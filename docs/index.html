@@ -99,7 +99,7 @@
         const GITHUB_PAT = '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'; 
 
         function triggerLiveOnDemandRefresh() {
-            const url = `https://github.com{GITHUB_OWNER}/${GITHUB_REPO}/dispatches`;
+            const url = `https://api.github.com/${GITHUB_OWNER}/${GITHUB_REPO}/dispatches`;
             
             fetch(url, {
                 method: 'POST',
