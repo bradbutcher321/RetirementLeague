@@ -5,10 +5,9 @@ import time
 import gspread
 from google.oauth2.service_account import Credentials
 
-# Point Python to your local clone directory
-cloned_repo_path = os.path.abspath("./espn-api")
-if cloned_repo_path not in sys.path:
-    sys.path.insert(0, cloned_repo_path)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
 from espn_api.football import League  
 
