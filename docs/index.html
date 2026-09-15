@@ -3,115 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>League Statistics Dashboard</title>
+    <title>League Weekly Performance</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; margin-top: 0; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; margin-top: 0; margin-bottom: 25px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 35px; margin-bottom: 15px; font-size: 1.5rem; }
         
-        /* Tab Navigation Styling */
-        .tab-menu { display: flex; gap: 10px; border-bottom: 2px solid #ddd; margin-bottom: 20px; padding-bottom: 10px; }
-        .tab-btn { background: #e8f4f8; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; color: #2c3e50; cursor: pointer; border-radius: 4px; transition: 0.2s; }
-        .tab-btn:hover { background: #d0e7f0; }
-        .tab-btn.active { background: #3498db; color: white; }
+        /* Layout Component Spacing */
+        .section-block { margin-bottom: 40px; }
         
-        /* Table Component Styling */
-        .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
+        /* Summary Metric Cards Layout */
+        .card-box { display: flex; gap: 20px; margin-bottom: 20px; }
+        .card { flex: 1; background: #e8f4f8; padding: 20px; border-radius: 6px; border-left: 5px solid #3498db; }
+        .card.proj { background: #fdf2f4; border-left-color: #e74c3c; }
+        .card h3 { margin: 0; font-size: 0.9rem; text-transform: uppercase; color: #7f8c8d; letter-spacing: 0.5px; }
+        .card p { margin: 5px 0 0 0; font-size: 1.8rem; font-weight: bold; color: #2c3e50; }
+        
+        /* Structured Table System CSS */
+        .table-responsive { width: 100%; overflow-x: auto; background: #fff; border: 1px solid #e1e4e6; border-radius: 6px; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; white-space: nowrap; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #e1e4e6; }
         th { background: #f8f9fa; font-weight: 600; color: #2c3e50; }
-        tr:hover { background-color: #fafafa; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f9fbfd; }
         
-        .loading { font-style: italic; color: #666; padding: 20px 0; }
+        /* Helper Utilities */
+        .vs-cell { text-align: center; font-weight: bold; color: #95a5a6; width: 50px; }
+        .match-cell { width: 45%; }
+        .loading { font-style: italic; color: #7f8c8d; padding: 20px 0; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏆 Retirement League Statistics 🏆</h1>
+        <h1 id="week-header">🏈 Retirement League Live Dashboard 🏈</h1>
         
-        <!-- Tab Buttons (Will be populated by JavaScript) -->
-        <div class="tab-menu" id="tab-menu-container"></div>
+        <!-- Section A: Live Overview Cards -->
+        <div class="section-block">
+            <div class="card-box">
+                <div class="card">
+                    <h3>Current Median</h3>
+                    <p id="curr-median">--</p>
+                </div>
+                <div class="card proj">
+                    <h3>Projected Median</h3>
+                    <p id="proj-median">--</p>
+                </div>
+            </div>
+        </div>
 
-        <!-- Dynamic Data Content Container -->
-        <div class="table-responsive" id="table-container">
-            <div class="loading">Select a tab to load league metrics...</div>
+        <!-- Section B: Standings Leaderboard Table -->
+        <div class="section-block">
+            <h2>Team Leaderboard</h2>
+            <div class="table-responsive">
+                <table id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Team Name</th>
+                            <th>Current Score</th>
+                            <th>Projected Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <tr><td colspan="3" class="loading">Loading standings matrix...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section C: Head-to-Head Active Matchups Table -->
+        <div class="section-block">
+            <h2>Live Matchups</h2>
+            <div class="table-responsive">
+                <table id="matchups-table">
+                    <thead>
+                        <tr>
+                            <th class="match-cell">Away Team / Project</th>
+                            <th class="vs-cell"></th>
+                            <th class="match-cell">Home Team / Project</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matchups-body">
+                        <tr><td colspan="3" class="loading">Loading fantasy matchup pairings...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        // 1. CONFIGURATION: Define your tab labels and paste your exact CSV URLs here
-        const leagueTabs = {
-            "Live Weekly Medians": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpuyTa17f_K_VMTCVBXO4bDPaPkiDf66w8OAXTPtyn1MTQR3yjuCORs91WPabAyjo5Wso_eXKNM1SS/pub?gid=941832551&single=true&output=csv",
-            "Historical Standings": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpuyTa17f_K_VMTCVBXO4bDPaPkiDf66w8OAXTPtyn1MTQR3yjuCORs91WPabAyjo5Wso_eXKNM1SS/pubhtml?gid=283917789&single=true",
-            "All-Time Records": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTpuyTa17f_K_VMTCVBXO4bDPaPkiDf66w8OAXTPtyn1MTQR3yjuCORs91WPabAyjo5Wso_eXKNM1SS/pub?gid=0&single=true&output=csv"
-        };
+        // Paste your exact published "Live Weekly Medians" tab CSV URL here
+        const csvUrl = 'YOUR_PUBLISHED_GOOGLE_SHEET_CSV_URL_HERE';
 
-        // 2. Generate Tab Buttons dynamically based on configuration
-        const menuContainer = document.getElementById('tab-menu-container');
-        Object.keys(leagueTabs).forEach((tabName, index) => {
-            const button = document.createElement('button');
-            button.className = `tab-btn ${index === 0 ? 'active' : ''}`;
-            button.innerText = tabName;
-            button.onclick = () => switchTab(tabName, button);
-            menuContainer.appendChild(button);
-        });
+        function cleanCell(text) {
+            return text ? text.replace(/"/g, '').trim() : '';
+        }
 
-        // 3. Main Data Fetch and Render Engine
-        function loadTabData(url) {
-            const container = document.getElementById('table-container');
-            container.innerHTML = '<div class="loading">Fetching records from Google Sheets...</div>';
+        fetch(csvUrl)
+            .then(response => response.text())
+            .then(csvText => {
+                const rows = csvText.split('\n').map(row => row.split(','));
+                
+                let leaderboardHTML = '';
+                let matchupsHTML = '';
+                
+                // State flags to determine which table section we are currently reading
+                let parsingLeaderboard = false;
+                let parsingMatchups = false;
 
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error('Network error');
-                    return response.text();
-                })
-                .then(csvText => {
-                    // Split rows by line break, split cells by comma parsing
-                    const rows = csvText.split('\n')
-                                        .map(row => row.split(','))
-                                        .filter(row => row.length > 0 && row[0].trim() !== ""); // Filter blank lines
+                rows.forEach(row => {
+                    if (row.length < 2) return;
                     
-                    let htmlTable = '<table><thead><tr>';
-                    
-                    // Build Headers (First Row)
-                    rows[0].forEach(headerText => {
-                        htmlTable += `<th>${headerText.replace(/"/g, '')}</th>`;
-                    });
-                    htmlTable += '</tr></thead><tbody>';
-                    
-                    // Build Data Rows
-                    for (let i = 1; i < rows.length; i++) {
-                        htmlTable += '<tr>';
-                        rows[i].forEach(cellText => {
-                            // Strips extra quotes added by CSV formatting structures
-                            htmlTable += `<td>${cellText.replace(/"/g, '')}</td>`;
-                        });
-                        htmlTable += '</tr>';
+                    const colA = cleanCell(row[0]);
+                    const colB = cleanCell(row[1]);
+                    const colC = cleanCell(row[2]);
+
+                    // Parse Section A: General Metrics
+                    if (colA === "Matchup Week") {
+                        document.getElementById('week-header').innerText = `🏈 ${colB} Dashboard`;
+                    } else if (colA === "Current Median Score") {
+                        document.getElementById('curr-median').innerText = colB;
+                    } else if (colA === "Projected Median Score") {
+                        document.getElementById('proj-median').innerText = colB;
                     }
-                    htmlTable += '</tbody></table>';
                     
-                    container.innerHTML = htmlTable;
-                })
-                .catch(error => {
-                    container.innerHTML = `<div class="loading" style="color: red;">Error: Could not render sheet data. Verify your published CSV link settings.</div>`;
-                    console.error(error);
+                    // Detect Section B Boundary (Team Leaderboard Table)
+                    if (colA === "Team Name") {
+                        parsingLeaderboard = true;
+                        parsingMatchups = false;
+                        return; // Skip table header row
+                    }
+                    
+                    // Detect Section C Boundary (Live Matchups Table)
+                    if (colA === "Away Team / Project") {
+                        parsingLeaderboard = false;
+                        parsingMatchups = true;
+                        return; // Skip table header row
+                    }
+
+                    // Stop parsing if we hit an intentionally empty spacer row
+                    if (colA === "" && colB === "") {
+                        parsingLeaderboard = false;
+                        parsingMatchups = false;
+                    }
+
+                    // Build HTML Rows for Section B
+                    if (parsingLeaderboard && colA) {
+                        leaderboardHTML += `
+                            <tr>
+                                <td><strong>${colA}</strong></td>
+                                <td>${colB}</td>
+                                <td>${colC}</td>
+                            </tr>`;
+                    }
+
+                    // Build HTML Rows for Section C
+                    if (parsingMatchups && colA) {
+                        matchupsHTML += `
+                            <tr>
+                                <td class="match-cell">${colA}</td>
+                                <td class="vs-cell">${colB}</td>
+                                <td class="match-cell">${colC}</td>
+                            </tr>`;
+                    }
                 });
-        }
 
-        // 4. Tab Switch Click Coordinator
-        function switchTab(tabName, buttonElement) {
-            // Remove active classes from all navigation tabs
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            // Set current tab to active status
-            buttonElement.classList.add('active');
-            // Trigger fetch pipeline
-            loadTabData(leagueTabs[tabName]);
-        }
-
-        // 5. Initial Execution: Load the very first configured tab on page open
-        const initialTabName = Object.keys(leagueTabs)[0];
-        loadTabData(leagueTabs[initialTabName]);
+                // Update UI Containers with the parsed structured fragments
+                document.getElementById('leaderboard-body').innerHTML = leaderboardHTML;
+                document.getElementById('matchups-body').innerHTML = matchupsHTML;
+            })
+            .catch(error => {
+                console.error("Dashboard error:", error);
+                document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="3" style="color:red;">Error loading sheet records.</td></tr>';
+            });
     </script>
 </body>
 </html>
