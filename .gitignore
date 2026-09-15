@@ -166,6 +166,7 @@ dump.rdb
 secrets.json
 credentials.json
 service-account.json
+google_secret.json
 
 # Backup files
 *.bak

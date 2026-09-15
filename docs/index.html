@@ -94,7 +94,34 @@
     <script>
         // Paste your exact published "Live Weekly Medians" tab CSV URL here
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTpuyTa17f_K_VMTCVBXO4bDPaPkiDf66w8OAXTPtyn1MTQR3yjuCORs91WPabAyjo5Wso_eXKNM1SS/pub?gid=941832551&single=true&output=csv';
+        const GITHUB_OWNER = 'bradbutcher321';
+        const GITHUB_REPO = 'RetirementLeague';
+        const GITHUB_PAT = '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'; 
 
+        function triggerLiveOnDemandRefresh() {
+            const url = `https://github.com{GITHUB_OWNER}/${GITHUB_REPO}/dispatches`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${GITHUB_PAT}`,
+                    'Accept': 'application/vnd.github+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    event_type: 'web_site_access' // Matches the 'types' filter in your workflow file
+                })
+            })
+            .then(response => {
+                if(response.ok) {
+                    console.log("Web landing registered: Backend refresh dispatched or throttled by cooldown gate.");
+                }
+            })
+            .catch(err => console.error("On-demand hook error:", err));
+        }
+
+        // Fire the automation routine every time the dashboard link is opened by a visitor
+        triggerLiveOnDemandRefresh();
         function cleanCell(text) {
             return text ? text.replace(/"/g, '').trim() : '';
         }
