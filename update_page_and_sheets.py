@@ -149,6 +149,17 @@ def main():
     team_data.sort(key=lambda x: (x['standing'] if x['standing'] != '' else 999))
 
     # --- 3. WIPE AND WRITE BULK PAYLOAD ---
+    # Defensively unmerge every cell in a generous range first. Merged cells
+    # left over from earlier manual formatting can silently swallow values
+    # written to their non-anchor cells via the API (the cell looks blank
+    # even though we sent a value), which is exactly the kind of bug that's
+    # invisible in the code and only shows up as missing data downstream.
+    # This is a no-op if nothing is merged, so it's safe to run every time.
+    try:
+        worksheet.unmerge_cells("A1:Z500")
+    except Exception as e:
+        print(f"Note: unmerge_cells step skipped/failed harmlessly: {e}")
+
     worksheet.clear()
 
     TOTAL_COLS = 10  # widest section (matchups) has 10 columns; pad everything to match
