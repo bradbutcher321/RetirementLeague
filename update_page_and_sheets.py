@@ -50,19 +50,23 @@ def format_record(team):
 
 def format_manager(team):
     """Best-effort manager display name from the raw ESPN `members` entries
-    espn_api attaches to a Team as `owners`. Prefer the real first/last name
-    ESPN has on file over `displayName`, which is usually the account's
-    public username (e.g. "Keithstone12") rather than the person's actual
-    name. Different account setups populate different subsets of these
-    fields, so we fall back gracefully instead of crashing on a missing
-    key."""
+    espn_api attaches to a Team as `owners`, formatted as "First L." (first
+    name plus last initial) everywhere it's shown on the page. Prefer the
+    real first/last name ESPN has on file over `displayName`, which is
+    usually the account's public username (e.g. "Keithstone12") rather than
+    the person's actual name. Different account setups populate different
+    subsets of these fields, so we fall back gracefully instead of crashing
+    on a missing key."""
     owners = getattr(team, "owners", None) or []
     if not owners:
         return ""
     owner = owners[0]
-    full_name = f"{owner.get('firstName', '')} {owner.get('lastName', '')}".strip()
-    if full_name:
-        return full_name
+    first = (owner.get("firstName") or "").strip()
+    last = (owner.get("lastName") or "").strip()
+    if first and last:
+        return f"{first} {last[0]}."
+    if first or last:
+        return first or last
     return owner.get("displayName", "")
 
 
@@ -145,6 +149,7 @@ def main():
 
         team_data.append({
             "name": box.home_team.team_name,
+            "manager": format_manager(home_team_full),
             "record": home_record,
             "current": box.home_score,
             "projected": box.home_projected,
@@ -155,6 +160,7 @@ def main():
         })
         team_data.append({
             "name": box.away_team.team_name,
+            "manager": format_manager(away_team_full),
             "record": away_record,
             "current": box.away_score,
             "projected": box.away_projected,
@@ -212,7 +218,7 @@ def main():
     worksheet.clear()
 
     # The two tables are laid out side by side in entirely separate columns
-    # (leaderboard in A-H, matchups in J-S) rather than stacked in the same
+    # (leaderboard in A-I, matchups in K-V) rather than stacked in the same
     # columns. This is the fix for the "home team name goes missing" bug:
     # Google's CSV/gviz export infers ONE data type per column across the
     # whole tab. When a leaderboard numeric column and the matchup table's
@@ -220,10 +226,10 @@ def main():
     # column was numeric and silently dropped the text values — even
     # though they were stored correctly and displayed fine in the Sheets UI.
     # Giving each table its own columns means no column ever mixes types.
-    LEADERBOARD_COLS = 8   # A-H
-    MATCHUP_START_COL = 9  # column J (0-indexed: A=0 ... I=8, J=9)
-    MATCHUP_COLS = 12      # J-U
-    TOTAL_COLS = MATCHUP_START_COL + MATCHUP_COLS  # 21, i.e. through column U
+    LEADERBOARD_COLS = 9    # A-I
+    MATCHUP_START_COL = 10  # column K (0-indexed: A=0 ... J=9, K=10)
+    MATCHUP_COLS = 12       # K-V
+    TOTAL_COLS = MATCHUP_START_COL + MATCHUP_COLS  # 22, i.e. through column V
 
     def pad_leaderboard(row):
         return row + [""] * (TOTAL_COLS - len(row))
@@ -243,12 +249,13 @@ def main():
         pad_leaderboard(["Season Leader Manager", format_manager(season_leader_team) if season_points_started else ""]),
         pad_leaderboard(["Season Leader Points", f"{season_leader_team.points_for:.2f}" if season_points_started else ""]),
         pad_leaderboard([""]),
-        pad_leaderboard(["Team Name", "Record", "Current Score", "Projected Score", "Standing", "Points For", "Points Against", "Playoff Odds"]),
+        pad_leaderboard(["Team Name", "Manager", "Record", "Current Score", "Projected Score", "Standing", "Points For", "Points Against", "Playoff Odds"]),
     ]
 
     for team in team_data:
         payload.append(pad_leaderboard([
             team["name"],
+            team["manager"],
             team["record"],
             f"{team['current']:.2f}",
             f"{team['projected']:.2f}",
