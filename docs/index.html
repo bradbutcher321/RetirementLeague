@@ -268,7 +268,7 @@
   // repository_dispatch call to GitHub. Set REFRESH_PROXY_URL below once
   // that's deployed. Leaving it blank simply skips the on-demand refresh
   // and the dashboard still works fine off the last scheduled run.
-  const REFRESH_PROXY_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const REFRESH_PROXY_URL = ''; // e.g. 'https://your-worker.example.workers.dev/trigger-refresh'
 
   function triggerLiveOnDemandRefresh() {
     if (!REFRESH_PROXY_URL) return;
@@ -342,7 +342,11 @@
       </div>`;
   }
 
-  fetch(csvUrl)
+  // Cache-bust: append a timestamp so neither the browser nor any
+  // intermediate cache serves a stale copy of the CSV.
+  const cacheBustedCsvUrl = csvUrl + '&_=' + Date.now();
+
+  fetch(cacheBustedCsvUrl, { cache: 'no-store' })
     .then(res => res.text())
     .then(csvText => {
       const rows = parseCsv(csvText);
