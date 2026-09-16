@@ -211,6 +211,59 @@
 
   .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }
   footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
+
+  /* ---------- Median Watch ---------- */
+  .median-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px){ .median-grid{ grid-template-columns: 1fr; } }
+
+  .median-card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 18px 20px;
+  }
+  .median-card-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .median-card-title{ font-weight: 600; font-size: 0.9rem; color: var(--text-dim); }
+  .median-card-value{
+    font-family: var(--scoreboard);
+    font-weight: 700;
+    font-size: 1.3rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .median-groups{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .median-group-label{
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .median-group-label.above{ color: var(--turf); }
+  .median-group-label.below{ color: var(--loss); }
+
+  .median-team-row{
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .median-team-row:last-child{ border-bottom: none; }
+  .median-team-name{
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .median-team-score{ color: var(--text-dim); font-variant-numeric: tabular-nums; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -246,6 +299,13 @@
       <h2>Current Standings</h2>
       <div class="leaderboard" id="leaderboard-container">
         <div class="loading-row">Loading standings…</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Median Watch</h2>
+      <div class="median-grid" id="median-container">
+        <div class="loading-row">Loading median splits…</div>
       </div>
     </section>
 
@@ -330,6 +390,39 @@
       </div>`;
   }
 
+  function renderMedianGroup(list, label, cls) {
+    if (!list.length) return '';
+    return `
+      <div class="median-group">
+        <div class="median-group-label ${cls}">${label}</div>
+        ${list.map(t => `
+          <div class="median-team-row">
+            <span class="median-team-name">${t.name}</span>
+            <span class="median-team-score">${fmtScore(t.score)}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // Splits teams by rank (not by literal distance from the median value) so
+  // it always yields an even above/below split — 6-and-6 in a 12-team
+  // league — even if a couple of scores happen to tie exactly at the median.
+  function renderMedianCard(title, medianValue, teamsSorted, scoreKey) {
+    const half = Math.floor(teamsSorted.length / 2);
+    const above = teamsSorted.slice(0, half).map(t => ({ name: t.name, score: t[scoreKey] }));
+    const below = teamsSorted.slice(teamsSorted.length - half).map(t => ({ name: t.name, score: t[scoreKey] }));
+    return `
+      <div class="median-card">
+        <div class="median-card-header">
+          <span class="median-card-title">${title}</span>
+          <span class="median-card-value">${fmtScore(medianValue)}</span>
+        </div>
+        <div class="median-groups">
+          ${renderMedianGroup(above, 'Above Median', 'above')}
+          ${renderMedianGroup(below, 'Below Median', 'below')}
+        </div>
+      </div>`;
+  }
+
   function renderLeaderboardRow(t, rank) {
     return `
       <div class="lb-row">
@@ -352,13 +445,18 @@
   // zone: check column A (index 0) for leaderboard content, column H
   // (index 7) for matchup content.
   const MATCHUP_START = 7;
+  // Column Z (index 25) holds the epoch timestamp of the last successful
+  // update_page_and_sheets.py run (see cell Z1) — that's the true
+  // "data updated" time, as opposed to whenever a visitor's browser
+  // happens to load this page.
+  const UPDATED_COL = 25;
 
   fetch(cacheBustedCsvUrl, { cache: 'no-store' })
     .then(res => res.text())
     .then(csvText => {
       const rows = parseCsv(csvText);
 
-      let currMedian = '—', projMedian = '—', week = '';
+      let currMedian = '—', projMedian = '—', week = '', updatedEpoch = '';
       const teams = [];
       const matchups = [];
 
@@ -366,6 +464,7 @@
         if (row.length < 2 || row.every(c => c === '')) return;
 
         const a = row[0];
+        if (!updatedEpoch && row[UPDATED_COL]) updatedEpoch = row[UPDATED_COL];
 
         // Leaderboard zone (columns A-F)
         if (a === 'Matchup Week') { week = row[1]; return; }
@@ -397,7 +496,9 @@
       document.getElementById('week-header').textContent = week ? `Live Dashboard — ${week}` : 'Live Dashboard';
       document.getElementById('curr-median').textContent = fmtScore(currMedian);
       document.getElementById('proj-median').textContent = fmtScore(projMedian);
-      document.getElementById('updated-at').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('updated-at').textContent = updatedEpoch
+        ? new Date(parseInt(updatedEpoch, 10) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : '—';
 
       document.getElementById('matchups-container').innerHTML =
         matchups.length ? matchups.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
@@ -408,6 +509,20 @@
         </div>`;
       document.getElementById('leaderboard-container').innerHTML =
         lbHeader + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1)).join('');
+
+      // Before games kick off every team sits at 0.00 — a current-score
+      // median split is meaningless then, so skip that card and only show
+      // the projected split until real scores start coming in.
+      const currentHasStarted = teams.some(t => parseFloat(t.current) > 0);
+      const byCurrentDesc = [...teams].sort((a, b) => parseFloat(b.current) - parseFloat(a.current));
+      const byProjectedDesc = [...teams].sort((a, b) => parseFloat(b.projected) - parseFloat(a.projected));
+
+      let medianHtml = '';
+      if (currentHasStarted) {
+        medianHtml += renderMedianCard('Current Score', currMedian, byCurrentDesc, 'current');
+      }
+      medianHtml += renderMedianCard('Projected Score', projMedian, byProjectedDesc, 'projected');
+      document.getElementById('median-container').innerHTML = medianHtml;
     })
     .catch(err => {
       console.error('Dashboard error:', err);
