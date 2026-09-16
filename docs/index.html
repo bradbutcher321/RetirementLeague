@@ -142,18 +142,16 @@
     font-size: 1rem;
     /* Stretch to the side's full width (overriding the flex-start/flex-end
        shrink-wrap the other elements in .side use) so a long name has a
-       fixed box to truncate against instead of wrapping to a second line. */
+       fixed box to truncate against instead of wrapping to a second line.
+       Always left-aligned (even on the home side, which right-aligns
+       everything else) so a long name reads from the start with the cut
+       — and the "…" — at the end, instead of the reverse. */
     align-self: stretch;
+    text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* Right-aligned (home) names overflow toward the left, so a plain
-     left-to-right ellipsis would silently clip the start of the name with
-     no "…" shown. Flipping direction to rtl moves the CSS-logical "end" (and
-     therefore the ellipsis) to the correct, left-hand overflow side while
-     the plain-English text inside still renders left-to-right as normal. */
-  .side.home .team-name{ direction: rtl; }
   .meta-row{
     display: flex;
     align-items: baseline;
