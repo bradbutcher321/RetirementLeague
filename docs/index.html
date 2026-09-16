@@ -141,17 +141,19 @@
     font-weight: 600;
     font-size: 1rem;
     /* Stretch to the side's full width (overriding the flex-start/flex-end
-       shrink-wrap the other elements in .side use) so a long name has a
-       fixed box to truncate against instead of wrapping to a second line.
-       Always left-aligned (even on the home side, which right-aligns
-       everything else) so a long name reads from the start with the cut
-       — and the "…" — at the end, instead of the reverse. */
+       shrink-wrap the other elements in .side use) so there's a fixed box
+       to measure and truncate against instead of wrapping to a second
+       line. Stays right-aligned by inheritance on the home side — same as
+       every other short name — until JS (see loadDashboard) detects this
+       particular name actually overflows and adds .truncate, which flips
+       just that one name to left-aligned so it reads from the start with
+       the cut, and the "…", landing at the end instead of the start. */
     align-self: stretch;
-    text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .team-name.truncate{ text-align: left; }
   .meta-row{
     display: flex;
     align-items: baseline;
@@ -738,6 +740,16 @@
 
         document.getElementById('matchups-container').innerHTML =
           matchups.length ? matchups.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
+
+        // Team names stay right-aligned (matching every other short name)
+        // unless a specific one is actually too long for its box, in which
+        // case flip just that one to left-aligned so its ellipsis truncates
+        // from the end instead of the start. Reading scrollWidth here is a
+        // synchronous layout read, but it's a couple dozen elements at most
+        // and only runs on this periodic refresh, so the cost is negligible.
+        document.querySelectorAll('#matchups-container .team-name').forEach(el => {
+          if (el.scrollWidth > el.clientWidth) el.classList.add('truncate');
+        });
 
         const lbHeader = `
           <div class="lb-row head">
