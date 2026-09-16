@@ -80,6 +80,22 @@
     font-size: 1.7rem;
     font-variant-numeric: tabular-nums;
   }
+  .ticker-value-updated{ font-size: 1.1rem; }
+
+  @media (max-width: 480px){
+    .ticker{ flex-direction: column; }
+    .ticker-item{
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+    }
+    .ticker-item:last-child{ border-bottom: none; }
+    .ticker-label{ margin-bottom: 0; }
+    .ticker-value{ font-size: 1.3rem; }
+  }
 
   section{ margin-bottom: 44px; }
   h2{
@@ -186,11 +202,12 @@
   }
   .lb-row{
     display: grid;
-    grid-template-columns: 32px 1fr 70px 90px 90px 90px;
+    grid-template-columns: 32px 1fr 70px 84px 84px 84px 84px 84px;
     align-items: center;
     padding: 12px 16px;
     border-bottom: 1px solid var(--line);
     font-size: 0.9rem;
+    gap: 4px;
   }
   .lb-row:last-child{ border-bottom: none; }
   .lb-row.head{
@@ -199,14 +216,20 @@
     background: var(--surface-raised);
   }
   .lb-rank{ color: var(--text-dim); font-family: var(--scoreboard); font-weight: 700; }
-  .lb-name{ font-weight: 500; }
+  .lb-name{
+    font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .lb-record{ color: var(--text-dim); font-size: 0.82rem; }
   .lb-num{ font-variant-numeric: tabular-nums; text-align: right; }
   .lb-current{ font-weight: 700; }
 
   @media (max-width: 640px){
     .lb-row{ grid-template-columns: 24px 1fr 60px 70px; }
-    .lb-record, .lb-remaining-col{ display: none; }
+    .lb-record, .lb-pf, .lb-pa, .lb-playoff{ display: none; }
   }
 
   .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }
@@ -259,11 +282,89 @@
   .median-team-row:last-child{ border-bottom: none; }
   .median-team-name{
     color: var(--text);
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .median-team-score{ color: var(--text-dim); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  /* ---------- Superlatives ---------- */
+  .accolades-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px){ .accolades-grid{ grid-template-columns: 1fr; } }
+
+  .accolade-card{
+    position: relative;
+    background: linear-gradient(165deg, var(--surface-raised), var(--surface));
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--gold);
+    padding: 30px 22px 24px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .accolade-card::before{
+    content: "";
+    position: absolute;
+    top: -70px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 240px;
+    height: 140px;
+    background: radial-gradient(ellipse at center, rgba(232,170,46,0.16), transparent 70%);
+    pointer-events: none;
+  }
+  .accolade-eyebrow{
+    position: relative;
+    color: var(--gold);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .accolade-score{
+    position: relative;
+    font-family: var(--scoreboard);
+    font-weight: 800;
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .accolade-team{
+    position: relative;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .accolade-meta{
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+  }
+  .accolade-dot{ color: var(--line); }
+  .accolade-placeholder{
+    position: relative;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    padding: 22px 4px 6px;
+  }
+
+  /* ---------- Small-phone tightening (must stay last: overrides base rules above) ---------- */
+  @media (max-width: 480px){
+    .wrap{ padding: 0 14px 40px; }
+    section{ margin-bottom: 32px; }
+    .side{ padding: 16px; }
+    .median-card{ padding: 16px; }
+    .median-groups{ gap: 12px; }
+    .accolade-card{ padding: 24px 16px 20px; }
+    .accolade-score{ font-size: 2.5rem; }
+  }
 </style>
 </head>
 <body>
@@ -284,9 +385,16 @@
       </div>
       <div class="ticker-item">
         <div class="ticker-label">Updated</div>
-        <div class="ticker-value" id="updated-at" style="font-size:1.1rem;">—</div>
+        <div class="ticker-value ticker-value-updated" id="updated-at">—</div>
       </div>
     </div>
+
+    <section>
+      <h2>Median Watch</h2>
+      <div class="median-grid" id="median-container">
+        <div class="loading-row">Loading median splits…</div>
+      </div>
+    </section>
 
     <section>
       <h2>This week's matchups</h2>
@@ -296,16 +404,16 @@
     </section>
 
     <section>
-      <h2>Current Standings</h2>
-      <div class="leaderboard" id="leaderboard-container">
-        <div class="loading-row">Loading standings…</div>
+      <h2>Superlatives</h2>
+      <div class="accolades-grid" id="accolades-container">
+        <div class="loading-row">Loading accolades…</div>
       </div>
     </section>
 
     <section>
-      <h2>Median Watch</h2>
-      <div class="median-grid" id="median-container">
-        <div class="loading-row">Loading median splits…</div>
+      <h2>Current Standings</h2>
+      <div class="leaderboard" id="leaderboard-container">
+        <div class="loading-row">Loading standings…</div>
       </div>
     </section>
 
@@ -423,6 +531,11 @@
       </div>`;
   }
 
+  function fmtPct(n) {
+    const num = parseFloat(n);
+    return isNaN(num) ? '—' : `${num.toFixed(1)}%`;
+  }
+
   function renderLeaderboardRow(t, rank) {
     return `
       <div class="lb-row">
@@ -431,7 +544,30 @@
         <div class="lb-record">${t.record}</div>
         <div class="lb-num lb-current">${fmtScore(t.current)}</div>
         <div class="lb-num">${fmtScore(t.projected)}</div>
-        <div class="lb-num lb-remaining-col">${t.remaining} left</div>
+        <div class="lb-num lb-pf">${fmtScore(t.pointsFor)}</div>
+        <div class="lb-num lb-pa">${fmtScore(t.pointsAgainst)}</div>
+        <div class="lb-num lb-playoff">${fmtPct(t.playoffPct)}</div>
+      </div>`;
+  }
+
+  function renderAccoladeCard(eyebrow, team, manager, meta, score) {
+    if (!team) {
+      return `
+        <div class="accolade-card">
+          <div class="accolade-eyebrow">${eyebrow}</div>
+          <div class="accolade-placeholder">Stats will appear once games get underway.</div>
+        </div>`;
+    }
+    return `
+      <div class="accolade-card">
+        <div class="accolade-eyebrow">${eyebrow}</div>
+        <div class="accolade-score">${fmtScore(score)}</div>
+        <div class="accolade-team">${team}</div>
+        <div class="accolade-meta">
+          ${manager ? `<span>${manager}</span>` : ''}
+          ${manager && meta ? `<span class="accolade-dot">•</span>` : ''}
+          ${meta ? `<span>${meta}</span>` : ''}
+        </div>
       </div>`;
   }
 
@@ -439,12 +575,12 @@
   // intermediate cache serves a stale copy of the CSV.
   const cacheBustedCsvUrl = csvUrl + '&_=' + Date.now();
 
-  // The leaderboard (columns A-F) and matchup table (columns H-Q) now live
+  // The leaderboard (columns A-H) and matchup table (columns J-S) now live
   // side by side on separate columns within the same tab/row-range — see
   // update_page_and_sheets.py for why. So each row belongs to exactly one
-  // zone: check column A (index 0) for leaderboard content, column H
-  // (index 7) for matchup content.
-  const MATCHUP_START = 7;
+  // zone: check column A (index 0) for leaderboard content, column J
+  // (index 9) for matchup content.
+  const MATCHUP_START = 9;
   // Column Z (index 25) holds the epoch timestamp of the last successful
   // update_page_and_sheets.py run (see cell Z1) — that's the true
   // "data updated" time, as opposed to whenever a visitor's browser
@@ -457,6 +593,8 @@
       const rows = parseCsv(csvText);
 
       let currMedian = '—', projMedian = '—', week = '', updatedEpoch = '';
+      let weeklyHighTeam = '', weeklyHighManager = '', weeklyHighWeek = '', weeklyHighScore = '';
+      let seasonLeaderTeam = '', seasonLeaderManager = '', seasonLeaderPoints = '';
       const teams = [];
       const matchups = [];
 
@@ -466,20 +604,27 @@
         const a = row[0];
         if (!updatedEpoch && row[UPDATED_COL]) updatedEpoch = row[UPDATED_COL];
 
-        // Leaderboard zone (columns A-F)
+        // Leaderboard zone (columns A-H)
         if (a === 'Matchup Week') { week = row[1]; return; }
         if (a === 'Current Median Score') { currMedian = row[1]; return; }
         if (a === 'Projected Median Score') { projMedian = row[1]; return; }
+        if (a === 'Weekly High Team') { weeklyHighTeam = row[1]; return; }
+        if (a === 'Weekly High Manager') { weeklyHighManager = row[1]; return; }
+        if (a === 'Weekly High Week') { weeklyHighWeek = row[1]; return; }
+        if (a === 'Weekly High Score') { weeklyHighScore = row[1]; return; }
+        if (a === 'Season Leader Team') { seasonLeaderTeam = row[1]; return; }
+        if (a === 'Season Leader Manager') { seasonLeaderManager = row[1]; return; }
+        if (a === 'Season Leader Points') { seasonLeaderPoints = row[1]; return; }
         if (a === 'Team Name') return; // leaderboard header row
         if (a) {
           teams.push({
-            name: a, record: row[1], current: row[2], projected: row[3],
-            remaining: row[4], standing: row[5],
+            name: a, record: row[1], current: row[2], projected: row[3], standing: row[4],
+            pointsFor: row[5], pointsAgainst: row[6], playoffPct: row[7],
           });
           return;
         }
 
-        // Matchup zone (columns H-Q)
+        // Matchup zone (columns J-S)
         const h = row[MATCHUP_START];
         if (h === 'Away Team') return; // matchup header row
         if (h) {
@@ -505,7 +650,7 @@
 
       const lbHeader = `
         <div class="lb-row head">
-          <div>#</div><div>Team</div><div>Record</div><div class="lb-num">Score</div><div class="lb-num">Proj</div><div class="lb-num lb-remaining-col">Rem.</div>
+          <div>#</div><div>Team</div><div class="lb-record">Record</div><div class="lb-num">Score</div><div class="lb-num">Proj</div><div class="lb-num lb-pf">PF</div><div class="lb-num lb-pa">PA</div><div class="lb-num lb-playoff">Playoff%</div>
         </div>`;
       document.getElementById('leaderboard-container').innerHTML =
         lbHeader + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1)).join('');
@@ -523,6 +668,15 @@
       }
       medianHtml += renderMedianCard('Projected Score', projMedian, byProjectedDesc, 'projected');
       document.getElementById('median-container').innerHTML = medianHtml;
+
+      document.getElementById('accolades-container').innerHTML =
+        renderAccoladeCard(
+          'Season High Score', weeklyHighTeam, weeklyHighManager,
+          weeklyHighWeek ? `Week ${weeklyHighWeek}` : '', weeklyHighScore
+        ) +
+        renderAccoladeCard(
+          'Season Points Leader', seasonLeaderTeam, seasonLeaderManager, '', seasonLeaderPoints
+        );
     })
     .catch(err => {
       console.error('Dashboard error:', err);

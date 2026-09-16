@@ -48,6 +48,35 @@ def format_record(team):
     return f"{wins}-{losses}"
 
 
+def format_manager(team):
+    """Best-effort manager display name from the raw ESPN `members` entries
+    espn_api attaches to a Team as `owners`. Different account setups
+    populate different subsets of these fields, so we fall back gracefully
+    instead of crashing on a missing key."""
+    owners = getattr(team, "owners", None) or []
+    if not owners:
+        return ""
+    owner = owners[0]
+    display_name = owner.get("displayName")
+    if display_name:
+        return display_name
+    return f"{owner.get('firstName', '')} {owner.get('lastName', '')}".strip()
+
+
+def find_weekly_high(teams, current_week):
+    """Finds the single-highest weekly score of the season so far across all
+    teams, and which week it happened in. `Team.scores` is a season-long
+    list indexed by week (index 0 = week 1), populated from ESPN's own
+    schedule data, so this doesn't require any extra API calls or our own
+    history-tracking."""
+    best_team, best_week, best_score = None, None, -1.0
+    for team in teams:
+        for week_num, score in enumerate(getattr(team, "scores", [])[:current_week], start=1):
+            if score is not None and score > best_score:
+                best_team, best_week, best_score = team, week_num, score
+    return best_team, best_week, best_score
+
+
 def main():
     # --- 1. CONNECT TO GOOGLE SHEETS FIRST TO CHECK COOLDOWN ---
     print("Connecting to Google Sheets API...")
@@ -116,16 +145,20 @@ def main():
             "record": home_record,
             "current": box.home_score,
             "projected": box.home_projected,
-            "remaining": home_remaining,
             "standing": home_standing,
+            "points_for": getattr(home_team_full, "points_for", 0) or 0,
+            "points_against": getattr(home_team_full, "points_against", 0) or 0,
+            "playoff_pct": getattr(home_team_full, "playoff_pct", 0) or 0,
         })
         team_data.append({
             "name": box.away_team.team_name,
             "record": away_record,
             "current": box.away_score,
             "projected": box.away_projected,
-            "remaining": away_remaining,
             "standing": away_standing,
+            "points_for": getattr(away_team_full, "points_for", 0) or 0,
+            "points_against": getattr(away_team_full, "points_against", 0) or 0,
+            "playoff_pct": getattr(away_team_full, "playoff_pct", 0) or 0,
         })
 
         matchup_data.append({
@@ -148,6 +181,21 @@ def main():
     # better rank (1st place first).
     team_data.sort(key=lambda x: (x['standing'] if x['standing'] != '' else 999))
 
+    # --- Superlatives: season-long single-week high score, and the current
+    # points-for leader. Both are derived entirely from data ESPN already
+    # tracks (Team.scores / Team.points_for), no extra history-keeping
+    # needed on our end. ---
+    weekly_high_team, weekly_high_week, weekly_high_score = find_weekly_high(league.teams, current_week)
+    season_leader_team = max(league.teams, key=lambda t: getattr(t, "points_for", 0) or 0)
+
+    # Before Week 1 kicks off every team is sitting at 0, which would make
+    # both accolades meaningless (and playoff odds aren't simulated by ESPN
+    # yet either) — leave those cells blank so the page can show a
+    # "not available yet" state instead of a misleading zero.
+    season_started = bool(weekly_high_score and weekly_high_score > 0)
+    season_points_started = bool(season_leader_team.points_for and season_leader_team.points_for > 0)
+    any_playoff_data = any(t["playoff_pct"] for t in team_data)
+
     # --- 3. WIPE AND WRITE BULK PAYLOAD ---
     # Defensively unmerge every cell in a generous range first (harmless
     # no-op if nothing is merged).
@@ -159,18 +207,18 @@ def main():
     worksheet.clear()
 
     # The two tables are laid out side by side in entirely separate columns
-    # (leaderboard in A-F, matchups in H-Q) rather than stacked in the same
+    # (leaderboard in A-H, matchups in J-S) rather than stacked in the same
     # columns. This is the fix for the "home team name goes missing" bug:
     # Google's CSV/gviz export infers ONE data type per column across the
-    # whole tab. When the leaderboard's numeric "Standing" and the
-    # matchup table's text "Home Team" both lived in column F, gviz decided
-    # the column was numeric and silently dropped the text values — even
+    # whole tab. When a leaderboard numeric column and the matchup table's
+    # text "Home Team" both lived in the same column, gviz decided the
+    # column was numeric and silently dropped the text values — even
     # though they were stored correctly and displayed fine in the Sheets UI.
     # Giving each table its own columns means no column ever mixes types.
-    LEADERBOARD_COLS = 6   # A-F
-    MATCHUP_START_COL = 7  # column H (0-indexed: A=0 ... G=6, H=7)
-    MATCHUP_COLS = 10      # H-Q
-    TOTAL_COLS = MATCHUP_START_COL + MATCHUP_COLS  # 17, i.e. through column Q
+    LEADERBOARD_COLS = 8   # A-H
+    MATCHUP_START_COL = 9  # column J (0-indexed: A=0 ... I=8, J=9)
+    MATCHUP_COLS = 10      # J-S
+    TOTAL_COLS = MATCHUP_START_COL + MATCHUP_COLS  # 19, i.e. through column S
 
     def pad_leaderboard(row):
         return row + [""] * (TOTAL_COLS - len(row))
@@ -182,8 +230,15 @@ def main():
         pad_leaderboard(["Matchup Week", f"Week {current_week}"]),
         pad_leaderboard(["Current Median Score", f"{current_median:.2f}"]),
         pad_leaderboard(["Projected Median Score", f"{projected_median:.2f}"]),
+        pad_leaderboard(["Weekly High Team", weekly_high_team.team_name if season_started else ""]),
+        pad_leaderboard(["Weekly High Manager", format_manager(weekly_high_team) if season_started else ""]),
+        pad_leaderboard(["Weekly High Week", str(weekly_high_week) if season_started else ""]),
+        pad_leaderboard(["Weekly High Score", f"{weekly_high_score:.2f}" if season_started else ""]),
+        pad_leaderboard(["Season Leader Team", season_leader_team.team_name if season_points_started else ""]),
+        pad_leaderboard(["Season Leader Manager", format_manager(season_leader_team) if season_points_started else ""]),
+        pad_leaderboard(["Season Leader Points", f"{season_leader_team.points_for:.2f}" if season_points_started else ""]),
         pad_leaderboard([""]),
-        pad_leaderboard(["Team Name", "Record", "Current Score", "Projected Score", "Players Remaining", "Standing"]),
+        pad_leaderboard(["Team Name", "Record", "Current Score", "Projected Score", "Standing", "Points For", "Points Against", "Playoff Odds"]),
     ]
 
     for team in team_data:
@@ -192,8 +247,10 @@ def main():
             team["record"],
             f"{team['current']:.2f}",
             f"{team['projected']:.2f}",
-            team["remaining"],
             team["standing"],
+            f"{team['points_for']:.2f}",
+            f"{team['points_against']:.2f}",
+            f"{team['playoff_pct']:.1f}" if any_playoff_data else "",
         ]))
 
     payload.append(pad_leaderboard([""]))
