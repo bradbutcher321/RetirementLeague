@@ -48,6 +48,17 @@ def format_record(team):
     return f"{wins}-{losses}"
 
 
+# League-specific nickname preferences, applied regardless of what ESPN has
+# on file for a manager's first name. Keyed lowercase so matching is
+# case-insensitive.
+MANAGER_NICKNAMES = {
+    "joseph": "Joe",
+    "jonathan": "Jon",
+    "bradley": "Brad",
+    "benjamin": "Ben",
+}
+
+
 def format_manager(team):
     """Best-effort manager display name from the raw ESPN `members` entries
     espn_api attaches to a Team as `owners`, formatted as "First L." (first
@@ -63,8 +74,9 @@ def format_manager(team):
     owner = owners[0]
     first = (owner.get("firstName") or "").strip()
     last = (owner.get("lastName") or "").strip()
+    first = MANAGER_NICKNAMES.get(first.lower(), first)
     if first and last:
-        return f"{first} {last[0]}."
+        return f"{first} {last[0].upper()}."
     if first or last:
         return first or last
     return owner.get("displayName", "")
