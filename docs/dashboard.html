@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retirement League — Live Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0F14;
+    --surface: #131920;
+    --surface-raised: #1A222B;
+    --line: #26303B;
+    --text: #E9EEF3;
+    --text-dim: #8A97A3;
+    --gold: #E8AA2E;
+    --turf: #4C9A6B;
+    --turf-dim: #2E5A3F;
+    --loss: #C0574B;
+    --scoreboard: 'Big Shoulders Display', sans-serif;
+    --body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse 900px 500px at 20% -10%, rgba(232,170,46,0.06), transparent),
+      radial-gradient(ellipse 900px 500px at 90% 10%, rgba(76,154,107,0.06), transparent);
+    color: var(--text);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{ max-width: 980px; margin: 0 auto; padding: 0 20px 60px; }
+
+  /* ---------- Header / ticker ---------- */
+  header{
+    padding: 28px 0 0;
+  }
+  .eyebrow{
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+  }
+  h1{
+    font-family: var(--scoreboard);
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3.1rem);
+    margin: 2px 0 20px;
+    letter-spacing: 0.01em;
+    line-height: 1;
+  }
+
+  .ticker{
+    display: flex;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 34px;
+  }
+  .ticker-item{
+    flex: 1;
+    padding: 16px 18px;
+    border-right: 1px solid var(--line);
+  }
+  .ticker-item:last-child{ border-right: none; }
+  .ticker-label{
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    margin-bottom: 4px;
+  }
+  .ticker-value{
+    font-family: var(--scoreboard);
+    font-weight: 700;
+    font-size: 1.7rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  section{ margin-bottom: 44px; }
+  h2{
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* ---------- Matchup cards ---------- */
+  .matchups{ display: flex; flex-direction: column; gap: 14px; }
+
+  .matchup-card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+  }
+
+  .side{
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 3px solid transparent;
+  }
+  .side.leading{ border-top-color: var(--gold); }
+
+  .side.away{ text-align: left; align-items: flex-start; }
+  .side.home{ text-align: right; align-items: flex-end; }
+
+  .team-name{
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .meta-row{
+    display: flex;
+    gap: 10px;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+  }
+  .side.home .meta-row{ flex-direction: row-reverse; }
+
+  .score-line{
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .side.home .score-line{ flex-direction: row-reverse; }
+  .score{
+    font-family: var(--scoreboard);
+    font-weight: 700;
+    font-size: 2.4rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .proj{
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .remaining-badge{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    color: var(--text-dim);
+  }
+  .remaining-badge .dot{
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--turf);
+  }
+  .remaining-badge.done .dot{ background: var(--line); }
+
+  .vs-divider{
+    padding: 0 18px;
+    color: var(--text-dim);
+    font-family: var(--scoreboard);
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+  }
+
+  @media (max-width: 640px){
+    .matchup-card{ grid-template-columns: 1fr; }
+    .vs-divider{ border-left:none; border-right:none; border-top:1px solid var(--line); border-bottom:1px solid var(--line); justify-content:center; padding: 6px 0; }
+    .side.home{ text-align:left; align-items:flex-start; }
+    .side.home .meta-row, .side.home .score-line{ flex-direction: row; }
+  }
+
+  /* ---------- Leaderboard ---------- */
+  .leaderboard{
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .lb-row{
+    display: grid;
+    grid-template-columns: 32px 1fr 70px 90px 90px 90px;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.9rem;
+  }
+  .lb-row:last-child{ border-bottom: none; }
+  .lb-row.head{
+    color: var(--text-dim);
+    font-size: 0.76rem;
+    background: var(--surface-raised);
+  }
+  .lb-rank{ color: var(--text-dim); font-family: var(--scoreboard); font-weight: 700; }
+  .lb-name{ font-weight: 500; }
+  .lb-record{ color: var(--text-dim); font-size: 0.82rem; }
+  .lb-num{ font-variant-numeric: tabular-nums; text-align: right; }
+  .lb-current{ font-weight: 700; }
+
+  @media (max-width: 640px){
+    .lb-row{ grid-template-columns: 24px 1fr 60px 70px; }
+    .lb-record, .lb-remaining-col{ display: none; }
+  }
+
+  .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }
+  footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">Retirement League</div>
+      <h1 id="week-header">Live Dashboard</h1>
+    </header>
+
+    <div class="ticker">
+      <div class="ticker-item">
+        <div class="ticker-label">Current median</div>
+        <div class="ticker-value" id="curr-median">—</div>
+      </div>
+      <div class="ticker-item">
+        <div class="ticker-label">Projected median</div>
+        <div class="ticker-value" id="proj-median">—</div>
+      </div>
+      <div class="ticker-item">
+        <div class="ticker-label">Updated</div>
+        <div class="ticker-value" id="updated-at" style="font-size:1.1rem;">—</div>
+      </div>
+    </div>
+
+    <section>
+      <h2>This week's matchups</h2>
+      <div class="matchups" id="matchups-container">
+        <div class="loading-row">Loading matchups…</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Standings this week</h2>
+      <div class="leaderboard" id="leaderboard-container">
+        <div class="loading-row">Loading standings…</div>
+      </div>
+    </section>
+
+    <footer>Auto-refreshes from the league sheet · Data via ESPN Fantasy</footer>
+  </div>
+
+<script>
+  // Paste your exact published "Live Weekly Medians" tab CSV URL here
+  const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTpuyTa17f_K_VMTCVBXO4bDPaPkiDf66w8OAXTPtyn1MTQR3yjuCORs91WPabAyjo5Wso_eXKNM1SS/pub?gid=941832551&single=true&output=csv';
+
+  // --- On-demand refresh trigger -------------------------------------
+  // IMPORTANT: earlier versions of this file embedded a raw GitHub
+  // Personal Access Token here. That is unsafe: anyone who views the page
+  // source can copy the token and use the GitHub API as you. Never put a
+  // PAT (or any secret) into client-side HTML/JS.
+  //
+  // Instead, this now calls a small proxy endpoint that YOU control
+  // (e.g. a Cloudflare Worker / Vercel serverless function / AWS Lambda
+  // URL) which holds the real token server-side and forwards the
+  // repository_dispatch call to GitHub. Set REFRESH_PROXY_URL below once
+  // that's deployed. Leaving it blank simply skips the on-demand refresh
+  // and the dashboard still works fine off the last scheduled run.
+  const REFRESH_PROXY_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+
+  function triggerLiveOnDemandRefresh() {
+    if (!REFRESH_PROXY_URL) return;
+    fetch(REFRESH_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      .then(res => res.json())
+      .then(data => {
+        if (data.dispatched) console.log('Refresh dispatched.');
+        else if (data.skipped) console.log('Refresh skipped:', data.reason);
+      })
+      .catch(err => console.error('On-demand refresh error:', err));
+  }
+  triggerLiveOnDemandRefresh();
+
+  // --- CSV parsing -----------------------------------------------------
+  function cleanCell(text) {
+    return text ? text.replace(/"/g, '').trim() : '';
+  }
+
+  function parseCsv(text) {
+    return text.split('\n').map(row => row.split(',').map(cleanCell));
+  }
+
+  function fmtScore(n) {
+    const num = parseFloat(n);
+    return isNaN(num) ? n : num.toFixed(2);
+  }
+
+  function renderMatchupCard(m) {
+    const homeLeading = parseFloat(m.homeScore) >= parseFloat(m.awayScore);
+    const remBadge = (n, label) => {
+      const remaining = parseInt(n, 10) || 0;
+      const done = remaining === 0;
+      return `<span class="remaining-badge ${done ? 'done' : ''}">
+                <span class="dot"></span>${remaining} ${label} left to play
+              </span>`;
+    };
+
+    return `
+      <div class="matchup-card">
+        <div class="side away ${!homeLeading ? 'leading' : ''}">
+          <div class="team-name">${m.awayName}</div>
+          <div class="meta-row"><span>${m.awayRecord}</span></div>
+          <div class="score-line">
+            <span class="score">${fmtScore(m.awayScore)}</span>
+            <span class="proj">proj ${fmtScore(m.awayProjected)}</span>
+          </div>
+          ${remBadge(m.awayRemaining, '')}
+        </div>
+        <div class="vs-divider">@</div>
+        <div class="side home ${homeLeading ? 'leading' : ''}">
+          <div class="team-name">${m.homeName}</div>
+          <div class="meta-row"><span>${m.homeRecord}</span></div>
+          <div class="score-line">
+            <span class="score">${fmtScore(m.homeScore)}</span>
+            <span class="proj">proj ${fmtScore(m.homeProjected)}</span>
+          </div>
+          ${remBadge(m.homeRemaining, '')}
+        </div>
+      </div>`;
+  }
+
+  function renderLeaderboardRow(t, rank) {
+    return `
+      <div class="lb-row">
+        <div class="lb-rank">${rank}</div>
+        <div class="lb-name">${t.name}</div>
+        <div class="lb-record">${t.record}</div>
+        <div class="lb-num lb-current">${fmtScore(t.current)}</div>
+        <div class="lb-num">${fmtScore(t.projected)}</div>
+        <div class="lb-num lb-remaining-col">${t.remaining} left</div>
+      </div>`;
+  }
+
+  fetch(csvUrl)
+    .then(res => res.text())
+    .then(csvText => {
+      const rows = parseCsv(csvText);
+
+      let currMedian = '—', projMedian = '—', week = '';
+      const teams = [];
+      const matchups = [];
+
+      let mode = null; // 'leaderboard' | 'matchups' | null
+
+      rows.forEach(row => {
+        if (row.length < 2 || row.every(c => c === '')) { mode = null; return; }
+
+        const [a, b, c, d, e, f, g, h, i, j] = row;
+
+        if (a === 'Matchup Week') { week = b; return; }
+        if (a === 'Current Median Score') { currMedian = b; return; }
+        if (a === 'Projected Median Score') { projMedian = b; return; }
+
+        if (a === 'Team Name') { mode = 'leaderboard'; return; }
+        if (a === 'Away Team') { mode = 'matchups'; return; }
+
+        if (mode === 'leaderboard' && a) {
+          teams.push({ name: a, record: b, current: c, projected: d, remaining: e, standing: f });
+        }
+        if (mode === 'matchups' && a) {
+          matchups.push({
+            awayName: a, awayRecord: b, awayScore: c, awayProjected: d, awayRemaining: e,
+            homeName: f, homeRecord: g, homeScore: h, homeProjected: i, homeRemaining: j,
+          });
+        }
+      });
+
+      document.getElementById('week-header').textContent = week ? `Live Dashboard — ${week}` : 'Live Dashboard';
+      document.getElementById('curr-median').textContent = fmtScore(currMedian);
+      document.getElementById('proj-median').textContent = fmtScore(projMedian);
+      document.getElementById('updated-at').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      document.getElementById('matchups-container').innerHTML =
+        matchups.length ? matchups.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
+
+      const lbHeader = `
+        <div class="lb-row head">
+          <div>#</div><div>Team</div><div>Record</div><div class="lb-num">Score</div><div class="lb-num">Proj</div><div class="lb-num lb-remaining-col">Rem.</div>
+        </div>`;
+      document.getElementById('leaderboard-container').innerHTML =
+        lbHeader + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1)).join('');
+    })
+    .catch(err => {
+      console.error('Dashboard error:', err);
+      document.getElementById('matchups-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading league data.</div>';
+    });
+</script>
+</body>
+</html>
