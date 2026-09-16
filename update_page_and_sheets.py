@@ -149,12 +149,8 @@ def main():
     team_data.sort(key=lambda x: (x['standing'] if x['standing'] != '' else 999))
 
     # --- 3. WIPE AND WRITE BULK PAYLOAD ---
-    # Defensively unmerge every cell in a generous range first. Merged cells
-    # left over from earlier manual formatting can silently swallow values
-    # written to their non-anchor cells via the API (the cell looks blank
-    # even though we sent a value), which is exactly the kind of bug that's
-    # invisible in the code and only shows up as missing data downstream.
-    # This is a no-op if nothing is merged, so it's safe to run every time.
+    # Defensively unmerge every cell in a generous range first (harmless
+    # no-op if nothing is merged).
     try:
         worksheet.unmerge_cells("A1:Z500")
     except Exception as e:
@@ -162,21 +158,36 @@ def main():
 
     worksheet.clear()
 
-    TOTAL_COLS = 10  # widest section (matchups) has 10 columns; pad everything to match
+    # The two tables are laid out side by side in entirely separate columns
+    # (leaderboard in A-F, matchups in H-Q) rather than stacked in the same
+    # columns. This is the fix for the "home team name goes missing" bug:
+    # Google's CSV/gviz export infers ONE data type per column across the
+    # whole tab. When the leaderboard's numeric "Standing" and the
+    # matchup table's text "Home Team" both lived in column F, gviz decided
+    # the column was numeric and silently dropped the text values — even
+    # though they were stored correctly and displayed fine in the Sheets UI.
+    # Giving each table its own columns means no column ever mixes types.
+    LEADERBOARD_COLS = 6   # A-F
+    MATCHUP_START_COL = 7  # column H (0-indexed: A=0 ... G=6, H=7)
+    MATCHUP_COLS = 10      # H-Q
+    TOTAL_COLS = MATCHUP_START_COL + MATCHUP_COLS  # 17, i.e. through column Q
 
-    def pad(row):
+    def pad_leaderboard(row):
         return row + [""] * (TOTAL_COLS - len(row))
 
+    def pad_matchup(row):
+        return [""] * MATCHUP_START_COL + row + [""] * (TOTAL_COLS - MATCHUP_START_COL - len(row))
+
     payload = [
-        pad(["Matchup Week", f"Week {current_week}"]),
-        pad(["Current Median Score", f"{current_median:.2f}"]),
-        pad(["Projected Median Score", f"{projected_median:.2f}"]),
-        pad([""]),
-        pad(["Team Name", "Record", "Current Score", "Projected Score", "Players Remaining", "Standing"]),
+        pad_leaderboard(["Matchup Week", f"Week {current_week}"]),
+        pad_leaderboard(["Current Median Score", f"{current_median:.2f}"]),
+        pad_leaderboard(["Projected Median Score", f"{projected_median:.2f}"]),
+        pad_leaderboard([""]),
+        pad_leaderboard(["Team Name", "Record", "Current Score", "Projected Score", "Players Remaining", "Standing"]),
     ]
 
     for team in team_data:
-        payload.append(pad([
+        payload.append(pad_leaderboard([
             team["name"],
             team["record"],
             f"{team['current']:.2f}",
@@ -185,15 +196,14 @@ def main():
             team["standing"],
         ]))
 
-    payload.append(pad([""]))
-    payload.append(pad([""]))
-    payload.append(pad([
+    payload.append(pad_leaderboard([""]))
+    payload.append(pad_matchup([
         "Away Team", "Away Record", "Away Score", "Away Projected", "Away Remaining",
         "Home Team", "Home Record", "Home Score", "Home Projected", "Home Remaining",
     ]))
 
     for match in matchup_data:
-        payload.append(pad([
+        payload.append(pad_matchup([
             match["away_name"], match["away_record"], f"{match['away_score']:.2f}",
             f"{match['away_projected']:.2f}", match["away_remaining"],
             match["home_name"], match["home_record"], f"{match['home_score']:.2f}",

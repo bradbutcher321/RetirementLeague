@@ -243,7 +243,7 @@
     </section>
 
     <section>
-      <h2>Standings this week</h2>
+      <h2>Current Standings</h2>
       <div class="leaderboard" id="leaderboard-container">
         <div class="loading-row">Loading standings…</div>
       </div>
@@ -346,6 +346,13 @@
   // intermediate cache serves a stale copy of the CSV.
   const cacheBustedCsvUrl = csvUrl + '&_=' + Date.now();
 
+  // The leaderboard (columns A-F) and matchup table (columns H-Q) now live
+  // side by side on separate columns within the same tab/row-range — see
+  // update_page_and_sheets.py for why. So each row belongs to exactly one
+  // zone: check column A (index 0) for leaderboard content, column H
+  // (index 7) for matchup content.
+  const MATCHUP_START = 7;
+
   fetch(cacheBustedCsvUrl, { cache: 'no-store' })
     .then(res => res.text())
     .then(csvText => {
@@ -355,27 +362,34 @@
       const teams = [];
       const matchups = [];
 
-      let mode = null; // 'leaderboard' | 'matchups' | null
-
       rows.forEach(row => {
-        if (row.length < 2 || row.every(c => c === '')) { mode = null; return; }
+        if (row.length < 2 || row.every(c => c === '')) return;
 
-        const [a, b, c, d, e, f, g, h, i, j] = row;
+        const a = row[0];
 
-        if (a === 'Matchup Week') { week = b; return; }
-        if (a === 'Current Median Score') { currMedian = b; return; }
-        if (a === 'Projected Median Score') { projMedian = b; return; }
-
-        if (a === 'Team Name') { mode = 'leaderboard'; return; }
-        if (a === 'Away Team') { mode = 'matchups'; return; }
-
-        if (mode === 'leaderboard' && a) {
-          teams.push({ name: a, record: b, current: c, projected: d, remaining: e, standing: f });
+        // Leaderboard zone (columns A-F)
+        if (a === 'Matchup Week') { week = row[1]; return; }
+        if (a === 'Current Median Score') { currMedian = row[1]; return; }
+        if (a === 'Projected Median Score') { projMedian = row[1]; return; }
+        if (a === 'Team Name') return; // leaderboard header row
+        if (a) {
+          teams.push({
+            name: a, record: row[1], current: row[2], projected: row[3],
+            remaining: row[4], standing: row[5],
+          });
+          return;
         }
-        if (mode === 'matchups' && a) {
+
+        // Matchup zone (columns H-Q)
+        const h = row[MATCHUP_START];
+        if (h === 'Away Team') return; // matchup header row
+        if (h) {
           matchups.push({
-            awayName: a, awayRecord: b, awayScore: c, awayProjected: d, awayRemaining: e,
-            homeName: f, homeRecord: g, homeScore: h, homeProjected: i, homeRemaining: j,
+            awayName: h, awayRecord: row[MATCHUP_START + 1], awayScore: row[MATCHUP_START + 2],
+            awayProjected: row[MATCHUP_START + 3], awayRemaining: row[MATCHUP_START + 4],
+            homeName: row[MATCHUP_START + 5], homeRecord: row[MATCHUP_START + 6],
+            homeScore: row[MATCHUP_START + 7], homeProjected: row[MATCHUP_START + 8],
+            homeRemaining: row[MATCHUP_START + 9],
           });
         }
       });
