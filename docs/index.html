@@ -114,19 +114,19 @@
     background: var(--surface);
     border: 1px solid var(--line);
     display: grid;
-    /* Each side has a 190px floor instead of shrinking freely, so on a
+    /* Each side has a 175px floor instead of shrinking freely, so on a
        narrow phone the card stays laid out side-by-side (never stacks) and
        instead scrolls horizontally within itself — overflow-x lives on this
        same element as the background/border so the background scrolls
        along with the content instead of leaving a gap. */
-    grid-template-columns: minmax(190px, 1fr) auto minmax(190px, 1fr);
+    grid-template-columns: minmax(175px, 1fr) auto minmax(175px, 1fr);
     align-items: center;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   .side{
-    padding: 18px 20px;
+    padding: 18px 16px;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -187,7 +187,7 @@
 
   .vs-divider{
     position: relative;
-    padding: 0 16px;
+    padding: 0 8px;
     align-self: stretch;
     display: flex;
     align-items: center;
@@ -210,9 +210,9 @@
     color: var(--gold);
     font-family: var(--scoreboard);
     font-weight: 800;
-    font-size: 0.78rem;
-    letter-spacing: 0.04em;
-    padding: 6px 11px;
+    font-size: 0.74rem;
+    letter-spacing: 0.03em;
+    padding: 5px 8px;
     border-radius: 999px;
     white-space: nowrap;
   }
@@ -321,29 +321,21 @@
   .median-pending{
     grid-column: 1 / -1;
     text-align: center;
-    padding: 14px 10px 4px;
+    padding: 22px 10px 14px;
   }
-  .pending-dots{
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 12px;
+  .pending-headline{
+    font-family: var(--scoreboard);
+    font-weight: 800;
+    font-size: 2rem;
+    letter-spacing: 0.01em;
+    color: var(--gold);
+    line-height: 1;
   }
-  .pending-dots span{
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--gold);
-    opacity: 0.3;
-    animation: pending-pulse 1.2s ease-in-out infinite;
+  .pending-sub{
+    margin-top: 10px;
+    color: var(--text-dim);
+    font-size: 0.88rem;
   }
-  .pending-dots span:nth-child(2){ animation-delay: 0.15s; }
-  .pending-dots span:nth-child(3){ animation-delay: 0.3s; }
-  @keyframes pending-pulse{
-    0%, 80%, 100%{ opacity: 0.25; transform: scale(0.85); }
-    40%{ opacity: 1; transform: scale(1); }
-  }
-  .pending-text{ color: var(--text-dim); font-size: 0.85rem; line-height: 1.4; }
 
   /* ---------- Superlatives ---------- */
   .accolades-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -603,8 +595,8 @@
         </div>
         <div class="median-groups">
           <div class="median-pending">
-            <div class="pending-dots"><span></span><span></span><span></span></div>
-            <div class="pending-text">Kickoff hasn't happened yet — nobody's above or below anybody. Check back once scores start rolling in.</div>
+            <div class="pending-headline">Locked at 0.00</div>
+            <div class="pending-sub">Nobody's up. Nobody's down. Yet.</div>
           </div>
         </div>
       </div>`;
@@ -650,10 +642,6 @@
       </div>`;
   }
 
-  // Cache-bust: append a timestamp so neither the browser nor any
-  // intermediate cache serves a stale copy of the CSV.
-  const cacheBustedCsvUrl = csvUrl + '&_=' + Date.now();
-
   // The leaderboard (columns A-I) and matchup table (columns K-V) now live
   // side by side on separate columns within the same tab/row-range — see
   // update_page_and_sheets.py for why. So each row belongs to exactly one
@@ -666,102 +654,120 @@
   // happens to load this page.
   const UPDATED_COL = 25;
 
-  fetch(cacheBustedCsvUrl, { cache: 'no-store' })
-    .then(res => res.text())
-    .then(csvText => {
-      const rows = parseCsv(csvText);
+  // How often to re-read the published CSV while the tab stays open. This
+  // only re-fetches the sheet's current contents — it never calls
+  // triggerLiveOnDemandRefresh(), so it can't repeatedly kick off the
+  // GitHub Action. That fires once per page load (below), same as before;
+  // the periodic timer just picks up whatever the last run (scheduled or
+  // on-demand) already wrote to the sheet, so an open tab stays current
+  // without the visitor having to manually reload the page.
+  const AUTO_REFRESH_MS = 2 * 60 * 1000;
 
-      let currMedian = '—', projMedian = '—', week = '', updatedEpoch = '';
-      let weeklyHighTeam = '', weeklyHighManager = '', weeklyHighWeek = '', weeklyHighScore = '';
-      let seasonLeaderTeam = '', seasonLeaderManager = '', seasonLeaderPoints = '';
-      const teams = [];
-      const matchups = [];
+  function loadDashboard() {
+    // Cache-bust: append a fresh timestamp each call so neither the browser
+    // nor any intermediate cache serves a stale copy of the CSV.
+    const cacheBustedCsvUrl = csvUrl + '&_=' + Date.now();
 
-      rows.forEach(row => {
-        if (row.length < 2 || row.every(c => c === '')) return;
+    fetch(cacheBustedCsvUrl, { cache: 'no-store' })
+      .then(res => res.text())
+      .then(csvText => {
+        const rows = parseCsv(csvText);
 
-        const a = row[0];
-        if (!updatedEpoch && row[UPDATED_COL]) updatedEpoch = row[UPDATED_COL];
+        let currMedian = '—', projMedian = '—', week = '', updatedEpoch = '';
+        let weeklyHighTeam = '', weeklyHighManager = '', weeklyHighWeek = '', weeklyHighScore = '';
+        let seasonLeaderTeam = '', seasonLeaderManager = '', seasonLeaderPoints = '';
+        const teams = [];
+        const matchups = [];
 
-        // Leaderboard zone (columns A-H)
-        if (a === 'Matchup Week') { week = row[1]; return; }
-        if (a === 'Current Median Score') { currMedian = row[1]; return; }
-        if (a === 'Projected Median Score') { projMedian = row[1]; return; }
-        if (a === 'Weekly High Team') { weeklyHighTeam = row[1]; return; }
-        if (a === 'Weekly High Manager') { weeklyHighManager = row[1]; return; }
-        if (a === 'Weekly High Week') { weeklyHighWeek = row[1]; return; }
-        if (a === 'Weekly High Score') { weeklyHighScore = row[1]; return; }
-        if (a === 'Season Leader Team') { seasonLeaderTeam = row[1]; return; }
-        if (a === 'Season Leader Manager') { seasonLeaderManager = row[1]; return; }
-        if (a === 'Season Leader Points') { seasonLeaderPoints = row[1]; return; }
-        if (a === 'Team Name') return; // leaderboard header row
-        if (a) {
-          teams.push({
-            name: a, manager: row[1], record: row[2], current: row[3], projected: row[4], standing: row[5],
-            pointsFor: row[6], pointsAgainst: row[7], playoffPct: row[8],
-          });
-          return;
-        }
+        rows.forEach(row => {
+          if (row.length < 2 || row.every(c => c === '')) return;
 
-        // Matchup zone (columns K-V)
-        const h = row[MATCHUP_START];
-        if (h === 'Away Team') return; // matchup header row
-        if (h) {
-          matchups.push({
-            awayName: h, awayManager: row[MATCHUP_START + 1], awayRecord: row[MATCHUP_START + 2],
-            awayScore: row[MATCHUP_START + 3], awayProjected: row[MATCHUP_START + 4], awayRemaining: row[MATCHUP_START + 5],
-            homeName: row[MATCHUP_START + 6], homeManager: row[MATCHUP_START + 7], homeRecord: row[MATCHUP_START + 8],
-            homeScore: row[MATCHUP_START + 9], homeProjected: row[MATCHUP_START + 10], homeRemaining: row[MATCHUP_START + 11],
-          });
-        }
+          const a = row[0];
+          if (!updatedEpoch && row[UPDATED_COL]) updatedEpoch = row[UPDATED_COL];
+
+          // Leaderboard zone (columns A-H)
+          if (a === 'Matchup Week') { week = row[1]; return; }
+          if (a === 'Current Median Score') { currMedian = row[1]; return; }
+          if (a === 'Projected Median Score') { projMedian = row[1]; return; }
+          if (a === 'Weekly High Team') { weeklyHighTeam = row[1]; return; }
+          if (a === 'Weekly High Manager') { weeklyHighManager = row[1]; return; }
+          if (a === 'Weekly High Week') { weeklyHighWeek = row[1]; return; }
+          if (a === 'Weekly High Score') { weeklyHighScore = row[1]; return; }
+          if (a === 'Season Leader Team') { seasonLeaderTeam = row[1]; return; }
+          if (a === 'Season Leader Manager') { seasonLeaderManager = row[1]; return; }
+          if (a === 'Season Leader Points') { seasonLeaderPoints = row[1]; return; }
+          if (a === 'Team Name') return; // leaderboard header row
+          if (a) {
+            teams.push({
+              name: a, manager: row[1], record: row[2], current: row[3], projected: row[4], standing: row[5],
+              pointsFor: row[6], pointsAgainst: row[7], playoffPct: row[8],
+            });
+            return;
+          }
+
+          // Matchup zone (columns K-V)
+          const h = row[MATCHUP_START];
+          if (h === 'Away Team') return; // matchup header row
+          if (h) {
+            matchups.push({
+              awayName: h, awayManager: row[MATCHUP_START + 1], awayRecord: row[MATCHUP_START + 2],
+              awayScore: row[MATCHUP_START + 3], awayProjected: row[MATCHUP_START + 4], awayRemaining: row[MATCHUP_START + 5],
+              homeName: row[MATCHUP_START + 6], homeManager: row[MATCHUP_START + 7], homeRecord: row[MATCHUP_START + 8],
+              homeScore: row[MATCHUP_START + 9], homeProjected: row[MATCHUP_START + 10], homeRemaining: row[MATCHUP_START + 11],
+            });
+          }
+        });
+
+        document.getElementById('week-header').textContent = week ? `Live Dashboard — ${week}` : 'Live Dashboard';
+        document.getElementById('curr-median').textContent = fmtScore(currMedian);
+        document.getElementById('proj-median').textContent = fmtScore(projMedian);
+        document.getElementById('updated-at').textContent = updatedEpoch
+          ? new Date(parseInt(updatedEpoch, 10) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : '—';
+
+        document.getElementById('matchups-container').innerHTML =
+          matchups.length ? matchups.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
+
+        const lbHeader = `
+          <div class="lb-row head">
+            <div>#</div><div>Team</div><div class="lb-record">Record</div><div class="lb-num">Score</div><div class="lb-num">Proj</div><div class="lb-num lb-pf">PF</div><div class="lb-num lb-pa">PA</div><div class="lb-num lb-playoff">Playoff%</div>
+          </div>`;
+        document.getElementById('leaderboard-container').innerHTML =
+          lbHeader + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1)).join('');
+
+        // Before games kick off every team sits at 0.00 — an above/below split
+        // on current score would be meaningless then, so that card shows a
+        // "kickoff hasn't happened yet" placeholder instead of being hidden.
+        // Both cards always render so they sit side-by-side on desktop /
+        // stacked on mobile, the same as when the season is underway.
+        const currentHasStarted = teams.some(t => parseFloat(t.current) > 0);
+        const byCurrentDesc = [...teams].sort((a, b) => parseFloat(b.current) - parseFloat(a.current));
+        const byProjectedDesc = [...teams].sort((a, b) => parseFloat(b.projected) - parseFloat(a.projected));
+
+        const medianHtml =
+          (currentHasStarted
+            ? renderMedianCard('Current Score', currMedian, byCurrentDesc, 'current')
+            : renderMedianPendingCard('Current Score')) +
+          renderMedianCard('Projected Score', projMedian, byProjectedDesc, 'projected');
+        document.getElementById('median-container').innerHTML = medianHtml;
+
+        document.getElementById('accolades-container').innerHTML =
+          renderAccoladeCard(
+            'Season High Score', weeklyHighTeam, weeklyHighManager,
+            weeklyHighWeek ? `Week ${weeklyHighWeek}` : '', weeklyHighScore
+          ) +
+          renderAccoladeCard(
+            'Season Points Leader', seasonLeaderTeam, seasonLeaderManager, '', seasonLeaderPoints
+          );
+      })
+      .catch(err => {
+        console.error('Dashboard error:', err);
+        document.getElementById('matchups-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading league data.</div>';
       });
+  }
 
-      document.getElementById('week-header').textContent = week ? `Live Dashboard — ${week}` : 'Live Dashboard';
-      document.getElementById('curr-median').textContent = fmtScore(currMedian);
-      document.getElementById('proj-median').textContent = fmtScore(projMedian);
-      document.getElementById('updated-at').textContent = updatedEpoch
-        ? new Date(parseInt(updatedEpoch, 10) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : '—';
-
-      document.getElementById('matchups-container').innerHTML =
-        matchups.length ? matchups.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
-
-      const lbHeader = `
-        <div class="lb-row head">
-          <div>#</div><div>Team</div><div class="lb-record">Record</div><div class="lb-num">Score</div><div class="lb-num">Proj</div><div class="lb-num lb-pf">PF</div><div class="lb-num lb-pa">PA</div><div class="lb-num lb-playoff">Playoff%</div>
-        </div>`;
-      document.getElementById('leaderboard-container').innerHTML =
-        lbHeader + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1)).join('');
-
-      // Before games kick off every team sits at 0.00 — an above/below split
-      // on current score would be meaningless then, so that card shows a
-      // "kickoff hasn't happened yet" placeholder instead of being hidden.
-      // Both cards always render so they sit side-by-side on desktop /
-      // stacked on mobile, the same as when the season is underway.
-      const currentHasStarted = teams.some(t => parseFloat(t.current) > 0);
-      const byCurrentDesc = [...teams].sort((a, b) => parseFloat(b.current) - parseFloat(a.current));
-      const byProjectedDesc = [...teams].sort((a, b) => parseFloat(b.projected) - parseFloat(a.projected));
-
-      const medianHtml =
-        (currentHasStarted
-          ? renderMedianCard('Current Score', currMedian, byCurrentDesc, 'current')
-          : renderMedianPendingCard('Current Score')) +
-        renderMedianCard('Projected Score', projMedian, byProjectedDesc, 'projected');
-      document.getElementById('median-container').innerHTML = medianHtml;
-
-      document.getElementById('accolades-container').innerHTML =
-        renderAccoladeCard(
-          'Season High Score', weeklyHighTeam, weeklyHighManager,
-          weeklyHighWeek ? `Week ${weeklyHighWeek}` : '', weeklyHighScore
-        ) +
-        renderAccoladeCard(
-          'Season Points Leader', seasonLeaderTeam, seasonLeaderManager, '', seasonLeaderPoints
-        );
-    })
-    .catch(err => {
-      console.error('Dashboard error:', err);
-      document.getElementById('matchups-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading league data.</div>';
-    });
+  loadDashboard();
+  setInterval(loadDashboard, AUTO_REFRESH_MS);
 </script>
 </body>
 </html>
