@@ -268,7 +268,7 @@
   // repository_dispatch call to GitHub. Set REFRESH_PROXY_URL below once
   // that's deployed. Leaving it blank simply skips the on-demand refresh
   // and the dashboard still works fine off the last scheduled run.
-  const REFRESH_PROXY_URL = ''; // e.g. 'https://your-worker.example.workers.dev/trigger-refresh'
+  const REFRESH_PROXY_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
 
   function triggerLiveOnDemandRefresh() {
     if (!REFRESH_PROXY_URL) return;
