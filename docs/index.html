@@ -436,11 +436,11 @@
 
     <div class="ticker">
       <div class="ticker-item">
-        <div class="ticker-label">Current median</div>
+        <div class="ticker-label">Current Median</div>
         <div class="ticker-value" id="curr-median">—</div>
       </div>
       <div class="ticker-item">
-        <div class="ticker-label">Projected median</div>
+        <div class="ticker-label">Projected Median</div>
         <div class="ticker-value" id="proj-median">—</div>
       </div>
       <div class="ticker-item">
@@ -597,6 +597,38 @@
       </div>`;
   }
 
+  // Thursday Night Football kickoff is when this week's scores actually
+  // start moving off 0.00, so that's what the pending card counts down to.
+  function getNextThursdayKickoff() {
+    const now = new Date();
+    const target = new Date(now);
+    target.setHours(20, 15, 0, 0); // 8:15 PM local time
+    target.setDate(now.getDate() + ((4 - now.getDay() + 7) % 7)); // 4 = Thursday
+    if (target <= now) target.setDate(target.getDate() + 7);
+    return target;
+  }
+
+  function formatCountdown(ms) {
+    if (ms <= 0) return 'Kickoff!';
+    const totalMinutes = Math.floor(ms / 60000);
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  }
+
+  // Re-looks-up the element each call (rather than caching a reference) so
+  // it keeps working across loadDashboard() re-rendering the card every
+  // couple minutes, and no-ops harmlessly once the season is underway and
+  // the pending card (and this element) no longer exist.
+  function updateKickoffCountdown() {
+    const el = document.getElementById('kickoff-countdown');
+    if (!el) return;
+    el.textContent = formatCountdown(getNextThursdayKickoff() - new Date());
+  }
+
   // Shown for the Current Score card before Week 1 kicks off, when every
   // team is tied at 0.00 and an above/below split would be meaningless.
   function renderMedianPendingCard(title) {
@@ -608,8 +640,8 @@
         </div>
         <div class="median-groups">
           <div class="median-pending">
-            <div class="pending-headline">Locked at 0.00</div>
-            <div class="pending-sub">Nobody's up. Nobody's down. Yet.</div>
+            <div class="pending-headline" id="kickoff-countdown">—</div>
+            <div class="pending-sub">until Thursday Night Kickoff (8:15 PM)</div>
           </div>
         </div>
       </div>`;
@@ -769,10 +801,11 @@
 
         const medianHtml =
           (currentHasStarted
-            ? renderMedianCard('Current Score', currMedian, byCurrentDesc, 'current')
-            : renderMedianPendingCard('Current Score')) +
-          renderMedianCard('Projected Score', projMedian, byProjectedDesc, 'projected');
+            ? renderMedianCard('Current Median', currMedian, byCurrentDesc, 'current')
+            : renderMedianPendingCard('Current Median')) +
+          renderMedianCard('Projected Median', projMedian, byProjectedDesc, 'projected');
         document.getElementById('median-container').innerHTML = medianHtml;
+        updateKickoffCountdown();
 
         document.getElementById('accolades-container').innerHTML =
           renderAccoladeCard(
@@ -791,6 +824,9 @@
 
   loadDashboard();
   setInterval(loadDashboard, AUTO_REFRESH_MS);
+  // Ticks the countdown between data refreshes so it counts down smoothly
+  // rather than jumping only once every AUTO_REFRESH_MS.
+  setInterval(updateKickoffCountdown, 60 * 1000);
 </script>
 </body>
 </html>
