@@ -50,17 +50,20 @@ def format_record(team):
 
 def format_manager(team):
     """Best-effort manager display name from the raw ESPN `members` entries
-    espn_api attaches to a Team as `owners`. Different account setups
-    populate different subsets of these fields, so we fall back gracefully
-    instead of crashing on a missing key."""
+    espn_api attaches to a Team as `owners`. Prefer the real first/last name
+    ESPN has on file over `displayName`, which is usually the account's
+    public username (e.g. "Keithstone12") rather than the person's actual
+    name. Different account setups populate different subsets of these
+    fields, so we fall back gracefully instead of crashing on a missing
+    key."""
     owners = getattr(team, "owners", None) or []
     if not owners:
         return ""
     owner = owners[0]
-    display_name = owner.get("displayName")
-    if display_name:
-        return display_name
-    return f"{owner.get('firstName', '')} {owner.get('lastName', '')}".strip()
+    full_name = f"{owner.get('firstName', '')} {owner.get('lastName', '')}".strip()
+    if full_name:
+        return full_name
+    return owner.get("displayName", "")
 
 
 def find_weekly_high(teams, current_week):
@@ -163,11 +166,13 @@ def main():
 
         matchup_data.append({
             "away_name": box.away_team.team_name,
+            "away_manager": format_manager(away_team_full),
             "away_record": away_record,
             "away_score": box.away_score,
             "away_projected": box.away_projected,
             "away_remaining": away_remaining,
             "home_name": box.home_team.team_name,
+            "home_manager": format_manager(home_team_full),
             "home_record": home_record,
             "home_score": box.home_score,
             "home_projected": box.home_projected,
@@ -217,8 +222,8 @@ def main():
     # Giving each table its own columns means no column ever mixes types.
     LEADERBOARD_COLS = 8   # A-H
     MATCHUP_START_COL = 9  # column J (0-indexed: A=0 ... I=8, J=9)
-    MATCHUP_COLS = 10      # J-S
-    TOTAL_COLS = MATCHUP_START_COL + MATCHUP_COLS  # 19, i.e. through column S
+    MATCHUP_COLS = 12      # J-U
+    TOTAL_COLS = MATCHUP_START_COL + MATCHUP_COLS  # 21, i.e. through column U
 
     def pad_leaderboard(row):
         return row + [""] * (TOTAL_COLS - len(row))
@@ -255,15 +260,15 @@ def main():
 
     payload.append(pad_leaderboard([""]))
     payload.append(pad_matchup([
-        "Away Team", "Away Record", "Away Score", "Away Projected", "Away Remaining",
-        "Home Team", "Home Record", "Home Score", "Home Projected", "Home Remaining",
+        "Away Team", "Away Manager", "Away Record", "Away Score", "Away Projected", "Away Remaining",
+        "Home Team", "Home Manager", "Home Record", "Home Score", "Home Projected", "Home Remaining",
     ]))
 
     for match in matchup_data:
         payload.append(pad_matchup([
-            match["away_name"], match["away_record"], f"{match['away_score']:.2f}",
+            match["away_name"], match["away_manager"], match["away_record"], f"{match['away_score']:.2f}",
             f"{match['away_projected']:.2f}", match["away_remaining"],
-            match["home_name"], match["home_record"], f"{match['home_score']:.2f}",
+            match["home_name"], match["home_manager"], match["home_record"], f"{match['home_score']:.2f}",
             f"{match['home_projected']:.2f}", match["home_remaining"],
         ]))
 

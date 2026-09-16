@@ -136,11 +136,14 @@
   }
   .meta-row{
     display: flex;
-    gap: 10px;
+    align-items: baseline;
+    gap: 6px;
     color: var(--text-dim);
     font-size: 0.82rem;
   }
   .side.home .meta-row{ flex-direction: row-reverse; }
+  .manager-name{ font-weight: 500; }
+  .meta-dot{ color: var(--line); }
 
   .score-line{
     display: flex;
@@ -196,13 +199,21 @@
   }
 
   /* ---------- Leaderboard ---------- */
+  .leaderboard-scroll{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   .leaderboard{
     border: 1px solid var(--line);
     background: var(--surface);
   }
   .lb-row{
     display: grid;
-    grid-template-columns: 32px 1fr 70px 84px 84px 84px 84px 84px;
+    /* The name column has a 120px floor rather than shrinking freely, so on
+       a narrow phone the row's total width (32+120+70+84*5=642px) exceeds
+       the viewport and the wrapping .leaderboard-scroll scrolls horizontally
+       instead of every column getting crushed unreadably thin. */
+    grid-template-columns: 32px minmax(120px, 1fr) 70px 84px 84px 84px 84px 84px;
     align-items: center;
     padding: 12px 16px;
     border-bottom: 1px solid var(--line);
@@ -227,9 +238,15 @@
   .lb-num{ font-variant-numeric: tabular-nums; text-align: right; }
   .lb-current{ font-weight: 700; }
 
+  .scroll-hint{ display: none; }
   @media (max-width: 640px){
-    .lb-row{ grid-template-columns: 24px 1fr 60px 70px; }
-    .lb-record, .lb-pf, .lb-pa, .lb-playoff{ display: none; }
+    .scroll-hint{
+      display: block;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.72rem;
+      margin-top: 8px;
+    }
   }
 
   .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }
@@ -412,9 +429,12 @@
 
     <section>
       <h2>Current Standings</h2>
-      <div class="leaderboard" id="leaderboard-container">
-        <div class="loading-row">Loading standings…</div>
+      <div class="leaderboard-scroll">
+        <div class="leaderboard" id="leaderboard-container">
+          <div class="loading-row">Loading standings…</div>
+        </div>
       </div>
+      <div class="scroll-hint">← Swipe to see PF, PA &amp; Playoff% →</div>
     </section>
 
     <footer>Auto-refreshes from the league sheet · Data via ESPN Fantasy</footer>
@@ -466,34 +486,39 @@
 
   function renderMatchupCard(m) {
     const homeLeading = parseFloat(m.homeScore) >= parseFloat(m.awayScore);
-    const remBadge = (n, label) => {
+    const remBadge = (n) => {
       const remaining = parseInt(n, 10) || 0;
       const done = remaining === 0;
       return `<span class="remaining-badge ${done ? 'done' : ''}">
-                <span class="dot"></span>${remaining} ${label} left to play
+                <span class="dot"></span>${remaining} left to play
               </span>`;
     };
+    const metaRow = (manager, record) => `
+      <div class="meta-row">
+        ${manager ? `<span class="manager-name">${manager}</span><span class="meta-dot">•</span>` : ''}
+        <span>${record}</span>
+      </div>`;
 
     return `
       <div class="matchup-card">
         <div class="side away ${!homeLeading ? 'leading' : ''}">
           <div class="team-name">${m.awayName}</div>
-          <div class="meta-row"><span>${m.awayRecord}</span></div>
+          ${metaRow(m.awayManager, m.awayRecord)}
           <div class="score-line">
             <span class="score">${fmtScore(m.awayScore)}</span>
             <span class="proj">proj ${fmtScore(m.awayProjected)}</span>
           </div>
-          ${remBadge(m.awayRemaining, '')}
+          ${remBadge(m.awayRemaining)}
         </div>
         <div class="vs-divider">@</div>
         <div class="side home ${homeLeading ? 'leading' : ''}">
           <div class="team-name">${m.homeName}</div>
-          <div class="meta-row"><span>${m.homeRecord}</span></div>
+          ${metaRow(m.homeManager, m.homeRecord)}
           <div class="score-line">
             <span class="score">${fmtScore(m.homeScore)}</span>
             <span class="proj">proj ${fmtScore(m.homeProjected)}</span>
           </div>
-          ${remBadge(m.homeRemaining, '')}
+          ${remBadge(m.homeRemaining)}
         </div>
       </div>`;
   }
@@ -575,7 +600,7 @@
   // intermediate cache serves a stale copy of the CSV.
   const cacheBustedCsvUrl = csvUrl + '&_=' + Date.now();
 
-  // The leaderboard (columns A-H) and matchup table (columns J-S) now live
+  // The leaderboard (columns A-H) and matchup table (columns J-U) now live
   // side by side on separate columns within the same tab/row-range — see
   // update_page_and_sheets.py for why. So each row belongs to exactly one
   // zone: check column A (index 0) for leaderboard content, column J
@@ -624,16 +649,15 @@
           return;
         }
 
-        // Matchup zone (columns J-S)
+        // Matchup zone (columns J-U)
         const h = row[MATCHUP_START];
         if (h === 'Away Team') return; // matchup header row
         if (h) {
           matchups.push({
-            awayName: h, awayRecord: row[MATCHUP_START + 1], awayScore: row[MATCHUP_START + 2],
-            awayProjected: row[MATCHUP_START + 3], awayRemaining: row[MATCHUP_START + 4],
-            homeName: row[MATCHUP_START + 5], homeRecord: row[MATCHUP_START + 6],
-            homeScore: row[MATCHUP_START + 7], homeProjected: row[MATCHUP_START + 8],
-            homeRemaining: row[MATCHUP_START + 9],
+            awayName: h, awayManager: row[MATCHUP_START + 1], awayRecord: row[MATCHUP_START + 2],
+            awayScore: row[MATCHUP_START + 3], awayProjected: row[MATCHUP_START + 4], awayRemaining: row[MATCHUP_START + 5],
+            homeName: row[MATCHUP_START + 6], homeManager: row[MATCHUP_START + 7], homeRecord: row[MATCHUP_START + 8],
+            homeScore: row[MATCHUP_START + 9], homeProjected: row[MATCHUP_START + 10], homeRemaining: row[MATCHUP_START + 11],
           });
         }
       });
