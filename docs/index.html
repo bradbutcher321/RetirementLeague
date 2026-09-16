@@ -114,8 +114,15 @@
     background: var(--surface);
     border: 1px solid var(--line);
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    /* Each side has a 190px floor instead of shrinking freely, so on a
+       narrow phone the card stays laid out side-by-side (never stacks) and
+       instead scrolls horizontally within itself — overflow-x lives on this
+       same element as the background/border so the background scrolls
+       along with the content instead of leaving a gap. */
+    grid-template-columns: minmax(190px, 1fr) auto minmax(190px, 1fr);
     align-items: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .side{
@@ -179,40 +186,55 @@
   .remaining-badge.done .dot{ background: var(--line); }
 
   .vs-divider{
-    padding: 0 18px;
-    color: var(--text-dim);
-    font-family: var(--scoreboard);
-    font-weight: 600;
-    font-size: 0.95rem;
-    border-left: 1px solid var(--line);
-    border-right: 1px solid var(--line);
+    position: relative;
+    padding: 0 16px;
     align-self: stretch;
     display: flex;
     align-items: center;
+    justify-content: center;
   }
-
-  @media (max-width: 640px){
-    .matchup-card{ grid-template-columns: 1fr; }
-    .vs-divider{ border-left:none; border-right:none; border-top:1px solid var(--line); border-bottom:1px solid var(--line); justify-content:center; padding: 6px 0; }
-    .side.home{ text-align:left; align-items:flex-start; }
-    .side.home .meta-row, .side.home .score-line{ flex-direction: row; }
+  .vs-divider::before{
+    content: "";
+    position: absolute;
+    top: 16px;
+    bottom: 16px;
+    left: 50%;
+    width: 1px;
+    background: var(--line);
+    transform: translateX(-50%);
+  }
+  .vs-badge{
+    position: relative;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    color: var(--gold);
+    font-family: var(--scoreboard);
+    font-weight: 800;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    padding: 6px 11px;
+    border-radius: 999px;
+    white-space: nowrap;
   }
 
   /* ---------- Leaderboard ---------- */
-  .leaderboard-scroll{
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
   .leaderboard{
     border: 1px solid var(--line);
     background: var(--surface);
+    /* overflow-x lives on this same element (not a separate wrapper) so its
+       own background/border box grows to cover the full scrollable width —
+       putting overflow on a plain wrapper around it left this element's box
+       (and its background) sized to only the original viewport width,
+       showing the page's black background once you scrolled past that. */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .lb-row{
     display: grid;
     /* The name column has a 120px floor rather than shrinking freely, so on
        a narrow phone the row's total width (32+120+70+84*5=642px) exceeds
-       the viewport and the wrapping .leaderboard-scroll scrolls horizontally
-       instead of every column getting crushed unreadably thin. */
+       the viewport and .leaderboard (its scrollable ancestor) scrolls
+       horizontally instead of every column getting crushed unreadably thin. */
     grid-template-columns: 32px minmax(120px, 1fr) 70px 84px 84px 84px 84px 84px;
     align-items: center;
     padding: 12px 16px;
@@ -237,17 +259,6 @@
   .lb-record{ color: var(--text-dim); font-size: 0.82rem; }
   .lb-num{ font-variant-numeric: tabular-nums; text-align: right; }
   .lb-current{ font-weight: 700; }
-
-  .scroll-hint{ display: none; }
-  @media (max-width: 640px){
-    .scroll-hint{
-      display: block;
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 0.72rem;
-      margin-top: 8px;
-    }
-  }
 
   .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }
   footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
@@ -429,12 +440,9 @@
 
     <section>
       <h2>Current Standings</h2>
-      <div class="leaderboard-scroll">
-        <div class="leaderboard" id="leaderboard-container">
-          <div class="loading-row">Loading standings…</div>
-        </div>
+      <div class="leaderboard" id="leaderboard-container">
+        <div class="loading-row">Loading standings…</div>
       </div>
-      <div class="scroll-hint">← Swipe to see PF, PA &amp; Playoff% →</div>
     </section>
 
     <footer>Auto-refreshes from the league sheet · Data via ESPN Fantasy</footer>
@@ -510,7 +518,7 @@
           </div>
           ${remBadge(m.awayRemaining)}
         </div>
-        <div class="vs-divider">@</div>
+        <div class="vs-divider"><span class="vs-badge">VS</span></div>
         <div class="side home ${homeLeading ? 'leading' : ''}">
           <div class="team-name">${m.homeName}</div>
           ${metaRow(m.homeManager, m.homeRecord)}
