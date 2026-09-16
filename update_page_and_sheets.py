@@ -143,7 +143,10 @@ def main():
 
     current_median = statistics.median(current_scores)
     projected_median = statistics.median(projected_scores)
-    team_data.sort(key=lambda x: x['current'], reverse=True)
+    # Sort by actual league standing (as ESPN computes it: record + their
+    # own tiebreakers), not by this week's score. Lower standing number =
+    # better rank (1st place first).
+    team_data.sort(key=lambda x: (x['standing'] if x['standing'] != '' else 999))
 
     # --- 3. WIPE AND WRITE BULK PAYLOAD ---
     worksheet.clear()
