@@ -150,6 +150,9 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
+# Cloudflare Wrangler local cache/state
+.wrangler/
+
 # Ruff
 .ruff_cache/
 

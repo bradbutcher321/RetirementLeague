@@ -1,0 +1,22 @@
+name = "retirement-league-refresh-proxy"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+# Plain-text config (safe to commit — these are not secrets)
+[vars]
+ALLOWED_ORIGIN = "https://bradbutcher321.github.io"  # tighten this to your real site URL
+ESPN_LEAGUE_ID = "58101"
+ESPN_YEAR = "2026"
+
+# Secrets — NOT set here. Run these once locally:
+#   wrangler secret put ESPN_SWID
+#   wrangler secret put ESPN_S2
+# (Same values as the ESPN_SWID/ESPN_S2 GitHub Actions secrets.)
+# GITHUB_PAT is no longer used — this Worker talks to ESPN directly now
+# instead of dispatching a GitHub Action.
+
+# KV namespace, now used to cache the computed dashboard payload (previously
+# only held the cooldown timestamp).
+[[kv_namespaces]]
+binding = "COOLDOWN_KV"
+id = "1521d1a4fe954b00a05b4542c7a44670"
