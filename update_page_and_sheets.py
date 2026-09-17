@@ -48,38 +48,62 @@ def format_record(team):
     return f"{wins}-{losses}"
 
 
-# League-specific nickname preferences, applied regardless of what ESPN has
-# on file for a manager's first name. Keyed lowercase so matching is
-# case-insensitive.
+# League-specific name preferences, applied regardless of what ESPN has on
+# file for a manager's first name. Keyed lowercase so matching is
+# case-insensitive. "nick" -> "Flanders" isn't a nickname-of-a-legal-name
+# case like the others — it's this manager's long-standing league nickname
+# (used everywhere on the Franchise page/sheet), which ESPN has no concept
+# of at all, so it's mapped here as a one-off override.
 MANAGER_NICKNAMES = {
     "joseph": "Joe",
     "jonathan": "Jon",
     "bradley": "Brad",
     "benjamin": "Ben",
+    "nick": "Flanders",
 }
 
 
-def format_manager(team):
-    """Best-effort manager display name from the raw ESPN `members` entries
-    espn_api attaches to a Team as `owners`, formatted as "First L." (first
-    name plus last initial) everywhere it's shown on the page. Prefer the
-    real first/last name ESPN has on file over `displayName`, which is
-    usually the account's public username (e.g. "Keithstone12") rather than
-    the person's actual name. Different account setups populate different
-    subsets of these fields, so we fall back gracefully instead of crashing
-    on a missing key."""
+def raw_manager_name(team):
+    """Best-effort (first, last) name from the raw ESPN `members` entries
+    espn_api attaches to a Team as `owners`. Prefers the real first/last
+    name ESPN has on file over `displayName`, which is usually the
+    account's public username (e.g. "Keithstone12") rather than the
+    person's actual name. Different account setups populate different
+    subsets of these fields, so this falls back gracefully instead of
+    crashing on a missing key."""
     owners = getattr(team, "owners", None) or []
     if not owners:
-        return ""
+        return "", ""
     owner = owners[0]
     first = (owner.get("firstName") or "").strip()
     last = (owner.get("lastName") or "").strip()
     first = MANAGER_NICKNAMES.get(first.lower(), first)
-    if first and last:
-        return f"{first} {last[0].upper()}."
     if first or last:
-        return first or last
-    return owner.get("displayName", "")
+        return first, last
+    return owner.get("displayName", ""), ""
+
+
+def build_manager_names(teams):
+    """Builds {team_id: display_name} for every team: first name only,
+    matching how managers are identified on the Franchise page — except
+    when two managers share a first name (e.g. the league's two Joes),
+    where the last initial is appended (no period) to disambiguate, e.g.
+    "Joe G" / "Joe K"."""
+    raw = {team.team_id: raw_manager_name(team) for team in teams}
+    first_name_counts = {}
+    for first, _ in raw.values():
+        if first:
+            first_name_counts[first] = first_name_counts.get(first, 0) + 1
+
+    names = {}
+    for team_id, (first, last) in raw.items():
+        if not first:
+            names[team_id] = last
+        elif first_name_counts[first] > 1 and last:
+            names[team_id] = f"{first} {last[0].upper()}"
+        else:
+            names[team_id] = first
+    return names
 
 
 def find_weekly_high(teams, current_week):
@@ -141,6 +165,10 @@ def main():
     # so we look records up by team_id to make sure wins/losses are correct.
     teams_by_id = {team.team_id: team for team in league.teams}
 
+    # Computed once across every team so first-name collisions (the two
+    # Joes) can be detected league-wide, rather than one team at a time.
+    manager_names = build_manager_names(league.teams)
+
     current_scores, projected_scores, team_data, matchup_data = [], [], [], []
 
     for box in box_scores:
@@ -161,7 +189,7 @@ def main():
 
         team_data.append({
             "name": box.home_team.team_name,
-            "manager": format_manager(home_team_full),
+            "manager": manager_names.get(home_team_full.team_id, ""),
             "record": home_record,
             "current": box.home_score,
             "projected": box.home_projected,
@@ -172,7 +200,7 @@ def main():
         })
         team_data.append({
             "name": box.away_team.team_name,
-            "manager": format_manager(away_team_full),
+            "manager": manager_names.get(away_team_full.team_id, ""),
             "record": away_record,
             "current": box.away_score,
             "projected": box.away_projected,
@@ -184,13 +212,13 @@ def main():
 
         matchup_data.append({
             "away_name": box.away_team.team_name,
-            "away_manager": format_manager(away_team_full),
+            "away_manager": manager_names.get(away_team_full.team_id, ""),
             "away_record": away_record,
             "away_score": box.away_score,
             "away_projected": box.away_projected,
             "away_remaining": away_remaining,
             "home_name": box.home_team.team_name,
-            "home_manager": format_manager(home_team_full),
+            "home_manager": manager_names.get(home_team_full.team_id, ""),
             "home_record": home_record,
             "home_score": box.home_score,
             "home_projected": box.home_projected,
@@ -254,11 +282,11 @@ def main():
         pad_leaderboard(["Current Median Score", f"{current_median:.2f}"]),
         pad_leaderboard(["Projected Median Score", f"{projected_median:.2f}"]),
         pad_leaderboard(["Weekly High Team", weekly_high_team.team_name if season_started else ""]),
-        pad_leaderboard(["Weekly High Manager", format_manager(weekly_high_team) if season_started else ""]),
+        pad_leaderboard(["Weekly High Manager", manager_names.get(weekly_high_team.team_id, "") if season_started else ""]),
         pad_leaderboard(["Weekly High Week", str(weekly_high_week) if season_started else ""]),
         pad_leaderboard(["Weekly High Score", f"{weekly_high_score:.2f}" if season_started else ""]),
         pad_leaderboard(["Season Leader Team", season_leader_team.team_name if season_points_started else ""]),
-        pad_leaderboard(["Season Leader Manager", format_manager(season_leader_team) if season_points_started else ""]),
+        pad_leaderboard(["Season Leader Manager", manager_names.get(season_leader_team.team_id, "") if season_points_started else ""]),
         pad_leaderboard(["Season Leader Points", f"{season_leader_team.points_for:.2f}" if season_points_started else ""]),
         pad_leaderboard([""]),
         pad_leaderboard(["Team Name", "Manager", "Record", "Current Score", "Projected Score", "Standing", "Points For", "Points Against", "Playoff Odds"]),
