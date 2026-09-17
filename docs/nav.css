@@ -99,8 +99,8 @@
 }
 .nav-link:hover{ background: rgba(255,255,255,0.04); }
 .nav-link.active{
-  color: var(--gold);
-  border-left-color: var(--gold);
-  background: rgba(186,155,55,0.1);
+  color: var(--gold-bright);
+  border-left-color: var(--gold-bright);
+  background: rgba(255,201,4,0.1);
   font-weight: 700;
 }

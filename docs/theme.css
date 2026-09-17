@@ -1,12 +1,20 @@
 :root{
-  /* UCF Knights black & gold */
-  --bg: #060504;
-  --surface: #141210;
-  --surface-raised: #1E1B17;
-  --line: #332F28;
-  --text: #F3F1EA;
-  --text-dim: #A39C8E;
+  /* UCF Knights black & gold. Surfaces are neutral (not warm-tinted) so
+     they read as true black against the gold — a warm/brown-leaning gray
+     here muddies the contrast into "brown and gold" instead. */
+  --bg: #050505;
+  --surface: #141414;
+  --surface-raised: #1E1E1E;
+  --line: #2E2E2E;
+  --text: #F2F2F0;
+  --text-dim: #9B9B98;
   --gold: #BA9B37;
+  /* A brighter digital gold, reserved for the highest-impact accents (VS
+     badge, big score/countdown numbers, active nav state, leading-team
+     indicator) — --gold alone reads as muted "brass" on screen, so those
+     few elements use this instead to make the page read unmistakably
+     black-and-gold at a glance, while subtler text/labels keep --gold. */
+  --gold-bright: #FFC904;
   --turf: #4C9A6B;
   --turf-dim: #2E5A3F;
   --loss: #C0574B;

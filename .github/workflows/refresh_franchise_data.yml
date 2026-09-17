@@ -1,0 +1,50 @@
+name: Refresh Franchise Data
+
+on:
+  schedule:
+    # Tuesday and Thursday mornings. GitHub Actions cron always runs in UTC
+    # (there's no named-timezone option), so 12:00 UTC lands around 7-8am
+    # US Eastern depending on daylight saving — adjust the hour here if you
+    # want it to land at a more precise local time.
+    - cron: '0 12 * * 2,4'
+  workflow_dispatch: # Manual button inside GitHub web console
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install System Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install gspread google-auth
+
+    - name: Create Google Secret File
+      run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > google_secret.json
+
+    - name: Run Franchise Data Script
+      env:
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+      run: python generate_franchise_data.py
+
+    - name: Remove Google Secret File
+      if: always()
+      run: rm -f google_secret.json
+
+    - name: Commit and Push Updated Data
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add docs/data/franchise.json
+        git diff --cached --quiet || git commit -m "Update franchise data"
+        git push
