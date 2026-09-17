@@ -60,6 +60,7 @@ MANAGER_NICKNAMES = {
     "bradley": "Brad",
     "benjamin": "Ben",
     "nick": "Flanders",
+    "tj": "TJ",  # ESPN has this owner's first name on file as "Tj" (mixed case)
 }
 
 
