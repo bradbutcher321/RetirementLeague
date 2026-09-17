@@ -418,48 +418,17 @@
       </div>
     </section>
 
-    <footer>Auto-refreshes from the league sheet · Data via ESPN Fantasy</footer>
+    <footer>Auto-refreshes every couple minutes · Data via ESPN Fantasy</footer>
   </div>
 
 <script src="nav.js"></script>
 <script>
-  // Paste your exact published "Live Weekly Medians" tab CSV URL here
-  const csvUrl = 'https://docs.google.com/spreadsheets/d/1WghofPfu0Df9eEuePopV8Y0LJbPUYRdMOsPE-fZUtb4/gviz/tq?tqx=out:csv&gid=941832551';
-
-  // --- On-demand refresh trigger -------------------------------------
-  // IMPORTANT: earlier versions of this file embedded a raw GitHub
-  // Personal Access Token here. That is unsafe: anyone who views the page
-  // source can copy the token and use the GitHub API as you. Never put a
-  // PAT (or any secret) into client-side HTML/JS.
-  //
-  // Instead, this now calls a small proxy endpoint that YOU control
-  // (e.g. a Cloudflare Worker / Vercel serverless function / AWS Lambda
-  // URL) which holds the real token server-side and forwards the
-  // repository_dispatch call to GitHub. Set REFRESH_PROXY_URL below once
-  // that's deployed. Leaving it blank simply skips the on-demand refresh
-  // and the dashboard still works fine off the last scheduled run.
-  const REFRESH_PROXY_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
-
-  function triggerLiveOnDemandRefresh() {
-    if (!REFRESH_PROXY_URL) return;
-    fetch(REFRESH_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-      .then(res => res.json())
-      .then(data => {
-        if (data.dispatched) console.log('Refresh dispatched.');
-        else if (data.skipped) console.log('Refresh skipped:', data.reason);
-      })
-      .catch(err => console.error('On-demand refresh error:', err));
-  }
-  triggerLiveOnDemandRefresh();
-
-  // --- CSV parsing -----------------------------------------------------
-  function cleanCell(text) {
-    return text ? text.replace(/"/g, '').trim() : '';
-  }
-
-  function parseCsv(text) {
-    return text.split('\n').map(row => row.split(',').map(cleanCell));
-  }
+  // This Worker fetches ESPN directly and caches the computed result in KV
+  // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
+  // Google Sheet or GitHub Action in the loop for this page. A GET here
+  // either returns data cached within the last 2 minutes instantly, or
+  // fetches fresh from ESPN, caches it, and returns that.
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
 
   function fmtScore(n) {
     const num = parseFloat(n);
@@ -629,87 +598,25 @@
       </div>`;
   }
 
-  // The leaderboard (columns A-I) and matchup table (columns K-V) now live
-  // side by side on separate columns within the same tab/row-range — see
-  // update_page_and_sheets.py for why. So each row belongs to exactly one
-  // zone: check column A (index 0) for leaderboard content, column K
-  // (index 10) for matchup content.
-  const MATCHUP_START = 10;
-  // Column Z (index 25) holds the epoch timestamp of the last successful
-  // update_page_and_sheets.py run (see cell Z1) — that's the true
-  // "data updated" time, as opposed to whenever a visitor's browser
-  // happens to load this page.
-  const UPDATED_COL = 25;
-
-  // How often to re-read the published CSV while the tab stays open. This
-  // only re-fetches the sheet's current contents — it never calls
-  // triggerLiveOnDemandRefresh(), so it can't repeatedly kick off the
-  // GitHub Action. That fires once per page load (below), same as before;
-  // the periodic timer just picks up whatever the last run (scheduled or
-  // on-demand) already wrote to the sheet, so an open tab stays current
-  // without the visitor having to manually reload the page.
+  // Polling the Worker every 2 minutes is now cheap regardless of whether
+  // the cooldown is active — within it, the Worker just returns its KV
+  // cache instantly; only once it's expired does a real ESPN fetch happen.
   const AUTO_REFRESH_MS = 2 * 60 * 1000;
 
   function loadDashboard() {
-    // Cache-bust: append a fresh timestamp each call so neither the browser
-    // nor any intermediate cache serves a stale copy of the CSV.
-    const cacheBustedCsvUrl = csvUrl + '&_=' + Date.now();
+    fetch(WORKER_URL, { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
 
-    fetch(cacheBustedCsvUrl, { cache: 'no-store' })
-      .then(res => res.text())
-      .then(csvText => {
-        const rows = parseCsv(csvText);
+        const teams = data.teams || [];
+        const matchups = data.matchups || [];
 
-        let currMedian = '—', projMedian = '—', week = '', updatedEpoch = '';
-        let weeklyHighTeam = '', weeklyHighManager = '', weeklyHighWeek = '', weeklyHighScore = '';
-        let seasonLeaderTeam = '', seasonLeaderManager = '', seasonLeaderPoints = '';
-        const teams = [];
-        const matchups = [];
-
-        rows.forEach(row => {
-          if (row.length < 2 || row.every(c => c === '')) return;
-
-          const a = row[0];
-          if (!updatedEpoch && row[UPDATED_COL]) updatedEpoch = row[UPDATED_COL];
-
-          // Leaderboard zone (columns A-H)
-          if (a === 'Matchup Week') { week = row[1]; return; }
-          if (a === 'Current Median Score') { currMedian = row[1]; return; }
-          if (a === 'Projected Median Score') { projMedian = row[1]; return; }
-          if (a === 'Weekly High Team') { weeklyHighTeam = row[1]; return; }
-          if (a === 'Weekly High Manager') { weeklyHighManager = row[1]; return; }
-          if (a === 'Weekly High Week') { weeklyHighWeek = row[1]; return; }
-          if (a === 'Weekly High Score') { weeklyHighScore = row[1]; return; }
-          if (a === 'Season Leader Team') { seasonLeaderTeam = row[1]; return; }
-          if (a === 'Season Leader Manager') { seasonLeaderManager = row[1]; return; }
-          if (a === 'Season Leader Points') { seasonLeaderPoints = row[1]; return; }
-          if (a === 'Team Name') return; // leaderboard header row
-          if (a) {
-            teams.push({
-              name: a, manager: row[1], record: row[2], current: row[3], projected: row[4], standing: row[5],
-              pointsFor: row[6], pointsAgainst: row[7], playoffPct: row[8],
-            });
-            return;
-          }
-
-          // Matchup zone (columns K-V)
-          const h = row[MATCHUP_START];
-          if (h === 'Away Team') return; // matchup header row
-          if (h) {
-            matchups.push({
-              awayName: h, awayManager: row[MATCHUP_START + 1], awayRecord: row[MATCHUP_START + 2],
-              awayScore: row[MATCHUP_START + 3], awayProjected: row[MATCHUP_START + 4], awayRemaining: row[MATCHUP_START + 5],
-              homeName: row[MATCHUP_START + 6], homeManager: row[MATCHUP_START + 7], homeRecord: row[MATCHUP_START + 8],
-              homeScore: row[MATCHUP_START + 9], homeProjected: row[MATCHUP_START + 10], homeRemaining: row[MATCHUP_START + 11],
-            });
-          }
-        });
-
-        document.getElementById('week-header').textContent = week ? `Live Dashboard — ${week}` : 'Live Dashboard';
-        document.getElementById('curr-median').textContent = fmtScore(currMedian);
-        document.getElementById('proj-median').textContent = fmtScore(projMedian);
-        document.getElementById('updated-at').textContent = updatedEpoch
-          ? new Date(parseInt(updatedEpoch, 10) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        document.getElementById('week-header').textContent = data.week ? `Live Dashboard — Week ${data.week}` : 'Live Dashboard';
+        document.getElementById('curr-median').textContent = fmtScore(data.currentMedian);
+        document.getElementById('proj-median').textContent = fmtScore(data.projectedMedian);
+        document.getElementById('updated-at').textContent = data.updatedAt
+          ? new Date(data.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : '—';
 
         document.getElementById('matchups-container').innerHTML =
@@ -737,26 +644,23 @@
         // "kickoff hasn't happened yet" placeholder instead of being hidden.
         // Both cards always render so they sit side-by-side on desktop /
         // stacked on mobile, the same as when the season is underway.
-        const currentHasStarted = teams.some(t => parseFloat(t.current) > 0);
-        const byCurrentDesc = [...teams].sort((a, b) => parseFloat(b.current) - parseFloat(a.current));
-        const byProjectedDesc = [...teams].sort((a, b) => parseFloat(b.projected) - parseFloat(a.projected));
+        const currentHasStarted = teams.some(t => t.current > 0);
+        const byCurrentDesc = [...teams].sort((a, b) => b.current - a.current);
+        const byProjectedDesc = [...teams].sort((a, b) => b.projected - a.projected);
 
         const medianHtml =
           (currentHasStarted
-            ? renderMedianCard('Current Median', currMedian, byCurrentDesc, 'current')
+            ? renderMedianCard('Current Median', data.currentMedian, byCurrentDesc, 'current')
             : renderMedianPendingCard('Current Median')) +
-          renderMedianCard('Projected Median', projMedian, byProjectedDesc, 'projected');
+          renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected');
         document.getElementById('median-container').innerHTML = medianHtml;
         updateKickoffCountdown();
 
+        const wh = data.weeklyHigh;
+        const sl = data.seasonLeader;
         document.getElementById('accolades-container').innerHTML =
-          renderAccoladeCard(
-            'Season High Score', weeklyHighTeam, weeklyHighManager,
-            weeklyHighWeek ? `Week ${weeklyHighWeek}` : '', weeklyHighScore
-          ) +
-          renderAccoladeCard(
-            'Season Points Leader', seasonLeaderTeam, seasonLeaderManager, '', seasonLeaderPoints
-          );
+          renderAccoladeCard('Season High Score', wh && wh.team, wh && wh.manager, wh ? `Week ${wh.week}` : '', wh && wh.score) +
+          renderAccoladeCard('Season Points Leader', sl && sl.team, sl && sl.manager, '', sl && sl.points);
       })
       .catch(err => {
         console.error('Dashboard error:', err);
