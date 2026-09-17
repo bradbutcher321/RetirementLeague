@@ -1,11 +1,12 @@
 :root{
-  --bg: #0B0F14;
-  --surface: #131920;
-  --surface-raised: #1A222B;
-  --line: #26303B;
-  --text: #E9EEF3;
-  --text-dim: #8A97A3;
-  --gold: #E8AA2E;
+  /* UCF Knights black & gold */
+  --bg: #060504;
+  --surface: #141210;
+  --surface-raised: #1E1B17;
+  --line: #332F28;
+  --text: #F3F1EA;
+  --text-dim: #A39C8E;
+  --gold: #BA9B37;
   --turf: #4C9A6B;
   --turf-dim: #2E5A3F;
   --loss: #C0574B;
@@ -19,8 +20,8 @@ body{
   margin:0;
   background: var(--bg);
   background-image:
-    radial-gradient(ellipse 900px 500px at 20% -10%, rgba(232,170,46,0.06), transparent),
-    radial-gradient(ellipse 900px 500px at 90% 10%, rgba(76,154,107,0.06), transparent);
+    radial-gradient(ellipse 900px 500px at 20% -10%, rgba(186,155,55,0.09), transparent),
+    radial-gradient(ellipse 900px 500px at 90% 10%, rgba(186,155,55,0.05), transparent);
   color: var(--text);
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
