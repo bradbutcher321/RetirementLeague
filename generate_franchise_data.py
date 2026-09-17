@@ -231,11 +231,17 @@ def compute_extremes(perspectives_for_player):
     }
 
 
-def compute_rivalries(perspectives_for_player):
+def compute_rivalries(perspectives_for_player, active_players):
     """Best/worst head-to-head records against each opponent ever faced
     (any game type, matching how the sheet's own H2H tab pulls from Game
     Tracker with no type filter). Requires at least 3 meetings so a single
-    early blowout doesn't crown a "nemesis" off one game."""
+    early blowout doesn't crown a "nemesis" off one game.
+
+    If the top pick has left the league, it's a lot less fun — there's no
+    one left to needle about it — so we also surface the best-qualifying
+    opponent who's still active this season alongside it ("but also"),
+    determined dynamically from who actually has a season row this year
+    rather than a hardcoded list of retired names."""
     records = {}
     for p in perspectives_for_player:
         if not p["opponent"] or p["opp"] is None or p["own"] is None:
@@ -254,16 +260,22 @@ def compute_rivalries(perspectives_for_player):
         total = rec["w"] + rec["l"]
         return rec["w"] / total if total else 0
 
-    nemesis_opp = min(qualifying, key=lambda o: win_pct(qualifying[o]))
-    favorite_opp = max(qualifying, key=lambda o: win_pct(qualifying[o]))
-
     def package(opp):
         rec = qualifying[opp]
-        total = rec["w"] + rec["l"]
         return {"opponent": opp, "wins": rec["w"], "losses": rec["l"], "win_pct": round(win_pct(rec) * 100, 1)}
 
-    nemesis = package(nemesis_opp)
-    favorite = package(favorite_opp)
+    def build(pick_fn):
+        top_opp = pick_fn(qualifying)
+        result = package(top_opp)
+        if top_opp not in active_players:
+            active_qualifying = {o: r for o, r in qualifying.items() if o in active_players and o != top_opp}
+            if active_qualifying:
+                result["also"] = package(pick_fn(active_qualifying))
+        return top_opp, result
+
+    nemesis_opp, nemesis = build(lambda pool: min(pool, key=lambda o: win_pct(pool[o])))
+    favorite_opp, favorite = build(lambda pool: max(pool, key=lambda o: win_pct(pool[o])))
+
     # If one qualifying opponent is both the best and worst (only one played
     # 3+ times), don't show the same record twice as if it were two facts.
     if nemesis_opp == favorite_opp:
@@ -318,6 +330,11 @@ def compute_career_from_playerstats(header, lifetime):
             "reg_pct": stat(header, lifetime, "Reg %", to_float, 0),
             "playoff_pct": stat(header, lifetime, "Playoff %", to_float, 0),
             "median_pct": stat(header, lifetime, "Median %", to_float, None),
+        },
+        "median": {
+            "wins": stat(header, lifetime, "Median W", to_int, 0),
+            "losses": stat(header, lifetime, "Median L", to_int, 0),
+            "pct": stat(header, lifetime, "Median %", to_float, None),
         },
         "points": {
             "total_pf": stat(header, lifetime, "Total PF", to_float, 0),
@@ -573,6 +590,15 @@ def main():
 
     all_players = sorted(set(perspectives_by_player) | set(team_names_block))
 
+    # Whoever has a row for the most recent year anywhere in PlayerStats is
+    # still active this season — used to keep Rivalries relevant instead of
+    # crowning someone who left the league years ago, without hardcoding
+    # names.
+    year_col, name_col = ps_header["Year"], ps_header["Player"]
+    all_years = [to_int(r[year_col]) for r in ps_rows if r[year_col] not in ("", "Lifetime")]
+    current_year = max((y for y in all_years if y is not None), default=None)
+    active_players = {r[name_col] for r in ps_rows if to_int(r[year_col]) == current_year}
+
     players_out = []
     for player in all_players:
         perspectives = perspectives_by_player.get(player, [])
@@ -603,7 +629,7 @@ def main():
             "career": career,
             "extremes": compute_extremes(perspectives),
             "streaks": compute_streaks(perspectives),
-            "rivalries": compute_rivalries(perspectives),
+            "rivalries": compute_rivalries(perspectives, active_players),
             "moves": compute_moves(moves_block, player),
             "draft": compute_draft(draft_block, player),
             "weekly_sackos": weekly_sacko_counts.get(player, 0),
