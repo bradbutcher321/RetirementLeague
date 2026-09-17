@@ -7,56 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="nav.css">
 <style>
-  :root{
-    --bg: #0B0F14;
-    --surface: #131920;
-    --surface-raised: #1A222B;
-    --line: #26303B;
-    --text: #E9EEF3;
-    --text-dim: #8A97A3;
-    --gold: #E8AA2E;
-    --turf: #4C9A6B;
-    --turf-dim: #2E5A3F;
-    --loss: #C0574B;
-    --scoreboard: 'Big Shoulders Display', sans-serif;
-    --body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-
-  * { box-sizing: border-box; }
-
-  body{
-    margin:0;
-    background: var(--bg);
-    background-image:
-      radial-gradient(ellipse 900px 500px at 20% -10%, rgba(232,170,46,0.06), transparent),
-      radial-gradient(ellipse 900px 500px at 90% 10%, rgba(76,154,107,0.06), transparent);
-    color: var(--text);
-    font-family: var(--body);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .wrap{ max-width: 980px; margin: 0 auto; padding: 0 20px 60px; }
-
   /* ---------- Header / ticker ---------- */
-  header{
-    padding: 28px 0 0;
-  }
-  .eyebrow{
-    color: var(--gold);
-    font-weight: 600;
-    font-size: 0.8rem;
-    letter-spacing: 0.02em;
-  }
-  h1{
-    font-family: var(--scoreboard);
-    font-weight: 800;
-    font-size: clamp(2rem, 5vw, 3.1rem);
-    margin: 2px 0 20px;
-    letter-spacing: 0.01em;
-    line-height: 1;
-  }
-
   .ticker{
     display: flex;
     border-top: 1px solid var(--line);
@@ -95,16 +49,6 @@
     .ticker-item:last-child{ border-bottom: none; }
     .ticker-label{ margin-bottom: 0; }
     .ticker-value{ font-size: 1.3rem; }
-  }
-
-  section{ margin-bottom: 44px; }
-  h2{
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-dim);
-    margin: 0 0 16px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--line);
   }
 
   /* ---------- Matchup cards ---------- */
@@ -273,9 +217,6 @@
   .lb-num{ font-variant-numeric: tabular-nums; text-align: right; }
   .lb-current{ font-weight: 700; }
 
-  .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }
-  footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
-
   /* ---------- Median Watch ---------- */
   .median-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 640px){ .median-grid{ grid-template-columns: 1fr; } }
@@ -417,8 +358,6 @@
 
   /* ---------- Small-phone tightening (must stay last: overrides base rules above) ---------- */
   @media (max-width: 480px){
-    .wrap{ padding: 0 14px 40px; }
-    section{ margin-bottom: 32px; }
     .side{ padding: 16px; }
     .median-card{ padding: 16px; }
     .median-groups{ gap: 12px; }
@@ -428,6 +367,7 @@
 </style>
 </head>
 <body>
+  <div id="site-nav"></div>
   <div class="wrap">
     <header>
       <div class="eyebrow">Retirement League</div>
@@ -480,6 +420,7 @@
     <footer>Auto-refreshes from the league sheet · Data via ESPN Fantasy</footer>
   </div>
 
+<script src="nav.js"></script>
 <script>
   // Paste your exact published "Live Weekly Medians" tab CSV URL here
   const csvUrl = 'https://docs.google.com/spreadsheets/d/1WghofPfu0Df9eEuePopV8Y0LJbPUYRdMOsPE-fZUtb4/gviz/tq?tqx=out:csv&gid=941832551';

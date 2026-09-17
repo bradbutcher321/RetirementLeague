@@ -1,0 +1,106 @@
+/* Shared hamburger navigation — injected by nav.js into #site-nav on every
+   page. Styled here (rather than inline in nav.js) so it reads/edits like
+   any other stylesheet and stays in sync with the theme.css color tokens. */
+
+.nav-bar{
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.nav-toggle{
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+.nav-toggle span{
+  width: 18px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.nav-toggle.open span:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+.nav-toggle.open span:nth-child(2){ opacity: 0; }
+.nav-toggle.open span:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
+
+.nav-brand{
+  font-family: var(--scoreboard);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--gold);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+}
+
+.nav-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 40;
+}
+.nav-backdrop.open{ opacity: 1; pointer-events: auto; }
+
+.nav-drawer{
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  max-width: 80vw;
+  background: var(--surface-raised);
+  border-right: 1px solid var(--line);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+.nav-drawer.open{ transform: translateX(0); }
+
+.nav-drawer-header{
+  color: var(--gold);
+  font-family: var(--scoreboard);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  padding: 0 20px 14px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 8px;
+}
+
+.nav-link{
+  display: block;
+  padding: 12px 20px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-left: 3px solid transparent;
+}
+.nav-link:hover{ background: rgba(255,255,255,0.04); }
+.nav-link.active{
+  color: var(--gold);
+  border-left-color: var(--gold);
+  background: rgba(232,170,46,0.07);
+  font-weight: 700;
+}
