@@ -260,12 +260,18 @@ export async function buildDashboard(env) {
   const teamsById = new Map(teamsRaw.map((t) => [t.teamId, t]));
   const managerNames = buildManagerNames(teamsRaw);
 
+  let nflScoreboardError = null;
   const [boxData, nflScoreboard] = await Promise.all([
     fetchBoxScores(env, currentWeek, matchupPeriod),
     // Public API, separate from ESPN's private fantasy endpoints — degrade
     // to "no live NFL game info" rather than failing the whole dashboard
-    // if it's ever unreachable.
-    fetchNflScoreboard(env, currentWeek).catch(() => null),
+    // if it's ever unreachable. The message is surfaced in the response
+    // below (only when present) so a failure is visible without needing
+    // to tail the Worker's logs.
+    fetchNflScoreboard(env, currentWeek).catch((err) => {
+      nflScoreboardError = err.message;
+      return null;
+    }),
   ]);
   const gameStateByProTeam = buildGameStateMap(nflScoreboard);
 
@@ -368,5 +374,6 @@ export async function buildDashboard(env) {
           points: round2(seasonLeaderTeam.pointsFor),
         }
       : null,
+    ...(nflScoreboardError ? { nflScoreboardError } : {}),
   };
 }

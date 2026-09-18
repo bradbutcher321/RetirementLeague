@@ -73,8 +73,21 @@ export async function fetchBoxScores(env, week, matchupPeriod) {
  * directly with no translation table. */
 export async function fetchNflScoreboard(env, week) {
   const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${week}&seasontype=2&year=${env.ESPN_YEAR}`;
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) throw new Error(`NFL scoreboard request failed (${res.status})`);
+  const res = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+      // Without a browser-like UA, ESPN's public site API silently rejects
+      // requests from datacenter/Worker IPs (confirmed: identical request
+      // works fine from a local curl, fails with no useful error from a
+      // deployed Worker).
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    },
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`NFL scoreboard request failed (${res.status}): ${body.slice(0, 300)}`);
+  }
   return res.json();
 }
 
