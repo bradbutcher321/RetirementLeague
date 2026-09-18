@@ -142,6 +142,24 @@
   }
   .remaining-badge.done .dot{ background: var(--line); }
 
+  .badge-row{ display: flex; gap: 10px; flex-wrap: wrap; }
+  .side.home .badge-row{ justify-content: flex-end; }
+
+  .chip{
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+  }
+  .chip.wp-fav{ border-color: var(--gold-bright); color: var(--gold-bright); }
+  .chip.streak-win{ border-color: var(--turf-dim); color: var(--turf); }
+  .chip.streak-loss{ border-color: var(--loss); color: var(--loss); }
+
   .vs-divider{
     position: relative;
     padding: 0 8px;
@@ -437,12 +455,26 @@
 
   function renderMatchupCard(m) {
     const homeLeading = parseFloat(m.homeScore) >= parseFloat(m.awayScore);
-    const remBadge = (n) => {
-      const remaining = parseInt(n, 10) || 0;
-      const done = remaining === 0;
+    const statusBadge = (n, label) => {
+      const count = parseInt(n, 10) || 0;
+      const done = count === 0;
       return `<span class="remaining-badge ${done ? 'done' : ''}">
-                <span class="dot"></span>${remaining} left to play
+                <span class="dot"></span>${count} ${label}
               </span>`;
+    };
+    const statusRow = (inPlay, remaining) => `
+      <div class="badge-row">
+        ${statusBadge(inPlay, 'in play')}
+        ${statusBadge(remaining, 'left to play')}
+      </div>`;
+    const chipRow = (winProbability, streak) => {
+      const wpChip = typeof winProbability === 'number'
+        ? `<span class="chip ${winProbability >= 50 ? 'wp-fav' : ''}">${Math.round(winProbability)}% to win</span>`
+        : '';
+      const streakChip = streak
+        ? `<span class="chip ${streak[0] === 'W' ? 'streak-win' : 'streak-loss'}">${streak}</span>`
+        : '';
+      return (wpChip || streakChip) ? `<div class="badge-row">${wpChip}${streakChip}</div>` : '';
     };
     const metaRow = (manager, record) => `
       <div class="meta-row">
@@ -459,7 +491,8 @@
             <span class="score">${fmtScore(m.awayScore)}</span>
             <span class="proj">proj ${fmtScore(m.awayProjected)}</span>
           </div>
-          ${remBadge(m.awayRemaining)}
+          ${chipRow(m.awayWinProbability, m.awayStreak)}
+          ${statusRow(m.awayInPlay, m.awayRemaining)}
         </div>
         <div class="vs-divider"><span class="vs-badge">VS</span></div>
         <div class="side home ${homeLeading ? 'leading' : ''}">
@@ -469,7 +502,8 @@
             <span class="score">${fmtScore(m.homeScore)}</span>
             <span class="proj">proj ${fmtScore(m.homeProjected)}</span>
           </div>
-          ${remBadge(m.homeRemaining)}
+          ${chipRow(m.homeWinProbability, m.homeStreak)}
+          ${statusRow(m.homeInPlay, m.homeRemaining)}
         </div>
       </div>`;
   }

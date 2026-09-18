@@ -37,6 +37,13 @@ function formatRecord(wins, losses, ties) {
   return ties ? `${wins}-${losses}-${ties}` : `${wins}-${losses}`;
 }
 
+function formatStreak(streakType, streakLength) {
+  if (!streakLength) return null;
+  if (streakType === "WIN") return `W${streakLength}`;
+  if (streakType === "LOSS") return `L${streakLength}`;
+  return null; // TIE / NONE — nothing worth showing
+}
+
 function parseTeam(data) {
   const overall = data.record?.overall || {};
   const wins = overall.wins || 0;
@@ -51,6 +58,7 @@ function parseTeam(data) {
     losses,
     ties,
     record: formatRecord(wins, losses, ties),
+    streak: formatStreak(overall.streakType, overall.streakLength),
     pointsFor: overall.pointsFor || 0,
     pointsAgainst: round2(overall.pointsAgainst || 0),
     playoffPct: (data.currentSimulationResults?.playoffPct || 0) * 100,
@@ -100,20 +108,28 @@ function parseBoxSide(sideData) {
     score = round2(sideData.totalPoints);
     projected = 0; // see file header — pre-live-scoring fallback simplification
   }
+  const winProbability =
+    typeof sideData.winProbability === "number" ? round2(sideData.winProbability * 100) : null;
   const entries = sideData.rosterForCurrentScoringPeriod?.entries || [];
-  return { teamId: sideData.teamId, score, projected, entries };
+  return { teamId: sideData.teamId, score, projected, winProbability, entries };
 }
 
-function countRemaining(entries, proSchedule, nowMs) {
+/** A roster slot's real-world game is either not started yet ("remaining"),
+ * in progress right now ("inPlay"), or over — approximated the same way
+ * espn_api treats a game as "played": GAME_GRACE_MS after kickoff. A bye
+ * week (no entry in proSchedule) counts as neither. */
+function countGameStatus(entries, proSchedule, nowMs) {
   let remaining = 0;
+  let inPlay = 0;
   for (const entry of entries) {
     if (BENCH_SLOTS.has(entry.lineupSlotId)) continue;
     const player = entry.playerPoolEntry?.player || entry.player || {};
     const sched = proSchedule[player.proTeamId];
-    const gameStarted = sched ? nowMs > sched.date + GAME_GRACE_MS : true; // no game this week (bye) = not "remaining"
-    if (!gameStarted) remaining++;
+    if (!sched) continue; // bye week
+    if (nowMs <= sched.date) remaining++;
+    else if (nowMs <= sched.date + GAME_GRACE_MS) inPlay++;
   }
-  return remaining;
+  return { remaining, inPlay };
 }
 
 export async function buildDashboard(env) {
@@ -162,19 +178,27 @@ export async function buildDashboard(env) {
 
     const homeTeam = teamsById.get(home.teamId);
     const awayTeam = teamsById.get(away.teamId);
+    const awayStatus = countGameStatus(away.entries, proSchedule, now);
+    const homeStatus = countGameStatus(home.entries, proSchedule, now);
     matchups.push({
       awayName: awayTeam?.name || "",
       awayManager: managerNames.get(away.teamId) || "",
       awayRecord: awayTeam?.record || "",
+      awayStreak: awayTeam?.streak || null,
       awayScore: away.score,
       awayProjected: away.projected,
-      awayRemaining: countRemaining(away.entries, proSchedule, now),
+      awayWinProbability: away.winProbability,
+      awayRemaining: awayStatus.remaining,
+      awayInPlay: awayStatus.inPlay,
       homeName: homeTeam?.name || "",
       homeManager: managerNames.get(home.teamId) || "",
       homeRecord: homeTeam?.record || "",
+      homeStreak: homeTeam?.streak || null,
       homeScore: home.score,
       homeProjected: home.projected,
-      homeRemaining: countRemaining(home.entries, proSchedule, now),
+      homeWinProbability: home.winProbability,
+      homeRemaining: homeStatus.remaining,
+      homeInPlay: homeStatus.inPlay,
     });
   }
 
