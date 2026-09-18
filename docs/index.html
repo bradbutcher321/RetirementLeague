@@ -455,38 +455,108 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .median-groups{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  .median-group-label{
+  .group-label{
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-bottom: 8px;
     font-weight: 600;
   }
-  .median-group-label.above{ color: var(--turf); }
-  .median-group-label.below{ color: var(--loss); }
+  .group-label.above{ color: var(--turf); }
+  .group-label.below{ color: var(--loss); }
 
-  .median-team-row{
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 5px 0;
-    font-size: 0.85rem;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+  .mini-grid{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .mini-grid:last-of-type{ margin-bottom: 0; }
+  .mini-card{
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-top: 2px solid transparent;
+    border-radius: 4px;
+    padding: 8px 10px;
   }
-  .median-team-row:last-child{ border-bottom: none; }
-  .median-team-name{
-    color: var(--text);
-    flex: 1;
-    min-width: 0;
+  .mini-card.above{ border-top-color: var(--turf); }
+  .mini-card.below{ border-top-color: var(--loss); }
+  .mini-card .name{
+    font-size: 0.76rem;
+    color: var(--text-dim);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .mini-card .score{
+    font-family: var(--scoreboard);
+    font-weight: 700;
+    font-size: 1.1rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* A single-axis dot plot positioned by each team's actual score, not
+     rank — distance on the page is real distance in points. Adjacent
+     teams close enough to visually collide merge into one wider pill
+     (see renderSpreadChart) with all their names side by side. */
+  .spread-section{ margin-top: 4px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .spread-label{
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 26px;
+  }
+  .dotplot{ position: relative; height: 100px; }
+  .dotplot .axis{ position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+  /* z-index above .name-pill so the tick renders on top of pill edges
+     instead of disappearing behind them (plain DOM order would otherwise
+     paint pills, which come after it in the markup, over the top of it). */
+  .dotplot .median-tick{ position: absolute; top: 6px; bottom: 6px; width: 1px; background: var(--gold-bright); z-index: 2; }
+  .dotplot .median-tick-label{
+    position: absolute;
+    top: -18px;
+    transform: translateX(-50%);
+    font-size: 0.64rem;
+    font-weight: 700;
+    color: var(--gold-bright);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    z-index: 2;
+  }
+  /* Background is set inline per-pill (solid green/below, solid red/above,
+     or a split gradient sized to how many members are on each side of the
+     median for a merged pill) since it varies per team composition. */
+  .name-pill{
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    padding: 2px 0;
+  }
+  .name-pill .slot{
+    writing-mode: vertical-rl;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0;
+  }
+  .name-pill .slot.above{ color: var(--turf); }
+  .name-pill .slot.below{ color: var(--loss); }
+  .name-pill .slot + .slot{ border-left: 1px solid rgba(255,255,255,0.12); }
+  .endcap-score{
+    position: absolute;
+    top: 84px;
+    transform: translateX(-50%);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  .median-team-score{ color: var(--text-dim); font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
   .median-pending{
-    grid-column: 1 / -1;
     text-align: center;
     padding: 22px 10px 14px;
   }
@@ -574,7 +644,7 @@
   @media (max-width: 480px){
     .side{ padding: 16px; }
     .median-card{ padding: 16px; }
-    .median-groups{ gap: 12px; }
+    .mini-grid{ grid-template-columns: repeat(2, 1fr); }
     .accolade-card{ padding: 24px 16px 20px; }
     .accolade-score{ font-size: 2.5rem; }
   }
@@ -784,36 +854,157 @@
       </div>`;
   }
 
-  function renderMedianGroup(list, label, cls) {
+  function medianTeamName(t) { return t.manager || t.name; }
+
+  function buildMiniGrid(list, cls) {
     if (!list.length) return '';
-    return `
-      <div class="median-group">
-        <div class="median-group-label ${cls}">${label}</div>
-        ${list.map(t => `
-          <div class="median-team-row">
-            <span class="median-team-name">${t.name}</span>
-            <span class="median-team-score">${fmtScore(t.score)}</span>
-          </div>`).join('')}
-      </div>`;
+    return `<div class="mini-grid">${list.map(t => `
+      <div class="mini-card ${cls}">
+        <div class="name">${t.name}</div>
+        <div class="score">${fmtScore(t.score)}</div>
+      </div>`).join('')}</div>`;
+  }
+
+  // Queued by renderMedianCard while building the (synchronous, string-based)
+  // page HTML, then drained right after that HTML is inserted into the DOM —
+  // the chart needs each .dotplot's actual rendered width (for collision
+  // math), which only exists once the element is really on the page.
+  let spreadChartJobs = [];
+
+  const SPREAD_MIN_GAP = 3; // px minimum breathing room between separate pills
+
+  // A rotated name's rendered width doesn't depend on the name's length
+  // (it stacks vertically, so it's basically the font's line-height either
+  // way), so rather than guess at pill padding/border/line-height and get
+  // it wrong, briefly render one real 1-slot and one real 2-slot pill
+  // (invisible, off the layout flow) in the actual container and measure
+  // them — width of an empty pill, and how much each added slot costs.
+  function measurePillWidths(container) {
+    const probe = document.createElement('div');
+    probe.className = 'name-pill';
+    probe.style.visibility = 'hidden';
+    probe.style.position = 'absolute';
+    probe.style.left = '-9999px';
+    probe.innerHTML = '<span class="slot">Xx</span>';
+    container.appendChild(probe);
+    const singleWidth = probe.offsetWidth;
+    probe.innerHTML = '<span class="slot">Xx</span><span class="slot">Xx</span>';
+    const slotWidth = probe.offsetWidth - singleWidth;
+    container.removeChild(probe);
+    return { singleWidth, slotWidth };
+  }
+
+  // Positions every team by its actual score along one axis (not by rank),
+  // merging adjacent teams into a single wider pill wherever they'd
+  // otherwise visually collide, so distance on the page always means
+  // distance in points instead of silently overlapping.
+  function computeSpreadClusters(ascendingTeams, plotWidth, singleWidth, slotWidth) {
+    const scores = ascendingTeams.map(t => t.score);
+    const min = scores[0];
+    const max = scores[scores.length - 1];
+    const idealX = s => (max === min ? plotWidth / 2 : ((s - min) / (max - min)) * plotWidth);
+    const widthOf = c => singleWidth + (c.members.length - 1) * slotWidth;
+
+    // Pass 1: greedy merge based on each team's ideal (unclamped) position.
+    const clusters = [];
+    for (const t of ascendingTeams) {
+      const x = idealX(t.score);
+      const prev = clusters[clusters.length - 1];
+      if (prev) {
+        const requiredGap = widthOf(prev) / 2 + singleWidth / 2 + SPREAD_MIN_GAP;
+        if (x - prev.x < requiredGap) {
+          prev.members.push(t);
+          prev.x = (prev.x * (prev.members.length - 1) + x) / prev.members.length;
+          continue;
+        }
+      }
+      clusters.push({ members: [t], x });
+    }
+
+    // Pass 2: push clusters apart left-to-right so a merge that widened a
+    // pill can't then make it overlap its neighbor.
+    for (let i = 1; i < clusters.length; i++) {
+      const prevC = clusters[i - 1], curC = clusters[i];
+      const requiredGap = widthOf(prevC) / 2 + widthOf(curC) / 2 + SPREAD_MIN_GAP;
+      if (curC.x - prevC.x < requiredGap) curC.x = prevC.x + requiredGap;
+    }
+    return clusters;
+  }
+
+  function renderSpreadChart(elId, ascendingTeams, median) {
+    const el = document.getElementById(elId);
+    if (!el || ascendingTeams.length < 2) return;
+    const plotWidth = el.clientWidth || 300;
+    const { singleWidth, slotWidth } = measurePillWidths(el);
+    const clusters = computeSpreadClusters(ascendingTeams, plotWidth, singleWidth, slotWidth);
+    const toPct = px => (px / plotWidth) * 100;
+    const min = ascendingTeams[0].score, max = ascendingTeams[ascendingTeams.length - 1].score;
+    const idealX = s => (max === min ? plotWidth / 2 : ((s - min) / (max - min)) * plotWidth);
+    const RED = 'rgba(192,87,75,0.28)';
+    const GREEN = 'rgba(76,154,107,0.28)';
+
+    let html = '<div class="axis"></div>';
+    const medianPct = toPct(idealX(median));
+    html += `<div class="median-tick" style="left:${medianPct}%;"></div>`;
+    html += `<div class="median-tick-label" style="left:${medianPct}%;">${fmtScore(median)}</div>`;
+
+    clusters.forEach(c => {
+      const belowCount = c.members.filter(m => m.score < median).length;
+      const aboveCount = c.members.length - belowCount;
+      let background, borderColor;
+      if (belowCount === 0) {
+        background = GREEN;
+        borderColor = 'var(--turf-dim)';
+      } else if (aboveCount === 0) {
+        background = RED;
+        borderColor = 'rgba(192,87,75,0.5)';
+      } else {
+        // Straddles the median — split proportional to how many members
+        // are on each side (1 below + 1 above = an even half/half pill).
+        const splitPct = (belowCount / c.members.length) * 100;
+        background = `linear-gradient(to right, ${RED} ${splitPct}%, ${GREEN} ${splitPct}%)`;
+        borderColor = 'var(--line)';
+      }
+      const slots = c.members
+        .slice()
+        .sort((a, b) => a.score - b.score)
+        .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}">${m.name}</span>`)
+        .join('');
+      html += `<div class="name-pill" style="left:${toPct(c.x)}%; background:${background}; border-color:${borderColor};">${slots}</div>`;
+    });
+
+    const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
+    html += `<div class="endcap-score" style="left:${toPct(idealX(lowest.score))}%;">${fmtScore(lowest.score)}</div>`;
+    html += `<div class="endcap-score" style="left:${toPct(idealX(highest.score))}%;">${fmtScore(highest.score)}</div>`;
+    el.innerHTML = html;
   }
 
   // Splits teams by rank (not by literal distance from the median value) so
   // it always yields an even above/below split — 6-and-6 in a 12-team
   // league — even if a couple of scores happen to tie exactly at the median.
-  function renderMedianCard(title, medianValue, teamsSorted, scoreKey) {
+  function renderMedianCard(title, medianValue, teamsSorted, scoreKey, elId) {
     const half = Math.floor(teamsSorted.length / 2);
-    const displayName = t => t.manager || t.name;
-    const above = teamsSorted.slice(0, half).map(t => ({ name: displayName(t), score: t[scoreKey] }));
-    const below = teamsSorted.slice(teamsSorted.length - half).map(t => ({ name: displayName(t), score: t[scoreKey] }));
+    const withScore = teamsSorted.map(t => ({ name: medianTeamName(t), score: t[scoreKey] }));
+    const above = withScore.slice(0, half);
+    const below = withScore.slice(withScore.length - half);
+    spreadChartJobs.push({
+      elId,
+      median: medianValue,
+      ascending: [...withScore].sort((a, b) => a.score - b.score),
+    });
     return `
       <div class="median-card">
         <div class="median-card-header">
           <span class="median-card-title">${title}</span>
           <span class="median-card-value">${fmtScore(medianValue)}</span>
         </div>
-        <div class="median-groups">
-          ${renderMedianGroup(above, 'Above Median', 'above')}
-          ${renderMedianGroup(below, 'Below Median', 'below')}
+        <div class="group-label above">Above Median</div>
+        ${buildMiniGrid(above, 'above')}
+        <div class="group-label below">Below Median</div>
+        ${buildMiniGrid(below, 'below')}
+        <div class="spread-section">
+          <div class="spread-label">Spread this week</div>
+          <div class="dotplot" id="${elId}"></div>
         </div>
       </div>`;
   }
@@ -859,11 +1050,9 @@
           <span class="median-card-title">${title}</span>
           <span class="median-card-value">—</span>
         </div>
-        <div class="median-groups">
-          <div class="median-pending">
-            <div class="pending-headline" id="kickoff-countdown">—</div>
-            <div class="pending-sub">Until Thursday Night Kickoff</div>
-          </div>
+        <div class="median-pending">
+          <div class="pending-headline" id="kickoff-countdown">—</div>
+          <div class="pending-sub">Until Thursday Night Kickoff</div>
         </div>
       </div>`;
   }
@@ -966,12 +1155,17 @@
         const byCurrentDesc = [...teams].sort((a, b) => b.current - a.current);
         const byProjectedDesc = [...teams].sort((a, b) => b.projected - a.projected);
 
+        spreadChartJobs = [];
         const medianHtml =
           (currentHasStarted
-            ? renderMedianCard('Current Median', data.currentMedian, byCurrentDesc, 'current')
+            ? renderMedianCard('Current Median', data.currentMedian, byCurrentDesc, 'current', 'spread-current')
             : renderMedianPendingCard('Current Median')) +
-          renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected');
+          renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected', 'spread-projected');
         document.getElementById('median-container').innerHTML = medianHtml;
+        // Needs the .dotplot elements to actually be in the DOM first, so
+        // clientWidth (used for the collision math) reflects their real
+        // rendered width instead of a guessed constant.
+        spreadChartJobs.forEach(job => renderSpreadChart(job.elId, job.ascending, job.median));
         updateKickoffCountdown();
 
         const wh = data.weeklyHigh;
