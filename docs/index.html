@@ -298,7 +298,6 @@
   .player-cell{
     display: grid;
     grid-template-columns: 1fr auto;
-    align-items: center;
     column-gap: 8px;
     padding: 10px 8px;
     border: 1px solid transparent;
@@ -330,10 +329,15 @@
     background: rgba(255, 201, 4, 0.10);
   }
 
-  .player-info{ min-width: 0; text-align: left; }
-  .player-score{ text-align: right; }
+  /* Info (name/game-status/stats) top-aligns so the top two lines always
+     land in the same place regardless of how many stat lines (0-2) either
+     side ends up with. The score instead centers vertically, in line with
+     the position callout next to it, independent of that variable height. */
+  .player-info{ min-width: 0; text-align: left; align-self: start; }
+  .player-score{ text-align: right; align-self: center; }
   .team-tag{
     display: inline-block;
+    flex-shrink: 0;
     font-size: 0.6rem;
     font-weight: 700;
     color: var(--text-dim);
@@ -341,14 +345,23 @@
     border: 1px solid var(--line);
     border-radius: 4px;
     padding: 1px 4px;
-    margin-left: 4px;
-    vertical-align: 1px;
   }
+  /* A flex row instead of a single nowrap text block, so the team tag
+     (flex-shrink: 0) always stays fully visible while only the name text
+     itself shrinks and hard-clips (no ellipsis — it just runs until it
+     meets the tag) when space is tight. */
   .player-name{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
     font-weight: 600;
     font-size: 0.83rem;
+  }
+  .player-cell.home .player-name{ justify-content: flex-end; }
+  .name-text{
+    min-width: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
   }
   .player-score .current{
@@ -373,15 +386,16 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* Always reserves 2 lines of height (even for a short or empty stat
-     line) so a QB's longer line and an unstarted player's blank one still
-     leave every row — on both sides of the card — the same height. */
+  /* Sizes to however many stat lines there actually are (0-2, clipped
+     beyond that) rather than always reserving 2 — an empty or one-line
+     stat block just takes less room instead of leaving dead blank space.
+     Alignment across both sides comes from .player-cell's top-alignment
+     above, not from forcing this to a fixed height. */
   .player-stat-line{
     font-size: 0.7rem;
     color: var(--text-dim);
     margin-top: 2px;
     line-height: 1.35;
-    min-height: calc(0.7rem * 1.35 * 2);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -687,7 +701,7 @@
     return `
       <div class="player-cell ${side} ${state ? 'state-' + state : ''}">
         <div class="player-info">
-          <div class="player-name">${p.name}${teamTag}</div>
+          <div class="player-name"><span class="name-text">${p.name}</span>${teamTag}</div>
           <div class="player-game-line">${gameLine}</div>
           <div class="player-stat-line">${p.statLine || ''}</div>
         </div>
