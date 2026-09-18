@@ -91,6 +91,19 @@ export async function fetchProSchedule(env, week) {
   return schedule;
 }
 
+/** ESPN's public (unauthenticated) sports scoreboard API — game score,
+ * quarter, clock, and offense possession for every NFL game in a week.
+ * Separate host/API from the private fantasy endpoints above, so no
+ * cookie is sent. Its team ids are numerically identical to the fantasy
+ * API's proTeamId (e.g. Miami is 15 in both), so callers can join the two
+ * directly with no translation table. */
+export async function fetchNflScoreboard(env, week) {
+  const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${week}&seasontype=2&year=${env.ESPN_YEAR}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`NFL scoreboard request failed (${res.status})`);
+  return res.json();
+}
+
 /** `scheduleSettings.matchupPeriods` is {matchupId: [week, week, ...]} —
  * finds which matchup period a given week belongs to. */
 export function findMatchupPeriod(matchupPeriodsObj, week) {

@@ -58,6 +58,7 @@
     background: var(--surface);
     border: 1px solid var(--line);
     display: grid;
+    cursor: pointer;
     /* Each side has a 175px floor instead of shrinking freely, so on a
        narrow phone the card stays laid out side-by-side (never stacks) and
        instead scrolls horizontally within itself — overflow-x lives on this
@@ -231,6 +232,84 @@
     border-radius: 999px;
     white-space: nowrap;
   }
+
+  /* ---------- Expanded matchup details (per-player roster) ---------- */
+  .matchup-details{
+    display: none;
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+    padding: 4px 16px 14px;
+  }
+  .matchup-card.expanded .matchup-details{ display: block; }
+
+  .detail-row{
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) 46px minmax(130px, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .detail-row:last-child{ border-bottom: none; }
+  .detail-position{
+    text-align: center;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.03em;
+  }
+
+  .player-cell{
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    position: relative;
+    min-width: 0;
+  }
+  .player-cell.home{ text-align: right; }
+  .player-cell.live{
+    background: rgba(255, 201, 4, 0.08);
+    border-color: var(--gold-bright);
+  }
+  .player-name{
+    font-weight: 600;
+    font-size: 0.83rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .player-points{
+    font-family: var(--scoreboard);
+    font-weight: 700;
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .player-points .pts-label{
+    font-family: var(--body);
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-left: 3px;
+  }
+  .player-stat-line, .player-game-line{
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .offense-chip{
+    position: absolute;
+    top: 4px;
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: var(--gold-bright);
+    border: 1px solid var(--gold-bright);
+    border-radius: 4px;
+    padding: 1px 4px;
+    background: var(--surface);
+  }
+  .player-cell.away .offense-chip{ left: 4px; }
+  .player-cell.home .offense-chip{ right: 4px; }
 
   /* ---------- Leaderboard ---------- */
   .leaderboard{
@@ -493,6 +572,52 @@
     return isNaN(num) ? n : num.toFixed(2);
   }
 
+  // Which matchups are currently expanded, keyed by team-name pair rather
+  // than array index so expansion survives the list re-sorting finals to
+  // the bottom, or the whole innerHTML being rebuilt on the next poll.
+  const expandedMatchups = new Set();
+  const matchupKey = (m) => `${m.awayName}::${m.homeName}`;
+
+  function renderPlayerCell(p, side) {
+    if (!p) return `<div class="player-cell ${side}"></div>`;
+    const live = p.game && p.game.state === 'in';
+    const hasLivePoints = p.livePoints !== null && p.livePoints !== undefined;
+    const points = hasLivePoints ? fmtScore(p.livePoints) : fmtScore(p.projectedPoints);
+    const pointsLabel = hasLivePoints ? '' : 'proj';
+    let gameLine = '';
+    if (p.game) {
+      if (p.game.state === 'pre') gameLine = `vs ${p.game.opponent}`;
+      else if (p.game.state === 'post') gameLine = `Final ${p.game.teamScore}-${p.game.opponentScore}`;
+      else gameLine = `${p.game.teamScore}-${p.game.opponentScore} · Q${p.game.period} ${p.game.clock}`;
+    }
+    return `
+      <div class="player-cell ${side} ${live ? 'live' : ''}">
+        ${live && p.game.hasPossession ? `<span class="offense-chip">OFF</span>` : ''}
+        <div class="player-name">${p.name}</div>
+        <div class="player-points">${points}<span class="pts-label">${pointsLabel}</span></div>
+        ${p.statLine ? `<div class="player-stat-line">${p.statLine}</div>` : ''}
+        ${gameLine ? `<div class="player-game-line">${gameLine}</div>` : ''}
+      </div>`;
+  }
+
+  function renderMatchupDetails(m) {
+    const awayPlayers = m.awayPlayers || [];
+    const homePlayers = m.homePlayers || [];
+    const rowCount = Math.max(awayPlayers.length, homePlayers.length);
+    const rows = [];
+    for (let i = 0; i < rowCount; i++) {
+      const a = awayPlayers[i];
+      const h = homePlayers[i];
+      rows.push(`
+        <div class="detail-row">
+          ${renderPlayerCell(a, 'away')}
+          <div class="detail-position">${(a && a.slot) || (h && h.slot) || ''}</div>
+          ${renderPlayerCell(h, 'home')}
+        </div>`);
+    }
+    return `<div class="matchup-details">${rows.join('')}</div>`;
+  }
+
   function renderMatchupCard(m) {
     const homeLeading = parseFloat(m.homeScore) >= parseFloat(m.awayScore);
     const homeInPlay = parseInt(m.homeInPlay, 10) || 0;
@@ -528,9 +653,11 @@
       </div>`;
 
     const sideClass = (leading) => leading ? `leading ${isFinal ? 'final' : ''}` : '';
+    const key = matchupKey(m);
+    const expanded = expandedMatchups.has(key);
 
     return `
-      <div class="matchup-card">
+      <div class="matchup-card ${expanded ? 'expanded' : ''}" data-key="${encodeURIComponent(key)}">
         <div class="side away ${sideClass(!homeLeading)}">
           <div class="team-name">${m.awayName}</div>
           ${metaRow(m.awayManager, m.awayRecord)}
@@ -555,6 +682,7 @@
           ${chipRow(m.homeWinProbability, m.homeStreak)}
           ${statusRow(homeInPlay, homeRemaining)}
         </div>
+        ${renderMatchupDetails(m)}
       </div>`;
   }
 
@@ -761,6 +889,19 @@
         document.getElementById('matchups-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading league data.</div>';
       });
   }
+
+  // Delegated once — click a card to expand/collapse its roster. The
+  // expanded state itself lives in expandedMatchups (checked at render
+  // time), so this just needs to flip the class on the clicked element and
+  // keep that Set in sync for the next re-render.
+  document.getElementById('matchups-container').addEventListener('click', (e) => {
+    const card = e.target.closest('.matchup-card');
+    if (!card) return;
+    const key = decodeURIComponent(card.dataset.key);
+    if (expandedMatchups.has(key)) expandedMatchups.delete(key);
+    else expandedMatchups.add(key);
+    card.classList.toggle('expanded');
+  });
 
   loadDashboard();
   setInterval(loadDashboard, AUTO_REFRESH_MS);

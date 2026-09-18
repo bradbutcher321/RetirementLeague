@@ -17,11 +17,116 @@
  *      the brief window before Thursday kickoff, when the page already
  *      shows the countdown card instead of real numbers anyway.
  */
-import { fetchLeague, fetchBoxScores, fetchProSchedule, findMatchupPeriod } from "./espn.js";
+import { fetchLeague, fetchBoxScores, fetchProSchedule, fetchNflScoreboard, findMatchupPeriod } from "./espn.js";
 import { buildManagerNames } from "./managerNames.js";
 
 const BENCH_SLOTS = new Set([20, 21]); // BE, IR — see espn_api football/constant.py POSITION_MAP
 const GAME_GRACE_MS = 3 * 60 * 60 * 1000; // matches espn_api BoxPlayer: game counted "played" 3h after kickoff
+
+// Starter lineup slots, in the order the expanded matchup view displays
+// them — see espn_api football/constant.py POSITION_MAP for the full slot
+// id table. Slot 23 ("RB/WR/TE") is the FLEX spot.
+const SLOT_LABELS = { 0: "QB", 2: "RB", 4: "WR", 6: "TE", 23: "FLEX", 16: "D/ST", 17: "K" };
+const SLOT_ORDER = [0, 2, 4, 6, 23, 16, 17];
+
+// A FLEX-slotted player's *real* position (needed to pick the right stat
+// line) isn't in the lineup slot — it's ESPN's separate defaultPositionId,
+// a different numbering than SLOT_LABELS above.
+const DEFAULT_POSITION_MAP = { 1: "QB", 2: "RB", 3: "WR", 4: "TE", 5: "K", 16: "D/ST" };
+
+// Subset of espn_api football/constant.py PLAYER_STATS_MAP needed to build
+// a readable per-position stat line from a player's raw `stats` object.
+function formatStatLine(position, stats) {
+  const s = stats || {};
+  const n = (id) => s[id] || 0;
+  switch (position) {
+    case "QB": {
+      let line = `${n(1)}/${n(0)}, ${n(3)} YDS, ${n(4)} TD, ${n(20)} INT`;
+      if (n(24)) line += `, ${n(24)} RUSH YDS`;
+      return line;
+    }
+    case "RB": {
+      const parts = [`${n(23)} CAR, ${n(24)} YDS, ${n(25)} TD`];
+      const rec = n(41) || n(53);
+      if (rec) parts.push(`${rec} REC, ${n(42) || n(61)} YDS, ${n(43)} TD`);
+      return parts.join(" · ");
+    }
+    case "WR":
+    case "TE":
+      return `${n(41) || n(53)} REC, ${n(42) || n(61)} YDS, ${n(43)} TD`;
+    case "K":
+      return `${n(83)}/${n(84)} FG, ${n(86)}/${n(87)} XP`;
+    case "D/ST": {
+      let line = `${n(99)} SACK, ${n(95)} INT, ${n(96)} FR`;
+      const defTd = n(105) || n(94);
+      if (defTd) line += `, ${defTd} TD`;
+      return line;
+    }
+    default:
+      return "";
+  }
+}
+
+/** proTeamId -> live NFL game state, from the public scoreboard feed. */
+function buildGameStateMap(scoreboardData) {
+  const map = new Map();
+  for (const event of scoreboardData?.events || []) {
+    const comp = event.competitions?.[0];
+    if (!comp) continue;
+    const status = comp.status || {};
+    const possessionTeamId = comp.situation?.possession ? parseInt(comp.situation.possession, 10) : null;
+    const competitors = comp.competitors || [];
+    for (const c of competitors) {
+      const teamId = parseInt(c.team?.id, 10);
+      if (!teamId) continue;
+      const opponent = competitors.find((o) => o !== c);
+      map.set(teamId, {
+        teamScore: parseInt(c.score, 10) || 0,
+        opponentScore: opponent ? parseInt(opponent.score, 10) || 0 : 0,
+        opponentAbbrev: opponent?.team?.abbreviation || "",
+        period: status.period || 0,
+        displayClock: status.displayClock || "",
+        state: status.type?.state || "pre", // "pre" | "in" | "post"
+        hasPossession: possessionTeamId === teamId,
+      });
+    }
+  }
+  return map;
+}
+
+function buildPlayerCard(entry, gameStateByProTeam) {
+  const player = entry.playerPoolEntry?.player || entry.player || {};
+  const slot = SLOT_LABELS[entry.lineupSlotId] || "";
+  const position = slot === "FLEX" ? DEFAULT_POSITION_MAP[player.defaultPositionId] || "RB" : slot;
+  const stats = player.stats || [];
+  const actualStat = stats.find((s) => s.statSourceId === 0);
+  const projStat = stats.find((s) => s.statSourceId === 1);
+  const game = gameStateByProTeam.get(player.proTeamId) || null;
+  return {
+    name: player.fullName || "",
+    slot,
+    livePoints: actualStat ? round2(actualStat.appliedTotal) : null,
+    projectedPoints: projStat ? round2(projStat.appliedTotal) : 0,
+    statLine: actualStat ? formatStatLine(position, actualStat.stats) : "",
+    game: game && {
+      opponent: game.opponentAbbrev,
+      teamScore: game.teamScore,
+      opponentScore: game.opponentScore,
+      period: game.period,
+      clock: game.displayClock,
+      state: game.state,
+      hasPossession: game.hasPossession,
+    },
+  };
+}
+
+/** Starters only (bench/IR excluded), in standard lineup order. */
+function buildStarters(entries, gameStateByProTeam) {
+  return entries
+    .filter((e) => SLOT_ORDER.includes(e.lineupSlotId))
+    .sort((a, b) => SLOT_ORDER.indexOf(a.lineupSlotId) - SLOT_ORDER.indexOf(b.lineupSlotId))
+    .map((e) => buildPlayerCard(e, gameStateByProTeam));
+}
 
 function median(values) {
   const sorted = [...values].sort((a, b) => a - b);
@@ -148,10 +253,15 @@ export async function buildDashboard(env) {
   const teamsById = new Map(teamsRaw.map((t) => [t.teamId, t]));
   const managerNames = buildManagerNames(teamsRaw);
 
-  const [boxData, proSchedule] = await Promise.all([
+  const [boxData, proSchedule, nflScoreboard] = await Promise.all([
     fetchBoxScores(env, currentWeek, matchupPeriod),
     fetchProSchedule(env, currentWeek),
+    // Public API, separate from ESPN's private fantasy endpoints — degrade
+    // to "no live NFL game info" rather than failing the whole dashboard
+    // if it's ever unreachable.
+    fetchNflScoreboard(env, currentWeek).catch(() => null),
   ]);
+  const gameStateByProTeam = buildGameStateMap(nflScoreboard);
 
   const now = Date.now();
   const currentScores = [];
@@ -199,6 +309,8 @@ export async function buildDashboard(env) {
       homeWinProbability: home.winProbability,
       homeRemaining: homeStatus.remaining,
       homeInPlay: homeStatus.inPlay,
+      awayPlayers: buildStarters(away.entries, gameStateByProTeam),
+      homePlayers: buildStarters(home.entries, gameStateByProTeam),
     });
   }
 
