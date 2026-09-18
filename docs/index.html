@@ -14,11 +14,15 @@
   .header-row{
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    /* flex-end (not center) so the visible text bottoms line up — h1's
+       own bottom margin is zeroed below so that margin doesn't throw off
+       where its "bottom edge" actually is. */
+    align-items: flex-end;
     gap: 16px;
     flex-wrap: wrap;
     margin-bottom: 28px;
   }
+  .header-row h1{ margin-bottom: 0; }
   .updated-block{ text-align: right; }
   .updated-label{
     color: var(--text-dim);
