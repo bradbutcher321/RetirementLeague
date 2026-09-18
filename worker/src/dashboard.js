@@ -40,26 +40,37 @@ function formatStatLine(position, stats) {
   const n = (id) => s[id] || 0;
   switch (position) {
     case "QB": {
-      let line = `${n(1)}/${n(0)}, ${n(3)} YDS, ${n(4)} TD, ${n(20)} INT`;
-      if (n(24)) line += `, ${n(24)} RUSH YDS`;
-      return line;
+      const parts = [`${n(1)}/${n(0)}, ${n(3)} YDS`];
+      if (n(4)) parts.push(`${n(4)} TD`);
+      if (n(20)) parts.push(`${n(20)} INT`);
+      if (n(24)) parts.push(`${n(24)} RUSH YDS`);
+      return parts.join(", ");
     }
     case "RB": {
-      const parts = [`${n(23)} CAR, ${n(24)} YDS, ${n(25)} TD`];
+      const rush = [`${n(23)} CAR, ${n(24)} YDS`];
+      if (n(25)) rush.push(`${n(25)} TD`);
       const rec = n(41) || n(53);
-      if (rec) parts.push(`${rec} REC, ${n(42) || n(61)} YDS, ${n(43)} TD`);
-      return parts.join(" · ");
+      if (!rec) return rush.join(", ");
+      const recParts = [`${rec} REC, ${n(42) || n(61)} YDS`];
+      if (n(43)) recParts.push(`${n(43)} TD`);
+      return `${rush.join(", ")} · ${recParts.join(", ")}`;
     }
     case "WR":
-    case "TE":
-      return `${n(41) || n(53)} REC, ${n(42) || n(61)} YDS, ${n(43)} TD`;
+    case "TE": {
+      const parts = [`${n(41) || n(53)} REC, ${n(42) || n(61)} YDS`];
+      if (n(43)) parts.push(`${n(43)} TD`);
+      return parts.join(", ");
+    }
     case "K":
       return `${n(83)}/${n(84)} FG, ${n(86)}/${n(87)} XP`;
     case "D/ST": {
-      let line = `${n(99)} SACK, ${n(95)} INT, ${n(96)} FR`;
+      const parts = [];
+      if (n(99)) parts.push(`${n(99)} SACK`);
+      if (n(95)) parts.push(`${n(95)} INT`);
+      if (n(96)) parts.push(`${n(96)} FR`);
       const defTd = n(105) || n(94);
-      if (defTd) line += `, ${defTd} TD`;
-      return line;
+      if (defTd) parts.push(`${defTd} TD`);
+      return parts.join(", ");
     }
     default:
       return "";
@@ -85,6 +96,7 @@ function buildGameStateMap(scoreboardData) {
       const opponent = competitors.find((o) => o !== c);
       map.set(teamId, {
         date: event.date,
+        ownAbbrev: c.team?.abbreviation || "",
         teamScore: parseInt(c.score, 10) || 0,
         opponentScore: opponent ? parseInt(opponent.score, 10) || 0 : 0,
         opponentAbbrev: opponent?.team?.abbreviation || "",
@@ -113,6 +125,7 @@ function buildPlayerCard(entry, gameStateByProTeam) {
     projectedPoints: projStat ? round2(projStat.appliedTotal) : 0,
     statLine: actualStat ? formatStatLine(position, actualStat.stats) : "",
     game: game && {
+      team: game.ownAbbrev,
       opponent: game.opponentAbbrev,
       date: game.date,
       teamScore: game.teamScore,

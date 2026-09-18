@@ -260,16 +260,39 @@
   }
 
   .player-cell{
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 8px;
     padding: 5px 8px;
     border-radius: 6px;
     border: 1px solid transparent;
     position: relative;
     min-width: 0;
   }
-  .player-cell.home{ text-align: right; }
+  /* Home side mirrors the column order so its score still ends up on the
+     inner edge (next to the position label) and its name/info on the
+     outer edge, matching the away side's score-toward-center layout. */
+  .player-cell.home{ grid-template-columns: auto 1fr; }
+  .player-cell.home .player-info{ order: 2; text-align: right; }
+  .player-cell.home .player-score{ order: 1; text-align: left; }
   .player-cell.live{
     background: rgba(255, 201, 4, 0.08);
     border-color: var(--gold-bright);
+  }
+  .player-info{ min-width: 0; text-align: left; }
+  .player-score{ text-align: right; }
+  .team-tag{
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 4px;
+    margin-right: 4px;
+    vertical-align: 1px;
   }
   .player-name{
     font-weight: 600;
@@ -278,18 +301,19 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .player-points{
+  .player-score .current{
     font-family: var(--scoreboard);
     font-weight: 700;
     font-size: 1.05rem;
     font-variant-numeric: tabular-nums;
+    line-height: 1;
   }
-  .player-points .pts-label{
-    font-family: var(--body);
-    font-size: 0.62rem;
-    font-weight: 500;
+  .player-score .projected{
+    font-size: 0.68rem;
     color: var(--text-dim);
-    margin-left: 3px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
   }
   .player-stat-line, .player-game-line{
     font-size: 0.7rem;
@@ -581,9 +605,7 @@
   function renderPlayerCell(p, side) {
     if (!p) return `<div class="player-cell ${side}"></div>`;
     const live = p.game && p.game.state === 'in';
-    const hasLivePoints = p.livePoints !== null && p.livePoints !== undefined;
-    const points = hasLivePoints ? fmtScore(p.livePoints) : fmtScore(p.projectedPoints);
-    const pointsLabel = hasLivePoints ? '' : 'proj';
+    const current = p.livePoints !== null && p.livePoints !== undefined ? p.livePoints : 0;
     let gameLine = '';
     if (p.game) {
       if (p.game.state === 'pre') {
@@ -593,18 +615,24 @@
           : '';
         gameLine = `vs ${p.game.opponent}${when ? ' · ' + when : ''}`;
       } else if (p.game.state === 'post') {
-        gameLine = `Final ${p.game.teamScore}-${p.game.opponentScore}`;
+        gameLine = `${p.game.opponent} ${p.game.teamScore}-${p.game.opponentScore} Final`;
       } else {
-        gameLine = `${p.game.teamScore}-${p.game.opponentScore} · Q${p.game.period} ${p.game.clock}`;
+        gameLine = `${p.game.opponent} ${p.game.teamScore}-${p.game.opponentScore} · Q${p.game.period} ${p.game.clock}`;
       }
     }
+    const teamTag = p.game && p.game.team ? `<span class="team-tag">${p.game.team}</span>` : '';
     return `
       <div class="player-cell ${side} ${live ? 'live' : ''}">
         ${live && p.game.hasPossession ? `<span class="offense-chip">OFF</span>` : ''}
-        <div class="player-name">${p.name}</div>
-        <div class="player-points">${points}<span class="pts-label">${pointsLabel}</span></div>
-        ${p.statLine ? `<div class="player-stat-line">${p.statLine}</div>` : ''}
-        ${gameLine ? `<div class="player-game-line">${gameLine}</div>` : ''}
+        <div class="player-info">
+          <div class="player-name">${teamTag}${p.name}</div>
+          ${p.statLine ? `<div class="player-stat-line">${p.statLine}</div>` : ''}
+          ${gameLine ? `<div class="player-game-line">${gameLine}</div>` : ''}
+        </div>
+        <div class="player-score">
+          <div class="current">${fmtScore(current)}</div>
+          <div class="projected">${fmtScore(p.projectedPoints)}</div>
+        </div>
       </div>`;
   }
 
