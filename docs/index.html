@@ -586,9 +586,17 @@
     const pointsLabel = hasLivePoints ? '' : 'proj';
     let gameLine = '';
     if (p.game) {
-      if (p.game.state === 'pre') gameLine = `vs ${p.game.opponent}`;
-      else if (p.game.state === 'post') gameLine = `Final ${p.game.teamScore}-${p.game.opponentScore}`;
-      else gameLine = `${p.game.teamScore}-${p.game.opponentScore} · Q${p.game.period} ${p.game.clock}`;
+      if (p.game.state === 'pre') {
+        const kickoff = p.game.date ? new Date(p.game.date) : null;
+        const when = kickoff
+          ? `${kickoff.toLocaleDateString([], { weekday: 'short' })} ${kickoff.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+          : '';
+        gameLine = `vs ${p.game.opponent}${when ? ' · ' + when : ''}`;
+      } else if (p.game.state === 'post') {
+        gameLine = `Final ${p.game.teamScore}-${p.game.opponentScore}`;
+      } else {
+        gameLine = `${p.game.teamScore}-${p.game.opponentScore} · Q${p.game.period} ${p.game.clock}`;
+      }
     }
     return `
       <div class="player-cell ${side} ${live ? 'live' : ''}">

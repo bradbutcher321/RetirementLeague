@@ -13,10 +13,6 @@ function leagueEndpoint(year, leagueId) {
   return `${FANTASY_BASE}/seasons/${year}/segments/0/leagues/${leagueId}`;
 }
 
-function seasonEndpoint(year) {
-  return `${FANTASY_BASE}/seasons/${year}`;
-}
-
 function buildUrl(base, params) {
   const url = new URL(base);
   for (const [key, value] of Object.entries(params)) {
@@ -67,28 +63,6 @@ export async function fetchBoxScores(env, week, matchupPeriod) {
   });
   const filter = { schedule: { filterMatchupPeriodIds: { value: [matchupPeriod] } } };
   return espnGet(url, env, { "x-fantasy-filter": JSON.stringify(filter) });
-}
-
-/** Maps NFL proTeamId -> { opponentId, date (epoch ms) } for the given
- * week, used to tell whether a player's real-world game has started yet. A
- * team with no entry that week is on a bye. */
-export async function fetchProSchedule(env, week) {
-  const url = buildUrl(seasonEndpoint(env.ESPN_YEAR), { view: "proTeamSchedules_wl" });
-  const data = await espnGet(url, env);
-  const proTeams = data?.settings?.proTeams || [];
-  const schedule = {};
-  for (const team of proTeams) {
-    if (team.id === 0) continue;
-    const games = (team.proGamesByScoringPeriod || {})[String(week)];
-    if (games && games.length) {
-      const g = games[0];
-      schedule[team.id] =
-        team.id === g.awayProTeamId
-          ? { opponentId: g.homeProTeamId, date: g.date }
-          : { opponentId: g.awayProTeamId, date: g.date };
-    }
-  }
-  return schedule;
 }
 
 /** ESPN's public (unauthenticated) sports scoreboard API — game score,

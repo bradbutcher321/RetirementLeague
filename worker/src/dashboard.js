@@ -17,11 +17,10 @@
  *      the brief window before Thursday kickoff, when the page already
  *      shows the countdown card instead of real numbers anyway.
  */
-import { fetchLeague, fetchBoxScores, fetchProSchedule, fetchNflScoreboard, findMatchupPeriod } from "./espn.js";
+import { fetchLeague, fetchBoxScores, fetchNflScoreboard, findMatchupPeriod } from "./espn.js";
 import { buildManagerNames } from "./managerNames.js";
 
 const BENCH_SLOTS = new Set([20, 21]); // BE, IR — see espn_api football/constant.py POSITION_MAP
-const GAME_GRACE_MS = 3 * 60 * 60 * 1000; // matches espn_api BoxPlayer: game counted "played" 3h after kickoff
 
 // Starter lineup slots, in the order the expanded matchup view displays
 // them — see espn_api football/constant.py POSITION_MAP for the full slot
@@ -67,7 +66,11 @@ function formatStatLine(position, stats) {
   }
 }
 
-/** proTeamId -> live NFL game state, from the public scoreboard feed. */
+/** proTeamId -> live NFL game state, from the public scoreboard feed. This
+ * is the authoritative source for whether a player's game is upcoming, in
+ * progress, or over — used both for the per-player detail panel and (via
+ * countGameStatus below) the matchup-level in-play/remaining counts,
+ * instead of guessing from a fixed post-kickoff time window. */
 function buildGameStateMap(scoreboardData) {
   const map = new Map();
   for (const event of scoreboardData?.events || []) {
@@ -81,6 +84,7 @@ function buildGameStateMap(scoreboardData) {
       if (!teamId) continue;
       const opponent = competitors.find((o) => o !== c);
       map.set(teamId, {
+        date: event.date,
         teamScore: parseInt(c.score, 10) || 0,
         opponentScore: opponent ? parseInt(opponent.score, 10) || 0 : 0,
         opponentAbbrev: opponent?.team?.abbreviation || "",
@@ -110,6 +114,7 @@ function buildPlayerCard(entry, gameStateByProTeam) {
     statLine: actualStat ? formatStatLine(position, actualStat.stats) : "",
     game: game && {
       opponent: game.opponentAbbrev,
+      date: game.date,
       teamScore: game.teamScore,
       opponentScore: game.opponentScore,
       period: game.period,
@@ -220,19 +225,21 @@ function parseBoxSide(sideData) {
 }
 
 /** A roster slot's real-world game is either not started yet ("remaining"),
- * in progress right now ("inPlay"), or over — approximated the same way
- * espn_api treats a game as "played": GAME_GRACE_MS after kickoff. A bye
- * week (no entry in proSchedule) counts as neither. */
-function countGameStatus(entries, proSchedule, nowMs) {
+ * in progress right now ("inPlay"), or over — read directly from the NFL
+ * scoreboard's own game state rather than guessing from a fixed time
+ * window after kickoff, so an overtime or otherwise-long game doesn't get
+ * marked "done" just because a few hours have passed. A bye week (no
+ * entry in gameStateByProTeam) counts as neither. */
+function countGameStatus(entries, gameStateByProTeam) {
   let remaining = 0;
   let inPlay = 0;
   for (const entry of entries) {
     if (BENCH_SLOTS.has(entry.lineupSlotId)) continue;
     const player = entry.playerPoolEntry?.player || entry.player || {};
-    const sched = proSchedule[player.proTeamId];
-    if (!sched) continue; // bye week
-    if (nowMs <= sched.date) remaining++;
-    else if (nowMs <= sched.date + GAME_GRACE_MS) inPlay++;
+    const game = gameStateByProTeam.get(player.proTeamId);
+    if (!game) continue; // bye week, or NFL scoreboard unavailable
+    if (game.state === "pre") remaining++;
+    else if (game.state === "in") inPlay++;
   }
   return { remaining, inPlay };
 }
@@ -253,9 +260,8 @@ export async function buildDashboard(env) {
   const teamsById = new Map(teamsRaw.map((t) => [t.teamId, t]));
   const managerNames = buildManagerNames(teamsRaw);
 
-  const [boxData, proSchedule, nflScoreboard] = await Promise.all([
+  const [boxData, nflScoreboard] = await Promise.all([
     fetchBoxScores(env, currentWeek, matchupPeriod),
-    fetchProSchedule(env, currentWeek),
     // Public API, separate from ESPN's private fantasy endpoints — degrade
     // to "no live NFL game info" rather than failing the whole dashboard
     // if it's ever unreachable.
@@ -263,7 +269,6 @@ export async function buildDashboard(env) {
   ]);
   const gameStateByProTeam = buildGameStateMap(nflScoreboard);
 
-  const now = Date.now();
   const currentScores = [];
   const projectedScores = [];
   const teamCurrentById = new Map(); // teamId -> { current, projected }
@@ -288,8 +293,8 @@ export async function buildDashboard(env) {
 
     const homeTeam = teamsById.get(home.teamId);
     const awayTeam = teamsById.get(away.teamId);
-    const awayStatus = countGameStatus(away.entries, proSchedule, now);
-    const homeStatus = countGameStatus(home.entries, proSchedule, now);
+    const awayStatus = countGameStatus(away.entries, gameStateByProTeam);
+    const homeStatus = countGameStatus(home.entries, gameStateByProTeam);
     matchups.push({
       awayName: awayTeam?.name || "",
       awayManager: managerNames.get(away.teamId) || "",
