@@ -172,12 +172,17 @@
     padding: 0 8px;
     align-self: stretch;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
   }
   .live-indicator{
+    /* Anchored to the top of the divider (independent of the centered VS
+       badge below it) with an opaque background so it fully covers the
+       divider's vertical line instead of the line showing through it. */
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -185,13 +190,18 @@
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--turf);
+    color: var(--loss);
+    background: var(--surface-raised);
+    border: 1px solid var(--loss);
+    border-radius: 999px;
+    padding: 3px 8px;
+    white-space: nowrap;
   }
   .live-indicator .pulse-dot{
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--turf);
+    background: var(--loss);
     animation: pulse 1.6s ease-in-out infinite;
   }
   @keyframes pulse{
