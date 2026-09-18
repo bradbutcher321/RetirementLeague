@@ -465,19 +465,23 @@
   .group-label.above{ color: var(--turf); }
   .group-label.below{ color: var(--loss); }
 
-  .mini-grid{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  /* The card splits into the Above/Below grids (left) and the vertical
+     spread strip (right, fixed width) side by side, so the grids run 2
+     columns x 3 rows instead of 3 x 2 to leave room for it. */
+  .card-body{ display: grid; grid-template-columns: 1fr auto; gap: 16px; }
+  .mini-grid{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin-bottom: 14px; }
   .mini-grid:last-of-type{ margin-bottom: 0; }
   .mini-card{
     background: var(--surface-raised);
     border: 1px solid var(--line);
     border-top: 2px solid transparent;
     border-radius: 4px;
-    padding: 8px 10px;
+    padding: 7px 9px;
   }
   .mini-card.above{ border-top-color: var(--turf); }
   .mini-card.below{ border-top-color: var(--loss); }
   .mini-card .name{
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     color: var(--text-dim);
     white-space: nowrap;
     overflow: hidden;
@@ -486,75 +490,69 @@
   .mini-card .score{
     font-family: var(--scoreboard);
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-variant-numeric: tabular-nums;
   }
 
-  /* A single-axis dot plot positioned by each team's actual score, not
-     rank — distance on the page is real distance in points. Adjacent
-     teams close enough to visually collide merge into one wider pill
-     (see renderSpreadChart) with all their names side by side. */
-  .spread-section{ margin-top: 4px; padding-top: 18px; border-top: 1px solid var(--line); }
-  .spread-label{
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    font-weight: 600;
-    color: var(--text-dim);
-    margin-bottom: 26px;
-  }
-  .dotplot{ position: relative; height: 100px; }
-  .dotplot .axis{ position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
-  /* z-index above .name-pill so the tick renders on top of pill edges
+  /* A single-axis plot positioned by each team's actual score, not rank —
+     distance on the page is real distance in points. Runs top (highest)
+     to bottom (lowest); adjacent teams close enough to visually collide
+     merge into one taller row (see renderSpreadChart) with all their
+     names stacked, highest on top. */
+  /* Reserved top/bottom padding is where the low/high endcap labels live
+     (see .endcap-score below) — kept outside .vplot's own box entirely so
+     they can never overlap the top/bottom rows inside it. */
+  .spread-col{ width: 108px; flex-shrink: 0; padding: 15px 0; }
+  .vplot{ position: relative; height: 100%; min-height: 200px; }
+  .vplot .axis{ position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--line); }
+  /* z-index above .name-row so the tick renders on top of row edges
      instead of disappearing behind them (plain DOM order would otherwise
-     paint pills, which come after it in the markup, over the top of it). */
-  .dotplot .median-tick{ position: absolute; top: 6px; bottom: 6px; width: 1px; background: var(--gold-bright); z-index: 2; }
-  .dotplot .median-tick-label{
-    position: absolute;
-    top: -18px;
-    transform: translateX(-50%);
-    font-size: 0.64rem;
-    font-weight: 700;
-    color: var(--gold-bright);
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    z-index: 2;
-  }
-  /* Background is set inline per-pill (solid green/below, solid red/above,
+     paint rows, which come after it in the markup, over the top of it).
+     No text label on it — the actual median value is already shown in
+     the card header, and there's no space in this narrow a column to
+     print it here without it colliding with the name rows on the line. */
+  .vplot .median-tick{ position: absolute; left: 6px; right: 6px; height: 1px; background: var(--gold-bright); z-index: 2; }
+  /* Background is set inline per-row (solid green/above, solid red/below,
      or a split gradient sized to how many members are on each side of the
-     median for a merged pill) since it varies per team composition. */
-  .name-pill{
+     median for a merged row) since it varies per team composition. Width
+     is also set inline (see measureMaxRowWidth) so every row — single
+     name or merged — is exactly as wide as the single longest name among
+     this week's teams, not a guessed constant with padding to spare. */
+  .name-row{
     position: absolute;
-    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 50px;
     border-radius: 4px;
     border: 1px solid var(--line);
-    padding: 2px 0;
+    padding: 1px 2px;
   }
-  .name-pill .slot{
-    writing-mode: vertical-rl;
-    font-size: 0.52rem;
+  .name-row .slot{
+    font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.02em;
-    padding: 0;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
   }
-  .name-pill .slot.above{ color: var(--turf); }
-  .name-pill .slot.below{ color: var(--loss); }
-  .name-pill .slot + .slot{ border-left: 1px solid rgba(255,255,255,0.12); }
+  .name-row .slot.above{ color: var(--turf); }
+  .name-row .slot.below{ color: var(--loss); }
+  .name-row .slot + .slot{ border-top: 1px solid rgba(255,255,255,0.12); }
+  /* Sits in .spread-col's own reserved padding, above/below .vplot's box
+     entirely, so it can't overlap the top/bottom name rows inside it. */
   .endcap-score{
     position: absolute;
-    top: 84px;
+    left: 50%;
     transform: translateX(-50%);
     font-size: 0.62rem;
     color: var(--text-dim);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+  .endcap-score.low{ bottom: -15px; }
+  .endcap-score.high{ top: -15px; }
 
   .median-pending{
     text-align: center;
@@ -644,7 +642,8 @@
   @media (max-width: 480px){
     .side{ padding: 16px; }
     .median-card{ padding: 16px; }
-    .mini-grid{ grid-template-columns: repeat(2, 1fr); }
+    .card-body{ gap: 8px; }
+    .spread-col{ width: 84px; }
     .accolade-card{ padding: 24px 16px 20px; }
     .accolade-score{ font-size: 2.5rem; }
   }
@@ -867,86 +866,147 @@
 
   // Queued by renderMedianCard while building the (synchronous, string-based)
   // page HTML, then drained right after that HTML is inserted into the DOM —
-  // the chart needs each .dotplot's actual rendered width (for collision
+  // the chart needs each .vplot's actual rendered height (for collision
   // math), which only exists once the element is really on the page.
   let spreadChartJobs = [];
 
-  const SPREAD_MIN_GAP = 3; // px minimum breathing room between separate pills
+  const SPREAD_MIN_GAP = 3; // px minimum breathing room between separate rows
 
-  // A rotated name's rendered width doesn't depend on the name's length
-  // (it stacks vertically, so it's basically the font's line-height either
-  // way), so rather than guess at pill padding/border/line-height and get
-  // it wrong, briefly render one real 1-slot and one real 2-slot pill
+  // A name's rendered height doesn't depend on how long it is (one line is
+  // one line), so rather than guess at row padding/border/line-height and
+  // get it wrong, briefly render one real 1-slot and one real 2-slot row
   // (invisible, off the layout flow) in the actual container and measure
-  // them — width of an empty pill, and how much each added slot costs.
-  function measurePillWidths(container) {
+  // them — height of an empty row, and how much each added slot costs.
+  function measurePillHeights(container) {
     const probe = document.createElement('div');
-    probe.className = 'name-pill';
+    probe.className = 'name-row';
     probe.style.visibility = 'hidden';
     probe.style.position = 'absolute';
     probe.style.left = '-9999px';
     probe.innerHTML = '<span class="slot">Xx</span>';
     container.appendChild(probe);
-    const singleWidth = probe.offsetWidth;
+    const singleHeight = probe.offsetHeight;
     probe.innerHTML = '<span class="slot">Xx</span><span class="slot">Xx</span>';
-    const slotWidth = probe.offsetWidth - singleWidth;
+    const slotHeight = probe.offsetHeight - singleHeight;
     container.removeChild(probe);
-    return { singleWidth, slotWidth };
+    return { singleHeight, slotHeight };
+  }
+
+  // Every row (single name or merged) renders at exactly the width of the
+  // single longest name among this week's teams — measured for real
+  // rather than guessed, so there's no leftover margin around shorter
+  // names once that longest one is accounted for.
+  function measureMaxRowWidth(container, names) {
+    const probe = document.createElement('div');
+    probe.className = 'name-row';
+    probe.style.visibility = 'hidden';
+    probe.style.position = 'absolute';
+    probe.style.left = '-9999px';
+    container.appendChild(probe);
+    let max = 0;
+    for (const name of names) {
+      probe.innerHTML = `<span class="slot">${name}</span>`;
+      max = Math.max(max, probe.offsetWidth);
+    }
+    container.removeChild(probe);
+    return max;
   }
 
   // Positions every team by its actual score along one axis (not by rank),
-  // merging adjacent teams into a single wider pill wherever they'd
+  // merging adjacent teams into a single taller row wherever they'd
   // otherwise visually collide, so distance on the page always means
-  // distance in points instead of silently overlapping.
-  function computeSpreadClusters(ascendingTeams, plotWidth, singleWidth, slotWidth) {
+  // distance in points instead of silently overlapping. Pure 0..plotSize
+  // number-line math — used for the vertical axis, with "width" meaning
+  // "size along the axis" (height, here) and pos 0 meaning the lowest score.
+  function computeSpreadClusters(ascendingTeams, plotSize, singleSize, slotSize) {
     const scores = ascendingTeams.map(t => t.score);
     const min = scores[0];
     const max = scores[scores.length - 1];
-    const idealX = s => (max === min ? plotWidth / 2 : ((s - min) / (max - min)) * plotWidth);
-    const widthOf = c => singleWidth + (c.members.length - 1) * slotWidth;
+    const idealPos = s => (max === min ? plotSize / 2 : ((s - min) / (max - min)) * plotSize);
+    const sizeOf = c => singleSize + (c.members.length - 1) * slotSize;
 
     // Pass 1: greedy merge based on each team's ideal (unclamped) position.
     const clusters = [];
     for (const t of ascendingTeams) {
-      const x = idealX(t.score);
+      const pos = idealPos(t.score);
       const prev = clusters[clusters.length - 1];
       if (prev) {
-        const requiredGap = widthOf(prev) / 2 + singleWidth / 2 + SPREAD_MIN_GAP;
-        if (x - prev.x < requiredGap) {
+        const requiredGap = sizeOf(prev) / 2 + singleSize / 2 + SPREAD_MIN_GAP;
+        if (pos - prev.pos < requiredGap) {
           prev.members.push(t);
-          prev.x = (prev.x * (prev.members.length - 1) + x) / prev.members.length;
+          prev.pos = (prev.pos * (prev.members.length - 1) + pos) / prev.members.length;
           continue;
         }
       }
-      clusters.push({ members: [t], x });
+      clusters.push({ members: [t], pos });
     }
 
-    // Pass 2: push clusters apart left-to-right so a merge that widened a
-    // pill can't then make it overlap its neighbor.
+    // A cluster's own half-size can push it past the plot's edge even
+    // though its center (pos) is a valid in-range position — e.g. several
+    // teams tied at the very lowest score merge into a row centered at
+    // pos=0, and the centering transform then hangs half that row off the
+    // edge of the card entirely. Clamp the first/last cluster inward by
+    // their own half-size before spacing the rest off of them.
+    if (clusters.length) {
+      const first = clusters[0];
+      first.pos = Math.max(first.pos, sizeOf(first) / 2);
+    }
+
+    // Pass 2: push clusters apart low-to-high so a merge that grew a row
+    // can't then make it overlap its neighbor.
     for (let i = 1; i < clusters.length; i++) {
       const prevC = clusters[i - 1], curC = clusters[i];
-      const requiredGap = widthOf(prevC) / 2 + widthOf(curC) / 2 + SPREAD_MIN_GAP;
-      if (curC.x - prevC.x < requiredGap) curC.x = prevC.x + requiredGap;
+      const requiredGap = sizeOf(prevC) / 2 + sizeOf(curC) / 2 + SPREAD_MIN_GAP;
+      if (curC.pos - prevC.pos < requiredGap) curC.pos = prevC.pos + requiredGap;
     }
+
+    if (clusters.length) {
+      const last = clusters[clusters.length - 1];
+      last.pos = Math.min(last.pos, plotSize - sizeOf(last) / 2);
+    }
+    clusters.forEach(c => { c.size = sizeOf(c); });
     return clusters;
+  }
+
+  // The median tick's position comes from where the rows actually
+  // rendered (post edge-clamping above), not from the raw linear score
+  // scale — otherwise a cluster shifted to avoid spilling off the card
+  // could end up visually on the wrong side of a tick placed purely by
+  // score, even though every one of its members is genuinely below (or
+  // above) the median.
+  function findMedianTickPos(clusters, median, plotSize) {
+    for (const c of clusters) {
+      const belowCount = c.members.filter(m => m.score < median).length;
+      if (belowCount > 0 && belowCount < c.members.length) {
+        // Straddles the median — tick lines up with this row's own
+        // below/above color split, not just its center.
+        return (c.pos - c.size / 2) + (belowCount / c.members.length) * c.size;
+      }
+    }
+    let belowEdge = 0, aboveEdge = plotSize;
+    for (const c of clusters) {
+      if (c.members.every(m => m.score < median)) belowEdge = Math.max(belowEdge, c.pos + c.size / 2);
+      else aboveEdge = Math.min(aboveEdge, c.pos - c.size / 2);
+    }
+    return (belowEdge + aboveEdge) / 2;
   }
 
   function renderSpreadChart(elId, ascendingTeams, median) {
     const el = document.getElementById(elId);
     if (!el || ascendingTeams.length < 2) return;
-    const plotWidth = el.clientWidth || 300;
-    const { singleWidth, slotWidth } = measurePillWidths(el);
-    const clusters = computeSpreadClusters(ascendingTeams, plotWidth, singleWidth, slotWidth);
-    const toPct = px => (px / plotWidth) * 100;
-    const min = ascendingTeams[0].score, max = ascendingTeams[ascendingTeams.length - 1].score;
-    const idealX = s => (max === min ? plotWidth / 2 : ((s - min) / (max - min)) * plotWidth);
+    const plotSize = el.clientHeight || 220;
+    const { singleHeight, slotHeight } = measurePillHeights(el);
+    const rowWidth = measureMaxRowWidth(el, ascendingTeams.map(t => t.name));
+    const clusters = computeSpreadClusters(ascendingTeams, plotSize, singleHeight, slotHeight);
+    // Highest score renders at the top, so a cluster's axis position (0 =
+    // lowest score) maps to "100% minus its share of the plot" for `top`.
+    const toTopPct = pos => 100 - (pos / plotSize) * 100;
     const RED = 'rgba(192,87,75,0.28)';
     const GREEN = 'rgba(76,154,107,0.28)';
 
     let html = '<div class="axis"></div>';
-    const medianPct = toPct(idealX(median));
-    html += `<div class="median-tick" style="left:${medianPct}%;"></div>`;
-    html += `<div class="median-tick-label" style="left:${medianPct}%;">${fmtScore(median)}</div>`;
+    const medianPct = toTopPct(findMedianTickPos(clusters, median, plotSize));
+    html += `<div class="median-tick" style="top:${medianPct}%;"></div>`;
 
     clusters.forEach(c => {
       const belowCount = c.members.filter(m => m.score < median).length;
@@ -960,22 +1020,24 @@
         borderColor = 'rgba(192,87,75,0.5)';
       } else {
         // Straddles the median — split proportional to how many members
-        // are on each side (1 below + 1 above = an even half/half pill).
+        // are on each side (1 below + 1 above = an even half/half row).
+        // "to top" so the below/red share sits at the bottom, matching
+        // low-scores-at-the-bottom.
         const splitPct = (belowCount / c.members.length) * 100;
-        background = `linear-gradient(to right, ${RED} ${splitPct}%, ${GREEN} ${splitPct}%)`;
+        background = `linear-gradient(to top, ${RED} ${splitPct}%, ${GREEN} ${splitPct}%)`;
         borderColor = 'var(--line)';
       }
       const slots = c.members
         .slice()
-        .sort((a, b) => a.score - b.score)
+        .sort((a, b) => b.score - a.score) // highest first = rendered on top
         .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}">${m.name}</span>`)
         .join('');
-      html += `<div class="name-pill" style="left:${toPct(c.x)}%; background:${background}; border-color:${borderColor};">${slots}</div>`;
+      html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background:${background}; border-color:${borderColor};">${slots}</div>`;
     });
 
     const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
-    html += `<div class="endcap-score" style="left:${toPct(idealX(lowest.score))}%;">${fmtScore(lowest.score)}</div>`;
-    html += `<div class="endcap-score" style="left:${toPct(idealX(highest.score))}%;">${fmtScore(highest.score)}</div>`;
+    html += `<div class="endcap-score low">${fmtScore(lowest.score)}</div>`;
+    html += `<div class="endcap-score high">${fmtScore(highest.score)}</div>`;
     el.innerHTML = html;
   }
 
@@ -998,13 +1060,16 @@
           <span class="median-card-title">${title}</span>
           <span class="median-card-value">${fmtScore(medianValue)}</span>
         </div>
-        <div class="group-label above">Above Median</div>
-        ${buildMiniGrid(above, 'above')}
-        <div class="group-label below">Below Median</div>
-        ${buildMiniGrid(below, 'below')}
-        <div class="spread-section">
-          <div class="spread-label">Spread this week</div>
-          <div class="dotplot" id="${elId}"></div>
+        <div class="card-body">
+          <div>
+            <div class="group-label above">Above Median</div>
+            ${buildMiniGrid(above, 'above')}
+            <div class="group-label below">Below Median</div>
+            ${buildMiniGrid(below, 'below')}
+          </div>
+          <div class="spread-col">
+            <div class="vplot" id="${elId}"></div>
+          </div>
         </div>
       </div>`;
   }
@@ -1162,9 +1227,9 @@
             : renderMedianPendingCard('Current Median')) +
           renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected', 'spread-projected');
         document.getElementById('median-container').innerHTML = medianHtml;
-        // Needs the .dotplot elements to actually be in the DOM first, so
-        // clientWidth (used for the collision math) reflects their real
-        // rendered width instead of a guessed constant.
+        // Needs the .vplot elements to actually be in the DOM first, so
+        // clientHeight (used for the collision math) reflects their real
+        // rendered height instead of a guessed constant.
         spreadChartJobs.forEach(job => renderSpreadChart(job.elId, job.ascending, job.median));
         updateKickoffCountdown();
 
