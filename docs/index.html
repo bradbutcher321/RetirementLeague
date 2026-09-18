@@ -176,6 +176,30 @@
     align-items: center;
     justify-content: center;
   }
+  .expand-chip{
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 9px;
+    white-space: nowrap;
+  }
+  /* Both labels always render; CSS (driven by the same .expanded class the
+     click handler already toggles) shows only the one that matches — no
+     extra JS needed to keep the chip's text in sync with the card state. */
+  .expand-chip .label-expanded{ display: none; }
+  .matchup-card.expanded .expand-chip .label-collapsed{ display: none; }
+  .matchup-card.expanded .expand-chip .label-expanded{ display: inline; }
   .live-indicator{
     /* Anchored to the top of the divider (independent of the centered VS
        badge below it) with an opaque background so it fully covers the
@@ -237,22 +261,34 @@
   .matchup-details{
     display: none;
     grid-column: 1 / -1;
+    /* Matches the card's own surface — the per-row game-state colors are
+       what should read as "different here", not a separately-tinted
+       panel competing with them. The border-top plus a faint inset shadow
+       are enough to read as a drawer without changing the base color. */
+    background: var(--surface);
     border-top: 1px solid var(--line);
-    padding: 4px 16px 14px;
+    box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.35);
   }
   .matchup-card.expanded .matchup-details{ display: block; }
 
   .detail-row{
     display: grid;
     grid-template-columns: minmax(130px, 1fr) 46px minmax(130px, 1fr);
-    align-items: center;
+    align-items: stretch;
     gap: 8px;
-    padding: 9px 0;
     border-bottom: 1px solid var(--line);
   }
+  .detail-row .detail-position{ align-self: center; }
   .detail-row:last-child{ border-bottom: none; }
   .detail-position{
     text-align: center;
+  }
+  .position-label{
+    display: inline-block;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 2px 5px;
     font-size: 0.66rem;
     font-weight: 700;
     color: var(--text-dim);
@@ -264,8 +300,7 @@
     grid-template-columns: 1fr auto;
     align-items: center;
     column-gap: 8px;
-    padding: 5px 8px;
-    border-radius: 6px;
+    padding: 10px 8px;
     border: 1px solid transparent;
     position: relative;
     min-width: 0;
@@ -276,10 +311,25 @@
   .player-cell.home{ grid-template-columns: auto 1fr; }
   .player-cell.home .player-info{ order: 2; text-align: right; }
   .player-cell.home .player-score{ order: 1; text-align: left; }
-  .player-cell.live{
-    background: rgba(255, 201, 4, 0.08);
-    border-color: var(--gold-bright);
+
+  /* Only the two states actually worth looking at right now get an
+     accent: in progress, and in progress with the ball (gold — the one
+     moment that should really pop). Not-started and final both stay
+     neutral, full-bleed to the card's own edge — left for away, right for
+     home — with no rounding and no surrounding gap, so consecutive rows
+     (and the row against the card above it) read as one continuous strip
+     rather than a series of separate floating boxes. */
+  .player-cell.away{ border-left: 4px solid var(--state-bar-color, transparent); padding-left: 10px; }
+  .player-cell.home{ border-right: 4px solid var(--state-bar-color, transparent); padding-right: 10px; }
+  .player-cell.state-live{
+    --state-bar-color: rgba(214, 214, 208, 0.5);
+    background: rgba(214, 214, 208, 0.10);
   }
+  .player-cell.state-possession{
+    --state-bar-color: rgba(255, 201, 4, 0.6);
+    background: rgba(255, 201, 4, 0.10);
+  }
+
   .player-info{ min-width: 0; text-align: left; }
   .player-score{ text-align: right; }
   .team-tag{
@@ -291,7 +341,7 @@
     border: 1px solid var(--line);
     border-radius: 4px;
     padding: 1px 4px;
-    margin-right: 4px;
+    margin-left: 4px;
     vertical-align: 1px;
   }
   .player-name{
@@ -315,26 +365,29 @@
     font-variant-numeric: tabular-nums;
     margin-top: 2px;
   }
-  .player-stat-line, .player-game-line{
+  .player-game-line{
     font-size: 0.7rem;
     color: var(--text-dim);
     margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .offense-chip{
-    position: absolute;
-    top: 4px;
-    font-size: 0.56rem;
-    font-weight: 800;
-    letter-spacing: 0.03em;
-    color: var(--gold-bright);
-    border: 1px solid var(--gold-bright);
-    border-radius: 4px;
-    padding: 1px 4px;
-    background: var(--surface);
+  /* Always reserves 2 lines of height (even for a short or empty stat
+     line) so a QB's longer line and an unstarted player's blank one still
+     leave every row — on both sides of the card — the same height. */
+  .player-stat-line{
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+    line-height: 1.35;
+    min-height: calc(0.7rem * 1.35 * 2);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  .player-cell.away .offense-chip{ left: 4px; }
-  .player-cell.home .offense-chip{ right: 4px; }
-
   /* ---------- Leaderboard ---------- */
   .leaderboard{
     border: 1px solid var(--line);
@@ -602,9 +655,19 @@
   const expandedMatchups = new Set();
   const matchupKey = (m) => `${m.awayName}::${m.homeName}`;
 
-  function renderPlayerCell(p, side) {
+  // Four states a starter's real NFL game can be in: hasn't kicked off
+  // yet, in progress, in progress AND their team has the ball (the single
+  // highest-attention moment), or over. Drives the whole-cell wash and
+  // edge accent bar via .player-cell.state-* — colors live in CSS.
+  function playerState(p) {
+    if (!p || !p.game) return null;
+    if (p.game.state === 'pre') return 'pre';
+    if (p.game.state === 'post') return 'final';
+    return p.game.hasPossession ? 'possession' : 'live';
+  }
+
+  function renderPlayerCell(p, side, state) {
     if (!p) return `<div class="player-cell ${side}"></div>`;
-    const live = p.game && p.game.state === 'in';
     const current = p.livePoints !== null && p.livePoints !== undefined ? p.livePoints : 0;
     let gameLine = '';
     if (p.game) {
@@ -622,12 +685,11 @@
     }
     const teamTag = p.game && p.game.team ? `<span class="team-tag">${p.game.team}</span>` : '';
     return `
-      <div class="player-cell ${side} ${live ? 'live' : ''}">
-        ${live && p.game.hasPossession ? `<span class="offense-chip">OFF</span>` : ''}
+      <div class="player-cell ${side} ${state ? 'state-' + state : ''}">
         <div class="player-info">
-          <div class="player-name">${teamTag}${p.name}</div>
-          ${p.statLine ? `<div class="player-stat-line">${p.statLine}</div>` : ''}
-          ${gameLine ? `<div class="player-game-line">${gameLine}</div>` : ''}
+          <div class="player-name">${p.name}${teamTag}</div>
+          <div class="player-game-line">${gameLine}</div>
+          <div class="player-stat-line">${p.statLine || ''}</div>
         </div>
         <div class="player-score">
           <div class="current">${fmtScore(current)}</div>
@@ -644,11 +706,15 @@
     for (let i = 0; i < rowCount; i++) {
       const a = awayPlayers[i];
       const h = homePlayers[i];
+      const awayState = playerState(a);
+      const homeState = playerState(h);
       rows.push(`
         <div class="detail-row">
-          ${renderPlayerCell(a, 'away')}
-          <div class="detail-position">${(a && a.slot) || (h && h.slot) || ''}</div>
-          ${renderPlayerCell(h, 'home')}
+          ${renderPlayerCell(a, 'away', awayState)}
+          <div class="detail-position">
+            <span class="position-label">${(a && a.slot) || (h && h.slot) || ''}</span>
+          </div>
+          ${renderPlayerCell(h, 'home', homeState)}
         </div>`);
     }
     return `<div class="matchup-details">${rows.join('')}</div>`;
@@ -707,6 +773,10 @@
         <div class="vs-divider">
           <span class="vs-badge">VS</span>
           ${isLive ? `<span class="live-indicator"><span class="pulse-dot"></span>Live</span>` : ''}
+          <span class="expand-chip">
+            <span class="label-collapsed">▾ Expand</span>
+            <span class="label-expanded">▴ Collapse</span>
+          </span>
         </div>
         <div class="side home ${sideClass(homeLeading)}">
           <div class="team-name">${m.homeName}</div>
