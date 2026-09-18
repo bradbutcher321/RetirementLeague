@@ -75,8 +75,10 @@
     flex-direction: column;
     gap: 6px;
     border-top: 3px solid transparent;
+    transition: border-top-color 0.4s ease;
   }
   .side.leading{ border-top-color: var(--gold-bright); }
+  .side.leading.final{ border-top-color: var(--turf); }
 
   .side.away{ text-align: left; align-items: flex-start; }
   .side.home{ text-align: right; align-items: flex-end; }
@@ -104,6 +106,7 @@
     gap: 6px;
     color: var(--text-dim);
     font-size: 0.82rem;
+    white-space: nowrap;
   }
   .side.home .meta-row{ flex-direction: row-reverse; }
   .manager-name{ font-weight: 500; }
@@ -113,12 +116,16 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
   }
   .side.home .score-line{ flex-direction: row-reverse; }
   .score{
     font-family: var(--scoreboard);
     font-weight: 700;
-    font-size: 2.4rem;
+    /* Shrinks fluidly on narrow phones instead of wrapping onto a second
+       line when a score picks up an extra digit or a minus sign. */
+    font-size: clamp(1.6rem, 8vw, 2.4rem);
     font-variant-numeric: tabular-nums;
     line-height: 1;
   }
@@ -165,8 +172,31 @@
     padding: 0 8px;
     align-self: stretch;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 6px;
+  }
+  .live-indicator{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--turf);
+  }
+  .live-indicator .pulse-dot{
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--turf);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(1.35); }
   }
   .vs-divider::before{
     content: "";
@@ -455,8 +485,13 @@
 
   function renderMatchupCard(m) {
     const homeLeading = parseFloat(m.homeScore) >= parseFloat(m.awayScore);
-    const statusBadge = (n, label) => {
-      const count = parseInt(n, 10) || 0;
+    const homeInPlay = parseInt(m.homeInPlay, 10) || 0;
+    const awayInPlay = parseInt(m.awayInPlay, 10) || 0;
+    const homeRemaining = parseInt(m.homeRemaining, 10) || 0;
+    const awayRemaining = parseInt(m.awayRemaining, 10) || 0;
+    const isLive = homeInPlay + awayInPlay > 0;
+    const isFinal = homeInPlay + awayInPlay + homeRemaining + awayRemaining === 0;
+    const statusBadge = (count, label) => {
       const done = count === 0;
       return `<span class="remaining-badge ${done ? 'done' : ''}">
                 <span class="dot"></span>${count} ${label}
@@ -464,8 +499,8 @@
     };
     const statusRow = (inPlay, remaining) => `
       <div class="badge-row">
-        ${statusBadge(inPlay, 'in play')}
-        ${statusBadge(remaining, 'left to play')}
+        ${statusBadge(inPlay, 'In Play')}
+        ${statusBadge(remaining, 'To Play')}
       </div>`;
     const chipRow = (winProbability, streak) => {
       const wpChip = typeof winProbability === 'number'
@@ -482,9 +517,11 @@
         <span>${record}</span>
       </div>`;
 
+    const sideClass = (leading) => leading ? `leading ${isFinal ? 'final' : ''}` : '';
+
     return `
       <div class="matchup-card">
-        <div class="side away ${!homeLeading ? 'leading' : ''}">
+        <div class="side away ${sideClass(!homeLeading)}">
           <div class="team-name">${m.awayName}</div>
           ${metaRow(m.awayManager, m.awayRecord)}
           <div class="score-line">
@@ -492,10 +529,13 @@
             <span class="proj">proj ${fmtScore(m.awayProjected)}</span>
           </div>
           ${chipRow(m.awayWinProbability, m.awayStreak)}
-          ${statusRow(m.awayInPlay, m.awayRemaining)}
+          ${statusRow(awayInPlay, awayRemaining)}
         </div>
-        <div class="vs-divider"><span class="vs-badge">VS</span></div>
-        <div class="side home ${homeLeading ? 'leading' : ''}">
+        <div class="vs-divider">
+          <span class="vs-badge">VS</span>
+          ${isLive ? `<span class="live-indicator"><span class="pulse-dot"></span>Live</span>` : ''}
+        </div>
+        <div class="side home ${sideClass(homeLeading)}">
           <div class="team-name">${m.homeName}</div>
           ${metaRow(m.homeManager, m.homeRecord)}
           <div class="score-line">
@@ -503,7 +543,7 @@
             <span class="proj">proj ${fmtScore(m.homeProjected)}</span>
           </div>
           ${chipRow(m.homeWinProbability, m.homeStreak)}
-          ${statusRow(m.homeInPlay, m.homeRemaining)}
+          ${statusRow(homeInPlay, homeRemaining)}
         </div>
       </div>`;
   }
@@ -644,7 +684,17 @@
         if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
 
         const teams = data.teams || [];
-        const matchups = data.matchups || [];
+        // Fully final matchups (nobody left to play, nobody in play, on
+        // either side) sink to the bottom, but only ever move there once —
+        // live and not-yet-started matchups keep their original relative
+        // order instead of continuously reshuffling every poll.
+        const isMatchupFinal = (m) =>
+          (parseInt(m.homeInPlay, 10) || 0) + (parseInt(m.awayInPlay, 10) || 0) +
+          (parseInt(m.homeRemaining, 10) || 0) + (parseInt(m.awayRemaining, 10) || 0) === 0;
+        const matchups = (data.matchups || [])
+          .map((m, i) => ({ m, i, final: isMatchupFinal(m) }))
+          .sort((a, b) => (a.final === b.final ? a.i - b.i : a.final ? 1 : -1))
+          .map(({ m }) => m);
 
         document.getElementById('week-header').textContent = data.week ? `Live Dashboard — Week ${data.week}` : 'Live Dashboard';
         document.getElementById('curr-median').textContent = fmtScore(data.currentMedian);
