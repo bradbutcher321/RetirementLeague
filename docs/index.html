@@ -729,7 +729,7 @@
 
   function renderPlayerCell(p, side, state) {
     if (!p) return `<div class="player-cell ${side}"></div>`;
-    const current = p.livePoints !== null && p.livePoints !== undefined ? p.livePoints : 0;
+    const hasLiveScore = p.livePoints !== null && p.livePoints !== undefined;
     let gameLine = '';
     if (p.game) {
       if (p.game.state === 'pre') {
@@ -753,7 +753,7 @@
           <div class="player-stat-line">${p.statLine || ''}</div>
         </div>
         <div class="player-score">
-          <div class="current">${fmtScore(current)}</div>
+          <div class="current">${hasLiveScore ? fmtScore(p.livePoints) : '-'}</div>
           <div class="projected">${fmtScore(p.projectedPoints)}</div>
         </div>
       </div>`;
