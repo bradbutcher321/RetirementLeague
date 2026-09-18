@@ -10,45 +10,28 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="nav.css">
 <style>
-  /* ---------- Header / ticker ---------- */
-  .ticker{
+  /* ---------- Header ---------- */
+  .header-row{
     display: flex;
-    border-top: 1px solid var(--line);
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
     border-bottom: 1px solid var(--line);
+    padding-bottom: 20px;
     margin-bottom: 34px;
   }
-  .ticker-item{
-    flex: 1;
-    padding: 16px 18px;
-    border-right: 1px solid var(--line);
-  }
-  .ticker-item:last-child{ border-right: none; }
-  .ticker-label{
+  .updated-block{ text-align: right; }
+  .updated-label{
     color: var(--text-dim);
     font-size: 0.78rem;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
-  .ticker-value{
+  .updated-value{
     font-family: var(--scoreboard);
     font-weight: 700;
-    font-size: 1.7rem;
+    font-size: 1.1rem;
     font-variant-numeric: tabular-nums;
-  }
-  .ticker-value-updated{ font-size: 1.1rem; }
-
-  @media (max-width: 480px){
-    .ticker{ flex-direction: column; }
-    .ticker-item{
-      border-right: none;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-    }
-    .ticker-item:last-child{ border-bottom: none; }
-    .ticker-label{ margin-bottom: 0; }
-    .ticker-value{ font-size: 1.3rem; }
   }
 
   /* ---------- Matchup cards ---------- */
@@ -599,24 +582,17 @@
   <div id="site-nav"></div>
   <div class="wrap">
     <header>
-      <div class="eyebrow">Retirement League</div>
-      <h1 id="week-header">Live Dashboard</h1>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1 id="week-header">Live Dashboard</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
     </header>
-
-    <div class="ticker">
-      <div class="ticker-item">
-        <div class="ticker-label">Current Median</div>
-        <div class="ticker-value" id="curr-median">—</div>
-      </div>
-      <div class="ticker-item">
-        <div class="ticker-label">Projected Median</div>
-        <div class="ticker-value" id="proj-median">—</div>
-      </div>
-      <div class="ticker-item">
-        <div class="ticker-label">Updated</div>
-        <div class="ticker-value ticker-value-updated" id="updated-at">—</div>
-      </div>
-    </div>
 
     <section>
       <h2>Median Watch</h2>
@@ -955,8 +931,6 @@
           .map(({ m }) => m);
 
         document.getElementById('week-header').textContent = data.week ? `Live Dashboard — Week ${data.week}` : 'Live Dashboard';
-        document.getElementById('curr-median').textContent = fmtScore(data.currentMedian);
-        document.getElementById('proj-median').textContent = fmtScore(data.projectedMedian);
         document.getElementById('updated-at').textContent = data.updatedAt
           ? new Date(data.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : '—';
