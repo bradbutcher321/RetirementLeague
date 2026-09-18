@@ -388,47 +388,56 @@
     overflow: hidden;
   }
   /* ---------- Leaderboard ---------- */
-  .leaderboard{
-    border: 1px solid var(--line);
-    background: var(--surface);
-    /* overflow-x lives on this same element (not a separate wrapper) so its
-       own background/border box grows to cover the full scrollable width —
-       putting overflow on a plain wrapper around it left this element's box
-       (and its background) sized to only the original viewport width,
-       showing the page's black background once you scrolled past that. */
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+  /* One row per team instead of an 8-column table — Score/Proj dropped
+     (redundant with the matchup cards above) and the record shown once,
+     next to the manager's name, instead of in its own column. Everything
+     fits on a single row with no horizontal scroll or tap-to-expand. */
+  .leaderboard{ display: flex; flex-direction: column; gap: 8px; }
   .lb-row{
-    display: grid;
-    /* The name column has a 120px floor rather than shrinking freely, so on
-       a narrow phone the row's total width (32+120+70+84*5=642px) exceeds
-       the viewport and .leaderboard (its scrollable ancestor) scrolls
-       horizontally instead of every column getting crushed unreadably thin. */
-    grid-template-columns: 32px minmax(120px, 1fr) 70px 84px 84px 84px 84px 84px;
+    display: flex;
     align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--line);
-    font-size: 0.9rem;
-    gap: 4px;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--line);
+    padding: 10px 14px;
   }
-  .lb-row:last-child{ border-bottom: none; }
-  .lb-row.head{
+  .lb-row.playoff{ border-left-color: var(--turf); }
+  .lb-rank{
+    font-family: var(--scoreboard);
+    font-weight: 800;
+    font-size: 1.2rem;
     color: var(--text-dim);
-    font-size: 0.76rem;
-    background: var(--surface-raised);
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
   }
-  .lb-rank{ color: var(--text-dim); font-family: var(--scoreboard); font-weight: 700; }
+  .lb-row.playoff .lb-rank{ color: var(--gold-bright); }
+  .lb-identity{ flex: 1; min-width: 0; }
   .lb-name{
-    font-weight: 500;
-    min-width: 0;
+    font-weight: 600;
+    font-size: 0.92rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .lb-record{ color: var(--text-dim); font-size: 0.82rem; }
-  .lb-num{ font-variant-numeric: tabular-nums; text-align: right; }
-  .lb-current{ font-weight: 700; }
+  .lb-meta{ color: var(--text-dim); font-size: 0.76rem; margin-top: 1px; }
+  .lb-stat{ text-align: center; flex-shrink: 0; width: 48px; }
+  .lb-stat .v{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+  .lb-stat .l{ font-size: 0.58rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.02em; margin-top: 1px; }
+  .lb-playoff-chip{
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    min-width: 40px;
+    text-align: center;
+  }
+  .lb-playoff-chip.high{ border-color: var(--turf-dim); color: var(--turf); }
+  .lb-playoff-chip.low{ border-color: rgba(192,87,75,0.4); color: var(--loss); }
 
   /* ---------- Median Watch ---------- */
   .median-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -644,6 +653,8 @@
     .median-card{ padding: 16px; }
     .card-body{ gap: 8px; }
     .spread-col{ width: 84px; }
+    .lb-stat{ width: 38px; }
+    .lb-stat .l{ display: none; }
     .accolade-card{ padding: 24px 16px 20px; }
     .accolade-score{ font-size: 2.5rem; }
   }
@@ -1128,16 +1139,18 @@
   }
 
   function renderLeaderboardRow(t, rank) {
+    const hasPlayoffPct = typeof t.playoffPct === 'number';
+    const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : (t.playoffPct < 25 ? 'low' : '')) : '';
     return `
-      <div class="lb-row">
+      <div class="lb-row ${chipCls === 'high' ? 'playoff' : ''}">
         <div class="lb-rank">${rank}</div>
-        <div class="lb-name">${t.name}</div>
-        <div class="lb-record">${t.record}</div>
-        <div class="lb-num lb-current">${fmtScore(t.current)}</div>
-        <div class="lb-num">${fmtScore(t.projected)}</div>
-        <div class="lb-num lb-pf">${fmtScore(t.pointsFor)}</div>
-        <div class="lb-num lb-pa">${fmtScore(t.pointsAgainst)}</div>
-        <div class="lb-num lb-playoff">${fmtPct(t.playoffPct)}</div>
+        <div class="lb-identity">
+          <div class="lb-name">${t.name}</div>
+          <div class="lb-meta">${t.manager ? `${t.manager} • ` : ''}${t.record}</div>
+        </div>
+        <div class="lb-stat"><div class="v">${fmtScore(t.pointsFor)}</div><div class="l">PF</div></div>
+        <div class="lb-stat"><div class="v">${fmtScore(t.pointsAgainst)}</div><div class="l">PA</div></div>
+        <div class="lb-playoff-chip ${chipCls}">${fmtPct(t.playoffPct)}</div>
       </div>`;
   }
 
@@ -1204,12 +1217,8 @@
           if (el.scrollWidth > el.clientWidth) el.classList.add('truncate');
         });
 
-        const lbHeader = `
-          <div class="lb-row head">
-            <div>#</div><div>Team</div><div class="lb-record">Record</div><div class="lb-num">Score</div><div class="lb-num">Proj</div><div class="lb-num lb-pf">PF</div><div class="lb-num lb-pa">PA</div><div class="lb-num lb-playoff">Playoff%</div>
-          </div>`;
         document.getElementById('leaderboard-container').innerHTML =
-          lbHeader + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1)).join('');
+          teams.map((t, idx) => renderLeaderboardRow(t, idx + 1)).join('');
 
         // Before games kick off every team sits at 0.00 — an above/below split
         // on current score would be meaningless then, so that card shows a
