@@ -370,6 +370,7 @@ export async function buildDashboard(env) {
     week: currentWeek,
     currentMedian,
     projectedMedian,
+    playoffTeamCount: league.settings?.scheduleSettings?.playoffTeamCount || 0,
     teams: teams.map((t) => ({ ...t, playoffPct: anyPlayoffData ? round2(t.playoffPct) : null })),
     matchups,
     weeklyHigh: seasonStarted

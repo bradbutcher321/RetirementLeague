@@ -653,8 +653,9 @@
     .median-card{ padding: 16px; }
     .card-body{ gap: 8px; }
     .spread-col{ width: 84px; }
-    .lb-stat{ width: 38px; }
-    .lb-stat .l{ display: none; }
+    .lb-stat{ width: 34px; }
+    .lb-stat .v{ font-size: 0.82rem; }
+    .lb-stat .l{ font-size: 0.52rem; }
     .accolade-card{ padding: 24px 16px 20px; }
     .accolade-score{ font-size: 2.5rem; }
   }
@@ -1138,11 +1139,19 @@
     return isNaN(num) ? '—' : `${num.toFixed(1)}%`;
   }
 
-  function renderLeaderboardRow(t, rank) {
+  // The row's gold rank/green edge means "actually holds a playoff spot
+  // right now" (rank <= however many the league sends teams to) — a
+  // deterministic fact from standings position. The chip's color means
+  // "current playoff odds >= 50%" — a separate, probability-based signal
+  // that can disagree with raw rank (tiebreakers, remaining schedule).
+  // Deliberately not the same threshold, so showing both is more
+  // informative than picking just one.
+  function renderLeaderboardRow(t, rank, playoffTeamCount) {
     const hasPlayoffPct = typeof t.playoffPct === 'number';
-    const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : (t.playoffPct < 25 ? 'low' : '')) : '';
+    const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : 'low') : '';
+    const inPlayoffPosition = playoffTeamCount > 0 && rank <= playoffTeamCount;
     return `
-      <div class="lb-row ${chipCls === 'high' ? 'playoff' : ''}">
+      <div class="lb-row ${inPlayoffPosition ? 'playoff' : ''}">
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${t.name}</div>
@@ -1218,7 +1227,7 @@
         });
 
         document.getElementById('leaderboard-container').innerHTML =
-          teams.map((t, idx) => renderLeaderboardRow(t, idx + 1)).join('');
+          teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
 
         // Before games kick off every team sits at 0.00 — an above/below split
         // on current score would be meaningless then, so that card shows a
