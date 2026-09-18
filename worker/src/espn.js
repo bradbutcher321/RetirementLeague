@@ -65,30 +65,27 @@ export async function fetchBoxScores(env, week, matchupPeriod) {
   return espnGet(url, env, { "x-fantasy-filter": JSON.stringify(filter) });
 }
 
-/** ESPN's public (unauthenticated) sports scoreboard API — game score,
- * quarter, clock, and offense possession for every NFL game in a week.
- * Separate host/API from the private fantasy endpoints above, so no
- * cookie is sent. Its team ids are numerically identical to the fantasy
- * API's proTeamId (e.g. Miami is 15 in both), so callers can join the two
- * directly with no translation table. */
+/** ESPN's public (unauthenticated) NFL scoreboard — game score, quarter,
+ * clock, and offense possession for every game in a week. Deliberately
+ * *not* site.api.espn.com/apis/site/v2/... (the "normal" public sports
+ * API): that host's WAF returns a 403 to every request from a deployed
+ * Worker (confirmed live — identical request succeeds from a local curl,
+ * fails from Cloudflare's IPs), with no header combination found that
+ * changes that. cdn.espn.com's core scoreboard page-data endpoint returns
+ * the same event/competition shape (one level deeper, under
+ * content.sbData) and isn't behind that block. Its team ids are still
+ * numerically identical to the fantasy API's proTeamId (e.g. Miami is 15
+ * in both), so callers can join the two directly with no translation
+ * table. */
 export async function fetchNflScoreboard(env, week) {
-  const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week=${week}&seasontype=2&year=${env.ESPN_YEAR}`;
-  const res = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-      // Without a browser-like UA, ESPN's public site API silently rejects
-      // requests from datacenter/Worker IPs (confirmed: identical request
-      // works fine from a local curl, fails with no useful error from a
-      // deployed Worker).
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    },
-  });
+  const url = `https://cdn.espn.com/core/nfl/scoreboard?xhr=1&year=${env.ESPN_YEAR}&week=${week}&seasontype=2`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(`NFL scoreboard request failed (${res.status}): ${body.slice(0, 300)}`);
   }
-  return res.json();
+  const data = await res.json();
+  return data?.content?.sbData || null;
 }
 
 /** `scheduleSettings.matchupPeriods` is {matchupId: [week, week, ...]} —
