@@ -59,21 +59,20 @@
     const done = seasons.filter(s => complete.has(s.year));
     const draftPos = (p, y) => (D.draft_order[p] || {})[y];
     const totalWins = s => s.tot_w + s.med_w;
-    const regWins = s => s.reg_w + s.med_w;
     const noBye = D.games.filter(g => g.type !== 'Bye' && g.p2);
     const out = [];
 
     // ----- Champions & Sackos -----
     const champs = done.filter(s => s.champ > 0).sort((a, b) => a.year - b.year);
     const sackos = done.filter(s => s.sacko > 0).sort((a, b) => a.year - b.year);
-    const yearRows = (list, winsFn) => list.map(s => ({
+    const yearRows = (list, reg) => list.map(s => ({
       name: s.player, wide: true, rank: s.year,
-      sub: `Draft position ${draftPos(s.player, s.year) ?? '—'}`,
-      val: winsFn(s), tone: '',
+      sub: reg ? `${s.reg_w + s.med_w}-${s.reg_l + s.med_l}` : `${s.tot_w + s.med_w}-${s.tot_l + s.med_l}`,
+      stats: [[draftPos(s.player, s.year) ?? '—', 'Draft']],
     }));
     out.push(section('Champions & Sackos', [
-      card('Champions', ranked(yearRows(champs, totalWins).reverse(), { podium: false })),
-      card('Sackos', ranked(yearRows(sackos, regWins).reverse(), { podium: false })),
+      card('Champions', ranked(yearRows(champs, false).reverse(), { podium: false })),
+      card('Sackos', ranked(yearRows(sackos, true).reverse(), { podium: false })),
       countCard('Championship Count', done, 'champ', 'Last won'),
       countCard('Sacko Count', done, 'sacko', 'Last received'),
     ]));
