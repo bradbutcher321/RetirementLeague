@@ -288,8 +288,16 @@
   <div id="site-nav"></div>
   <div class="wrap">
     <header>
-      <div class="eyebrow">Retirement League</div>
-      <h1>Franchise</h1>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Franchise</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
     </header>
 
     <div class="selector-row">
@@ -341,6 +349,14 @@
 
 <script src="nav.js"></script>
 <script>
+  // Time only if it was today, otherwise "Sep 17 · 3:42 PM".
+  function formatUpdated(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (d.toDateString() === new Date().toDateString()) return time;
+    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
+  }
   function fmt(n, decimals) {
     if (n === null || n === undefined || Number.isNaN(n)) return '—';
     return Number(n).toFixed(decimals === undefined ? 0 : decimals);
@@ -573,6 +589,7 @@
     .then(res => res.json())
     .then(data => {
       franchiseData = data;
+      document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
       const select = document.getElementById('franchise-select');
       select.innerHTML = data.players.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
 

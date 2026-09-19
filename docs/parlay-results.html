@@ -24,6 +24,19 @@
     border-radius: 4px;
   }
   .parlay-select:focus{ outline: 1px solid var(--gold-bright); }
+  .back-link{
+    background: none;
+    border: 1px solid var(--gold);
+    color: var(--gold-bright);
+    font-family: var(--body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .back-link:hover{ background: rgba(255,201,4,0.1); }
+  .back-link[hidden]{ display: none; }
 
   /* ---------- Parlay summary + legs ---------- */
   .parlay-card{
@@ -138,24 +151,28 @@
   <div id="site-nav"></div>
   <div class="wrap">
     <header>
-      <div class="eyebrow">Retirement League</div>
-      <h1>Parlay Results</h1>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Parlay Results</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
     </header>
 
     <section>
-      <h2>Current Parlay</h2>
-      <div id="current-container"><div class="loading-row">Loading parlay…</div></div>
-    </section>
-
-    <section>
-      <h2>Past Parlays</h2>
+      <h2 id="parlay-heading">Current Parlay</h2>
       <div class="selector-row">
         <label class="selector-label" for="year-select">Year</label>
-        <select class="parlay-select" id="year-select"></select>
+        <select class="parlay-select" id="year-select" autocomplete="off"></select>
         <label class="selector-label" for="week-select">Week</label>
-        <select class="parlay-select" id="week-select"></select>
+        <select class="parlay-select" id="week-select" autocomplete="off"></select>
+        <button type="button" class="back-link" id="back-to-current" hidden>Back to current</button>
       </div>
-      <div id="past-container"></div>
+      <div id="current-container"><div class="loading-row">Loading parlay…</div></div>
     </section>
 
     <section>
@@ -194,6 +211,14 @@
   }
   function fmtPct(n) {
     return n === null || n === undefined ? '—' : Number(n).toFixed(1) + '%';
+  }
+  // Time only if it was today, otherwise "Sep 17 · 3:42 PM".
+  function formatUpdated(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (d.toDateString() === new Date().toDateString()) return time;
+    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
   }
   function fmtTime(iso) {
     if (!iso) return 'TBD';
@@ -414,12 +439,12 @@
     .then(data => {
       const { players, weeks, stats } = data;
       const current = weeks[weeks.length - 1];
-      document.getElementById('current-container').innerHTML = renderParlay(current, players);
-
       const years = [...new Set(weeks.map(w => w.year))].sort((a, b) => b - a);
       const yearSel = document.getElementById('year-select');
       const weekSel = document.getElementById('week-select');
-      const past = document.getElementById('past-container');
+      const backBtn = document.getElementById('back-to-current');
+      const heading = document.getElementById('parlay-heading');
+      const container = document.getElementById('current-container');
       yearSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
 
       function fillWeeks(preferred) {
@@ -427,27 +452,29 @@
         weekSel.innerHTML = inYear.map(w => `<option value="${w.week}">Week ${w.week}</option>`).join('');
         if (preferred !== undefined && inYear.some(w => w.week === preferred)) weekSel.value = preferred;
       }
-      function showPast() {
+      function showSelected() {
         const w = weeks.find(x => x.year === Number(yearSel.value) && x.week === Number(weekSel.value));
-        past.innerHTML = w ? renderParlay(w, players) : '';
+        if (!w) return;
+        const isCurrent = w === current;
+        heading.textContent = isCurrent ? 'Current Parlay' : 'Past Parlay';
+        backBtn.hidden = isCurrent;
+        container.innerHTML = renderParlay(w, players);
       }
-      // Default the lookup to the most recent week that has finished, since the
-      // current one is already shown above.
-      const previous = weeks.length > 1 ? weeks[weeks.length - 2] : current;
-      yearSel.value = previous.year;
-      fillWeeks(previous.week);
-      showPast();
-      yearSel.addEventListener('change', () => { fillWeeks(); showPast(); });
-      weekSel.addEventListener('change', showPast);
+      function selectCurrent() {
+        yearSel.value = current.year;
+        fillWeeks(current.week);
+        showSelected();
+      }
+      selectCurrent();
+      yearSel.addEventListener('change', () => { fillWeeks(); showSelected(); });
+      weekSel.addEventListener('change', showSelected);
+      backBtn.addEventListener('click', selectCurrent);
 
       document.getElementById('leaders-container').innerHTML = renderLeaders(stats);
       document.getElementById('breakdown-container').innerHTML = renderBreakdowns(stats);
       document.getElementById('legs-container').innerHTML = renderLegs(stats);
 
-      const updated = new Date(data.generated_at);
-      if (!Number.isNaN(updated.getTime())) {
-        document.getElementById('footer').textContent = `Data from the league sheet · Last refreshed ${updated.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
-      }
+      document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
     })
     .catch(err => {
       console.error('Parlay data error:', err);

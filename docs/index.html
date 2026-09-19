@@ -11,30 +11,6 @@
 <link rel="stylesheet" href="nav.css">
 <style>
   /* ---------- Header ---------- */
-  .header-row{
-    display: flex;
-    justify-content: space-between;
-    /* flex-end (not center) so the visible text bottoms line up — h1's
-       own bottom margin is zeroed below so that margin doesn't throw off
-       where its "bottom edge" actually is. */
-    align-items: flex-end;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 28px;
-  }
-  .header-row h1{ margin-bottom: 0; }
-  .updated-block{ text-align: right; }
-  .updated-label{
-    color: var(--text-dim);
-    font-size: 0.78rem;
-    margin-bottom: 2px;
-  }
-  .updated-value{
-    font-family: var(--scoreboard);
-    font-weight: 700;
-    font-size: 1.1rem;
-    font-variant-numeric: tabular-nums;
-  }
 
   /* ---------- Matchup cards ---------- */
   .matchups{ display: flex; flex-direction: column; gap: 14px; }
