@@ -9,41 +9,106 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
-<style>
-  .coming-soon{
-    background: var(--surface);
-    border: 1px solid var(--line);
-    padding: 40px 24px;
-    text-align: center;
-    color: var(--text-dim);
-  }
-  .coming-soon strong{
-    display: block;
-    color: var(--text);
-    font-family: var(--scoreboard);
-    font-size: 1.3rem;
-    margin-bottom: 8px;
-  }
-</style>
+<link rel="stylesheet" href="league.css?v=1">
 </head>
 <body>
   <div id="site-nav"></div>
   <div class="wrap">
     <header>
-      <div class="eyebrow">Retirement League</div>
-      <h1>Standings</h1>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Standings</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
     </header>
 
     <section>
-      <div class="coming-soon">
-        <strong>Coming soon</strong>
-        This page is on the way — check back once it's built out.
+      <h2 id="standings-heading">Standings</h2>
+      <div class="selector-row">
+        <label class="selector-label" for="type-select">View</label>
+        <select class="lg-select" id="type-select" autocomplete="off">
+          <option value="reg">Regular Season</option>
+          <option value="final">Final Standings</option>
+        </select>
+        <label class="selector-label" for="year-select">Year</label>
+        <select class="lg-select" id="year-select" autocomplete="off"></select>
       </div>
+      <div id="standings-container"><div class="loading-row">Loading standings…</div></div>
     </section>
 
-    <footer>Retirement League</footer>
+    <footer>Data from the league sheet</footer>
   </div>
 
 <script src="nav.js"></script>
+<script src="league-common.js?v=1"></script>
+<script>
+  let DATA;
+
+  function build(year, type) {
+    const rows = DATA.seasons.filter(s => s.year === year).map(s => {
+      const reg = type === 'reg';
+      const w = (reg ? s.reg_w : s.tot_w) + s.med_w;
+      const l = (reg ? s.reg_l : s.tot_l) + s.med_l;
+      return {
+        player: s.player, w, l, pct: w + l ? w / (w + l) : null,
+        pf: reg ? s.reg_pf : s.tot_pf, pa: reg ? s.reg_pa : s.tot_pa,
+        rank: reg ? s.reg_rank : s.final_rank, s,
+      };
+    });
+    rows.sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.w - a.w || b.pf - a.pf);
+    return rows;
+  }
+
+  function render() {
+    const year = Number(document.getElementById('year-select').value);
+    const type = document.getElementById('type-select').value;
+    const rows = build(year, type);
+    const complete = DATA.completeYears.includes(year);
+    document.getElementById('standings-heading').textContent =
+      `${year} ${type === 'reg' ? 'Regular Season' : 'Final'} Standings`;
+
+    const items = rows.map(r => {
+      let badge = '';
+      if (complete && type === 'final') {
+        if (r.s.champ) badge = '<span class="badge gold">Champion</span>';
+        else if (r.s.sacko) badge = '<span class="badge loss">Sacko</span>';
+      }
+      return {
+        name: r.player, rank: r.rank, badge,
+        sub: `PF ${LG.f1(r.pf)} · PA ${LG.f1(r.pa)}`,
+        val: `${r.w}-${r.l}`,
+        stats: [[r.w, 'W'], [r.l, 'L'], [LG.pct(r.pct), 'Win %']],
+        podiumSub: `${LG.pct(r.pct)} · PF ${Math.round(r.pf)}`,
+      };
+    });
+
+    const note = year >= 2025 ? 'Wins and losses include the weekly median game.' : '';
+    let body = '';
+    if (items.length >= 3) {
+      body += '<div class="podium">' + items.slice(0, 3).map(it =>
+        `<div class="pod"><div class="pod-rank">#${it.rank}</div><div class="pod-name">${LG.esc(it.name)}</div>` +
+        `<div class="pod-val">${it.val}</div><div class="pod-sub">${LG.esc(it.podiumSub)}</div></div>`).join('') + '</div>';
+    }
+    body += items.slice(items.length >= 3 ? 3 : 0).map(it => LG.rowHtml(it, it.rank)).join('');
+    document.getElementById('standings-container').innerHTML = LG.card(
+      type === 'reg' ? 'Regular season' : 'After playoffs', body, note) ;
+  }
+
+  LG.load().then(data => {
+    DATA = data;
+    const years = data.years.slice().reverse();
+    document.getElementById('year-select').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    document.getElementById('year-select').value = data.currentYear;
+    document.getElementById('type-select').value = data.completeYears.includes(data.currentYear) ? 'final' : 'reg';
+    document.getElementById('year-select').addEventListener('change', render);
+    document.getElementById('type-select').addEventListener('change', render);
+    render();
+  }).catch(err => LG.showError('standings-container', err));
+</script>
 </body>
 </html>

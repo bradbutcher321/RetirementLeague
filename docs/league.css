@@ -1,0 +1,62 @@
+/* Shared styles for Standings, Head to Head, Overview and Game Records. */
+.selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.selector-label{ color: var(--text-dim); font-size: 0.82rem; }
+.lg-select{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 9px 12px;
+  border-radius: 4px;
+  max-width: 100%;
+}
+.lg-select:focus{ outline: 1px solid var(--gold); }
+
+.card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+.card-grid.stretch{ align-items: stretch; }
+@media (max-width: 720px){ .card-grid{ grid-template-columns: 1fr; } }
+.stat-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); }
+.stat-card-title{ padding: 12px 16px 4px; font-weight: 700; font-size: 0.95rem; }
+.stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 0 16px 8px; }
+.stat-card-body{ padding: 6px 10px 12px; }
+
+.podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+.pod{ background: var(--surface-raised); border: 1px solid var(--line); padding: 12px 6px; text-align: center; min-width: 0; }
+.pod:first-child{ border-color: var(--gold); }
+.pod-rank{ font-family: var(--scoreboard); font-size: 0.85rem; color: var(--gold); font-weight: 700; }
+.pod-name{ font-weight: 700; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; color: var(--gold); font-variant-numeric: tabular-nums; height: 2rem; line-height: 2rem; }
+.pod-val.long{ font-size: 1.25rem; }
+.pod-val.up{ color: var(--turf); }
+.pod-val.down{ color: var(--loss); }
+.pod-sub{ color: var(--text-dim); font-size: 0.7rem; min-height: 1em; }
+
+.row{
+  display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
+  background: var(--surface-raised); border: 1px solid var(--line); padding: 9px 12px; margin-top: 6px; min-height: 58px;
+}
+.row.norank{ grid-template-columns: minmax(0,1fr) auto; }
+.row.wide-rank{ grid-template-columns: 46px minmax(0,1fr) auto; }
+.row-rank{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; color: var(--text-dim); text-align: center; }
+.row-rank.year{ font-size: 1.05rem; }
+.row-name{ font-weight: 700; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-name.wrap{ white-space: normal; }
+.row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.25rem; font-variant-numeric: tabular-nums; text-align: right; }
+.row-val.gold{ color: var(--gold); }
+.row-val.up{ color: var(--turf); }
+.row-val.down{ color: var(--loss); }
+.row-stats{ display: flex; gap: 14px; }
+.row-stat{ text-align: center; min-width: 34px; }
+.row-stat:last-child{ min-width: 58px; }
+.row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
+.row.hl{ border-color: var(--gold); }
+
+.badge{ font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); margin-left: 6px; vertical-align: middle; white-space: nowrap; }
+.badge.gold{ color: var(--gold); border-color: var(--gold); }
+.badge.loss{ color: var(--loss); border-color: var(--loss); }
+
+.empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
