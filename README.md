@@ -17,8 +17,12 @@ career stats in sync with the league's Google Sheet.
   streaks, rivalries, scoring extremes, money, season-by-season history).
   Reads a static `docs/data/franchise.json` file, since this data only
   changes when results are entered.
-- Head to Head, Overview, Game Records, Standings, and Parlay Results are
-  placeholder pages, not yet built out.
+- **Parlay Results** (`docs/parlay-results.html`) — the current week's
+  parlay (with a week/year picker for past weeks), plus betting stats,
+  breakdowns, and "how far parlays get" charts. Reads a static
+  `docs/data/parlay.json` file.
+- Head to Head, Overview, Game Records, and Standings are placeholder
+  pages, not yet built out.
 
 ## How it updates
 
@@ -34,8 +38,14 @@ career stats in sync with the league's Google Sheet.
   computes each manager's career stats, and writes `docs/data/franchise.json`.
   Runs Tuesday/Thursday mornings and on-demand
   (`.github/workflows/refresh_franchise_data.yml`).
+- **`generate_parlay_data.py`** — reads the sheet's `Parlay Tracker` tab
+  (the hand-entered picks and results), reproduces the stats the sheet's
+  `Parlay Results` tab computes, and writes `docs/data/parlay.json`. Runs
+  every 30 minutes and on-demand
+  (`.github/workflows/refresh_parlay_data.yml`), and only commits when the
+  data actually changed.
 
-`generate_franchise_data.py` needs a Google service account key at
+Both scripts need a Google service account key at
 `google_secret.json` (gitignored, not committed) to authenticate with the
 Sheets API locally. In GitHub Actions this is written from the
 `GOOGLE_CREDENTIALS` secret.
@@ -43,9 +53,10 @@ Sheets API locally. In GitHub Actions this is written from the
 ## Repo layout
 
 ```
-docs/                   GitHub Pages site (HTML/CSS/JS + franchise.json)
+docs/                   GitHub Pages site (HTML/CSS/JS + franchise.json, parlay.json)
 worker/                 Cloudflare Worker powering the live Dashboard
 espn_api/               Vendored ESPN Fantasy API client library (Python, used by generate_franchise_data.py)
 generate_franchise_data.py    Franchise page data pipeline
+generate_parlay_data.py       Parlay Results page data pipeline
 .github/workflows/      Scheduled + manual automation
 ```
