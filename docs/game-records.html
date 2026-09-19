@@ -9,41 +9,88 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
-<style>
-  .coming-soon{
-    background: var(--surface);
-    border: 1px solid var(--line);
-    padding: 40px 24px;
-    text-align: center;
-    color: var(--text-dim);
-  }
-  .coming-soon strong{
-    display: block;
-    color: var(--text);
-    font-family: var(--scoreboard);
-    font-size: 1.3rem;
-    margin-bottom: 8px;
-  }
-</style>
+<link rel="stylesheet" href="league.css?v=3">
 </head>
 <body>
   <div id="site-nav"></div>
   <div class="wrap">
     <header>
-      <div class="eyebrow">Retirement League</div>
-      <h1>Game Records</h1>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Game Records</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
     </header>
 
     <section>
-      <div class="coming-soon">
-        <strong>Coming soon</strong>
-        This page is on the way — check back once it's built out.
+      <h2 id="rec-heading">All-Time Records</h2>
+      <div class="selector-row">
+        <label class="selector-label" for="year-select">Season</label>
+        <select class="lg-select" id="year-select" autocomplete="off"></select>
       </div>
+      <div class="card-grid stretch" id="records"><div class="loading-row">Loading records…</div></div>
     </section>
 
-    <footer>Retirement League</footer>
+    <footer>Data from the league sheet</footer>
   </div>
 
 <script src="nav.js"></script>
+<script src="league-common.js?v=2"></script>
+<script>
+  const { f2, card, ranked } = LG;
+  let D;
+
+  function when(g) {
+    return `${g.year} · Week ${g.week}${g.type === 'Reg' ? '' : ' · ' + g.type}`;
+  }
+
+  function render() {
+    const sel = document.getElementById('year-select').value;
+    document.getElementById('rec-heading').textContent = sel === 'all' ? 'All-Time Records' : `${sel} Records`;
+    const games = D.games.filter(g => g.type !== 'Bye' && g.p2 && g.s1 > 0 && g.s2 > 0 &&
+      g.winner !== 'In Progress' && (sel === 'all' || g.year === Number(sel)));
+
+    const scores = games.flatMap(g => [
+      { team: g.p1, s: g.s1, g }, { team: g.p2, s: g.s2, g },
+    ]);
+    const top = (list, n = 10) => list.slice(0, n);
+    const scoreItems = list => top(list).map(x => ({ name: x.team, sub: when(x.g), val: f2(x.s), tone: '' }));
+    const matchup = (g, val) => {
+      const w = g.winner === g.p1 ? [g.p1, g.s1, g.p2, g.s2] : [g.p2, g.s2, g.p1, g.s1];
+      return { name: `${w[0]} ${w[1]} vs ${w[2]} ${w[3]}`, sub: when(g), val, wrap: true };
+    };
+    const decided = games.filter(g => g.winner === g.p1 || g.winner === g.p2);
+    const margin = g => Math.abs(g.s1 - g.s2);
+    const total = g => g.s1 + g.s2;
+    const loserScore = g => (g.winner === g.p1 ? g.s2 : g.s1);
+    const winnerScore = g => (g.winner === g.p1 ? g.s1 : g.s2);
+    const by = (list, fn, desc) => list.slice().sort((a, b) => desc ? fn(b) - fn(a) : fn(a) - fn(b));
+    const mCard = (title, list, fn, note) => card(title, ranked(top(list).map(g => matchup(g, f2(fn(g)))), { podium: false }), note);
+
+    document.getElementById('records').innerHTML = [
+      card('Top Scores', ranked(scoreItems(scores.slice().sort((a, b) => b.s - a.s)), { podium: false })),
+      card('Lowest Scores', ranked(scoreItems(scores.slice().sort((a, b) => a.s - b.s)), { podium: false })),
+      mCard('Highest Victory Margins', by(decided, margin, true), margin),
+      mCard('Lowest Victory Margins', by(decided, margin, false), margin),
+      mCard('Most Combined Points', by(games, total, true), total),
+      mCard('Least Combined Points', by(games, total, false), total),
+      mCard('Highest Score in a Loss', by(decided, loserScore, true), loserScore, 'Scores shown are the loser’s'),
+      mCard('Lowest Score in a Win', by(decided, winnerScore, false), winnerScore, 'Scores shown are the winner’s'),
+    ].join('');
+  }
+
+  LG.load().then(data => {
+    D = data;
+    const sel = document.getElementById('year-select');
+    sel.innerHTML = '<option value="all">All-Time</option>' + data.years.slice().reverse().map(y => `<option value="${y}">${y}</option>`).join('');
+    sel.addEventListener('change', render);
+    render();
+  }).catch(err => LG.showError('records', err));
+</script>
 </body>
 </html>

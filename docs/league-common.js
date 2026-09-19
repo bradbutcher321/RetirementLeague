@@ -61,7 +61,7 @@ const LG = (() => {
       : `<div class="row-val ${it.tone || ''}">${it.val}</div>`;
     return `<div class="${cls}">` +
       (rank === null ? '' : `<div class="row-rank${it.wide ? ' year' : ''}">${rank}</div>`) +
-      `<div style="min-width:0"><div class="row-name${it.wrap ? ' wrap' : ''}">${esc(it.name)}${it.badge || ''}</div>` +
+      `<div style="min-width:0"><div class="row-name${it.wrap ? ' breaks' : ''}">${esc(it.name)}${it.badge || ''}</div>` +
       (it.sub ? `<div class="row-sub">${esc(it.sub)}</div>` : '') + `</div>${right}</div>`;
   }
 

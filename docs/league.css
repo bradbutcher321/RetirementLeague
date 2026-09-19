@@ -42,7 +42,7 @@
 .row-rank{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; color: var(--text-dim); text-align: center; }
 .row-rank.year{ font-size: 1.05rem; }
 .row-name{ font-weight: 700; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row-name.wrap{ white-space: normal; }
+.row-name.breaks{ white-space: normal; }
 .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.25rem; font-variant-numeric: tabular-nums; text-align: right; }
 .row-val.gold{ color: var(--gold); }

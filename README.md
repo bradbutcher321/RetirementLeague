@@ -21,8 +21,17 @@ career stats in sync with the league's Google Sheet.
   parlay (with a week/year picker for past weeks), plus betting stats,
   breakdowns, and "how far parlays get" charts. Reads a static
   `docs/data/parlay.json` file.
-- Head to Head, Overview, Game Records, and Standings are placeholder
-  pages, not yet built out.
+- **Standings** (`docs/standings.html`) — regular-season or final standings
+  for any year.
+- **Head to Head** (`docs/head-to-head.html`) — pick two teams to compare
+  their all-time and postseason results, with every game listed.
+- **Overview** (`docs/overview.html`) — champions, sackos, title games,
+  season and weekly scoring records, rankings, earnings, and streaks.
+- **Game Records** (`docs/game-records.html`) — top-10 single-game records,
+  all-time or for a single season.
+
+Standings, Head to Head, Overview, and Game Records all read
+`docs/data/league.json` and share `league.css` / `league-common.js`.
 
 ## How it updates
 
@@ -45,7 +54,12 @@ career stats in sync with the league's Google Sheet.
   (`.github/workflows/refresh_parlay_data.yml`), and only commits when the
   data actually changed.
 
-Both scripts need a Google service account key at
+- **`generate_league_data.py`** — writes `docs/data/league.json` (the game
+  log, per-season rollups, draft order, and earnings) from Game Tracker,
+  PlayerStats, RandomInfo, and Money Tracker. Runs every few hours and
+  on-demand (`.github/workflows/refresh_league_data.yml`).
+
+All scripts need a Google service account key at
 `google_secret.json` (gitignored, not committed) to authenticate with the
 Sheets API locally. In GitHub Actions this is written from the
 `GOOGLE_CREDENTIALS` secret.
@@ -58,5 +72,6 @@ worker/                 Cloudflare Worker powering the live Dashboard
 espn_api/               Vendored ESPN Fantasy API client library (Python, used by generate_franchise_data.py)
 generate_franchise_data.py    Franchise page data pipeline
 generate_parlay_data.py       Parlay Results page data pipeline
+generate_league_data.py       Standings / Head to Head / Overview / Game Records data pipeline
 .github/workflows/      Scheduled + manual automation
 ```
