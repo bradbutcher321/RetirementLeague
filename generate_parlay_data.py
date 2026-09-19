@@ -210,6 +210,10 @@ def compute_stats(players, weeks):
     winnings = {p: 0.0 for p in players}
     losses_amt = {p: 0.0 for p in players}
     sackos = {p: 0 for p in players}
+    biggest_hit = {}
+    safest_loss = {}
+    flat = {p: {"profit": 0.0, "bets": 0} for p in players}
+    streak = {p: {"current": 0, "longest_win": 0, "longest_loss": 0} for p in players}
     per_parlay = {n: 0 for n in range(len(players) + 1)}
     before_loss = {n: 0 for n in range(len(players) + 1)}
 
@@ -235,6 +239,26 @@ def compute_stats(players, weeks):
                 continue
             idx = 0 if p["result"] == "Win" else 1
             leg[name][idx] += 1
+            if idx == 0 and p["odds"] and (name not in biggest_hit or american_to_prob(p["odds"]) < american_to_prob(biggest_hit[name]["odds"])):
+                biggest_hit[name] = {
+                    "player": name, "odds": p["odds"], "pick": p["pick"], "sport": p["sport"],
+                    "year": week["year"], "week": week["week"],
+                }
+            if p["odds"]:
+                flat[name]["bets"] += 1
+                flat[name]["profit"] += (p["odds"] if p["odds"] > 0 else 10000 / -p["odds"]) if idx == 0 else -100
+                if idx == 1 and (name not in safest_loss or american_to_prob(p["odds"]) > american_to_prob(safest_loss[name]["odds"])):
+                    safest_loss[name] = {
+                        "player": name, "odds": p["odds"], "pick": p["pick"], "sport": p["sport"],
+                        "year": week["year"], "week": week["week"],
+                    }
+            run = streak[name]
+            if idx == 0:
+                run["current"] = run["current"] + 1 if run["current"] > 0 else 1
+                run["longest_win"] = max(run["longest_win"], run["current"])
+            else:
+                run["current"] = run["current"] - 1 if run["current"] < 0 else -1
+                run["longest_loss"] = max(run["longest_loss"], -run["current"])
             if sport is not None:
                 sport[idx] += 1
             if btype is not None:
@@ -285,6 +309,16 @@ def compute_stats(players, weeks):
         "potential_earnings": by_desc([
             {"player": n, "winnings": round(winnings[n], 2), "losses": round(losses_amt[n], 2)} for n in players
         ], "winnings"),
+        "streaks": sorted(
+            [{"player": n, **streak[n]} for n in players],
+            key=lambda r: (-r["longest_win"], -r["current"]),
+        ),
+        "biggest_hits": sorted(biggest_hit.values(), key=lambda r: american_to_prob(r["odds"])),
+        "safest_losses": sorted(safest_loss.values(), key=lambda r: -american_to_prob(r["odds"])),
+        "flat_bet_profit": sorted(
+            [{"player": n, "profit": round(f["profit"], 2), "bets": f["bets"]} for n, f in flat.items()],
+            key=lambda r: -r["profit"],
+        ),
         "sport_wl": wl_rows(sports, "sport"),
         "bet_type_wl": wl_rows(bet_types, "bet_type"),
         "odds_type_wl": wl_rows(odds_type, "odds_type"),

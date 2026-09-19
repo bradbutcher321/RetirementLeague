@@ -106,12 +106,12 @@
 
   .row{
     display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
-    background: var(--surface-raised); border: 1px solid var(--line); padding: 9px 12px; margin-top: 6px;
+    background: var(--surface-raised); border: 1px solid var(--line); padding: 9px 12px; margin-top: 6px; min-height: 62px;
   }
   .row.norank{ grid-template-columns: minmax(0,1fr) auto; }
   .row-rank{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; color: var(--text-dim); text-align: center; }
   .row-name{ font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; }
+  .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .row-stats{ display: flex; gap: 14px; }
   .row-stat{ text-align: center; min-width: 34px; }
   .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -154,7 +154,7 @@
     </section>
 
     <section>
-      <h2>Leaders</h2>
+      <h2>Betting Stats</h2>
       <div class="card-grid" id="leaders-container"></div>
     </section>
 
@@ -278,7 +278,7 @@
     const rows = rest.map((it, i) => `
       <div class="row${podium ? '' : ' norank'}">
         ${podium ? `<div class="row-rank">${i + 4}</div>` : ''}
-        <div><div class="row-name">${esc(it.name)}</div>${it.sub ? `<div class="row-sub">${it.sub}</div>` : ''}</div>
+        <div style="min-width:0"><div class="row-name">${esc(it.name)}</div>${it.detail || it.sub ? `<div class="row-sub">${esc(it.detail || it.sub)}</div>` : ''}</div>
         ${it.right || '<span></span>'}
       </div>`).join('');
     return `
@@ -308,21 +308,43 @@
     const earnings = s.potential_earnings
       .map(r => ({ player: r.player, net: r.winnings - r.losses }))
       .sort((a, b) => b.net - a.net);
+    const winStreaks = [...s.streaks].sort((a, b) => b.longest_win - a.longest_win || b.current - a.current);
+    const lossStreaks = [...s.streaks].sort((a, b) => b.longest_loss - a.longest_loss || a.current - b.current);
     return [
       rankedCard('Individual W/L', wlItems(s.individual_wl, 'player')),
       rankedCard('Weekly Sacko Count', s.weekly_sackos.map(r => ({
-        name: r.player, big: String(r.sackos), sub: fmtMoney(r.cost), right: stats([[r.sackos, 'Sackos'], [fmtMoney(r.cost), 'Cost']]),
+        name: r.player, big: String(r.sackos), sub: fmtMoney(r.cost), right: stats([[r.sackos, r.sackos === 1 ? 'Sacko' : 'Sackos']]),
       }))),
       rankedCard('Parlays Killed', s.parlays_killed.map(r => ({
         name: r.player, big: r.kills.toFixed(1), sub: plural(r.kill_chances, 'chance'),
         right: stats([[r.kills.toFixed(1), 'Kills'], [r.avg_bet_position === null ? '—' : r.avg_bet_position.toFixed(1), 'Avg Pos']]),
-      })), { note: 'The leg that loses first kills the parlay; ties split it. Avg Pos is where their game falls in the week\u2019s schedule.' }),
+      }))),
       rankedCard('Average Odds', s.average_odds.map(r => ({
         name: r.player, big: fmtOdds(r.avg_odds), right: stats([[fmtOdds(r.avg_odds), 'Odds']]),
       }))),
       rankedCard('Potential Earnings', earnings.map(r => ({
         name: r.player, big: signedMoney(r.net), right: pill(signedMoney(r.net), r.net >= 0),
-      })), { note: 'Winnings minus losses, counting each week\u2019s full payout when that player\u2019s leg won or lost.' }),
+      }))),
+      rankedCard('Flat Bet Profit', s.flat_bet_profit.map(r => ({
+        name: r.player, big: signedMoney(r.profit), sub: plural(r.bets, 'bet'),
+        right: pill(signedMoney(r.profit), r.profit >= 0),
+      }))),
+      rankedCard('Biggest Hit', s.biggest_hits.map(r => ({
+        name: r.player, big: fmtOdds(r.odds), sub: r.sport || '',
+        right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
+      }))),
+      rankedCard('Safest Loss', s.safest_losses.map(r => ({
+        name: r.player, big: fmtOdds(r.odds), sub: r.sport || '',
+        right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
+      }))),
+      rankedCard('Win Streaks', winStreaks.map(r => ({
+        name: r.player, big: String(r.longest_win), sub: `Current ${Math.max(r.current, 0)}`,
+        right: stats([[r.longest_win, 'Longest'], [Math.max(r.current, 0), 'Current']]),
+      }))),
+      rankedCard('Losing Streaks', lossStreaks.map(r => ({
+        name: r.player, big: String(r.longest_loss), sub: `Current ${Math.max(-r.current, 0)}`,
+        right: stats([[r.longest_loss, 'Longest'], [Math.max(-r.current, 0), 'Current']]),
+      }))),
     ].join('');
   }
 

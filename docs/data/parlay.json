@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-19T04:20:42.415815+00:00",
+  "generated_at": "2026-09-19T05:11:14.701397+00:00",
   "players": [
     "Brad",
     "Flanders",
@@ -2143,6 +2143,338 @@
         "player": "Joe K",
         "winnings": 171991.85,
         "losses": 657502.21
+      }
+    ],
+    "streaks": [
+      {
+        "player": "Joe G",
+        "current": 6,
+        "longest_win": 6,
+        "longest_loss": 2
+      },
+      {
+        "player": "Jeff",
+        "current": -2,
+        "longest_win": 5,
+        "longest_loss": 8
+      },
+      {
+        "player": "TJ",
+        "current": -2,
+        "longest_win": 5,
+        "longest_loss": 5
+      },
+      {
+        "player": "Jared",
+        "current": 4,
+        "longest_win": 4,
+        "longest_loss": 5
+      },
+      {
+        "player": "Ben",
+        "current": -3,
+        "longest_win": 4,
+        "longest_loss": 3
+      },
+      {
+        "player": "Chad",
+        "current": -3,
+        "longest_win": 3,
+        "longest_loss": 4
+      },
+      {
+        "player": "Kris",
+        "current": 2,
+        "longest_win": 2,
+        "longest_loss": 3
+      },
+      {
+        "player": "Brad",
+        "current": 1,
+        "longest_win": 2,
+        "longest_loss": 4
+      },
+      {
+        "player": "Flanders",
+        "current": 1,
+        "longest_win": 2,
+        "longest_loss": 3
+      },
+      {
+        "player": "Jon",
+        "current": 1,
+        "longest_win": 2,
+        "longest_loss": 5
+      },
+      {
+        "player": "Joe K",
+        "current": -2,
+        "longest_win": 2,
+        "longest_loss": 7
+      },
+      {
+        "player": "Collin",
+        "current": -2,
+        "longest_win": 2,
+        "longest_loss": 4
+      }
+    ],
+    "biggest_hits": [
+      {
+        "player": "Jon",
+        "odds": 300.0,
+        "pick": "Anytime TD: 2x Rashee Rice",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 12
+      },
+      {
+        "player": "Kris",
+        "odds": 250.0,
+        "pick": "Anytime TD: Jaxson Dart",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 6
+      },
+      {
+        "player": "Jared",
+        "odds": 165.0,
+        "pick": "Money Line: Magic vs. Pistons",
+        "sport": "NBA",
+        "year": 2025,
+        "week": 12
+      },
+      {
+        "player": "TJ",
+        "odds": 150.0,
+        "pick": "Money Line: Newcastle United vs. Everton",
+        "sport": "Futbol",
+        "year": 2025,
+        "week": 12
+      },
+      {
+        "player": "Brad",
+        "odds": 135.0,
+        "pick": "Money Line: Lions vs. Bears",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 17
+      },
+      {
+        "player": "Flanders",
+        "odds": 135.0,
+        "pick": "Money Line: Titans vs. Chiefs",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 15
+      },
+      {
+        "player": "Joe G",
+        "odds": 120.0,
+        "pick": "Money Line: #12 GT vs. Duke",
+        "sport": "NCAAF",
+        "year": 2025,
+        "week": 6
+      },
+      {
+        "player": "Jeff",
+        "odds": 115.0,
+        "pick": "Money Line: Fiorentina vs. Udinese",
+        "sport": "Futbol",
+        "year": 2025,
+        "week": 15
+      },
+      {
+        "player": "Chad",
+        "odds": -105.0,
+        "pick": "Spread: #23 Illinois +6.5 vs. #21 USC",
+        "sport": "NCAAF",
+        "year": 2025,
+        "week": 3
+      },
+      {
+        "player": "Ben",
+        "odds": -105.0,
+        "pick": "Spread: Buccs +2.5 vs. Texans",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 1
+      },
+      {
+        "player": "Joe K",
+        "odds": -105.0,
+        "pick": "Total Points: Over 48.5 Kentucky vs. #12 Georgia",
+        "sport": "NCAAF",
+        "year": 2025,
+        "week": 4
+      },
+      {
+        "player": "Collin",
+        "odds": -105.0,
+        "pick": "Spread: Steelers -6 vs. Browns",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 5
+      }
+    ],
+    "safest_losses": [
+      {
+        "player": "Jared",
+        "odds": -300.0,
+        "pick": "Money Line: Chargers vs. Giants",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 3
+      },
+      {
+        "player": "Joe G",
+        "odds": -300.0,
+        "pick": "Money Line: #24 ASU vs. Houston",
+        "sport": "NCAAF",
+        "year": 2025,
+        "week": 7
+      },
+      {
+        "player": "Joe K",
+        "odds": -300.0,
+        "pick": "Money Line: Arkansas vs. Memphis",
+        "sport": "NCAAF",
+        "year": 2025,
+        "week": 2
+      },
+      {
+        "player": "Collin",
+        "odds": -300.0,
+        "pick": "Money Line: #8 Notre Dame vs. #16 Texas A&M",
+        "sport": "NCAAF",
+        "year": 2025,
+        "week": 1
+      },
+      {
+        "player": "Kris",
+        "odds": -260.0,
+        "pick": "Anytime TD: Jonathan Taylor",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 11
+      },
+      {
+        "player": "Chad",
+        "odds": -260.0,
+        "pick": "Money Line: #3 Georgia vs. #6 Ole Miss",
+        "sport": "NCAAF",
+        "year": 2025,
+        "week": 16
+      },
+      {
+        "player": "TJ",
+        "odds": -185.0,
+        "pick": "Money Line: Stars vs. Blackhawks",
+        "sport": "NHL",
+        "year": 2025,
+        "week": 17
+      },
+      {
+        "player": "Flanders",
+        "odds": -180.0,
+        "pick": "Money Line: 49ers vs. Jags",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 3
+      },
+      {
+        "player": "Brad",
+        "odds": -180.0,
+        "pick": "Money Line: Cowboys vs. Panthers",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 5
+      },
+      {
+        "player": "Ben",
+        "odds": -155.0,
+        "pick": "Money Line: Chargers vs. Jaguars",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 10
+      },
+      {
+        "player": "Jeff",
+        "odds": -120.0,
+        "pick": "Total Goals: Over 2.5 Celta Vigo vs. Atletico Madrid",
+        "sport": "Futbol",
+        "year": 2025,
+        "week": 4
+      },
+      {
+        "player": "Jon",
+        "odds": 105.0,
+        "pick": "Anytime TD: Ceedee Lamb",
+        "sport": "NFL",
+        "year": 2025,
+        "week": 13
+      }
+    ],
+    "flat_bet_profit": [
+      {
+        "player": "Ben",
+        "profit": 191.41,
+        "bets": 17
+      },
+      {
+        "player": "Joe G",
+        "profit": 183.42,
+        "bets": 17
+      },
+      {
+        "player": "Flanders",
+        "profit": -255.85,
+        "bets": 17
+      },
+      {
+        "player": "Kris",
+        "profit": -272.81,
+        "bets": 17
+      },
+      {
+        "player": "Jon",
+        "profit": -354.76,
+        "bets": 17
+      },
+      {
+        "player": "Brad",
+        "profit": -512.4,
+        "bets": 17
+      },
+      {
+        "player": "Chad",
+        "profit": -564.07,
+        "bets": 18
+      },
+      {
+        "player": "Jeff",
+        "profit": -575.24,
+        "bets": 17
+      },
+      {
+        "player": "Jared",
+        "profit": -580.92,
+        "bets": 18
+      },
+      {
+        "player": "TJ",
+        "profit": -587.68,
+        "bets": 17
+      },
+      {
+        "player": "Collin",
+        "profit": -674.51,
+        "bets": 17
+      },
+      {
+        "player": "Joe K",
+        "profit": -1153.74,
+        "bets": 18
       }
     ],
     "sport_wl": [
