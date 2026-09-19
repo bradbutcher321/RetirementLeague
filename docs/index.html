@@ -495,7 +495,7 @@
      No text label on it — the actual median value is already shown in
      the card header, and there's no space in this narrow a column to
      print it here without it colliding with the name rows on the line. */
-  .vplot .median-tick{ position: absolute; left: 6px; right: 6px; height: 1px; background: var(--gold); z-index: 2; }
+  .vplot .median-tick{ position: absolute; left: 50%; transform: translateX(-50%); height: 1px; background: var(--gold); z-index: 2; }
   /* Background is set inline per-row (solid green/above, solid red/below,
      or a split gradient sized to how many members are on each side of the
      median for a merged row) since it varies per team composition. Width
@@ -993,7 +993,7 @@
 
     let html = '<div class="axis"></div>';
     const medianPct = toTopPct(findMedianTickPos(clusters, median, plotSize));
-    html += `<div class="median-tick" style="top:${medianPct}%;"></div>`;
+    html += `<div class="median-tick" style="top:${medianPct}%; width:${rowWidth}px;"></div>`;
 
     clusters.forEach(c => {
       const belowCount = c.members.filter(m => m.score < median).length;
