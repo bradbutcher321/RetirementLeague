@@ -1,0 +1,2443 @@
+{
+  "generated_at": "2026-09-19T04:20:42.415815+00:00",
+  "players": [
+    "Brad",
+    "Flanders",
+    "Jared",
+    "Joe G",
+    "Joe K",
+    "Chad",
+    "Jeff",
+    "Ben",
+    "Kris",
+    "Collin",
+    "Jon",
+    "TJ"
+  ],
+  "weeks": [
+    {
+      "year": 2025,
+      "week": 1,
+      "sacko": "Joe K",
+      "picks": {
+        "Brad": {
+          "pick": "Anytime TD: Josh Jacobs",
+          "sport": "NFL",
+          "odds": -210.0,
+          "gametime": "2025-09-11T20:15:00",
+          "result": "Win"
+        },
+        "Flanders": {
+          "pick": "Anytime TD: Ceedee Lamb",
+          "sport": "NFL",
+          "odds": 105.0,
+          "gametime": "2025-09-14T13:00:00",
+          "result": "Loss"
+        },
+        "Jared": {
+          "pick": "Total Points: Under 56.5 #5 Miami vs. #18 USF",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-09-13T16:30:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Anytime TD: Kyren Williams",
+          "sport": "NFL",
+          "odds": -175.0,
+          "gametime": "2025-09-14T13:00:00",
+          "result": "Loss"
+        },
+        "Joe K": {
+          "pick": "Spread: Georgia -3.5 vs. Tennessee",
+          "sport": "NCAAF",
+          "odds": 100.0,
+          "gametime": "2025-09-13T15:30:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: Arkansas +7.5 vs. #17 Ole Miss",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-09-13T19:30:00",
+          "result": "Win"
+        },
+        "Jeff": {
+          "pick": "Spread: #11 South Carolina -5.5 vs. Vanderbilt",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-09-13T19:45:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Spread: Buccs +2.5 vs. Texans",
+          "sport": "NFL",
+          "odds": -105.0,
+          "gametime": "2025-09-15T19:00:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Anytime TD: A.J. Brown",
+          "sport": "NFL",
+          "odds": 185.0,
+          "gametime": "2025-09-14T16:25:00",
+          "result": "Loss"
+        },
+        "Collin": {
+          "pick": "Money Line: #8 Notre Dame vs. #16 Texas A&M",
+          "sport": "NCAAF",
+          "odds": -300.0,
+          "gametime": "2025-09-13T19:30:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Hollywood Brown",
+          "sport": "NFL",
+          "odds": 195.0,
+          "gametime": "2025-09-14T16:25:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Money Line: #12 Clemson vs. Georgia Tech",
+          "sport": "NCAAF",
+          "odds": -170.0,
+          "gametime": "2025-09-13T12:00:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 246142.0,
+        "payout": 49248.31,
+        "split": 4104.025833333333,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "TJ"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 2,
+      "sacko": "Collin",
+      "picks": {
+        "Brad": {
+          "pick": "Money Line: #21 Michigan vs. Nebraska",
+          "sport": "NCAAF",
+          "odds": -135.0,
+          "gametime": "2025-09-20T15:30:00",
+          "result": "Win"
+        },
+        "Flanders": {
+          "pick": "Money Line: Chiefs vs. Giants",
+          "sport": "NFL",
+          "odds": -300.0,
+          "gametime": "2025-09-21T20:20:00",
+          "result": "Win"
+        },
+        "Jared": {
+          "pick": "Total Points: Over 47.5 UCF vs. UNC",
+          "sport": "NCAAF",
+          "odds": -105.0,
+          "gametime": "2025-09-20T15:30:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Anytime TD: Kyren Williams",
+          "sport": "NFL",
+          "odds": -120.0,
+          "gametime": "2025-09-21T13:00:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Money Line: Arkansas vs. Memphis",
+          "sport": "NCAAF",
+          "odds": -300.0,
+          "gametime": "2025-09-20T12:00:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Money Line: UCF vs. UNC",
+          "sport": "NCAAF",
+          "odds": -275.0,
+          "gametime": "2025-09-20T15:30:00",
+          "result": "Win"
+        },
+        "Jeff": {
+          "pick": "Money Line: Steelers vs. Pats",
+          "sport": "NFL",
+          "odds": -125.0,
+          "gametime": "2025-09-21T13:00:00",
+          "result": "Win"
+        },
+        "Ben": {
+          "pick": "Money Line: Commanders vs. Raiders",
+          "sport": "NFL",
+          "odds": -190.0,
+          "gametime": "2025-09-21T13:00:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Money Line: Jags vs. Texans",
+          "sport": "NFL",
+          "odds": -125.0,
+          "gametime": "2025-09-21T13:00:00",
+          "result": "Win"
+        },
+        "Collin": {
+          "pick": "Total Points: Over 57.5 #17 TT vs. #16 Utah",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-09-20T12:00:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Daniel Jones",
+          "sport": "NFL",
+          "odds": 180.0,
+          "gametime": "2025-09-21T13:00:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Spread: -4.5 Falcons vs. Panthers",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2025-09-21T13:00:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 69998.0,
+        "payout": 14019.67,
+        "split": 1168.3058333333333,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Joe K",
+        "Collin"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 3,
+      "sacko": "TJ",
+      "picks": {
+        "Brad": {
+          "pick": "Money Line: UCF vs. KSU",
+          "sport": "NCAAF",
+          "odds": 190.0,
+          "gametime": "2025-09-27T12:00:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Money Line: 49ers vs. Jags",
+          "sport": "NFL",
+          "odds": -180.0,
+          "gametime": "2025-09-28T16:05:00",
+          "result": "Loss"
+        },
+        "Jared": {
+          "pick": "Money Line: Chargers vs. Giants",
+          "sport": "NFL",
+          "odds": -300.0,
+          "gametime": "2025-09-28T13:00:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Money Line: #4 LSU vs. #13 Ole Miss",
+          "sport": "NCAAF",
+          "odds": 100.0,
+          "gametime": "2025-09-27T15:30:00",
+          "result": "Loss"
+        },
+        "Joe K": {
+          "pick": "Spread: Houston -13.5 vs. Oregon St",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-09-26T22:30:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: #23 Illinois +6.5 vs. #21 USC",
+          "sport": "NCAAF",
+          "odds": -105.0,
+          "gametime": "2025-09-27T12:00:00",
+          "result": "Win"
+        },
+        "Jeff": {
+          "pick": "Spread: West Virginia +12.5 vs. Utah",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-09-27T15:30:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Alt Spread: Broncos -4 vs. Bengals",
+          "sport": "NFL",
+          "odds": -190.0,
+          "gametime": "2025-09-29T20:15:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Money Line: Bucs vs. Eagles",
+          "sport": "NFL",
+          "odds": 165.0,
+          "gametime": "2025-09-28T13:00:00",
+          "result": "Loss"
+        },
+        "Collin": {
+          "pick": "Alt Spread: Packers -1.5 vs. Cowboys",
+          "sport": "NFL",
+          "odds": -275.0,
+          "gametime": "2025-09-28T20:20:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Tetairoa McMillan",
+          "sport": "NFL",
+          "odds": 175.0,
+          "gametime": "2025-09-28T13:00:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Receiving Yards: Over 48.5 DJ Moore",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2025-09-28T16:25:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 242635.0,
+        "payout": 48546.98,
+        "split": 4045.581666666667,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Joe K"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 4,
+      "sacko": "Jared",
+      "picks": {
+        "Brad": {
+          "pick": "Total Rounds: Over 4.5 Ankalaev vs. Pereira",
+          "sport": "UFC",
+          "odds": 100.0,
+          "gametime": "2025-10-04T23:00:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Anytime TD: Christian McCaffrey",
+          "sport": "NFL",
+          "odds": -140.0,
+          "gametime": "2025-10-02T20:15:00",
+          "result": "Win"
+        },
+        "Jared": {
+          "pick": "Money Line: Paolini vs. Anisimova",
+          "sport": "Womens Tennis",
+          "odds": 155.0,
+          "gametime": "2025-10-02T06:30:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Money Line: Army vs. UAB",
+          "sport": "NCAAF",
+          "odds": -275.0,
+          "gametime": "2025-10-04T12:00:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Total Points: Over 48.5 Kentucky vs. #12 Georgia",
+          "sport": "NCAAF",
+          "odds": -105.0,
+          "gametime": "2025-10-04T12:00:00",
+          "result": "Win"
+        },
+        "Chad": {
+          "pick": "Spread: Mississippi State +15.5 vs #6 Texas A&M",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-10-04T19:30:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Total Goals: Over 2.5 Celta Vigo vs. Atletico Madrid",
+          "sport": "Futbol",
+          "odds": -120.0,
+          "gametime": "2025-10-05T15:00:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Alt Spread: Colts -4 vs. Raiders",
+          "sport": "NFL",
+          "odds": -155.0,
+          "gametime": "2025-10-05T13:00:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Money Line: Eagles vs. Broncos",
+          "sport": "NFL",
+          "odds": -210.0,
+          "gametime": "2025-10-05T13:00:00",
+          "result": "Loss"
+        },
+        "Collin": {
+          "pick": "Money Line: #9 Texas vs. Florida",
+          "sport": "NCAAF",
+          "odds": -300.0,
+          "gametime": "2025-10-04T15:30:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Money Line: Browns vs. Vikings",
+          "sport": "NFL",
+          "odds": 165.0,
+          "gametime": "2025-10-05T09:30:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Money Line: Brighton vs Wolves",
+          "sport": "Futbol",
+          "odds": 100.0,
+          "gametime": "2025-10-05T09:00:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 118486.0,
+        "payout": 23717.17,
+        "split": 1976.430833333333,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Jared"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 5,
+      "sacko": "Jeff",
+      "picks": {
+        "Brad": {
+          "pick": "Money Line: Cowboys vs. Panthers",
+          "sport": "NFL",
+          "odds": -180.0,
+          "gametime": "2025-10-12T13:00:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Money Line: Patriots vs. Saints",
+          "sport": "NFL",
+          "odds": -190.0,
+          "gametime": "2025-10-12T13:00:00",
+          "result": "Win"
+        },
+        "Jared": {
+          "pick": "Spread: Eagles -7 vs. Giants",
+          "sport": "NFL",
+          "odds": -120.0,
+          "gametime": "2025-10-09T20:15:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Money Line: #10 Georgia vs. Auburn",
+          "sport": "NCAAF",
+          "odds": -180.0,
+          "gametime": "2025-10-11T19:30:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Money Line: #6 Oklahoma vs. Texas",
+          "sport": "NCAAF",
+          "odds": 100.0,
+          "gametime": "2025-10-11T15:30:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: #5 Texas A&M -7.5 vs Florida",
+          "sport": "NCAAF",
+          "odds": -105.0,
+          "gametime": "2025-10-11T19:00:00",
+          "result": "Win"
+        },
+        "Jeff": {
+          "pick": "Spread: Lightning -1.5 vs. Senators",
+          "sport": "Hockey",
+          "odds": 140.0,
+          "gametime": "2025-10-09T19:00:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Spread: Chargers -4 vs. Dolphins",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2025-10-12T13:00:00",
+          "result": "Loss"
+        },
+        "Kris": {
+          "pick": "Money Line: Bills vs. Falcons",
+          "sport": "NFL",
+          "odds": -225.0,
+          "gametime": "2025-10-13T19:15:00",
+          "result": "Loss"
+        },
+        "Collin": {
+          "pick": "Spread: Steelers -6 vs. Browns",
+          "sport": "NFL",
+          "odds": -105.0,
+          "gametime": "2025-10-12T13:00:00",
+          "result": "Win"
+        },
+        "Jon": {
+          "pick": "Passing TD: Over 1.5 Bryce Young",
+          "sport": "NFL",
+          "odds": 120.0,
+          "gametime": "2025-10-12T13:00:00",
+          "result": "Win"
+        },
+        "TJ": {
+          "pick": "Money Line: USA vs Ecuador",
+          "sport": "Futbol",
+          "odds": 125.0,
+          "gametime": "2025-10-10T20:30:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 185203.0,
+        "payout": 37060.64,
+        "split": 3088.3866666666668,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Jeff"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 6,
+      "sacko": "Joe K",
+      "picks": {
+        "Brad": {
+          "pick": "Spread: UCF -7.5 vs. West Virginia",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-10-18T13:00:00",
+          "result": "Win"
+        },
+        "Flanders": {
+          "pick": "Spread: Packers -6.5 vs. Cardinals",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2025-10-19T16:25:00",
+          "result": "Loss"
+        },
+        "Jared": {
+          "pick": "Anytime TD: Cam Skattebo",
+          "sport": "NFL",
+          "odds": 110.0,
+          "gametime": "2025-10-19T16:05:00",
+          "result": "Win"
+        },
+        "Joe G": {
+          "pick": "Money Line: #12 GT vs. Duke",
+          "sport": "NCAAF",
+          "odds": 120.0,
+          "gametime": "2025-10-18T12:00:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Money Line: #10 LSU vs. #17 Vanderbilt",
+          "sport": "NCAAF",
+          "odds": 105.0,
+          "gametime": "2025-10-18T12:00:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: SMU +5.5 vs. Clemson",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-10-18T15:30:00",
+          "result": "Win"
+        },
+        "Jeff": {
+          "pick": "1st Half Spread: Steelers -3.5 vs. Bengals",
+          "sport": "NFL",
+          "odds": 105.0,
+          "gametime": "2025-10-16T20:15:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Total Goals: Over 2.5 Tottenham vs. Aston Villa",
+          "sport": "Futbol",
+          "odds": -125.0,
+          "gametime": "2025-10-19T09:00:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Anytime TD: Jaxson Dart",
+          "sport": "NFL",
+          "odds": 250.0,
+          "gametime": "2025-10-19T16:05:00",
+          "result": "Win"
+        },
+        "Collin": {
+          "pick": "Alt Spread: Falcons +3.5 vs. 49ers",
+          "sport": "NFL",
+          "odds": -170.0,
+          "gametime": "2025-10-19T20:20:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Rashee Rice",
+          "sport": "NFL",
+          "odds": -105.0,
+          "gametime": "2025-10-19T13:00:00",
+          "result": "Win"
+        },
+        "TJ": {
+          "pick": "Alt Spread: Patriots -6.5 vs. Titans",
+          "sport": "NFL",
+          "odds": -120.0,
+          "gametime": "2025-10-19T13:00:00",
+          "result": "Win"
+        }
+      },
+      "final": {
+        "odds": 579046.0,
+        "payout": 115829.21,
+        "split": 9652.434166666668,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Jeff"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 7,
+      "sacko": "Jared",
+      "picks": {
+        "Brad": {
+          "pick": "Money Line: Cowboys vs. Broncos",
+          "sport": "NFL",
+          "odds": 145.0,
+          "gametime": "2025-10-26T16:25:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Money Line: 49ers vs. Texans",
+          "sport": "NFL",
+          "odds": 100.0,
+          "gametime": "2025-10-26T13:00:00",
+          "result": "Loss"
+        },
+        "Jared": {
+          "pick": "Spread: Thunder -8.5 vs. Pacers",
+          "sport": "NBA",
+          "odds": -115.0,
+          "gametime": "2025-10-23T19:30:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Money Line: #24 ASU vs. Houston",
+          "sport": "NCAAF",
+          "odds": -300.0,
+          "gametime": "2025-10-25T20:00:00",
+          "result": "Loss"
+        },
+        "Joe K": {
+          "pick": "Home Runs: Over .5 Vlad Guerrero Jr.",
+          "sport": "MLB",
+          "odds": 300.0,
+          "gametime": "2025-10-24T20:00:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: Virginia -10.5 vs. UNC",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-10-25T12:00:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Player Points: 25+ Franz Wagner",
+          "sport": "NBA",
+          "odds": 190.0,
+          "gametime": "2025-10-22T19:00:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Total Goals: Over 2.5 Man U vs. Brighton",
+          "sport": "Futbol",
+          "odds": -170.0,
+          "gametime": "2025-10-25T12:30:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Money Line: Bucs vs. Saints",
+          "sport": "NFL",
+          "odds": -225.0,
+          "gametime": "2025-10-26T16:05:00",
+          "result": "Win"
+        },
+        "Collin": {
+          "pick": "Money Line: Timberwolves vs. Trail Blazers",
+          "sport": "NBA",
+          "odds": -200.0,
+          "gametime": "2025-10-22T22:00:00",
+          "result": "Win"
+        },
+        "Jon": {
+          "pick": "Interceptions: Over .5 Josh Allen",
+          "sport": "NFL",
+          "odds": 125.0,
+          "gametime": "2025-10-26T13:00:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Money Line: #20 LSU vs. #3 Texas A&M",
+          "sport": "NCAAF",
+          "odds": 120.0,
+          "gametime": "2025-10-25T19:30:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 470398.0,
+        "payout": 94099.68,
+        "split": 7841.639999999999,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Jeff"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 8,
+      "sacko": "Jared",
+      "picks": {
+        "Brad": {
+          "pick": "Money Line: Bills vs. Chiefs",
+          "sport": "NFL",
+          "odds": 110.0,
+          "gametime": "2025-11-02T16:25:00",
+          "result": "Win"
+        },
+        "Flanders": {
+          "pick": "Money Line: Broncos vs. Texans",
+          "sport": "NFL",
+          "odds": 105.0,
+          "gametime": "2025-11-02T13:00:00",
+          "result": "Win"
+        },
+        "Jared": {
+          "pick": "Money Line: Spurs vs. Heat",
+          "sport": "NBA",
+          "odds": -230.0,
+          "gametime": "2025-10-30T20:30:00",
+          "result": "Win"
+        },
+        "Joe G": {
+          "pick": "Money Line: #5 Georgia vs. Florida",
+          "sport": "NCAAF",
+          "odds": -300.0,
+          "gametime": "2025-11-01T15:30:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Money Line: #9 Vanderbilt vs. #20 Texas",
+          "sport": "NCAAF",
+          "odds": 120.0,
+          "gametime": "2025-11-01T12:00:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: UCF +3.5 vs. Baylor",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-11-01T12:00:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Total Goals: Over 2.5 Napoli vs. Como",
+          "sport": "Futbol",
+          "odds": 115.0,
+          "gametime": "2025-11-01T13:00:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Total Goals: Over 2.5 Nottingham vs. Man U",
+          "sport": "Futbol",
+          "odds": -135.0,
+          "gametime": "2025-11-01T11:00:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Total Points: Over 50 Colts vs. Steelers",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2025-11-02T13:00:00",
+          "result": "Loss"
+        },
+        "Collin": {
+          "pick": "Money Line: #8 Georgia Tech vs. NC State",
+          "sport": "NCAAF",
+          "odds": -225.0,
+          "gametime": "2025-11-01T19:30:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Oronde Gadsden II",
+          "sport": "NFL",
+          "odds": 155.0,
+          "gametime": "2025-11-02T13:00:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Money Line: Bengals vs. Bears",
+          "sport": "NFL",
+          "odds": 130.0,
+          "gametime": "2025-11-02T13:00:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 204936.0,
+        "payout": 41007.12,
+        "split": 3417.26,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Joe K",
+        "Chad"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 9,
+      "sacko": "TJ",
+      "picks": {
+        "Brad": {
+          "pick": "Spread: Buccaneerss -2.5 vs. Patriots",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2025-11-09T13:00:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Total Yards: Over 38.5 RJ Harvey",
+          "sport": "NFL",
+          "odds": -120.0,
+          "gametime": "2025-11-06T20:15:00",
+          "result": "Loss"
+        },
+        "Jared": {
+          "pick": "Money Line: #20 Iowa vs. #9 Oregon",
+          "sport": "NCAAF",
+          "odds": 190.0,
+          "gametime": "2025-11-08T15:30:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Money Line: #3 Texas A&M vs. #22 Missouri",
+          "sport": "NCAAF",
+          "odds": -275.0,
+          "gametime": "2025-11-08T15:30:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Receptions: Over 4.5 Courtland Sutton",
+          "sport": "NFL",
+          "odds": 105.0,
+          "gametime": "2025-11-06T20:15:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: #7 BYU +10.5 vs. #8 Texas Tech",
+          "sport": "NCAAF",
+          "odds": -105.0,
+          "gametime": "2025-11-08T12:00:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Anytime TD: Brock Bowers",
+          "sport": "NFL",
+          "odds": 160.0,
+          "gametime": "2025-11-06T20:15:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Total Goals: Over 2.5 Tottenham vs Man U",
+          "sport": "Futbol",
+          "odds": -150.0,
+          "gametime": "2025-11-08T07:30:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Money Line: Ravens vs. Vikings",
+          "sport": "NFL",
+          "odds": -210.0,
+          "gametime": "2025-11-09T13:00:00",
+          "result": "Win"
+        },
+        "Collin": {
+          "pick": "Total Points: Over 28.5 Tulane vs. Memphis",
+          "sport": "NCAAF",
+          "odds": -120.0,
+          "gametime": "2025-11-07T21:00:00",
+          "result": "Win"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Tetairoa McMillan",
+          "sport": "NFL",
+          "odds": 210.0,
+          "gametime": "2025-11-09T13:00:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Money Line: UCLA vs. Nebraska",
+          "sport": "NCAAF",
+          "odds": -120.0,
+          "gametime": "2025-11-08T21:00:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 377754.0,
+        "payout": 75570.7,
+        "split": 6297.558333333333,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Flanders",
+        "Joe K",
+        "Jeff"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 10,
+      "sacko": "Jeff",
+      "picks": {
+        "Brad": {
+          "pick": "Spread: UCF +24.5 vs. #6 Texas Tech",
+          "sport": "NCAAF",
+          "odds": -115.0,
+          "gametime": "2025-11-15T15:30:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Money Line: 49ers vs. Cardinals",
+          "sport": "NFL",
+          "odds": -165.0,
+          "gametime": "2025-11-16T16:05:00",
+          "result": "Win"
+        },
+        "Jared": {
+          "pick": "Money Line: Commanders vs. Dolphins",
+          "sport": "NFL",
+          "odds": 130.0,
+          "gametime": "2025-11-16T09:30:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Money Line: #4 Alabama vs. #11 Oklahoma",
+          "sport": "NCAAF",
+          "odds": -250.0,
+          "gametime": "2025-11-15T15:30:00",
+          "result": "Loss"
+        },
+        "Joe K": {
+          "pick": "Total Points: Over 44.5 Wisconsin vs. #2 Indiana",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-11-15T12:00:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: Navy +10.5 vs. #24 USF",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-11-15T12:00:00",
+          "result": "Win"
+        },
+        "Jeff": {
+          "pick": "Total Points: Over 133.5 Pitt vs. WV",
+          "sport": "NCAAM",
+          "odds": -115.0,
+          "gametime": "2025-11-13T18:00:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Money Line: Chargers vs. Jaguars",
+          "sport": "NFL",
+          "odds": -155.0,
+          "gametime": "2025-11-16T13:00:00",
+          "result": "Loss"
+        },
+        "Kris": {
+          "pick": "Money Line: Bills vs. Bucs",
+          "sport": "NFL",
+          "odds": -260.0,
+          "gametime": "2025-11-16T13:00:00",
+          "result": "Win"
+        },
+        "Collin": {
+          "pick": "Money Line: #20 Louisville vs. Clemson",
+          "sport": "NCAAF",
+          "odds": -145.0,
+          "gametime": "2025-11-14T19:30:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: DeVonta Smith",
+          "sport": "NFL",
+          "odds": 160.0,
+          "gametime": "2025-11-16T20:20:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Money Line: Netherlands vs. Poland",
+          "sport": "Futbol",
+          "odds": -150.0,
+          "gametime": "2025-11-14T14:45:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 109778.0,
+        "payout": 22997.43,
+        "split": 1916.4525,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Jeff"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 11,
+      "sacko": "Jeff",
+      "picks": {
+        "Brad": {
+          "pick": "Spread: Bills -6 vs. Texans",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2025-11-20T20:15:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Receiving Yards: Over 57.5 Michael Wilson",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2025-11-23T16:05:00",
+          "result": "Win"
+        },
+        "Jared": {
+          "pick": "Money Line: #22 Missouri vs. #8 Oklahoma",
+          "sport": "NCAAF",
+          "odds": 225.0,
+          "gametime": "2025-11-22T12:00:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Money Line: #16 Georgia Tech vs. Pitt",
+          "sport": "NCAAF",
+          "odds": -135.0,
+          "gametime": "2025-11-22T19:00:00",
+          "result": "Loss"
+        },
+        "Joe K": {
+          "pick": "Money Line: Florida State vs. NC State",
+          "sport": "NCAAF",
+          "odds": -220.0,
+          "gametime": "2025-11-21T20:00:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: #15 USC +9.5 vs. #7 Oregon",
+          "sport": "NCAAF",
+          "odds": -105.0,
+          "gametime": "2025-11-22T15:30:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Money Line: Tromso vs. Rosenberg",
+          "sport": "Futbol",
+          "odds": -165.0,
+          "gametime": "2025-11-22T08:00:00",
+          "result": "Win"
+        },
+        "Ben": {
+          "pick": "Total Goals: Over 2.5 Nice vs. Marseille",
+          "sport": "Futbol",
+          "odds": -145.0,
+          "gametime": "2025-11-21T14:45:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Anytime TD: Jonathan Taylor",
+          "sport": "NFL",
+          "odds": -260.0,
+          "gametime": "2025-11-23T13:00:00",
+          "result": "Loss"
+        },
+        "Collin": {
+          "pick": "Money Line: UNLV vs. Hawaii",
+          "sport": "NCAAF",
+          "odds": -140.0,
+          "gametime": "2025-11-21T22:30:00",
+          "result": "Win"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Woody Marks",
+          "sport": "NFL",
+          "odds": 115.0,
+          "gametime": "2025-11-20T20:15:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Passing TD: Over 0.5 Shedeur Sanders",
+          "sport": "NFL",
+          "odds": -155.0,
+          "gametime": "2025-11-23T16:05:00",
+          "result": "Win"
+        }
+      },
+      "final": {
+        "odds": 146161.0,
+        "payout": 30422.34,
+        "split": 2535.195,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Brad",
+        "Jon"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 12,
+      "sacko": "Joe K",
+      "picks": {
+        "Brad": {
+          "pick": "Money Line: Packers vs. Lions",
+          "sport": "NFL",
+          "odds": 130.0,
+          "gametime": "2025-11-27T13:00:00",
+          "result": "Win"
+        },
+        "Flanders": {
+          "pick": "Coin Toss: Cowboys",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2025-11-27T16:30:00",
+          "result": "Loss"
+        },
+        "Jared": {
+          "pick": "Money Line: Magic vs. Pistons",
+          "sport": "NBA",
+          "odds": 165.0,
+          "gametime": "2025-11-28T19:30:00",
+          "result": "Win"
+        },
+        "Joe G": {
+          "pick": "Money Line: #10 Alabama vs. Auburn",
+          "sport": "NCAAF",
+          "odds": -250.0,
+          "gametime": "2025-11-29T19:30:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Money Line: #7 Ole Miss vs Mississippi State",
+          "sport": "NCAAF",
+          "odds": -275.0,
+          "gametime": "2025-11-28T12:00:00",
+          "result": "Win"
+        },
+        "Chad": {
+          "pick": "Spread: #3 Texas A&M -1.5 vs. #16 Texas",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2025-11-28T19:30:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Spread: Bears +7 vs Eagles",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2025-11-28T15:00:00",
+          "result": "Win"
+        },
+        "Ben": {
+          "pick": "Spread: Buccaneers -2.5 vs. Cardinals",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2025-11-30T13:00:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Anytime TD: Jonathan Taylor",
+          "sport": "NFL",
+          "odds": -230.0,
+          "gametime": "2025-11-30T13:00:00",
+          "result": "Loss"
+        },
+        "Collin": {
+          "pick": "Total Points: Over 50 Cowboys vs. Chiefs",
+          "sport": "NFL",
+          "odds": -150.0,
+          "gametime": "2025-11-27T16:30:00",
+          "result": "Win"
+        },
+        "Jon": {
+          "pick": "Anytime TD: 2x Rashee Rice",
+          "sport": "NFL",
+          "odds": 300.0,
+          "gametime": "2025-11-27T16:30:00",
+          "result": "Win"
+        },
+        "TJ": {
+          "pick": "Money Line: Newcastle United vs. Everton",
+          "sport": "Futbol",
+          "odds": 150.0,
+          "gametime": "2025-11-29T12:30:00",
+          "result": "Win"
+        }
+      },
+      "final": {
+        "odds": 284294.0,
+        "payout": 56878.78,
+        "split": 4739.8983333333335,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Flanders"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 13,
+      "sacko": "Jon",
+      "picks": {
+        "Brad": {
+          "pick": "Money Line: Colts vs. Jaguars",
+          "sport": "NFL",
+          "odds": -125.0,
+          "gametime": "2025-12-07T13:00:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Spread: Bills -5 vs. Bengals",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2025-12-07T13:00:00",
+          "result": "Loss"
+        },
+        "Jared": {
+          "pick": "Money Line: #24 North Texas vs. #20 Tulane",
+          "sport": "NCAAF",
+          "odds": -135.0,
+          "gametime": "2025-12-05T20:00:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Money Line: Navy vs. Army",
+          "sport": "NCAAF",
+          "odds": -250.0,
+          "gametime": "2025-12-13T15:00:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Money Line: #1 Ohio State vs. #2 Indiana",
+          "sport": "NCAAF",
+          "odds": -200.0,
+          "gametime": "2025-12-06T20:00:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Total Rec Yards: Over 67.5 Rashee Rice",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2025-12-07T20:20:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Total Points: Under 47.5 #1 Ohio State vs. #2 Indiana",
+          "sport": "NCAAF",
+          "odds": -105.0,
+          "gametime": "2025-12-06T20:00:00",
+          "result": "Win"
+        },
+        "Ben": {
+          "pick": "Total Goals: Over 2.5 Tottenham vs. Brentford",
+          "sport": "Futbol",
+          "odds": -120.0,
+          "gametime": "2025-12-06T10:00:00",
+          "result": "Loss"
+        },
+        "Kris": {
+          "pick": "Money Line: Chiefs vs. Texans",
+          "sport": "NFL",
+          "odds": -190.0,
+          "gametime": "2025-12-07T20:20:00",
+          "result": "Loss"
+        },
+        "Collin": {
+          "pick": "Spread: Buccaneers -7 vs. Saints",
+          "sport": "NFL",
+          "odds": -145.0,
+          "gametime": "2025-12-07T13:00:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Ceedee Lamb",
+          "sport": "NFL",
+          "odds": 105.0,
+          "gametime": "2025-12-04T20:15:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Passing TD: Over 0.5 Cam Ward",
+          "sport": "NFL",
+          "odds": -140.0,
+          "gametime": "2025-12-07T13:00:00",
+          "result": "Win"
+        }
+      },
+      "final": {
+        "odds": 69873.0,
+        "payout": 13994.56,
+        "split": 1166.2133333333334,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Jon"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 14,
+      "sacko": "Chad",
+      "picks": {
+        "Brad": {
+          "pick": "Spread: Buccaneers -4.5 vs. Falcons",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2025-12-11T20:15:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Anytime TD: Isiah Likely",
+          "sport": "NFL",
+          "odds": 220.0,
+          "gametime": "2025-12-14T13:00:00",
+          "result": "Loss"
+        },
+        "Jared": {
+          "pick": "Money Line: Patriots",
+          "sport": "NFL",
+          "odds": 120.0,
+          "gametime": "2025-12-14T13:00:00",
+          "result": "Loss"
+        },
+        "Joe G": {
+          "pick": "Money Line: Navy vs. Army",
+          "sport": "NCAAF",
+          "odds": -275.0,
+          "gametime": "2025-12-13T15:00:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Anytime TD: JaMarr Chase",
+          "sport": "NFL",
+          "odds": -170.0,
+          "gametime": "2025-12-14T13:00:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Anytime TD: Josh Allen",
+          "sport": "NFL",
+          "odds": 150.0,
+          "gametime": "2025-12-14T13:00:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Total Goals: Over 5.5 Blues vs. Preds",
+          "sport": "NHL",
+          "odds": -115.0,
+          "gametime": "2025-12-11T20:00:00",
+          "result": "Win"
+        },
+        "Ben": {
+          "pick": "Receiving Yards: Over 74.5 Nico Collins",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2025-12-14T13:00:00",
+          "result": "Win"
+        },
+        "Kris": {
+          "pick": "Money Line: Knicks vs. Magic",
+          "sport": "NBA",
+          "odds": -180.0,
+          "gametime": "2025-12-14T13:00:00",
+          "result": "Win"
+        },
+        "Collin": {
+          "pick": "Spread: Panthers -2.5 vs. Saints",
+          "sport": "NFL",
+          "odds": -135.0,
+          "gametime": "2025-12-14T16:25:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Tyler Shough",
+          "sport": "NFL",
+          "odds": 230.0,
+          "gametime": "2025-12-14T16:25:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Money Line: Predators vs. Blues",
+          "sport": "NHL",
+          "odds": -135.0,
+          "gametime": "2025-12-11T20:00:00",
+          "result": "Win"
+        }
+      },
+      "final": {
+        "odds": 326493.0,
+        "payout": 65318.51,
+        "split": 5443.2091666666665,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Brad"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 15,
+      "sacko": "Joe G",
+      "picks": {
+        "Brad": {
+          "pick": "Money Line: Buccaneers vs. Panthers",
+          "sport": "NFL",
+          "odds": -155.0,
+          "gametime": "2025-12-21T13:00:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Money Line: Titans vs. Chiefs",
+          "sport": "NFL",
+          "odds": 135.0,
+          "gametime": "2025-12-21T13:00:00",
+          "result": "Win"
+        },
+        "Jared": {
+          "pick": "Total Rounds: Over 2.5 Paul vs. Joshua",
+          "sport": "Boxing",
+          "odds": -165.0,
+          "gametime": "2025-12-19T23:15:00",
+          "result": "Win"
+        },
+        "Joe G": {
+          "pick": "Total Points: o37.5 #8 Oklahoma vs. #9 Alabama",
+          "sport": "NCAAF",
+          "odds": -185.0,
+          "gametime": "2025-12-19T20:00:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Total Points: o52 #8 Ole Miss vs. #11 Tulane",
+          "sport": "NCAAF",
+          "odds": -185.0,
+          "gametime": "2025-12-20T15:30:00",
+          "result": "Win"
+        },
+        "Chad": {
+          "pick": "Money Line: Saints vs. Jets",
+          "sport": "NFL",
+          "odds": -275.0,
+          "gametime": "2025-12-21T13:00:00",
+          "result": "Win"
+        },
+        "Jeff": {
+          "pick": "Money Line: Fiorentina vs. Udinese",
+          "sport": "Futbol",
+          "odds": 115.0,
+          "gametime": "2025-12-21T12:00:00",
+          "result": "Win"
+        },
+        "Ben": {
+          "pick": "Total Goals: Over 2.5 Brighton vs. Sunderland",
+          "sport": "Futbol",
+          "odds": -125.0,
+          "gametime": "2025-12-20T10:00:00",
+          "result": "Loss"
+        },
+        "Kris": {
+          "pick": "Money Line: Dolphins vs. Bengals",
+          "sport": "NFL",
+          "odds": 175.0,
+          "gametime": "2025-12-21T13:00:00",
+          "result": "Loss"
+        },
+        "Collin": {
+          "pick": "Spread: Eagles -3.5 vs. Commanders",
+          "sport": "NFL",
+          "odds": -170.0,
+          "gametime": "2025-12-20T17:00:00",
+          "result": "Win"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Courtland Sutton",
+          "sport": "NFL",
+          "odds": 175.0,
+          "gametime": "2025-12-21T16:05:00",
+          "result": "Win"
+        },
+        "TJ": {
+          "pick": "Spread: Patriots +3.5 vs. Ravens",
+          "sport": "NFL",
+          "odds": -145.0,
+          "gametime": "2025-12-21T20:20:00",
+          "result": "Win"
+        }
+      },
+      "final": {
+        "odds": 157724.0,
+        "payout": 63129.5,
+        "split": 5260.791666666667,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Ben"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 16,
+      "sacko": "TJ",
+      "picks": {
+        "Brad": {
+          "pick": "Spread: Chargers vs. Texans",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2025-12-27T16:30:00",
+          "result": "Loss"
+        },
+        "Flanders": {
+          "pick": "Anytime TD: George Pickens",
+          "sport": "NFL",
+          "odds": 115.0,
+          "gametime": "2025-12-25T13:00:00",
+          "result": "Loss"
+        },
+        "Jared": {
+          "pick": "Money Line: Nuggets vs. Wolves",
+          "sport": "NBA",
+          "odds": -140.0,
+          "gametime": "2025-12-25T22:30:00",
+          "result": "Win"
+        },
+        "Joe G": {
+          "pick": "Money Line: Man City vs. Nottingham Forest",
+          "sport": "Futbol",
+          "odds": -175.0,
+          "gametime": "2025-12-27T07:30:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Anytime TD: Javonte Williams",
+          "sport": "NFL",
+          "odds": -165.0,
+          "gametime": "2025-12-25T13:00:00",
+          "result": "Win"
+        },
+        "Chad": {
+          "pick": "Money Line: #3 Georgia vs. #6 Ole Miss",
+          "sport": "NCAAF",
+          "odds": -260.0,
+          "gametime": "2026-01-01T20:00:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Money Line: Southampton vs. Oxford United",
+          "sport": "Futbol",
+          "odds": -120.0,
+          "gametime": "2025-12-26T10:00:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Spread: Bucs -5 vs. Dolphins",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2025-12-28T13:00:00",
+          "result": "Loss"
+        },
+        "Kris": {
+          "pick": "Money Line: Knicks vs. Cavs",
+          "sport": "NBA",
+          "odds": -225.0,
+          "gametime": "2025-12-25T12:00:00",
+          "result": "Win"
+        },
+        "Collin": {
+          "pick": "Anytime TD: Jaxon Smith-Njigba",
+          "sport": "NFL",
+          "odds": -105.0,
+          "gametime": "2025-12-28T13:00:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Troy Franklin",
+          "sport": "NFL",
+          "odds": 250.0,
+          "gametime": "2025-12-25T20:15:00",
+          "result": "Loss"
+        },
+        "TJ": {
+          "pick": "Money Line: Chelsea vs. Aston Villa",
+          "sport": "Futbol",
+          "odds": -120.0,
+          "gametime": "2025-12-27T12:30:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 141232.0,
+        "payout": 28266.4,
+        "split": 2355.5333333333333,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Flanders"
+      ]
+    },
+    {
+      "year": 2025,
+      "week": 17,
+      "sacko": "Jon",
+      "picks": {
+        "Brad": {
+          "pick": "Money Line: Lions vs. Bears",
+          "sport": "NFL",
+          "odds": 135.0,
+          "gametime": "2026-01-04T16:25:00",
+          "result": "Win"
+        },
+        "Flanders": {
+          "pick": "Spread: Saints +3 vs. Falcons",
+          "sport": "NFL",
+          "odds": -105.0,
+          "gametime": "2026-01-04T13:00:00",
+          "result": "Win"
+        },
+        "Jared": {
+          "pick": "Money Line: #1 Indiana vs. #9 Alabama",
+          "sport": "NCAAF",
+          "odds": -250.0,
+          "gametime": "2026-01-01T16:00:00",
+          "result": "Win"
+        },
+        "Joe G": {
+          "pick": "Anytime TD: Ja'marr Chase",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2026-01-04T13:00:00",
+          "result": "Win"
+        },
+        "Joe K": {
+          "pick": "Anytime TD: Mike Evans",
+          "sport": "NFL",
+          "odds": 150.0,
+          "gametime": "2026-01-03T16:30:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Money Line: #3 Georgia vs. #6 Ole Miss",
+          "sport": "NCAAF",
+          "odds": -250.0,
+          "gametime": "2026-01-01T20:00:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Anytime TD: Jaxon Smith-Njigba",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2026-01-03T20:00:00",
+          "result": "Loss"
+        },
+        "Ben": {
+          "pick": "Total Goals: Over 2.5 Brentford vs. Tottenham",
+          "sport": "Futbol",
+          "odds": -110.0,
+          "gametime": "2026-01-01T15:00:00",
+          "result": "Loss"
+        },
+        "Kris": {
+          "pick": "Money Line: Bucs vs. Panthers",
+          "sport": "NFL",
+          "odds": -150.0,
+          "gametime": "2026-01-03T16:30:00",
+          "result": "Win"
+        },
+        "Collin": {
+          "pick": "Spread: #4 Texas Tech vs. #5 Oregon",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2026-01-01T12:00:00",
+          "result": "Loss"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Michael Wilson",
+          "sport": "NFL",
+          "odds": 155.0,
+          "gametime": "2026-01-04T16:25:00",
+          "result": "Win"
+        },
+        "TJ": {
+          "pick": "Money Line: Stars vs. Blackhawks",
+          "sport": "NHL",
+          "odds": -185.0,
+          "gametime": "2026-01-01T20:30:00",
+          "result": "Loss"
+        }
+      },
+      "final": {
+        "odds": 149250.0,
+        "payout": 29850.03,
+        "split": 2487.5025,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Collin"
+      ]
+    },
+    {
+      "year": 2026,
+      "week": 1,
+      "sacko": "Joe K",
+      "picks": {
+        "Brad": {
+          "pick": "Spread: Buccaneers -8 vs. Browns",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2026-09-20T13:00:00",
+          "result": "Pending"
+        },
+        "Flanders": {
+          "pick": "Spread: Saints +8 vs. Ravens",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2026-09-20T13:00:00",
+          "result": "Pending"
+        },
+        "Jared": {
+          "pick": "Money Line: #13 Texas Tech vs. #22 Houston",
+          "sport": "NCAAF",
+          "odds": -350.0,
+          "gametime": "2026-09-18T20:00:00",
+          "result": "Win"
+        },
+        "Joe G": {
+          "pick": "Money Line: #7 LSU vs. #8 Ole Miss",
+          "sport": "NCAAF",
+          "odds": -150.0,
+          "gametime": "2026-09-19T19:30:00",
+          "result": "Pending"
+        },
+        "Joe K": {
+          "pick": "Total Points: Over 55.5 #5 Miami vs. Wake Forest",
+          "sport": "NCAAF",
+          "odds": -115.0,
+          "gametime": "2026-09-18T19:30:00",
+          "result": "Loss"
+        },
+        "Chad": {
+          "pick": "Spread: #5 Miami -21.5 vs. Wake Forest",
+          "sport": "NCAAF",
+          "odds": -110.0,
+          "gametime": "2026-09-18T19:30:00",
+          "result": "Loss"
+        },
+        "Jeff": {
+          "pick": "Spread: Chiefs -1 vs. Colts",
+          "sport": "NFL",
+          "odds": -300.0,
+          "gametime": "2026-09-20T20:20:00",
+          "result": "Pending"
+        },
+        "Ben": {
+          "pick": "Anytime TD: Ja'Marr Chase",
+          "sport": "NFL",
+          "odds": 110.0,
+          "gametime": "2026-09-20T13:00:00",
+          "result": "Pending"
+        },
+        "Kris": {
+          "pick": "Money Line: Bears vs. Vikings",
+          "sport": "NFL",
+          "odds": -225.0,
+          "gametime": "2026-09-20T13:00:00",
+          "result": "Pending"
+        },
+        "Collin": {
+          "pick": "Spread: Panthers -1.5 vs. Falcons",
+          "sport": "NFL",
+          "odds": -125.0,
+          "gametime": "2026-09-20T13:00:00",
+          "result": "Pending"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Lamar Jackson",
+          "sport": "NFL",
+          "odds": 165.0,
+          "gametime": "2026-09-20T13:00:00",
+          "result": "Pending"
+        },
+        "TJ": {
+          "pick": "Receiving Yards: Over 38.5 Michael Wilson",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2026-09-20T16:25:00",
+          "result": "Pending"
+        }
+      },
+      "final": {
+        "odds": 97585.0,
+        "payout": 19537.03,
+        "split": 1628.0858333333333,
+        "result": "Loss"
+      },
+      "killed_by": [
+        "Joe K",
+        "Chad"
+      ]
+    }
+  ],
+  "stats": {
+    "weekly_sackos": [
+      {
+        "player": "Joe K",
+        "sackos": 4,
+        "cost": 80
+      },
+      {
+        "player": "Jared",
+        "sackos": 3,
+        "cost": 60
+      },
+      {
+        "player": "Jeff",
+        "sackos": 3,
+        "cost": 60
+      },
+      {
+        "player": "TJ",
+        "sackos": 3,
+        "cost": 60
+      },
+      {
+        "player": "Jon",
+        "sackos": 2,
+        "cost": 40
+      },
+      {
+        "player": "Joe G",
+        "sackos": 1,
+        "cost": 20
+      },
+      {
+        "player": "Chad",
+        "sackos": 1,
+        "cost": 20
+      },
+      {
+        "player": "Collin",
+        "sackos": 1,
+        "cost": 20
+      },
+      {
+        "player": "Brad",
+        "sackos": 0,
+        "cost": 0
+      },
+      {
+        "player": "Flanders",
+        "sackos": 0,
+        "cost": 0
+      },
+      {
+        "player": "Ben",
+        "sackos": 0,
+        "cost": 0
+      },
+      {
+        "player": "Kris",
+        "sackos": 0,
+        "cost": 0
+      }
+    ],
+    "individual_wl": [
+      {
+        "player": "Joe G",
+        "w": 12,
+        "l": 5,
+        "win_pct": 70.6
+      },
+      {
+        "player": "Ben",
+        "w": 11,
+        "l": 6,
+        "win_pct": 64.7
+      },
+      {
+        "player": "Flanders",
+        "w": 8,
+        "l": 9,
+        "win_pct": 47.1
+      },
+      {
+        "player": "Kris",
+        "w": 8,
+        "l": 9,
+        "win_pct": 47.1
+      },
+      {
+        "player": "Jared",
+        "w": 7,
+        "l": 11,
+        "win_pct": 38.9
+      },
+      {
+        "player": "Chad",
+        "w": 7,
+        "l": 11,
+        "win_pct": 38.9
+      },
+      {
+        "player": "Brad",
+        "w": 6,
+        "l": 11,
+        "win_pct": 35.3
+      },
+      {
+        "player": "Jeff",
+        "w": 6,
+        "l": 11,
+        "win_pct": 35.3
+      },
+      {
+        "player": "Collin",
+        "w": 6,
+        "l": 11,
+        "win_pct": 35.3
+      },
+      {
+        "player": "TJ",
+        "w": 6,
+        "l": 11,
+        "win_pct": 35.3
+      },
+      {
+        "player": "Jon",
+        "w": 5,
+        "l": 12,
+        "win_pct": 29.4
+      },
+      {
+        "player": "Joe K",
+        "w": 4,
+        "l": 14,
+        "win_pct": 22.2
+      }
+    ],
+    "average_odds": [
+      {
+        "player": "Jon",
+        "avg_odds": 162
+      },
+      {
+        "player": "Jeff",
+        "avg_odds": -106
+      },
+      {
+        "player": "Brad",
+        "avg_odds": -108
+      },
+      {
+        "player": "Flanders",
+        "avg_odds": -115
+      },
+      {
+        "player": "Jared",
+        "avg_odds": -115
+      },
+      {
+        "player": "TJ",
+        "avg_odds": -117
+      },
+      {
+        "player": "Joe K",
+        "avg_odds": -123
+      },
+      {
+        "player": "Chad",
+        "avg_odds": -127
+      },
+      {
+        "player": "Ben",
+        "avg_odds": -131
+      },
+      {
+        "player": "Kris",
+        "avg_odds": -144
+      },
+      {
+        "player": "Collin",
+        "avg_odds": -156
+      },
+      {
+        "player": "Joe G",
+        "avg_odds": -182
+      }
+    ],
+    "parlays_killed": [
+      {
+        "player": "Jeff",
+        "kills": 4.33,
+        "kill_chances": 6,
+        "avg_bet_position": 4.89
+      },
+      {
+        "player": "Joe K",
+        "kills": 2.83,
+        "kill_chances": 6,
+        "avg_bet_position": 3.17
+      },
+      {
+        "player": "Flanders",
+        "kills": 2.33,
+        "kill_chances": 3,
+        "avg_bet_position": 6.94
+      },
+      {
+        "player": "Brad",
+        "kills": 1.5,
+        "kill_chances": 4,
+        "avg_bet_position": 5.94
+      },
+      {
+        "player": "Collin",
+        "kills": 1.5,
+        "kill_chances": 3,
+        "avg_bet_position": 5.67
+      },
+      {
+        "player": "Jon",
+        "kills": 1.5,
+        "kill_chances": 3,
+        "avg_bet_position": 7.22
+      },
+      {
+        "player": "Jared",
+        "kills": 1.0,
+        "kill_chances": 3,
+        "avg_bet_position": 4.33
+      },
+      {
+        "player": "Chad",
+        "kills": 1.0,
+        "kill_chances": 2,
+        "avg_bet_position": 5.44
+      },
+      {
+        "player": "Ben",
+        "kills": 1.0,
+        "kill_chances": 2,
+        "avg_bet_position": 6.5
+      },
+      {
+        "player": "TJ",
+        "kills": 1.0,
+        "kill_chances": 2,
+        "avg_bet_position": 6.94
+      },
+      {
+        "player": "Joe G",
+        "kills": 0.0,
+        "kill_chances": 1,
+        "avg_bet_position": 6.22
+      },
+      {
+        "player": "Kris",
+        "kills": 0.0,
+        "kill_chances": 1,
+        "avg_bet_position": 8.11
+      }
+    ],
+    "potential_earnings": [
+      {
+        "player": "Ben",
+        "winnings": 614658.47,
+        "losses": 195298.56
+      },
+      {
+        "player": "Joe G",
+        "winnings": 564642.29,
+        "losses": 245314.74
+      },
+      {
+        "player": "Kris",
+        "winnings": 445951.63,
+        "losses": 364005.4
+      },
+      {
+        "player": "Collin",
+        "winnings": 357161.64,
+        "losses": 452795.39
+      },
+      {
+        "player": "Jared",
+        "winnings": 354498.07,
+        "losses": 474995.99
+      },
+      {
+        "player": "Chad",
+        "winnings": 350831.74,
+        "losses": 478662.32
+      },
+      {
+        "player": "TJ",
+        "winnings": 345572.9,
+        "losses": 464384.13
+      },
+      {
+        "player": "Brad",
+        "winnings": 306833.12,
+        "losses": 503123.91
+      },
+      {
+        "player": "Jon",
+        "winnings": 302748.16,
+        "losses": 507208.87
+      },
+      {
+        "player": "Flanders",
+        "winnings": 262203.9,
+        "losses": 547753.13
+      },
+      {
+        "player": "Jeff",
+        "winnings": 243763.36,
+        "losses": 566193.67
+      },
+      {
+        "player": "Joe K",
+        "winnings": 171991.85,
+        "losses": 657502.21
+      }
+    ],
+    "sport_wl": [
+      {
+        "sport": "Boxing",
+        "w": 1,
+        "l": 0,
+        "win_pct": 100.0
+      },
+      {
+        "sport": "NBA",
+        "w": 6,
+        "l": 2,
+        "win_pct": 75.0
+      },
+      {
+        "sport": "NHL",
+        "w": 2,
+        "l": 1,
+        "win_pct": 66.7
+      },
+      {
+        "sport": "Futbol",
+        "w": 9,
+        "l": 10,
+        "win_pct": 47.4
+      },
+      {
+        "sport": "NFL",
+        "w": 43,
+        "l": 62,
+        "win_pct": 41.0
+      },
+      {
+        "sport": "NCAAF",
+        "w": 25,
+        "l": 41,
+        "win_pct": 37.9
+      },
+      {
+        "sport": "UFC",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "sport": "Womens Tennis",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "sport": "Hockey",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "sport": "MLB",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "sport": "NCAAM",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      }
+    ],
+    "bet_type_wl": [
+      {
+        "bet_type": "Passing TD",
+        "w": 3,
+        "l": 0,
+        "win_pct": 100.0
+      },
+      {
+        "bet_type": "Receiving Yards",
+        "w": 2,
+        "l": 1,
+        "win_pct": 66.7
+      },
+      {
+        "bet_type": "Alt Spread",
+        "w": 3,
+        "l": 2,
+        "win_pct": 60.0
+      },
+      {
+        "bet_type": "Total Goals",
+        "w": 6,
+        "l": 5,
+        "win_pct": 54.5
+      },
+      {
+        "bet_type": "Total Rounds",
+        "w": 1,
+        "l": 1,
+        "win_pct": 50.0
+      },
+      {
+        "bet_type": "Money Line",
+        "w": 41,
+        "l": 47,
+        "win_pct": 46.6
+      },
+      {
+        "bet_type": "Total Points",
+        "w": 6,
+        "l": 7,
+        "win_pct": 46.2
+      },
+      {
+        "bet_type": "Spread",
+        "w": 13,
+        "l": 27,
+        "win_pct": 32.5
+      },
+      {
+        "bet_type": "Anytime TD",
+        "w": 11,
+        "l": 23,
+        "win_pct": 32.4
+      },
+      {
+        "bet_type": "1st Half Spread",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "bet_type": "Home Runs",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "bet_type": "Player Points",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "bet_type": "Interceptions",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "bet_type": "Total Yards",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "bet_type": "Receptions",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "bet_type": "Coin Toss",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      },
+      {
+        "bet_type": "Total Rec Yards",
+        "w": 0,
+        "l": 1,
+        "win_pct": 0.0
+      }
+    ],
+    "odds_type_wl": [
+      {
+        "odds_type": "Favorite",
+        "w": 71,
+        "l": 76,
+        "win_pct": 48.3
+      },
+      {
+        "odds_type": "Underdog",
+        "w": 15,
+        "l": 45,
+        "win_pct": 25.0
+      }
+    ],
+    "legs_won_per_parlay": [
+      {
+        "legs": 0,
+        "occurrences": 0
+      },
+      {
+        "legs": 1,
+        "occurrences": 0
+      },
+      {
+        "legs": 2,
+        "occurrences": 1
+      },
+      {
+        "legs": 3,
+        "occurrences": 4
+      },
+      {
+        "legs": 4,
+        "occurrences": 3
+      },
+      {
+        "legs": 5,
+        "occurrences": 4
+      },
+      {
+        "legs": 6,
+        "occurrences": 1
+      },
+      {
+        "legs": 7,
+        "occurrences": 1
+      },
+      {
+        "legs": 8,
+        "occurrences": 1
+      },
+      {
+        "legs": 9,
+        "occurrences": 2
+      },
+      {
+        "legs": 10,
+        "occurrences": 0
+      },
+      {
+        "legs": 11,
+        "occurrences": 0
+      },
+      {
+        "legs": 12,
+        "occurrences": 0
+      }
+    ],
+    "legs_won_before_loss": [
+      {
+        "legs": 0,
+        "occurrences": 11
+      },
+      {
+        "legs": 1,
+        "occurrences": 3
+      },
+      {
+        "legs": 2,
+        "occurrences": 3
+      },
+      {
+        "legs": 3,
+        "occurrences": 0
+      },
+      {
+        "legs": 4,
+        "occurrences": 0
+      },
+      {
+        "legs": 5,
+        "occurrences": 0
+      },
+      {
+        "legs": 6,
+        "occurrences": 0
+      },
+      {
+        "legs": 7,
+        "occurrences": 0
+      },
+      {
+        "legs": 8,
+        "occurrences": 0
+      },
+      {
+        "legs": 9,
+        "occurrences": 0
+      },
+      {
+        "legs": 10,
+        "occurrences": 0
+      },
+      {
+        "legs": 11,
+        "occurrences": 0
+      },
+      {
+        "legs": 12,
+        "occurrences": 0
+      }
+    ]
+  }
+}

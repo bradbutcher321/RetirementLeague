@@ -10,20 +10,123 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="nav.css">
 <style>
-  .coming-soon{
+  /* ---------- Week selector ---------- */
+  .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .selector-label{ color: var(--text-dim); font-size: 0.82rem; }
+  .parlay-select{
     background: var(--surface);
     border: 1px solid var(--line);
-    padding: 40px 24px;
-    text-align: center;
-    color: var(--text-dim);
-  }
-  .coming-soon strong{
-    display: block;
     color: var(--text);
-    font-family: var(--scoreboard);
-    font-size: 1.3rem;
-    margin-bottom: 8px;
+    font-family: var(--body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 9px 12px;
+    border-radius: 4px;
   }
+  .parlay-select:focus{ outline: 1px solid var(--gold-bright); }
+
+  /* ---------- Parlay summary + legs ---------- */
+  .parlay-card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--gold-bright);
+  }
+  .parlay-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .parlay-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.4rem; }
+  .parlay-sub{ color: var(--text-dim); font-size: 0.82rem; margin-top: 2px; }
+  .tiles{ display: flex; flex-wrap: wrap; gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
+  .tile{ flex: 1 1 110px; background: var(--surface); padding: 12px 10px; text-align: center; }
+  .tile-label{ color: var(--text-dim); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 5px; white-space: nowrap; }
+  .tile-value{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+
+  .leg{
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) auto;
+    gap: 4px 14px;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line);
+    border-left: 3px solid transparent;
+  }
+  .leg:last-child{ border-bottom: none; }
+  .leg.Win{ border-left-color: var(--turf); }
+  .leg.Loss{ border-left-color: var(--loss); }
+  .leg-player{ font-weight: 700; }
+  .leg-pick{ min-width: 0; }
+  .leg-bet{ font-size: 0.92rem; }
+  .leg-meta{ color: var(--text-dim); font-size: 0.78rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .result-pill{
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .result-pill.Win{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.12); }
+  .result-pill.Loss{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.12); }
+  .result-pill.Pending{ border-style: dashed; }
+  .val-win{ color: var(--turf); }
+  .val-loss{ color: var(--loss); }
+  @media (max-width: 560px){
+    .leg{ grid-template-columns: minmax(0, 1fr) auto; }
+    .leg-pick{ grid-column: 1 / -1; grid-row: 2; }
+  }
+
+  /* ---------- Stat cards ---------- */
+  .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  @media (max-width: 720px){ .card-grid{ grid-template-columns: 1fr; } }
+  .stat-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold-bright); }
+  .stat-card-title{ padding: 12px 16px 4px; font-weight: 700; font-size: 0.95rem; }
+  .stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 0 16px 8px; }
+  .stat-card-body{ padding: 6px 10px 12px; }
+
+  .pill{ font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pill.up{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.10); }
+  .pill.down{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.10); }
+
+  .podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+  .pod{ background: var(--surface-raised); border: 1px solid var(--line); padding: 12px 6px; text-align: center; min-width: 0; }
+  .pod:first-child{ border-color: var(--gold-bright); }
+  .pod-rank{ font-family: var(--scoreboard); font-size: 0.85rem; color: var(--gold); font-weight: 700; }
+  .pod-name{ font-weight: 700; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; color: var(--gold-bright); font-variant-numeric: tabular-nums; }
+  .pod-val.long{ font-size: 1.25rem; }
+  .pod-sub{ color: var(--text-dim); font-size: 0.7rem; min-height: 1em; }
+
+  .row{
+    display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
+    background: var(--surface-raised); border: 1px solid var(--line); padding: 9px 12px; margin-top: 6px;
+  }
+  .row.norank{ grid-template-columns: minmax(0,1fr) auto; }
+  .row-rank{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; color: var(--text-dim); text-align: center; }
+  .row-name{ font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; }
+  .row-stats{ display: flex; gap: 14px; }
+  .row-stat{ text-align: center; min-width: 34px; }
+  .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* ---------- Histograms ---------- */
+  .hist-row{ display: grid; grid-template-columns: 26px 1fr 30px; align-items: center; gap: 10px; padding: 5px 16px; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+    .hist-row:last-child{ padding-bottom: 12px; }
+  .hist-label{ color: var(--text-dim); text-align: right; }
+  .hist-track{ height: 10px; }
+  .hist-bar{ height: 100%; background: var(--gold-bright); border-radius: 0 4px 4px 0; min-width: 0; }
+  .hist-count{ text-align: right; font-weight: 600; }
+  .hist-count.zero{ color: var(--text-dim); font-weight: 400; }
+
+  .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
 </style>
 </head>
 <body>
@@ -35,15 +138,256 @@
     </header>
 
     <section>
-      <div class="coming-soon">
-        <strong>Coming soon</strong>
-        This page is on the way — check back once it's built out.
-      </div>
+      <h2>Current Parlay</h2>
+      <div id="current-container"><div class="loading-row">Loading parlay…</div></div>
     </section>
 
-    <footer>Retirement League</footer>
+    <section>
+      <h2>Past Parlays</h2>
+      <div class="selector-row">
+        <label class="selector-label" for="year-select">Year</label>
+        <select class="parlay-select" id="year-select"></select>
+        <label class="selector-label" for="week-select">Week</label>
+        <select class="parlay-select" id="week-select"></select>
+      </div>
+      <div id="past-container"></div>
+    </section>
+
+    <section>
+      <h2>Leaders</h2>
+      <div class="card-grid" id="leaders-container"></div>
+    </section>
+
+    <section>
+      <h2>Bet Breakdowns</h2>
+      <div class="card-grid" id="breakdown-container"></div>
+    </section>
+
+    <section>
+      <h2>How Far Parlays Get</h2>
+      <div class="card-grid" id="legs-container"></div>
+    </section>
+
+    <footer id="footer">Data from the league sheet</footer>
   </div>
 
 <script src="nav.js"></script>
+<script>
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function fmtOdds(o) {
+    if (o === null || o === undefined) return '—';
+    const n = Math.round(o);
+    return (n > 0 ? '+' : '') + n.toLocaleString();
+  }
+  function fmtMoney(n) {
+    if (n === null || n === undefined) return '—';
+    return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+  function fmtPct(n) {
+    return n === null || n === undefined ? '—' : Number(n).toFixed(1) + '%';
+  }
+  function fmtTime(iso) {
+    if (!iso) return 'TBD';
+    const d = new Date(iso);
+    const h = d.getHours();
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${DAYS[d.getDay()]} ${h % 12 || 12}:${mins}${h < 12 ? 'AM' : 'PM'}`;
+  }
+  function tile(label, value, cls) {
+    return `<div class="tile"><div class="tile-label">${label}</div><div class="tile-value${cls ? ' ' + cls : ''}">${value}</div></div>`;
+  }
+
+  // ---------- Parlay (current / past) ----------
+  function legsSorted(week, players) {
+    return players.filter(p => week.picks[p])
+      .map(p => [p, week.picks[p]])
+      .sort((a, b) => (a[1].gametime || '9999').localeCompare(b[1].gametime || '9999'));
+  }
+
+  function renderParlay(week, players) {
+    const legs = legsSorted(week, players);
+    const wins = legs.filter(([, p]) => p.result === 'Win').length;
+    const losses = legs.filter(([, p]) => p.result === 'Loss').length;
+    const missing = players.filter(p => !week.picks[p]);
+    const result = week.final.result;
+    const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Still alive';
+    const killers = week.killed_by.length ? `Killed by ${week.killed_by.join(' & ')}` : '';
+    const subParts = [killers, week.sacko ? `Sacko: ${week.sacko}` : ''].filter(Boolean);
+
+    const tiles =
+      tile('Legs Hit', `${wins}/${players.length}`, wins ? 'val-win' : '') +
+      tile('Legs Missed', losses, losses ? 'val-loss' : '') +
+      tile('Combined Odds', fmtOdds(week.final.odds)) +
+      tile('Payout', fmtMoney(week.final.payout)) +
+      tile('Split', fmtMoney(week.final.split));
+
+    const rows = legs.map(([name, p]) => `
+      <div class="leg ${p.result}">
+        <div class="leg-player">${esc(name)}</div>
+        <div class="leg-pick">
+          <div class="leg-bet">${esc(p.pick)}</div>
+          <div class="leg-meta">${p.sport ? esc(p.sport) + ' · ' : ''}${fmtOdds(p.odds)} · ${fmtTime(p.gametime)}</div>
+        </div>
+        <span class="result-pill ${p.result}">${p.result}</span>
+      </div>`).join('') +
+      missing.map(name => `
+      <div class="leg">
+        <div class="leg-player">${esc(name)}</div>
+        <div class="leg-pick"><div class="leg-meta">No pick yet</div></div>
+        <span class="result-pill Pending">Pending</span>
+      </div>`).join('');
+
+    return `
+      <div class="parlay-card">
+        <div class="parlay-head">
+          <div>
+            <div class="parlay-title">${week.year} · Week ${week.week}</div>
+            ${subParts.length ? `<div class="parlay-sub">${esc(subParts.join(' · '))}</div>` : ''}
+          </div>
+          <span class="result-pill ${result}">${status}</span>
+        </div>
+        <div class="tiles">${tiles}</div>
+        ${rows}
+      </div>`;
+  }
+
+  // ---------- Stat cards ----------
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  const pill = (text, up) => `<span class="pill ${up ? 'up' : 'down'}">${text}</span>`;
+  const winPill = pct => pill(fmtPct(pct), pct >= 50);
+  const signedMoney = n => (n < 0 ? '-' : '') + fmtMoney(Math.abs(n));
+  const stats = list => `<div class="row-stats">${list.map(([v, l]) => `<div class="row-stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+
+  // items: { name, sub, big, right }. The top 3 become podium cards and the
+  // rest become rows, unless podium is false (short lists show plain rows).
+  function rankedCard(title, items, opts = {}) {
+    const podium = opts.podium !== false;
+    const top = podium ? items.slice(0, 3) : [];
+    const rest = podium ? items.slice(3) : items;
+    const pods = top.map((it, i) => `
+      <div class="pod">
+        <div class="pod-rank">#${i + 1}</div>
+        <div class="pod-name">${esc(it.name)}</div>
+        <div class="pod-val${it.big.length > 6 ? ' long' : ''}">${it.big}</div>
+        <div class="pod-sub">${it.sub || ''}</div>
+      </div>`).join('');
+    const rows = rest.map((it, i) => `
+      <div class="row${podium ? '' : ' norank'}">
+        ${podium ? `<div class="row-rank">${i + 4}</div>` : ''}
+        <div><div class="row-name">${esc(it.name)}</div>${it.sub ? `<div class="row-sub">${it.sub}</div>` : ''}</div>
+        ${it.right || '<span></span>'}
+      </div>`).join('');
+    return `
+      <div class="stat-card">
+        <div class="stat-card-title">${title}</div>
+        ${opts.note ? `<div class="stat-card-note">${opts.note}</div>` : ''}
+        <div class="stat-card-body">${top.length ? `<div class="podium">${pods}</div>` : ''}${rows}</div>
+      </div>`;
+  }
+
+  function wlItems(rows, key) {
+    return rows.map(r => ({ name: r[key], sub: `${r.w}-${r.l}`, big: fmtPct(r.win_pct), right: winPill(r.win_pct) }));
+  }
+
+  function histCard(title, rows, note) {
+    const max = Math.max(1, ...rows.map(r => r.occurrences));
+    const body = rows.map(r => `
+      <div class="hist-row">
+        <div class="hist-label">${r.legs}</div>
+        <div class="hist-track"><div class="hist-bar" style="width:${r.occurrences / max * 100}%"></div></div>
+        <div class="hist-count${r.occurrences ? '' : ' zero'}">${r.occurrences}</div>
+      </div>`).join('');
+    return `<div class="stat-card"><div class="stat-card-title">${title}</div><div class="stat-card-note">${note}</div><div class="stat-card-body">${body}</div></div>`;
+  }
+
+  function renderLeaders(s) {
+    const earnings = s.potential_earnings
+      .map(r => ({ player: r.player, net: r.winnings - r.losses }))
+      .sort((a, b) => b.net - a.net);
+    return [
+      rankedCard('Individual W/L', wlItems(s.individual_wl, 'player')),
+      rankedCard('Weekly Sacko Count', s.weekly_sackos.map(r => ({
+        name: r.player, big: String(r.sackos), sub: fmtMoney(r.cost), right: stats([[r.sackos, 'Sackos'], [fmtMoney(r.cost), 'Cost']]),
+      }))),
+      rankedCard('Parlays Killed', s.parlays_killed.map(r => ({
+        name: r.player, big: r.kills.toFixed(1), sub: plural(r.kill_chances, 'chance'),
+        right: stats([[r.kills.toFixed(1), 'Kills'], [r.avg_bet_position === null ? '—' : r.avg_bet_position.toFixed(1), 'Avg Pos']]),
+      })), { note: 'The leg that loses first kills the parlay; ties split it. Avg Pos is where their game falls in the week\u2019s schedule.' }),
+      rankedCard('Average Odds', s.average_odds.map(r => ({
+        name: r.player, big: fmtOdds(r.avg_odds), right: stats([[fmtOdds(r.avg_odds), 'Odds']]),
+      }))),
+      rankedCard('Potential Earnings', earnings.map(r => ({
+        name: r.player, big: signedMoney(r.net), right: pill(signedMoney(r.net), r.net >= 0),
+      })), { note: 'Winnings minus losses, counting each week\u2019s full payout when that player\u2019s leg won or lost.' }),
+    ].join('');
+  }
+
+  function renderBreakdowns(s) {
+    const tw = s.odds_type_wl.reduce((a, r) => a + r.w, 0);
+    const tl = s.odds_type_wl.reduce((a, r) => a + r.l, 0);
+    const oddsItems = wlItems(s.odds_type_wl, 'odds_type');
+    oddsItems.push({ name: 'Total', sub: `${tw}-${tl}`, big: '', right: winPill(tw + tl ? tw / (tw + tl) * 100 : 0) });
+    return [
+      rankedCard('Sport W/L', wlItems(s.sport_wl, 'sport')),
+      rankedCard('Bet Type W/L', wlItems(s.bet_type_wl, 'bet_type')),
+      rankedCard('Favorite vs. Underdog', oddsItems, { podium: false }),
+    ].join('');
+  }
+
+  function renderLegs(s) {
+    return histCard('Legs Won per Parlay', s.legs_won_per_parlay, 'Weeks by how many of the legs hit, once every leg was graded.') +
+      histCard('Legs Won Before First Loss', s.legs_won_before_loss, 'Weeks by how many legs won, in game-time order, before the first loss.');
+  }
+
+  // ---------- Wiring ----------
+  fetch('data/parlay.json', { cache: 'no-store' })
+    .then(res => res.json())
+    .then(data => {
+      const { players, weeks, stats } = data;
+      const current = weeks[weeks.length - 1];
+      document.getElementById('current-container').innerHTML = renderParlay(current, players);
+
+      const years = [...new Set(weeks.map(w => w.year))].sort((a, b) => b - a);
+      const yearSel = document.getElementById('year-select');
+      const weekSel = document.getElementById('week-select');
+      const past = document.getElementById('past-container');
+      yearSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+      function fillWeeks(preferred) {
+        const inYear = weeks.filter(w => w.year === Number(yearSel.value)).sort((a, b) => b.week - a.week);
+        weekSel.innerHTML = inYear.map(w => `<option value="${w.week}">Week ${w.week}</option>`).join('');
+        if (preferred !== undefined && inYear.some(w => w.week === preferred)) weekSel.value = preferred;
+      }
+      function showPast() {
+        const w = weeks.find(x => x.year === Number(yearSel.value) && x.week === Number(weekSel.value));
+        past.innerHTML = w ? renderParlay(w, players) : '';
+      }
+      // Default the lookup to the most recent week that has finished, since the
+      // current one is already shown above.
+      const previous = weeks.length > 1 ? weeks[weeks.length - 2] : current;
+      yearSel.value = previous.year;
+      fillWeeks(previous.week);
+      showPast();
+      yearSel.addEventListener('change', () => { fillWeeks(); showPast(); });
+      weekSel.addEventListener('change', showPast);
+
+      document.getElementById('leaders-container').innerHTML = renderLeaders(stats);
+      document.getElementById('breakdown-container').innerHTML = renderBreakdowns(stats);
+      document.getElementById('legs-container').innerHTML = renderLegs(stats);
+
+      const updated = new Date(data.generated_at);
+      if (!Number.isNaN(updated.getTime())) {
+        document.getElementById('footer').textContent = `Data from the league sheet · Last refreshed ${updated.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}`;
+      }
+    })
+    .catch(err => {
+      console.error('Parlay data error:', err);
+      document.getElementById('current-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading parlay data.</div>';
+    });
+</script>
 </body>
 </html>
