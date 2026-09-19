@@ -14,6 +14,7 @@ values are read unformatted and converted from Sheets serial numbers.
 """
 import json
 import os
+import re
 from datetime import datetime, timedelta, timezone
 
 import gspread
@@ -199,7 +200,43 @@ def wl_rows(counter, key_name):
     return sorted(rows, key=lambda r: (r["win_pct"] is None, -(r["win_pct"] or 0)))
 
 
+def fixed_rows(counter, key_name):
+    """Like wl_rows but keeps the counter's own (meaningful) order."""
+    rows = []
+    for key, (w, l) in counter.items():
+        rows.append({key_name: key, "w": w, "l": l, "win_pct": round(w / (w + l) * 100, 1) if w + l else None})
+    return rows
+
+
+def over_under_side(pick):
+    m = re.search(r"\b(over|under)\b|(?<![a-z])([ou])(?=\d)", pick.lower())
+    if not m:
+        return None
+    return "Over" if (m.group(1) or m.group(2)) in ("over", "o") else "Under"
+
+
+def odds_bucket(odds):
+    if odds <= -250:
+        return "Heavy Favorite"
+    if odds <= -150:
+        return "Favorite"
+    if odds < 125:
+        return "Toss-Up"
+    if odds < 200:
+        return "Underdog"
+    return "Longshot"
+
+
+def day_bucket(iso):
+    day = datetime.fromisoformat(iso).weekday()  # Mon=0
+    return {3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}.get(day, "Mon-Wed")
+
+
 def compute_stats(players, weeks):
+    over_under = {"Over": [0, 0], "Under": [0, 0]}
+    odds_range = {k: [0, 0] for k in ("Heavy Favorite", "Favorite", "Toss-Up", "Underdog", "Longshot")}
+    day_of_week = {k: [0, 0] for k in ("Thursday", "Friday", "Saturday", "Sunday", "Mon-Wed")}
+    misses, close_calls = [], []
     leg = {p: [0, 0] for p in players}
     sports, bet_types = {}, {}
     odds_type = {"Favorite": [0, 0], "Underdog": [0, 0]}
@@ -265,6 +302,12 @@ def compute_stats(players, weeks):
                 btype[idx] += 1
             if p["odds"]:
                 odds_type["Favorite" if p["odds"] < 0 else "Underdog"][idx] += 1
+                odds_range[odds_bucket(p["odds"])][idx] += 1
+            side = over_under_side(p["pick"])
+            if side:
+                over_under[side][idx] += 1
+            if p["gametime"]:
+                day_of_week[day_bucket(p["gametime"])][idx] += 1
             if idx == 0:
                 winnings[name] += payout
             else:
@@ -272,6 +315,11 @@ def compute_stats(players, weeks):
 
         state = week_state(week, players)
         week["killed_by"] = killers
+        entry = {"year": week["year"], "week": week["week"], "payout": payout, "legs_hit": state["wins"], "killed_by": killers}
+        if state["losses"]:
+            misses.append(entry)
+        if state["complete"] and state["losses"]:
+            close_calls.append({**entry, "lost_by": [n for n, p in week["picks"].items() if p["result"] == "Loss"]})
         if state["complete"]:
             per_parlay[state["wins"]] += 1
             wins_before = 0
@@ -322,6 +370,11 @@ def compute_stats(players, weeks):
         "sport_wl": wl_rows(sports, "sport"),
         "bet_type_wl": wl_rows(bet_types, "bet_type"),
         "odds_type_wl": wl_rows(odds_type, "odds_type"),
+        "over_under_wl": wl_rows(over_under, "side"),
+        "odds_range_wl": fixed_rows(odds_range, "range"),
+        "day_of_week_wl": fixed_rows(day_of_week, "day"),
+        "biggest_misses": sorted(misses, key=lambda r: -r["payout"])[:3],
+        "closest_calls": sorted(close_calls, key=lambda r: (-r["legs_hit"], -r["payout"]))[:3],
         "legs_won_per_parlay": [{"legs": n, "occurrences": c} for n, c in per_parlay.items()],
         "legs_won_before_loss": [{"legs": n, "occurrences": c} for n, c in before_loss.items()],
     }

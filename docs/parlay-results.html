@@ -93,6 +93,7 @@
 
   .pill{ font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .pill.up{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.10); }
+  .pill.flat{ color: var(--text-dim); border-color: var(--line); }
   .pill.down{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.10); }
 
   .podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
@@ -101,6 +102,7 @@
   .pod-rank{ font-family: var(--scoreboard); font-size: 0.85rem; color: var(--gold); font-weight: 700; }
   .pod-name{ font-weight: 700; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; color: var(--gold-bright); font-variant-numeric: tabular-nums; }
+  .pod-val{ height: 2rem; line-height: 2rem; }
   .pod-val.long{ font-size: 1.25rem; }
   .pod-sub{ color: var(--text-dim); font-size: 0.7rem; min-height: 1em; }
 
@@ -122,7 +124,10 @@
     .hist-row:last-child{ padding-bottom: 12px; }
   .hist-label{ color: var(--text-dim); text-align: right; }
   .hist-track{ height: 10px; }
-  .hist-bar{ height: 100%; background: var(--gold-bright); border-radius: 0 4px 4px 0; min-width: 0; }
+  .hist-bar{ height: 100%; border-radius: 0 4px 4px 0; min-width: 0; }
+  .hist-bar.low{ background: var(--loss); }
+  .hist-bar.mid{ background: var(--turf); }
+  .hist-bar.full{ background: var(--gold-bright); }
   .hist-count{ text-align: right; font-weight: 600; }
   .hist-count.zero{ color: var(--text-dim); font-weight: 400; }
 
@@ -154,6 +159,11 @@
     </section>
 
     <section>
+      <h2>How Far Parlays Get</h2>
+      <div class="card-grid" id="legs-container"></div>
+    </section>
+
+    <section>
       <h2>Betting Stats</h2>
       <div class="card-grid" id="leaders-container"></div>
     </section>
@@ -161,11 +171,6 @@
     <section>
       <h2>Bet Breakdowns</h2>
       <div class="card-grid" id="breakdown-container"></div>
-    </section>
-
-    <section>
-      <h2>How Far Parlays Get</h2>
-      <div class="card-grid" id="legs-container"></div>
     </section>
 
     <footer id="footer">Data from the league sheet</footer>
@@ -258,7 +263,7 @@
   // ---------- Stat cards ----------
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const pill = (text, up) => `<span class="pill ${up ? 'up' : 'down'}">${text}</span>`;
-  const winPill = pct => pill(fmtPct(pct), pct >= 50);
+  const winPill = pct => pct === null || pct === undefined ? '<span class="pill flat">—</span>' : pill(fmtPct(pct), pct >= 50);
   const signedMoney = n => (n < 0 ? '-' : '') + fmtMoney(Math.abs(n));
   const stats = list => `<div class="row-stats">${list.map(([v, l]) => `<div class="row-stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
 
@@ -273,11 +278,11 @@
         <div class="pod-rank">#${i + 1}</div>
         <div class="pod-name">${esc(it.name)}</div>
         <div class="pod-val${it.big.length > 6 ? ' long' : ''}">${it.big}</div>
-        <div class="pod-sub">${it.sub || ''}</div>
+        <div class="pod-sub">${it.sub || '&nbsp;'}</div>
       </div>`).join('');
     const rows = rest.map((it, i) => `
       <div class="row${podium ? '' : ' norank'}">
-        ${podium ? `<div class="row-rank">${i + 4}</div>` : ''}
+        ${podium ? `<div class="row-rank">${it.unranked ? '–' : i + 4}</div>` : ''}
         <div style="min-width:0"><div class="row-name">${esc(it.name)}</div>${it.detail || it.sub ? `<div class="row-sub">${esc(it.detail || it.sub)}</div>` : ''}</div>
         ${it.right || '<span></span>'}
       </div>`).join('');
@@ -289,6 +294,23 @@
       </div>`;
   }
 
+  // Keeps the 10 most-bet categories (ordered by win %) and folds the rest
+  // into a single "All Others" row so the card can't grow without bound.
+  function condensedWlItems(rows, key, limit = 10) {
+    if (rows.length <= limit) return wlItems(rows, key);
+    const byVolume = [...rows].sort((a, b) => (b.w + b.l) - (a.w + a.l));
+    const kept = new Set(byVolume.slice(0, limit));
+    const others = rows.filter(r => !kept.has(r));
+    const w = others.reduce((a, r) => a + r.w, 0);
+    const l = others.reduce((a, r) => a + r.l, 0);
+    const items = wlItems(rows.filter(r => kept.has(r)), key);
+    items.push({
+      name: 'All Others', unranked: true, sub: `${w}-${l} · ${others.length} more`, big: fmtPct(w + l ? w / (w + l) * 100 : null),
+      right: winPill(w + l ? w / (w + l) * 100 : 0),
+    });
+    return items;
+  }
+
   function wlItems(rows, key) {
     return rows.map(r => ({ name: r[key], sub: `${r.w}-${r.l}`, big: fmtPct(r.win_pct), right: winPill(r.win_pct) }));
   }
@@ -298,7 +320,7 @@
     const body = rows.map(r => `
       <div class="hist-row">
         <div class="hist-label">${r.legs}</div>
-        <div class="hist-track"><div class="hist-bar" style="width:${r.occurrences / max * 100}%"></div></div>
+        <div class="hist-track"><div class="hist-bar ${r.legs < 6 ? 'low' : r.legs < 12 ? 'mid' : 'full'}" style="width:${r.occurrences / max * 100}%"></div></div>
         <div class="hist-count${r.occurrences ? '' : ' zero'}">${r.occurrences}</div>
       </div>`).join('');
     return `<div class="stat-card"><div class="stat-card-title">${title}</div><div class="stat-card-note">${note}</div><div class="stat-card-body">${body}</div></div>`;
@@ -348,15 +370,36 @@
     ].join('');
   }
 
+  function withTotal(rows, key) {
+    const tw = rows.reduce((a, r) => a + r.w, 0);
+    const tl = rows.reduce((a, r) => a + r.l, 0);
+    const items = wlItems(rows, key);
+    items.push({ name: 'Total', sub: `${tw}-${tl}`, big: '', right: winPill(tw + tl ? tw / (tw + tl) * 100 : null) });
+    return items;
+  }
+
+  function weekLabel(r) {
+    return `${r.year} · Week ${r.week}`;
+  }
+
   function renderBreakdowns(s) {
-    const tw = s.odds_type_wl.reduce((a, r) => a + r.w, 0);
-    const tl = s.odds_type_wl.reduce((a, r) => a + r.l, 0);
-    const oddsItems = wlItems(s.odds_type_wl, 'odds_type');
-    oddsItems.push({ name: 'Total', sub: `${tw}-${tl}`, big: '', right: winPill(tw + tl ? tw / (tw + tl) * 100 : 0) });
+    const missItems = s.biggest_misses.map(r => ({
+      name: weekLabel(r), sub: `Killed by ${r.killed_by.join(' & ')}`,
+      right: stats([[fmtMoney(r.payout), 'Payout']]),
+    }));
+    const callItems = s.closest_calls.map(r => ({
+      name: weekLabel(r), sub: `Missed by ${r.lost_by.join(', ')}`,
+      right: stats([[`${r.legs_hit}/12`, 'Legs Hit']]),
+    }));
     return [
-      rankedCard('Sport W/L', wlItems(s.sport_wl, 'sport')),
-      rankedCard('Bet Type W/L', wlItems(s.bet_type_wl, 'bet_type')),
-      rankedCard('Favorite vs. Underdog', oddsItems, { podium: false }),
+      rankedCard('Sport W/L', condensedWlItems(s.sport_wl, 'sport')),
+      rankedCard('Bet Type W/L', condensedWlItems(s.bet_type_wl, 'bet_type')),
+      rankedCard('Favorite vs. Underdog', withTotal(s.odds_type_wl, 'odds_type'), { podium: false }),
+      rankedCard('Over vs. Under', withTotal(s.over_under_wl, 'side'), { podium: false }),
+      rankedCard('Biggest Misses', missItems, { podium: false }),
+      rankedCard('Closest Calls', callItems, { podium: false }),
+      rankedCard('Day of Week', wlItems(s.day_of_week_wl, 'day'), { podium: false }),
+      rankedCard('Odds Range', wlItems(s.odds_range_wl, 'range'), { podium: false }),
     ].join('');
   }
 
