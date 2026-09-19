@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=2">
-<link rel="stylesheet" href="nav.css?v=2">
+<link rel="stylesheet" href="theme.css?v=3">
+<link rel="stylesheet" href="nav.css?v=3">
 <style>
   /* ---------- Matchup cards ---------- */
   .matchups{ display: flex; flex-direction: column; gap: 14px; }
@@ -37,7 +37,7 @@
     border-top: 3px solid transparent;
     transition: border-top-color 0.4s ease;
   }
-  .side.leading{ border-top-color: var(--gold-bright); }
+  .side.leading{ border-top-color: var(--gold); }
   .side.leading.final{ border-top-color: var(--turf); }
 
   .side.away{ text-align: left; align-items: flex-start; }
@@ -123,7 +123,7 @@
     border: 1px solid var(--line);
     color: var(--text-dim);
   }
-  .chip.wp-fav{ border-color: var(--gold-bright); color: var(--gold-bright); }
+  .chip.wp-fav{ border-color: var(--gold); color: var(--gold); }
   .chip.streak-win{ border-color: var(--turf-dim); color: var(--turf); }
   .chip.streak-loss{ border-color: var(--loss); color: var(--loss); }
 
@@ -205,8 +205,8 @@
   .vs-badge{
     position: relative;
     background: var(--surface-raised);
-    border: 1px solid var(--gold-bright);
-    color: var(--gold-bright);
+    border: 1px solid var(--gold);
+    color: var(--gold);
     font-family: var(--scoreboard);
     font-weight: 800;
     font-size: 0.74rem;
@@ -284,8 +284,8 @@
     background: rgba(214, 214, 208, 0.10);
   }
   .player-cell.state-possession{
-    --state-bar-color: rgba(255, 201, 4, 0.6);
-    background: rgba(255, 201, 4, 0.10);
+    --state-bar-color: rgba(186,155,55, 0.6);
+    background: rgba(186,155,55, 0.10);
   }
 
   /* Info (name/game-status/stats) top-aligns so the top two lines always
@@ -386,7 +386,7 @@
     text-align: center;
     flex-shrink: 0;
   }
-  .lb-row.playoff .lb-rank{ color: var(--gold-bright); }
+  .lb-row.playoff .lb-rank{ color: var(--gold); }
   .lb-identity{ flex: 1; min-width: 0; }
   .lb-name{
     font-weight: 600;
@@ -420,6 +420,7 @@
   .median-card{
     background: var(--surface);
     border: 1px solid var(--line);
+    border-top: 3px solid var(--gold);
     padding: 18px 20px;
   }
   .median-card-header{
@@ -430,7 +431,7 @@
     padding-bottom: 10px;
     border-bottom: 1px solid var(--line);
   }
-  .median-card-title{ font-weight: 600; font-size: 0.9rem; color: var(--text-dim); }
+  .median-card-title{ font-weight: 700; font-size: 0.95rem; color: var(--text); }
   .median-card-value{
     font-family: var(--scoreboard);
     font-weight: 700;
@@ -494,7 +495,7 @@
      No text label on it — the actual median value is already shown in
      the card header, and there's no space in this narrow a column to
      print it here without it colliding with the name rows on the line. */
-  .vplot .median-tick{ position: absolute; left: 6px; right: 6px; height: 1px; background: var(--gold-bright); z-index: 2; }
+  .vplot .median-tick{ position: absolute; left: 6px; right: 6px; height: 1px; background: var(--gold); z-index: 2; }
   /* Background is set inline per-row (solid green/above, solid red/below,
      or a split gradient sized to how many members are on each side of the
      median for a merged row) since it varies per team composition. Width
@@ -546,7 +547,7 @@
     font-weight: 800;
     font-size: 2rem;
     letter-spacing: 0.01em;
-    color: var(--gold-bright);
+    color: var(--gold);
     line-height: 1;
   }
   .pending-sub{
@@ -596,7 +597,7 @@
     line-height: 1;
     margin-bottom: 10px;
     font-variant-numeric: tabular-nums;
-    color: var(--gold-bright);
+    color: var(--gold);
   }
   .accolade-team{
     position: relative;

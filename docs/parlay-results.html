@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=2">
-<link rel="stylesheet" href="nav.css?v=2">
+<link rel="stylesheet" href="theme.css?v=3">
+<link rel="stylesheet" href="nav.css?v=3">
 <style>
   /* ---------- Week selector ---------- */
   .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -23,11 +23,11 @@
     padding: 9px 12px;
     border-radius: 4px;
   }
-  .parlay-select:focus{ outline: 1px solid var(--gold-bright); }
+  .parlay-select:focus{ outline: 1px solid var(--gold); }
   .back-link{
     background: none;
     border: 1px solid var(--gold);
-    color: var(--gold-bright);
+    color: var(--gold);
     font-family: var(--body);
     font-size: 0.8rem;
     font-weight: 600;
@@ -35,14 +35,14 @@
     border-radius: 4px;
     cursor: pointer;
   }
-  .back-link:hover{ background: rgba(255,201,4,0.1); }
+  .back-link:hover{ background: rgba(186,155,55,0.1); }
   .back-link[hidden]{ display: none; }
 
   /* ---------- Parlay summary + legs ---------- */
   .parlay-card{
     background: var(--surface);
     border: 1px solid var(--line);
-    border-top: 3px solid var(--gold-bright);
+    border-top: 3px solid var(--gold);
   }
   .parlay-head{
     display: flex;
@@ -99,7 +99,7 @@
   /* ---------- Stat cards ---------- */
   .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   @media (max-width: 720px){ .card-grid{ grid-template-columns: 1fr; } }
-  .stat-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold-bright); }
+  .stat-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); }
   .stat-card-title{ padding: 12px 16px 4px; font-weight: 700; font-size: 0.95rem; }
   .stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 0 16px 8px; }
   .stat-card-body{ padding: 6px 10px 12px; }
@@ -111,10 +111,10 @@
 
   .podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
   .pod{ background: var(--surface-raised); border: 1px solid var(--line); padding: 12px 6px; text-align: center; min-width: 0; }
-  .pod:first-child{ border-color: var(--gold-bright); }
+  .pod:first-child{ border-color: var(--gold); }
   .pod-rank{ font-family: var(--scoreboard); font-size: 0.85rem; color: var(--gold); font-weight: 700; }
   .pod-name{ font-weight: 700; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; color: var(--gold-bright); font-variant-numeric: tabular-nums; }
+  .pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; color: var(--gold); font-variant-numeric: tabular-nums; }
   .pod-val{ height: 2rem; line-height: 2rem; }
   .pod-val.long{ font-size: 1.25rem; }
   .pod-sub{ color: var(--text-dim); font-size: 0.7rem; min-height: 1em; }
@@ -140,7 +140,7 @@
   .hist-bar{ height: 100%; border-radius: 0 4px 4px 0; min-width: 0; }
   .hist-bar.low{ background: var(--loss); }
   .hist-bar.mid{ background: var(--turf); }
-  .hist-bar.full{ background: var(--gold-bright); }
+  .hist-bar.full{ background: var(--gold); }
   .hist-count{ text-align: right; font-weight: 600; }
   .hist-count.zero{ color: var(--text-dim); font-weight: 400; }
 
