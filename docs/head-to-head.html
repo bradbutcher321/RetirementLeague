@@ -24,8 +24,8 @@
 
   .form-wrap{ padding:14px 16px 6px; }
   .form-title{ color:var(--text-dim); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; text-align:center; margin-bottom:10px; }
-  .form{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
-  .chip{ width:34px; height:34px; display:grid; place-items:center; font-size:0.7rem; font-weight:700; border:1px solid; }
+  .form{ display:flex; gap:6px; justify-content:center; flex-wrap:nowrap; }
+  .chip{ flex:1 1 0; min-width:0; max-width:46px; height:34px; display:grid; place-items:center; font-size:0.7rem; font-weight:700; border:1px solid; }
   .chip.up{ color:var(--turf); border-color:var(--turf-dim); background:rgba(76,154,107,0.12); }
   .chip.down{ color:var(--loss); border-color:var(--loss); background:rgba(192,87,75,0.12); }
 
@@ -60,6 +60,7 @@
     .cmp-row{ grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr); }
     .side .nm{ font-size:1.6rem; } .rec b{ font-size:2.4rem; }
     .pill{ font-size:0.7rem; padding:3px 9px; }
+    .form{ gap:3px; } .chip{ font-size:0.6rem; height:30px; }
   }
 </style>
 </head>
@@ -138,7 +139,8 @@
     const f = v => (v === null ? '—' : fmt(v));
     return `<div class="cmp-row"><div class="cmp-val${ls}">${f(l)}</div><div class="cmp-label">${label}</div><div class="cmp-val r${rs}">${f(r)}</div></div>`;
   }
-  const abbr = n => (n.includes(' ') ? n.split(' ').map(w => w[0]).join('').toUpperCase() : n.slice(0, 2));
+  const ABBR = { Ben: 'Ben', Brad: 'Brd', Chad: 'Chd', Collin: 'Cln', Flanders: 'Fla', Jared: 'Jar', Jeff: 'Jef', 'Joe G': 'JoG', 'Joe K': 'JoK', Jon: 'Jon', Kris: 'Krs', TJ: 'TJ', Chappy: 'Chp', Corey: 'Cor' };
+  const abbr = n => ABBR[n] || n.slice(0, 3);
   const tone = (x, y) => (x > y ? 'up' : x < y ? 'down' : 'flat');
   const callout = (t, n, cls, s) => `<div class="co"><div class="co-t">${t}</div><div class="co-n ${cls}">${n}</div><div class="co-s">${s}</div></div>`;
 
