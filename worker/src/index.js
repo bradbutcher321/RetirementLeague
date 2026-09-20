@@ -23,8 +23,9 @@
 import { buildDashboard } from "./dashboard.js";
 
 const COOLDOWN_SECONDS = 120;
-const CACHE_KEY = "dashboard:latest";
-const LAST_FETCH_KEY = "dashboard:last-fetch-epoch";
+// One key holds { fetchedAt, data } so a cache hit costs a single KV read and
+// a refresh costs a single KV write (free tier: 100k reads / 1k writes a day).
+const CACHE_KEY = "dashboard:v2";
 
 function corsHeaders(env) {
   return {
@@ -56,29 +57,21 @@ export default {
     const url = new URL(request.url);
     const force = url.searchParams.get("force") === "1";
 
-    const lastFetchRaw = await env.COOLDOWN_KV.get(LAST_FETCH_KEY);
-    const lastFetch = lastFetchRaw ? parseInt(lastFetchRaw, 10) : 0;
-    const elapsed = now - lastFetch;
+    const entry = await env.COOLDOWN_KV.get(CACHE_KEY, "json");
 
-    if (!force && elapsed < COOLDOWN_SECONDS) {
-      const cached = await env.COOLDOWN_KV.get(CACHE_KEY, "json");
-      if (cached) {
-        return jsonResponse({ ...cached, cacheHit: true }, headers);
-      }
-      // No cache yet at all (very first request ever) — fall through.
+    if (!force && entry && now - entry.fetchedAt < COOLDOWN_SECONDS) {
+      return jsonResponse({ ...entry.data, cacheHit: true }, headers);
     }
 
     try {
       const dashboard = await buildDashboard(env);
-      await env.COOLDOWN_KV.put(CACHE_KEY, JSON.stringify(dashboard));
-      await env.COOLDOWN_KV.put(LAST_FETCH_KEY, String(now));
+      await env.COOLDOWN_KV.put(CACHE_KEY, JSON.stringify({ fetchedAt: now, data: dashboard }));
       return jsonResponse({ ...dashboard, cacheHit: false }, headers);
     } catch (err) {
       // ESPN hiccup or bad credentials — better to serve stale data than
       // nothing, if we have it.
-      const cached = await env.COOLDOWN_KV.get(CACHE_KEY, "json");
-      if (cached) {
-        return jsonResponse({ ...cached, cacheHit: true, error: String(err) }, headers);
+      if (entry) {
+        return jsonResponse({ ...entry.data, cacheHit: true, error: String(err) }, headers);
       }
       return jsonResponse({ error: String(err) }, headers, 502);
     }

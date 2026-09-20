@@ -1251,8 +1251,15 @@
     card.classList.toggle('expanded');
   });
 
-  loadDashboard();
-  setInterval(loadDashboard, AUTO_REFRESH_MS);
+  // Background tabs don't poll (each poll costs Worker/KV quota); coming
+  // back to the tab refreshes right away if the data is stale.
+  let lastLoadAt = 0;
+  const loadDashboardTracked = () => { lastLoadAt = Date.now(); loadDashboard(); };
+  loadDashboardTracked();
+  setInterval(() => { if (!document.hidden) loadDashboardTracked(); }, AUTO_REFRESH_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Date.now() - lastLoadAt >= AUTO_REFRESH_MS) loadDashboardTracked();
+  });
   // Ticks the countdown between data refreshes so it counts down smoothly
   // rather than jumping only once every AUTO_REFRESH_MS.
   setInterval(updateKickoffCountdown, 60 * 1000);
