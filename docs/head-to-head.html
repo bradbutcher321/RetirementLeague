@@ -46,7 +46,7 @@
   .cmp-val.lose{ color:var(--text-dim); }
   .gap{ height:14px; }
 
-  .game{ display:grid; grid-template-columns:86px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); padding:9px 12px; margin-top:6px; border-left:3px solid transparent; }
+  .game{ display:grid; grid-template-columns:86px minmax(0,1fr); gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); padding:9px 12px; margin-top:6px; border-left:3px solid transparent; }
   .game.up{ border-left-color:var(--turf); } .game.down{ border-left-color:var(--loss); }
   .game-when{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); font-size:0.95rem; }
   .game-when small{ display:block; font-family:var(--body); font-size:0.68rem; font-weight:400; }
@@ -54,10 +54,9 @@
   .game-line .sc{ font-family:var(--scoreboard); font-weight:700; font-size:1.05rem; font-variant-numeric:tabular-nums; }
   .game-line .who.right{ text-align:right; }
   .game-line .won{ font-weight:700; } .game-line .lost{ color:var(--text-dim); }
-  .game-margin{ color:var(--text-dim); font-size:0.78rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
   @media (max-width:720px){ .callouts{ grid-template-columns:1fr 1fr; } }
   @media (max-width:560px){
-    .game{ grid-template-columns:1fr; gap:4px; } .game-margin{ display:none; }
+    .game{ grid-template-columns:1fr; gap:4px; }
     .cmp-row{ grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr); }
     .side .nm{ font-size:1.6rem; } .rec b{ font-size:2.4rem; }
     .pill{ font-size:0.7rem; padding:3px 9px; }
@@ -198,7 +197,7 @@
       const s1 = scoreOf(g, a), s2 = scoreOf(g, b), aw = g.winner === a;
       return `<div class="game ${aw ? 'up' : 'down'}"><div class="game-when">${g.year}<small>Wk ${g.week} · ${TYPE[g.type] || g.type}</small></div>` +
         `<div class="game-line"><div class="who ${aw ? 'won' : 'lost'}">${ea}</div><div class="sc">${LG.f2(s1)} – ${LG.f2(s2)}</div>` +
-        `<div class="who right ${aw ? 'lost' : 'won'}">${eb}</div></div><div class="game-margin">${LG.esc(g.winner)} by ${LG.f2(Math.abs(s1 - s2))}</div></div>`;
+        `<div class="who right ${aw ? 'lost' : 'won'}">${eb}</div></div></div>`;
     }).join('') + '</div></div>';
     $('games-section').hidden = false;
   }
