@@ -9,7 +9,40 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
-<link rel="stylesheet" href="league.css?v=3">
+<link rel="stylesheet" href="league.css?v=4">
+<style>
+  .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  @media (max-width:800px){ .hero-grid{ grid-template-columns:1fr 1fr; } }
+  .hero{ background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--gold); padding:14px 12px; text-align:center; min-width:0; }
+  .hero-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; min-height:2.2em; }
+  .hero-v{ font-family:var(--scoreboard); font-weight:800; font-size:2.4rem; line-height:1.1; color:var(--turf); margin:6px 0 6px; }
+  .hero-v.dn{ color:var(--loss); }
+  .hero-n{ font-weight:700; font-size:0.85rem; line-height:1.3; min-height:2.6em; display:flex; flex-direction:column; justify-content:center; }
+  .hero-n span{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hero-s{ color:var(--text-dim); font-size:0.72rem; margin-top:4px; }
+
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer; }
+  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(186,155,55,0.10); }
+  .seg{ display:inline-flex; border:1px solid var(--line); margin:4px 16px 8px; }
+  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.78rem; padding:7px 16px; cursor:pointer; }
+  .seg button.on{ background:rgba(76,154,107,0.14); color:var(--turf); }
+  .seg button.on.dn{ background:rgba(192,87,75,0.14); color:var(--loss); }
+
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+  @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
+  .ln{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); border-left:3px solid var(--turf); padding:9px 12px; margin-top:6px; min-height:58px; }
+  .ln.dn{ border-left-color:var(--loss); }
+  .ln .rk{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); text-align:center; font-size:1.2rem; }
+  .ln .tm{ font-weight:700; font-size:0.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ln .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
+  .ln.rec{ border-color:var(--turf); background:rgba(76,154,107,0.07); }
+  .ln.rec.dn{ border-color:var(--loss); background:rgba(192,87,75,0.07); }
+  .ln.rec .rk, .ln.rec .val{ color:var(--turf); }
+  .ln.rec.dn .rk, .ln.rec.dn .val{ color:var(--loss); }
+  .ln.rec .val{ font-size:1.5rem; font-weight:800; }
+  .ln .val{ font-family:var(--scoreboard); font-weight:700; font-size:1.2rem; color:var(--text); font-variant-numeric:tabular-nums; text-align:right; min-width:58px; }
+</style>
 </head>
 <body>
   <div id="site-nav"></div>
@@ -33,7 +66,8 @@
         <label class="selector-label" for="year-select">Season</label>
         <select class="lg-select" id="year-select" autocomplete="off"></select>
       </div>
-      <div class="card-grid stretch" id="records"><div class="loading-row">Loading records…</div></div>
+      <div class="tabs" id="tabs"></div>
+      <div id="records"><div class="loading-row">Loading records…</div></div>
     </section>
 
     <footer>Data from the league sheet</footer>
@@ -42,47 +76,84 @@
 <script src="nav.js"></script>
 <script src="league-common.js?v=2"></script>
 <script>
-  const { f2, card, ranked } = LG;
-  let D;
+  const { f2, card, esc } = LG;
+  let D, tab = 0;
+  const pickState = {};
+  const TABS = ['Records', 'Scores', 'Margins', 'Combined', 'Loss & Win'];
 
-  function when(g) {
-    return `${g.year} · Week ${g.week}${g.type === 'Reg' ? '' : ' · ' + g.type}`;
+  const when = g => `${g.year} · Week ${g.week}${g.type === 'Reg' ? '' : ' · ' + g.type}`;
+  const by = (list, fn, desc) => list.slice().sort((a, b) => (desc ? fn(b) - fn(a) : fn(a) - fn(b)));
+
+  function categories(sel) {
+    const games = D.games.filter(g => g.type !== 'Bye' && g.p2 && g.s1 > 0 && g.s2 > 0 &&
+      g.winner !== 'In Progress' && (sel === 'all' || g.year === Number(sel)));
+    const decided = games.filter(g => g.winner === g.p1 || g.winner === g.p2);
+    const scores = games.flatMap(g => [{ team: g.p1, s: g.s1, g }, { team: g.p2, s: g.s2, g }]);
+    const margin = g => Math.abs(g.s1 - g.s2), total = g => g.s1 + g.s2;
+    const wS = g => (g.winner === g.p1 ? g.s1 : g.s2), lS = g => (g.winner === g.p1 ? g.s2 : g.s1);
+    const lt = g => (g.winner === g.p1 ? g.p2 : g.p1);
+    const winFirst = g => ({ a: g.winner, as: wS(g), b: lt(g), bs: lS(g) });
+    const loseFirst = g => ({ a: lt(g), as: lS(g), b: g.winner, bs: wS(g) });
+
+    const team = (title, desc) => ({
+      title, dn: !desc,
+      items: by(scores, x => x.s, desc).slice(0, 10).map(x => ({ v: x.s, team: x.team, meta: when(x.g) })),
+    });
+    const match = (title, list, fn, desc, side = winFirst) => ({
+      title, dn: !desc,
+      items: by(list, fn, desc).slice(0, 10).map(g => ({ v: fn(g), m: side(g), meta: when(g) })),
+    });
+    return {
+      topS: team('Top Scores', true), lowS: team('Lowest Scores', false),
+      hiM: match('Highest Victory Margins', decided, margin, true), loM: match('Lowest Victory Margins', decided, margin, false),
+      hiC: match('Most Combined Points', games, total, true), loC: match('Least Combined Points', games, total, false),
+      hiL: { ...match('Highest Score in a Loss', decided, lS, true, loseFirst), dn: true }, loW: { ...match('Lowest Score in a Win', decided, wS, false, winFirst), dn: false },
+    };
+  }
+
+  const matchText = m => `${m.a} ${f2(m.as)} vs ${m.b} ${f2(m.bs)}`;
+  const nameOf = i => (i.team ? i.team : matchText(i.m));
+
+  function tile(c) {
+    const t = c.items[0];
+    if (!t) return `<div class="hero"><div class="hero-t">${c.title}</div><div class="hero-v">—</div><div class="hero-n"></div><div class="hero-s">&nbsp;</div></div>`;
+    const who = t.team
+      ? `<span>${esc(t.team)}</span>`
+      : `<span>${esc(t.m.a)} ${f2(t.m.as)}</span><span>vs ${esc(t.m.b)} ${f2(t.m.bs)}</span>`;
+    return `<div class="hero"><div class="hero-t">${c.title}</div><div class="hero-v ${c.dn ? 'dn' : ''}">${f2(t.v)}</div><div class="hero-n">${who}</div><div class="hero-s">${t.meta}</div></div>`;
+  }
+
+  const seg = (w, inv) => `<div class="seg"><button class="${w === 'hi' ? 'on' + (inv ? ' dn' : '') : ''}" data-seg="hi">Highest</button><button class="${w === 'lo' ? 'on' + (inv ? '' : ' dn') : ''}" data-seg="lo">Lowest</button></div>`;
+  const row = (i, rank, dn) => `<div class="ln ${dn ? 'dn' : ''}${rank === 1 ? ' rec' : ''}"><div class="rk">${rank}</div><div style="min-width:0"><div class="tm">${esc(nameOf(i))}</div><div class="meta">${i.meta}</div></div><div class="val">${f2(i.v)}</div></div>`;
+
+  function listCard(hi, lo, which) {
+    const c = which === 'lo' ? lo : hi;
+    if (!c.items.length) return card(c.title, seg(which, hi.dn) + '<div class="empty-note">No games yet for this season.</div>');
+    return card(c.title, seg(which, hi.dn) +
+      `<div class="cols"><div>${c.items.slice(0, 5).map((i, k) => row(i, k + 1, c.dn)).join('')}</div><div>${c.items.slice(5).map((i, k) => row(i, k + 6, c.dn)).join('')}</div></div>`);
   }
 
   function render() {
     const sel = document.getElementById('year-select').value;
     document.getElementById('rec-heading').textContent = sel === 'all' ? 'All-Time Records' : `${sel} Records`;
-    const games = D.games.filter(g => g.type !== 'Bye' && g.p2 && g.s1 > 0 && g.s2 > 0 &&
-      g.winner !== 'In Progress' && (sel === 'all' || g.year === Number(sel)));
-
-    const scores = games.flatMap(g => [
-      { team: g.p1, s: g.s1, g }, { team: g.p2, s: g.s2, g },
-    ]);
-    const top = (list, n = 10) => list.slice(0, n);
-    const scoreItems = list => top(list).map(x => ({ name: x.team, sub: when(x.g), val: f2(x.s), tone: '' }));
-    const matchup = (g, val) => {
-      const w = g.winner === g.p1 ? [g.p1, g.s1, g.p2, g.s2] : [g.p2, g.s2, g.p1, g.s1];
-      return { name: `${w[0]} ${w[1]} vs ${w[2]} ${w[3]}`, sub: when(g), val, wrap: true };
-    };
-    const decided = games.filter(g => g.winner === g.p1 || g.winner === g.p2);
-    const margin = g => Math.abs(g.s1 - g.s2);
-    const total = g => g.s1 + g.s2;
-    const loserScore = g => (g.winner === g.p1 ? g.s2 : g.s1);
-    const winnerScore = g => (g.winner === g.p1 ? g.s1 : g.s2);
-    const by = (list, fn, desc) => list.slice().sort((a, b) => desc ? fn(b) - fn(a) : fn(a) - fn(b));
-    const mCard = (title, list, fn, note) => card(title, ranked(top(list).map(g => matchup(g, f2(fn(g)))), { podium: false }), note);
-
-    document.getElementById('records').innerHTML = [
-      card('Top Scores', ranked(scoreItems(scores.slice().sort((a, b) => b.s - a.s)), { podium: false })),
-      card('Lowest Scores', ranked(scoreItems(scores.slice().sort((a, b) => a.s - b.s)), { podium: false })),
-      mCard('Highest Victory Margins', by(decided, margin, true), margin),
-      mCard('Lowest Victory Margins', by(decided, margin, false), margin),
-      mCard('Most Combined Points', by(games, total, true), total),
-      mCard('Least Combined Points', by(games, total, false), total),
-      mCard('Highest Score in a Loss', by(decided, loserScore, true), loserScore, 'Scores shown are the loser’s'),
-      mCard('Lowest Score in a Win', by(decided, winnerScore, false), winnerScore, 'Scores shown are the winner’s'),
-    ].join('');
+    document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t}</button>`).join('');
+    const C = categories(sel);
+    const el = document.getElementById('records');
+    if (tab === 0) {
+      el.innerHTML = `<div class="hero-grid">${[C.topS, C.lowS, C.hiM, C.loM, C.hiC, C.loC, C.hiL, C.loW].map(tile).join('')}</div>`;
+      return;
+    }
+    const pairs = [[C.topS, C.lowS], [C.hiM, C.loM], [C.hiC, C.loC], [C.hiL, C.loW]];
+    const [hi, lo] = pairs[tab - 1];
+    el.innerHTML = listCard(hi, lo, pickState[tab] || 'hi');
   }
+
+  document.addEventListener('click', e => {
+    const t = e.target.closest('.tab');
+    if (t) { tab = Number(t.dataset.i); render(); return; }
+    const s = e.target.closest('[data-seg]');
+    if (s) { pickState[tab] = s.dataset.seg; render(); }
+  });
 
   LG.load().then(data => {
     D = data;
