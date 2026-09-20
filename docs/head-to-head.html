@@ -11,40 +11,56 @@
 <link rel="stylesheet" href="nav.css?v=3">
 <link rel="stylesheet" href="league.css?v=3">
 <style>
-  .vs-head{
-    display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: 12px;
-    padding: 16px; border-bottom: 1px solid var(--line);
-  }
-  .vs-name{ font-family: var(--scoreboard); font-weight: 800; font-size: clamp(1.5rem, 5vw, 2.2rem); line-height: 1; overflow: hidden; text-overflow: ellipsis; }
-  .vs-name.right{ text-align: right; }
-  .vs-name.lead{ color: var(--gold); }
-  .vs-mid{ color: var(--text-dim); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; }
-  .vs-summary{ text-align: center; color: var(--text-dim); font-size: 0.85rem; padding: 12px 16px 4px; }
-  .cmp{ padding: 4px 16px 12px; }
-  .cmp-row{
-    display: grid; grid-template-columns: minmax(0,1fr) minmax(110px, auto) minmax(0,1fr); align-items: center; gap: 12px;
-    padding: 9px 0; border-bottom: 1px solid var(--line);
-  }
-  .cmp-row:last-child{ border-bottom: none; }
-  .cmp-label{ text-align: center; color: var(--text-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
-  .cmp-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
-  .cmp-val.right{ text-align: right; }
-  .cmp-val.win{ color: var(--gold); }
-  .game{
-    display: grid; grid-template-columns: 86px minmax(0,1fr) auto; gap: 12px; align-items: center;
-    background: var(--surface-raised); border: 1px solid var(--line); padding: 9px 12px; margin-top: 6px;
-  }
-  .game-when{ font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); font-size: 0.95rem; }
-  .game-when small{ display: block; font-family: var(--body); font-size: 0.68rem; font-weight: 400; }
-  .game-line{ display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 10px; align-items: center; font-size: 0.92rem; }
-  .game-line .sc{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-  .game-line .side.right{ text-align: right; }
-  .game-line .won{ color: var(--gold); font-weight: 700; }
-  .game-margin{ color: var(--text-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  @media (max-width: 560px){
-    .game{ grid-template-columns: 1fr; gap: 4px; }
-    .game-margin{ display: none; }
-    .cmp-row{ grid-template-columns: minmax(0,1fr) 92px minmax(0,1fr); }
+  .banner{ display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:center; padding:18px 16px 16px; border-bottom:1px solid var(--line); }
+  .side .nm{ font-family:var(--scoreboard); font-weight:800; font-size:2.2rem; line-height:1; margin-bottom:10px; overflow:hidden; text-overflow:ellipsis; }
+  .side.r{ text-align:right; }
+  .pill{ display:inline-block; font-size:0.8rem; font-weight:700; padding:4px 12px; border-radius:999px; border:1px solid; font-variant-numeric:tabular-nums; }
+  .pill.up{ color:var(--turf); border-color:var(--turf-dim); background:rgba(76,154,107,0.12); }
+  .pill.down{ color:var(--loss); border-color:var(--loss); background:rgba(192,87,75,0.12); }
+  .pill.flat{ color:var(--text-dim); border-color:var(--line); }
+  .rec{ text-align:center; }
+  .rec b{ font-family:var(--scoreboard); font-weight:800; font-size:3.4rem; line-height:1; display:block; }
+  .rec span{ color:var(--text-dim); font-size:0.78rem; }
+
+  .form-wrap{ padding:14px 16px 6px; }
+  .form-title{ color:var(--text-dim); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; text-align:center; margin-bottom:10px; }
+  .form{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+  .chip{ width:34px; height:34px; display:grid; place-items:center; font-size:0.7rem; font-weight:700; border:1px solid; }
+  .chip.up{ color:var(--turf); border-color:var(--turf-dim); background:rgba(76,154,107,0.12); }
+  .chip.down{ color:var(--loss); border-color:var(--loss); background:rgba(192,87,75,0.12); }
+
+  .callouts{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:14px 10px 12px; }
+  .co{ background:var(--surface-raised); border:1px solid var(--line); padding:12px 10px; text-align:center; min-width:0; }
+  .co-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.04em; }
+  .co-n{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; margin:4px 0 2px; }
+  .co-n.up{ color:var(--turf); } .co-n.down{ color:var(--loss); } .co-n.flat{ color:var(--text); }
+  .co-s{ color:var(--text-dim); font-size:0.72rem; }
+
+  .cmp{ padding:2px 16px 12px; }
+  .cmp-row{ display:grid; grid-template-columns:minmax(0,1fr) 130px minmax(0,1fr); align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); }
+  .cmp-row:last-child{ border-bottom:none; }
+  .cmp-label{ text-align:center; color:var(--text-dim); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; }
+  .cmp-val{ font-family:var(--scoreboard); font-weight:700; font-size:1.3rem; font-variant-numeric:tabular-nums; }
+  .cmp-val.r{ text-align:right; }
+  .cmp-val.win{ color:var(--turf); }
+  .cmp-val.lose{ color:var(--text-dim); }
+  .gap{ height:14px; }
+
+  .game{ display:grid; grid-template-columns:86px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); padding:9px 12px; margin-top:6px; border-left:3px solid transparent; }
+  .game.up{ border-left-color:var(--turf); } .game.down{ border-left-color:var(--loss); }
+  .game-when{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); font-size:0.95rem; }
+  .game-when small{ display:block; font-family:var(--body); font-size:0.68rem; font-weight:400; }
+  .game-line{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:10px; align-items:center; font-size:0.92rem; }
+  .game-line .sc{ font-family:var(--scoreboard); font-weight:700; font-size:1.05rem; font-variant-numeric:tabular-nums; }
+  .game-line .who.right{ text-align:right; }
+  .game-line .won{ font-weight:700; } .game-line .lost{ color:var(--text-dim); }
+  .game-margin{ color:var(--text-dim); font-size:0.78rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  @media (max-width:720px){ .callouts{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:560px){
+    .game{ grid-template-columns:1fr; gap:4px; } .game-margin{ display:none; }
+    .cmp-row{ grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr); }
+    .side .nm{ font-size:1.6rem; } .rec b{ font-size:2.4rem; }
+    .pill{ font-size:0.7rem; padding:3px 9px; }
   }
 </style>
 </head>
@@ -87,20 +103,22 @@
 <script>
   let DATA;
   const $ = id => document.getElementById(id);
+  const TYPE = { Reg: 'Regular', Play: 'Playoff', Champ: 'Final', Cons: 'Consolation', Sacko: 'Sacko', '3rd': '3rd Place', '5th': '5th Place' };
 
   // Games between the pair, oldest first. Byes have no opponent so never match.
   function pairGames(a, b) {
     return DATA.games
-      .filter(g => g.p2 && g.winner !== 'In Progress' && ((g.p1 === a && g.p2 === b) || (g.p1 === b && g.p2 === a)))
+      .filter(g => g.p2 && ((g.p1 === a && g.p2 === b) || (g.p1 === b && g.p2 === a)))
       .sort((x, y) => x.year - y.year || x.week - y.week || x.gid - y.gid);
   }
   const scoreOf = (g, p) => (g.p1 === p ? g.s1 : g.s2);
   const oppScoreOf = (g, p) => (g.p1 === p ? g.s2 : g.s1);
+  const margin = g => Math.abs(g.s1 - g.s2);
 
   function summarize(games, p) {
     const wins = games.filter(g => g.winner === p);
-    const pts = games.reduce((s, g) => s + scoreOf(g, p), 0);
-    const oppPts = games.reduce((s, g) => s + oppScoreOf(g, p), 0);
+    const pts = games.reduce((t, g) => t + scoreOf(g, p), 0);
+    const oppPts = games.reduce((t, g) => t + oppScoreOf(g, p), 0);
     const scores = games.map(g => scoreOf(g, p));
     const margins = wins.map(g => scoreOf(g, p) - oppScoreOf(g, p));
     let best = 0, run = 0;
@@ -116,12 +134,13 @@
   }
 
   function cmpRow(label, l, r, fmt, higherWins = true) {
-    let lw = false, rw = false;
-    if (higherWins && l !== null && r !== null && l !== r) { lw = l > r; rw = r > l; }
-    const s = v => (v === null ? '—' : fmt(v));
-    return `<div class="cmp-row"><div class="cmp-val${lw ? ' win' : ''}">${s(l)}</div><div class="cmp-label">${label}</div>` +
-      `<div class="cmp-val right${rw ? ' win' : ''}">${s(r)}</div></div>`;
+    let ls = '', rs = '';
+    if (higherWins && l !== null && r !== null && l !== r) { ls = l > r ? ' win' : ' lose'; rs = r > l ? ' win' : ' lose'; }
+    const f = v => (v === null ? '—' : fmt(v));
+    return `<div class="cmp-row"><div class="cmp-val${ls}">${f(l)}</div><div class="cmp-label">${label}</div><div class="cmp-val r${rs}">${f(r)}</div></div>`;
   }
+  const tone = (x, y) => (x > y ? 'up' : x < y ? 'down' : 'flat');
+  const callout = (t, n, cls, s) => `<div class="co"><div class="co-t">${t}</div><div class="co-n ${cls}">${n}</div><div class="co-s">${s}</div></div>`;
 
   function render() {
     const a = $('p1').value, b = $('p2').value;
@@ -140,52 +159,47 @@
     const A = summarize(all, a), B = summarize(all, b);
     const PA = summarize(post, a), PB = summarize(post, b);
     const int = v => String(v), dec = v => LG.f1(v), pc = v => LG.pct(v), plus = v => (v > 0 ? '+' : '') + LG.f1(v);
+    const ea = LG.esc(a), eb = LG.esc(b);
 
-    const lead = A.wins === B.wins ? '' : (A.wins > B.wins ? 'l' : 'r');
-    const streakText = (A.cur || B.cur)
-      ? `${A.cur ? a : b} has won the last ${(A.cur || B.cur) === 1 ? 'meeting' : (A.cur || B.cur) + ' meetings'}` : '';
-    const head =
-      `<div class="vs-head"><div class="vs-name${lead === 'l' ? ' lead' : ''}">${LG.esc(a)}</div><div class="vs-mid">VS</div>` +
-      `<div class="vs-name right${lead === 'r' ? ' lead' : ''}">${LG.esc(b)}</div></div>` +
-      `<div class="vs-summary">${A.wins}–${B.wins} all-time${streakText ? ' · ' + LG.esc(streakText) : ''}</div>`;
+    const banner = `<div class="banner"><div class="side"><div class="nm">${ea}</div><span class="pill ${tone(A.pct, B.pct)}">${LG.pct(A.pct)}</span></div>` +
+      `<div class="rec"><b>${A.wins}–${B.wins}</b><span>${all.length} meetings</span></div>` +
+      `<div class="side r"><div class="nm">${eb}</div><span class="pill ${tone(B.pct, A.pct)}">${LG.pct(B.pct)}</span></div></div>`;
 
-    const main = '<div class="cmp">' +
-      cmpRow('Games Played', A.games, B.games, int, false) +
-      cmpRow('Wins', A.wins, B.wins, int) +
-      cmpRow('Win %', A.pct, B.pct, pc) +
-      cmpRow('Current Streak', A.cur, B.cur, int) +
-      cmpRow('Best Win Streak', A.best, B.best, int) +
-      cmpRow('Total Points', A.pts, B.pts, dec) +
-      cmpRow('Total Margin', A.margin, B.margin, plus) +
-      cmpRow('Average Points', A.avg, B.avg, dec) +
-      cmpRow('Highest Score', A.hi, B.hi, dec) +
-      cmpRow('Lowest Score', A.lo, B.lo, dec) +
-      cmpRow('Largest Win', A.bigWin, B.bigWin, dec) +
-      cmpRow('Smallest Win', A.smallWin, B.smallWin, dec, false) + '</div>';
+    const last = all.slice(-10);
+    const form = `<div class="form-wrap"><div class="form-title">Last ${last.length} meetings</div><div class="form">` +
+      last.map(g => `<div class="chip ${g.winner === a ? 'up' : 'down'}" title="${g.year} week ${g.week}">${LG.esc(g.winner.slice(0, 2))}</div>`).join('') + '</div></div>';
 
-    let postCard = '';
-    if (post.length) {
-      postCard = '<div class="cmp">' +
-        cmpRow('Games Played', PA.games, PB.games, int, false) +
-        cmpRow('Wins', PA.wins, PB.wins, int) +
-        cmpRow('Win %', PA.pct, PB.pct, pc) +
-        cmpRow('Total Points', PA.pts, PB.pts, dec) +
-        cmpRow('Total Margin', PA.margin, PB.margin, plus) + '</div>';
-    }
+    const closest = all.reduce((m, g) => (margin(g) < margin(m) ? g : m));
+    const blowout = all.reduce((m, g) => (margin(g) > margin(m) ? g : m));
+    const curTeam = A.cur ? a : b, curN = A.cur || B.cur;
+    const bestTeam = A.best >= B.best ? a : b;
+    const callouts = '<div class="callouts">' +
+      callout('Current streak', curN + (curN === 1 ? ' win' : ' in a row'), curTeam === a ? 'up' : 'down', `${LG.esc(curTeam)} won the last ${curN === 1 ? 'meeting' : curN}`) +
+      callout('Best streak', Math.max(A.best, B.best), bestTeam === a ? 'up' : 'down', `${LG.esc(bestTeam)} · longest run`) +
+      callout('Biggest blowout', LG.f1(margin(blowout)), blowout.winner === a ? 'up' : 'down', `${LG.esc(blowout.winner)} · ${blowout.year}`) +
+      callout('Closest game', LG.f2(margin(closest)), closest.winner === a ? 'up' : 'down', `${LG.esc(closest.winner)} · ${closest.year}`) + '</div>';
 
-    $('compare').innerHTML = `<div class="stat-card">${head}${main}</div>` +
-      (post.length ? `<div style="height:14px"></div>` + LG.card('Postseason', postCard, 'Playoffs, finals, consolation and every other postseason game') : '');
+    const allStats = '<div class="cmp">' +
+      cmpRow('Games Played', A.games, B.games, int, false) + cmpRow('Wins', A.wins, B.wins, int) + cmpRow('Win %', A.pct, B.pct, pc) +
+      cmpRow('Current Streak', A.cur, B.cur, int) + cmpRow('Best Win Streak', A.best, B.best, int) +
+      cmpRow('Total Points', A.pts, B.pts, dec) + cmpRow('Total Margin', A.margin, B.margin, plus) + cmpRow('Average Points', A.avg, B.avg, dec) +
+      cmpRow('Highest Score', A.hi, B.hi, dec) + cmpRow('Lowest Score', A.lo, B.lo, dec) +
+      cmpRow('Largest Win', A.bigWin, B.bigWin, dec) + cmpRow('Smallest Win', A.smallWin, B.smallWin, dec, false) + '</div>';
+    const postStats = '<div class="cmp">' +
+      cmpRow('Games Played', PA.games, PB.games, int, false) + cmpRow('Wins', PA.wins, PB.wins, int) + cmpRow('Win %', PA.pct, PB.pct, pc) +
+      cmpRow('Total Points', PA.pts, PB.pts, dec) + cmpRow('Total Margin', PA.margin, PB.margin, plus) + '</div>';
 
-    const TYPE = { Reg: 'Regular', Play: 'Playoff', Champ: 'Final', Cons: 'Consolation', Sacko: 'Sacko', '3rd': '3rd Place', '5th': '5th Place' };
+    $('compare').innerHTML = `<div class="stat-card">${banner}${form}${callouts}</div><div class="gap"></div>` +
+      `<div class="stat-card"><div class="stat-card-title">All Games</div>${allStats}</div>` +
+      (post.length ? `<div class="gap"></div><div class="stat-card"><div class="stat-card-title">Postseason</div><div class="stat-card-note">Playoffs, finals, consolation and every other postseason game</div>${postStats}</div>` : '');
+
     $('games-heading').textContent = `Every Game · ${a} vs ${b}`;
-    $('games').innerHTML = `<div class="stat-card"><div class="stat-card-body">` + all.slice().reverse().map(g => {
-      const s1 = scoreOf(g, a), s2 = scoreOf(g, b);
-      return `<div class="game"><div class="game-when">${g.year}<small>Wk ${g.week} · ${TYPE[g.type] || g.type}</small></div>` +
-        `<div class="game-line"><div class="side${g.winner === a ? ' won' : ''}">${LG.esc(a)}</div>` +
-        `<div class="sc">${LG.f2(s1)} – ${LG.f2(s2)}</div>` +
-        `<div class="side right${g.winner === b ? ' won' : ''}">${LG.esc(b)}</div></div>` +
-        `<div class="game-margin">${LG.esc(g.winner)} by ${LG.f2(Math.abs(s1 - s2))}</div></div>`;
-    }).join('') + `</div></div>`;
+    $('games').innerHTML = '<div class="stat-card"><div class="stat-card-body">' + all.slice().reverse().map(g => {
+      const s1 = scoreOf(g, a), s2 = scoreOf(g, b), aw = g.winner === a;
+      return `<div class="game ${aw ? 'up' : 'down'}"><div class="game-when">${g.year}<small>Wk ${g.week} · ${TYPE[g.type] || g.type}</small></div>` +
+        `<div class="game-line"><div class="who ${aw ? 'won' : 'lost'}">${ea}</div><div class="sc">${LG.f2(s1)} – ${LG.f2(s2)}</div>` +
+        `<div class="who right ${aw ? 'lost' : 'won'}">${eb}</div></div><div class="game-margin">${LG.esc(g.winner)} by ${LG.f2(Math.abs(s1 - s2))}</div></div>`;
+    }).join('') + '</div></div>';
     $('games-section').hidden = false;
   }
 
@@ -198,7 +212,6 @@
       (former.length ? `<optgroup label="Former teams">${former.map(n => `<option>${LG.esc(n)}</option>`).join('')}</optgroup>` : '');
     $('p1').innerHTML = opts;
     $('p2').innerHTML = opts;
-    // Default to the most-played matchup among current teams.
     let bestPair = [active[0], active[1]], bestN = -1;
     for (let i = 0; i < active.length; i++) for (let j = i + 1; j < active.length; j++) {
       const n = pairGames(active[i], active[j]).length;
