@@ -147,7 +147,12 @@
         .map(p => { const s = p.streaks[key]; return { name: p.name, stats: [[s.longest_win, 'Best W'], [s.longest_loss, 'Best L'], [cur(s.current), 'Now']] }; });
     };
 
-    const V = (label, items, o = {}) => ({ label, items, tone: o.tone || 'neutral', note: o.note, year: o.year, hl: o.hl });
+    const V = (label, items, o = {}) => {
+      let best = -1;
+      if (o.pick === 'first') best = 0;
+      else if (o.pick) items.forEach((it, i) => { const n = parseFloat(it.val); if (best < 0 || (o.pick === 'max' ? n > parseFloat(items[best].val) : n < parseFloat(items[best].val))) best = i; });
+      return { label, items, tone: o.tone || 'neutral', note: o.note, year: o.year, hl: o.hl, best };
+    };
     const first = (a, fallback = '—') => a[0] || { name: fallback, sub: '', val: '—' };
 
     // ----- summary tiles -----
@@ -170,8 +175,8 @@
       { label: 'Summary', tiles },
       { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true }), V('Title Count', champC, { hl: true }), V('Title Games', titleGames('Champ', true), { year: true })] },
       { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, tone: 'bad' }), V('Sacko Count', sackC, { hl: true, tone: 'bad' }), V('Sacko Games', titleGames('Sacko', false), { year: true, tone: 'bad' })] },
-      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad' }), V('Weekly High', weekly(true), { year: true, tone: 'good' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad' }), V('Average Median', avgMedian, { year: true })] },
-      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad' }), V('Earnings', earn, { hl: true })] },
+      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good', pick: 'max' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad', pick: 'min' }), V('Weekly High', weekly(true), { year: true, tone: 'good', pick: 'max' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad', pick: 'min' }), V('Average Median', avgMedian, { year: true })] },
+      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true })] },
       { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { note: 'Head-to-head games only' }), V('With Median', streakView('combined'), { note: 'Includes the weekly median game (2025 onward)' })] },
     ];
   }
@@ -179,7 +184,7 @@
   const tileHtml = x => `<div class="hero"><div class="hero-t">${x.title}</div><div class="hero-v ${x.tone}">${esc(x.val)}</div><div class="hero-n">${esc(x.name)}</div><div class="hero-s">${esc(x.sub || '')}</div></div>`;
 
   function rowHtml(i, k, v) {
-    const isRec = v.hl && k === 0;
+    const isRec = v.hl ? k === 0 : k === v.best;
     const cls = ['ln', v.year ? 'yr' : '', v.tone === 'good' ? 'good' : v.tone === 'bad' ? 'bad' : '', isRec ? 'rec' : ''].filter(Boolean).join(' ');
     const right = i.stats
       ? `<div class="stats">${i.stats.map(s => `<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`
