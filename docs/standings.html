@@ -9,7 +9,47 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
-<link rel="stylesheet" href="league.css?v=3">
+<link rel="stylesheet" href="league.css?v=4">
+<style>
+  .hero-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:16px; }
+  @media (max-width:900px){ .hero-grid{ grid-template-columns:1fr 1fr; } .hero:last-child{ grid-column:1 / -1; } }
+  .hero{ background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--gold); padding:14px 12px; text-align:center; min-width:0; }
+  .hero-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; }
+  .hero-n{ font-family:var(--scoreboard); font-weight:800; font-size:1.7rem; line-height:1.1; margin:8px 0 4px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hero-n.sm{ font-size:1.2rem; line-height:1.9rem; }
+  .hero-n.good{ color:var(--turf); } .hero-n.bad{ color:var(--loss); } .hero-n.gold{ color:var(--gold); }
+  .hero-s{ color:var(--text-dim); font-size:0.74rem; min-height:1.1em; }
+
+  .top-row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:14px; }
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+  .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer; }
+  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(186,155,55,0.10); }
+  .top-row .sp{ flex:1; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; color:var(--text-dim); font-size:0.74rem; padding:0 16px 8px; }
+  .legend i{ display:inline-block; width:10px; height:10px; margin-right:6px; vertical-align:-1px; }
+
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+  @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
+  .ln{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); border-left:3px solid #4a4a47; padding:9px 12px; margin-top:6px; min-height:62px; }
+  .ln.po{ border-left-color:var(--turf); }
+  .ln .rk{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); text-align:center; font-size:1.25rem; }
+  .ln .tm{ font-weight:700; font-size:0.95rem; display:flex; align-items:center; gap:6px; min-width:0; }
+  .ln .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .ln .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ln.top{ border-color:var(--turf); background:rgba(76,154,107,0.07); }
+  .ln.top .rk{ color:var(--turf); }
+  .ln.last{ border-color:var(--loss); background:rgba(192,87,75,0.07); }
+  .ln.last .rk{ color:var(--loss); }
+  .stats{ display:flex; gap:12px; }
+  .stats div{ text-align:center; min-width:34px; }
+  .stats div:last-child{ min-width:56px; }
+  .stats b{ display:block; font-family:var(--scoreboard); font-size:1.15rem; font-weight:700; font-variant-numeric:tabular-nums; }
+  .stats span{ font-size:0.58rem; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; }
+  .badge{ font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:2px 6px; border-radius:999px; border:1px solid; white-space:nowrap; flex:none; line-height:1.4; }
+  .ln.former{ opacity:0.55; }
+  .badge.gold{ color:var(--gold); border-color:var(--gold); }
+  .badge.loss{ color:var(--loss); border-color:var(--loss); }
+</style>
 </head>
 <body>
   <div id="site-nav"></div>
@@ -29,15 +69,13 @@
 
     <section>
       <h2 id="standings-heading">Standings</h2>
-      <div class="selector-row">
-        <label class="selector-label" for="type-select">View</label>
-        <select class="lg-select" id="type-select" autocomplete="off">
-          <option value="reg">Regular Season</option>
-          <option value="final">Final Standings</option>
-        </select>
-        <label class="selector-label" for="year-select">Year</label>
+      <div class="top-row">
+        <div class="tabs" id="tabs"></div>
+        <div class="sp"></div>
+        <label class="selector-label" for="year-select">Season</label>
         <select class="lg-select" id="year-select" autocomplete="off"></select>
       </div>
+      <div id="tiles"></div>
       <div id="standings-container"><div class="loading-row">Loading standings…</div></div>
     </section>
 
@@ -47,66 +85,128 @@
 <script src="nav.js"></script>
 <script src="league-common.js?v=2"></script>
 <script>
-  let DATA;
+  const { f1, card, esc, pct } = LG;
+  const TABS = [['reg', 'Regular Season'], ['final', 'Final Standings']];
+  let D, tab = 'reg';
+  const $ = id => document.getElementById(id);
 
   function build(year, type) {
-    const rows = DATA.seasons.filter(s => s.year === year).map(s => {
-      const reg = type === 'reg';
-      const w = (reg ? s.reg_w : s.tot_w) + s.med_w;
-      const l = (reg ? s.reg_l : s.tot_l) + s.med_l;
-      return {
-        player: s.player, w, l, pct: w + l ? w / (w + l) : null,
-        pf: reg ? s.reg_pf : s.tot_pf, pa: reg ? s.reg_pa : s.tot_pa,
-        rank: reg ? s.reg_rank : s.final_rank, s,
-      };
+    const reg = type === 'reg';
+    const mk = s => {
+      const w = (reg ? s.reg_w : s.tot_w) + s.med_w, l = (reg ? s.reg_l : s.tot_l) + s.med_l;
+      return { w, l, pf: reg ? s.reg_pf : s.tot_pf, pa: reg ? s.reg_pa : s.tot_pa };
+    };
+    if (year === 'all') {
+      const by = {};
+      D.seasons.forEach(s => {
+        const m = mk(s), e = by[s.player] || (by[s.player] = { player: s.player, w: 0, l: 0, pf: 0, pa: 0, seasons: 0, s: { champ: 0, sacko: 0 } });
+        e.w += m.w; e.l += m.l; e.pf += m.pf; e.pa += m.pa; e.seasons++; e.s.champ += s.champ; e.s.sacko += s.sacko;
+      });
+      const rows = Object.values(by).map(e => ({ ...e, pct: e.w + e.l ? e.w / (e.w + e.l) : null }));
+      const cur = rows.filter(r => D.active.has(r.player)).sort((a, b) => b.pct - a.pct || b.w - a.w);
+      const former = rows.filter(r => !D.active.has(r.player)).sort((a, b) => b.pct - a.pct || b.w - a.w);
+      cur.forEach((r, i) => { r.rank = i + 1; });
+      former.forEach(r => { r.rank = null; r.former = true; });
+      return [...cur, ...former];
+    }
+    const rows = D.seasons.filter(s => s.year === year).map(s => {
+      const m = mk(s);
+      return { player: s.player, ...m, pct: m.w + m.l ? m.w / (m.w + m.l) : null, rank: reg ? s.reg_rank : s.final_rank, s };
     });
     rows.sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.w - a.w || b.pf - a.pf);
     return rows;
   }
 
-  function render() {
-    const year = Number(document.getElementById('year-select').value);
-    const type = document.getElementById('type-select').value;
-    const rows = build(year, type);
-    const complete = DATA.completeYears.includes(year);
-    document.getElementById('standings-heading').textContent =
-      `${year} ${type === 'reg' ? 'Regular Season' : 'Final'} Standings`;
+  const tileHtml = (title, name, cls, sub) => `<div class="hero"><div class="hero-t">${title}</div><div class="hero-n ${cls}${String(name).length > 11 ? ' sm' : ''}">${esc(name)}</div><div class="hero-s">${esc(sub)}</div></div>`;
 
-    const items = rows.map(r => {
-      let badge = '';
-      if (complete && type === 'final') {
-        if (r.s.champ) badge = '<span class="badge gold">Champion</span>';
-        else if (r.s.sacko) badge = '<span class="badge loss">Sacko</span>';
-      }
-      return {
-        name: r.player, rank: r.rank, badge,
-        sub: `PF ${LG.f1(r.pf)} · PA ${LG.f1(r.pa)}`,
-        val: `${r.w}-${r.l}`,
-        stats: [[r.w, 'W'], [r.l, 'L'], [LG.pct(r.pct), 'Win %']],
-        podiumSub: `${LG.pct(r.pct)} · PF ${Math.round(r.pf)}`,
-      };
-    });
-
-    const note = year >= 2025 ? 'Wins and losses include the weekly median game.' : '';
-    let body = '';
-    if (items.length >= 3) {
-      body += '<div class="podium">' + items.slice(0, 3).map(it =>
-        `<div class="pod"><div class="pod-rank">#${it.rank}</div><div class="pod-name">${LG.esc(it.name)}</div>` +
-        `<div class="pod-val">${it.val}</div><div class="pod-sub">${LG.esc(it.podiumSub)}</div></div>`).join('') + '</div>';
-    }
-    body += items.slice(items.length >= 3 ? 3 : 0).map(it => LG.rowHtml(it, it.rank)).join('');
-    document.getElementById('standings-container').innerHTML = LG.card(
-      type === 'reg' ? 'Regular season' : 'After playoffs', body, note) ;
+  // Biggest single-game score for the selected season; regular-season tab only counts regular-season games.
+  function gameTile(year) {
+    const games = D.games.filter(g => g.type !== 'Bye' && g.p2 && g.s1 > 0 && g.s2 > 0 && g.winner !== 'In Progress' &&
+      (year === 'all' || g.year === year) && (tab === 'reg' ? g.type === 'Reg' : true));
+    let best = null;
+    games.forEach(g => [[g.p1, g.s1, g.p2], [g.p2, g.s2, g.p1]].forEach(([p, sc, opp]) => { if (!best || sc > best.sc) best = { p, sc, opp, g }; }));
+    if (!best) return tileHtml('Top Single Game', '—', '', 'No games yet');
+    const g = best.g;
+    return tileHtml('Top Single Game', best.p, '', `${f1(best.sc)} · ${year === 'all' ? g.year + ' ' : ''}Week ${g.week} vs ${best.opp}`);
   }
 
+  function tilesAll() {
+    const cur = build('all', tab), fin = build('all', 'final');
+    const top = cur.find(r => !r.former);
+    const champs = fin.slice().sort((a, b) => b.s.champ - a.s.champ), sackos = fin.slice().sort((a, b) => b.s.sacko - a.s.sacko);
+    const mostPf = cur.slice().sort((a, b) => b.pf - a.pf)[0];
+    const names = (list, k) => list.filter(r => r.s[k] === list[0].s[k]).slice(0, 2).map(r => r.player).join(' · ');
+    return '<div class="hero-grid">' +
+      tileHtml('Best Win %', top.player, 'good', `${pct(top.pct)} · ${top.w}-${top.l}`) +
+      tileHtml('Most Titles', names(champs, 'champ'), 'gold', `${champs[0].s.champ} championships`) +
+      tileHtml('Most Sackos', names(sackos, 'sacko'), 'bad', `${sackos[0].s.sacko} sackos`) +
+      tileHtml('Most Points', mostPf.player, '', `${f1(mostPf.pf)} points for`) +
+      gameTile('all') + '</div>';
+  }
+
+  function tiles(year) {
+    if (year === 'all') return tilesAll();
+    const complete = D.completeYears.includes(year);
+    const cur = build(year, tab), fin = build(year, 'final');
+    const champ = complete ? fin.find(r => r.s.champ) : null, sacko = complete ? fin.find(r => r.s.sacko) : null;
+    const top = tab === 'reg' ? cur[0] : cur.slice().sort((a, b) => b.pct - a.pct || b.w - a.w)[0];
+    const mostPf = cur.slice().sort((a, b) => b.pf - a.pf)[0];
+    return '<div class="hero-grid">' +
+      tileHtml(tab === 'reg' ? (complete ? 'Top Seed' : 'Current Leader') : 'Best Record', top.player, 'good', `${top.w}-${top.l} ${tab === 'reg' ? 'regular season' : 'overall'}`) +
+      tileHtml('Champion', champ ? champ.player : '—', champ ? 'gold' : '', champ ? `${champ.w}-${champ.l} overall` : 'Season in progress') +
+      tileHtml('Sacko', sacko ? sacko.player : '—', sacko ? 'bad' : '', sacko ? `${sacko.w}-${sacko.l} overall` : 'Season in progress') +
+      tileHtml('Most Points', mostPf.player, '', `${f1(mostPf.pf)}${tab === 'reg' ? ' points' : ' incl. playoffs'}`) +
+      gameTile(year) + '</div>';
+  }
+
+  let formerCount = 0;
+  function row(r, k, n, type, complete, year) {
+    const cls = ['ln'];
+    if (r.former) cls.push('former');
+    else if (r.rank === 1) cls.push('top'); else if (r.rank === n - (year === 'all' ? formerCount : 0)) cls.push('last');
+    else if (type === 'reg' && complete && r.s.playoff > 0) cls.push('po');
+    let badge = '';
+    if (year === 'all') {
+      if (type === 'final') {
+        if (r.s.champ) badge += `<span class="badge gold">${r.s.champ}× Title</span>`;
+        if (r.s.sacko) badge += `<span class="badge loss">${r.s.sacko}× Sacko</span>`;
+      }
+    } else if (complete && type === 'final') {
+      if (r.s.champ) badge = '<span class="badge gold">Champion</span>';
+      else if (r.s.sacko) badge = '<span class="badge loss">Sacko</span>';
+    }
+    return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div style="min-width:0"><div class="tm"><span class="nm">${esc(r.player)}</span>${badge}</div>` +
+      `<div class="meta">${year === 'all' ? r.seasons + ' seasons · ' : ''}PF ${f1(r.pf)} · PA ${f1(r.pa)}</div></div>` +
+      `<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div>`;
+  }
+
+  function render() {
+    const sel = $('year-select').value;
+    const year = sel === 'all' ? 'all' : Number(sel);
+    const complete = year !== 'all' && D.completeYears.includes(year);
+    $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
+    $('standings-heading').textContent = `${year === 'all' ? 'All-Time' : year} ${tab === 'reg' ? 'Regular Season' : 'Final'} Standings`;
+    $('tiles').innerHTML = tiles(year);
+    const rows = build(year, tab);
+    formerCount = rows.filter(r => r.former).length;
+    const legend = tab === 'reg' && complete
+      ? '<div class="legend"><span><i style="background:var(--turf)"></i>Made the playoffs</span><span><i style="background:#4a4a47"></i>Missed the playoffs</span></div>'
+      : '';
+    const note = year === 'all' ? 'Every season combined, current teams ranked by win percentage (former teams listed after). Median games count from 2025 on.' : year >= 2025 ? 'Wins and losses include the weekly median game.' : '';
+    $('standings-container').innerHTML = card(tab === 'reg' ? 'Regular Season' : 'After the Playoffs', legend +
+      `<div>${rows.map((r, k) => row(r, k, rows.length, tab, complete, year)).join('')}</div>`, note);
+  }
+
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-t]');
+    if (t) { tab = t.dataset.t; render(); }
+  });
+
   LG.load().then(data => {
-    DATA = data;
-    const years = data.years.slice().reverse();
-    document.getElementById('year-select').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-    document.getElementById('year-select').value = data.currentYear;
-    document.getElementById('type-select').value = data.completeYears.includes(data.currentYear) ? 'final' : 'reg';
-    document.getElementById('year-select').addEventListener('change', render);
-    document.getElementById('type-select').addEventListener('change', render);
+    D = data;
+    $('year-select').innerHTML = '<option value="all">All-Time</option>' + data.years.slice().reverse().map(y => `<option value="${y}">${y}</option>`).join('');
+    $('year-select').value = data.completeYears[data.completeYears.length - 1];
+    $('year-select').addEventListener('change', render);
     render();
   }).catch(err => LG.showError('standings-container', err));
 </script>
