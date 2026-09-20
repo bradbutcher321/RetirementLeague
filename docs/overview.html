@@ -9,7 +9,50 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
-<link rel="stylesheet" href="league.css?v=3">
+<link rel="stylesheet" href="league.css?v=4">
+<style>
+  .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  @media (max-width:800px){ .hero-grid{ grid-template-columns:1fr 1fr; } }
+  .hero{ background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--gold); padding:14px 12px; text-align:center; min-width:0; }
+  .hero-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; min-height:2.2em; }
+  .hero-v{ font-family:var(--scoreboard); font-weight:800; font-size:2.2rem; line-height:1.1; color:var(--gold); margin:6px 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .hero-v.good{ color:var(--turf); } .hero-v.bad{ color:var(--loss); }
+  .hero-n{ font-weight:700; font-size:0.88rem; min-height:1.3em; }
+  .hero-s{ color:var(--text-dim); font-size:0.72rem; margin-top:4px; min-height:1.1em; }
+
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer; }
+  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(186,155,55,0.10); }
+  .seg{ display:flex; flex-wrap:wrap; border:1px solid var(--line); margin:4px 16px 8px; width:fit-content; max-width:calc(100% - 32px); }
+  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.78rem; padding:7px 14px; cursor:pointer; }
+  .seg button.on{ background:rgba(186,155,55,0.14); color:var(--gold); }
+  .seg button.on.good{ background:rgba(76,154,107,0.14); color:var(--turf); }
+  .seg button.on.bad{ background:rgba(192,87,75,0.14); color:var(--loss); }
+
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+  @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
+  .ln{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); border-left:3px solid var(--gold); padding:9px 12px; margin-top:6px; min-height:58px; }
+  .ln.yr{ grid-template-columns:46px minmax(0,1fr) auto; }
+  .ln.good{ border-left-color:var(--turf); } .ln.bad{ border-left-color:var(--loss); }
+  .ln .rk{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); text-align:center; font-size:1.2rem; }
+  .ln.yr .rk{ font-size:1.05rem; }
+  .ln .tm{ font-weight:700; font-size:0.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ln .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ln.rec{ border-color:var(--gold); background:rgba(186,155,55,0.07); }
+  .ln.rec.good{ border-color:var(--turf); background:rgba(76,154,107,0.07); }
+  .ln.rec.bad{ border-color:var(--loss); background:rgba(192,87,75,0.07); }
+  .ln.rec .rk, .ln.rec .val{ color:var(--gold); }
+  .ln.rec.good .rk, .ln.rec.good .val{ color:var(--turf); }
+  .ln.rec.bad .rk, .ln.rec.bad .val{ color:var(--loss); }
+  .ln.rec .val{ font-size:1.5rem; font-weight:800; }
+  .ln .val{ font-family:var(--scoreboard); font-weight:700; font-size:1.2rem; color:var(--text); font-variant-numeric:tabular-nums; text-align:right; min-width:50px; }
+  .ln .val.up{ color:var(--turf); } .ln .val.down{ color:var(--loss); }
+  .stats{ display:flex; gap:12px; }
+  .stats div{ text-align:center; min-width:38px; }
+  .stats b{ display:block; font-family:var(--scoreboard); font-size:1.1rem; font-weight:700; }
+  .stats b em{ font-style:normal; }
+  .stats span{ font-size:0.58rem; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; }
+</style>
 </head>
 <body>
   <div id="site-nav"></div>
@@ -27,7 +70,11 @@
       </div>
     </header>
 
-    <div id="overview"><div class="loading-row">Loading league history…</div></div>
+    <section>
+      <h2>League History</h2>
+      <div class="tabs" id="tabs"></div>
+      <div id="overview"><div class="loading-row">Loading league history…</div></div>
+    </section>
 
     <footer>Data from the league sheet</footer>
   </div>
@@ -35,137 +82,134 @@
 <script src="nav.js"></script>
 <script src="league-common.js?v=2"></script>
 <script>
-  const { esc, f1, f2, money, card, ranked, rowHtml } = LG;
-
-  const section = (title, cards) =>
-    `<section><h2>${title}</h2><div class="card-grid stretch">${cards.join('')}</div></section>`;
-
-  // Latest year per team for "last won" style sub-lines.
-  function countCard(title, seasons, key, lastLabel) {
-    const by = {};
-    seasons.filter(s => s[key] > 0).forEach(s => {
-      const e = by[s.player] || (by[s.player] = { n: 0, last: 0 });
-      e.n += 1; e.last = Math.max(e.last, s.year);
-    });
-    const items = Object.entries(by)
-      .sort((a, b) => b[1].n - a[1].n || b[1].last - a[1].last)
-      .map(([name, e]) => ({ name, val: e.n, sub: `${lastLabel} ${e.last}` }));
-    return card(title, ranked(items));
-  }
+  const { f1, f2, money, card, esc } = LG;
+  let TABS = [], tab = 0;
+  const viewPick = {};
 
   function build(D, F) {
     const complete = new Set(D.completeYears);
-    const seasons = D.seasons;
-    const done = seasons.filter(s => complete.has(s.year));
+    const done = D.seasons.filter(s => complete.has(s.year));
     const draftPos = (p, y) => (D.draft_order[p] || {})[y];
-    const totalWins = s => s.tot_w + s.med_w;
-    const noBye = D.games.filter(g => g.type !== 'Bye' && g.p2);
-    const out = [];
+    const noBye = D.games.filter(g => g.type !== 'Bye' && g.p2 && g.winner !== 'In Progress');
+    const yearsDesc = D.completeYears.slice().reverse();
+    const champs = done.filter(s => s.champ > 0).sort((a, b) => b.year - a.year);
+    const sackos = done.filter(s => s.sacko > 0).sort((a, b) => b.year - a.year);
+    const rec = s => `${s.tot_w + s.med_w}-${s.tot_l + s.med_l}`;
+    const regRec = s => `${s.reg_w + s.med_w}-${s.reg_l + s.med_l}`;
 
-    // ----- Champions & Sackos -----
-    const champs = done.filter(s => s.champ > 0).sort((a, b) => a.year - b.year);
-    const sackos = done.filter(s => s.sacko > 0).sort((a, b) => a.year - b.year);
-    const yearRows = (list, reg) => list.map(s => ({
-      name: s.player, wide: true, rank: s.year,
-      sub: reg ? `${s.reg_w + s.med_w}-${s.reg_l + s.med_l}` : `${s.tot_w + s.med_w}-${s.tot_l + s.med_l}`,
-      stats: [[draftPos(s.player, s.year) ?? '—', 'Draft']],
-    }));
-    out.push(section('Champions & Sackos', [
-      card('Champions', ranked(yearRows(champs, false).reverse(), { podium: false })),
-      card('Sackos', ranked(yearRows(sackos, true).reverse(), { podium: false })),
-      countCard('Championship Count', done, 'champ', 'Last won'),
-      countCard('Sacko Count', done, 'sacko', 'Last received'),
-    ]));
-
-    const finalGame = (year, type) => noBye.find(g => g.year === year && g.type === type && g.winner !== 'In Progress');
-    const gameRow = (year, type, winnerFirst) => {
-      const g = finalGame(year, type);
-      if (!g) return null;
+    const byYear = (list, recFn) => list.map(s => ({ rank: s.year, name: s.player, sub: `Draft position ${draftPos(s.player, s.year) ?? '—'}`, val: recFn(s) }));
+    const counts = (list, key, label) => {
+      const by = {};
+      list.filter(s => s[key] > 0).forEach(s => { const e = by[s.player] || (by[s.player] = { n: 0, last: 0 }); e.n++; e.last = Math.max(e.last, s.year); });
+      return Object.entries(by).sort((a, b) => b[1].n - a[1].n || b[1].last - a[1].last).map(([name, e]) => ({ name, sub: `${label} ${e.last}`, val: e.n, hl: true }));
+    };
+    const titleGames = (type, winnerFirst) => yearsDesc.map(y => {
+      const g = noBye.find(x => x.year === y && x.type === type); if (!g) return null;
       const hi = g.s1 >= g.s2 ? [g.p1, g.s1, g.p2, g.s2] : [g.p2, g.s2, g.p1, g.s1];
-      const first = winnerFirst ? hi : [hi[2], hi[3], hi[0], hi[1]];
-      return { name: `${first[0]} ${f2(first[1])} vs ${first[2]} ${f2(first[3])}`, wide: true, rank: year, wrap: true, val: f2(Math.abs(g.s1 - g.s2)), sub: 'Margin of victory' };
-    };
-    const gameCard = (title, type, winnerFirst) =>
-      card(title, ranked(D.completeYears.slice().reverse().map(y => gameRow(y, type, winnerFirst)).filter(Boolean), { podium: false }));
-    out.push(section('Title Games', [
-      gameCard('Championship Games', 'Champ', true),
-      gameCard('Sacko Games', 'Sacko', false),
-    ]));
+      const f = winnerFirst ? hi : [hi[2], hi[3], hi[0], hi[1]];
+      return { rank: y, name: `${f[0]} ${f2(f[1])} vs ${f[2]} ${f2(f[3])}`, sub: 'Margin of victory', val: f2(Math.abs(g.s1 - g.s2)) };
+    }).filter(Boolean);
 
-    // ----- Scoring records -----
-    const seasonPts = (pick) => card(pick.title, ranked(D.completeYears.slice().reverse().map(y => {
+    const seasonPts = max => yearsDesc.map(y => {
       const rows = done.filter(s => s.year === y);
-      const best = rows.reduce((a, b) => (pick.max ? b.tot_pf > a.tot_pf : b.tot_pf < a.tot_pf) ? b : a);
-      return { name: best.player, wide: true, rank: y, sub: `${totalWins(best)} wins`, val: f2(best.tot_pf), tone: pick.max ? 'gold' : '' };
-    }), { podium: false }));
-    out.push(section('Scoring Records', [
-      seasonPts({ title: 'Most Full Season Points', max: true }),
-      seasonPts({ title: 'Least Full Season Points', max: false }),
-    ]));
-
-    const weekly = (max) => card(max ? 'Highest Weekly Score' : 'Lowest Weekly Score', ranked(D.years.slice().reverse().map(y => {
+      const b = rows.reduce((a, c) => ((max ? c.tot_pf > a.tot_pf : c.tot_pf < a.tot_pf) ? c : a));
+      return { rank: y, name: b.player, sub: `${rec(b)} record`, val: f2(b.tot_pf) };
+    });
+    const weekly = max => D.years.slice().reverse().map(y => {
       let best = null;
-      noBye.filter(g => g.year === y && g.winner !== 'In Progress').forEach(g => {
-        [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => {
-          if (s === null || s <= 0) return;
-          if (!best || (max ? s > best.s : s < best.s)) best = { p, s, t: g.type, w: g.week };
-        });
-      });
-      return best && { name: best.p, wide: true, rank: y, sub: `Week ${best.w} · ${best.t}`, val: f2(best.s), tone: max ? 'gold' : '' };
-    }).filter(Boolean), { podium: false }));
-    const avgMedian = card('Yearly Average Median', ranked(D.years.slice().reverse().map(y => {
+      noBye.filter(g => g.year === y).forEach(g => [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => {
+        if (!s || s <= 0) return;
+        if (!best || (max ? s > best.s : s < best.s)) best = { p, s, t: g.type, w: g.week };
+      }));
+      return best && { rank: y, name: best.p, sub: `Week ${best.w}${best.t === 'Reg' ? '' : ' · ' + best.t}`, val: f2(best.s) };
+    }).filter(Boolean);
+    const avgMedian = D.years.slice().reverse().map(y => {
       const m = D.games.filter(g => g.year === y && g.type === 'Reg' && g.median !== null).map(g => g.median);
-      return m.length && { name: 'Average median', wide: true, rank: y, val: f2(m.reduce((a, b) => a + b, 0) / m.length) };
-    }).filter(Boolean), { podium: false }), 'The score that beats half the league in a typical week');
-    out.push(section('Weekly Scores', [weekly(true), weekly(false)]));
+      return m.length && { rank: y, name: 'Average median', sub: 'Score that beats half the league', val: f2(m.reduce((a, b) => a + b, 0) / m.length) };
+    }).filter(Boolean);
 
-    // ----- Records & rankings -----
-    const seasonWins = (high) => {
-      const list = done.slice().sort((a, b) => (high ? b.reg_w - a.reg_w : a.reg_w - b.reg_w) || a.year - b.year).slice(0, 12);
-      return card(high ? 'Highest Win Seasons' : 'Lowest Win Seasons',
-        ranked(list.map(s => ({ name: s.player, wide: true, rank: s.year, val: `${s.reg_w}-${s.reg_l}`, tone: high ? 'up' : 'down' })), { podium: false }),
-        'Regular season record, before the weekly median');
-    };
-    const activeDone = (p) => done.filter(s => s.player === p);
+    const winSeasons = high => done.slice().sort((a, b) => (high ? b.reg_w - a.reg_w : a.reg_w - b.reg_w) || a.year - b.year).slice(0, 12)
+      .map(s => ({ rank: s.year, name: s.player, sub: 'Regular season', val: `${s.reg_w}-${s.reg_l}` }));
     const players = [...D.active];
-    const rate = ranked(players.map(p => {
-      const ss = activeDone(p);
-      return { name: p, n: ss.length, r: ss.length ? ss.filter(s => s.playoff > 0).length / ss.length : 0, made: ss.filter(s => s.playoff > 0).length };
-    }).sort((a, b) => b.r - a.r).map(x => ({ name: x.name, val: Math.round(x.r * 100) + '%', sub: `${x.made} of ${x.n} seasons` })));
-    const place = ranked(players.map(p => {
-      const ss = activeDone(p).filter(s => s.final_rank);
-      return { name: p, avg: ss.length ? ss.reduce((a, s) => a + s.final_rank, 0) / ss.length : 99, n: ss.length };
-    }).sort((a, b) => a.avg - b.avg).map(x => ({ name: x.name, val: x.avg.toFixed(1), sub: `${x.n} seasons` })));
-    const earn = Object.entries(D.earnings).filter(([, v]) => v !== null && v !== undefined).sort((a, b) => b[1] - a[1])
-      .map(([name, v]) => ({ name, val: money(v), tone: v > 0 ? 'up' : v < 0 ? 'down' : '' }));
-    out.push(section('Records & Rankings', [
-      seasonWins(true), seasonWins(false),
-      card('Playoff Appearance Rate', rate, 'Current teams, completed seasons'),
-      card('Average Finish', place, 'Average final placement (lower is better)'),
-      card('Estimated Earnings', ranked(earn), 'Net after dues and parlays'), avgMedian,
-    ]));
+    const doneOf = p => done.filter(s => s.player === p);
+    const rate = players.map(p => { const ss = doneOf(p), made = ss.filter(s => s.playoff > 0).length; return { name: p, r: ss.length ? made / ss.length : 0, sub: `${made} of ${ss.length} seasons` }; })
+      .sort((a, b) => b.r - a.r).map(x => ({ name: x.name, sub: x.sub, val: Math.round(x.r * 100) + '%', hl: true }));
+    const finish = players.map(p => { const ss = doneOf(p).filter(s => s.final_rank); return { name: p, avg: ss.length ? ss.reduce((a, s) => a + s.final_rank, 0) / ss.length : 99, n: ss.length }; })
+      .sort((a, b) => a.avg - b.avg).map(x => ({ name: x.name, sub: `${x.n} seasons`, val: x.avg.toFixed(1), hl: true }));
+    const earn = Object.entries(D.earnings).filter(([, v]) => v != null).sort((a, b) => b[1] - a[1])
+      .map(([name, v]) => ({ name, sub: 'Net after dues and parlays', val: money(v), tone: v > 0 ? 'up' : v < 0 ? 'down' : '', hl: true }));
 
-    // ----- Streaks -----
-    if (F) {
-      const cur = n => (n > 0 ? `<span style="color:var(--turf)">W${n}</span>` : n < 0 ? `<span style="color:var(--loss)">L${-n}</span>` : '—');
-      const streakCard = (title, key, note) => {
-        const list = F.players.filter(p => p.streaks && p.streaks[key])
-          .sort((a, b) => b.streaks[key].current - a.streaks[key].current || b.streaks[key].longest_win - a.streaks[key].longest_win);
-        return card(title, list.map(p => {
-          const s = p.streaks[key];
-          return rowHtml({ name: p.name, stats: [[s.longest_win, 'Best W'], [s.longest_loss, 'Best L'], [cur(s.current), 'Now']] }, null);
-        }).join(''), note);
-      };
-      out.push(section('Streaks', [
-        streakCard('Longest Streaks', 'head_to_head', 'Head-to-head games only'),
-        streakCard('Longest Streaks with Median', 'combined', 'Includes the weekly median game (2025 onward)'),
-      ]));
-    }
-    return out.join('');
+    const streakView = key => {
+      if (!F) return [];
+      const cur = n => (n > 0 ? `<em style="color:var(--turf)">W${n}</em>` : n < 0 ? `<em style="color:var(--loss)">L${-n}</em>` : '—');
+      return F.players.filter(p => p.streaks && p.streaks[key])
+        .sort((a, b) => b.streaks[key].current - a.streaks[key].current || b.streaks[key].longest_win - a.streaks[key].longest_win)
+        .map(p => { const s = p.streaks[key]; return { name: p.name, stats: [[s.longest_win, 'Best W'], [s.longest_loss, 'Best L'], [cur(s.current), 'Now']] }; });
+    };
+
+    const V = (label, items, o = {}) => ({ label, items, tone: o.tone || 'neutral', note: o.note, year: o.year, hl: o.hl });
+    const first = (a, fallback = '—') => a[0] || { name: fallback, sub: '', val: '—' };
+
+    // ----- summary tiles -----
+    const t = (title, item, val, tone, sub, name) => ({ title, val: val ?? item.val, tone, name: name ?? item.name, sub: sub ?? item.sub });
+    const champC = counts(done, 'champ', 'Last won'), sackC = counts(done, 'sacko', 'Last received');
+    const topPts = seasonPts(true).sort((a, b) => parseFloat(b.val) - parseFloat(a.val))[0];
+    const bestWin = winSeasons(true)[0];
+    const tiles = [
+      t('Reigning Champion', champs[0], champs[0].year, '', `${rec(champs[0])} record`, champs[0].player),
+      t('Reigning Sacko', sackos[0], sackos[0].year, 'bad', `${regRec(sackos[0])} record`, sackos[0].player),
+      t('Most Titles', champC[0], champC[0].val, '', champC[0].sub, champC.filter(c => c.val === champC[0].val).map(c => c.name).join(' · ')),
+      t('Most Sackos', sackC[0], sackC[0].val, 'bad', sackC[0].sub, sackC.filter(c => c.val === sackC[0].val).slice(0, 3).map(c => c.name).join(' · ')),
+      t('Best Season Points', topPts, topPts.val, 'good', `${topPts.rank}`, topPts.name),
+      t('Best Regular Season', bestWin, bestWin.val, 'good', `${bestWin.rank}`, bestWin.name),
+      t('Top Earner', earn[0], earn[0].val, 'good', 'Net all-time', earn[0].name),
+      t('Best Average Finish', finish[0], finish[0].val, 'good', finish[0].sub, finish[0].name),
+    ];
+
+    TABS = [
+      { label: 'Summary', tiles },
+      { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true }), V('Title Count', champC, { hl: true }), V('Title Games', titleGames('Champ', true), { year: true })] },
+      { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, tone: 'bad' }), V('Sacko Count', sackC, { hl: true, tone: 'bad' }), V('Sacko Games', titleGames('Sacko', false), { year: true, tone: 'bad' })] },
+      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad' }), V('Weekly High', weekly(true), { year: true, tone: 'good' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad' }), V('Average Median', avgMedian, { year: true })] },
+      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad' }), V('Earnings', earn, { hl: true })] },
+      { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { note: 'Head-to-head games only' }), V('With Median', streakView('combined'), { note: 'Includes the weekly median game (2025 onward)' })] },
+    ];
   }
 
-  Promise.all([LG.load(), fetch('data/franchise.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null)])
-    .then(([D, F]) => { document.getElementById('overview').innerHTML = build(D, F); })
+  const tileHtml = x => `<div class="hero"><div class="hero-t">${x.title}</div><div class="hero-v ${x.tone}">${esc(x.val)}</div><div class="hero-n">${esc(x.name)}</div><div class="hero-s">${esc(x.sub || '')}</div></div>`;
+
+  function rowHtml(i, k, v) {
+    const isRec = v.hl && k === 0;
+    const cls = ['ln', v.year ? 'yr' : '', v.tone === 'good' ? 'good' : v.tone === 'bad' ? 'bad' : '', isRec ? 'rec' : ''].filter(Boolean).join(' ');
+    const right = i.stats
+      ? `<div class="stats">${i.stats.map(s => `<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`
+      : `<div class="val ${i.tone || ''}">${esc(i.val)}</div>`;
+    const rank = v.year ? i.rank : (i.stats ? '' : k + 1);
+    return `<div class="${cls}" ${i.stats ? 'style="grid-template-columns:minmax(0,1fr) auto"' : ''}>` + (i.stats ? '' : `<div class="rk">${rank}</div>`) +
+      `<div style="min-width:0"><div class="tm">${esc(i.name)}</div>${i.sub ? `<div class="meta">${esc(i.sub)}</div>` : ''}</div>${right}</div>`;
+  }
+
+  function render() {
+    document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
+    const T = TABS[tab], el = document.getElementById('overview');
+    if (T.tiles) { el.innerHTML = `<div class="hero-grid">${T.tiles.map(tileHtml).join('')}</div>`; return; }
+    const vi = viewPick[tab] || 0, v = T.views[vi];
+    const tg = v.tone === 'good' ? ' good' : v.tone === 'bad' ? ' bad' : '';
+    const seg = `<div class="seg">${T.views.map((x, i) => `<button class="${i === vi ? 'on' + (x.tone === 'good' ? ' good' : x.tone === 'bad' ? ' bad' : '') : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
+    const half = Math.ceil(v.items.length / 2);
+    const cols = `<div class="cols"><div>${v.items.slice(0, half).map((i, k) => rowHtml(i, k, v)).join('')}</div><div>${v.items.slice(half).map((i, k) => rowHtml(i, k + half, v)).join('')}</div></div>`;
+    el.innerHTML = card(v.label, seg + cols, v.note);
+  }
+
+  document.addEventListener('click', e => {
+    const t = e.target.closest('.tab');
+    if (t) { tab = Number(t.dataset.i); render(); return; }
+    const s = e.target.closest('[data-v]');
+    if (s) { viewPick[tab] = Number(s.dataset.v); render(); }
+  });
+
+  Promise.all([LG.load(), fetch('data/franchise.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)])
+    .then(([D, F]) => { build(D, F); render(); })
     .catch(err => LG.showError('overview', err));
 </script>
 </body>
