@@ -138,11 +138,13 @@
     const f = v => (v === null ? '—' : fmt(v));
     return `<div class="cmp-row"><div class="cmp-val${ls}">${f(l)}</div><div class="cmp-label">${label}</div><div class="cmp-val r${rs}">${f(r)}</div></div>`;
   }
+  const abbr = n => (n.includes(' ') ? n.split(' ').map(w => w[0]).join('').toUpperCase() : n.slice(0, 2));
   const tone = (x, y) => (x > y ? 'up' : x < y ? 'down' : 'flat');
   const callout = (t, n, cls, s) => `<div class="co"><div class="co-t">${t}</div><div class="co-n ${cls}">${n}</div><div class="co-s">${s}</div></div>`;
 
   function render() {
     const a = $('p1').value, b = $('p2').value;
+    try { localStorage.setItem('h2h-pair', JSON.stringify([a, b])); } catch (e) {}
     if (a === b) {
       $('compare').innerHTML = '<div class="loading-row">Pick two different teams.</div>';
       $('games-section').hidden = true;
@@ -166,7 +168,7 @@
 
     const last = all.slice(-10);
     const form = `<div class="form-wrap"><div class="form-title">Last ${last.length} meetings</div><div class="form">` +
-      last.map(g => `<div class="chip ${g.winner === a ? 'up' : 'down'}" title="${g.year} week ${g.week}">${LG.esc(g.winner.slice(0, 2))}</div>`).join('') + '</div></div>';
+      last.map(g => `<div class="chip ${g.winner === a ? 'up' : 'down'}" title="${g.year} week ${g.week}">${LG.esc(abbr(g.winner))}</div>`).join('') + '</div></div>';
 
     const closest = all.reduce((m, g) => (margin(g) < margin(m) ? g : m));
     const blowout = all.reduce((m, g) => (margin(g) > margin(m) ? g : m));
@@ -211,13 +213,12 @@
       (former.length ? `<optgroup label="Former teams">${former.map(n => `<option>${LG.esc(n)}</option>`).join('')}</optgroup>` : '');
     $('p1').innerHTML = opts;
     $('p2').innerHTML = opts;
-    let bestPair = [active[0], active[1]], bestN = -1;
-    for (let i = 0; i < active.length; i++) for (let j = i + 1; j < active.length; j++) {
-      const n = pairGames(active[i], active[j]).length;
-      if (n > bestN) { bestN = n; bestPair = [active[i], active[j]]; }
-    }
-    $('p1').value = bestPair[0];
-    $('p2').value = bestPair[1];
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('h2h-pair')); } catch (e) {}
+    const ok = n => names.includes(n);
+    const pair = saved && ok(saved[0]) && ok(saved[1]) ? saved : ['Joe G', 'Joe K'];
+    $('p1').value = ok(pair[0]) ? pair[0] : active[0];
+    $('p2').value = ok(pair[1]) ? pair[1] : active[1];
     $('p1').addEventListener('change', render);
     $('p2').addEventListener('change', render);
     render();
