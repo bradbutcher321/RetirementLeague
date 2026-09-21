@@ -543,10 +543,14 @@
     letter-spacing: 0.01em;
     line-height: 1.4;
     border: 1px solid transparent;
-    border-radius: 3px;
+    border-radius: 0;
     width: 100%;
     text-align: center;
   }
+  /* Only the outer corners of a (possibly merged) pill are rounded, so a
+     locked fill in the middle of a stack is square. */
+  .name-row .slot:first-child{ border-top-left-radius: 3px; border-top-right-radius: 3px; }
+  .name-row .slot:last-child{ border-bottom-left-radius: 3px; border-bottom-right-radius: 3px; }
   /* Status on the strip: check = no starters left, solid fill = result locked
      in (see renderMedianCard), red pulsing dot = a player is live. */
   .name-row .slot{ position: relative; }
