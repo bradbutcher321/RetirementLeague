@@ -547,9 +547,8 @@
     width: 100%;
     text-align: center;
   }
-  /* Status on the strip: dashed outline = still has players to play, solid
-     fill = result locked in (see renderMedianCard), pulsing = a player is live. */
-  .name-row .slot.playing{ border-style: dashed; border-color: currentColor; }
+  /* Status on the strip: check = no starters left, solid fill = result locked
+     in (see renderMedianCard), red pulsing dot = a player is live. */
   .name-row .slot{ position: relative; }
   .name-row .slot.live::before{
     content: '';
@@ -563,6 +562,15 @@
     background: var(--loss);
     --pc: 192,87,75;
     animation: live-pulse 1.6s infinite;
+  }
+  .name-row .slot.final::after{
+    content: '\2713';
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    line-height: 1;
   }
   /* A red dot would vanish on a solid red (locked below) pill. */
   .name-row .slot.locked.below.live::before{ background: #fff; --pc: 255,255,255; }
@@ -597,7 +605,6 @@
   .median-legend .k{ display: inline-flex; align-items: center; gap: 6px; }
   .median-legend .sw{ display: inline-block; width: 14px; height: 9px; border-radius: 2px; border: 1px solid var(--text-dim); }
   .median-legend .sw.locked{ background: linear-gradient(135deg, var(--turf) 50%, var(--loss) 50%); border-color: var(--line); }
-  .median-legend .sw.playing{ border-style: dashed; }
   .endcap-score.low{ bottom: -15px; }
   .endcap-score.high{ top: -15px; }
 
@@ -1107,7 +1114,7 @@
       const slots = c.members
         .slice()
         .sort((a, b) => b.score - a.score) // highest first = rendered on top
-        .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? '' : ' playing') + (m.inPlay ? ' live' : '') : ''}">${m.name}</span>`)
+        .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}">${m.name}</span>`)
         .join('');
       html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor};">${slots}</div>`;
     });
@@ -1166,8 +1173,7 @@
     const legend = known ? `
         <div class="median-legend">
           ${opts.locks ? '<span class="k"><span class="sw locked"></span>Locked</span>' : ''}
-          <span class="k"><span class="sw"></span>Final</span>
-          <span class="k"><span class="sw playing"></span>Still playing</span>
+          <span class="k"><span style="color:var(--text-dim);font-weight:700">\u2713</span>Final</span>
           <span class="k"><span class="live-dot"></span>Live</span>
           ${zones ? '<span class="k" style="color:var(--turf)">\u25B2 above this score = locked above</span><span class="k" style="color:var(--loss)">\u25BC below this score = locked below</span>' : ''}
         </div>` : '';
