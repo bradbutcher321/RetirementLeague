@@ -716,6 +716,33 @@
     .sup-row .r{ min-width: 46px; }
   }
 
+  /* Collapsible tray (Site Activity), closed until opened */
+  .tray > summary{
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+    color: var(--text-dim);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .tray > summary::-webkit-details-marker{ display: none; }
+  .tray > summary:hover .tray-title{ color: var(--text); }
+  .tray-summary{ flex: 1; text-align: right; font-size: 0.78rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .tray-chevron{
+    width: 8px; height: 8px;
+    border-right: 2px solid var(--gold);
+    border-bottom: 2px solid var(--gold);
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform 0.2s ease;
+    align-self: center;
+  }
+  .tray[open] > summary .tray-chevron{ transform: rotate(-135deg) translateY(-2px); }
+  .tray > #activity-container{ margin-top: 16px; }
+
   /* Site activity */
   .act-tiles{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
   .act-tile{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); padding: 16px 12px; text-align: center; }
@@ -794,8 +821,14 @@
     </section>
 
     <section id="activity-section" hidden>
-      <h2>Site Activity</h2>
-      <div id="activity-container"></div>
+      <details class="tray">
+        <summary>
+          <span class="tray-title">Site Activity</span>
+          <span class="tray-summary" id="activity-summary"></span>
+          <span class="tray-chevron" aria-hidden="true"></span>
+        </summary>
+        <div id="activity-container"></div>
+      </details>
     </section>
 
     <footer>Auto-refreshes every couple minutes · Data via ESPN Fantasy</footer>
@@ -1588,6 +1621,8 @@
             <div class="act-card"><div class="act-card-title">Top pages today</div>
               <div class="act-row head"><span>Page</span><span class="r">Views</span></div>${pages || '<div class="act-row"><span class="n">No visits yet</span></div>'}</div>
           </div>`;
+        document.getElementById('activity-summary').textContent =
+          `${st.activeNow} active now · ${st.visitorsToday} visitors · ${st.viewsToday} views today`;
         document.getElementById('activity-section').hidden = false;
       })
       .catch(() => { document.getElementById('activity-section').hidden = true; });
