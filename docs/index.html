@@ -593,15 +593,15 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  /* Lock zones on the Current strip: green above the line = can't fall below
-     the median any more, red below = can't get above it. The plot shifts left
+  /* Lock lines on the Current strip: above the green line a team can't fall
+     below the median any more, below the red line a finished team can't get above it. The plot shifts left
      to leave room for the line labels. */
   .spread-col.zoned{ width: 136px; }
   .vplot.zoned .axis, .vplot.zoned .name-row, .vplot.zoned .median-tick{ left: 44px; }
   .vplot.zoned .endcap-score{ left: 44px; }
   .zone{ position: absolute; left: 0; right: 0; z-index: 0; }
-  .zone.up{ background: linear-gradient(180deg, rgba(76,154,107,0.16), rgba(76,154,107,0.03)); border-bottom: 1px dashed rgba(76,154,107,0.6); }
-  .zone.dn{ background: linear-gradient(0deg, rgba(192,87,75,0.16), rgba(192,87,75,0.03)); border-top: 1px dashed rgba(192,87,75,0.6); }
+  .zone.up{ border-bottom: 1px dashed rgba(76,154,107,0.6); }
+  .zone.dn{ border-top: 1px dashed rgba(192,87,75,0.6); }
   .zone-label{ position: absolute; right: 0; z-index: 4; font-size: 0.58rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .zone-label.up{ color: var(--turf); transform: translateY(-105%); }
   .zone-label.dn{ color: var(--loss); transform: translateY(5%); }
