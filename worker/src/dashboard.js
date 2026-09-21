@@ -345,6 +345,14 @@ export async function buildDashboard(env) {
     .map((t) => {
       const live = teamCurrentById.get(t.teamId) || { current: 0, projected: 0 };
       const status = teamStatusById.get(t.teamId) || { remaining: 0, inPlay: 0 };
+      // Points from weeks before the current one, straight from the schedule, so
+      // the dashboard can add this week on top without double counting once ESPN
+      // rolls a finished week into pointsFor.
+      const priorPoints = round2(
+        teamScoresByWeek(league.schedule || [], t.teamId)
+          .slice(0, Math.max(currentWeek - 1, 0))
+          .reduce((sum, v) => sum + (v || 0), 0)
+      );
       return {
         name: t.name,
         manager: managerNames.get(t.teamId) || "",
@@ -353,6 +361,7 @@ export async function buildDashboard(env) {
         projected: live.projected,
         remaining: status.remaining,
         inPlay: status.inPlay,
+        priorPoints,
         standing: t.standing,
         pointsFor: round2(t.pointsFor),
         pointsAgainst: t.pointsAgainst,
@@ -365,6 +374,7 @@ export async function buildDashboard(env) {
   const projectedMedian = projectedScores.length ? round2(median(projectedScores)) : 0;
 
   const weeklyHigh = findWeeklyHigh(teamsRaw, league.schedule || [], currentWeek);
+  const priorHigh = findWeeklyHigh(teamsRaw, league.schedule || [], Math.max(currentWeek - 1, 0));
   const seasonLeaderTeam = teamsRaw.reduce((best, t) => (t.pointsFor > (best?.pointsFor ?? -1) ? t : best), null);
 
   const seasonStarted = weeklyHigh.score > 0;
@@ -389,6 +399,14 @@ export async function buildDashboard(env) {
           manager: managerNames.get(weeklyHigh.teamId) || "",
           week: weeklyHigh.week,
           score: round2(weeklyHigh.score),
+        }
+      : null,
+    priorSeasonHigh: priorHigh.score > 0
+      ? {
+          team: teamsById.get(priorHigh.teamId)?.name || "",
+          manager: managerNames.get(priorHigh.teamId) || "",
+          week: priorHigh.week,
+          score: round2(priorHigh.score),
         }
       : null,
     seasonLeader: seasonPointsStarted

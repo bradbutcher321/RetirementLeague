@@ -696,6 +696,26 @@
     padding: 22px 4px 6px;
   }
 
+  /* Superlatives view toggle + race rows */
+  .sup-seg{ display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); margin-bottom: 14px; }
+  .sup-seg button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.8rem; padding: 9px 16px; cursor: pointer; }
+  .sup-seg button.on{ background: rgba(186,155,55,0.14); color: var(--gold); }
+  .sup-tag{ position: relative; display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; margin-bottom: 12px; }
+  .sup-tag.new{ color: var(--turf); border: 1px solid var(--turf-dim); background: rgba(76,154,107,0.12); }
+  .sup-tag.hold{ color: var(--text-dim); border: 1px solid var(--line); }
+  .sup-note{ position: relative; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 0.78rem; line-height: 1.5; }
+  .sup-lines{ position: relative; margin-top: 14px; text-align: left; }
+  .sup-row{ display: grid; grid-template-columns: minmax(0,1fr) auto auto auto; gap: 12px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--line); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+  .sup-row.head{ color: var(--text-dim); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; border-top: none; padding-bottom: 3px; }
+  .sup-row .n{ font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sup-row .r{ text-align: right; min-width: 56px; }
+  .sup-row .lead{ color: var(--gold); }
+  @media (max-width: 480px){
+    .sup-seg button{ padding: 8px 10px; font-size: 0.74rem; }
+    .sup-row{ gap: 8px; font-size: 0.76rem; }
+    .sup-row .r{ min-width: 46px; }
+  }
+
   /* ---------- Small-phone tightening (must stay last: overrides base rules above) ---------- */
   @media (max-width: 480px){
     .side{ padding: 16px; }
@@ -742,6 +762,7 @@
 
     <section>
       <h2>Superlatives</h2>
+      <div id="superlatives-toggle"></div>
       <div class="accolades-grid" id="accolades-container">
         <div class="loading-row">Loading accolades…</div>
       </div>
@@ -1314,6 +1335,107 @@
       </div>`;
   }
 
+  // ---------- Superlatives: through last week / + this week live / + this week projected ----------
+  let superlativesData = null;
+  let superlativesMode = 'live';
+
+  function renderSuperlatives() {
+    const data = superlativesData;
+    if (!data) return;
+    const container = document.getElementById('accolades-container');
+    const toggle = document.getElementById('superlatives-toggle');
+    const teams = (data.teams || []).map(t => ({
+      team: t.name,
+      manager: t.manager,
+      n: medianTeamName(t),
+      prior: typeof t.priorPoints === 'number' ? t.priorPoints : (t.pointsFor || 0),
+      cur: t.current || 0,
+      proj: Math.max(t.projected || 0, t.current || 0),
+    }));
+    const week = data.week || 1;
+    const prevHigh = data.priorSeasonHigh || null;
+    const hasPrior = week > 1 && Boolean(prevHigh);
+
+    // Nothing has been scored yet this season: keep the original placeholders.
+    if (!hasPrior && !teams.some(t => t.cur > 0)) {
+      toggle.innerHTML = '';
+      container.innerHTML =
+        renderAccoladeCard('Season High Score', null, '', '', 0) +
+        renderAccoladeCard('Season Points Leader', null, '', '', 0);
+      return;
+    }
+
+    const modes = hasPrior
+      ? [['through', `Through Week ${week - 1}`], ['live', `+ Week ${week} live`], ['proj', `+ Week ${week} projected`]]
+      : [['live', `Week ${week} live`], ['proj', `Week ${week} projected`]];
+    if (!modes.some(([k]) => k === superlativesMode)) superlativesMode = 'live';
+    const m = superlativesMode;
+    toggle.innerHTML = `<div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-sup="${k}" class="${k === m ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+
+    const tag = (isNew, label) => !hasPrior || m === 'through' ? ''
+      : (isNew ? `<div class="sup-tag new">${label}</div>` : '<div class="sup-tag hold">Holding</div>');
+    const card = (eyebrow, score, team, manager, meta, extra, tagHtml) => `
+      <div class="accolade-card">
+        <div class="accolade-eyebrow">${eyebrow}</div>
+        ${tagHtml || ''}
+        <div class="accolade-score">${fmtScore(score)}</div>
+        <div class="accolade-team">${team}</div>
+        <div class="accolade-meta">
+          ${manager ? `<span>${manager}</span>` : ''}
+          ${manager && meta ? '<span class="accolade-dot">\u2022</span>' : ''}
+          ${meta ? `<span>${meta}</span>` : ''}
+        </div>
+        ${extra || ''}
+      </div>`;
+
+    // ----- Season High Score -----
+    const recordScore = prevHigh ? prevHigh.score : 0;
+    const bestCur = teams.reduce((a, t) => (!a || t.cur > a.cur ? t : a), null);
+    const bestProj = teams.reduce((a, t) => (!a || t.proj > a.proj ? t : a), null);
+    const liveBreaks = bestCur && bestCur.cur > recordScore;
+    const projBreaks = bestProj && bestProj.proj > Math.max(recordScore, bestCur ? bestCur.cur : 0);
+    let high;
+    if (m === 'through' && prevHigh) high = { score: prevHigh.score, team: prevHigh.team, manager: prevHigh.manager, meta: `Week ${prevHigh.week}`, isNew: false };
+    else if (m === 'proj' && projBreaks) high = { score: bestProj.proj, team: bestProj.team, manager: bestProj.manager, meta: `Week ${week} \u00b7 projected`, isNew: true };
+    else if (liveBreaks) high = { score: bestCur.cur, team: bestCur.team, manager: bestCur.manager, meta: `Week ${week} \u00b7 live`, isNew: true };
+    else if (prevHigh) high = { score: prevHigh.score, team: prevHigh.team, manager: prevHigh.manager, meta: `Week ${prevHigh.week}`, isNew: false };
+    else high = { score: bestCur.cur, team: bestCur.team, manager: bestCur.manager, meta: `Week ${week} \u00b7 live`, isNew: true };
+
+    let highExtra = '';
+    if (m === 'through') {
+      highExtra = `<div class="sup-note">Record set in Week ${prevHigh.week}. Switch to a live or projected view to see how this week's scores stack up.</div>`;
+    } else {
+      const rows = [...teams].sort((a, b) => (m === 'proj' ? b.proj - a.proj : b.cur - a.cur)).slice(0, 3).map(r => {
+        const gap = Math.max(0, recordScore - (m === 'proj' ? r.proj : r.cur));
+        return `<div class="sup-row"><span class="n">${r.n}</span><span class="r ${m === 'live' ? 'lead' : ''}">${fmtScore(r.cur)}</span>` +
+          `<span class="r">${recordScore ? fmtScore(gap) + ' short' : '\u2014'}</span><span class="r ${m === 'proj' ? 'lead' : ''}">${fmtScore(r.proj)}</span></div>`;
+      }).join('');
+      highExtra = `<div class="sup-lines"><div class="sup-row head"><span>Best this week</span><span class="r">Live</span><span class="r">To record</span><span class="r">Proj</span></div>${rows}</div>`;
+    }
+
+    // ----- Season Points Leader -----
+    const total = r => r.prior + (m === 'through' ? 0 : m === 'live' ? r.cur : r.proj);
+    const ranked = [...teams].sort((a, b) => total(b) - total(a));
+    const throughLeader = [...teams].sort((a, b) => b.prior - a.prior)[0];
+    const leader = ranked[0];
+    const leaderChanged = hasPrior && m !== 'through' && leader.team !== throughLeader.team;
+    const modeLabel = m === 'through' ? `Through Week ${week - 1}` : m === 'live' ? `Through Week ${week} so far` : `Projected through Week ${week}`;
+    const leadRows = ranked.slice(0, 4).map((r, i) => `<div class="sup-row"><span class="n">${r.n}</span><span class="r">${fmtScore(r.prior)}</span>` +
+      `<span class="r">${m === 'through' ? '\u2014' : '+ ' + fmtScore(m === 'live' ? r.cur : r.proj)}</span><span class="r ${i === 0 ? 'lead' : ''}">${fmtScore(total(r))}</span></div>`).join('');
+    const leadExtra = `<div class="sup-lines"><div class="sup-row head"><span>Team</span><span class="r">${week > 1 ? 'Thru Wk ' + (week - 1) : 'Before'}</span><span class="r">Week ${week}</span><span class="r">Total</span></div>${leadRows}</div>`;
+
+    container.innerHTML =
+      card('Season High Score', high.score, high.team, high.manager, high.meta, highExtra, tag(high.isNew, 'New record')) +
+      card('Season Points Leader', total(leader), leader.team, leader.manager, modeLabel, leadExtra, tag(leaderChanged, 'New leader'));
+  }
+
+  document.getElementById('superlatives-toggle').addEventListener('click', e => {
+    const b = e.target.closest('[data-sup]');
+    if (!b) return;
+    superlativesMode = b.dataset.sup;
+    renderSuperlatives();
+  });
+
   // Polling the Worker every 2 minutes is now cheap regardless of whether
   // the cooldown is active — within it, the Worker just returns its KV
   // cache instantly; only once it's expired does a real ESPN fetch happen.
@@ -1381,11 +1503,8 @@
         spreadChartJobs.forEach(job => renderSpreadChart(job.elId, job.ascending, job.median, job.zones));
         updateKickoffCountdown();
 
-        const wh = data.weeklyHigh;
-        const sl = data.seasonLeader;
-        document.getElementById('accolades-container').innerHTML =
-          renderAccoladeCard('Season High Score', wh && wh.team, wh && wh.manager, wh ? `Week ${wh.week}` : '', wh && wh.score) +
-          renderAccoladeCard('Season Points Leader', sl && sl.team, sl && sl.manager, '', sl && sl.points);
+        superlativesData = data;
+        renderSuperlatives();
       })
       .catch(err => {
         console.error('Dashboard error:', err);
