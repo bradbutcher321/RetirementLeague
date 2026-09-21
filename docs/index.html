@@ -1130,29 +1130,32 @@
     const withScore = teamsSorted.map(t => ({
       name: medianTeamName(t),
       score: t[scoreKey],
+      cur: t.current,
       remaining: t.remaining || 0,
       inPlay: t.inPlay || 0,
       statusKnown: known,
       done: known && !(t.remaining || 0) && !(t.inPlay || 0),
     }));
 
-    // Locks only exist for real (current) scores. A team with no starters
-    // left can never move; so a team is locked above once at least half the
-    // league is finished and already scoring below it (its own score can only
-    // go up), and a finished team is locked below once at least half the
-    // league is finished and scoring above it. Anything else can still be
-    // passed by a team with players left, since fantasy points have no cap.
+    // Locks are decided from real (current) scores on both cards. A team with
+    // no starters left can never move; so a team is locked above once at least
+    // half the league is finished and already scoring below its current score
+    // (its own score can only go up), and a finished team is locked below once
+    // at least half the league is finished and scoring above it. Anything else
+    // can still be passed by a team with players left, since fantasy points
+    // have no cap. The zone lines are drawn on the Current strip only, where
+    // the axis is in real scores.
     let zones = null;
     if (opts.locks && known) {
-      const finished = withScore.filter(m => m.done).map(m => m.score);
+      const finished = withScore.filter(m => m.done).map(m => m.cur);
       const upLine = finished.length >= half ? [...finished].sort((a, b) => a - b)[half - 1] : null;
       const downLine = finished.length >= half ? [...finished].sort((a, b) => b - a)[half - 1] : null;
       withScore.forEach(m => {
-        m.lockedAbove = upLine !== null && m.score > upLine;
-        m.lockedBelow = m.done && downLine !== null && m.score < downLine;
+        m.lockedAbove = upLine !== null && m.cur > upLine;
+        m.lockedBelow = m.done && downLine !== null && m.cur < downLine;
         m.locked = m.lockedAbove || m.lockedBelow;
       });
-      if (upLine !== null || downLine !== null) zones = { up: upLine, down: downLine };
+      if (opts.zones && (upLine !== null || downLine !== null)) zones = { up: upLine, down: downLine };
     }
 
     const above = withScore.slice(0, half);
@@ -1347,9 +1350,9 @@
         medianStatusKnown = Boolean(data.medianStatusKnown) && teams.every(t => typeof t.remaining === 'number');
         const medianHtml =
           (currentHasStarted
-            ? renderMedianCard('Current Median', data.currentMedian, byCurrentDesc, 'current', 'spread-current', { locks: true })
+            ? renderMedianCard('Current Median', data.currentMedian, byCurrentDesc, 'current', 'spread-current', { locks: true, zones: true })
             : renderMedianPendingCard('Current Median')) +
-          renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected', 'spread-projected');
+          renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected', 'spread-projected', { locks: true });
         document.getElementById('median-container').innerHTML = medianHtml;
         // Needs the .vplot elements to actually be in the DOM first, so
         // clientHeight (used for the collision math) reflects their real
