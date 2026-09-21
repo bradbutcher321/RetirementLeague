@@ -20,3 +20,9 @@ ESPN_YEAR = "2026"
 [[kv_namespaces]]
 binding = "COOLDOWN_KV"
 id = "1521d1a4fe954b00a05b4542c7a44670"
+
+# Site analytics: one row per page view, plus a last-seen table for "active now".
+[[d1_databases]]
+binding = "DB"
+database_name = "retirement-league-analytics"
+database_id = "5bf8d0cf-b461-437b-9367-7818a00a431d"

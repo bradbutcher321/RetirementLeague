@@ -14,6 +14,7 @@
  *                      returns it. Falls back to serving stale cache (with
  *                      an `error` field) if a fresh ESPN fetch fails.
  * GET /?force=1    -> bypasses the cooldown (manual testing).
+ * POST /hit, GET /stats -> site analytics (see analytics.js).
  *
  * Required setup:
  *   - Secrets:     ESPN_SWID, ESPN_S2   (wrangler secret put ...)
@@ -21,6 +22,7 @@
  *   - KV namespace bound as: COOLDOWN_KV (already existed for the old design)
  */
 import { buildDashboard } from "./dashboard.js";
+import { getStats, recordHit } from "./analytics.js";
 
 const COOLDOWN_SECONDS = 120;
 // One key holds { fetchedAt, data } so a cache hit costs a single KV read and
@@ -30,7 +32,7 @@ const CACHE_KEY = "dashboard:v2";
 function corsHeaders(env) {
   return {
     "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
 }
@@ -48,6 +50,16 @@ export default {
 
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers });
+    }
+    const path = new URL(request.url).pathname;
+    if (path === "/hit") {
+      if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const ok = await recordHit(request, env).catch(() => false);
+      return new Response(null, { status: ok ? 204 : 400, headers });
+    }
+    if (path === "/stats") {
+      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      return jsonResponse(await getStats(env).catch((err) => ({ error: String(err) })), headers);
     }
     if (request.method !== "GET") {
       return jsonResponse({ error: "Method not allowed" }, headers, 405);

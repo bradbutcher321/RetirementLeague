@@ -42,6 +42,12 @@ Standings, Head to Head, Overview, and Game Records all read
   repeated page loads don't hammer ESPN. See `worker/wrangler.toml` for
   config; `ESPN_SWID`/`ESPN_S2` are set via `wrangler secret put` rather
   than committed.
+- **Site analytics** — every page loads `docs/track.js`, which sends an
+  anonymous random id plus the page name to the Worker (`worker/src/analytics.js`),
+  stored in a D1 database (`worker/schema.sql`). The Live Dashboard's "Site
+  Activity" section shows active now, unique visitors and page views today,
+  the last 7 days, and top pages. Set `localStorage.setItem('rl-notrack', '1')`
+  in a browser to stop counting your own visits.
 - **`generate_franchise_data.py`** — reads the sheet's `Game Tracker`,
   `PlayerStats`, `RandomInfo`, `Parlay Tracker`, and `Money Tracker` tabs,
   computes each manager's career stats, and writes `docs/data/franchise.json`.

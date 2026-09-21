@@ -716,6 +716,23 @@
     .sup-row .r{ min-width: 46px; }
   }
 
+  /* Site activity */
+  .act-tiles{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+  .act-tile{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); padding: 16px 12px; text-align: center; }
+  .act-label{ color: var(--text-dim); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .act-value{ font-family: var(--scoreboard); font-weight: 800; font-size: 2.4rem; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .act-value.live{ color: var(--turf); }
+  .act-sub{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
+  .act-panels{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px){ .act-panels{ grid-template-columns: 1fr; } }
+  .act-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); padding: 14px 16px 8px; }
+  .act-card-title{ font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
+  .act-row{ display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 14px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .act-row.head{ border-top: none; color: var(--text-dim); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 0 4px; }
+  .act-row .r{ text-align: right; min-width: 54px; }
+  .act-row .n{ font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .act-row b{ font-family: var(--scoreboard); font-size: 1.05rem; font-weight: 700; }
+
   /* ---------- Small-phone tightening (must stay last: overrides base rules above) ---------- */
   @media (max-width: 480px){
     .side{ padding: 16px; }
@@ -774,6 +791,11 @@
       <div class="leaderboard" id="leaderboard-container">
         <div class="loading-row">Loading standings…</div>
       </div>
+    </section>
+
+    <section id="activity-section" hidden>
+      <h2>Site Activity</h2>
+      <div id="activity-container"></div>
     </section>
 
     <footer>Auto-refreshes every couple minutes · Data via ESPN Fantasy</footer>
@@ -1536,6 +1558,41 @@
     renderSuperlatives();
   });
 
+  // ---------- Site activity (unique visitors / page views from the Worker's own counter) ----------
+  const PAGE_LABELS = { dashboard: 'Live Dashboard', franchise: 'Franchise', 'parlay-results': 'Parlay Results', standings: 'Standings', 'head-to-head': 'Head to Head', overview: 'Overview', 'game-records': 'Game Records' };
+
+  function dayLabel(iso, today) {
+    if (iso === today) return 'Today';
+    const d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  function loadActivity() {
+    fetch(WORKER_URL + '/stats', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(st => {
+        if (st.error || typeof st.visitorsToday !== 'number') throw new Error(st.error || 'No stats');
+        const days = (st.days || []).map(d => `
+          <div class="act-row"><span class="n">${dayLabel(d.day, st.today)}</span><span class="r"><b>${d.visitors}</b></span><span class="r"><b>${d.views}</b></span></div>`).join('');
+        const pages = (st.topPages || []).map(p => `
+          <div class="act-row"><span class="n">${PAGE_LABELS[p.page] || p.page}</span><span class="r"><b>${p.views}</b></span></div>`).join('');
+        document.getElementById('activity-container').innerHTML = `
+          <div class="act-tiles">
+            <div class="act-tile"><div class="act-label">Active now</div><div class="act-value live">${st.activeNow}</div><div class="act-sub">last 5 minutes</div></div>
+            <div class="act-tile"><div class="act-label">Unique visitors today</div><div class="act-value">${st.visitorsToday}</div><div class="act-sub">people</div></div>
+            <div class="act-tile"><div class="act-label">Page views today</div><div class="act-value">${st.viewsToday}</div><div class="act-sub">pages opened</div></div>
+          </div>
+          <div class="act-panels">
+            <div class="act-card"><div class="act-card-title">Last 7 days</div>
+              <div class="act-row head"><span>Day</span><span class="r">Visitors</span><span class="r">Views</span></div>${days || '<div class="act-row"><span class="n">No visits yet</span></div>'}</div>
+            <div class="act-card"><div class="act-card-title">Top pages today</div>
+              <div class="act-row head"><span>Page</span><span class="r">Views</span></div>${pages || '<div class="act-row"><span class="n">No visits yet</span></div>'}</div>
+          </div>`;
+        document.getElementById('activity-section').hidden = false;
+      })
+      .catch(() => { document.getElementById('activity-section').hidden = true; });
+  }
+
   // Polling the Worker every 2 minutes is now cheap regardless of whether
   // the cooldown is active — within it, the Worker just returns its KV
   // cache instantly; only once it's expired does a real ESPN fetch happen.
@@ -1628,6 +1685,8 @@
   // Background tabs don't poll (each poll costs Worker/KV quota); coming
   // back to the tab refreshes right away if the data is stale.
   let lastLoadAt = 0;
+  loadActivity();
+  setInterval(() => { if (!document.hidden) loadActivity(); }, 60 * 1000);
   const loadDashboardTracked = () => { lastLoadAt = Date.now(); loadDashboard(); };
   loadDashboardTracked();
   setInterval(() => { if (!document.hidden) loadDashboardTracked(); }, AUTO_REFRESH_MS);
@@ -1638,5 +1697,6 @@
   // rather than jumping only once every AUTO_REFRESH_MS.
   setInterval(updateKickoffCountdown, 60 * 1000);
 </script>
+<script src="track.js?v=1" defer></script>
 </body>
 </html>
