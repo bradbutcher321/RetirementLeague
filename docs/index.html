@@ -842,6 +842,20 @@
     return `<div class="matchup-details">${rows.join('')}</div>`;
   }
 
+  // A matchup is decided (green bar, sinks to the bottom) once nobody is left to
+  // play on either side, or once a team with no players left is already behind
+  // its opponent's current score: the opponent's score can only go up, so the
+  // finished team can't catch back up. The second case needs the NFL game
+  // states to be readable; otherwise a team with "0 left" might just be missing data.
+  function matchupDecided(m) {
+    const hIn = parseInt(m.homeInPlay, 10) || 0, aIn = parseInt(m.awayInPlay, 10) || 0;
+    const hRem = parseInt(m.homeRemaining, 10) || 0, aRem = parseInt(m.awayRemaining, 10) || 0;
+    if (hIn + aIn + hRem + aRem === 0) return true;
+    if (!medianStatusKnown) return false;
+    const hs = parseFloat(m.homeScore), as = parseFloat(m.awayScore);
+    return (hIn + hRem === 0 && hs < as) || (aIn + aRem === 0 && as < hs);
+  }
+
   function renderMatchupCard(m) {
     const homeLeading = parseFloat(m.homeScore) >= parseFloat(m.awayScore);
     const homeInPlay = parseInt(m.homeInPlay, 10) || 0;
@@ -849,7 +863,7 @@
     const homeRemaining = parseInt(m.homeRemaining, 10) || 0;
     const awayRemaining = parseInt(m.awayRemaining, 10) || 0;
     const isLive = homeInPlay + awayInPlay > 0;
-    const isFinal = homeInPlay + awayInPlay + homeRemaining + awayRemaining === 0;
+    const isFinal = matchupDecided(m);
     const statusBadge = (count, label) => {
       const done = count === 0;
       return `<span class="remaining-badge ${done ? 'done' : ''}">
@@ -1316,9 +1330,8 @@
         // either side) sink to the bottom, but only ever move there once —
         // live and not-yet-started matchups keep their original relative
         // order instead of continuously reshuffling every poll.
-        const isMatchupFinal = (m) =>
-          (parseInt(m.homeInPlay, 10) || 0) + (parseInt(m.awayInPlay, 10) || 0) +
-          (parseInt(m.homeRemaining, 10) || 0) + (parseInt(m.awayRemaining, 10) || 0) === 0;
+        medianStatusKnown = Boolean(data.medianStatusKnown) && teams.every(t => typeof t.remaining === 'number');
+        const isMatchupFinal = matchupDecided;
         const matchups = (data.matchups || [])
           .map((m, i) => ({ m, i, final: isMatchupFinal(m) }))
           .sort((a, b) => (a.final === b.final ? a.i - b.i : a.final ? 1 : -1))
