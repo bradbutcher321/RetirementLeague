@@ -770,6 +770,7 @@
 
     <section>
       <h2>Current Standings</h2>
+      <div id="standings-toggle"></div>
       <div class="leaderboard" id="leaderboard-container">
         <div class="loading-row">Loading standings…</div>
       </div>
@@ -1314,6 +1315,105 @@
       </div>`;
   }
 
+  // ---------- Standings: through last week / + this week live / + this week projected ----------
+  let standingsData = null;
+  let standingsMode = 'through';
+
+  function formatRecordParts(w, l, t) { return `${w}-${l}${t ? '-' + t : ''}`; }
+
+  // Standings as they would look if the week ended with the given scores:
+  // last weeks' results plus this week's head-to-head result and this week's
+  // result against the median (top half of scores wins), points included.
+  function projectStandings(data, mode) {
+    const teams = data.teams || [];
+    const scoreOf = t => (mode === 'proj' ? Math.max(t.projected || 0, t.current || 0) : (t.current || 0));
+    const byName = new Map(teams.map(t => [t.name, t]));
+    const oppByName = new Map();
+    (data.matchups || []).forEach(m => {
+      oppByName.set(m.homeName, m.awayName);
+      oppByName.set(m.awayName, m.homeName);
+    });
+    const ranked = [...teams].sort((a, b) => scoreOf(b) - scoreOf(a));
+    const half = Math.floor(ranked.length / 2);
+    const medianWin = new Map(ranked.map((t, i) => [t.name, i < half]));
+    return teams.map((t, i) => {
+      const p = t.prior || { w: 0, l: 0, t: 0, pf: t.pointsFor, pa: t.pointsAgainst };
+      const opp = byName.get(oppByName.get(t.name));
+      const own = scoreOf(t);
+      const oppScore = opp ? scoreOf(opp) : null;
+      let w = p.w, l = p.l, ties = p.t;
+      if (mode !== 'through') {
+        if (oppScore !== null) { if (own > oppScore) w++; else if (own < oppScore) l++; else ties++; }
+        if (medianWin.get(t.name)) w++; else l++;
+      }
+      return {
+        name: t.name, manager: t.manager, w, l, ties,
+        pf: p.pf + (mode === 'through' ? 0 : own),
+        pa: p.pa + (mode === 'through' || oppScore === null ? 0 : oppScore),
+        espnRank: i + 1,
+        playoffPct: t.playoffPct,
+      };
+    });
+  }
+
+  function renderStandings() {
+    const data = standingsData;
+    if (!data) return;
+    const teams = data.teams || [];
+    const container = document.getElementById('leaderboard-container');
+    const toggle = document.getElementById('standings-toggle');
+    const week = data.week || 1;
+    const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
+    const started = teams.some(t => (t.current || 0) > 0);
+
+    if (!hasPrior || !started) {
+      // Week 1, or nothing scored yet: no earlier weeks to compare against.
+      toggle.innerHTML = '';
+      standingsMode = 'through';
+      container.innerHTML = teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
+      return;
+    }
+
+    const modes = [['through', `Through Week ${week - 1}`], ['live', `+ Week ${week} live`], ['proj', `+ Week ${week} projected`]];
+    const m = standingsMode;
+    toggle.innerHTML = `<div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-stand="${k}" class="${k === m ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+
+    if (m === 'through') {
+      container.innerHTML = teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
+      return;
+    }
+
+    const rows = projectStandings(data, m);
+    const base = projectStandings(data, 'through');
+    const baseRank = new Map([...base].sort((a, b) => b.w - a.w || b.pf - a.pf).map((r, i) => [r.name, i + 1]));
+    const ordered = [...rows].sort((a, b) => b.w - a.w || b.pf - a.pf);
+    container.innerHTML = ordered.map((r, i) => {
+      const rank = i + 1;
+      const move = baseRank.get(r.name) - rank;
+      const chipCls = move > 0 ? 'high' : move < 0 ? 'low' : '';
+      const chipText = move > 0 ? `\u25B2 ${move}` : move < 0 ? `\u25BC ${-move}` : '\u2013';
+      const inPlayoffPosition = data.playoffTeamCount > 0 && rank <= data.playoffTeamCount;
+      return `
+      <div class="lb-row ${inPlayoffPosition ? 'playoff' : ''}">
+        <div class="lb-rank">${rank}</div>
+        <div class="lb-identity">
+          <div class="lb-name">${r.name}</div>
+          <div class="lb-meta">${r.manager ? `${r.manager} • ` : ''}${formatRecordParts(r.w, r.l, r.ties)}</div>
+        </div>
+        <div class="lb-stat"><div class="v">${fmtScore(r.pf)}</div><div class="l">PF</div></div>
+        <div class="lb-stat"><div class="v">${fmtScore(r.pa)}</div><div class="l">PA</div></div>
+        <div class="lb-playoff-chip ${chipCls}">${chipText}</div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('standings-toggle').addEventListener('click', e => {
+    const b = e.target.closest('[data-stand]');
+    if (!b) return;
+    standingsMode = b.dataset.stand;
+    renderStandings();
+  });
+
   function renderAccoladeCard(eyebrow, team, manager, meta, score) {
     if (!team) {
       return `
@@ -1477,8 +1577,8 @@
           if (el.scrollWidth > el.clientWidth) el.classList.add('truncate');
         });
 
-        document.getElementById('leaderboard-container').innerHTML =
-          teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
+        standingsData = data;
+        renderStandings();
 
         // Before games kick off every team sits at 0.00 — an above/below split
         // on current score would be meaningless then, so that card shows a

@@ -208,6 +208,53 @@ function teamScoresByWeek(schedule, teamId) {
   return scores;
 }
 
+/** Each team's record and points through weeks before `currentWeek`, rebuilt
+ * from the schedule: one head-to-head result per week plus one result against
+ * the weekly median (top half of that week's scores wins). Used so the
+ * dashboard can add the current week on top without double counting once ESPN
+ * folds a finished week into its own totals. */
+function priorStandings(schedule, currentWeek) {
+  const byWeek = new Map();
+  for (const m of schedule) {
+    const week = m.matchupPeriodId;
+    if (!week || week >= currentWeek) continue;
+    const home = m.home || {};
+    const away = m.away || {};
+    if (typeof home.totalPoints !== "number") continue;
+    const list = byWeek.get(week) || [];
+    if (away.teamId !== undefined && typeof away.totalPoints === "number") {
+      list.push({ teamId: home.teamId, own: home.totalPoints, opp: away.totalPoints });
+      list.push({ teamId: away.teamId, own: away.totalPoints, opp: home.totalPoints });
+    } else {
+      list.push({ teamId: home.teamId, own: home.totalPoints, opp: null });
+    }
+    byWeek.set(week, list);
+  }
+  const out = new Map();
+  const get = (id) => {
+    if (!out.has(id)) out.set(id, { w: 0, l: 0, t: 0, pf: 0, pa: 0 });
+    return out.get(id);
+  };
+  for (const sides of byWeek.values()) {
+    for (const s of sides) {
+      const r = get(s.teamId);
+      r.pf += s.own;
+      if (s.opp !== null) {
+        r.pa += s.opp;
+        if (s.own > s.opp) r.w++;
+        else if (s.own < s.opp) r.l++;
+        else r.t++;
+      }
+    }
+    const half = Math.floor(sides.length / 2);
+    [...sides].sort((a, b) => b.own - a.own).forEach((s, i) => {
+      if (i < half) get(s.teamId).w++;
+      else get(s.teamId).l++;
+    });
+  }
+  return out;
+}
+
 function findWeeklyHigh(teamsRaw, schedule, currentWeek) {
   let best = { teamId: null, week: null, score: -1 };
   for (const t of teamsRaw) {
@@ -271,6 +318,7 @@ export async function buildDashboard(env) {
     return parsed;
   });
   const teamsById = new Map(teamsRaw.map((t) => [t.teamId, t]));
+  const priorByTeam = priorStandings(league.schedule || [], currentWeek);
   const managerNames = buildManagerNames(teamsRaw);
 
   let nflScoreboardError = null;
@@ -362,6 +410,10 @@ export async function buildDashboard(env) {
         remaining: status.remaining,
         inPlay: status.inPlay,
         priorPoints,
+        prior: (() => {
+          const p = priorByTeam.get(t.teamId) || { w: 0, l: 0, t: 0, pf: 0, pa: 0 };
+          return { w: p.w, l: p.l, t: p.t, pf: round2(p.pf), pa: round2(p.pa) };
+        })(),
         standing: t.standing,
         pointsFor: round2(t.pointsFor),
         pointsAgainst: t.pointsAgainst,
