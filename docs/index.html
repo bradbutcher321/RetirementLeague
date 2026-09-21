@@ -464,6 +464,27 @@
   }
   .mini-card.above{ border-top-color: var(--turf); }
   .mini-card.below{ border-top-color: var(--loss); }
+  .mini-card.locked.above{ background: rgba(76,154,107,0.14); border-color: var(--turf-dim); border-top-color: var(--turf); }
+  .mini-card.locked.below{ background: rgba(192,87,75,0.14); border-color: rgba(192,87,75,0.45); border-top-color: var(--loss); }
+  .mini-card .stat{
+    font-size: 0.62rem;
+    margin-top: 2px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .mini-card .stat.lock.above{ color: var(--turf); }
+  .mini-card .stat.lock.below{ color: var(--loss); }
+  .mini-card .stat.live{ color: var(--turf); }
+  .live-dot{ display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--turf); animation: live-pulse 1.6s infinite; }
+  @keyframes live-pulse{
+    0%{ box-shadow: 0 0 0 0 rgba(76,154,107,0.6); }
+    70%{ box-shadow: 0 0 0 6px rgba(76,154,107,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(76,154,107,0); }
+  }
   .mini-card .name{
     font-size: 0.74rem;
     color: var(--text-dim);
@@ -520,7 +541,17 @@
     font-weight: 700;
     letter-spacing: 0.01em;
     line-height: 1.4;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    width: 100%;
+    text-align: center;
   }
+  /* Status on the strip: dashed outline = still has players to play, solid
+     fill = result locked in (see renderMedianCard), pulsing = a player is live. */
+  .name-row .slot.playing{ border-style: dashed; border-color: currentColor; }
+  .name-row .slot.live{ animation: live-pulse 1.6s infinite; }
+  .name-row .slot.locked.above{ background: var(--turf); color: #08140d; border-color: var(--turf); }
+  .name-row .slot.locked.below{ background: var(--loss); color: #1a0908; border-color: var(--loss); }
   .name-row .slot.above{ color: var(--turf); }
   .name-row .slot.below{ color: var(--loss); }
   .name-row .slot + .slot{ border-top: 1px solid rgba(255,255,255,0.12); }
@@ -535,6 +566,23 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+  /* Lock zones on the Current strip: green above the line = can't fall below
+     the median any more, red below = can't get above it. The plot shifts left
+     to leave room for the line labels. */
+  .spread-col.zoned{ width: 136px; }
+  .vplot.zoned .axis, .vplot.zoned .name-row, .vplot.zoned .median-tick{ left: 44px; }
+  .vplot.zoned .endcap-score{ left: 44px; }
+  .zone{ position: absolute; left: 0; right: 0; z-index: 0; }
+  .zone.up{ background: linear-gradient(180deg, rgba(76,154,107,0.16), rgba(76,154,107,0.03)); border-bottom: 1px dashed rgba(76,154,107,0.6); }
+  .zone.dn{ background: linear-gradient(0deg, rgba(192,87,75,0.16), rgba(192,87,75,0.03)); border-top: 1px dashed rgba(192,87,75,0.6); }
+  .zone-label{ position: absolute; right: 0; z-index: 4; font-size: 0.58rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .zone-label.up{ color: var(--turf); transform: translateY(-105%); }
+  .zone-label.dn{ color: var(--loss); transform: translateY(5%); }
+  .median-legend{ display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 0.68rem; }
+  .median-legend .k{ display: inline-flex; align-items: center; gap: 6px; }
+  .median-legend .sw{ display: inline-block; width: 14px; height: 9px; border-radius: 2px; border: 1px solid var(--text-dim); }
+  .median-legend .sw.locked{ background: var(--turf); border-color: var(--turf); }
+  .median-legend .sw.playing{ border-style: dashed; }
   .endcap-score.low{ bottom: -15px; }
   .endcap-score.high{ top: -15px; }
 
@@ -842,12 +890,25 @@
 
   function medianTeamName(t) { return t.manager || t.name; }
 
+  // Status line under each score: locked (result can't change), final (no
+  // starters left), or what's still to come. Blank when the NFL game state
+  // couldn't be read, so nobody is wrongly shown as finished.
+  function miniStatus(t, cls) {
+    if (!t.statusKnown) return '';
+    if (t.locked) return `<div class="stat lock ${cls}">\u2713 LOCKED ${t.lockedAbove ? 'ABOVE' : 'BELOW'}</div>`;
+    if (t.done) return '<div class="stat">FINAL</div>';
+    const toPlay = t.remaining ? `${t.remaining} to play` : '';
+    if (t.inPlay) return `<div class="stat live"><span class="live-dot"></span>${t.inPlay} live${toPlay ? ' \u00b7 ' + toPlay : ''}</div>`;
+    return `<div class="stat">${toPlay}</div>`;
+  }
+
   function buildMiniGrid(list, cls) {
     if (!list.length) return '';
     return `<div class="mini-grid">${list.map(t => `
-      <div class="mini-card ${cls}">
+      <div class="mini-card ${cls}${t.locked ? ' locked' : ''}">
         <div class="name">${t.name}</div>
         <div class="score">${fmtScore(t.score)}</div>
+        ${miniStatus(t, cls)}
       </div>`).join('')}</div>`;
   }
 
@@ -856,6 +917,9 @@
   // the chart needs each .vplot's actual rendered height (for collision
   // math), which only exists once the element is really on the page.
   let spreadChartJobs = [];
+  // Whether the Worker could read NFL game states this refresh; without that
+  // every team would look finished, so status and locks stay hidden.
+  let medianStatusKnown = false;
 
   const SPREAD_MIN_GAP = 3; // px minimum breathing room between separate rows
 
@@ -961,9 +1025,9 @@
   // could end up visually on the wrong side of a tick placed purely by
   // score, even though every one of its members is genuinely below (or
   // above) the median.
-  function findMedianTickPos(clusters, median, plotSize) {
+  function findMedianTickPos(clusters, median, plotSize, isBelow = m => m.score < median) {
     for (const c of clusters) {
-      const belowCount = c.members.filter(m => m.score < median).length;
+      const belowCount = c.members.filter(isBelow).length;
       if (belowCount > 0 && belowCount < c.members.length) {
         // Straddles the median — tick lines up with this row's own
         // below/above color split, not just its center.
@@ -972,13 +1036,13 @@
     }
     let belowEdge = 0, aboveEdge = plotSize;
     for (const c of clusters) {
-      if (c.members.every(m => m.score < median)) belowEdge = Math.max(belowEdge, c.pos + c.size / 2);
+      if (c.members.every(isBelow)) belowEdge = Math.max(belowEdge, c.pos + c.size / 2);
       else aboveEdge = Math.min(aboveEdge, c.pos - c.size / 2);
     }
     return (belowEdge + aboveEdge) / 2;
   }
 
-  function renderSpreadChart(elId, ascendingTeams, median) {
+  function renderSpreadChart(elId, ascendingTeams, median, zones) {
     const el = document.getElementById(elId);
     if (!el || ascendingTeams.length < 2) return;
     const plotSize = el.clientHeight || 220;
@@ -991,7 +1055,18 @@
     const RED = 'rgba(192,87,75,0.28)';
     const GREEN = 'rgba(76,154,107,0.28)';
 
-    let html = '<div class="axis"></div>';
+    let html = '';
+    if (zones) {
+      if (zones.up !== null) {
+        const yUp = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score <= zones.up));
+        html += `<div class="zone up" style="top:0; height:${yUp}%;"></div><div class="zone-label up" style="top:${yUp}%;">\u25B2 ${fmtScore(zones.up)}</div>`;
+      }
+      if (zones.down !== null) {
+        const yDn = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score < zones.down));
+        html += `<div class="zone dn" style="top:${yDn}%; bottom:0;"></div><div class="zone-label dn" style="top:${yDn}%;">\u25BC ${fmtScore(zones.down)}</div>`;
+      }
+    }
+    html += '<div class="axis"></div>';
     const medianPct = toTopPct(findMedianTickPos(clusters, median, plotSize));
     html += `<div class="median-tick" style="top:${medianPct}%; width:${rowWidth}px;"></div>`;
 
@@ -1017,7 +1092,7 @@
       const slots = c.members
         .slice()
         .sort((a, b) => b.score - a.score) // highest first = rendered on top
-        .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}">${m.name}</span>`)
+        .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? '' : ' playing') + (m.inPlay ? ' live' : '') : ''}">${m.name}</span>`)
         .join('');
       html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background:${background}; border-color:${borderColor};">${slots}</div>`;
     });
@@ -1031,16 +1106,53 @@
   // Splits teams by rank (not by literal distance from the median value) so
   // it always yields an even above/below split — 6-and-6 in a 12-team
   // league — even if a couple of scores happen to tie exactly at the median.
-  function renderMedianCard(title, medianValue, teamsSorted, scoreKey, elId) {
+  function renderMedianCard(title, medianValue, teamsSorted, scoreKey, elId, opts = {}) {
     const half = Math.floor(teamsSorted.length / 2);
-    const withScore = teamsSorted.map(t => ({ name: medianTeamName(t), score: t[scoreKey] }));
+    const known = medianStatusKnown;
+    const withScore = teamsSorted.map(t => ({
+      name: medianTeamName(t),
+      score: t[scoreKey],
+      remaining: t.remaining || 0,
+      inPlay: t.inPlay || 0,
+      statusKnown: known,
+      done: known && !(t.remaining || 0) && !(t.inPlay || 0),
+    }));
+
+    // Locks only exist for real (current) scores. A team with no starters
+    // left can never move; so a team is locked above once at least half the
+    // league is finished and already scoring below it (its own score can only
+    // go up), and a finished team is locked below once at least half the
+    // league is finished and scoring above it. Anything else can still be
+    // passed by a team with players left, since fantasy points have no cap.
+    let zones = null;
+    if (opts.locks && known) {
+      const finished = withScore.filter(m => m.done).map(m => m.score);
+      const upLine = finished.length >= half ? [...finished].sort((a, b) => a - b)[half - 1] : null;
+      const downLine = finished.length >= half ? [...finished].sort((a, b) => b - a)[half - 1] : null;
+      withScore.forEach(m => {
+        m.lockedAbove = upLine !== null && m.score > upLine;
+        m.lockedBelow = m.done && downLine !== null && m.score < downLine;
+        m.locked = m.lockedAbove || m.lockedBelow;
+      });
+      if (upLine !== null || downLine !== null) zones = { up: upLine, down: downLine };
+    }
+
     const above = withScore.slice(0, half);
     const below = withScore.slice(withScore.length - half);
     spreadChartJobs.push({
       elId,
       median: medianValue,
       ascending: [...withScore].sort((a, b) => a.score - b.score),
+      zones,
     });
+    const legend = known ? `
+        <div class="median-legend">
+          ${opts.locks ? '<span class="k"><span class="sw locked"></span>Locked</span>' : ''}
+          <span class="k"><span class="sw"></span>Final</span>
+          <span class="k"><span class="sw playing"></span>Still playing</span>
+          <span class="k"><span class="live-dot"></span>Live</span>
+          ${zones ? '<span class="k" style="color:var(--turf)">\u25B2 above this score = locked above</span><span class="k" style="color:var(--loss)">\u25BC below this score = locked below</span>' : ''}
+        </div>` : '';
     return `
       <div class="median-card">
         <div class="median-card-header">
@@ -1054,10 +1166,10 @@
             <div class="group-label below">Below Median</div>
             ${buildMiniGrid(below, 'below')}
           </div>
-          <div class="spread-col">
-            <div class="vplot" id="${elId}"></div>
+          <div class="spread-col${zones ? ' zoned' : ''}">
+            <div class="vplot${zones ? ' zoned' : ''}" id="${elId}"></div>
           </div>
-        </div>
+        </div>${legend}
       </div>`;
   }
 
@@ -1214,16 +1326,17 @@
         const byProjectedDesc = [...teams].sort((a, b) => b.projected - a.projected);
 
         spreadChartJobs = [];
+        medianStatusKnown = Boolean(data.medianStatusKnown) && teams.every(t => typeof t.remaining === 'number');
         const medianHtml =
           (currentHasStarted
-            ? renderMedianCard('Current Median', data.currentMedian, byCurrentDesc, 'current', 'spread-current')
+            ? renderMedianCard('Current Median', data.currentMedian, byCurrentDesc, 'current', 'spread-current', { locks: true })
             : renderMedianPendingCard('Current Median')) +
           renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected', 'spread-projected');
         document.getElementById('median-container').innerHTML = medianHtml;
         // Needs the .vplot elements to actually be in the DOM first, so
         // clientHeight (used for the collision math) reflects their real
         // rendered height instead of a guessed constant.
-        spreadChartJobs.forEach(job => renderSpreadChart(job.elId, job.ascending, job.median));
+        spreadChartJobs.forEach(job => renderSpreadChart(job.elId, job.ascending, job.median, job.zones));
         updateKickoffCountdown();
 
         const wh = data.weeklyHigh;

@@ -291,6 +291,7 @@ export async function buildDashboard(env) {
   const currentScores = [];
   const projectedScores = [];
   const teamCurrentById = new Map(); // teamId -> { current, projected }
+  const teamStatusById = new Map(); // teamId -> { remaining, inPlay } starters left to play / in play
   const matchups = [];
 
   for (const boxMatchup of boxData.schedule || []) {
@@ -299,11 +300,13 @@ export async function buildDashboard(env) {
     if (!home && !away) continue;
 
     if (home) {
+      teamStatusById.set(home.teamId, countGameStatus(home.entries, gameStateByProTeam));
       currentScores.push(home.score);
       projectedScores.push(home.projected);
       teamCurrentById.set(home.teamId, { current: home.score, projected: home.projected });
     }
     if (away) {
+      teamStatusById.set(away.teamId, countGameStatus(away.entries, gameStateByProTeam));
       currentScores.push(away.score);
       projectedScores.push(away.projected);
       teamCurrentById.set(away.teamId, { current: away.score, projected: away.projected });
@@ -341,12 +344,15 @@ export async function buildDashboard(env) {
   const teams = teamsRaw
     .map((t) => {
       const live = teamCurrentById.get(t.teamId) || { current: 0, projected: 0 };
+      const status = teamStatusById.get(t.teamId) || { remaining: 0, inPlay: 0 };
       return {
         name: t.name,
         manager: managerNames.get(t.teamId) || "",
         record: t.record,
         current: live.current,
         projected: live.projected,
+        remaining: status.remaining,
+        inPlay: status.inPlay,
         standing: t.standing,
         pointsFor: round2(t.pointsFor),
         pointsAgainst: t.pointsAgainst,
@@ -371,6 +377,10 @@ export async function buildDashboard(env) {
     currentMedian,
     projectedMedian,
     playoffTeamCount: league.settings?.scheduleSettings?.playoffTeamCount || 0,
+    // False when the NFL scoreboard couldn't be read, in which case every team
+    // looks like it has nobody left to play and the dashboard must not claim
+    // teams are finished or locked.
+    medianStatusKnown: Boolean(nflScoreboard) && gameStateByProTeam.size > 0,
     teams: teams.map((t) => ({ ...t, playoffPct: anyPlayoffData ? round2(t.playoffPct) : null })),
     matchups,
     weeklyHigh: seasonStarted
