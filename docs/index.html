@@ -478,11 +478,8 @@
   }
   .mini-card .stat.lock.above{ color: var(--turf); }
   .mini-card .stat.lock.below{ color: var(--loss); }
-  .mini-card.above .stat .live-txt{ color: var(--turf); }
-  .mini-card.below .stat .live-txt{ color: var(--loss); }
-  .live-dot{ display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--turf); --pc: 76,154,107; animation: live-pulse 1.6s infinite; }
-  .below .live-dot, .live-dot.below{ background: var(--loss); --pc: 192,87,75; }
-  .live-dot.split{ background: linear-gradient(135deg, var(--turf) 50%, var(--loss) 50%); --pc: 155,155,152; }
+  .mini-card .stat .live-txt{ color: var(--loss); }
+  .live-dot{ display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--loss); --pc: 192,87,75; animation: live-pulse 1.6s infinite; }
   @keyframes live-pulse{
     0%{ box-shadow: 0 0 0 0 rgba(var(--pc), 0.6); }
     70%{ box-shadow: 0 0 0 6px rgba(var(--pc), 0); }
@@ -553,10 +550,6 @@
      fill = result locked in (see renderMedianCard), pulsing = a player is live. */
   .name-row .slot.playing{ border-style: dashed; border-color: currentColor; }
   .name-row .slot{ position: relative; }
-  .name-row .slot.above{ --pc: 76,154,107; }
-  .name-row .slot.below{ --pc: 192,87,75; }
-  .name-row .slot.locked.above{ --pc: 8,20,13; }
-  .name-row .slot.locked.below{ --pc: 26,9,8; }
   .name-row .slot.live::before{
     content: '';
     position: absolute;
@@ -566,9 +559,12 @@
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: currentColor;
+    background: var(--loss);
+    --pc: 192,87,75;
     animation: live-pulse 1.6s infinite;
   }
+  /* A red dot would vanish on a solid red (locked below) pill. */
+  .name-row .slot.locked.below.live::before{ background: #fff; --pc: 255,255,255; }
   .name-row .slot.locked.above{ background: var(--turf); color: #08140d; border-color: var(--turf); }
   .name-row .slot.locked.below{ background: var(--loss); color: #1a0908; border-color: var(--loss); }
   .name-row .slot.above{ color: var(--turf); }
@@ -1172,7 +1168,7 @@
           ${opts.locks ? '<span class="k"><span class="sw locked"></span>Locked</span>' : ''}
           <span class="k"><span class="sw"></span>Final</span>
           <span class="k"><span class="sw playing"></span>Still playing</span>
-          <span class="k"><span class="live-dot split"></span>Live</span>
+          <span class="k"><span class="live-dot"></span>Live</span>
           ${zones ? '<span class="k" style="color:var(--turf)">\u25B2 above this score = locked above</span><span class="k" style="color:var(--loss)">\u25BC below this score = locked below</span>' : ''}
         </div>` : '';
     return `
