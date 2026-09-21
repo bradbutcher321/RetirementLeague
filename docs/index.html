@@ -1094,7 +1094,7 @@
     }
     html += '<div class="axis"></div>';
     const medianPct = toTopPct(findMedianTickPos(clusters, median, plotSize));
-    html += `<div class="median-tick" style="top:${medianPct}%; width:${rowWidth}px;"></div>`;
+    html += `<div class="median-tick" style="top:${medianPct}%; width:${rowWidth - 2}px;"></div>`;
 
     clusters.forEach(c => {
       const belowCount = c.members.filter(m => m.score < median).length;
