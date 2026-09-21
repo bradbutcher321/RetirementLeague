@@ -524,6 +524,7 @@
      name or merged — is exactly as wide as the single longest name among
      this week's teams, not a guessed constant with padding to spare. */
   .name-row{
+    background-color: var(--surface);
     position: absolute;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -1089,10 +1090,10 @@
       const aboveCount = c.members.length - belowCount;
       let background, borderColor;
       if (belowCount === 0) {
-        background = GREEN;
+        background = `linear-gradient(${GREEN}, ${GREEN})`;
         borderColor = 'var(--turf-dim)';
       } else if (aboveCount === 0) {
-        background = RED;
+        background = `linear-gradient(${RED}, ${RED})`;
         borderColor = 'rgba(192,87,75,0.5)';
       } else {
         // Straddles the median — split proportional to how many members
@@ -1108,7 +1109,7 @@
         .sort((a, b) => b.score - a.score) // highest first = rendered on top
         .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? '' : ' playing') + (m.inPlay ? ' live' : '') : ''}">${m.name}</span>`)
         .join('');
-      html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background:${background}; border-color:${borderColor};">${slots}</div>`;
+      html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor};">${slots}</div>`;
     });
 
     const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
