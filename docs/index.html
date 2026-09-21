@@ -1141,19 +1141,20 @@
       done: known && !(t.remaining || 0) && !(t.inPlay || 0),
     }));
 
-    // Locks are decided from real (current) scores on both cards. A team with
-    // no starters left can never move; so a team is locked above once at least
-    // half the league is finished and already scoring below its current score
-    // (its own score can only go up), and a finished team is locked below once
-    // at least half the league is finished and scoring above it. Anything else
-    // can still be passed by a team with players left, since fantasy points
-    // have no cap. The zone lines are drawn on the Current strip only, where
-    // the axis is in real scores.
+    // Locks are decided from real (current) scores on both cards. Scores only
+    // ever go up, and fantasy points have no cap, so:
+    //  - a team is locked ABOVE once at least half the league is finished and
+    //    already scoring below its current score (only finished teams are
+    //    certain to stay below it; unfinished ones could still climb past);
+    //  - a FINISHED team is locked BELOW once at least half the league is
+    //    already scoring above it (finished or not, they can't drop back).
+    // The zone lines are drawn on the Current strip only, where the axis is
+    // in real scores. The lower line applies to a team that has finished.
     let zones = null;
     if (opts.locks && known) {
       const finished = withScore.filter(m => m.done).map(m => m.cur);
       const upLine = finished.length >= half ? [...finished].sort((a, b) => a - b)[half - 1] : null;
-      const downLine = finished.length >= half ? [...finished].sort((a, b) => b - a)[half - 1] : null;
+      const downLine = withScore.length > half ? withScore.map(m => m.cur).sort((a, b) => b - a)[half - 1] : null;
       withScore.forEach(m => {
         m.lockedAbove = upLine !== null && m.cur > upLine;
         m.lockedBelow = m.done && downLine !== null && m.cur < downLine;
@@ -1175,7 +1176,7 @@
           ${opts.locks ? '<span class="k"><span class="sw locked"></span>Locked</span>' : ''}
           <span class="k"><span style="color:var(--text-dim);font-weight:700">\u2713</span>Final</span>
           <span class="k"><span class="live-dot"></span>Live</span>
-          ${zones ? '<span class="k" style="color:var(--turf)">\u25B2 above this score = locked above</span><span class="k" style="color:var(--loss)">\u25BC below this score = locked below</span>' : ''}
+          ${zones ? '<span class="k" style="color:var(--turf)">\u25B2 above this score = locked above</span><span class="k" style="color:var(--loss)">\u25BC finish below this score = locked below</span>' : ''}
         </div>` : '';
     return `
       <div class="median-card">
