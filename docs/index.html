@@ -1595,7 +1595,7 @@
           (currentHasStarted
             ? renderMedianCard('Current Median', data.currentMedian, byCurrentDesc, 'current', 'spread-current', { locks: true, zones: true })
             : renderMedianPendingCard('Current Median')) +
-          renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected', 'spread-projected', { locks: true });
+          renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected', 'spread-projected', { locks: true, zones: true });
         document.getElementById('median-container').innerHTML = medianHtml;
         // Needs the .vplot elements to actually be in the DOM first, so
         // clientHeight (used for the collision math) reflects their real
