@@ -74,6 +74,8 @@ def main():
 
     run_sql(hl.insert_or_replace_sql("managers", hl.MANAGER_COLUMNS, hl.manager_rows(league.teams)), "managers")
     run_sql(hl.insert_or_replace_sql("teams", hl.TEAM_COLUMNS, hl.team_rows(year, league.teams)), "teams")
+    run_sql(hl.insert_or_replace_sql("draft_picks", hl.DRAFT_COLUMNS, hl.draft_rows(league)), "draft_picks")
+    run_sql(hl.insert_or_replace_sql("league_settings", hl.LEAGUE_SETTINGS_COLUMNS, [hl.league_settings_row(league)]), "league_settings")
 
     if year < hl.BOX_SCORE_MIN_YEAR:
         rows = hl.season_only_matchup_rows(league)

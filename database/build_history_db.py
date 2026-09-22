@@ -63,7 +63,10 @@ def build_year(conn, year, espn_s2, swid, delay):
     league = League(league_id=hl.LEAGUE_ID, year=year, espn_s2=espn_s2, swid=swid)
     insert_rows(conn, "managers", hl.MANAGER_COLUMNS, hl.manager_rows(league.teams))
     insert_rows(conn, "teams", hl.TEAM_COLUMNS, hl.team_rows(year, league.teams))
+    insert_rows(conn, "draft_picks", hl.DRAFT_COLUMNS, hl.draft_rows(league))
+    insert_rows(conn, "league_settings", hl.LEAGUE_SETTINGS_COLUMNS, [hl.league_settings_row(league)])
     conn.commit()
+    print(f"  {len(league.draft)} draft picks, league settings recorded")
 
     if year < hl.BOX_SCORE_MIN_YEAR:
         rows = hl.season_only_matchup_rows(league)

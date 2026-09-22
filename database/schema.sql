@@ -1,6 +1,9 @@
--- League history database, covering the league's full life (2015-present)
--- at two fidelity tiers:
---   - teams + matchups: populated for every season, 2015 on.
+-- League history database, covering the league's full life (2015-present).
+-- The goal is to archive everything ESPN's API exposes for this league --
+-- not just what today's site needs -- so the data survives even if ESPN
+-- later changes or removes it. Two fidelity tiers:
+--   - teams + matchups + draft_picks + league_settings: populated for
+--     every season, 2015 on.
 --   - roster_entries: player-level weekly box scores (starters + bench,
 --     every ESPN stat category) -- only populated from 2019 on, since
 --     ESPN's API does not retain per-week bench rosters or per-week player
@@ -8,7 +11,9 @@
 --     gap is permanent, not a fetch-method problem.
 -- This is meant to eventually replace the league's Google Sheet as the
 -- site's data source (see generate_franchise_data.py for the sheet-driven
--- version), though that migration hasn't started yet.
+-- version); some data (real-money dues/earnings, the Parlay side-game's
+-- weekly "Sacko") has no ESPN equivalent at all and will always need the
+-- sheet regardless.
 
 CREATE TABLE IF NOT EXISTS managers (
     espn_id TEXT PRIMARY KEY,
@@ -17,12 +22,18 @@ CREATE TABLE IF NOT EXISTS managers (
     last_name TEXT
 );
 
+-- Every field ESPN's Team object exposes for a season, not just what the
+-- franchise page happens to need today -- the point is to hold a complete
+-- archive of what ESPN reports, so this outlives ESPN changing or removing
+-- any of it later.
 CREATE TABLE IF NOT EXISTS teams (
     year INTEGER NOT NULL,
     team_id INTEGER NOT NULL,
     team_name TEXT,
     team_abbrev TEXT,
     owner_espn_id TEXT,
+    division_id INTEGER,
+    division_name TEXT,
     wins INTEGER,
     losses INTEGER,
     ties INTEGER,
@@ -30,7 +41,49 @@ CREATE TABLE IF NOT EXISTS teams (
     points_against REAL,
     regular_season_standing INTEGER,
     final_standing INTEGER,
+    playoff_pct REAL,
+    streak_length INTEGER,
+    streak_type TEXT,
+    waiver_rank INTEGER,
+    draft_projected_rank INTEGER,
+    acquisitions INTEGER,
+    acquisition_budget_spent INTEGER,
+    drops INTEGER,
+    trades INTEGER,
+    move_to_ir INTEGER,
+    logo_url TEXT,
     PRIMARY KEY (year, team_id)
+);
+
+-- One row per draft pick, every year the league has drafted.
+CREATE TABLE IF NOT EXISTS draft_picks (
+    year INTEGER NOT NULL,
+    round_num INTEGER NOT NULL,
+    round_pick INTEGER NOT NULL,
+    team_id INTEGER,
+    nominating_team_id INTEGER,
+    player_id INTEGER,
+    player_name TEXT,
+    bid_amount INTEGER,
+    keeper_status INTEGER,
+    PRIMARY KEY (year, round_num, round_pick)
+);
+
+-- One row per season's league settings/rules -- scoring format, roster/
+-- playoff structure, etc. -- since those change over the years and affect
+-- how every other table's numbers should be interpreted. settings_json holds
+-- the full detail (scoring format list, division map, position slot counts,
+-- waiver/trade rules); the plain columns are just the most-queried subset.
+CREATE TABLE IF NOT EXISTS league_settings (
+    year INTEGER PRIMARY KEY,
+    name TEXT,
+    team_count INTEGER,
+    reg_season_count INTEGER,
+    playoff_team_count INTEGER,
+    playoff_seed_tie_rule TEXT,
+    scoring_type TEXT,
+    median_scoring INTEGER,
+    settings_json TEXT
 );
 
 -- One row per side of a matchup (so a bye shows up as a row with no

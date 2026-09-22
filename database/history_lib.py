@@ -13,12 +13,19 @@ SEASON_MIN_YEAR = 2015     # league inception -- earliest year any data exists
 BOX_SCORE_MIN_YEAR = 2019  # earliest year ESPN retains per-week roster/stat data
 
 MANAGER_COLUMNS = ("espn_id", "display_name", "first_name", "last_name")
-TEAM_COLUMNS = ("year", "team_id", "team_name", "team_abbrev", "owner_espn_id", "wins", "losses",
-                "ties", "points_for", "points_against", "regular_season_standing", "final_standing")
+TEAM_COLUMNS = ("year", "team_id", "team_name", "team_abbrev", "owner_espn_id", "division_id",
+                "division_name", "wins", "losses", "ties", "points_for", "points_against",
+                "regular_season_standing", "final_standing", "playoff_pct", "streak_length",
+                "streak_type", "waiver_rank", "draft_projected_rank", "acquisitions",
+                "acquisition_budget_spent", "drops", "trades", "move_to_ir", "logo_url")
 MATCHUP_COLUMNS = ("year", "week", "team_id", "opponent_team_id", "team_score", "opponent_score",
                     "is_playoff", "outcome")
 ROSTER_COLUMNS = ("year", "week", "team_id", "player_id", "player_name", "pro_team", "position",
                    "lineup_slot", "is_starter", "points", "projected_points", "stats_json")
+DRAFT_COLUMNS = ("year", "round_num", "round_pick", "team_id", "nominating_team_id", "player_id",
+                  "player_name", "bid_amount", "keeper_status")
+LEAGUE_SETTINGS_COLUMNS = ("year", "name", "team_count", "reg_season_count", "playoff_team_count",
+                            "playoff_seed_tie_rule", "scoring_type", "median_scoring", "settings_json")
 
 
 def manager_name(owner: dict) -> tuple:
@@ -53,10 +60,59 @@ def team_rows(year, teams) -> list:
         primary_owner = team.owners[0]["id"] if team.owners else None
         rows.append((
             year, team.team_id, team.team_name, team.team_abbrev, primary_owner,
-            team.wins, team.losses, team.ties, team.points_for, team.points_against,
-            team.standing, team.final_standing,
+            team.division_id, team.division_name, team.wins, team.losses, team.ties,
+            team.points_for, team.points_against, team.standing, team.final_standing,
+            team.playoff_pct, team.streak_length, team.streak_type, team.waiver_rank,
+            team.draft_projected_rank, team.acquisitions, team.acquisition_budget_spent,
+            team.drops, team.trades, team.move_to_ir, team.logo_url,
         ))
     return rows
+
+
+def draft_rows(league) -> list:
+    rows = []
+    for pick in league.draft:
+        team_id = pick.team.team_id if pick.team else None
+        nominating_id = pick.nominatingTeam.team_id if pick.nominatingTeam else None
+        rows.append((
+            league.year, pick.round_num, pick.round_pick, team_id, nominating_id,
+            pick.playerId, pick.playerName, pick.bid_amount, pick.keeper_status,
+        ))
+    return rows
+
+
+def league_settings_row(league) -> tuple:
+    s = league.settings
+    settings_json = json.dumps({
+        "reg_season_count": s.reg_season_count,
+        "matchup_periods": s.matchup_periods,
+        "veto_votes_required": s.veto_votes_required,
+        "team_count": s.team_count,
+        "playoff_team_count": s.playoff_team_count,
+        "keeper_count": s.keeper_count,
+        "trade_deadline": s.trade_deadline,
+        "division_map": s.division_map,
+        "tie_rule": s.tie_rule,
+        "playoff_tie_rule": s.playoff_tie_rule,
+        "playoff_matchup_period_length": s.playoff_matchup_period_length,
+        "playoff_seed_tie_rule": s.playoff_seed_tie_rule,
+        "scoring_type": s.scoring_type,
+        "median_scoring": s.median_scoring,
+        "scoring_format": s.scoring_format,
+        "faab": s.faab,
+        "acquisition_budget": s.acquisition_budget,
+        "acquisition_limit": s.acquisition_limit,
+        "matchup_acquisition_limit": s.matchup_acquisition_limit,
+        "matchup_limit_per_scoring_period": s.matchup_limit_per_scoring_period,
+        "minimum_bid": s.minimum_bid,
+        "waiver_process_days": s.waiver_process_days,
+        "waiver_process_hour": s.waiver_process_hour,
+        "trade_revision_hours": s.trade_revision_hours,
+    })
+    return (
+        league.year, s.name, s.team_count, s.reg_season_count, s.playoff_team_count,
+        s.playoff_seed_tie_rule, s.scoring_type, 1 if s.median_scoring else 0, settings_json,
+    )
 
 
 def matchup_weeks(league) -> list:
