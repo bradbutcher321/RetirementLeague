@@ -172,7 +172,7 @@
     <section><h2>Draft &amp; Roster Management</h2><div class="card-grid" id="draft-container"></div></section>
     <section><h2>Season History</h2><div id="history-container"></div></section>
 
-    <footer>Data from the league sheet · Updates Tuesday &amp; Thursday mornings</footer>
+    <footer>Data via ESPN Fantasy (Money Tracker from the league sheet) · Updates Tuesday &amp; Thursday mornings</footer>
   </div>
 
 <script src="nav.js"></script>
@@ -365,7 +365,10 @@
     const saved = (() => { try { return localStorage.getItem('franchise-selected'); } catch (e) { return null; } })();
     sel.value = d.players.some(p => p.name === saved) ? saved : d.players[0].name;
     show(sel.value);
-    sel.addEventListener('change', () => show(sel.value));
+    sel.addEventListener('change', () => {
+      show(sel.value);
+      try { localStorage.setItem('franchise-selected', sel.value); } catch (e) {}
+    });
   }).catch(err => {
     console.error(err);
     document.getElementById('hero-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading franchise data.</div>';

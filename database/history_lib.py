@@ -48,6 +48,7 @@ DRAFT_COLUMNS = ("year", "round_num", "round_pick", "team_id", "nominating_team_
                   "player_name", "bid_amount", "keeper_status")
 LEAGUE_SETTINGS_COLUMNS = ("year", "name", "team_count", "reg_season_count", "playoff_team_count",
                             "playoff_seed_tie_rule", "scoring_type", "median_scoring", "settings_json")
+SEASON_SACKO_COLUMNS = ("year", "team_id", "week", "opponent_team_id", "source")
 
 # Sheet nickname -> ESPN member id(s), hand-verified against D1's managers
 # table (first_name/last_name). A list because Flanders' ESPN account
@@ -244,6 +245,38 @@ def box_scores_to_rows(year, week, box_scores) -> tuple:
                 ))
 
     return matchup_rows, roster_rows
+
+
+def compute_season_sacko_row(year, teams_this_year, matchups_this_year):
+    """The Sacko game is a manually-arranged matchup between the two
+    worst regular-season teams, played in the championship week (the same
+    week as the WINNERS_BRACKET final) -- confirmed with the league owner;
+    the losers-bracket path means nothing for this. Returns a
+    SEASON_SACKO_COLUMNS-shaped row for the loser of that matchup, or None
+    if the season isn't far enough along to tell yet (the championship
+    hasn't been played, or the bottom two teams' matchup that week isn't
+    decided). Only ever call this for a year with no existing season_sackos
+    row -- history before this rule was formalized was tracked differently
+    and isn't reconstructable from bracket data (see migration 004)."""
+    champ_weeks = [m["week"] for m in matchups_this_year if m["bracket_type"] == "WINNERS_BRACKET"]
+    if not champ_weeks:
+        return None
+    champ_week = max(champ_weeks)
+
+    standings = sorted(
+        (t for t in teams_this_year if t.get("regular_season_standing") is not None),
+        key=lambda t: t["regular_season_standing"],
+    )
+    if len(standings) < 2:
+        return None
+    bottom_two = {standings[-1]["team_id"], standings[-2]["team_id"]}
+
+    for m in matchups_this_year:
+        if m["week"] != champ_week or m["outcome"] != "L":
+            continue
+        if m["team_id"] in bottom_two and m["opponent_team_id"] in bottom_two:
+            return (year, m["team_id"], champ_week, m["opponent_team_id"], "computed")
+    return None
 
 
 def sql_value(v):

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-22T04:22:19.184374+00:00",
+  "generated_at": "2026-09-22T04:43:47.616615+00:00",
   "median_era_start_year": 2025,
   "players": [
     {
@@ -44,7 +44,7 @@
           "playoff_appearances": 9,
           "champ_appearances": 5,
           "championships": 2,
-          "sackos": 0,
+          "sackos": 1,
           "byes": 2
         }
       },
@@ -294,7 +294,7 @@
           "playoff_appearances": 7,
           "champ_appearances": 4,
           "championships": 3,
-          "sackos": 1,
+          "sackos": 2,
           "byes": 4
         }
       },
@@ -351,7 +351,7 @@
         "best_position": 1,
         "worst_position": 10
       },
-      "weekly_sackos": 0,
+      "weekly_sackos": 1,
       "median_luck": 0.0,
       "money": {
         "total_dues": 1600.0,
@@ -535,7 +535,7 @@
           "playoff_appearances": 3,
           "champ_appearances": 2,
           "championships": 0,
-          "sackos": 4,
+          "sackos": 2,
           "byes": 1
         }
       },
@@ -1040,7 +1040,7 @@
           "playoff_appearances": 5,
           "champ_appearances": 1,
           "championships": 1,
-          "sackos": 0,
+          "sackos": 1,
           "byes": 1
         }
       },
@@ -1796,7 +1796,7 @@
           "playoff_appearances": 5,
           "champ_appearances": 3,
           "championships": 1,
-          "sackos": 2,
+          "sackos": 1,
           "byes": 3
         }
       },

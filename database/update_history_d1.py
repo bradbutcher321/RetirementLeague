@@ -8,6 +8,12 @@ Always re-derives the WHOLE current season (not just "new" weeks) -- cheap
 (at most ~17 weeks), and it self-heals any stat correction ESPN makes after
 a game was first marked final, since every write is INSERT OR REPLACE.
 
+Also fills in that season's Sacko (see history_lib.compute_season_sacko_row)
+the moment it's decided -- the matchup between the two worst regular-season
+teams in the championship week -- but only for a year with no season_sackos
+row yet, so it can never clobber the pre-2026 history imported from the
+sheet (that history was tracked under a different, now-forgotten rule).
+
 Talks to D1 through `wrangler d1 execute --remote` rather than a hand-rolled
 HTTP client, so it inherits wrangler's already-proven auth/retry behavior:
 locally that's the same OAuth login used for manual wrangler commands; in
@@ -84,6 +90,26 @@ def main():
 
     run_sql(hl.insert_or_replace_sql("matchups", hl.MATCHUP_COLUMNS, all_matchup_rows), "matchups")
     run_sql(hl.insert_or_replace_sql("roster_entries", hl.ROSTER_COLUMNS, all_roster_rows), "roster_entries")
+
+    update_season_sacko(year)
+
+
+def update_season_sacko(year):
+    """Only ever fills in a year with no season_sackos row yet -- history
+    before this rule was formalized was tracked a different, now-forgotten
+    way and must never be overwritten by this computed version (see
+    migration 004 / import_season_sackos.py)."""
+    if hl.d1_query(f"SELECT year FROM season_sackos WHERE year = {year}"):
+        return
+    teams_this_year = hl.d1_query(f"SELECT team_id, regular_season_standing FROM teams WHERE year = {year}")
+    matchups_this_year = hl.d1_query(
+        f"SELECT team_id, week, opponent_team_id, outcome, bracket_type FROM matchups WHERE year = {year}"
+    )
+    row = hl.compute_season_sacko_row(year, teams_this_year, matchups_this_year)
+    if row:
+        run_sql(hl.insert_or_replace_sql("season_sackos", hl.SEASON_SACKO_COLUMNS, [row]), "season_sackos")
+    else:
+        print("  season_sackos: not decided yet")
 
 
 if __name__ == "__main__":

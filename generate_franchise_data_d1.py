@@ -4,11 +4,13 @@ of the Google Sheet -- the D1-backed replacement for generate_franchise_data.py.
 
 Everything ESPN itself knows about (records, streaks, rivalries, score
 extremes, standings, draft position, roster moves, season-by-season history)
-is computed here from D1's teams/matchups/draft_picks tables. Two things
-have no ESPN equivalent and always come from the sheet regardless of this
-migration: Money Tracker (real-money dues/earnings/parlay buy-ins) and the
-Parlay Tracker's weekly "Sacko" callout -- both are purely manual league
-conventions ESPN has no concept of.
+is computed here from D1's teams/matchups/draft_picks tables. The weekly
+"Sacko" (lowest scorer of the week, capped at 3/year since it costs $20 --
+past the cap it falls to the next-lowest scorer, cascading as needed) is
+also computed from D1's scores rather than read off the Parlay Tracker
+sheet; verified against every sheet-recorded week since the rule started in
+2025 and it matches exactly. Only Money Tracker (real-money dues/earnings/
+parlay buy-ins) has no ESPN equivalent and always comes from the sheet.
 
 The output JSON shape is identical to generate_franchise_data.py's, so
 docs/franchise.html needs no changes at all.
@@ -23,10 +25,12 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
-from generate_franchise_data import authorize, load_money, load_weekly_sacko_counts, SHEET_ID
+from generate_franchise_data import authorize, load_money, SHEET_ID
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data", "franchise.json")
 MEDIAN_ERA_START_YEAR = 2025
+SACKO_START_YEAR = 2025
+SACKO_CAP_PER_YEAR = 3
 
 
 # --------------------------------------------------------------------------
@@ -45,13 +49,8 @@ def load_d1():
     draft_picks = hl.d1_query(
         "SELECT year, round_num, round_pick, team_id FROM draft_picks WHERE round_num = 1"
     )
-    return teams, matchups, draft_picks
-
-
-def team_by_year_for_player(player, teams):
-    """{year: team_id} for every year this player's ESPN account(s) owned a team."""
-    espn_ids = set(hl.SHEET_NAME_TO_ESPN_IDS.get(player, []))
-    return {t["year"]: t["team_id"] for t in teams if t["owner_espn_id"] in espn_ids}
+    season_sackos = hl.d1_query("SELECT year, team_id FROM season_sackos")
+    return teams, matchups, draft_picks, season_sackos
 
 
 # --------------------------------------------------------------------------
@@ -243,6 +242,32 @@ def compute_rivalries(games, team_id_to_player_by_year, active_players):
     return {"nemesis": nemesis, "favorite_opponent": favorite}
 
 
+def compute_weekly_sackos(matchups, team_id_to_player_by_year):
+    """The weekly Sacko is the lowest scorer of the week, every scheduled
+    week (playoffs included) -- but capped at SACKO_CAP_PER_YEAR per person
+    per year since it costs $20/week; past the cap it falls to the
+    next-lowest scorer that week, cascading further if they're capped too.
+    Returns {player: total count across all years}."""
+    scores_by_week = {}
+    for m in matchups:
+        if m["year"] < SACKO_START_YEAR or m["team_score"] is None:
+            continue
+        scores_by_week.setdefault((m["year"], m["week"]), []).append((m["team_id"], m["team_score"]))
+
+    counts = {}  # (year, player) -> count this year
+    totals = {}  # player -> total count
+    for (year, week), rows in sorted(scores_by_week.items()):
+        for team_id, _ in sorted(rows, key=lambda r: r[1]):
+            player = team_id_to_player_by_year.get((year, team_id))
+            if player is None:
+                continue
+            if counts.get((year, player), 0) < SACKO_CAP_PER_YEAR:
+                counts[(year, player)] = counts.get((year, player), 0) + 1
+                totals[player] = totals.get(player, 0) + 1
+                break
+    return totals
+
+
 def compute_moves(teams_by_player):
     """ESPN's own "Acquisitions" counter -- the number it surfaces as a
     team's transaction/moves count on its team-card view."""
@@ -271,11 +296,12 @@ def compute_draft(teams_by_player, draft_pos_by_year_team):
     }
 
 
-def compute_standings(teams_by_player, games, team_count_by_year):
+def compute_standings(teams_by_player, games, sacko_years):
     placements = [t["regular_season_standing"] for t in teams_by_player if t["regular_season_standing"] is not None]
     finals = {t["year"]: t["final_standing"] for t in teams_by_player}
     playoff_years = {g["year"] for g in games if g["is_playoff"]}
     bye_count = sum(1 for g in games if g["opponent_team_id"] is None)
+    player_years = {t["year"] for t in teams_by_player}
     return {
         "reg_season_champs": sum(1 for p in placements if p == 1),
         "best_regular_finish": min(placements) if placements else None,
@@ -283,7 +309,7 @@ def compute_standings(teams_by_player, games, team_count_by_year):
         "playoff_appearances": len(playoff_years),
         "champ_appearances": sum(1 for f in finals.values() if f in (1, 2)),
         "championships": sum(1 for f in finals.values() if f == 1),
-        "sackos": sum(1 for y, f in finals.items() if f is not None and f == team_count_by_year.get(y)),
+        "sackos": len(player_years & sacko_years),
         "byes": bye_count,
     }
 
@@ -324,8 +350,8 @@ def compute_season_history(teams_by_player, games):
 # --------------------------------------------------------------------------
 
 def main():
-    print("Loading D1 (teams + matchups + draft_picks)...")
-    teams, matchups, draft_picks = load_d1()
+    print("Loading D1 (teams + matchups + draft_picks + season_sackos)...")
+    teams, matchups, draft_picks, season_sackos = load_d1()
 
     # Keyed by (year, team_id), not just team_id -- ESPN does sometimes
     # reassign a departed owner's numeric team_id to a new owner in a later
@@ -337,9 +363,11 @@ def main():
             if t["owner_espn_id"] in ids:
                 team_id_to_player_by_year[(t["year"], t["team_id"])] = player
 
-    team_count_by_year = {}
-    for t in teams:
-        team_count_by_year[t["year"]] = team_count_by_year.get(t["year"], 0) + 1
+    sacko_years_by_player = {}
+    for s in season_sackos:
+        player = team_id_to_player_by_year.get((s["year"], s["team_id"]))
+        if player:
+            sacko_years_by_player.setdefault(player, set()).add(s["year"])
 
     draft_pos_by_year_team = {(d["year"], d["team_id"]): d["round_pick"] for d in draft_picks}
 
@@ -361,10 +389,10 @@ def main():
     active_players = {team_id_to_player_by_year[(current_year, t["team_id"])] for t in teams
                        if t["year"] == current_year and (current_year, t["team_id"]) in team_id_to_player_by_year}
 
-    print("Loading Google Sheet (Money Tracker + Parlay Tracker Sacko row)...")
+    print("Loading Google Sheet (Money Tracker)...")
     spreadsheet = authorize().open_by_key(SHEET_ID)
     money_block = load_money(spreadsheet)
-    weekly_sacko_counts = load_weekly_sacko_counts(spreadsheet)
+    weekly_sacko_counts = compute_weekly_sackos(matchups, team_id_to_player_by_year)
 
     players_out = []
     for player in all_players:
@@ -382,7 +410,7 @@ def main():
         median, median_luck = compute_median_stats(reg_median_by_year_week, reg_games)
         career["median"] = median
         career["win_rates"]["median_pct"] = median["pct"]
-        career["standings"] = compute_standings(teams_by_player, games, team_count_by_year)
+        career["standings"] = compute_standings(teams_by_player, games, sacko_years_by_player.get(player, set()))
 
         years_played = sorted({t["year"] for t in teams_by_player})
         players_out.append({

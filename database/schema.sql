@@ -86,6 +86,25 @@ CREATE TABLE IF NOT EXISTS league_settings (
     settings_json TEXT
 );
 
+-- Records which team was that season's "Sacko" (worst team of the year).
+-- Not reliably derivable from bracket_type/final_standing -- the league's
+-- actual rule has varied over the years (historically some other bracket
+-- game entirely, not necessarily the true last-place game; the exact old
+-- rule isn't remembered) -- so this is the plain fact of who lost that
+-- year's designated Sacko game, recorded directly rather than computed.
+CREATE TABLE IF NOT EXISTS season_sackos (
+    year INTEGER PRIMARY KEY,
+    team_id INTEGER NOT NULL,
+    week INTEGER,
+    opponent_team_id INTEGER,
+    source TEXT NOT NULL DEFAULT 'sheet'  -- 'sheet' (imported from the Game
+                                            -- Tracker's "Sacko"-typed game) or
+                                            -- 'computed' (derived going
+                                            -- forward from the two worst
+                                            -- regular-season teams meeting in
+                                            -- the championship week)
+);
+
 -- One row per side of a matchup (so a bye shows up as a row with no
 -- opponent), keyed by the fantasy "week" (ESPN's matchup period id -- the
 -- same numbering the league's Game Tracker sheet already uses), not the raw
