@@ -181,3 +181,11 @@ google_secret.json
 *.temp
 .temp/
 tmp/
+
+# League history database: lives in Cloudflare D1 now (see database/schema.sql
+# and build_history_db.py). The local .sqlite file and SQL dump batches used
+# to migrate it are build artifacts, not source -- regenerable, and exactly
+# the kind of growing binary that shouldn't go into git history.
+database/*.sqlite
+database/d1_dump/
+database/backfill.log

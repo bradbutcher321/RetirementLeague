@@ -1,0 +1,41 @@
+name: Update League History (D1)
+
+on:
+  schedule:
+    # Re-derives the whole current season every run (cheap, ~17 weeks) and
+    # writes it straight to Cloudflare D1 via INSERT OR REPLACE, so a daily
+    # run is plenty to pick up finished games and any later stat corrections
+    # without needing to track "which week is new".
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Manual button inside GitHub web console
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Python Dependencies
+      run: python -m pip install --upgrade pip requests
+
+    - name: Update D1 league history
+      env:
+        ESPN_S2: ${{ secrets.ESPN_S2 }}
+        ESPN_SWID: ${{ secrets.ESPN_SWID }}
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: f53f8e388e691eca52769f9f586713df
+      run: python database/update_history_d1.py
