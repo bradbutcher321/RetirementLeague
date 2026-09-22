@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retirement League — Rule Changes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=3">
+<link rel="stylesheet" href="nav.css?v=3">
+<style>
+  .tab-row{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .era-tab{
+    background: var(--surface); border: 1px solid var(--line); color: var(--text-dim);
+    font-family: var(--body); font-size: 0.86rem; font-weight: 600; padding: 9px 16px;
+    border-radius: 999px; cursor: pointer;
+  }
+  .era-tab:hover{ border-color: var(--gold); color: var(--text); }
+  .era-tab.active{ background: rgba(186,155,55,0.12); border-color: var(--gold); color: var(--gold); }
+
+  .rules-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); }
+  .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
+  .rules-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; }
+  .rules-body{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--line); }
+  .rules-section{ background: var(--surface); padding: 16px 20px; }
+  .rules-section-title{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
+  .rules-line{ font-size: 0.9rem; padding: 3px 0; color: var(--text); }
+  .rules-line .label{ color: var(--text-dim); }
+  .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Rule Changes</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <div class="tab-row" id="tab-row"></div>
+      <div id="rules-container"><div class="loading-row">Loading rules…</div></div>
+    </section>
+
+    <footer>Data from the league sheet</footer>
+  </div>
+
+<script src="nav.js"></script>
+<script>
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function formatUpdated(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (d.toDateString() === new Date().toDateString()) return time;
+    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
+  }
+
+  // Sections are blank-line separated. A section whose first line has no
+  // "Label: value" colon is treated as its own title (e.g. "Team Structure");
+  // otherwise it falls back to a generic title based on its position, since
+  // the sheet doesn't label every block explicitly.
+  function renderSections(text) {
+    const blocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+    const fallbackTitles = ['League Settings', 'Format & Rules'];
+    let fallbackIndex = 0;
+    return blocks.map(block => {
+      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+      let title = fallbackTitles[Math.min(fallbackIndex, fallbackTitles.length - 1)];
+      let body = lines;
+      if (lines.length && lines[0].endsWith(':') && !lines[0].slice(0, -1).includes(':')) {
+        title = lines[0].slice(0, -1);
+        body = lines.slice(1);
+      } else {
+        fallbackIndex++;
+      }
+      const rendered = body.map(line => {
+        const m = line.match(/^([^:]+):\s*(.+)$/);
+        return m
+          ? `<div class="rules-line"><span class="label">${esc(m[1])}:</span> ${esc(m[2])}</div>`
+          : `<div class="rules-line">${esc(line)}</div>`;
+      }).join('');
+      return `<div class="rules-section"><div class="rules-section-title">${esc(title)}</div>${rendered}</div>`;
+    }).join('');
+  }
+
+  function renderEra(era) {
+    return `
+      <div class="rules-card">
+        <div class="rules-head"><div class="rules-title">${esc(era.label)}</div></div>
+        <div class="rules-body">${renderSections(era.rules_text)}</div>
+      </div>`;
+  }
+
+  fetch('data/rule-changes.json', { cache: 'no-store' })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
+      if (!data.eras.length) {
+        document.getElementById('rules-container').innerHTML = '<div class="empty-note">No rule changes documented yet.</div>';
+        return;
+      }
+      const tabRow = document.getElementById('tab-row');
+      tabRow.innerHTML = data.eras.map((e, i) => `<button type="button" class="era-tab${i === data.eras.length - 1 ? ' active' : ''}" data-i="${i}">${esc(e.label)}</button>`).join('');
+
+      function show(i) {
+        [...tabRow.children].forEach((btn, idx) => btn.classList.toggle('active', idx === i));
+        document.getElementById('rules-container').innerHTML = renderEra(data.eras[i]);
+      }
+      tabRow.addEventListener('click', e => {
+        const btn = e.target.closest('.era-tab');
+        if (btn) show(Number(btn.dataset.i));
+      });
+      show(data.eras.length - 1); // most recent era first
+    })
+    .catch(err => {
+      console.error('Rule changes data error:', err);
+      document.getElementById('rules-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading rule changes data.</div>';
+    });
+</script>
+<script src="track.js?v=1" defer></script>
+</body>
+</html>

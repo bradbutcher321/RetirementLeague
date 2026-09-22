@@ -69,6 +69,19 @@ CREATE TABLE IF NOT EXISTS draft_picks (
     PRIMARY KEY (year, round_num, round_pick)
 );
 
+-- Player position reference, independent of any specific draft/season so
+-- it's never touched by draft_picks' own INSERT OR REPLACE upsert cycle
+-- (which would otherwise wipe a position value back to NULL on every
+-- re-run, since SQLite's INSERT OR REPLACE replaces the whole row).
+-- Populated from ESPN's full player pool with filterActive=false, the only
+-- source that reliably covers even long-retired players from old drafts --
+-- see backfill_draft_positions.py.
+CREATE TABLE IF NOT EXISTS players (
+    player_id INTEGER PRIMARY KEY,
+    full_name TEXT,
+    position TEXT
+);
+
 -- One row per season's league settings/rules -- scoring format, roster/
 -- playoff structure, etc. -- since those change over the years and affect
 -- how every other table's numbers should be interpreted. settings_json holds

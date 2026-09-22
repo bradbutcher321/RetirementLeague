@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retirement League — Draft Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=3">
+<link rel="stylesheet" href="nav.css?v=3">
+<style>
+  .wrap.wide{ max-width: 1180px; }
+
+  .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .selector-label{ color: var(--text-dim); font-size: 0.82rem; }
+  .board-select{
+    background: var(--surface); border: 1px solid var(--line); color: var(--text);
+    font-family: var(--body); font-size: 0.95rem; font-weight: 600; padding: 9px 12px; border-radius: 4px;
+  }
+  .board-select:focus{ outline: 1px solid var(--gold); }
+
+  .legend{ display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .legend-chip{ display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: var(--text-dim); }
+  .legend-swatch{ width: 10px; height: 10px; border-radius: 2px; }
+
+  .board-scroll{ overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+  table.board{ border-collapse: collapse; width: 100%; min-width: max-content; }
+  table.board th, table.board td{ border: 1px solid var(--line); padding: 0; }
+  table.board thead th{
+    background: var(--surface-raised); color: var(--text); font-family: var(--scoreboard);
+    font-weight: 700; font-size: 0.82rem; padding: 10px 8px; text-align: center; white-space: nowrap;
+    position: sticky; top: 0; z-index: 2;
+  }
+  table.board thead th .slot-manager{ display: block; color: var(--gold); font-size: 0.78rem; margin-bottom: 2px; }
+  table.board thead th .slot-team{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.68rem; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto; }
+  table.board .round-header{
+    position: sticky; left: 0; z-index: 3; background: var(--surface-raised);
+    font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); font-size: 0.8rem;
+    text-align: center; padding: 8px; white-space: nowrap;
+  }
+  table.board thead th.corner{ position: sticky; left: 0; top: 0; z-index: 4; background: var(--surface-raised); }
+
+  .pick-cell{ width: 132px; height: 56px; padding: 6px 8px !important; vertical-align: top; background: var(--surface); border-left-width: 3px !important; }
+  .pick-overall{ color: var(--text-dim); font-size: 0.62rem; font-variant-numeric: tabular-nums; }
+  .pick-rank{ font-weight: 800; font-size: 0.78rem; font-family: var(--scoreboard); }
+  .pick-player{ font-size: 0.76rem; line-height: 1.15; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pick-keeper{ font-size: 0.6rem; color: var(--gold); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 1px; }
+  .pick-empty{ color: var(--text-dim); font-size: 0.72rem; text-align: center; padding-top: 14px !important; }
+
+  /* Position color coding */
+  .pos-QB{ border-left-color: #E0644F; } .pos-QB .pick-rank{ color: #E0644F; }
+  .pos-RB{ border-left-color: #4C9A6B; } .pos-RB .pick-rank{ color: #4C9A6B; }
+  .pos-WR{ border-left-color: #4A90D9; } .pos-WR .pick-rank{ color: #4A90D9; }
+  .pos-TE{ border-left-color: #D9852F; } .pos-TE .pick-rank{ color: #D9852F; }
+  .pos-K{ border-left-color: #9B6BC4; } .pos-K .pick-rank{ color: #9B6BC4; }
+  .pos-DST{ border-left-color: #8A8A85; } .pos-DST .pick-rank{ color: #8A8A85; }
+  .pos-none{ border-left-color: var(--line); }
+
+  @media (max-width: 480px){
+    .pick-cell{ width: 104px; }
+  }
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap wide">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Draft Board</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <div class="selector-row">
+        <label class="selector-label" for="year-select">Year</label>
+        <select class="board-select" id="year-select" autocomplete="off"></select>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div id="board-container"><div class="loading-row">Loading draft board…</div></div>
+    </section>
+
+    <footer>Data via ESPN Fantasy</footer>
+  </div>
+
+<script src="nav.js"></script>
+<script>
+  const POSITION_COLORS = {
+    QB: '#E0644F', RB: '#4C9A6B', WR: '#4A90D9', TE: '#D9852F', K: '#9B6BC4', 'D/ST': '#8A8A85',
+  };
+  const posClass = pos => pos ? 'pos-' + pos.replace('/', '') : 'pos-none';
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function formatUpdated(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (d.toDateString() === new Date().toDateString()) return time;
+    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
+  }
+
+  function renderLegend() {
+    return Object.entries(POSITION_COLORS).map(([pos, color]) =>
+      `<div class="legend-chip"><span class="legend-swatch" style="background:${color}"></span>${pos}</div>`
+    ).join('');
+  }
+
+  function renderCell(pick) {
+    if (!pick || !pick.player_name) {
+      return `<td class="pick-cell pos-none"><div class="pick-empty">—</div></td>`;
+    }
+    return `
+      <td class="pick-cell ${posClass(pick.position)}">
+        <div class="pick-overall">#${pick.overall}</div>
+        <div class="pick-rank">${esc(pick.position_rank || pick.position || '')}</div>
+        <div class="pick-player">${esc(pick.player_name)}</div>
+        ${pick.keeper ? '<div class="pick-keeper">Keeper</div>' : ''}
+      </td>`;
+  }
+
+  function renderBoard(board) {
+    const headerCells = board.columns.map(c => `
+      <th>
+        <span class="slot-manager">${esc(c.manager || '')}</span>
+        <span class="slot-team">${esc(c.team_name || '')}</span>
+      </th>`).join('');
+
+    const rows = board.rounds.map(round => {
+      const cells = board.columns.map(c => renderCell(board.grid[round] && board.grid[round][c.slot])).join('');
+      return `<tr><td class="round-header">Rd ${round}</td>${cells}</tr>`;
+    }).join('');
+
+    return `
+      <div class="board-scroll">
+        <table class="board">
+          <thead><tr><th class="corner"></th>${headerCells}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  document.getElementById('legend').innerHTML = renderLegend();
+
+  fetch('data/draft-board.json', { cache: 'no-store' })
+    .then(res => res.json())
+    .then(data => {
+      const sel = document.getElementById('year-select');
+      sel.innerHTML = data.years.map(y => `<option value="${y}">${y}</option>`).join('');
+      document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
+
+      function show(year) {
+        const board = data.boards[year];
+        document.getElementById('board-container').innerHTML = board
+          ? renderBoard(board)
+          : '<div class="empty-note">No draft data for this year.</div>';
+      }
+      sel.value = data.years[0];
+      show(sel.value);
+      sel.addEventListener('change', () => show(sel.value));
+    })
+    .catch(err => {
+      console.error('Draft board data error:', err);
+      document.getElementById('board-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading draft board data.</div>';
+    });
+</script>
+<script src="track.js?v=1" defer></script>
+</body>
+</html>

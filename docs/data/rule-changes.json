@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-09-22T05:07:05.146460+00:00",
+  "eras": [
+    {
+      "label": "2021-2022 Season",
+      "rules_text": "Teams : 10\nBuy-in: 150\nWinner Payout: 1050\nSecond Place Payout: 150\nHighest Points For in a Week: 150\nHighest Points For Reg Season: 150\n\nTeam Structure:\n1 QB\n2 RB\n2 WR\n1 TE\n2 FLEX\n1 D/ST\n\n.5pt PPR\nStandard Draft\nStandard Waiver Wire"
+    },
+    {
+      "label": "2022-2023 Season",
+      "rules_text": "Teams : 12\nBuy-in: 200\nWinner Payout: 1400\nSecond Place Payout: 400\nThird Place Payout: 200\nHighest Points For in a Week: 200\nHighest Points All Season: 200\n\nTeam Structure:\n1 QB\n2 RB\n2 WR\n1 TE\n1 FLEX\n1 D/ST\n\n.5pt PPR\nStandard Draft\nStandard Waiver Wire"
+    },
+    {
+      "label": "2023-2024 Season",
+      "rules_text": "Teams : 12\nBuy-in: 200\nWinner Payout: 1400\nSecond Place Payout: 400\nThird Place Payout: 200\nHighest Points For in a Week: 200\nHighest Points All Season: 200\n\nTeam Structure:\n1 QB\n2 RB\n2 WR\n1 TE\n2 FLEX\n\n.5pt PPR\nStandard Draft\nStandard Waiver Wire"
+    }
+  ]
+}

@@ -11,6 +11,8 @@
     { href: 'game-records.html', label: 'Game Records' },
     { href: 'standings.html', label: 'Standings' },
     { href: 'parlay-results.html', label: 'Parlay Results' },
+    { href: 'draft-board.html', label: 'Draft Board' },
+    { href: 'rule-changes.html', label: 'Rule Changes' },
   ];
 
   function currentFile() {
