@@ -19,7 +19,6 @@ Usage:
 """
 import argparse
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -27,14 +26,6 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from espn_api.football import League
 import history_lib as hl
-
-DATABASE_NAME = "retirement-league-history"
-WORKER_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "worker")
-# On Windows, "npx" the plain command isn't directly executable (it's
-# npx.cmd) and CreateProcess won't resolve that the way a shell would;
-# resolving the real path here keeps this working the same on a local
-# Windows dev machine and a Linux CI runner without needing shell=True.
-NPX = shutil.which("npx.cmd") or shutil.which("npx") or "npx"
 
 
 def run_sql(statements, label):
@@ -46,8 +37,8 @@ def run_sql(statements, label):
         path = f.name
     try:
         result = subprocess.run(
-            [NPX, "-y", "wrangler", "d1", "execute", DATABASE_NAME, "--remote", f"--file={path}"],
-            cwd=WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
+            [hl.NPX, "-y", "wrangler", "d1", "execute", hl.D1_DATABASE_NAME, "--remote", f"--file={path}"],
+            cwd=hl.WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
         )
         if result.returncode != 0:
             print(result.stdout)

@@ -98,8 +98,13 @@ CREATE TABLE IF NOT EXISTS matchups (
     opponent_team_id INTEGER,
     team_score REAL,
     opponent_score REAL,
-    is_playoff INTEGER NOT NULL,
+    is_playoff INTEGER NOT NULL,  -- true only for ESPN's real championship bracket (WINNERS_BRACKET) -- see bracket_type
     outcome TEXT,  -- 'W', 'L', 'T', or NULL for an undecided/future game
+    bracket_type TEXT NOT NULL,  -- ESPN's raw playoffTierType: NONE, WINNERS_BRACKET,
+                                  -- WINNERS_CONSOLATION_LADDER, or LOSERS_CONSOLATION_LADDER.
+                                  -- Only WINNERS_BRACKET means "made the real playoffs" --
+                                  -- the consolation ladders are placement games for teams
+                                  -- that didn't, and is_playoff deliberately excludes them.
     PRIMARY KEY (year, week, team_id)
 );
 
