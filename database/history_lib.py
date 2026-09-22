@@ -145,6 +145,7 @@ def league_settings_row(league) -> tuple:
         "playoff_seed_tie_rule": s.playoff_seed_tie_rule,
         "scoring_type": s.scoring_type,
         "median_scoring": s.median_scoring,
+        "position_slot_counts": {k: v for k, v in s.position_slot_counts.items() if v},
         "scoring_format": s.scoring_format,
         "faab": s.faab,
         "acquisition_budget": s.acquisition_budget,

@@ -51,7 +51,7 @@
       <div id="rules-container"><div class="loading-row">Loading rules…</div></div>
     </section>
 
-    <footer>Data from the league sheet</footer>
+    <footer>Data via ESPN Fantasy (buy-in/payouts from the league sheet)</footer>
   </div>
 
 <script src="nav.js"></script>
@@ -67,39 +67,35 @@
     return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
   }
 
-  // Sections are blank-line separated. A section whose first line has no
-  // "Label: value" colon is treated as its own title (e.g. "Team Structure");
-  // otherwise it falls back to a generic title based on its position, since
-  // the sheet doesn't label every block explicitly.
-  function renderSections(text) {
-    const blocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
-    const fallbackTitles = ['League Settings', 'Format & Rules'];
-    let fallbackIndex = 0;
-    return blocks.map(block => {
-      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-      let title = fallbackTitles[Math.min(fallbackIndex, fallbackTitles.length - 1)];
-      let body = lines;
-      if (lines.length && lines[0].endsWith(':') && !lines[0].slice(0, -1).includes(':')) {
-        title = lines[0].slice(0, -1);
-        body = lines.slice(1);
-      } else {
-        fallbackIndex++;
-      }
-      const rendered = body.map(line => {
-        const m = line.match(/^([^:]+):\s*(.+)$/);
-        return m
-          ? `<div class="rules-line"><span class="label">${esc(m[1])}:</span> ${esc(m[2])}</div>`
-          : `<div class="rules-line">${esc(line)}</div>`;
-      }).join('');
-      return `<div class="rules-section"><div class="rules-section-title">${esc(title)}</div>${rendered}</div>`;
-    }).join('');
+  function section(title, lines) {
+    return `<div class="rules-section"><div class="rules-section-title">${esc(title)}</div>${lines.join('')}</div>`;
+  }
+  function line(label, value) {
+    return `<div class="rules-line"><span class="label">${esc(label)}:</span> ${esc(value)}</div>`;
   }
 
   function renderEra(era) {
+    const settingsLines = [
+      line('Teams', era.team_count),
+      line('Playoff Teams', era.playoff_team_count),
+      line('Scoring', era.ppr_label),
+      line('Median Scoring', era.median_scoring ? 'Yes' : 'No'),
+      line('Waiver Type', era.waiver_type),
+      line('Keepers', era.keeper_count || 'None'),
+    ];
+    const rosterLines = era.roster_structure.map(r => `<div class="rules-line">${r.count} ${esc(r.position)}</div>`);
+    const sections = [section('League Settings', settingsLines), section('Roster Structure', rosterLines)];
+    if (era.money_lines && era.money_lines.length) {
+      sections.push(section('Money', era.money_lines.map(l => {
+        const m = l.match(/^([^:]+):\s*(.+)$/);
+        return m ? line(m[1], m[2]) : `<div class="rules-line">${esc(l)}</div>`;
+      })));
+    }
+    const span = era.start_year === era.end_year ? `${era.start_year}` : `${era.start_year}–${era.end_year}`;
     return `
       <div class="rules-card">
-        <div class="rules-head"><div class="rules-title">${esc(era.label)}</div></div>
-        <div class="rules-body">${renderSections(era.rules_text)}</div>
+        <div class="rules-head"><div class="rules-title">${esc(span)} Season${era.start_year === era.end_year ? '' : 's'}</div></div>
+        <div class="rules-body">${sections.join('')}</div>
       </div>`;
   }
 
