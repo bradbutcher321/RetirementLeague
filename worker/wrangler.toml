@@ -11,9 +11,11 @@ ESPN_YEAR = "2026"
 # Secrets — NOT set here. Run these once locally:
 #   wrangler secret put ESPN_SWID
 #   wrangler secret put ESPN_S2
-# (Same values as the ESPN_SWID/ESPN_S2 GitHub Actions secrets.)
-# GITHUB_PAT is no longer used — this Worker talks to ESPN directly now
-# instead of dispatching a GitHub Action.
+#   wrangler secret put GITHUB_PAT
+# (ESPN_SWID/S2 match the GitHub Actions secrets of the same name.
+# GITHUB_PAT is a fine-grained token scoped to just this repo, with
+# Actions: read/write and nothing else -- used only by /refresh-parlay
+# to dispatch refresh_parlay_data.yml on demand.)
 
 # KV namespace, now used to cache the computed dashboard payload (previously
 # only held the cooldown timestamp).

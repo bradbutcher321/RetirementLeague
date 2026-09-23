@@ -15,14 +15,18 @@
  *                      an `error` field) if a fresh ESPN fetch fails.
  * GET /?force=1    -> bypasses the cooldown (manual testing).
  * POST /hit, GET /stats -> site analytics (see analytics.js).
+ * POST /refresh-parlay -> dispatches the Parlay data refresh Action on
+ *                      demand (see parlayRefresh.js); used by the "Refresh
+ *                      Data" button on the Parlay Results page.
  *
  * Required setup:
- *   - Secrets:     ESPN_SWID, ESPN_S2   (wrangler secret put ...)
+ *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT   (wrangler secret put ...)
  *   - Plain vars:  ESPN_LEAGUE_ID, ESPN_YEAR, ALLOWED_ORIGIN
  *   - KV namespace bound as: COOLDOWN_KV (already existed for the old design)
  */
 import { buildDashboard } from "./dashboard.js";
 import { getStats, recordHit } from "./analytics.js";
+import { dispatchParlayRefresh } from "./parlayRefresh.js";
 
 const COOLDOWN_SECONDS = 120;
 // One key holds { fetchedAt, data } so a cache hit costs a single KV read and
@@ -60,6 +64,11 @@ export default {
     if (path === "/stats") {
       if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       return jsonResponse(await getStats(env).catch((err) => ({ error: String(err) })), headers);
+    }
+    if (path === "/refresh-parlay") {
+      if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await dispatchParlayRefresh(env).catch((err) => ({ status: 502, body: { error: String(err) } }));
+      return jsonResponse(result.body, headers, result.status);
     }
     if (request.method !== "GET") {
       return jsonResponse({ error: "Method not allowed" }, headers, 405);

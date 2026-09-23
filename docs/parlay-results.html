@@ -36,6 +36,8 @@
     cursor: pointer;
   }
   .back-link:hover{ background: rgba(186,155,55,0.1); }
+  .back-link:disabled{ opacity: 0.5; cursor: default; }
+  .back-link:disabled:hover{ background: none; }
   .back-link[hidden]{ display: none; }
 
   /* Season/scope selector: solid-filled toggle, the most prominent of the
@@ -181,7 +183,8 @@
   .tray[open] > summary .tray-chevron{ transform: rotate(-135deg) translateY(-2px); }
   .tray-body{ margin-top: 16px; }
 
-  .jt-toolbar{ display: flex; justify-content: flex-end; margin-bottom: 10px; }
+  .jt-toolbar{ display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .jt-status{ color: var(--text-dim); font-size: 0.78rem; }
   .table-wrap{ overflow-x: auto; border: 1px solid var(--line); }
   .jt-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
   .jt-table th, .jt-table td{ padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -237,6 +240,8 @@
         <div class="tray-body">
           <div class="scope-row" id="jt-scope-row"></div>
           <div class="jt-toolbar">
+            <span class="jt-status" id="jt-refresh-status"></span>
+            <button type="button" class="back-link" id="jt-refresh-btn">Refresh Data</button>
             <button type="button" class="back-link" id="jt-copy-btn">Copy All</button>
           </div>
           <div class="table-wrap">
@@ -256,6 +261,7 @@
 
 <script src="nav.js"></script>
 <script>
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   function esc(s) {
@@ -719,6 +725,30 @@
         } else {
           fallbackCopy(text, done);
         }
+      });
+
+      // Kicks off the "Refresh Parlay Data" GitHub Action on demand (see
+      // worker/src/parlayRefresh.js) instead of waiting for its 30-minute
+      // schedule. It only dispatches the run -- the sheet -> commit ->
+      // GitHub Pages rebuild still takes a minute or two after that.
+      const jtRefreshBtn = document.getElementById('jt-refresh-btn');
+      const jtRefreshStatus = document.getElementById('jt-refresh-status');
+      jtRefreshBtn.addEventListener('click', () => {
+        jtRefreshBtn.disabled = true;
+        jtRefreshStatus.textContent = 'Requesting refresh…';
+        fetch(WORKER_URL + '/refresh-parlay', { method: 'POST' })
+          .then(res => res.json().then(body => ({ ok: res.ok, body })))
+          .then(({ ok, body }) => {
+            if (ok) {
+              jtRefreshStatus.textContent = 'Refresh started — check back in a minute or two.';
+            } else if (body && body.error === 'cooldown') {
+              jtRefreshStatus.textContent = `Just refreshed — try again in ${body.retryAfterSeconds}s.`;
+            } else {
+              jtRefreshStatus.textContent = 'Refresh failed — try again shortly.';
+            }
+          })
+          .catch(() => { jtRefreshStatus.textContent = 'Refresh failed — try again shortly.'; })
+          .finally(() => { jtRefreshBtn.disabled = false; });
       });
 
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
