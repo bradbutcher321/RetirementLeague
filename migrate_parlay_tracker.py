@@ -24,7 +24,7 @@ from generate_franchise_data import SHEET_ID, CREDS_PATH
 import generate_parlay_data as gp
 
 TARGET_TAB = "Auto Parlay Tracker"
-HEADER = ["Year", "Week", "Player", "Sport", "Bet Type", "Team", "Opponent",
+HEADER = ["Year", "Week", "Sacko", "Player", "Sport", "Bet Type", "Team", "Opponent",
           "Player Prop", "Line", "Side", "Odds", "Gametime", "Result", "Raw Pick"]
 
 TEAM_LINE_VS = {"Spread", "Alt Spread", "1st Half Spread"}
@@ -129,17 +129,22 @@ def main():
     rows = []
     flagged = []
     for week in weeks:
+        # Sacko is a once-per-week fact, not a per-pick one -- write it only
+        # on that week's first row so it isn't repeated down the block.
+        sacko_written = False
         for player in players:
             pick = week["picks"].get(player)
             if not pick:
                 continue
             parsed = parse_pick(pick["pick"])
+            sacko = week["sacko"] or ""
             row = [
-                week["year"], week["week"], player, pick["sport"] or "",
+                week["year"], week["week"], sacko if not sacko_written else "", player, pick["sport"] or "",
                 parsed["bet_type"], parsed["team"], parsed["opponent"], parsed["player_prop"],
                 parsed["line"], parsed["side"], pick["odds"] if pick["odds"] is not None else "",
                 pick["gametime"] or "", pick["result"], pick["pick"],
             ]
+            sacko_written = True
             rows.append(row)
             missing_expected = (
                 (parsed["bet_type"] in TEAM_LINE_VS and not parsed["line"]) or
@@ -160,7 +165,7 @@ def main():
     if flagged:
         print("\nFlagged rows (missing a field the format expects):")
         for r in flagged:
-            print(" ", r[2], r[0], "wk", r[1], "-", r[-1])
+            print(" ", r[3], r[0], "wk", r[1], "-", r[-1])
 
 
 if __name__ == "__main__":

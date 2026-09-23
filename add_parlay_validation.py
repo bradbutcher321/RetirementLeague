@@ -27,7 +27,7 @@ TARGET_TAB = "Auto Parlay Tracker"
 VALIDATION_LAST_ROW = 3000  # generous headroom for future picks, 0-indexed exclusive
 
 # Column indices match migrate_parlay_tracker.py's HEADER order (0-indexed).
-COL_PLAYER, COL_SPORT, COL_BET_TYPE, COL_SIDE, COL_RESULT = 2, 3, 4, 9, 12
+COL_SACKO, COL_PLAYER, COL_SPORT, COL_BET_TYPE, COL_SIDE, COL_RESULT = 2, 3, 4, 5, 10, 13
 
 # NHL and Hockey both appear in history for the same sport -- NHL is the
 # canonical spelling going forward; the existing "Hockey" row is left as-is
@@ -77,6 +77,7 @@ def main():
     target = spreadsheet.worksheet(TARGET_TAB)
 
     requests = [
+        validation_request(target.id, COL_SACKO, players, strict=True),
         validation_request(target.id, COL_PLAYER, players, strict=True),
         validation_request(target.id, COL_SPORT, SPORTS, strict=False),
         validation_request(target.id, COL_BET_TYPE, BET_TYPES, strict=False),
@@ -84,7 +85,7 @@ def main():
         validation_request(target.id, COL_RESULT, RESULTS, strict=True),
     ]
     spreadsheet.batch_update({"requests": requests})
-    print(f"Applied dropdown validation to Player, Sport, Bet Type, Side, Result "
+    print(f"Applied dropdown validation to Sacko, Player, Sport, Bet Type, Side, Result "
           f"on '{TARGET_TAB}' (rows 2-{VALIDATION_LAST_ROW}).")
 
 
