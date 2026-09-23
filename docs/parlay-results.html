@@ -165,6 +165,30 @@
   .hist-count.zero{ color: var(--text-dim); font-weight: 400; }
 
   .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
+
+  /* ---------- Collapsible tray (Jon's Table), closed until opened ---------- */
+  .tray > summary{
+    list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 12px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--line); color: var(--text-dim); font-size: 1rem; font-weight: 600;
+  }
+  .tray > summary::-webkit-details-marker{ display: none; }
+  .tray > summary:hover .tray-title{ color: var(--text); }
+  .tray-summary{ flex: 1; text-align: right; font-size: 0.78rem; font-weight: 500; }
+  .tray-chevron{
+    width: 8px; height: 8px; border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
+    transform: rotate(45deg) translateY(-2px); transition: transform 0.2s ease; align-self: center;
+  }
+  .tray[open] > summary .tray-chevron{ transform: rotate(-135deg) translateY(-2px); }
+  .tray-body{ margin-top: 16px; }
+
+  .jt-toolbar{ display: flex; justify-content: flex-end; margin-bottom: 10px; }
+  .table-wrap{ overflow-x: auto; border: 1px solid var(--line); }
+  .jt-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .jt-table th, .jt-table td{ padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .jt-table th{ color: var(--text-dim); font-weight: 700; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--surface-raised); }
+  .jt-table th:first-child, .jt-table td:first-child{ text-align: left; font-weight: 600; }
+  .jt-table tbody tr:hover{ background: var(--surface-raised); }
+  .jt-table tbody tr:last-child td{ border-bottom: none; }
 </style>
 </head>
 <body>
@@ -201,6 +225,30 @@
       <div class="tabs" id="category-tab-row"></div>
       <div id="sub-tab-row"></div>
       <div class="card-grid" id="stats-container"></div>
+    </section>
+
+    <section>
+      <details class="tray">
+        <summary>
+          <span class="tray-title">Jon's Table</span>
+          <span class="tray-summary" id="jt-summary"></span>
+          <span class="tray-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="tray-body">
+          <div class="scope-row" id="jt-scope-row"></div>
+          <div class="jt-toolbar">
+            <button type="button" class="back-link" id="jt-copy-btn">Copy All</button>
+          </div>
+          <div class="table-wrap">
+            <table class="jt-table">
+              <thead>
+                <tr><th>Team</th><th>W</th><th>L</th><th>Win %</th><th>Avg Odds</th><th>Kills</th><th>Sackos</th></tr>
+              </thead>
+              <tbody id="jt-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </details>
     </section>
 
     <footer id="footer">Data from the league sheet</footer>
@@ -597,6 +645,82 @@
         renderStats();
       });
       renderStats();
+
+      // ---------- Jon's Table (collapsible, copyable) ----------
+      const jtScopeRow = document.getElementById('jt-scope-row');
+      const jtTbody = document.getElementById('jt-tbody');
+      const jtCopyBtn = document.getElementById('jt-copy-btn');
+      const JT_HEADER = ['Team', 'W', 'L', 'Win %', 'Avg Odds', 'Kills', 'Sackos'];
+      let jtScope = String(current.year);
+
+      function jonsRows(scope) {
+        const s = stats[scope];
+        if (!s) return [];
+        const wlMap = Object.fromEntries(s.individual_wl.map(r => [r.player, r]));
+        const oddsMap = Object.fromEntries(s.average_odds.map(r => [r.player, r.avg_odds]));
+        const killMap = Object.fromEntries(s.parlays_killed.map(r => [r.player, r.kills]));
+        const sackoMap = Object.fromEntries(s.weekly_sackos.map(r => [r.player, r.sackos]));
+        return players.map(p => {
+          const wl = wlMap[p] || { w: 0, l: 0, win_pct: null };
+          return {
+            player: p, w: wl.w, l: wl.l, win_pct: wl.win_pct,
+            avgOdds: oddsMap[p] ?? null, kills: killMap[p] ?? 0, sackos: sackoMap[p] ?? 0,
+          };
+        }).sort((a, b) => (b.win_pct ?? -1) - (a.win_pct ?? -1));
+      }
+
+      function renderJonsTable() {
+        jtTbody.innerHTML = jonsRows(jtScope).map(r => `
+          <tr>
+            <td>${esc(r.player)}</td>
+            <td>${r.w}</td>
+            <td>${r.l}</td>
+            <td>${fmtPct(r.win_pct)}</td>
+            <td>${fmtOdds(r.avgOdds)}</td>
+            <td>${r.kills.toFixed(1)}</td>
+            <td>${r.sackos}</td>
+          </tr>`).join('');
+      }
+
+      jtScopeRow.innerHTML = scopes.map(s => `<button type="button" class="scope-btn${s === jtScope ? ' on' : ''}" data-scope="${s}">${scopeLabel(s)}</button>`).join('');
+      jtScopeRow.addEventListener('click', e => {
+        const btn = e.target.closest('[data-scope]');
+        if (!btn) return;
+        jtScope = btn.dataset.scope;
+        [...jtScopeRow.children].forEach(b => b.classList.toggle('on', b.dataset.scope === jtScope));
+        renderJonsTable();
+      });
+      renderJonsTable();
+
+      function fallbackCopy(text, done) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) { console.error('Copy failed', e); }
+        document.body.removeChild(ta);
+      }
+      jtCopyBtn.addEventListener('click', () => {
+        const lines = [JT_HEADER.join('\t')].concat(jonsRows(jtScope).map(r => [
+          r.player, r.w, r.l,
+          r.win_pct === null || r.win_pct === undefined ? '' : r.win_pct.toFixed(1) + '%',
+          r.avgOdds === null || r.avgOdds === undefined ? '' : fmtOdds(r.avgOdds),
+          r.kills.toFixed(1), r.sackos,
+        ].join('\t')));
+        const text = lines.join('\n');
+        const done = () => {
+          const original = jtCopyBtn.textContent;
+          jtCopyBtn.textContent = 'Copied!';
+          setTimeout(() => { jtCopyBtn.textContent = original; }, 1200);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+        } else {
+          fallbackCopy(text, done);
+        }
+      });
 
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
     })
