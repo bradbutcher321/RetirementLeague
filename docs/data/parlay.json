@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T01:21:50.787630+00:00",
+  "generated_at": "2026-09-23T02:51:54.723164+00:00",
   "players": [
     "Brad",
     "Flanders",
@@ -1820,6 +1820,62 @@
         "Joe K",
         "Chad"
       ]
+    },
+    {
+      "year": 2026,
+      "week": 2,
+      "sacko": "Flanders",
+      "picks": {
+        "Jared": {
+          "pick": "Money Line: #17 Iowa vs. #18 Michigan",
+          "sport": "NCAAF",
+          "odds": 170.0,
+          "gametime": "2026-09-26T15:30:00",
+          "result": "Pending"
+        },
+        "Joe K": {
+          "pick": "Spread: Bills -3 vs. Chargers",
+          "sport": "NFL",
+          "odds": -240.0,
+          "gametime": "2026-09-27T13:00:00",
+          "result": "Pending"
+        },
+        "Kris": {
+          "pick": "Receiving Yards: Over 38.5 Brian Thomas Jr.",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2026-09-27T13:00:00",
+          "result": "Pending"
+        },
+        "Collin": {
+          "pick": "Spread: Saints -3 vs. Raiders",
+          "sport": "NFL",
+          "odds": -120.0,
+          "gametime": "2026-09-27T16:25:00",
+          "result": "Pending"
+        },
+        "Jon": {
+          "pick": "Anytime TD: Chris Olave",
+          "sport": "NFL",
+          "odds": 165.0,
+          "gametime": "2026-09-27T16:25:00",
+          "result": "Pending"
+        },
+        "TJ": {
+          "pick": "Spread: Eagles -4.5 vs. Bears",
+          "sport": "NFL",
+          "odds": -110.0,
+          "gametime": "2026-09-28T20:15:00",
+          "result": "Pending"
+        }
+      },
+      "final": {
+        "odds": null,
+        "payout": null,
+        "split": 0.0,
+        "result": "Pending"
+      },
+      "killed_by": []
     }
   ],
   "years": [
@@ -1855,6 +1911,11 @@
           "cost": 40
         },
         {
+          "player": "Flanders",
+          "sackos": 1,
+          "cost": 20
+        },
+        {
           "player": "Joe G",
           "sackos": 1,
           "cost": 20
@@ -1871,11 +1932,6 @@
         },
         {
           "player": "Brad",
-          "sackos": 0,
-          "cost": 0
-        },
-        {
-          "player": "Flanders",
           "sackos": 0,
           "cost": 0
         },
@@ -1978,11 +2034,11 @@
           "avg_odds": -108
         },
         {
-          "player": "Flanders",
-          "avg_odds": -115
+          "player": "Jared",
+          "avg_odds": -111
         },
         {
-          "player": "Jared",
+          "player": "Flanders",
           "avg_odds": -115
         },
         {
@@ -1991,7 +2047,7 @@
         },
         {
           "player": "Joe K",
-          "avg_odds": -123
+          "avg_odds": -127
         },
         {
           "player": "Chad",
@@ -2003,11 +2059,11 @@
         },
         {
           "player": "Kris",
-          "avg_odds": -144
+          "avg_odds": -143
         },
         {
           "player": "Collin",
-          "avg_odds": -156
+          "avg_odds": -154
         },
         {
           "player": "Joe G",
@@ -2025,7 +2081,7 @@
           "player": "Joe K",
           "kills": 2.83,
           "kill_chances": 6,
-          "avg_bet_position": 3.17
+          "avg_bet_position": 3.11
         },
         {
           "player": "Flanders",
@@ -2043,19 +2099,19 @@
           "player": "Collin",
           "kills": 1.5,
           "kill_chances": 3,
-          "avg_bet_position": 5.67
+          "avg_bet_position": 5.58
         },
         {
           "player": "Jon",
           "kills": 1.5,
           "kill_chances": 3,
-          "avg_bet_position": 7.22
+          "avg_bet_position": 7.05
         },
         {
           "player": "Jared",
           "kills": 1.0,
           "kill_chances": 3,
-          "avg_bet_position": 4.33
+          "avg_bet_position": 4.16
         },
         {
           "player": "Chad",
@@ -2073,7 +2129,7 @@
           "player": "TJ",
           "kills": 1.0,
           "kill_chances": 2,
-          "avg_bet_position": 6.94
+          "avg_bet_position": 6.89
         },
         {
           "player": "Joe G",
@@ -2085,7 +2141,7 @@
           "player": "Kris",
           "kills": 0.0,
           "kill_chances": 1,
-          "avg_bet_position": 8.11
+          "avg_bet_position": 7.79
         }
       ],
       "potential_earnings": [
@@ -4026,17 +4082,17 @@
     "2026": {
       "weekly_sackos": [
         {
+          "player": "Flanders",
+          "sackos": 1,
+          "cost": 20
+        },
+        {
           "player": "Joe K",
           "sackos": 1,
           "cost": 20
         },
         {
           "player": "Brad",
-          "sackos": 0,
-          "cost": 0
-        },
-        {
-          "player": "Flanders",
           "sackos": 0,
           "cost": 0
         },
@@ -4178,20 +4234,20 @@
           "avg_odds": -110
         },
         {
+          "player": "TJ",
+          "avg_odds": -112
+        },
+        {
           "player": "Brad",
           "avg_odds": -115
         },
         {
-          "player": "Joe K",
-          "avg_odds": -115
-        },
-        {
-          "player": "TJ",
-          "avg_odds": -115
-        },
-        {
           "player": "Collin",
-          "avg_odds": -125
+          "avg_odds": -122
+        },
+        {
+          "player": "Jared",
+          "avg_odds": -135
         },
         {
           "player": "Joe G",
@@ -4199,15 +4255,15 @@
         },
         {
           "player": "Kris",
-          "avg_odds": -225
+          "avg_odds": -159
+        },
+        {
+          "player": "Joe K",
+          "avg_odds": -163
         },
         {
           "player": "Jeff",
           "avg_odds": -300
-        },
-        {
-          "player": "Jared",
-          "avg_odds": -350
         }
       ],
       "parlays_killed": [
@@ -4215,7 +4271,7 @@
           "player": "Joe K",
           "kills": 0.5,
           "kill_chances": 1,
-          "avg_bet_position": 1.0
+          "avg_bet_position": 1.5
         },
         {
           "player": "Chad",
@@ -4239,7 +4295,7 @@
           "player": "Jared",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 3.0
+          "avg_bet_position": 2.0
         },
         {
           "player": "Joe G",
@@ -4263,25 +4319,25 @@
           "player": "Kris",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 5.0
+          "avg_bet_position": 3.5
         },
         {
           "player": "Collin",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 5.0
+          "avg_bet_position": 4.5
         },
         {
           "player": "Jon",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 5.0
+          "avg_bet_position": 4.5
         },
         {
           "player": "TJ",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 11.0
+          "avg_bet_position": 8.5
         }
       ],
       "potential_earnings": [
