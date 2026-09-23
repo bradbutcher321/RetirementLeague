@@ -1,11 +1,11 @@
 """
-Visual polish for "Auto Parlay Tracker": separates weeks so consecutive
-weeks don't visually blend together in a one-row-per-pick table, keeps the
-header and identifying columns visible while scrolling, and adds guidance
-notes on the header cells explaining which fields matter for which bet
-type (the real source of entry confusion, since Team/Opponent/Player Prop/
-Line/Side apply differently depending on Bet Type). Re-runnable -- safe to
-run again after adding more weeks.
+Visual polish for "Auto Parlay Tracker": separates weeks (a live background
+banding rule plus a top border every 12 rows, since every week is always
+exactly 12 picks -- one per manager), keeps the header and identifying
+columns visible while scrolling, and adds guidance notes on the header
+cells explaining which fields matter for which bet type (the real source
+of entry confusion, since Team/Opponent/Player Prop/Line/Side apply
+differently depending on Bet Type). Re-runnable -- safe to run again.
 
 Usage: python format_parlay_sheet.py
 """
@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from generate_franchise_data import SHEET_ID, CREDS_PATH
 
 TARGET_TAB = "Auto Parlay Tracker"
-COL_YEAR, COL_WEEK = 0, 1
 VALIDATION_LAST_ROW = 3000  # matches add_parlay_validation.py
+PLAYERS_PER_WEEK = 12  # every week is always all 12 managers, one row each
 
 BAND_COLOR = {"red": 0.949, "green": 0.961, "blue": 0.976}  # light gray-blue
 BORDER_COLOR = {"red": 0.4, "green": 0.4, "blue": 0.4}
@@ -48,24 +48,6 @@ def authorize_write():
     return gspread.authorize(creds)
 
 
-def week_blocks(rows):
-    """rows: list of [year, week, ...] data rows (no header). Returns
-    [(start_row_idx, end_row_idx), ...] 0-indexed, end exclusive, relative
-    to the data (row 0 here = sheet row 2)."""
-    blocks = []
-    start = 0
-    prev = (rows[0][COL_YEAR], rows[0][COL_WEEK]) if rows else None
-    for i, r in enumerate(rows):
-        key = (r[COL_YEAR], r[COL_WEEK])
-        if key != prev:
-            blocks.append((start, i))
-            start = i
-            prev = key
-    if rows:
-        blocks.append((start, len(rows)))
-    return blocks
-
-
 def main():
     print("Loading Google Sheet...")
     gc = authorize_write()
@@ -74,9 +56,6 @@ def main():
 
     header = target.row_values(1)
     n_cols = len(header)
-    data_rows = [r for r in target.get_values("A2:Z3000") if any(r)]
-    blocks = week_blocks(data_rows)
-    print(f"Found {len(blocks)} week blocks across {len(data_rows)} rows.")
 
     meta = spreadsheet.fetch_sheet_metadata()
     sheet_props = next(s for s in meta["sheets"] if s["properties"]["sheetId"] == target.id)
@@ -144,13 +123,12 @@ def main():
         }
     })
 
-    # The top border at each week boundary can't be done as a live rule --
-    # conditional formatting in Sheets doesn't support borders -- so this
-    # part stays static and only covers weeks that exist right now. Re-run
-    # this script after adding new weeks to extend it; the banding above
-    # doesn't need that.
-    for i, (start, end) in enumerate(blocks):
-        sheet_row_start = start + 1  # +1 to skip header (0-indexed sheet row)
+    # Top border every 12 rows -- every week is always exactly 12 picks (one
+    # per manager), so this is purely mechanical: it doesn't need to read
+    # any actual data, and covers the full range in one pass, forever, with
+    # no re-run needed after new weeks are added. (Conditional formatting
+    # can't do borders, or this would be a live rule like the banding above.)
+    for sheet_row_start in range(1, VALIDATION_LAST_ROW, PLAYERS_PER_WEEK):  # 0-indexed sheet row
         requests.append({
             "updateBorders": {
                 "range": {"sheetId": target.id, "startRowIndex": sheet_row_start,
@@ -180,9 +158,9 @@ def main():
         })
 
     spreadsheet.batch_update({"requests": requests})
-    print(f"Applied live week banding (rows 2-{VALIDATION_LAST_ROW}), "
-          f"borders for {len(blocks)} current week blocks, frozen panes, "
-          f"and {len(HEADER_NOTES)} header notes to '{TARGET_TAB}'.")
+    print(f"Applied live week banding and a mechanical every-{PLAYERS_PER_WEEK}-row "
+          f"border (rows 2-{VALIDATION_LAST_ROW}), frozen panes, and "
+          f"{len(HEADER_NOTES)} header notes to '{TARGET_TAB}'.")
 
 
 if __name__ == "__main__":

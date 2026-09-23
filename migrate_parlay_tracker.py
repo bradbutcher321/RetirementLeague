@@ -10,6 +10,12 @@ with the league). Rows the parser can't confidently split (e.g. a Spread
 pick missing its line) are still written, with just the unparseable fields
 left blank, so they're easy to spot and fix by hand rather than guessed at.
 
+WARNING: this only rewrites the rows generated from "Parlay Tracker"'s own
+history (currently 228). Once new picks start being entered directly into
+"Auto Parlay Tracker" going forward, re-running this script will overwrite
+whatever's sitting in those same row positions -- do not re-run it after
+that point without accounting for that.
+
 Usage: python migrate_parlay_tracker.py
 """
 import os
@@ -158,8 +164,19 @@ def main():
 
     target = spreadsheet.worksheet(TARGET_TAB)
     clear_formatting(spreadsheet, target)
-    target.clear()
-    target.update([HEADER] + rows, "A1")
+    # Column D (Player) is intentionally never touched here -- it's an
+    # auto-fill formula (see setup_player_autofill.py) keyed on row
+    # position, not something this script writes. A blanket target.clear()
+    # would wipe that formula (and the Player Order helper list past
+    # column O) along with the data, so clear and write only the columns
+    # this script actually owns.
+    target.batch_clear(["A2:C3000", "E2:O3000"])
+    target.update([HEADER], "A1")
+    left = [row[:3] for row in rows]      # Year, Week, Sacko
+    right = [row[4:] for row in rows]     # Sport .. Raw Pick
+    if rows:
+        target.update(left, "A2")
+        target.update(right, "E2")
     print(f"Wrote {len(rows)} rows to '{TARGET_TAB}'.")
 
     if flagged:

@@ -4,12 +4,14 @@ directly into the structured columns stay consistent, instead of relying on
 free text (or, later, a parser) to get it right. Re-runnable -- safe to run
 again if the value lists below change.
 
-Strict columns (Player, Side, Result) reject anything not in the list --
+Strict columns (Sacko, Side, Result) reject anything not in the list --
 there's never a legitimate reason for a new value there. Sport and Bet Type
 use a warning instead of a hard reject: the league has already used 11
 different sports and 17 different bet types across two seasons, so a new
 one showing up next week is plausible and shouldn't be blocked, just nudged
-toward the existing spelling when one already fits.
+toward the existing spelling when one already fits. Player isn't validated
+here -- it's auto-filled by a formula now (see setup_player_autofill.py),
+so there's nothing for a person to type there to validate.
 
 Usage: python add_parlay_validation.py
 """
@@ -27,7 +29,8 @@ TARGET_TAB = "Auto Parlay Tracker"
 VALIDATION_LAST_ROW = 3000  # generous headroom for future picks, 0-indexed exclusive
 
 # Column indices match migrate_parlay_tracker.py's HEADER order (0-indexed).
-COL_SACKO, COL_PLAYER, COL_SPORT, COL_BET_TYPE, COL_SIDE, COL_RESULT = 2, 3, 4, 5, 10, 13
+# Player (3) is intentionally excluded -- see module docstring.
+COL_SACKO, COL_SPORT, COL_BET_TYPE, COL_SIDE, COL_RESULT = 2, 4, 5, 10, 13
 
 # NHL and Hockey both appear in history for the same sport -- NHL is the
 # canonical spelling going forward; the existing "Hockey" row is left as-is
@@ -107,14 +110,13 @@ def main():
 
     requests = [
         validation_request(target.id, COL_SACKO, players, strict=True),
-        validation_request(target.id, COL_PLAYER, players, strict=True),
         validation_request(target.id, COL_SPORT, SPORTS, strict=False),
         validation_request(target.id, COL_BET_TYPE, BET_TYPES, strict=False),
         validation_request(target.id, COL_SIDE, SIDES, strict=True),
         validation_request(target.id, COL_RESULT, RESULTS, strict=True),
     ]
     spreadsheet.batch_update({"requests": requests})
-    print(f"Applied dropdown validation to Sacko, Player, Sport, Bet Type, Side, Result "
+    print(f"Applied dropdown validation to Sacko, Sport, Bet Type, Side, Result "
           f"on '{TARGET_TAB}' (rows 2-{VALIDATION_LAST_ROW}).")
 
 
