@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T04:16:10.848681+00:00",
+  "generated_at": "2026-09-23T04:33:43.141623+00:00",
   "players": [
     "Brad",
     "Flanders",
@@ -1976,13 +1976,13 @@
       ],
       "individual_wl": [
         {
-          "player": "Joe G",
+          "player": "Ben",
           "w": 12,
           "l": 6,
           "win_pct": 66.7
         },
         {
-          "player": "Ben",
+          "player": "Joe G",
           "w": 12,
           "l": 6,
           "win_pct": 66.7
@@ -2000,6 +2000,12 @@
           "win_pct": 44.4
         },
         {
+          "player": "Jeff",
+          "w": 7,
+          "l": 11,
+          "win_pct": 38.9
+        },
+        {
           "player": "Jared",
           "w": 7,
           "l": 11,
@@ -2007,12 +2013,6 @@
         },
         {
           "player": "Chad",
-          "w": 7,
-          "l": 11,
-          "win_pct": 38.9
-        },
-        {
-          "player": "Jeff",
           "w": 7,
           "l": 11,
           "win_pct": 38.9
@@ -3110,6 +3110,12 @@
           "win_pct": 41.2
         },
         {
+          "player": "Jeff",
+          "w": 6,
+          "l": 11,
+          "win_pct": 35.3
+        },
+        {
           "player": "Brad",
           "w": 6,
           "l": 11,
@@ -3122,19 +3128,13 @@
           "win_pct": 35.3
         },
         {
-          "player": "Jeff",
+          "player": "TJ",
           "w": 6,
           "l": 11,
           "win_pct": 35.3
         },
         {
           "player": "Collin",
-          "w": 6,
-          "l": 11,
-          "win_pct": 35.3
-        },
-        {
-          "player": "TJ",
           "w": 6,
           "l": 11,
           "win_pct": 35.3
@@ -4178,7 +4178,19 @@
       ],
       "individual_wl": [
         {
+          "player": "Ben",
+          "w": 1,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
           "player": "Flanders",
+          "w": 1,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "player": "Collin",
           "w": 1,
           "l": 0,
           "win_pct": 100.0
@@ -4196,19 +4208,7 @@
           "win_pct": 100.0
         },
         {
-          "player": "Ben",
-          "w": 1,
-          "l": 0,
-          "win_pct": 100.0
-        },
-        {
-          "player": "Collin",
-          "w": 1,
-          "l": 0,
-          "win_pct": 100.0
-        },
-        {
-          "player": "Brad",
+          "player": "Jon",
           "w": 0,
           "l": 1,
           "win_pct": 0.0
@@ -4220,7 +4220,7 @@
           "win_pct": 0.0
         },
         {
-          "player": "Joe K",
+          "player": "Brad",
           "w": 0,
           "l": 1,
           "win_pct": 0.0
@@ -4232,19 +4232,19 @@
           "win_pct": 0.0
         },
         {
+          "player": "TJ",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
           "player": "Kris",
           "w": 0,
           "l": 1,
           "win_pct": 0.0
         },
         {
-          "player": "Jon",
-          "w": 0,
-          "l": 1,
-          "win_pct": 0.0
-        },
-        {
-          "player": "TJ",
+          "player": "Joe K",
           "w": 0,
           "l": 1,
           "win_pct": 0.0

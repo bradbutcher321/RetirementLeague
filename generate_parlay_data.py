@@ -337,12 +337,16 @@ def compute_stats(players, weeks):
         if odds_lists[name]:
             probs = [american_to_prob(o) for o in odds_lists[name]]
             avg_odds.append({"player": name, "avg_odds": round(prob_to_american(sum(probs) / len(probs)))})
+    avg_odds_by_player = {a["player"]: a["avg_odds"] for a in avg_odds}
 
     return {
         "weekly_sackos": by_desc([{"player": n, "sackos": sackos[n], "cost": sackos[n] * SACKO_COST} for n in players], "sackos"),
         "individual_wl": sorted(
             [{"player": n, "w": w, "l": l, "win_pct": round(w / (w + l) * 100, 1) if w + l else 0} for n, (w, l) in leg.items()],
-            key=lambda r: -r["win_pct"],
+            # Ties on win % break on average odds, higher (more positive)
+            # first -- a +140 winner called a harder bet than a -300 winner,
+            # so it outranks it rather than landing arbitrarily.
+            key=lambda r: (-r["win_pct"], -avg_odds_by_player.get(r["player"], -10**9)),
         ),
         "average_odds": by_desc(avg_odds, "avg_odds"),
         "parlays_killed": by_desc([

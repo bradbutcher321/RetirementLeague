@@ -656,17 +656,16 @@
       function jonsRows(scope) {
         const s = stats[scope];
         if (!s) return [];
-        const wlMap = Object.fromEntries(s.individual_wl.map(r => [r.player, r]));
         const oddsMap = Object.fromEntries(s.average_odds.map(r => [r.player, r.avg_odds]));
         const killMap = Object.fromEntries(s.parlays_killed.map(r => [r.player, r.kills]));
         const sackoMap = Object.fromEntries(s.weekly_sackos.map(r => [r.player, r.sackos]));
-        return players.map(p => {
-          const wl = wlMap[p] || { w: 0, l: 0, win_pct: null };
-          return {
-            player: p, w: wl.w, l: wl.l, win_pct: wl.win_pct,
-            avgOdds: oddsMap[p] ?? null, kills: killMap[p] ?? 0, sackos: sackoMap[p] ?? 0,
-          };
-        }).sort((a, b) => (b.win_pct ?? -1) - (a.win_pct ?? -1));
+        // individual_wl is already ordered by win % with ties broken on
+        // average odds (harder bets rank first) -- follow that order rather
+        // than re-deriving a separate, potentially inconsistent one here.
+        return s.individual_wl.map(wl => ({
+          player: wl.player, w: wl.w, l: wl.l, win_pct: wl.win_pct,
+          avgOdds: oddsMap[wl.player] ?? null, kills: killMap[wl.player] ?? 0, sackos: sackoMap[wl.player] ?? 0,
+        }));
       }
 
       function renderJonsTable() {
