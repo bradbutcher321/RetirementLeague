@@ -128,24 +128,21 @@
   .pill.flat{ color: var(--text-dim); border-color: var(--line); }
   .pill.down{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.10); }
 
-  .podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-  .pod{ background: var(--surface-raised); border: 1px solid var(--line); padding: 12px 6px; text-align: center; min-width: 0; }
-  .pod:first-child{ border-color: var(--gold); }
-  .pod-rank{ font-family: var(--scoreboard); font-size: 0.85rem; color: var(--gold); font-weight: 700; }
-  .pod-name{ font-weight: 700; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; color: var(--gold); font-variant-numeric: tabular-nums; }
-  .pod-val{ height: 2rem; line-height: 2rem; }
-  .pod-val.long{ font-size: 1.25rem; }
-  .pod-sub{ color: var(--text-dim); font-size: 0.7rem; min-height: 1em; }
-
-  .row{
+  /* Ranked rows: Game Records' .cols/.ln pattern -- a plain two-column list,
+     rank 1 picked out with a colored left border instead of a podium tile. */
+  .cols{ display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  @media (max-width: 720px){ .cols{ grid-template-columns: 1fr; } }
+  .ln{
     display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
-    background: var(--surface-raised); border: 1px solid var(--line); padding: 9px 12px; margin-top: 6px; min-height: 62px;
+    background: var(--surface-raised); border: 1px solid var(--line); border-left: 3px solid var(--turf);
+    padding: 9px 12px; margin-top: 6px; min-height: 58px;
   }
-  .row.norank{ grid-template-columns: minmax(0,1fr) auto; }
-  .row-rank{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; color: var(--text-dim); text-align: center; }
-  .row-name{ font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ln.norank{ grid-template-columns: minmax(0,1fr) auto; }
+  .ln .rk{ font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); text-align: center; font-size: 1.2rem; }
+  .ln .tm{ font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ln .meta{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ln.rec{ border-color: var(--turf); background: rgba(76,154,107,0.07); }
+  .ln.rec .rk{ color: var(--turf); }
   .row-stats{ display: flex; gap: 14px; }
   .row-stat{ text-align: center; min-width: 34px; }
   .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -304,30 +301,28 @@
   const signedMoney = n => (n < 0 ? '-' : '') + fmtMoney(Math.abs(n));
   const stats = list => `<div class="row-stats">${list.map(([v, l]) => `<div class="row-stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
 
-  // items: { name, sub, big, right }. The top 3 become podium cards and the
-  // rest become rows, unless podium is false (short lists show plain rows).
+  // items: { name, sub/detail, right, unranked }. Ranked lists (the default)
+  // number every row and pick out #1 the way Game Records does -- a colored
+  // left border, no separate "top 3" tile treatment. Pass podium: false for
+  // lists that are buckets, not rankings (e.g. Favorite vs. Underdog), which
+  // renders as a plain unnumbered list instead.
   function rankedCard(title, items, opts = {}) {
-    const podium = opts.podium !== false;
-    const top = podium ? items.slice(0, 3) : [];
-    const rest = podium ? items.slice(3) : items;
-    const pods = top.map((it, i) => `
-      <div class="pod">
-        <div class="pod-rank">#${i + 1}</div>
-        <div class="pod-name">${esc(it.name)}</div>
-        <div class="pod-val${it.big.length > 6 ? ' long' : ''}">${it.big}</div>
-        <div class="pod-sub">${it.sub || '&nbsp;'}</div>
-      </div>`).join('');
-    const rows = rest.map((it, i) => `
-      <div class="row${podium ? '' : ' norank'}">
-        ${podium ? `<div class="row-rank">${it.unranked ? '–' : i + 4}</div>` : ''}
-        <div style="min-width:0"><div class="row-name">${esc(it.name)}</div>${it.detail || it.sub ? `<div class="row-sub">${esc(it.detail || it.sub)}</div>` : ''}</div>
-        ${it.right || '<span></span>'}
-      </div>`).join('');
+    const ranked = opts.podium !== false;
+    let rank = 0;
+    const rows = items.map(it => {
+      const body = `<div style="min-width:0"><div class="tm">${esc(it.name)}</div>${it.detail || it.sub ? `<div class="meta">${esc(it.detail || it.sub)}</div>` : ''}</div>${it.right || '<span></span>'}`;
+      if (!ranked) return `<div class="ln norank">${body}</div>`;
+      if (!it.unranked) rank++;
+      const isTop = rank === 1 && !it.unranked;
+      return `<div class="ln${isTop ? ' rec' : ''}"><div class="rk">${it.unranked ? '–' : rank}</div>${body}</div>`;
+    });
+    const half = Math.ceil(rows.length / 2);
+    const cols = `<div class="cols"><div>${rows.slice(0, half).join('')}</div><div>${rows.slice(half).join('')}</div></div>`;
     return `
       <div class="stat-card">
         <div class="stat-card-title">${title}</div>
         ${opts.note ? `<div class="stat-card-note">${opts.note}</div>` : ''}
-        <div class="stat-card-body">${top.length ? `<div class="podium">${pods}</div>` : ''}${rows}</div>
+        <div class="stat-card-body">${cols}</div>
       </div>`;
   }
 
@@ -367,7 +362,7 @@
     const tw = rows.reduce((a, r) => a + r.w, 0);
     const tl = rows.reduce((a, r) => a + r.l, 0);
     const items = wlItems(rows, key);
-    items.push({ name: 'Total', sub: `${tw}-${tl}`, big: '', right: winPill(tw + tl ? tw / (tw + tl) * 100 : null) });
+    items.push({ name: 'Total', sub: `${tw}-${tl}`, right: winPill(tw + tl ? tw / (tw + tl) * 100 : null) });
     return items;
   }
 
@@ -381,17 +376,20 @@
     legsBeforeLoss: s => histCard('Legs Won Before First Loss', s.legs_won_before_loss, 'Weeks by how many legs won, in game-time order, before the first loss.'),
 
     individualWL: s => rankedCard('Individual W/L', wlItems(s.individual_wl, 'player')),
+    averageOdds: s => rankedCard('Average Odds', s.average_odds.map(r => ({
+      name: r.player, right: stats([[fmtOdds(r.avg_odds), 'Odds']]),
+    }))),
     winStreaks: s => {
       const winStreaks = [...s.streaks].sort((a, b) => b.longest_win - a.longest_win || b.current - a.current);
       return rankedCard('Win Streaks', winStreaks.map(r => ({
-        name: r.player, big: String(r.longest_win), sub: `Current ${Math.max(r.current, 0)}`,
+        name: r.player, sub: `Current ${Math.max(r.current, 0)}`,
         right: stats([[r.longest_win, 'Longest'], [Math.max(r.current, 0), 'Current']]),
       })));
     },
     lossStreaks: s => {
       const lossStreaks = [...s.streaks].sort((a, b) => b.longest_loss - a.longest_loss || a.current - b.current);
       return rankedCard('Losing Streaks', lossStreaks.map(r => ({
-        name: r.player, big: String(r.longest_loss), sub: `Current ${Math.max(-r.current, 0)}`,
+        name: r.player, sub: `Current ${Math.max(-r.current, 0)}`,
         right: stats([[r.longest_loss, 'Longest'], [Math.max(-r.current, 0), 'Current']]),
       })));
     },
@@ -399,31 +397,25 @@
     potentialEarnings: s => {
       const earnings = s.potential_earnings.map(r => ({ player: r.player, net: r.winnings - r.losses })).sort((a, b) => b.net - a.net);
       return rankedCard('Potential Earnings', earnings.map(r => ({
-        name: r.player, big: signedMoney(r.net), right: pill(signedMoney(r.net), r.net >= 0),
+        name: r.player, right: pill(signedMoney(r.net), r.net >= 0),
       })));
     },
     flatBetProfit: s => rankedCard('Flat Bet Profit', s.flat_bet_profit.map(r => ({
-      name: r.player, big: signedMoney(r.profit), sub: plural(r.bets, 'bet'),
-      right: pill(signedMoney(r.profit), r.profit >= 0),
+      name: r.player, sub: plural(r.bets, 'bet'), right: pill(signedMoney(r.profit), r.profit >= 0),
     }))),
 
-    averageOdds: s => rankedCard('Average Odds', s.average_odds.map(r => ({
-      name: r.player, big: fmtOdds(r.avg_odds), right: stats([[fmtOdds(r.avg_odds), 'Odds']]),
-    }))),
     biggestHit: s => rankedCard('Biggest Hit', s.biggest_hits.map(r => ({
-      name: r.player, big: fmtOdds(r.odds), sub: r.sport || '',
-      right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
+      name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
     }))),
     safestLoss: s => rankedCard('Safest Loss', s.safest_losses.map(r => ({
-      name: r.player, big: fmtOdds(r.odds), sub: r.sport || '',
-      right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
+      name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
     }))),
 
     weeklySackos: s => rankedCard('Weekly Sacko Count', s.weekly_sackos.map(r => ({
-      name: r.player, big: String(r.sackos), sub: fmtMoney(r.cost), right: stats([[r.sackos, r.sackos === 1 ? 'Sacko' : 'Sackos']]),
+      name: r.player, sub: fmtMoney(r.cost), right: stats([[r.sackos, r.sackos === 1 ? 'Sacko' : 'Sackos']]),
     }))),
     parlaysKilled: s => rankedCard('Parlays Killed', s.parlays_killed.map(r => ({
-      name: r.player, big: r.kills.toFixed(1), sub: plural(r.kill_chances, 'chance'),
+      name: r.player, sub: plural(r.kill_chances, 'chance'),
       right: stats([[r.kills.toFixed(1), 'Kills'], [r.avg_bet_position === null ? '—' : r.avg_bet_position.toFixed(1), 'Avg Pos']]),
     }))),
 
@@ -449,9 +441,9 @@
     {
       label: 'Betting Stats',
       subsections: [
-        { label: 'Record', cards: ['individualWL', 'winStreaks', 'lossStreaks'] },
-        { label: 'Money', cards: ['potentialEarnings', 'flatBetProfit'] },
-        { label: 'Picks', cards: ['averageOdds', 'biggestHit', 'safestLoss'] },
+        { label: 'Record', cards: ['individualWL', 'averageOdds'] },
+        { label: 'Streaks', cards: ['winStreaks', 'lossStreaks'] },
+        { label: 'Picks', cards: ['biggestHit', 'safestLoss'] },
         { label: 'Sacko & Kills', cards: ['weeklySackos', 'parlaysKilled'] },
       ],
     },
@@ -459,8 +451,13 @@
       label: 'Bet Breakdowns',
       subsections: [
         { label: 'Bet Type', cards: ['sportWL', 'betTypeWL'] },
-        { label: 'Odds', cards: ['favoriteUnderdog', 'oddsRange'] },
-        { label: 'Timing', cards: ['overUnder', 'dayOfWeek'] },
+        { label: 'Odds', cards: ['favoriteUnderdog', 'oddsRange', 'overUnder', 'dayOfWeek'] },
+      ],
+    },
+    {
+      label: 'Misc',
+      subsections: [
+        { label: 'Money', cards: ['potentialEarnings', 'flatBetProfit'] },
         { label: 'Notable Weeks', cards: ['biggestMisses', 'closestCalls'] },
       ],
     },
