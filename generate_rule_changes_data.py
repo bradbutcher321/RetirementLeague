@@ -21,6 +21,7 @@ Usage: python generate_rule_changes_data.py
 """
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 
@@ -109,8 +110,11 @@ def to_float(value):
 def load_money_by_year(spreadsheet):
     """{year: {"buy_in": int, "payouts": [amounts...] descending}} from the
     Money Tracker tab. Buy-in is the modal per-player amount that year;
-    payouts are every nonzero Earnings cell that year, largest first (each
-    entry is an actual recorded payout, ties included as separate entries)."""
+    payouts are every nonzero Earnings cell that year, largest first. This is
+    only a fallback for years the Rules tab doesn't document by category --
+    once a season has more than one payout category worth the same amount
+    (e.g. a superlative tied with a placing payout), a per-player earnings
+    total can't be split back into which category it came from."""
     ws = spreadsheet.worksheet("Money Tracker")
     rows = ws.get_values("A1:AB40")
     money_by_year = {}
@@ -127,6 +131,88 @@ def load_money_by_year(spreadsheet):
         payouts = sorted((int(e) for e in earnings if e), reverse=True)
         money_by_year[int(year_cell)] = {"buy_in": buy_in, "payouts": payouts}
     return money_by_year
+
+
+# Rules-tab payout line labels -> display label. Handles the two different
+# phrasings the sheet has used for the "highest points" superlatives.
+PAYOUT_LABELS = {
+    "winner payout": "1st Place",
+    "second place payout": "2nd Place",
+    "third place payout": "3rd Place",
+    "highest points for in a week": "Highest Points (Week)",
+    "highest points for reg season": "Highest Points (Season)",
+    "highest points all season": "Highest Points (Season)",
+}
+
+
+def load_money_categories(spreadsheet):
+    """{start_year: {"buy_in": int, "categories": [{"label", "amount"}...]}}
+    from the Rules tab's "20XX-20YY Season" text blocks, which name each
+    payout (including superlative bonuses the Money Tracker tab can't
+    distinguish from a placing payout once amounts collide). Order follows
+    the sheet's own line order."""
+    ws = spreadsheet.worksheet("Rules")
+    rows = ws.get_all_values()
+    col = 2
+
+    def cell(r):
+        return r[col].strip() if len(r) > col else ""
+
+    heading_pattern = re.compile(r"(\d{4})\s*-\s*\d{4}\s*season", re.IGNORECASE)
+    line_pattern = re.compile(r"^([^:]+):\s*\$?([\d,]+)\s*$")
+    categories_by_year = {}
+    i = 0
+    while i < len(rows):
+        m = heading_pattern.search(cell(rows[i]))
+        if m:
+            start_year = int(m.group(1))
+            j = i + 1
+            while j < len(rows) and not cell(rows[j]):
+                j += 1
+            body = cell(rows[j]) if j < len(rows) else ""
+            buy_in, categories = None, []
+            for line in body.split("\n"):
+                lm = line_pattern.match(line.strip())
+                if not lm:
+                    continue
+                label, amount = lm.group(1).strip().lower(), int(lm.group(2).replace(",", ""))
+                if label == "buy-in":
+                    buy_in = amount
+                elif label in PAYOUT_LABELS:
+                    categories.append({"label": PAYOUT_LABELS[label], "amount": amount})
+            if buy_in is not None and categories:
+                categories_by_year[start_year] = {"buy_in": buy_in, "categories": categories}
+            i = j + 1
+        else:
+            i += 1
+    return categories_by_year
+
+
+def resolve_payouts(year, money_by_year, categories_by_year):
+    """Prefer the Rules tab's named categories for this year -- falling
+    forward from the latest documented season whose buy-in still matches
+    this year's actual buy-in, since the category structure is a standing
+    rule, not a fact that changes every year. Falls back to anonymous
+    ordinal placings derived from actual earnings when no matching
+    documented structure exists (true for 2015-2020, before superlative
+    payouts existed)."""
+    money = money_by_year.get(year)
+    if not money:
+        return None, []
+    anchor_years = [
+        y for y, c in categories_by_year.items()
+        if y <= year and c["buy_in"] == money["buy_in"]
+    ]
+    if anchor_years:
+        return money["buy_in"], categories_by_year[max(anchor_years)]["categories"]
+    payouts = [{"label": f"{ordinal(i + 1)} Place", "amount": amt} for i, amt in enumerate(money["payouts"])]
+    return money["buy_in"], payouts
+
+
+def ordinal(n):
+    if 11 <= n % 100 <= 13:
+        return f"{n}th"
+    return f"{n}{ {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th') }"
 
 
 # --------------------------------------------------------------------------
@@ -199,16 +285,17 @@ def main():
     print("Loading D1 (teams -> managers)...")
     managers_by_year = load_managers_by_year()
 
-    print("Loading Google Sheet (Money Tracker tab)...")
+    print("Loading Google Sheet (Money Tracker + Rules tabs)...")
     spreadsheet = authorize().open_by_key(SHEET_ID)
     money_by_year = load_money_by_year(spreadsheet)
+    categories_by_year = load_money_categories(spreadsheet)
 
     def full_record(year):
         rec = rule_year(year, settings_by_year[year])
         rec["managers"] = managers_by_year.get(year, [])
-        money = money_by_year.get(year)
-        rec["buy_in"] = money["buy_in"] if money else None
-        rec["payouts"] = money["payouts"] if money else []
+        buy_in, payouts = resolve_payouts(year, money_by_year, categories_by_year)
+        rec["buy_in"] = buy_in
+        rec["payouts"] = payouts
         return rec
 
     records = {y: full_record(y) for y in years}
@@ -233,12 +320,13 @@ def main():
 
     current = dict(records[current_year])
     if not current["payouts"]:
-        # Current season likely in progress; show the most recent completed
-        # season's payouts as the reference point instead of nothing.
-        completed_years = [y for y in years if y != current_year and money_by_year.get(y, {}).get("payouts")]
-        if completed_years:
-            ref_year = max(completed_years)
-            current["payouts"] = money_by_year[ref_year]["payouts"]
+        # No buy-in recorded for the current year yet (e.g. a brand new
+        # season); show the most recent year that has one as a reference.
+        prior_years = [y for y in years if y != current_year and records[y]["payouts"]]
+        if prior_years:
+            ref_year = max(prior_years)
+            current["buy_in"] = records[ref_year]["buy_in"]
+            current["payouts"] = records[ref_year]["payouts"]
             current["payouts_year"] = ref_year
 
     output = {

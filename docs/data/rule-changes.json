@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T02:44:33.595674+00:00",
+  "generated_at": "2026-09-23T03:03:47.811003+00:00",
   "snapshots": [
     {
       "year": 2015,
@@ -51,8 +51,14 @@
       ],
       "buy_in": 50,
       "payouts": [
-        350,
-        50
+        {
+          "label": "1st Place",
+          "amount": 350
+        },
+        {
+          "label": "2nd Place",
+          "amount": 50
+        }
       ]
     },
     {
@@ -107,8 +113,14 @@
       ],
       "buy_in": 50,
       "payouts": [
-        450,
-        50
+        {
+          "label": "1st Place",
+          "amount": 450
+        },
+        {
+          "label": "2nd Place",
+          "amount": 50
+        }
       ]
     },
     {
@@ -163,8 +175,14 @@
       ],
       "buy_in": 100,
       "payouts": [
-        900,
-        100
+        {
+          "label": "1st Place",
+          "amount": 900
+        },
+        {
+          "label": "2nd Place",
+          "amount": 100
+        }
       ]
     },
     {
@@ -219,8 +237,14 @@
       ],
       "buy_in": 100,
       "payouts": [
-        900,
-        100
+        {
+          "label": "1st Place",
+          "amount": 900
+        },
+        {
+          "label": "2nd Place",
+          "amount": 100
+        }
       ]
     },
     {
@@ -271,8 +295,14 @@
       ],
       "buy_in": 100,
       "payouts": [
-        900,
-        100
+        {
+          "label": "1st Place",
+          "amount": 900
+        },
+        {
+          "label": "2nd Place",
+          "amount": 100
+        }
       ]
     },
     {
@@ -323,10 +353,22 @@
       ],
       "buy_in": 150,
       "payouts": [
-        1050,
-        150,
-        150,
-        150
+        {
+          "label": "1st Place",
+          "amount": 1050
+        },
+        {
+          "label": "2nd Place",
+          "amount": 150
+        },
+        {
+          "label": "Highest Points (Week)",
+          "amount": 150
+        },
+        {
+          "label": "Highest Points (Season)",
+          "amount": 150
+        }
       ]
     },
     {
@@ -379,10 +421,26 @@
       ],
       "buy_in": 200,
       "payouts": [
-        1400,
-        400,
-        400,
-        200
+        {
+          "label": "1st Place",
+          "amount": 1400
+        },
+        {
+          "label": "2nd Place",
+          "amount": 400
+        },
+        {
+          "label": "3rd Place",
+          "amount": 200
+        },
+        {
+          "label": "Highest Points (Week)",
+          "amount": 200
+        },
+        {
+          "label": "Highest Points (Season)",
+          "amount": 200
+        }
       ]
     },
     {
@@ -431,9 +489,26 @@
       ],
       "buy_in": 200,
       "payouts": [
-        1800,
-        400,
-        200
+        {
+          "label": "1st Place",
+          "amount": 1400
+        },
+        {
+          "label": "2nd Place",
+          "amount": 400
+        },
+        {
+          "label": "3rd Place",
+          "amount": 200
+        },
+        {
+          "label": "Highest Points (Week)",
+          "amount": 200
+        },
+        {
+          "label": "Highest Points (Season)",
+          "amount": 200
+        }
       ]
     },
     {
@@ -482,10 +557,26 @@
       ],
       "buy_in": 200,
       "payouts": [
-        1400,
-        400,
-        400,
-        200
+        {
+          "label": "1st Place",
+          "amount": 1400
+        },
+        {
+          "label": "2nd Place",
+          "amount": 400
+        },
+        {
+          "label": "3rd Place",
+          "amount": 200
+        },
+        {
+          "label": "Highest Points (Week)",
+          "amount": 200
+        },
+        {
+          "label": "Highest Points (Season)",
+          "amount": 200
+        }
       ]
     }
   ],
@@ -535,12 +626,27 @@
     ],
     "buy_in": 200,
     "payouts": [
-      1400,
-      400,
-      400,
-      200
-    ],
-    "payouts_year": 2025
+      {
+        "label": "1st Place",
+        "amount": 1400
+      },
+      {
+        "label": "2nd Place",
+        "amount": 400
+      },
+      {
+        "label": "3rd Place",
+        "amount": 200
+      },
+      {
+        "label": "Highest Points (Week)",
+        "amount": 200
+      },
+      {
+        "label": "Highest Points (Season)",
+        "amount": 200
+      }
+    ]
   },
   "changes": [
     {

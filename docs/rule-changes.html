@@ -102,11 +102,6 @@
     if (d.toDateString() === new Date().toDateString()) return time;
     return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
   }
-  function ordinal(n) {
-    const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-  }
-
   function section(title, lines, footnote, wide) {
     return `<div class="rules-section${wide ? ' rules-section-wide' : ''}"><div class="rules-section-title">${esc(title)}</div>${lines.join('')}${footnote ? `<div class="rules-footnote">${footnote}</div>` : ''}</div>`;
   }
@@ -117,7 +112,7 @@
   function moneyLines(rec) {
     if (!rec.buy_in) return [];
     const lines = [line('Buy-in', '$' + rec.buy_in)];
-    rec.payouts.forEach((amt, i) => lines.push(line(`${ordinal(i + 1)} Place`, '$' + amt)));
+    rec.payouts.forEach(p => lines.push(line(p.label, '$' + p.amount)));
     return lines;
   }
 
