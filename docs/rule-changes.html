@@ -18,22 +18,27 @@
   }
   .year-tab:hover{ border-color: var(--gold); color: var(--text); }
   .year-tab.active{ background: rgba(186,155,55,0.12); border-color: var(--gold); color: var(--gold); }
+  .year-tab.is-current{ border-color: var(--turf-dim); }
+  .year-tab.is-current:hover{ border-color: var(--turf); color: var(--text); }
+  .year-tab.is-current.active{ background: rgba(76,154,107,0.14); border-color: var(--turf); color: var(--turf); }
 
-  .compare-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
-  @media (max-width: 720px){ .compare-grid{ grid-template-columns: 1fr; } }
-
-  .rules-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); }
+  .rules-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); max-width: 640px; }
   .rules-card.is-current{ border-top-color: var(--turf); }
   .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
   .rules-tag{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
   .rules-card.is-current .rules-tag{ color: var(--turf); }
   .rules-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; }
-  .rules-body{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--line); }
+  .rules-body{ display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); }
+  @media (max-width: 520px){ .rules-body{ grid-template-columns: 1fr; } }
   .rules-section{ background: var(--surface); padding: 16px 20px; }
-  .rules-section-wide{ grid-column: 1 / -1; }
   .rules-section-title{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
-  .rules-line{ font-size: 0.9rem; padding: 3px 0; color: var(--text); }
+  .rules-line{ font-size: 0.9rem; padding: 3px 6px; margin: 0 -6px; color: var(--text); border-radius: 3px; }
   .rules-line .label{ color: var(--text-dim); }
+  .rules-line.line-changed{ background: rgba(186,155,55,0.1); }
+  .rules-line.line-added{ background: rgba(76,154,107,0.1); color: var(--turf); }
+  .rules-line.line-removed{ background: rgba(192,87,75,0.1); color: var(--loss); text-decoration: line-through; }
+  .rules-line .was{ color: var(--text-dim); text-decoration: line-through; margin-right: 4px; }
+  .rules-line .now{ color: var(--gold); font-weight: 700; }
   .rules-footnote{ color: var(--text-dim); font-size: 0.76rem; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
   .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
 
@@ -42,6 +47,8 @@
     background: var(--surface-raised); border: 1px solid var(--line); color: var(--text);
     font-size: 0.82rem; font-weight: 600; padding: 4px 11px; border-radius: 999px;
   }
+  .manager-chip.added{ background: rgba(76,154,107,0.14); border-color: var(--turf-dim); color: var(--turf); }
+  .manager-chip.removed{ background: rgba(192,87,75,0.14); border-color: var(--loss); color: var(--loss); text-decoration: line-through; }
 
   /* ---------- Timeline ---------- */
   .timeline{ position: relative; padding-left: 30px; }
@@ -76,10 +83,7 @@
 
     <section id="compare-section">
       <div class="tab-row" id="year-tab-row"></div>
-      <div class="compare-grid">
-        <div id="selected-container"><div class="loading-row">Loading rules…</div></div>
-        <div id="current-container"></div>
-      </div>
+      <div id="selected-container"><div class="loading-row">Loading rules…</div></div>
     </section>
 
     <section id="changes-section">
@@ -102,40 +106,96 @@
     if (d.toDateString() === new Date().toDateString()) return time;
     return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
   }
-  function section(title, lines, footnote, wide) {
-    return `<div class="rules-section${wide ? ' rules-section-wide' : ''}"><div class="rules-section-title">${esc(title)}</div>${lines.join('')}${footnote ? `<div class="rules-footnote">${footnote}</div>` : ''}</div>`;
-  }
-  function line(label, value) {
-    return `<div class="rules-line"><span class="label">${esc(label)}:</span> ${esc(value)}</div>`;
+
+  function section(title, lines, footnote) {
+    if (!lines.length) return '';
+    return `<div class="rules-section"><div class="rules-section-title">${esc(title)}</div>${lines.join('')}${footnote ? `<div class="rules-footnote">${footnote}</div>` : ''}</div>`;
   }
 
-  function moneyLines(rec) {
-    if (!rec.buy_in) return [];
-    const lines = [line('Buy-in', '$' + rec.buy_in)];
-    rec.payouts.forEach(p => lines.push(line(p.label, '$' + p.amount)));
-    return lines;
+  // A "line" renders plain unless prevVal is given and differs from val, in
+  // which case it renders as old → new, highlighted.
+  function scalarLine(label, val, prevVal) {
+    if (prevVal === undefined || prevVal === val) {
+      return `<div class="rules-line"><span class="label">${esc(label)}:</span> ${esc(val)}</div>`;
+    }
+    return `<div class="rules-line line-changed"><span class="label">${esc(label)}:</span> <span class="was">${esc(prevVal)}</span>→<span class="now">${esc(val)}</span></div>`;
   }
 
-  function rulesCard(rec, tag) {
-    const settingsLines = [
-      line('Teams', rec.team_count),
-      line('Playoff Teams', rec.playoff_team_count),
-      line('Scoring', rec.ppr_label),
-      line('Median Scoring', rec.median_scoring ? 'Yes' : 'No'),
-      line('Waiver Type', rec.waiver_type),
-      line('Keepers', rec.keeper_count || 'None'),
+  function settingsSection(rec, prev) {
+    const rows = [
+      ['Teams', rec.team_count, prev && prev.team_count],
+      ['Playoff Teams', rec.playoff_team_count, prev && prev.playoff_team_count],
+      ['Scoring', rec.ppr_label, prev && prev.ppr_label],
+      ['Median Scoring', rec.median_scoring ? 'Yes' : 'No', prev && (prev.median_scoring ? 'Yes' : 'No')],
+      ['Waiver Type', rec.waiver_type, prev && prev.waiver_type],
+      ['Keepers', rec.keeper_count || 'None', prev && (prev.keeper_count || 'None')],
     ];
-    const rosterLines = rec.roster_structure.map(r => `<div class="rules-line">${r.count} ${esc(r.position)}</div>`);
-    const sections = [section('League Settings', settingsLines), section('Roster Structure', rosterLines)];
-    const moneyFootnote = rec.payouts_year && rec.payouts_year !== rec.year
+    return section('League Settings', rows.map(([label, val, prevVal]) => scalarLine(label, val, prev ? prevVal : undefined)));
+  }
+
+  function rosterSection(rec, prev) {
+    if (!prev) {
+      return section('Roster Structure', rec.roster_structure.map(r => `<div class="rules-line">${r.count} ${esc(r.position)}</div>`));
+    }
+    const currMap = Object.fromEntries(rec.roster_structure.map(r => [r.position, r.count]));
+    const prevMap = Object.fromEntries(prev.roster_structure.map(r => [r.position, r.count]));
+    const order = rec.roster_structure.map(r => r.position);
+    Object.keys(prevMap).forEach(p => { if (!order.includes(p)) order.push(p); });
+    const lines = order.map(pos => {
+      const c = currMap[pos], p = prevMap[pos];
+      if (c === undefined) return `<div class="rules-line line-removed">${p} ${esc(pos)}</div>`;
+      if (p === undefined) return `<div class="rules-line line-added">+ ${c} ${esc(pos)}</div>`;
+      if (p === c) return `<div class="rules-line">${c} ${esc(pos)}</div>`;
+      return `<div class="rules-line line-changed">${esc(pos)}: <span class="was">${p}</span>→<span class="now">${c}</span></div>`;
+    });
+    return section('Roster Structure', lines);
+  }
+
+  function moneySection(rec, prev) {
+    if (!rec.buy_in) return '';
+    const footnote = rec.payouts_year && rec.payouts_year !== rec.year
       ? `${rec.year} season in progress — payouts shown are from the ${rec.payouts_year} season`
       : '';
-    const money = moneyLines(rec);
-    if (money.length) sections.push(section('Money', money, moneyFootnote));
-    if (rec.managers && rec.managers.length) {
-      const chips = `<div class="manager-chips">${rec.managers.map(m => `<span class="manager-chip">${esc(m)}</span>`).join('')}</div>`;
-      sections.push(section(`Managers (${rec.managers.length})`, [chips], '', true));
+    const lines = [scalarLine('Buy-in', '$' + rec.buy_in, prev && prev.buy_in ? '$' + prev.buy_in : undefined)];
+    if (!prev) {
+      rec.payouts.forEach(p => lines.push(`<div class="rules-line"><span class="label">${esc(p.label)}:</span> $${p.amount}</div>`));
+    } else {
+      const prevMap = Object.fromEntries(prev.payouts.map(p => [p.label, p.amount]));
+      const order = rec.payouts.map(p => p.label);
+      Object.keys(prevMap).forEach(l => { if (!order.includes(l)) order.push(l); });
+      order.forEach(label => {
+        const currAmt = rec.payouts.find(p => p.label === label);
+        const c = currAmt ? currAmt.amount : undefined;
+        const p = prevMap[label];
+        if (c === undefined) lines.push(`<div class="rules-line line-removed">${esc(label)}: $${p}</div>`);
+        else if (p === undefined) lines.push(`<div class="rules-line line-added">+ ${esc(label)}: $${c}</div>`);
+        else if (p === c) lines.push(`<div class="rules-line"><span class="label">${esc(label)}:</span> $${c}</div>`);
+        else lines.push(`<div class="rules-line line-changed"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→<span class="now">$${c}</span></div>`);
+      });
     }
+    return section('Money', lines, footnote);
+  }
+
+  function managersSection(rec, prev) {
+    if (!rec.managers.length) return '';
+    if (!prev) {
+      const chips = rec.managers.map(m => `<span class="manager-chip">${esc(m)}</span>`).join('');
+      return section(`Managers (${rec.managers.length})`, [`<div class="manager-chips">${chips}</div>`]);
+    }
+    const prevSet = new Set(prev.managers);
+    const currSet = new Set(rec.managers);
+    const order = [...rec.managers, ...prev.managers.filter(m => !currSet.has(m))].sort();
+    const chips = order.map(m => {
+      if (currSet.has(m) && prevSet.has(m)) return `<span class="manager-chip">${esc(m)}</span>`;
+      if (currSet.has(m)) return `<span class="manager-chip added">+${esc(m)}</span>`;
+      return `<span class="manager-chip removed">-${esc(m)}</span>`;
+    }).join('');
+    return section(`Managers (${rec.managers.length})`, [`<div class="manager-chips">${chips}</div>`]);
+  }
+
+  function yearCard(rec, prev, tag) {
+    const sections = [settingsSection(rec, prev), rosterSection(rec, prev), moneySection(rec, prev), managersSection(rec, prev)]
+      .filter(Boolean);
     return `
       <div class="rules-card${tag === 'Current' ? ' is-current' : ''}">
         <div class="rules-head">
@@ -170,23 +230,33 @@
     .then(data => {
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
 
+      // The selectable years are every documented snapshot plus "now",
+      // appended only if it isn't already the last snapshot (i.e. the
+      // current year's rules haven't changed since the last documented one).
+      const list = [...data.snapshots];
+      const lastYear = list[list.length - 1].year;
+      if (data.current.year !== lastYear) list.push(data.current);
+
       const tabRow = document.getElementById('year-tab-row');
       const selectedContainer = document.getElementById('selected-container');
-      tabRow.innerHTML = data.snapshots.map((s, i) => `<button type="button" class="year-tab${i === 0 ? ' active' : ''}" data-i="${i}">${s.year}</button>`).join('');
+      tabRow.innerHTML = list.map((rec, i) => {
+        const isCurrent = rec.year === data.current.year;
+        return `<button type="button" class="year-tab${isCurrent ? ' is-current' : ''}${i === 0 ? ' active' : ''}" data-i="${i}">${rec.year}${isCurrent ? ' · Current' : ''}</button>`;
+      }).join('');
 
       function showYear(i) {
         [...tabRow.children].forEach((btn, idx) => btn.classList.toggle('active', idx === i));
-        const rec = data.snapshots[i];
-        const tag = i === 0 ? 'Original' : '';
-        selectedContainer.innerHTML = rulesCard(rec, tag);
+        const rec = list[i];
+        const prev = i === 0 ? null : list[i - 1];
+        const isCurrent = rec.year === data.current.year;
+        const tag = i === 0 ? 'Starting Rules' : isCurrent ? 'Current' : '';
+        selectedContainer.innerHTML = yearCard(rec, prev, tag);
       }
       tabRow.addEventListener('click', e => {
         const btn = e.target.closest('.year-tab');
         if (btn) showYear(Number(btn.dataset.i));
       });
       showYear(0);
-
-      document.getElementById('current-container').innerHTML = rulesCard(data.current, 'Current');
 
       const changesContainer = document.getElementById('changes-container');
       if (!data.changes.length) {
