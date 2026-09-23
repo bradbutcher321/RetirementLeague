@@ -40,10 +40,10 @@
 
   /* Season/scope selector: solid-filled toggle, the most prominent of the
      three levels so it doesn't read as just another row of tabs. */
-  .scope-row{ display: inline-flex; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 2px; margin-bottom: 18px; }
-  .scope-btn{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 700; font-size: 0.85rem; padding: 8px 18px; border-radius: 6px; cursor: pointer; }
+  .scope-row{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .scope-btn{ background: var(--surface-raised); border: 1px solid var(--line); color: var(--text-dim); font-family: var(--body); font-weight: 700; font-size: 0.85rem; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
   .scope-btn:hover:not(.on){ color: var(--text); }
-  .scope-btn.on{ background: var(--gold); color: #050505; }
+  .scope-btn.on{ background: var(--gold); border-color: var(--gold); color: #050505; }
 
   /* Category tabs: outline pills. */
   .tabs{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
