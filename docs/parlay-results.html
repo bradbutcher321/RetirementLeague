@@ -140,12 +140,17 @@
   .ln .rk{ font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); text-align: center; font-size: 1.2rem; }
   .ln .tm{ font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ln .meta{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ln.rec{ border-color: var(--turf); background: rgba(76,154,107,0.07); }
-  .ln.rec .rk{ color: var(--turf); }
+  .ln.rec.up{ border-color: var(--turf); background: rgba(76,154,107,0.07); }
+  .ln.rec.up .rk{ color: var(--turf); }
+  .ln.rec.down{ border-color: var(--loss); background: rgba(192,87,75,0.07); }
+  .ln.rec.down .rk{ color: var(--loss); }
   .row-stats{ display: flex; gap: 14px; }
   .row-stat{ text-align: center; min-width: 34px; }
   .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row-stat b.up{ color: var(--turf); }
+  .row-stat b.down{ color: var(--loss); }
   .row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
+  .ln-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
   /* ---------- Histograms ---------- */
   .hist-row{ display: grid; grid-template-columns: 26px 1fr 30px; align-items: center; gap: 10px; padding: 5px 16px; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
@@ -298,13 +303,24 @@
   const pill = (text, up) => `<span class="pill ${up ? 'up' : 'down'}">${text}</span>`;
   const winPill = pct => pct === null || pct === undefined ? '<span class="pill flat">—</span>' : pill(fmtPct(pct), pct >= 50);
   const signedMoney = n => (n < 0 ? '-' : '') + fmtMoney(Math.abs(n));
-  const stats = list => `<div class="row-stats">${list.map(([v, l]) => `<div class="row-stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+  // list entries are [value, label, tone?] -- tone 'up'/'down' colors just that number.
+  const stats = list => `<div class="row-stats">${list.map(([v, l, tone]) => `<div class="row-stat"><b class="${tone || ''}">${v}</b><span>${l}</span></div>`).join('')}</div>`;
+  // Highlights every item tied for the max (or min) of valueFn's result, by
+  // setting item.highlight to the given tone -- used so "tied for the lead"
+  // (or "tied for last") picks out every row that qualifies, not just one.
+  function highlightExtreme(items, valueFn, which, tone) {
+    if (!items.length) return;
+    const vals = items.map(valueFn);
+    const target = which === 'max' ? Math.max(...vals) : Math.min(...vals);
+    items.forEach((it, i) => { if (vals[i] === target) it.highlight = tone; });
+  }
 
-  // items: { name, sub/detail, right, unranked }. Ranked lists (the default)
-  // number every row and pick out #1 the way Game Records does -- a colored
-  // left border, no separate "top 3" tile treatment. Pass podium: false for
-  // lists that are buckets, not rankings (e.g. Favorite vs. Underdog), which
-  // renders as a plain unnumbered list instead.
+  // items: { name, sub/detail, right, unranked, highlight }. Ranked lists
+  // (the default) number every row; unless an item sets `highlight`
+  // ('up'/'down') explicitly, #1 is picked out the way Game Records does --
+  // a colored left border, no separate "top 3" tile treatment. Pass
+  // podium: false for lists that are buckets, not rankings (e.g. Favorite
+  // vs. Underdog), which renders as a plain unnumbered list instead.
   function rankedCard(title, items, opts = {}) {
     const ranked = opts.podium !== false;
     let rank = 0;
@@ -312,8 +328,9 @@
       const body = `<div style="min-width:0"><div class="tm">${esc(it.name)}</div>${it.detail || it.sub ? `<div class="meta">${esc(it.detail || it.sub)}</div>` : ''}</div>${it.right || '<span></span>'}`;
       if (!ranked) return `<div class="ln norank">${body}</div>`;
       if (!it.unranked) rank++;
-      const isTop = rank === 1 && !it.unranked;
-      return `<div class="ln${isTop ? ' rec' : ''}"><div class="rk">${it.unranked ? '–' : rank}</div>${body}</div>`;
+      const auto = rank === 1 && !it.unranked ? 'up' : null;
+      const tone = it.highlight !== undefined ? it.highlight : auto;
+      return `<div class="ln${tone ? ` rec ${tone}` : ''}"><div class="rk">${it.unranked ? '–' : rank}</div>${body}</div>`;
     });
     const cols = `<div class="cols">${rows.join('')}</div>`;
     return `
@@ -375,47 +392,78 @@
 
     individualWL: s => rankedCard('Individual W/L', wlItems(s.individual_wl, 'player')),
     averageOdds: s => rankedCard('Average Odds', s.average_odds.map(r => ({
-      name: r.player, right: stats([[fmtOdds(r.avg_odds), 'Odds']]),
+      name: r.player, right: `<span class="ln-val">${fmtOdds(r.avg_odds)}</span>`,
     }))),
     winStreaks: s => {
-      const winStreaks = [...s.streaks].sort((a, b) => b.longest_win - a.longest_win || b.current - a.current);
-      return rankedCard('Win Streaks', winStreaks.map(r => ({
-        name: r.player, sub: `Current ${Math.max(r.current, 0)}`,
-        right: stats([[r.longest_win, 'Longest'], [Math.max(r.current, 0), 'Current']]),
-      })));
+      const rows = [...s.streaks].sort((a, b) => b.longest_win - a.longest_win || b.current - a.current)
+        .map(r => ({ player: r.player, longest_win: r.longest_win, curWin: Math.max(r.current, 0) }));
+      const maxLongest = Math.max(...rows.map(r => r.longest_win));
+      const maxCurrent = Math.max(...rows.map(r => r.curWin));
+      return rankedCard('Win Streaks', rows.map(r => {
+        const longestTie = r.longest_win === maxLongest;
+        const currentTie = maxCurrent > 0 && r.curWin === maxCurrent;
+        return {
+          name: r.player, sub: `Current ${r.curWin}`,
+          right: stats([[r.longest_win, 'Longest', longestTie ? 'up' : null], [r.curWin, 'Current', currentTie ? 'up' : null]]),
+          highlight: (longestTie || currentTie) ? 'up' : null,
+        };
+      }));
     },
     lossStreaks: s => {
-      const lossStreaks = [...s.streaks].sort((a, b) => b.longest_loss - a.longest_loss || a.current - b.current);
-      return rankedCard('Losing Streaks', lossStreaks.map(r => ({
-        name: r.player, sub: `Current ${Math.max(-r.current, 0)}`,
-        right: stats([[r.longest_loss, 'Longest'], [Math.max(-r.current, 0), 'Current']]),
-      })));
+      const rows = [...s.streaks].sort((a, b) => b.longest_loss - a.longest_loss || a.current - b.current)
+        .map(r => ({ player: r.player, longest_loss: r.longest_loss, curLoss: Math.max(-r.current, 0) }));
+      const maxLongest = Math.max(...rows.map(r => r.longest_loss));
+      const maxCurrent = Math.max(...rows.map(r => r.curLoss));
+      return rankedCard('Losing Streaks', rows.map(r => {
+        const longestTie = r.longest_loss === maxLongest;
+        const currentTie = maxCurrent > 0 && r.curLoss === maxCurrent;
+        return {
+          name: r.player, sub: `Current ${r.curLoss}`,
+          right: stats([[r.longest_loss, 'Longest', longestTie ? 'down' : null], [r.curLoss, 'Current', currentTie ? 'down' : null]]),
+          highlight: (longestTie || currentTie) ? 'down' : null,
+        };
+      }));
     },
 
     potentialEarnings: s => {
       const earnings = s.potential_earnings.map(r => ({ player: r.player, net: r.winnings - r.losses })).sort((a, b) => b.net - a.net);
-      return rankedCard('Potential Earnings', earnings.map(r => ({
-        name: r.player, right: pill(signedMoney(r.net), r.net >= 0),
-      })));
+      const items = earnings.map(r => ({ name: r.player, right: pill(signedMoney(r.net), r.net >= 0), net: r.net }));
+      highlightExtreme(items, it => it.net, 'min', 'down');
+      return rankedCard('Potential Earnings', items);
     },
-    flatBetProfit: s => rankedCard('Flat Bet Profit', s.flat_bet_profit.map(r => ({
-      name: r.player, sub: plural(r.bets, 'bet'), right: pill(signedMoney(r.profit), r.profit >= 0),
-    }))),
+    flatBetProfit: s => {
+      const items = s.flat_bet_profit.map(r => ({ name: r.player, sub: plural(r.bets, 'bet'), right: pill(signedMoney(r.profit), r.profit >= 0), profit: r.profit }));
+      highlightExtreme(items, it => it.profit, 'min', 'down');
+      return rankedCard('Flat Bet Profit', items);
+    },
 
-    biggestHit: s => rankedCard('Biggest Hit', s.biggest_hits.map(r => ({
-      name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
-    }))),
-    safestLoss: s => rankedCard('Safest Loss', s.safest_losses.map(r => ({
-      name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
-    }))),
+    biggestHit: s => {
+      const items = s.biggest_hits.map(r => ({ name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick, odds: r.odds }));
+      highlightExtreme(items, it => it.odds, 'max', 'up');
+      return rankedCard('Biggest Hit', items);
+    },
+    safestLoss: s => {
+      const items = s.safest_losses.map(r => ({ name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick, odds: r.odds }));
+      highlightExtreme(items, it => it.odds, 'min', 'down');
+      return rankedCard('Safest Loss', items);
+    },
 
-    weeklySackos: s => rankedCard('Weekly Sacko Count', s.weekly_sackos.map(r => ({
-      name: r.player, sub: fmtMoney(r.cost), right: stats([[r.sackos, r.sackos === 1 ? 'Sacko' : 'Sackos']]),
-    }))),
-    parlaysKilled: s => rankedCard('Parlays Killed', s.parlays_killed.map(r => ({
-      name: r.player, sub: plural(r.kill_chances, 'chance'),
-      right: stats([[r.kills.toFixed(1), 'Kills'], [r.avg_bet_position === null ? '—' : r.avg_bet_position.toFixed(1), 'Avg Pos']]),
-    }))),
+    weeklySackos: s => {
+      const items = s.weekly_sackos.map(r => ({ name: r.player, sub: fmtMoney(r.cost), right: stats([[r.sackos, r.sackos === 1 ? 'Sacko' : 'Sackos']]), sackos: r.sackos }));
+      highlightExtreme(items, it => it.sackos, 'max', 'down');
+      highlightExtreme(items, it => it.sackos, 'min', 'up');
+      return rankedCard('Weekly Sacko Count', items);
+    },
+    parlaysKilled: s => {
+      const items = s.parlays_killed.map(r => ({
+        name: r.player, sub: plural(r.kill_chances, 'chance'),
+        right: stats([[r.kills.toFixed(1), 'Kills'], [r.avg_bet_position === null ? '—' : r.avg_bet_position.toFixed(1), 'Avg Pos']]),
+        kills: r.kills,
+      }));
+      highlightExtreme(items, it => it.kills, 'max', 'down');
+      highlightExtreme(items, it => it.kills, 'min', 'up');
+      return rankedCard('Parlays Killed', items);
+    },
 
     sportWL: s => rankedCard('Sport W/L', condensedWlItems(s.sport_wl, 'sport')),
     betTypeWL: s => rankedCard('Bet Type W/L', condensedWlItems(s.bet_type_wl, 'bet_type')),
@@ -449,7 +497,7 @@
       label: 'Bet Breakdowns',
       subsections: [
         { label: 'Bet Type', cards: ['sportWL', 'betTypeWL'] },
-        { label: 'Odds', cards: ['favoriteUnderdog', 'oddsRange', 'overUnder', 'dayOfWeek'] },
+        { label: 'Odds', cards: ['favoriteUnderdog', 'overUnder', 'dayOfWeek', 'oddsRange'] },
       ],
     },
     {
