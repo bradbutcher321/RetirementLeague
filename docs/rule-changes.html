@@ -25,7 +25,7 @@
   .rules-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); max-width: 640px; }
   .rules-card.is-current{ border-top-color: var(--turf); }
   .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
-  .rules-tag{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .rules-tag{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; min-height: 1em; }
   .rules-card.is-current .rules-tag{ color: var(--turf); }
   .rules-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; }
   .rules-body{ display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); }
@@ -91,7 +91,7 @@
       <div id="changes-container"></div>
     </section>
 
-    <footer>Rules and manager history from ESPN Fantasy · buy-in and payouts from the league's money tracker</footer>
+    <footer>Rules and manager history from ESPN Fantasy · Money from the league sheet</footer>
   </div>
 
 <script src="nav.js"></script>
@@ -199,7 +199,7 @@
     return `
       <div class="rules-card${tag === 'Current' ? ' is-current' : ''}">
         <div class="rules-head">
-          ${tag ? `<div class="rules-tag">${esc(tag)}</div>` : ''}
+          <div class="rules-tag">${tag ? esc(tag) : ''}</div>
           <div class="rules-title">${rec.year}</div>
         </div>
         <div class="rules-body">${sections.join('')}</div>
@@ -241,7 +241,7 @@
       const selectedContainer = document.getElementById('selected-container');
       tabRow.innerHTML = list.map((rec, i) => {
         const isCurrent = rec.year === data.current.year;
-        return `<button type="button" class="year-tab${isCurrent ? ' is-current' : ''}${i === 0 ? ' active' : ''}" data-i="${i}">${rec.year}${isCurrent ? ' · Current' : ''}</button>`;
+        return `<button type="button" class="year-tab${isCurrent ? ' is-current' : ''}${i === 0 ? ' active' : ''}" data-i="${i}">${isCurrent ? 'Current' : rec.year}</button>`;
       }).join('');
 
       function showYear(i) {
