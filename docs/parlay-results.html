@@ -130,8 +130,7 @@
 
   /* Ranked rows: Game Records' .cols/.ln pattern -- a plain two-column list,
      rank 1 picked out with a colored left border instead of a podium tile. */
-  .cols{ display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
-  @media (max-width: 720px){ .cols{ grid-template-columns: 1fr; } }
+  .cols{ display: flex; flex-direction: column; }
   .ln{
     display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
     background: var(--surface-raised); border: 1px solid var(--line); border-left: 3px solid var(--turf);
@@ -316,8 +315,7 @@
       const isTop = rank === 1 && !it.unranked;
       return `<div class="ln${isTop ? ' rec' : ''}"><div class="rk">${it.unranked ? '–' : rank}</div>${body}</div>`;
     });
-    const half = Math.ceil(rows.length / 2);
-    const cols = `<div class="cols"><div>${rows.slice(0, half).join('')}</div><div>${rows.slice(half).join('')}</div></div>`;
+    const cols = `<div class="cols">${rows.join('')}</div>`;
     return `
       <div class="stat-card">
         <div class="stat-card-title">${title}</div>
