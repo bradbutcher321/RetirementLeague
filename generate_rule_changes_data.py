@@ -1,18 +1,21 @@
 """
 Builds docs/data/rule-changes.json: a year-by-year rules timeline sourced
-from D1's league_settings (real ESPN rule/format history, every year
-2015-present) plus the Google Sheet's "Money Tracker" tab (actual buy-in and
-payout amounts per year -- there's no ESPN equivalent for money).
+from D1's league_settings and teams tables (real ESPN rule/format and
+manager-roster history, every year 2015-present) plus the Google Sheet's
+"Money Tracker" tab (actual buy-in and payout amounts per year -- there's
+no ESPN equivalent for money).
 
 Shape:
-  - "baseline": the very first season's full rules + money, in full.
-  - "changes": one entry per later year that changed *something* from the
-    year before (format or buy-in); years with no change are omitted
-    entirely so the timeline only calls out what's different.
-  - "current": the latest season's full rules + money, in full, same shape
-    as baseline. If the latest season's payouts aren't final yet (still in
-    progress), the payouts shown fall back to the most recent completed
-    season's and say so via "payouts_year".
+  - "snapshots": one full rules+money+managers record per year that changed
+    *something* from the year before (format, buy-in, or who's in the
+    league) -- always starts with the very first season. This is the list
+    the page's year tabs are built from.
+  - "current": the latest season's full record, same shape as a snapshot.
+    If the latest season's payouts aren't final yet (still in progress),
+    the payouts shown fall back to the most recent completed season's and
+    say so via "payouts_year".
+  - "changes": one entry per snapshot year after the first, describing what
+    changed from the year before (used for the timeline below the tabs).
 
 Usage: python generate_rule_changes_data.py
 """
@@ -71,6 +74,23 @@ def rule_year(year, settings):
         "waiver_type": "FAAB" if settings.get("faab") else "Standard priority waivers",
         "roster_structure": roster_structure(settings.get("position_slot_counts")),
     }
+
+
+# --------------------------------------------------------------------------
+# D1 managers overlay (teams table: who owned a team each year)
+# --------------------------------------------------------------------------
+
+def load_managers_by_year():
+    """{year: [manager nicknames...] sorted alphabetically} from D1's teams
+    table, resolved through history_lib's hand-verified sheet-nickname map
+    so names match what the Franchise/Overview pages already call people
+    (e.g. "Joe G", "Chappy") instead of raw ESPN account names."""
+    rows = hl.d1_query("SELECT year, owner_espn_id FROM teams ORDER BY year")
+    managers_by_year = {}
+    for r in rows:
+        name = hl.ESPN_ID_TO_SHEET_NAME.get(r["owner_espn_id"], r["owner_espn_id"])
+        managers_by_year.setdefault(r["year"], set()).add(name)
+    return {y: sorted(names) for y, names in managers_by_year.items()}
 
 
 # --------------------------------------------------------------------------
@@ -133,6 +153,14 @@ def roster_diff(prev_list, curr_list):
     return f"Roster: {', '.join(parts)}" if parts else None
 
 
+def managers_diff(prev_managers, curr_managers):
+    prev, curr = set(prev_managers or []), set(curr_managers or [])
+    added = sorted(curr - prev)
+    removed = sorted(prev - curr)
+    parts = [f"+{n}" for n in added] + [f"-{n}" for n in removed]
+    return f"Managers: {', '.join(parts)}" if parts else None
+
+
 def diff_entry(prev, curr, prev_money, curr_money):
     changes = []
     if prev["team_count"] != curr["team_count"]:
@@ -152,6 +180,9 @@ def diff_entry(prev, curr, prev_money, curr_money):
         changes.append(roster)
     if curr_money and prev_money and prev_money["buy_in"] != curr_money["buy_in"]:
         changes.append(f"Buy-in: ${prev_money['buy_in']} → ${curr_money['buy_in']}")
+    managers = managers_diff(prev.get("managers"), curr.get("managers"))
+    if managers:
+        changes.append(managers)
     return changes
 
 
@@ -165,34 +196,42 @@ def main():
     settings_by_year = {r["year"]: json.loads(r["settings_json"]) for r in rows}
     years = sorted(settings_by_year)
 
+    print("Loading D1 (teams -> managers)...")
+    managers_by_year = load_managers_by_year()
+
     print("Loading Google Sheet (Money Tracker tab)...")
     spreadsheet = authorize().open_by_key(SHEET_ID)
     money_by_year = load_money_by_year(spreadsheet)
 
-    rule_by_year = {y: rule_year(y, settings_by_year[y]) for y in years}
-
     def full_record(year):
-        rec = dict(rule_by_year[year])
+        rec = rule_year(year, settings_by_year[year])
+        rec["managers"] = managers_by_year.get(year, [])
         money = money_by_year.get(year)
         rec["buy_in"] = money["buy_in"] if money else None
         rec["payouts"] = money["payouts"] if money else []
         return rec
 
-    baseline_year = years[0]
+    records = {y: full_record(y) for y in years}
     current_year = years[-1]
-    baseline = full_record(baseline_year)
 
+    # A year gets its own snapshot (and a change entry) whenever the diff
+    # against the year before is non-empty; the very first year always
+    # starts the list since there's nothing before it to diff against.
+    snapshot_years = [years[0]]
     changes = []
     for i in range(1, len(years)):
         prev_year, curr_year = years[i - 1], years[i]
         delta = diff_entry(
-            rule_by_year[prev_year], rule_by_year[curr_year],
+            records[prev_year], records[curr_year],
             money_by_year.get(prev_year), money_by_year.get(curr_year),
         )
         if delta:
+            snapshot_years.append(curr_year)
             changes.append({"year": curr_year, "changes": delta})
 
-    current = full_record(current_year)
+    snapshots = [records[y] for y in snapshot_years]
+
+    current = dict(records[current_year])
     if not current["payouts"]:
         # Current season likely in progress; show the most recent completed
         # season's payouts as the reference point instead of nothing.
@@ -204,14 +243,14 @@ def main():
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "baseline": baseline,
-        "changes": changes,
+        "snapshots": snapshots,
         "current": current,
+        "changes": changes,
     }
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
-    print(f"Wrote baseline ({baseline_year}), {len(changes)} change years, current ({current_year}) to {OUTPUT_PATH}")
+    print(f"Wrote {len(snapshots)} snapshots ({snapshot_years}), {len(changes)} change years, current ({current_year}) to {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":

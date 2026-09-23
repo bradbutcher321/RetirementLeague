@@ -10,17 +10,38 @@
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
 <style>
+  .tab-row{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .year-tab{
+    background: var(--surface); border: 1px solid var(--line); color: var(--text-dim);
+    font-family: var(--body); font-size: 0.86rem; font-weight: 600; padding: 9px 16px;
+    border-radius: 999px; cursor: pointer;
+  }
+  .year-tab:hover{ border-color: var(--gold); color: var(--text); }
+  .year-tab.active{ background: rgba(186,155,55,0.12); border-color: var(--gold); color: var(--gold); }
+
+  .compare-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 720px){ .compare-grid{ grid-template-columns: 1fr; } }
+
   .rules-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); }
+  .rules-card.is-current{ border-top-color: var(--turf); }
   .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
+  .rules-tag{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .rules-card.is-current .rules-tag{ color: var(--turf); }
   .rules-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; }
-  .rules-note{ color: var(--text-dim); font-size: 0.8rem; margin-top: 3px; }
   .rules-body{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--line); }
   .rules-section{ background: var(--surface); padding: 16px 20px; }
+  .rules-section-wide{ grid-column: 1 / -1; }
   .rules-section-title{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
   .rules-line{ font-size: 0.9rem; padding: 3px 0; color: var(--text); }
   .rules-line .label{ color: var(--text-dim); }
   .rules-footnote{ color: var(--text-dim); font-size: 0.76rem; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
   .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
+
+  .manager-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
+  .manager-chip{
+    background: var(--surface-raised); border: 1px solid var(--line); color: var(--text);
+    font-size: 0.82rem; font-weight: 600; padding: 4px 11px; border-radius: 999px;
+  }
 
   /* ---------- Timeline ---------- */
   .timeline{ position: relative; padding-left: 30px; }
@@ -31,6 +52,10 @@
   .timeline-year{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.15rem; color: var(--gold); margin-bottom: 8px; }
   .change-list{ display: flex; flex-direction: column; gap: 6px; }
   .change-chip{ background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 0.88rem; border-radius: 4px; }
+  .change-chip-label{ color: var(--text-dim); margin-right: 4px; }
+  .manager-delta{ display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; margin: 2px 3px 2px 0; }
+  .manager-delta.in{ background: rgba(76,154,107,0.15); color: var(--turf); border: 1px solid var(--turf-dim); }
+  .manager-delta.out{ background: rgba(192,87,75,0.15); color: var(--loss); border: 1px solid var(--loss); }
 </style>
 </head>
 <body>
@@ -49,22 +74,20 @@
       </div>
     </header>
 
-    <section id="baseline-section">
-      <h2>Where It Started</h2>
-      <div id="baseline-container"><div class="loading-row">Loading rules…</div></div>
+    <section id="compare-section">
+      <div class="tab-row" id="year-tab-row"></div>
+      <div class="compare-grid">
+        <div id="selected-container"><div class="loading-row">Loading rules…</div></div>
+        <div id="current-container"></div>
+      </div>
     </section>
 
     <section id="changes-section">
-      <h2>What's Changed Since</h2>
+      <h2>Timeline of Changes</h2>
       <div id="changes-container"></div>
     </section>
 
-    <section id="current-section">
-      <h2>Current Rules</h2>
-      <div id="current-container"></div>
-    </section>
-
-    <footer>Rules from ESPN Fantasy · buy-in and payouts from the league's money tracker</footer>
+    <footer>Rules and manager history from ESPN Fantasy · buy-in and payouts from the league's money tracker</footer>
   </div>
 
 <script src="nav.js"></script>
@@ -84,8 +107,8 @@
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   }
 
-  function section(title, lines, footnote) {
-    return `<div class="rules-section"><div class="rules-section-title">${esc(title)}</div>${lines.join('')}${footnote ? `<div class="rules-footnote">${footnote}</div>` : ''}</div>`;
+  function section(title, lines, footnote, wide) {
+    return `<div class="rules-section${wide ? ' rules-section-wide' : ''}"><div class="rules-section-title">${esc(title)}</div>${lines.join('')}${footnote ? `<div class="rules-footnote">${footnote}</div>` : ''}</div>`;
   }
   function line(label, value) {
     return `<div class="rules-line"><span class="label">${esc(label)}:</span> ${esc(value)}</div>`;
@@ -98,7 +121,7 @@
     return lines;
   }
 
-  function rulesCard(rec, title) {
+  function rulesCard(rec, tag) {
     const settingsLines = [
       line('Teams', rec.team_count),
       line('Playoff Teams', rec.playoff_team_count),
@@ -114,13 +137,28 @@
       : '';
     const money = moneyLines(rec);
     if (money.length) sections.push(section('Money', money, moneyFootnote));
+    if (rec.managers && rec.managers.length) {
+      const chips = `<div class="manager-chips">${rec.managers.map(m => `<span class="manager-chip">${esc(m)}</span>`).join('')}</div>`;
+      sections.push(section(`Managers (${rec.managers.length})`, [chips], '', true));
+    }
     return `
-      <div class="rules-card">
+      <div class="rules-card${tag === 'Current' ? ' is-current' : ''}">
         <div class="rules-head">
-          <div class="rules-title">${esc(title)} — ${rec.year}</div>
+          ${tag ? `<div class="rules-tag">${esc(tag)}</div>` : ''}
+          <div class="rules-title">${rec.year}</div>
         </div>
         <div class="rules-body">${sections.join('')}</div>
       </div>`;
+  }
+
+  function changeChip(text) {
+    const m = text.match(/^Managers: (.+)$/);
+    if (!m) return `<div class="change-chip">${esc(text)}</div>`;
+    const pills = m[1].split(', ').map(p => {
+      const out = p.startsWith('-');
+      return `<span class="manager-delta ${out ? 'out' : 'in'}">${esc(p)}</span>`;
+    }).join('');
+    return `<div class="change-chip"><span class="change-chip-label">Managers:</span>${pills}</div>`;
   }
 
   function timelineItem(entry) {
@@ -128,7 +166,7 @@
       <div class="timeline-item">
         <div class="timeline-dot"></div>
         <div class="timeline-year">${entry.year}</div>
-        <div class="change-list">${entry.changes.map(c => `<div class="change-chip">${esc(c)}</div>`).join('')}</div>
+        <div class="change-list">${entry.changes.map(changeChip).join('')}</div>
       </div>`;
   }
 
@@ -137,7 +175,23 @@
     .then(data => {
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
 
-      document.getElementById('baseline-container').innerHTML = rulesCard(data.baseline, 'Original');
+      const tabRow = document.getElementById('year-tab-row');
+      const selectedContainer = document.getElementById('selected-container');
+      tabRow.innerHTML = data.snapshots.map((s, i) => `<button type="button" class="year-tab${i === 0 ? ' active' : ''}" data-i="${i}">${s.year}</button>`).join('');
+
+      function showYear(i) {
+        [...tabRow.children].forEach((btn, idx) => btn.classList.toggle('active', idx === i));
+        const rec = data.snapshots[i];
+        const tag = i === 0 ? 'Original' : '';
+        selectedContainer.innerHTML = rulesCard(rec, tag);
+      }
+      tabRow.addEventListener('click', e => {
+        const btn = e.target.closest('.year-tab');
+        if (btn) showYear(Number(btn.dataset.i));
+      });
+      showYear(0);
+
+      document.getElementById('current-container').innerHTML = rulesCard(data.current, 'Current');
 
       const changesContainer = document.getElementById('changes-container');
       if (!data.changes.length) {
@@ -145,12 +199,10 @@
       } else {
         changesContainer.innerHTML = `<div class="timeline">${data.changes.map(timelineItem).join('')}</div>`;
       }
-
-      document.getElementById('current-container').innerHTML = rulesCard(data.current, 'Current');
     })
     .catch(err => {
       console.error('Rule changes data error:', err);
-      document.getElementById('baseline-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading rule changes data.</div>';
+      document.getElementById('selected-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading rule changes data.</div>';
     });
 </script>
 <script src="track.js?v=1" defer></script>

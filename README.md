@@ -21,10 +21,11 @@ career stats in sync with the league's Google Sheet.
   parlay (with a week/year picker for past weeks), plus betting stats,
   breakdowns, and "how far parlays get" charts, each with their own
   year / all-time tabs. Reads a static `docs/data/parlay.json` file.
-- **Rule Changes** (`docs/rule-changes.html`) — the league's original
-  (2015) rules, a timeline of what changed in later years (format changes
-  plus buy-in changes; years with no change are omitted), and the current
-  rules in full, including buy-in and payout amounts. Reads a static
+- **Rule Changes** (`docs/rule-changes.html`) — year tabs (2015, and every
+  later year something changed) for a full rules card shown side by side
+  with the current rules, each including buy-in/payout amounts and that
+  year's managers; plus a timeline below recapping what changed each year
+  (format, buy-in, and manager turnover). Reads a static
   `docs/data/rule-changes.json` file.
 - **Standings** (`docs/standings.html`) — regular-season or final standings
   for any year.
@@ -70,10 +71,11 @@ Standings, Head to Head, Overview, and Game Records all read
   PlayerStats, RandomInfo, and Money Tracker. Runs every few hours and
   on-demand (`.github/workflows/refresh_league_data.yml`).
 - **`generate_rule_changes_data.py`** — writes `docs/data/rule-changes.json`
-  from D1's `league_settings` (real ESPN rule history, every year
-  2015-present) plus the sheet's `Money Tracker` tab (buy-in and payout
-  amounts, which have no ESPN equivalent). Run on-demand whenever a rule or
-  the buy-in changes — there's no schedule for it since rules rarely change.
+  from D1's `league_settings` and `teams` tables (real ESPN rule and
+  manager-roster history, every year 2015-present) plus the sheet's
+  `Money Tracker` tab (buy-in and payout amounts, which have no ESPN
+  equivalent). Run on-demand whenever a rule, the buy-in, or the league's
+  managers change — there's no schedule for it since that's rare.
 
 All scripts need a Google service account key at
 `google_secret.json` (gitignored, not committed) to authenticate with the
