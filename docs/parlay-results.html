@@ -38,14 +38,14 @@
   .back-link:hover{ background: rgba(186,155,55,0.1); }
   .back-link[hidden]{ display: none; }
 
-  .tab-row{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
-  .scope-tab{
-    background: var(--surface); border: 1px solid var(--line); color: var(--text-dim);
-    font-family: var(--body); font-size: 0.86rem; font-weight: 600; padding: 9px 16px;
-    border-radius: 999px; cursor: pointer;
-  }
-  .scope-tab:hover{ border-color: var(--gold); color: var(--text); }
-  .scope-tab.active{ background: rgba(186,155,55,0.12); border-color: var(--gold); color: var(--gold); }
+  .tabs{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tab{ background: none; border: 1px solid var(--line); color: var(--text-dim); font-family: var(--body); font-size: 0.86rem; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
+  .tab:hover{ border-color: var(--gold); color: var(--text); }
+  .tab.on{ border-color: var(--gold); color: var(--gold); background: rgba(186,155,55,0.10); }
+  .seg{ display: flex; flex-wrap: wrap; border: 1px solid var(--line); margin: 4px 0 18px; width: fit-content; max-width: 100%; }
+  .seg button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.82rem; padding: 8px 15px; cursor: pointer; }
+  .seg button:hover{ color: var(--text); }
+  .seg button.on{ background: rgba(186,155,55,0.14); color: var(--gold); }
 
   /* ---------- Parlay summary + legs ---------- */
   .parlay-card{
@@ -185,22 +185,10 @@
     </section>
 
     <section>
-      <div class="tab-row" id="scope-tab-row"></div>
-    </section>
-
-    <section>
-      <h2>How Far Parlays Get</h2>
-      <div class="card-grid" id="legs-container"></div>
-    </section>
-
-    <section>
-      <h2>Betting Stats</h2>
-      <div class="card-grid" id="leaders-container"></div>
-    </section>
-
-    <section>
-      <h2>Bet Breakdowns</h2>
-      <div class="card-grid" id="breakdown-container"></div>
+      <h2>Stats</h2>
+      <div class="tabs" id="category-tab-row"></div>
+      <div class="seg" id="scope-tab-row"></div>
+      <div class="card-grid" id="stats-container"></div>
     </section>
 
     <footer id="footer">Data from the league sheet</footer>
@@ -483,26 +471,46 @@
       weekSel.addEventListener('change', showSelected);
       backBtn.addEventListener('click', selectCurrent);
 
-      // ---------- Stats scope tabs (year / all-time) ----------
-      const scopeTabRow = document.getElementById('scope-tab-row');
-      const scopeYears = [...(data.years || [])].sort((a, b) => b - a);
-      const scopes = [...scopeYears.map(String), 'all'];
-      const scopeLabel = s => s === 'all' ? 'All Time' : s;
-      scopeTabRow.innerHTML = scopes.map(s => `<button type="button" class="scope-tab${s === String(current.year) ? ' active' : ''}" data-scope="${s}">${scopeLabel(s)}</button>`).join('');
+      // ---------- Stats: category tabs (primary) + year/all-time scope (secondary) ----------
+      const categories = [
+        { label: 'How Far Parlays Get', render: renderLegs },
+        { label: 'Betting Stats', render: renderLeaders },
+        { label: 'Bet Breakdowns', render: renderBreakdowns },
+      ];
+      let activeCategory = 0;
+      let activeScope = 'all';
 
-      function showScope(scope) {
-        const s = stats[scope];
+      const categoryTabRow = document.getElementById('category-tab-row');
+      const scopeTabRow = document.getElementById('scope-tab-row');
+      const statsContainer = document.getElementById('stats-container');
+
+      const scopeYears = [...(data.years || [])].sort((a, b) => b - a);
+      const scopes = ['all', ...scopeYears.map(String)];
+      const scopeLabel = s => s === 'all' ? 'All Time' : s;
+
+      categoryTabRow.innerHTML = categories.map((c, i) => `<button type="button" class="tab${i === activeCategory ? ' on' : ''}" data-i="${i}">${c.label}</button>`).join('');
+      scopeTabRow.innerHTML = scopes.map(s => `<button type="button" class="${s === activeScope ? 'on' : ''}" data-scope="${s}">${scopeLabel(s)}</button>`).join('');
+
+      function renderStats() {
+        const s = stats[activeScope];
         if (!s) return;
-        [...scopeTabRow.children].forEach(btn => btn.classList.toggle('active', btn.dataset.scope === scope));
-        document.getElementById('leaders-container').innerHTML = renderLeaders(s);
-        document.getElementById('breakdown-container').innerHTML = renderBreakdowns(s);
-        document.getElementById('legs-container').innerHTML = renderLegs(s);
+        statsContainer.innerHTML = categories[activeCategory].render(s);
       }
-      scopeTabRow.addEventListener('click', e => {
-        const btn = e.target.closest('.scope-tab');
-        if (btn) showScope(btn.dataset.scope);
+      categoryTabRow.addEventListener('click', e => {
+        const btn = e.target.closest('.tab');
+        if (!btn) return;
+        activeCategory = Number(btn.dataset.i);
+        [...categoryTabRow.children].forEach((b, i) => b.classList.toggle('on', i === activeCategory));
+        renderStats();
       });
-      showScope(String(current.year));
+      scopeTabRow.addEventListener('click', e => {
+        const btn = e.target.closest('[data-scope]');
+        if (!btn) return;
+        activeScope = btn.dataset.scope;
+        [...scopeTabRow.children].forEach(b => b.classList.toggle('on', b.dataset.scope === activeScope));
+        renderStats();
+      });
+      renderStats();
 
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
     })
