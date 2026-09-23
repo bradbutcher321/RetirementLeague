@@ -1,11 +1,14 @@
 """
-Visual polish for "Auto Parlay Tracker": separates weeks (a live background
-banding rule plus a top border every 12 rows, since every week is always
-exactly 12 picks -- one per manager), keeps the header and identifying
-columns visible while scrolling, and adds guidance notes on the header
-cells explaining which fields matter for which bet type (the real source
-of entry confusion, since Team/Opponent/Player Prop/Line/Side apply
-differently depending on Bet Type). Re-runnable -- safe to run again.
+Visual polish for "Auto Parlay Tracker": separates weeks (alternating
+background plus a top border, both every 12 rows, since every week is
+always exactly 12 picks -- one per manager), keeps the header and
+identifying columns visible while scrolling, and adds guidance notes on
+the header cells explaining which fields matter for which bet type (the
+real source of entry confusion, since Team/Opponent/Player Prop/Line/Side
+apply differently depending on Bet Type). Both the banding and the border
+are static and purely mechanical -- computed from row position, not from
+reading any actual data -- covering the full range in one pass with no
+re-run needed after new weeks are added. Re-runnable -- safe to run again.
 
 Usage: python format_parlay_sheet.py
 """
@@ -22,6 +25,7 @@ TARGET_TAB = "Auto Parlay Tracker"
 VALIDATION_LAST_ROW = 3000  # matches add_parlay_validation.py
 PLAYERS_PER_WEEK = 12  # every week is always all 12 managers, one row each
 
+WHITE = {"red": 1, "green": 1, "blue": 1}
 BAND_COLOR = {"red": 0.949, "green": 0.961, "blue": 0.976}  # light gray-blue
 BORDER_COLOR = {"red": 0.4, "green": 0.4, "blue": 0.4}
 
@@ -75,60 +79,25 @@ def main():
                 "fields": "gridProperties.rowCount",
             }
         })
-    # Clear existing conditional format rules first so re-running this
-    # script updates the banding rule in place instead of stacking a
-    # duplicate on top of it each time.
+    # Remove the old live conditional-format banding rule -- it was flaky
+    # in practice, and now that every week is a guaranteed 12-row block,
+    # a plain static color applied directly per block is simpler and more
+    # reliable, matching how the border is already done.
     requests += [{"deleteConditionalFormatRule": {"sheetId": target.id, "index": 0}} for _ in range(existing_rule_count)]
 
-    # Reset any static background from a previous run of this script --
-    # the banding below now comes entirely from a live conditional format
-    # rule instead, so a stale direct fill underneath could look wrong if
-    # the rule and the direct color ever disagree.
-    requests.append({
-        "repeatCell": {
-            "range": {"sheetId": target.id, "startRowIndex": 1, "endRowIndex": VALIDATION_LAST_ROW,
-                       "startColumnIndex": 0, "endColumnIndex": n_cols},
-            "cell": {"userEnteredFormat": {"backgroundColor": {"red": 1, "green": 1, "blue": 1}}},
-            "fields": "userEnteredFormat.backgroundColor",
-        }
-    })
-
-    # Live alternating background, keyed off Year+Week, covering the same
-    # range the dropdowns already reach -- a running "how many distinct
-    # (Year, Week) pairs have I seen so far" count that flips parity each
-    # time a new week starts. Because it's a formula (not a precomputed
-    # color), it keeps working correctly for weeks added long after this
-    # script last ran, with no need to re-run it just for banding.
-    requests.append({
-        "addConditionalFormatRule": {
-            "rule": {
-                "ranges": [{"sheetId": target.id, "startRowIndex": 1, "endRowIndex": VALIDATION_LAST_ROW,
-                             "startColumnIndex": 0, "endColumnIndex": n_cols}],
-                "booleanRule": {
-                    "condition": {
-                        "type": "CUSTOM_FORMULA",
-                        # COUNTUNIQUE on a "&"-concatenation of two ranges doesn't
-                        # reliably array-evaluate outside an explicit array formula
-                        # (it silently collapsed to a scalar, so the rule never
-                        # fired) -- SUMPRODUCT forces genuine element-wise array
-                        # evaluation of COUNTIFS, which is the standard reliable
-                        # way to count distinct (Year, Week) combinations so far.
-                        "values": [{"userEnteredValue":
-                            '=ISEVEN(SUMPRODUCT(1/COUNTIFS($A$2:$A2,$A$2:$A2,$B$2:$B2,$B$2:$B2)))'}],
-                    },
-                    "format": {"backgroundColor": BAND_COLOR},
-                },
-            },
-            "index": 0,
-        }
-    })
-
-    # Top border every 12 rows -- every week is always exactly 12 picks (one
-    # per manager), so this is purely mechanical: it doesn't need to read
-    # any actual data, and covers the full range in one pass, forever, with
-    # no re-run needed after new weeks are added. (Conditional formatting
-    # can't do borders, or this would be a live rule like the banding above.)
-    for sheet_row_start in range(1, VALIDATION_LAST_ROW, PLAYERS_PER_WEEK):  # 0-indexed sheet row
+    # Alternating background and a top border, both every 12 rows -- purely
+    # mechanical, no data reading required, covering the full range in one
+    # pass forever.
+    for i, sheet_row_start in enumerate(range(1, VALIDATION_LAST_ROW, PLAYERS_PER_WEEK)):  # 0-indexed sheet row
+        color = BAND_COLOR if i % 2 else WHITE
+        requests.append({
+            "repeatCell": {
+                "range": {"sheetId": target.id, "startRowIndex": sheet_row_start,
+                           "endRowIndex": sheet_row_start + PLAYERS_PER_WEEK, "startColumnIndex": 0, "endColumnIndex": n_cols},
+                "cell": {"userEnteredFormat": {"backgroundColor": color}},
+                "fields": "userEnteredFormat.backgroundColor",
+            }
+        })
         requests.append({
             "updateBorders": {
                 "range": {"sheetId": target.id, "startRowIndex": sheet_row_start,
@@ -158,8 +127,8 @@ def main():
         })
 
     spreadsheet.batch_update({"requests": requests})
-    print(f"Applied live week banding and a mechanical every-{PLAYERS_PER_WEEK}-row "
-          f"border (rows 2-{VALIDATION_LAST_ROW}), frozen panes, and "
+    print(f"Applied mechanical every-{PLAYERS_PER_WEEK}-row banding and border "
+          f"(rows 2-{VALIDATION_LAST_ROW}), frozen panes, and "
           f"{len(HEADER_NOTES)} header notes to '{TARGET_TAB}'.")
 
 
