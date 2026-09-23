@@ -13,6 +13,13 @@ toward the existing spelling when one already fits. Player isn't validated
 here -- it's auto-filled by a formula now (see setup_player_autofill.py),
 so there's nothing for a person to type there to validate.
 
+Gametime gets a strict pattern check instead of a list -- it has to be the
+plain ISO format (YYYY-MM-DDTHH:MM:SS) the rest of the pipeline already
+relies on for chronological sorting (see generate_parlay_data.py's
+serial_to_iso()), since anything else either sorts wrong silently or
+crashes a script that parses it strictly later. Blank is always allowed --
+most rows haven't had a pick entered yet.
+
 Usage: python add_parlay_validation.py
 """
 import os
@@ -30,7 +37,8 @@ VALIDATION_LAST_ROW = 3000  # generous headroom for future picks, 0-indexed excl
 
 # Column indices match migrate_parlay_tracker.py's HEADER order (0-indexed).
 # Player (3) is intentionally excluded -- see module docstring.
-COL_SACKO, COL_SPORT, COL_BET_TYPE, COL_SIDE, COL_RESULT = 2, 4, 5, 10, 13
+COL_SACKO, COL_SPORT, COL_BET_TYPE, COL_SIDE, COL_GAMETIME, COL_RESULT = 2, 4, 5, 10, 12, 13
+GAMETIME_PATTERN = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$"
 
 # NHL and Hockey both appear in history for the same sport -- NHL is the
 # canonical spelling going forward; the existing "Hockey" row is left as-is
@@ -83,6 +91,39 @@ def validation_request(sheet_id, col, values, strict):
     }
 
 
+def column_letter(col):
+    """0-indexed column number -> spreadsheet column letter(s)."""
+    letters = ""
+    col += 1
+    while col:
+        col, rem = divmod(col - 1, 26)
+        letters = chr(65 + rem) + letters
+    return letters
+
+
+def regex_validation_request(sheet_id, col, pattern, allow_blank=True):
+    cell = f"${column_letter(col)}2"
+    formula = f'=REGEXMATCH(TO_TEXT({cell}),"{pattern}")'
+    if allow_blank:
+        formula = f'=OR({cell}="",{formula[1:]})'
+    return {
+        "setDataValidation": {
+            "range": {
+                "sheetId": sheet_id,
+                "startRowIndex": 1,
+                "endRowIndex": VALIDATION_LAST_ROW,
+                "startColumnIndex": col,
+                "endColumnIndex": col + 1,
+            },
+            "rule": {
+                "condition": {"type": "CUSTOM_FORMULA", "values": [{"userEnteredValue": formula}]},
+                "strict": True,
+                "showCustomUi": True,
+            },
+        }
+    }
+
+
 def ensure_row_count(spreadsheet, worksheet, min_rows):
     """A range request beyond the sheet's actual grid size is silently
     clamped to it, not rejected -- this is why validation only ever
@@ -114,10 +155,11 @@ def main():
         validation_request(target.id, COL_BET_TYPE, BET_TYPES, strict=False),
         validation_request(target.id, COL_SIDE, SIDES, strict=True),
         validation_request(target.id, COL_RESULT, RESULTS, strict=True),
+        regex_validation_request(target.id, COL_GAMETIME, GAMETIME_PATTERN),
     ]
     spreadsheet.batch_update({"requests": requests})
-    print(f"Applied dropdown validation to Sacko, Sport, Bet Type, Side, Result "
-          f"on '{TARGET_TAB}' (rows 2-{VALIDATION_LAST_ROW}).")
+    print(f"Applied dropdown validation to Sacko, Sport, Bet Type, Side, Result, "
+          f"and a strict ISO-format check on Gametime, on '{TARGET_TAB}' (rows 2-{VALIDATION_LAST_ROW}).")
 
 
 if __name__ == "__main__":
