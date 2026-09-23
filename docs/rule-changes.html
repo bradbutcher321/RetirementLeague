@@ -25,8 +25,6 @@
   .rules-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); max-width: 640px; }
   .rules-card.is-current{ border-top-color: var(--turf); }
   .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
-  .rules-tag{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; min-height: 1em; }
-  .rules-card.is-current .rules-tag{ color: var(--turf); }
   .rules-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; }
   .rules-body{ display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); }
   @media (max-width: 520px){ .rules-body{ grid-template-columns: 1fr; } }
@@ -36,8 +34,9 @@
   .rules-line .label{ color: var(--text-dim); }
   .rules-line.line-changed{ background: rgba(186,155,55,0.1); }
   .rules-line.line-added{ background: rgba(76,154,107,0.1); color: var(--turf); }
-  .rules-line.line-removed{ background: rgba(192,87,75,0.1); color: var(--loss); text-decoration: line-through; }
-  .rules-line .was{ color: var(--text-dim); text-decoration: line-through; margin-right: 4px; }
+  .rules-line.line-dropped{ background: rgba(192,87,75,0.1); }
+  .rules-line.line-dropped .now{ color: var(--loss); }
+  .rules-line .was{ color: var(--text-dim); margin-right: 4px; }
   .rules-line .now{ color: var(--gold); font-weight: 700; }
   .rules-footnote{ color: var(--text-dim); font-size: 0.76rem; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
   .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
@@ -48,7 +47,7 @@
     font-size: 0.82rem; font-weight: 600; padding: 4px 11px; border-radius: 999px;
   }
   .manager-chip.added{ background: rgba(76,154,107,0.14); border-color: var(--turf-dim); color: var(--turf); }
-  .manager-chip.removed{ background: rgba(192,87,75,0.14); border-color: var(--loss); color: var(--loss); text-decoration: line-through; }
+  .manager-chip.removed{ background: rgba(192,87,75,0.14); border-color: var(--loss); color: var(--loss); }
 
   /* ---------- Timeline ---------- */
   .timeline{ position: relative; padding-left: 30px; }
@@ -143,7 +142,7 @@
     Object.keys(prevMap).forEach(p => { if (!order.includes(p)) order.push(p); });
     const lines = order.map(pos => {
       const c = currMap[pos], p = prevMap[pos];
-      if (c === undefined) return `<div class="rules-line line-removed">${p} ${esc(pos)}</div>`;
+      if (c === undefined) return `<div class="rules-line line-dropped">${esc(pos)}: <span class="was">${p}</span>→<span class="now">0</span></div>`;
       if (p === undefined) return `<div class="rules-line line-added">+ ${c} ${esc(pos)}</div>`;
       if (p === c) return `<div class="rules-line">${c} ${esc(pos)}</div>`;
       return `<div class="rules-line line-changed">${esc(pos)}: <span class="was">${p}</span>→<span class="now">${c}</span></div>`;
@@ -167,7 +166,7 @@
         const currAmt = rec.payouts.find(p => p.label === label);
         const c = currAmt ? currAmt.amount : undefined;
         const p = prevMap[label];
-        if (c === undefined) lines.push(`<div class="rules-line line-removed">${esc(label)}: $${p}</div>`);
+        if (c === undefined) lines.push(`<div class="rules-line line-dropped"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→<span class="now">$0</span></div>`);
         else if (p === undefined) lines.push(`<div class="rules-line line-added">+ ${esc(label)}: $${c}</div>`);
         else if (p === c) lines.push(`<div class="rules-line"><span class="label">${esc(label)}:</span> $${c}</div>`);
         else lines.push(`<div class="rules-line line-changed"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→<span class="now">$${c}</span></div>`);
@@ -193,13 +192,12 @@
     return section(`Managers (${rec.managers.length})`, [`<div class="manager-chips">${chips}</div>`]);
   }
 
-  function yearCard(rec, prev, tag) {
+  function yearCard(rec, prev, isCurrent) {
     const sections = [settingsSection(rec, prev), rosterSection(rec, prev), moneySection(rec, prev), managersSection(rec, prev)]
       .filter(Boolean);
     return `
-      <div class="rules-card${tag === 'Current' ? ' is-current' : ''}">
+      <div class="rules-card${isCurrent ? ' is-current' : ''}">
         <div class="rules-head">
-          <div class="rules-tag">${tag ? esc(tag) : ''}</div>
           <div class="rules-title">${rec.year}</div>
         </div>
         <div class="rules-body">${sections.join('')}</div>
@@ -241,7 +239,8 @@
       const selectedContainer = document.getElementById('selected-container');
       tabRow.innerHTML = list.map((rec, i) => {
         const isCurrent = rec.year === data.current.year;
-        return `<button type="button" class="year-tab${isCurrent ? ' is-current' : ''}${i === 0 ? ' active' : ''}" data-i="${i}">${isCurrent ? 'Current' : rec.year}</button>`;
+        const label = isCurrent ? 'Current' : i === 0 ? 'Start' : rec.year;
+        return `<button type="button" class="year-tab${isCurrent ? ' is-current' : ''}${i === 0 ? ' active' : ''}" data-i="${i}">${label}</button>`;
       }).join('');
 
       function showYear(i) {
@@ -249,8 +248,7 @@
         const rec = list[i];
         const prev = i === 0 ? null : list[i - 1];
         const isCurrent = rec.year === data.current.year;
-        const tag = i === 0 ? 'Starting Rules' : isCurrent ? 'Current' : '';
-        selectedContainer.innerHTML = yearCard(rec, prev, tag);
+        selectedContainer.innerHTML = yearCard(rec, prev, isCurrent);
       }
       tabRow.addEventListener('click', e => {
         const btn = e.target.closest('.year-tab');
