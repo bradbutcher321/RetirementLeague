@@ -128,7 +128,14 @@ def main():
                 "booleanRule": {
                     "condition": {
                         "type": "CUSTOM_FORMULA",
-                        "values": [{"userEnteredValue": '=ISEVEN(COUNTUNIQUE($A$2:$A2&"-"&$B$2:$B2))'}],
+                        # COUNTUNIQUE on a "&"-concatenation of two ranges doesn't
+                        # reliably array-evaluate outside an explicit array formula
+                        # (it silently collapsed to a scalar, so the rule never
+                        # fired) -- SUMPRODUCT forces genuine element-wise array
+                        # evaluation of COUNTIFS, which is the standard reliable
+                        # way to count distinct (Year, Week) combinations so far.
+                        "values": [{"userEnteredValue":
+                            '=ISEVEN(SUMPRODUCT(1/COUNTIFS($A$2:$A2,$A$2:$A2,$B$2:$B2,$B$2:$B2)))'}],
                     },
                     "format": {"backgroundColor": BAND_COLOR},
                 },
