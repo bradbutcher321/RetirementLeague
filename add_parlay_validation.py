@@ -47,6 +47,17 @@ def authorize_write():
     return gspread.authorize(creds)
 
 
+def clear_all_validation(spreadsheet, sheet_id):
+    """Removes every data validation rule on the sheet first. Without this,
+    re-running after a column shift (e.g. inserting Sacko) leaves the old
+    rules sitting on whatever column now occupies that position -- which is
+    exactly what broke Line and Gametime last time (they inherited Side's
+    and Result's old strict dropdowns and started rejecting real values)."""
+    spreadsheet.batch_update({
+        "requests": [{"setDataValidation": {"range": {"sheetId": sheet_id}}}]
+    })
+
+
 def validation_request(sheet_id, col, values, strict):
     return {
         "setDataValidation": {
@@ -75,6 +86,7 @@ def main():
     spreadsheet = gc.open_by_key(SHEET_ID)
     players, _ = gp.load_tracker(spreadsheet)
     target = spreadsheet.worksheet(TARGET_TAB)
+    clear_all_validation(spreadsheet, target.id)
 
     requests = [
         validation_request(target.id, COL_SACKO, players, strict=True),
