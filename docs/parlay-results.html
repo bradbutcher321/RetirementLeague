@@ -38,11 +38,21 @@
   .back-link:hover{ background: rgba(186,155,55,0.1); }
   .back-link[hidden]{ display: none; }
 
+  /* Season/scope selector: solid-filled toggle, the most prominent of the
+     three levels so it doesn't read as just another row of tabs. */
+  .scope-row{ display: inline-flex; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 2px; margin-bottom: 18px; }
+  .scope-btn{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 700; font-size: 0.85rem; padding: 8px 18px; border-radius: 6px; cursor: pointer; }
+  .scope-btn:hover:not(.on){ color: var(--text); }
+  .scope-btn.on{ background: var(--gold); color: #050505; }
+
+  /* Category tabs: outline pills. */
   .tabs{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
   .tab{ background: none; border: 1px solid var(--line); color: var(--text-dim); font-family: var(--body); font-size: 0.86rem; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
   .tab:hover{ border-color: var(--gold); color: var(--text); }
   .tab.on{ border-color: var(--gold); color: var(--gold); background: rgba(186,155,55,0.10); }
-  .seg{ display: flex; flex-wrap: wrap; border: 1px solid var(--line); margin: 4px 0 18px; width: fit-content; max-width: 100%; }
+
+  /* Subsections within a category: bordered segmented bar. */
+  .seg{ display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); margin: 4px 0 18px; }
   .seg button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.82rem; padding: 8px 15px; cursor: pointer; }
   .seg button:hover{ color: var(--text); }
   .seg button.on{ background: rgba(186,155,55,0.14); color: var(--gold); }
@@ -186,8 +196,9 @@
 
     <section>
       <h2>Stats</h2>
+      <div class="scope-row" id="scope-tab-row"></div>
       <div class="tabs" id="category-tab-row"></div>
-      <div class="seg" id="scope-tab-row"></div>
+      <div id="sub-tab-row"></div>
       <div class="card-grid" id="stats-container"></div>
     </section>
 
@@ -352,50 +363,6 @@
     return `<div class="stat-card"><div class="stat-card-title">${title}</div><div class="stat-card-note">${note}</div><div class="stat-card-body">${body}</div></div>`;
   }
 
-  function renderLeaders(s) {
-    const earnings = s.potential_earnings
-      .map(r => ({ player: r.player, net: r.winnings - r.losses }))
-      .sort((a, b) => b.net - a.net);
-    const winStreaks = [...s.streaks].sort((a, b) => b.longest_win - a.longest_win || b.current - a.current);
-    const lossStreaks = [...s.streaks].sort((a, b) => b.longest_loss - a.longest_loss || a.current - b.current);
-    return [
-      rankedCard('Individual W/L', wlItems(s.individual_wl, 'player')),
-      rankedCard('Weekly Sacko Count', s.weekly_sackos.map(r => ({
-        name: r.player, big: String(r.sackos), sub: fmtMoney(r.cost), right: stats([[r.sackos, r.sackos === 1 ? 'Sacko' : 'Sackos']]),
-      }))),
-      rankedCard('Parlays Killed', s.parlays_killed.map(r => ({
-        name: r.player, big: r.kills.toFixed(1), sub: plural(r.kill_chances, 'chance'),
-        right: stats([[r.kills.toFixed(1), 'Kills'], [r.avg_bet_position === null ? '—' : r.avg_bet_position.toFixed(1), 'Avg Pos']]),
-      }))),
-      rankedCard('Average Odds', s.average_odds.map(r => ({
-        name: r.player, big: fmtOdds(r.avg_odds), right: stats([[fmtOdds(r.avg_odds), 'Odds']]),
-      }))),
-      rankedCard('Potential Earnings', earnings.map(r => ({
-        name: r.player, big: signedMoney(r.net), right: pill(signedMoney(r.net), r.net >= 0),
-      }))),
-      rankedCard('Flat Bet Profit', s.flat_bet_profit.map(r => ({
-        name: r.player, big: signedMoney(r.profit), sub: plural(r.bets, 'bet'),
-        right: pill(signedMoney(r.profit), r.profit >= 0),
-      }))),
-      rankedCard('Biggest Hit', s.biggest_hits.map(r => ({
-        name: r.player, big: fmtOdds(r.odds), sub: r.sport || '',
-        right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
-      }))),
-      rankedCard('Safest Loss', s.safest_losses.map(r => ({
-        name: r.player, big: fmtOdds(r.odds), sub: r.sport || '',
-        right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
-      }))),
-      rankedCard('Win Streaks', winStreaks.map(r => ({
-        name: r.player, big: String(r.longest_win), sub: `Current ${Math.max(r.current, 0)}`,
-        right: stats([[r.longest_win, 'Longest'], [Math.max(r.current, 0), 'Current']]),
-      }))),
-      rankedCard('Losing Streaks', lossStreaks.map(r => ({
-        name: r.player, big: String(r.longest_loss), sub: `Current ${Math.max(-r.current, 0)}`,
-        right: stats([[r.longest_loss, 'Longest'], [Math.max(-r.current, 0), 'Current']]),
-      }))),
-    ].join('');
-  }
-
   function withTotal(rows, key) {
     const tw = rows.reduce((a, r) => a + r.w, 0);
     const tl = rows.reduce((a, r) => a + r.l, 0);
@@ -408,31 +375,96 @@
     return `${r.year} · Week ${r.week}`;
   }
 
-  function renderBreakdowns(s) {
-    const missItems = s.biggest_misses.map(r => ({
+  // ---------- Individual cards, one function per card, keyed by name ----------
+  const CARD = {
+    legsPerParlay: s => histCard('Legs Won per Parlay', s.legs_won_per_parlay, 'Weeks by how many of the legs hit, once every leg was graded.'),
+    legsBeforeLoss: s => histCard('Legs Won Before First Loss', s.legs_won_before_loss, 'Weeks by how many legs won, in game-time order, before the first loss.'),
+
+    individualWL: s => rankedCard('Individual W/L', wlItems(s.individual_wl, 'player')),
+    winStreaks: s => {
+      const winStreaks = [...s.streaks].sort((a, b) => b.longest_win - a.longest_win || b.current - a.current);
+      return rankedCard('Win Streaks', winStreaks.map(r => ({
+        name: r.player, big: String(r.longest_win), sub: `Current ${Math.max(r.current, 0)}`,
+        right: stats([[r.longest_win, 'Longest'], [Math.max(r.current, 0), 'Current']]),
+      })));
+    },
+    lossStreaks: s => {
+      const lossStreaks = [...s.streaks].sort((a, b) => b.longest_loss - a.longest_loss || a.current - b.current);
+      return rankedCard('Losing Streaks', lossStreaks.map(r => ({
+        name: r.player, big: String(r.longest_loss), sub: `Current ${Math.max(-r.current, 0)}`,
+        right: stats([[r.longest_loss, 'Longest'], [Math.max(-r.current, 0), 'Current']]),
+      })));
+    },
+
+    potentialEarnings: s => {
+      const earnings = s.potential_earnings.map(r => ({ player: r.player, net: r.winnings - r.losses })).sort((a, b) => b.net - a.net);
+      return rankedCard('Potential Earnings', earnings.map(r => ({
+        name: r.player, big: signedMoney(r.net), right: pill(signedMoney(r.net), r.net >= 0),
+      })));
+    },
+    flatBetProfit: s => rankedCard('Flat Bet Profit', s.flat_bet_profit.map(r => ({
+      name: r.player, big: signedMoney(r.profit), sub: plural(r.bets, 'bet'),
+      right: pill(signedMoney(r.profit), r.profit >= 0),
+    }))),
+
+    averageOdds: s => rankedCard('Average Odds', s.average_odds.map(r => ({
+      name: r.player, big: fmtOdds(r.avg_odds), right: stats([[fmtOdds(r.avg_odds), 'Odds']]),
+    }))),
+    biggestHit: s => rankedCard('Biggest Hit', s.biggest_hits.map(r => ({
+      name: r.player, big: fmtOdds(r.odds), sub: r.sport || '',
+      right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
+    }))),
+    safestLoss: s => rankedCard('Safest Loss', s.safest_losses.map(r => ({
+      name: r.player, big: fmtOdds(r.odds), sub: r.sport || '',
+      right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick,
+    }))),
+
+    weeklySackos: s => rankedCard('Weekly Sacko Count', s.weekly_sackos.map(r => ({
+      name: r.player, big: String(r.sackos), sub: fmtMoney(r.cost), right: stats([[r.sackos, r.sackos === 1 ? 'Sacko' : 'Sackos']]),
+    }))),
+    parlaysKilled: s => rankedCard('Parlays Killed', s.parlays_killed.map(r => ({
+      name: r.player, big: r.kills.toFixed(1), sub: plural(r.kill_chances, 'chance'),
+      right: stats([[r.kills.toFixed(1), 'Kills'], [r.avg_bet_position === null ? '—' : r.avg_bet_position.toFixed(1), 'Avg Pos']]),
+    }))),
+
+    sportWL: s => rankedCard('Sport W/L', condensedWlItems(s.sport_wl, 'sport')),
+    betTypeWL: s => rankedCard('Bet Type W/L', condensedWlItems(s.bet_type_wl, 'bet_type')),
+    favoriteUnderdog: s => rankedCard('Favorite vs. Underdog', withTotal(s.odds_type_wl, 'odds_type'), { podium: false }),
+    oddsRange: s => rankedCard('Odds Range', wlItems(s.odds_range_wl, 'range'), { podium: false }),
+    overUnder: s => rankedCard('Over vs. Under', withTotal(s.over_under_wl, 'side'), { podium: false }),
+    dayOfWeek: s => rankedCard('Day of Week', wlItems(s.day_of_week_wl, 'day'), { podium: false }),
+    biggestMisses: s => rankedCard('Biggest Misses', s.biggest_misses.map(r => ({
       name: weekLabel(r), sub: `Killed by ${r.killed_by.join(' & ')}`,
       right: stats([[fmtMoney(r.payout), 'Payout']]),
-    }));
-    const callItems = s.closest_calls.map(r => ({
+    })), { podium: false }),
+    closestCalls: s => rankedCard('Closest Calls', s.closest_calls.map(r => ({
       name: weekLabel(r), sub: `Missed by ${r.lost_by.join(', ')}`,
       right: stats([[`${r.legs_hit}/12`, 'Legs Hit']]),
-    }));
-    return [
-      rankedCard('Sport W/L', condensedWlItems(s.sport_wl, 'sport')),
-      rankedCard('Bet Type W/L', condensedWlItems(s.bet_type_wl, 'bet_type')),
-      rankedCard('Favorite vs. Underdog', withTotal(s.odds_type_wl, 'odds_type'), { podium: false }),
-      rankedCard('Over vs. Under', withTotal(s.over_under_wl, 'side'), { podium: false }),
-      rankedCard('Biggest Misses', missItems, { podium: false }),
-      rankedCard('Closest Calls', callItems, { podium: false }),
-      rankedCard('Day of Week', wlItems(s.day_of_week_wl, 'day'), { podium: false }),
-      rankedCard('Odds Range', wlItems(s.odds_range_wl, 'range'), { podium: false }),
-    ].join('');
-  }
+    })), { podium: false }),
+  };
 
-  function renderLegs(s) {
-    return histCard('Legs Won per Parlay', s.legs_won_per_parlay, 'Weeks by how many of the legs hit, once every leg was graded.') +
-      histCard('Legs Won Before First Loss', s.legs_won_before_loss, 'Weeks by how many legs won, in game-time order, before the first loss.');
-  }
+  // ---------- Category > subsection structure ----------
+  const CATEGORIES = [
+    { label: 'How Far Parlays Get', cards: ['legsPerParlay', 'legsBeforeLoss'] },
+    {
+      label: 'Betting Stats',
+      subsections: [
+        { label: 'Record', cards: ['individualWL', 'winStreaks', 'lossStreaks'] },
+        { label: 'Money', cards: ['potentialEarnings', 'flatBetProfit'] },
+        { label: 'Picks', cards: ['averageOdds', 'biggestHit', 'safestLoss'] },
+        { label: 'Sacko & Kills', cards: ['weeklySackos', 'parlaysKilled'] },
+      ],
+    },
+    {
+      label: 'Bet Breakdowns',
+      subsections: [
+        { label: 'Bet Type', cards: ['sportWL', 'betTypeWL'] },
+        { label: 'Odds', cards: ['favoriteUnderdog', 'oddsRange'] },
+        { label: 'Timing', cards: ['overUnder', 'dayOfWeek'] },
+        { label: 'Notable Weeks', cards: ['biggestMisses', 'closestCalls'] },
+      ],
+    },
+  ];
 
   // ---------- Wiring ----------
   fetch('data/parlay.json', { cache: 'no-store' })
@@ -471,31 +503,43 @@
       weekSel.addEventListener('change', showSelected);
       backBtn.addEventListener('click', selectCurrent);
 
-      // ---------- Stats: category tabs (primary) + year/all-time scope (secondary) ----------
-      const categories = [
-        { label: 'How Far Parlays Get', render: renderLegs },
-        { label: 'Betting Stats', render: renderLeaders },
-        { label: 'Bet Breakdowns', render: renderBreakdowns },
-      ];
+      // ---------- Stats: scope (Season-equivalent) > category tabs > subsections ----------
       let activeCategory = 0;
       let activeScope = 'all';
+      const activeSub = {}; // remembers the picked subsection per category
 
-      const categoryTabRow = document.getElementById('category-tab-row');
       const scopeTabRow = document.getElementById('scope-tab-row');
+      const categoryTabRow = document.getElementById('category-tab-row');
+      const subTabRow = document.getElementById('sub-tab-row');
       const statsContainer = document.getElementById('stats-container');
 
       const scopeYears = [...(data.years || [])].sort((a, b) => b - a);
       const scopes = ['all', ...scopeYears.map(String)];
       const scopeLabel = s => s === 'all' ? 'All Time' : s;
 
-      categoryTabRow.innerHTML = categories.map((c, i) => `<button type="button" class="tab${i === activeCategory ? ' on' : ''}" data-i="${i}">${c.label}</button>`).join('');
-      scopeTabRow.innerHTML = scopes.map(s => `<button type="button" class="${s === activeScope ? 'on' : ''}" data-scope="${s}">${scopeLabel(s)}</button>`).join('');
+      scopeTabRow.innerHTML = scopes.map(s => `<button type="button" class="scope-btn${s === activeScope ? ' on' : ''}" data-scope="${s}">${scopeLabel(s)}</button>`).join('');
+      categoryTabRow.innerHTML = CATEGORIES.map((c, i) => `<button type="button" class="tab${i === activeCategory ? ' on' : ''}" data-i="${i}">${c.label}</button>`).join('');
 
       function renderStats() {
         const s = stats[activeScope];
         if (!s) return;
-        statsContainer.innerHTML = categories[activeCategory].render(s);
+        const cat = CATEGORIES[activeCategory];
+        if (cat.subsections) {
+          const subIdx = activeSub[activeCategory] || 0;
+          subTabRow.innerHTML = `<div class="seg">${cat.subsections.map((sub, i) => `<button type="button" class="${i === subIdx ? 'on' : ''}" data-sub="${i}">${sub.label}</button>`).join('')}</div>`;
+          statsContainer.innerHTML = cat.subsections[subIdx].cards.map(key => CARD[key](s)).join('');
+        } else {
+          subTabRow.innerHTML = '';
+          statsContainer.innerHTML = cat.cards.map(key => CARD[key](s)).join('');
+        }
       }
+      scopeTabRow.addEventListener('click', e => {
+        const btn = e.target.closest('[data-scope]');
+        if (!btn) return;
+        activeScope = btn.dataset.scope;
+        [...scopeTabRow.children].forEach(b => b.classList.toggle('on', b.dataset.scope === activeScope));
+        renderStats();
+      });
       categoryTabRow.addEventListener('click', e => {
         const btn = e.target.closest('.tab');
         if (!btn) return;
@@ -503,11 +547,10 @@
         [...categoryTabRow.children].forEach((b, i) => b.classList.toggle('on', i === activeCategory));
         renderStats();
       });
-      scopeTabRow.addEventListener('click', e => {
-        const btn = e.target.closest('[data-scope]');
+      subTabRow.addEventListener('click', e => {
+        const btn = e.target.closest('[data-sub]');
         if (!btn) return;
-        activeScope = btn.dataset.scope;
-        [...scopeTabRow.children].forEach(b => b.classList.toggle('on', b.dataset.scope === activeScope));
+        activeSub[activeCategory] = Number(btn.dataset.sub);
         renderStats();
       });
       renderStats();
