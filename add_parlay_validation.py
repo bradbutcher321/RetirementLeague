@@ -80,12 +80,29 @@ def validation_request(sheet_id, col, values, strict):
     }
 
 
+def ensure_row_count(spreadsheet, worksheet, min_rows):
+    """A range request beyond the sheet's actual grid size is silently
+    clamped to it, not rejected -- this is why validation only ever
+    reached row 1000 despite being requested through row 3000 (the sheet's
+    real row count until now)."""
+    props = next(s["properties"] for s in spreadsheet.fetch_sheet_metadata()["sheets"]
+                 if s["properties"]["sheetId"] == worksheet.id)
+    if props["gridProperties"]["rowCount"] < min_rows:
+        spreadsheet.batch_update({"requests": [{
+            "updateSheetProperties": {
+                "properties": {"sheetId": worksheet.id, "gridProperties": {"rowCount": min_rows}},
+                "fields": "gridProperties.rowCount",
+            }
+        }]})
+
+
 def main():
     print("Loading Google Sheet...")
     gc = authorize_write()
     spreadsheet = gc.open_by_key(SHEET_ID)
     players, _ = gp.load_tracker(spreadsheet)
     target = spreadsheet.worksheet(TARGET_TAB)
+    ensure_row_count(spreadsheet, target, VALIDATION_LAST_ROW)
     clear_all_validation(spreadsheet, target.id)
 
     requests = [

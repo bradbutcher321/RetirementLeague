@@ -20,11 +20,9 @@ from generate_franchise_data import SHEET_ID, CREDS_PATH
 
 TARGET_TAB = "Auto Parlay Tracker"
 COL_YEAR, COL_WEEK = 0, 1
+VALIDATION_LAST_ROW = 3000  # matches add_parlay_validation.py
 
-WEEK_BAND_COLORS = [
-    {"red": 1, "green": 1, "blue": 1},          # white
-    {"red": 0.949, "green": 0.961, "blue": 0.976},  # light gray-blue
-]
+BAND_COLOR = {"red": 0.949, "green": 0.961, "blue": 0.976}  # light gray-blue
 BORDER_COLOR = {"red": 0.4, "green": 0.4, "blue": 0.4}
 
 HEADER_NOTES = {
@@ -80,22 +78,72 @@ def main():
     blocks = week_blocks(data_rows)
     print(f"Found {len(blocks)} week blocks across {len(data_rows)} rows.")
 
-    requests = []
+    meta = spreadsheet.fetch_sheet_metadata()
+    sheet_props = next(s for s in meta["sheets"] if s["properties"]["sheetId"] == target.id)
+    existing_rule_count = len(sheet_props.get("conditionalFormats", []))
+    current_row_count = sheet_props["properties"]["gridProperties"]["rowCount"]
 
-    # Alternate background per week block, and a top border where a new
-    # week starts, so blocks read as visually separate groups.
-    for i, (start, end) in enumerate(blocks):
-        sheet_row_start = start + 1  # +1 to skip header (0-indexed sheet row)
-        sheet_row_end = end + 1
-        color = WEEK_BAND_COLORS[i % 2]
+    requests = []
+    # The sheet's actual grid has to be at least as tall as the range we're
+    # about to format, or Sheets silently clamps any range request to
+    # whatever the grid really has -- this bit everyone earlier: validation
+    # and banding were both requested through row 3000 but only ever landed
+    # through row 1000, the sheet's real row count.
+    if current_row_count < VALIDATION_LAST_ROW:
         requests.append({
-            "repeatCell": {
-                "range": {"sheetId": target.id, "startRowIndex": sheet_row_start,
-                           "endRowIndex": sheet_row_end, "startColumnIndex": 0, "endColumnIndex": n_cols},
-                "cell": {"userEnteredFormat": {"backgroundColor": color}},
-                "fields": "userEnteredFormat.backgroundColor",
+            "updateSheetProperties": {
+                "properties": {"sheetId": target.id, "gridProperties": {"rowCount": VALIDATION_LAST_ROW}},
+                "fields": "gridProperties.rowCount",
             }
         })
+    # Clear existing conditional format rules first so re-running this
+    # script updates the banding rule in place instead of stacking a
+    # duplicate on top of it each time.
+    requests += [{"deleteConditionalFormatRule": {"sheetId": target.id, "index": 0}} for _ in range(existing_rule_count)]
+
+    # Reset any static background from a previous run of this script --
+    # the banding below now comes entirely from a live conditional format
+    # rule instead, so a stale direct fill underneath could look wrong if
+    # the rule and the direct color ever disagree.
+    requests.append({
+        "repeatCell": {
+            "range": {"sheetId": target.id, "startRowIndex": 1, "endRowIndex": VALIDATION_LAST_ROW,
+                       "startColumnIndex": 0, "endColumnIndex": n_cols},
+            "cell": {"userEnteredFormat": {"backgroundColor": {"red": 1, "green": 1, "blue": 1}}},
+            "fields": "userEnteredFormat.backgroundColor",
+        }
+    })
+
+    # Live alternating background, keyed off Year+Week, covering the same
+    # range the dropdowns already reach -- a running "how many distinct
+    # (Year, Week) pairs have I seen so far" count that flips parity each
+    # time a new week starts. Because it's a formula (not a precomputed
+    # color), it keeps working correctly for weeks added long after this
+    # script last ran, with no need to re-run it just for banding.
+    requests.append({
+        "addConditionalFormatRule": {
+            "rule": {
+                "ranges": [{"sheetId": target.id, "startRowIndex": 1, "endRowIndex": VALIDATION_LAST_ROW,
+                             "startColumnIndex": 0, "endColumnIndex": n_cols}],
+                "booleanRule": {
+                    "condition": {
+                        "type": "CUSTOM_FORMULA",
+                        "values": [{"userEnteredValue": '=ISEVEN(COUNTUNIQUE($A$2:$A2&"-"&$B$2:$B2))'}],
+                    },
+                    "format": {"backgroundColor": BAND_COLOR},
+                },
+            },
+            "index": 0,
+        }
+    })
+
+    # The top border at each week boundary can't be done as a live rule --
+    # conditional formatting in Sheets doesn't support borders -- so this
+    # part stays static and only covers weeks that exist right now. Re-run
+    # this script after adding new weeks to extend it; the banding above
+    # doesn't need that.
+    for i, (start, end) in enumerate(blocks):
+        sheet_row_start = start + 1  # +1 to skip header (0-indexed sheet row)
         requests.append({
             "updateBorders": {
                 "range": {"sheetId": target.id, "startRowIndex": sheet_row_start,
@@ -125,7 +173,9 @@ def main():
         })
 
     spreadsheet.batch_update({"requests": requests})
-    print(f"Applied week banding/borders, frozen panes, and {len(HEADER_NOTES)} header notes to '{TARGET_TAB}'.")
+    print(f"Applied live week banding (rows 2-{VALIDATION_LAST_ROW}), "
+          f"borders for {len(blocks)} current week blocks, frozen panes, "
+          f"and {len(HEADER_NOTES)} header notes to '{TARGET_TAB}'.")
 
 
 if __name__ == "__main__":
