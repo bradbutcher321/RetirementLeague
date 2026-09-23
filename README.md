@@ -19,8 +19,13 @@ career stats in sync with the league's Google Sheet.
   changes when results are entered.
 - **Parlay Results** (`docs/parlay-results.html`) — the current week's
   parlay (with a week/year picker for past weeks), plus betting stats,
-  breakdowns, and "how far parlays get" charts. Reads a static
-  `docs/data/parlay.json` file.
+  breakdowns, and "how far parlays get" charts, each with their own
+  year / all-time tabs. Reads a static `docs/data/parlay.json` file.
+- **Rule Changes** (`docs/rule-changes.html`) — the league's original
+  (2015) rules, a timeline of what changed in later years (format changes
+  plus buy-in changes; years with no change are omitted), and the current
+  rules in full, including buy-in and payout amounts. Reads a static
+  `docs/data/rule-changes.json` file.
 - **Standings** (`docs/standings.html`) — regular-season or final standings
   for any year.
 - **Head to Head** (`docs/head-to-head.html`) — pick two teams to compare
@@ -64,6 +69,11 @@ Standings, Head to Head, Overview, and Game Records all read
   log, per-season rollups, draft order, and earnings) from Game Tracker,
   PlayerStats, RandomInfo, and Money Tracker. Runs every few hours and
   on-demand (`.github/workflows/refresh_league_data.yml`).
+- **`generate_rule_changes_data.py`** — writes `docs/data/rule-changes.json`
+  from D1's `league_settings` (real ESPN rule history, every year
+  2015-present) plus the sheet's `Money Tracker` tab (buy-in and payout
+  amounts, which have no ESPN equivalent). Run on-demand whenever a rule or
+  the buy-in changes — there's no schedule for it since rules rarely change.
 
 All scripts need a Google service account key at
 `google_secret.json` (gitignored, not committed) to authenticate with the
@@ -79,5 +89,6 @@ espn_api/               Vendored ESPN Fantasy API client library (Python, used b
 generate_franchise_data.py    Franchise page data pipeline
 generate_parlay_data.py       Parlay Results page data pipeline
 generate_league_data.py       Standings / Head to Head / Overview / Game Records data pipeline
+generate_rule_changes_data.py Rule Changes page data pipeline
 .github/workflows/      Scheduled + manual automation
 ```

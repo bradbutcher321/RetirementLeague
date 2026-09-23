@@ -389,15 +389,20 @@ def main():
     if not weeks:
         raise SystemExit("No parlay weeks found in Parlay Tracker; refusing to overwrite parlay.json")
 
-    stats = compute_stats(players, weeks)
     for week in weeks:
         week["final"]["result"] = week_state(week, players)["result"]
+
+    years = sorted({w["year"] for w in weeks})
+    stats_by_scope = {"all": compute_stats(players, weeks)}
+    for year in years:
+        stats_by_scope[str(year)] = compute_stats(players, [w for w in weeks if w["year"] == year])
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "players": players,
         "weeks": weeks,
-        "stats": stats,
+        "years": years,
+        "stats": stats_by_scope,
     }
 
     # Skip the write when only the timestamp would change, so frequent

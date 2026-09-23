@@ -1,289 +1,139 @@
 {
-  "generated_at": "2026-09-22T05:18:06.578260+00:00",
-  "eras": [
+  "generated_at": "2026-09-23T01:20:47.785333+00:00",
+  "baseline": {
+    "year": 2015,
+    "team_count": 8,
+    "playoff_team_count": 4,
+    "ppr_label": "No reception scoring",
+    "median_scoring": false,
+    "keeper_count": 0,
+    "waiver_type": "Standard priority waivers",
+    "roster_structure": [
+      {
+        "position": "QB",
+        "count": 1
+      },
+      {
+        "position": "RB",
+        "count": 2
+      },
+      {
+        "position": "WR",
+        "count": 2
+      },
+      {
+        "position": "TE",
+        "count": 1
+      },
+      {
+        "position": "FLEX",
+        "count": 1
+      },
+      {
+        "position": "D/ST",
+        "count": 1
+      },
+      {
+        "position": "K",
+        "count": 1
+      }
+    ],
+    "buy_in": 50,
+    "payouts": [
+      350,
+      50
+    ]
+  },
+  "changes": [
     {
-      "label": "2015-2016",
-      "start_year": 2015,
-      "end_year": 2016,
-      "team_count": 8,
-      "playoff_team_count": 4,
-      "ppr_label": "No reception scoring",
-      "median_scoring": false,
-      "keeper_count": 0,
-      "waiver_type": "Standard priority waivers",
-      "roster_structure": [
-        {
-          "position": "QB",
-          "count": 1
-        },
-        {
-          "position": "RB",
-          "count": 2
-        },
-        {
-          "position": "WR",
-          "count": 2
-        },
-        {
-          "position": "TE",
-          "count": 1
-        },
-        {
-          "position": "FLEX",
-          "count": 1
-        },
-        {
-          "position": "D/ST",
-          "count": 1
-        },
-        {
-          "position": "K",
-          "count": 1
-        }
-      ],
-      "money_lines": null
-    },
-    {
-      "label": "2017-2018",
-      "start_year": 2017,
-      "end_year": 2018,
-      "team_count": 10,
-      "playoff_team_count": 6,
-      "ppr_label": "No reception scoring",
-      "median_scoring": false,
-      "keeper_count": 0,
-      "waiver_type": "Standard priority waivers",
-      "roster_structure": [
-        {
-          "position": "QB",
-          "count": 1
-        },
-        {
-          "position": "RB",
-          "count": 2
-        },
-        {
-          "position": "WR",
-          "count": 2
-        },
-        {
-          "position": "TE",
-          "count": 1
-        },
-        {
-          "position": "FLEX",
-          "count": 1
-        },
-        {
-          "position": "D/ST",
-          "count": 1
-        },
-        {
-          "position": "K",
-          "count": 1
-        }
-      ],
-      "money_lines": null
-    },
-    {
-      "label": "2019",
-      "start_year": 2019,
-      "end_year": 2019,
-      "team_count": 10,
-      "playoff_team_count": 6,
-      "ppr_label": "0.5 PPR",
-      "median_scoring": false,
-      "keeper_count": 0,
-      "waiver_type": "Standard priority waivers",
-      "roster_structure": [
-        {
-          "position": "QB",
-          "count": 1
-        },
-        {
-          "position": "RB",
-          "count": 2
-        },
-        {
-          "position": "WR",
-          "count": 2
-        },
-        {
-          "position": "TE",
-          "count": 1
-        },
-        {
-          "position": "FLEX",
-          "count": 1
-        },
-        {
-          "position": "D/ST",
-          "count": 1
-        },
-        {
-          "position": "K",
-          "count": 1
-        }
-      ],
-      "money_lines": null
-    },
-    {
-      "label": "2020-2021",
-      "start_year": 2020,
-      "end_year": 2021,
-      "team_count": 10,
-      "playoff_team_count": 6,
-      "ppr_label": "0.5 PPR",
-      "median_scoring": false,
-      "keeper_count": 0,
-      "waiver_type": "Standard priority waivers",
-      "roster_structure": [
-        {
-          "position": "QB",
-          "count": 1
-        },
-        {
-          "position": "RB",
-          "count": 2
-        },
-        {
-          "position": "WR",
-          "count": 2
-        },
-        {
-          "position": "TE",
-          "count": 1
-        },
-        {
-          "position": "FLEX",
-          "count": 2
-        },
-        {
-          "position": "D/ST",
-          "count": 1
-        }
-      ],
-      "money_lines": [
-        "Buy-in: 150",
-        "Winner Payout: 1050",
-        "Second Place Payout: 150"
+      "year": 2017,
+      "changes": [
+        "Teams: 8 \u2192 10",
+        "Playoff Teams: 4 \u2192 6"
       ]
     },
     {
-      "label": "2022",
-      "start_year": 2022,
-      "end_year": 2022,
-      "team_count": 12,
-      "playoff_team_count": 6,
-      "ppr_label": "0.5 PPR",
-      "median_scoring": false,
-      "keeper_count": 0,
-      "waiver_type": "Standard priority waivers",
-      "roster_structure": [
-        {
-          "position": "QB",
-          "count": 1
-        },
-        {
-          "position": "RB",
-          "count": 2
-        },
-        {
-          "position": "WR",
-          "count": 2
-        },
-        {
-          "position": "TE",
-          "count": 1
-        },
-        {
-          "position": "FLEX",
-          "count": 1
-        },
-        {
-          "position": "D/ST",
-          "count": 1
-        }
-      ],
-      "money_lines": [
-        "Buy-in: 200",
-        "Winner Payout: 1400",
-        "Second Place Payout: 400",
-        "Third Place Payout: 200"
+      "year": 2018,
+      "changes": [
+        "Buy-in: $50 \u2192 $100"
       ]
     },
     {
-      "label": "2023-2024",
-      "start_year": 2023,
-      "end_year": 2024,
-      "team_count": 12,
-      "playoff_team_count": 6,
-      "ppr_label": "0.5 PPR",
-      "median_scoring": false,
-      "keeper_count": 0,
-      "waiver_type": "Standard priority waivers",
-      "roster_structure": [
-        {
-          "position": "QB",
-          "count": 1
-        },
-        {
-          "position": "RB",
-          "count": 2
-        },
-        {
-          "position": "WR",
-          "count": 2
-        },
-        {
-          "position": "TE",
-          "count": 1
-        },
-        {
-          "position": "FLEX",
-          "count": 2
-        }
-      ],
-      "money_lines": [
-        "Buy-in: 200",
-        "Winner Payout: 1400",
-        "Second Place Payout: 400",
-        "Third Place Payout: 200"
+      "year": 2019,
+      "changes": [
+        "Scoring: No reception scoring \u2192 0.5 PPR"
       ]
     },
     {
-      "label": "2025-2026",
-      "start_year": 2025,
-      "end_year": 2026,
-      "team_count": 12,
-      "playoff_team_count": 6,
-      "ppr_label": "0.5 PPR",
-      "median_scoring": true,
-      "keeper_count": 0,
-      "waiver_type": "Standard priority waivers",
-      "roster_structure": [
-        {
-          "position": "QB",
-          "count": 1
-        },
-        {
-          "position": "RB",
-          "count": 2
-        },
-        {
-          "position": "WR",
-          "count": 2
-        },
-        {
-          "position": "TE",
-          "count": 1
-        },
-        {
-          "position": "FLEX",
-          "count": 2
-        }
-      ],
-      "money_lines": null
+      "year": 2020,
+      "changes": [
+        "Roster: FLEX 1 \u2192 2, dropped K"
+      ]
+    },
+    {
+      "year": 2021,
+      "changes": [
+        "Buy-in: $100 \u2192 $150"
+      ]
+    },
+    {
+      "year": 2022,
+      "changes": [
+        "Teams: 10 \u2192 12",
+        "Roster: FLEX 2 \u2192 1",
+        "Buy-in: $150 \u2192 $200"
+      ]
+    },
+    {
+      "year": 2023,
+      "changes": [
+        "Roster: FLEX 1 \u2192 2, dropped D/ST"
+      ]
+    },
+    {
+      "year": 2025,
+      "changes": [
+        "Median Scoring: No \u2192 Yes"
+      ]
     }
-  ]
+  ],
+  "current": {
+    "year": 2026,
+    "team_count": 12,
+    "playoff_team_count": 6,
+    "ppr_label": "0.5 PPR",
+    "median_scoring": true,
+    "keeper_count": 0,
+    "waiver_type": "Standard priority waivers",
+    "roster_structure": [
+      {
+        "position": "QB",
+        "count": 1
+      },
+      {
+        "position": "RB",
+        "count": 2
+      },
+      {
+        "position": "WR",
+        "count": 2
+      },
+      {
+        "position": "TE",
+        "count": 1
+      },
+      {
+        "position": "FLEX",
+        "count": 2
+      }
+    ],
+    "buy_in": 200,
+    "payouts": [
+      1400,
+      400,
+      400,
+      200
+    ],
+    "payouts_year": 2025
+  }
 }

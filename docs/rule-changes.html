@@ -10,24 +10,27 @@
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
 <style>
-  .tab-row{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
-  .era-tab{
-    background: var(--surface); border: 1px solid var(--line); color: var(--text-dim);
-    font-family: var(--body); font-size: 0.86rem; font-weight: 600; padding: 9px 16px;
-    border-radius: 999px; cursor: pointer;
-  }
-  .era-tab:hover{ border-color: var(--gold); color: var(--text); }
-  .era-tab.active{ background: rgba(186,155,55,0.12); border-color: var(--gold); color: var(--gold); }
-
   .rules-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); }
   .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
   .rules-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; }
+  .rules-note{ color: var(--text-dim); font-size: 0.8rem; margin-top: 3px; }
   .rules-body{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--line); }
   .rules-section{ background: var(--surface); padding: 16px 20px; }
   .rules-section-title{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
   .rules-line{ font-size: 0.9rem; padding: 3px 0; color: var(--text); }
   .rules-line .label{ color: var(--text-dim); }
+  .rules-footnote{ color: var(--text-dim); font-size: 0.76rem; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
   .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
+
+  /* ---------- Timeline ---------- */
+  .timeline{ position: relative; padding-left: 30px; }
+  .timeline::before{ content: ''; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 2px; background: var(--line); }
+  .timeline-item{ position: relative; padding-bottom: 24px; }
+  .timeline-item:last-child{ padding-bottom: 0; }
+  .timeline-dot{ position: absolute; left: -30px; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg); border: 2px solid var(--gold); }
+  .timeline-year{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.15rem; color: var(--gold); margin-bottom: 8px; }
+  .change-list{ display: flex; flex-direction: column; gap: 6px; }
+  .change-chip{ background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 0.88rem; border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -46,12 +49,22 @@
       </div>
     </header>
 
-    <section>
-      <div class="tab-row" id="tab-row"></div>
-      <div id="rules-container"><div class="loading-row">Loading rules…</div></div>
+    <section id="baseline-section">
+      <h2>Where It Started</h2>
+      <div id="baseline-container"><div class="loading-row">Loading rules…</div></div>
     </section>
 
-    <footer>Data via ESPN Fantasy (buy-in/payouts from the league sheet)</footer>
+    <section id="changes-section">
+      <h2>What's Changed Since</h2>
+      <div id="changes-container"></div>
+    </section>
+
+    <section id="current-section">
+      <h2>Current Rules</h2>
+      <div id="current-container"></div>
+    </section>
+
+    <footer>Rules from ESPN Fantasy · buy-in and payouts from the league's money tracker</footer>
   </div>
 
 <script src="nav.js"></script>
@@ -66,36 +79,56 @@
     if (d.toDateString() === new Date().toDateString()) return time;
     return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
   }
+  function ordinal(n) {
+    const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
 
-  function section(title, lines) {
-    return `<div class="rules-section"><div class="rules-section-title">${esc(title)}</div>${lines.join('')}</div>`;
+  function section(title, lines, footnote) {
+    return `<div class="rules-section"><div class="rules-section-title">${esc(title)}</div>${lines.join('')}${footnote ? `<div class="rules-footnote">${footnote}</div>` : ''}</div>`;
   }
   function line(label, value) {
     return `<div class="rules-line"><span class="label">${esc(label)}:</span> ${esc(value)}</div>`;
   }
 
-  function renderEra(era) {
+  function moneyLines(rec) {
+    if (!rec.buy_in) return [];
+    const lines = [line('Buy-in', '$' + rec.buy_in)];
+    rec.payouts.forEach((amt, i) => lines.push(line(`${ordinal(i + 1)} Place`, '$' + amt)));
+    return lines;
+  }
+
+  function rulesCard(rec, title) {
     const settingsLines = [
-      line('Teams', era.team_count),
-      line('Playoff Teams', era.playoff_team_count),
-      line('Scoring', era.ppr_label),
-      line('Median Scoring', era.median_scoring ? 'Yes' : 'No'),
-      line('Waiver Type', era.waiver_type),
-      line('Keepers', era.keeper_count || 'None'),
+      line('Teams', rec.team_count),
+      line('Playoff Teams', rec.playoff_team_count),
+      line('Scoring', rec.ppr_label),
+      line('Median Scoring', rec.median_scoring ? 'Yes' : 'No'),
+      line('Waiver Type', rec.waiver_type),
+      line('Keepers', rec.keeper_count || 'None'),
     ];
-    const rosterLines = era.roster_structure.map(r => `<div class="rules-line">${r.count} ${esc(r.position)}</div>`);
+    const rosterLines = rec.roster_structure.map(r => `<div class="rules-line">${r.count} ${esc(r.position)}</div>`);
     const sections = [section('League Settings', settingsLines), section('Roster Structure', rosterLines)];
-    if (era.money_lines && era.money_lines.length) {
-      sections.push(section('Money', era.money_lines.map(l => {
-        const m = l.match(/^([^:]+):\s*(.+)$/);
-        return m ? line(m[1], m[2]) : `<div class="rules-line">${esc(l)}</div>`;
-      })));
-    }
-    const span = era.start_year === era.end_year ? `${era.start_year}` : `${era.start_year}–${era.end_year}`;
+    const moneyFootnote = rec.payouts_year && rec.payouts_year !== rec.year
+      ? `${rec.year} season in progress — payouts shown are from the ${rec.payouts_year} season`
+      : '';
+    const money = moneyLines(rec);
+    if (money.length) sections.push(section('Money', money, moneyFootnote));
     return `
       <div class="rules-card">
-        <div class="rules-head"><div class="rules-title">${esc(span)} Season${era.start_year === era.end_year ? '' : 's'}</div></div>
+        <div class="rules-head">
+          <div class="rules-title">${esc(title)} — ${rec.year}</div>
+        </div>
         <div class="rules-body">${sections.join('')}</div>
+      </div>`;
+  }
+
+  function timelineItem(entry) {
+    return `
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-year">${entry.year}</div>
+        <div class="change-list">${entry.changes.map(c => `<div class="change-chip">${esc(c)}</div>`).join('')}</div>
       </div>`;
   }
 
@@ -103,26 +136,21 @@
     .then(res => res.json())
     .then(data => {
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
-      if (!data.eras.length) {
-        document.getElementById('rules-container').innerHTML = '<div class="empty-note">No rule changes documented yet.</div>';
-        return;
-      }
-      const tabRow = document.getElementById('tab-row');
-      tabRow.innerHTML = data.eras.map((e, i) => `<button type="button" class="era-tab${i === data.eras.length - 1 ? ' active' : ''}" data-i="${i}">${esc(e.label)}</button>`).join('');
 
-      function show(i) {
-        [...tabRow.children].forEach((btn, idx) => btn.classList.toggle('active', idx === i));
-        document.getElementById('rules-container').innerHTML = renderEra(data.eras[i]);
+      document.getElementById('baseline-container').innerHTML = rulesCard(data.baseline, 'Original');
+
+      const changesContainer = document.getElementById('changes-container');
+      if (!data.changes.length) {
+        changesContainer.innerHTML = '<div class="empty-note">No changes recorded yet.</div>';
+      } else {
+        changesContainer.innerHTML = `<div class="timeline">${data.changes.map(timelineItem).join('')}</div>`;
       }
-      tabRow.addEventListener('click', e => {
-        const btn = e.target.closest('.era-tab');
-        if (btn) show(Number(btn.dataset.i));
-      });
-      show(data.eras.length - 1); // most recent era first
+
+      document.getElementById('current-container').innerHTML = rulesCard(data.current, 'Current');
     })
     .catch(err => {
       console.error('Rule changes data error:', err);
-      document.getElementById('rules-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading rule changes data.</div>';
+      document.getElementById('baseline-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading rule changes data.</div>';
     });
 </script>
 <script src="track.js?v=1" defer></script>

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-22T01:45:17.838629+00:00",
+  "generated_at": "2026-09-23T01:21:50.787630+00:00",
   "players": [
     "Brad",
     "Flanders",
@@ -1822,1102 +1822,3045 @@
       ]
     }
   ],
+  "years": [
+    2025,
+    2026
+  ],
   "stats": {
-    "weekly_sackos": [
-      {
-        "player": "Joe K",
-        "sackos": 4,
-        "cost": 80
-      },
-      {
-        "player": "Jared",
-        "sackos": 3,
-        "cost": 60
-      },
-      {
-        "player": "Jeff",
-        "sackos": 3,
-        "cost": 60
-      },
-      {
-        "player": "TJ",
-        "sackos": 3,
-        "cost": 60
-      },
-      {
-        "player": "Jon",
-        "sackos": 2,
-        "cost": 40
-      },
-      {
-        "player": "Joe G",
-        "sackos": 1,
-        "cost": 20
-      },
-      {
-        "player": "Chad",
-        "sackos": 1,
-        "cost": 20
-      },
-      {
-        "player": "Collin",
-        "sackos": 1,
-        "cost": 20
-      },
-      {
-        "player": "Brad",
-        "sackos": 0,
-        "cost": 0
-      },
-      {
-        "player": "Flanders",
-        "sackos": 0,
-        "cost": 0
-      },
-      {
-        "player": "Ben",
-        "sackos": 0,
-        "cost": 0
-      },
-      {
-        "player": "Kris",
-        "sackos": 0,
-        "cost": 0
-      }
-    ],
-    "individual_wl": [
-      {
-        "player": "Joe G",
-        "w": 12,
-        "l": 6,
-        "win_pct": 66.7
-      },
-      {
-        "player": "Ben",
-        "w": 12,
-        "l": 6,
-        "win_pct": 66.7
-      },
-      {
-        "player": "Flanders",
-        "w": 9,
-        "l": 9,
-        "win_pct": 50.0
-      },
-      {
-        "player": "Kris",
-        "w": 8,
-        "l": 10,
-        "win_pct": 44.4
-      },
-      {
-        "player": "Jared",
-        "w": 7,
-        "l": 11,
-        "win_pct": 38.9
-      },
-      {
-        "player": "Chad",
-        "w": 7,
-        "l": 11,
-        "win_pct": 38.9
-      },
-      {
-        "player": "Jeff",
-        "w": 7,
-        "l": 11,
-        "win_pct": 38.9
-      },
-      {
-        "player": "Collin",
-        "w": 7,
-        "l": 11,
-        "win_pct": 38.9
-      },
-      {
-        "player": "Brad",
-        "w": 6,
-        "l": 12,
-        "win_pct": 33.3
-      },
-      {
-        "player": "TJ",
-        "w": 6,
-        "l": 12,
-        "win_pct": 33.3
-      },
-      {
-        "player": "Jon",
-        "w": 5,
-        "l": 13,
-        "win_pct": 27.8
-      },
-      {
-        "player": "Joe K",
-        "w": 4,
-        "l": 14,
-        "win_pct": 22.2
-      }
-    ],
-    "average_odds": [
-      {
-        "player": "Jon",
-        "avg_odds": 162
-      },
-      {
-        "player": "Jeff",
-        "avg_odds": -106
-      },
-      {
-        "player": "Brad",
-        "avg_odds": -108
-      },
-      {
-        "player": "Flanders",
-        "avg_odds": -115
-      },
-      {
-        "player": "Jared",
-        "avg_odds": -115
-      },
-      {
-        "player": "TJ",
-        "avg_odds": -117
-      },
-      {
-        "player": "Joe K",
-        "avg_odds": -123
-      },
-      {
-        "player": "Chad",
-        "avg_odds": -127
-      },
-      {
-        "player": "Ben",
-        "avg_odds": -131
-      },
-      {
-        "player": "Kris",
-        "avg_odds": -144
-      },
-      {
-        "player": "Collin",
-        "avg_odds": -156
-      },
-      {
-        "player": "Joe G",
-        "avg_odds": -182
-      }
-    ],
-    "parlays_killed": [
-      {
-        "player": "Jeff",
-        "kills": 4.33,
-        "kill_chances": 6,
-        "avg_bet_position": 4.89
-      },
-      {
-        "player": "Joe K",
-        "kills": 2.83,
-        "kill_chances": 6,
-        "avg_bet_position": 3.17
-      },
-      {
-        "player": "Flanders",
-        "kills": 2.33,
-        "kill_chances": 3,
-        "avg_bet_position": 6.94
-      },
-      {
-        "player": "Brad",
-        "kills": 1.5,
-        "kill_chances": 4,
-        "avg_bet_position": 5.94
-      },
-      {
-        "player": "Collin",
-        "kills": 1.5,
-        "kill_chances": 3,
-        "avg_bet_position": 5.67
-      },
-      {
-        "player": "Jon",
-        "kills": 1.5,
-        "kill_chances": 3,
-        "avg_bet_position": 7.22
-      },
-      {
-        "player": "Jared",
-        "kills": 1.0,
-        "kill_chances": 3,
-        "avg_bet_position": 4.33
-      },
-      {
-        "player": "Chad",
-        "kills": 1.0,
-        "kill_chances": 2,
-        "avg_bet_position": 5.44
-      },
-      {
-        "player": "Ben",
-        "kills": 1.0,
-        "kill_chances": 2,
-        "avg_bet_position": 6.5
-      },
-      {
-        "player": "TJ",
-        "kills": 1.0,
-        "kill_chances": 2,
-        "avg_bet_position": 6.94
-      },
-      {
-        "player": "Joe G",
-        "kills": 0.0,
-        "kill_chances": 1,
-        "avg_bet_position": 6.22
-      },
-      {
-        "player": "Kris",
-        "kills": 0.0,
-        "kill_chances": 1,
-        "avg_bet_position": 8.11
-      }
-    ],
-    "potential_earnings": [
-      {
-        "player": "Ben",
-        "winnings": 634195.5,
-        "losses": 195298.56
-      },
-      {
-        "player": "Joe G",
-        "winnings": 564642.29,
-        "losses": 264851.77
-      },
-      {
-        "player": "Kris",
-        "winnings": 445951.63,
-        "losses": 383542.43
-      },
-      {
-        "player": "Collin",
-        "winnings": 376698.67,
-        "losses": 452795.39
-      },
-      {
-        "player": "Jared",
-        "winnings": 354498.07,
-        "losses": 474995.99
-      },
-      {
-        "player": "Chad",
-        "winnings": 350831.74,
-        "losses": 478662.32
-      },
-      {
-        "player": "TJ",
-        "winnings": 345572.9,
-        "losses": 483921.16
-      },
-      {
-        "player": "Brad",
-        "winnings": 306833.12,
-        "losses": 522660.94
-      },
-      {
-        "player": "Jon",
-        "winnings": 302748.16,
-        "losses": 526745.9
-      },
-      {
-        "player": "Flanders",
-        "winnings": 281740.93,
-        "losses": 547753.13
-      },
-      {
-        "player": "Jeff",
-        "winnings": 263300.39,
-        "losses": 566193.67
-      },
-      {
-        "player": "Joe K",
-        "winnings": 171991.85,
-        "losses": 657502.21
-      }
-    ],
-    "streaks": [
-      {
-        "player": "Joe G",
-        "current": -1,
-        "longest_win": 6,
-        "longest_loss": 2
-      },
-      {
-        "player": "Jeff",
-        "current": 1,
-        "longest_win": 5,
-        "longest_loss": 8
-      },
-      {
-        "player": "TJ",
-        "current": -3,
-        "longest_win": 5,
-        "longest_loss": 5
-      },
-      {
-        "player": "Jared",
-        "current": 4,
-        "longest_win": 4,
-        "longest_loss": 5
-      },
-      {
-        "player": "Ben",
-        "current": 1,
-        "longest_win": 4,
-        "longest_loss": 3
-      },
-      {
-        "player": "Chad",
-        "current": -3,
-        "longest_win": 3,
-        "longest_loss": 4
-      },
-      {
-        "player": "Flanders",
-        "current": 2,
-        "longest_win": 2,
-        "longest_loss": 3
-      },
-      {
-        "player": "Collin",
-        "current": 1,
-        "longest_win": 2,
-        "longest_loss": 4
-      },
-      {
-        "player": "Brad",
-        "current": -1,
-        "longest_win": 2,
-        "longest_loss": 4
-      },
-      {
-        "player": "Kris",
-        "current": -1,
-        "longest_win": 2,
-        "longest_loss": 3
-      },
-      {
-        "player": "Jon",
-        "current": -1,
-        "longest_win": 2,
-        "longest_loss": 5
-      },
-      {
-        "player": "Joe K",
-        "current": -2,
-        "longest_win": 2,
-        "longest_loss": 7
-      }
-    ],
-    "biggest_hits": [
-      {
-        "player": "Jon",
-        "odds": 300.0,
-        "pick": "Anytime TD: 2x Rashee Rice",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 12
-      },
-      {
-        "player": "Kris",
-        "odds": 250.0,
-        "pick": "Anytime TD: Jaxson Dart",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 6
-      },
-      {
-        "player": "Jared",
-        "odds": 165.0,
-        "pick": "Money Line: Magic vs. Pistons",
-        "sport": "NBA",
-        "year": 2025,
-        "week": 12
-      },
-      {
-        "player": "TJ",
-        "odds": 150.0,
-        "pick": "Money Line: Newcastle United vs. Everton",
-        "sport": "Futbol",
-        "year": 2025,
-        "week": 12
-      },
-      {
-        "player": "Brad",
-        "odds": 135.0,
-        "pick": "Money Line: Lions vs. Bears",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 17
-      },
-      {
-        "player": "Flanders",
-        "odds": 135.0,
-        "pick": "Money Line: Titans vs. Chiefs",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 15
-      },
-      {
-        "player": "Joe G",
-        "odds": 120.0,
-        "pick": "Money Line: #12 GT vs. Duke",
-        "sport": "NCAAF",
-        "year": 2025,
-        "week": 6
-      },
-      {
-        "player": "Jeff",
-        "odds": 115.0,
-        "pick": "Money Line: Fiorentina vs. Udinese",
-        "sport": "Futbol",
-        "year": 2025,
-        "week": 15
-      },
-      {
-        "player": "Ben",
-        "odds": 110.0,
-        "pick": "Anytime TD: Ja'Marr Chase",
-        "sport": "NFL",
-        "year": 2026,
-        "week": 1
-      },
-      {
-        "player": "Chad",
-        "odds": -105.0,
-        "pick": "Spread: #23 Illinois +6.5 vs. #21 USC",
-        "sport": "NCAAF",
-        "year": 2025,
-        "week": 3
-      },
-      {
-        "player": "Joe K",
-        "odds": -105.0,
-        "pick": "Total Points: Over 48.5 Kentucky vs. #12 Georgia",
-        "sport": "NCAAF",
-        "year": 2025,
-        "week": 4
-      },
-      {
-        "player": "Collin",
-        "odds": -105.0,
-        "pick": "Spread: Steelers -6 vs. Browns",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 5
-      }
-    ],
-    "safest_losses": [
-      {
-        "player": "Jared",
-        "odds": -300.0,
-        "pick": "Money Line: Chargers vs. Giants",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 3
-      },
-      {
-        "player": "Joe G",
-        "odds": -300.0,
-        "pick": "Money Line: #24 ASU vs. Houston",
-        "sport": "NCAAF",
-        "year": 2025,
-        "week": 7
-      },
-      {
-        "player": "Joe K",
-        "odds": -300.0,
-        "pick": "Money Line: Arkansas vs. Memphis",
-        "sport": "NCAAF",
-        "year": 2025,
-        "week": 2
-      },
-      {
-        "player": "Collin",
-        "odds": -300.0,
-        "pick": "Money Line: #8 Notre Dame vs. #16 Texas A&M",
-        "sport": "NCAAF",
-        "year": 2025,
-        "week": 1
-      },
-      {
-        "player": "Kris",
-        "odds": -260.0,
-        "pick": "Anytime TD: Jonathan Taylor",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 11
-      },
-      {
-        "player": "Chad",
-        "odds": -260.0,
-        "pick": "Money Line: #3 Georgia vs. #6 Ole Miss",
-        "sport": "NCAAF",
-        "year": 2025,
-        "week": 16
-      },
-      {
-        "player": "TJ",
-        "odds": -185.0,
-        "pick": "Money Line: Stars vs. Blackhawks",
-        "sport": "NHL",
-        "year": 2025,
-        "week": 17
-      },
-      {
-        "player": "Flanders",
-        "odds": -180.0,
-        "pick": "Money Line: 49ers vs. Jags",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 3
-      },
-      {
-        "player": "Brad",
-        "odds": -180.0,
-        "pick": "Money Line: Cowboys vs. Panthers",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 5
-      },
-      {
-        "player": "Ben",
-        "odds": -155.0,
-        "pick": "Money Line: Chargers vs. Jaguars",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 10
-      },
-      {
-        "player": "Jeff",
-        "odds": -120.0,
-        "pick": "Total Goals: Over 2.5 Celta Vigo vs. Atletico Madrid",
-        "sport": "Futbol",
-        "year": 2025,
-        "week": 4
-      },
-      {
-        "player": "Jon",
-        "odds": 105.0,
-        "pick": "Anytime TD: Ceedee Lamb",
-        "sport": "NFL",
-        "year": 2025,
-        "week": 13
-      }
-    ],
-    "flat_bet_profit": [
-      {
-        "player": "Ben",
-        "profit": 301.41,
-        "bets": 18
-      },
-      {
-        "player": "Joe G",
-        "profit": 83.42,
-        "bets": 18
-      },
-      {
-        "player": "Flanders",
-        "profit": -164.94,
-        "bets": 18
-      },
-      {
-        "player": "Kris",
-        "profit": -372.81,
-        "bets": 18
-      },
-      {
-        "player": "Jon",
-        "profit": -454.76,
-        "bets": 18
-      },
-      {
-        "player": "Jeff",
-        "profit": -541.91,
-        "bets": 18
-      },
-      {
-        "player": "Chad",
-        "profit": -564.07,
-        "bets": 18
-      },
-      {
-        "player": "Jared",
-        "profit": -580.92,
-        "bets": 18
-      },
-      {
-        "player": "Collin",
-        "profit": -594.51,
-        "bets": 18
-      },
-      {
-        "player": "Brad",
-        "profit": -612.4,
-        "bets": 18
-      },
-      {
-        "player": "TJ",
-        "profit": -687.68,
-        "bets": 18
-      },
-      {
-        "player": "Joe K",
-        "profit": -1153.74,
-        "bets": 18
-      }
-    ],
-    "sport_wl": [
-      {
-        "sport": "Boxing",
-        "w": 1,
-        "l": 0,
-        "win_pct": 100.0
-      },
-      {
-        "sport": "NBA",
-        "w": 6,
-        "l": 2,
-        "win_pct": 75.0
-      },
-      {
-        "sport": "NHL",
-        "w": 2,
-        "l": 1,
-        "win_pct": 66.7
-      },
-      {
-        "sport": "Futbol",
-        "w": 9,
-        "l": 10,
-        "win_pct": 47.4
-      },
-      {
-        "sport": "NFL",
-        "w": 47,
-        "l": 66,
-        "win_pct": 41.6
-      },
-      {
-        "sport": "NCAAF",
-        "w": 25,
-        "l": 42,
-        "win_pct": 37.3
-      },
-      {
-        "sport": "UFC",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "sport": "Womens Tennis",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "sport": "Hockey",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "sport": "MLB",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "sport": "NCAAM",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      }
-    ],
-    "bet_type_wl": [
-      {
-        "bet_type": "Passing TD",
-        "w": 3,
-        "l": 0,
-        "win_pct": 100.0
-      },
-      {
-        "bet_type": "Alt Spread",
-        "w": 3,
-        "l": 2,
-        "win_pct": 60.0
-      },
-      {
-        "bet_type": "Total Goals",
-        "w": 6,
-        "l": 5,
-        "win_pct": 54.5
-      },
-      {
-        "bet_type": "Total Rounds",
-        "w": 1,
-        "l": 1,
-        "win_pct": 50.0
-      },
-      {
-        "bet_type": "Total Points",
-        "w": 6,
-        "l": 7,
-        "win_pct": 46.2
-      },
-      {
-        "bet_type": "Money Line",
-        "w": 41,
-        "l": 49,
-        "win_pct": 45.6
-      },
-      {
-        "bet_type": "Receiving Yards",
-        "w": 2,
-        "l": 3,
-        "win_pct": 40.0
-      },
-      {
-        "bet_type": "Spread",
-        "w": 16,
-        "l": 28,
-        "win_pct": 36.4
-      },
-      {
-        "bet_type": "Anytime TD",
-        "w": 12,
-        "l": 24,
-        "win_pct": 33.3
-      },
-      {
-        "bet_type": "1st Half Spread",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "bet_type": "Home Runs",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "bet_type": "Player Points",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "bet_type": "Interceptions",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "bet_type": "Total Yards",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "bet_type": "Receptions",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      },
-      {
-        "bet_type": "Coin Toss",
-        "w": 0,
-        "l": 1,
-        "win_pct": 0.0
-      }
-    ],
-    "odds_type_wl": [
-      {
-        "odds_type": "Favorite",
-        "w": 74,
-        "l": 80,
-        "win_pct": 48.1
-      },
-      {
-        "odds_type": "Underdog",
-        "w": 16,
-        "l": 46,
-        "win_pct": 25.8
-      }
-    ],
-    "over_under_wl": [
-      {
-        "side": "Under",
-        "w": 1,
-        "l": 1,
-        "win_pct": 50.0
-      },
-      {
-        "side": "Over",
-        "w": 17,
-        "l": 20,
-        "win_pct": 45.9
-      }
-    ],
-    "odds_range_wl": [
-      {
-        "range": "Heavy Favorite",
-        "w": 14,
-        "l": 10,
-        "win_pct": 58.3
-      },
-      {
-        "range": "Favorite",
-        "w": 25,
-        "l": 19,
-        "win_pct": 56.8
-      },
-      {
-        "range": "Toss-Up",
-        "w": 42,
-        "l": 68,
-        "win_pct": 38.2
-      },
-      {
-        "range": "Underdog",
-        "w": 7,
-        "l": 23,
-        "win_pct": 23.3
-      },
-      {
-        "range": "Longshot",
-        "w": 2,
-        "l": 6,
-        "win_pct": 25.0
-      }
-    ],
-    "day_of_week_wl": [
-      {
-        "day": "Thursday",
-        "w": 12,
-        "l": 21,
-        "win_pct": 36.4
-      },
-      {
-        "day": "Friday",
-        "w": 9,
-        "l": 11,
-        "win_pct": 45.0
-      },
-      {
-        "day": "Saturday",
-        "w": 27,
-        "l": 40,
-        "win_pct": 40.3
-      },
-      {
-        "day": "Sunday",
-        "w": 39,
-        "l": 52,
-        "win_pct": 42.9
-      },
-      {
-        "day": "Mon-Wed",
-        "w": 3,
-        "l": 2,
-        "win_pct": 60.0
-      }
-    ],
-    "biggest_misses": [
-      {
-        "year": 2025,
-        "week": 6,
-        "payout": 115829.21,
-        "legs_hit": 8,
-        "killed_by": [
-          "Jeff"
-        ]
-      },
-      {
-        "year": 2025,
-        "week": 7,
-        "payout": 94099.68,
-        "legs_hit": 3,
-        "killed_by": [
-          "Jeff"
-        ]
-      },
-      {
-        "year": 2025,
-        "week": 9,
-        "payout": 75570.7,
-        "legs_hit": 4,
-        "killed_by": [
-          "Flanders",
-          "Joe K",
-          "Jeff"
-        ]
-      }
-    ],
-    "closest_calls": [
-      {
-        "year": 2025,
-        "week": 15,
-        "payout": 63129.5,
-        "legs_hit": 9,
-        "killed_by": [
-          "Ben"
-        ],
-        "lost_by": [
-          "Brad",
-          "Ben",
-          "Kris"
-        ]
-      },
-      {
-        "year": 2025,
-        "week": 12,
-        "payout": 56878.78,
-        "legs_hit": 9,
-        "killed_by": [
-          "Flanders"
-        ],
-        "lost_by": [
-          "Flanders",
-          "Chad",
-          "Kris"
-        ]
-      },
-      {
-        "year": 2025,
-        "week": 6,
-        "payout": 115829.21,
-        "legs_hit": 8,
-        "killed_by": [
-          "Jeff"
-        ],
-        "lost_by": [
-          "Flanders",
-          "Joe K",
-          "Jeff",
-          "Collin"
-        ]
-      }
-    ],
-    "legs_won_per_parlay": [
-      {
-        "legs": 0,
-        "occurrences": 0
-      },
-      {
-        "legs": 1,
-        "occurrences": 0
-      },
-      {
-        "legs": 2,
-        "occurrences": 1
-      },
-      {
-        "legs": 3,
-        "occurrences": 4
-      },
-      {
-        "legs": 4,
-        "occurrences": 3
-      },
-      {
-        "legs": 5,
-        "occurrences": 5
-      },
-      {
-        "legs": 6,
-        "occurrences": 1
-      },
-      {
-        "legs": 7,
-        "occurrences": 1
-      },
-      {
-        "legs": 8,
-        "occurrences": 1
-      },
-      {
-        "legs": 9,
-        "occurrences": 2
-      },
-      {
-        "legs": 10,
-        "occurrences": 0
-      },
-      {
-        "legs": 11,
-        "occurrences": 0
-      },
-      {
-        "legs": 12,
-        "occurrences": 0
-      }
-    ],
-    "legs_won_before_loss": [
-      {
-        "legs": 0,
-        "occurrences": 12
-      },
-      {
-        "legs": 1,
-        "occurrences": 3
-      },
-      {
-        "legs": 2,
-        "occurrences": 3
-      },
-      {
-        "legs": 3,
-        "occurrences": 0
-      },
-      {
-        "legs": 4,
-        "occurrences": 0
-      },
-      {
-        "legs": 5,
-        "occurrences": 0
-      },
-      {
-        "legs": 6,
-        "occurrences": 0
-      },
-      {
-        "legs": 7,
-        "occurrences": 0
-      },
-      {
-        "legs": 8,
-        "occurrences": 0
-      },
-      {
-        "legs": 9,
-        "occurrences": 0
-      },
-      {
-        "legs": 10,
-        "occurrences": 0
-      },
-      {
-        "legs": 11,
-        "occurrences": 0
-      },
-      {
-        "legs": 12,
-        "occurrences": 0
-      }
-    ]
+    "all": {
+      "weekly_sackos": [
+        {
+          "player": "Joe K",
+          "sackos": 4,
+          "cost": 80
+        },
+        {
+          "player": "Jared",
+          "sackos": 3,
+          "cost": 60
+        },
+        {
+          "player": "Jeff",
+          "sackos": 3,
+          "cost": 60
+        },
+        {
+          "player": "TJ",
+          "sackos": 3,
+          "cost": 60
+        },
+        {
+          "player": "Jon",
+          "sackos": 2,
+          "cost": 40
+        },
+        {
+          "player": "Joe G",
+          "sackos": 1,
+          "cost": 20
+        },
+        {
+          "player": "Chad",
+          "sackos": 1,
+          "cost": 20
+        },
+        {
+          "player": "Collin",
+          "sackos": 1,
+          "cost": 20
+        },
+        {
+          "player": "Brad",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Flanders",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Ben",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Kris",
+          "sackos": 0,
+          "cost": 0
+        }
+      ],
+      "individual_wl": [
+        {
+          "player": "Joe G",
+          "w": 12,
+          "l": 6,
+          "win_pct": 66.7
+        },
+        {
+          "player": "Ben",
+          "w": 12,
+          "l": 6,
+          "win_pct": 66.7
+        },
+        {
+          "player": "Flanders",
+          "w": 9,
+          "l": 9,
+          "win_pct": 50.0
+        },
+        {
+          "player": "Kris",
+          "w": 8,
+          "l": 10,
+          "win_pct": 44.4
+        },
+        {
+          "player": "Jared",
+          "w": 7,
+          "l": 11,
+          "win_pct": 38.9
+        },
+        {
+          "player": "Chad",
+          "w": 7,
+          "l": 11,
+          "win_pct": 38.9
+        },
+        {
+          "player": "Jeff",
+          "w": 7,
+          "l": 11,
+          "win_pct": 38.9
+        },
+        {
+          "player": "Collin",
+          "w": 7,
+          "l": 11,
+          "win_pct": 38.9
+        },
+        {
+          "player": "Brad",
+          "w": 6,
+          "l": 12,
+          "win_pct": 33.3
+        },
+        {
+          "player": "TJ",
+          "w": 6,
+          "l": 12,
+          "win_pct": 33.3
+        },
+        {
+          "player": "Jon",
+          "w": 5,
+          "l": 13,
+          "win_pct": 27.8
+        },
+        {
+          "player": "Joe K",
+          "w": 4,
+          "l": 14,
+          "win_pct": 22.2
+        }
+      ],
+      "average_odds": [
+        {
+          "player": "Jon",
+          "avg_odds": 162
+        },
+        {
+          "player": "Jeff",
+          "avg_odds": -106
+        },
+        {
+          "player": "Brad",
+          "avg_odds": -108
+        },
+        {
+          "player": "Flanders",
+          "avg_odds": -115
+        },
+        {
+          "player": "Jared",
+          "avg_odds": -115
+        },
+        {
+          "player": "TJ",
+          "avg_odds": -117
+        },
+        {
+          "player": "Joe K",
+          "avg_odds": -123
+        },
+        {
+          "player": "Chad",
+          "avg_odds": -127
+        },
+        {
+          "player": "Ben",
+          "avg_odds": -131
+        },
+        {
+          "player": "Kris",
+          "avg_odds": -144
+        },
+        {
+          "player": "Collin",
+          "avg_odds": -156
+        },
+        {
+          "player": "Joe G",
+          "avg_odds": -182
+        }
+      ],
+      "parlays_killed": [
+        {
+          "player": "Jeff",
+          "kills": 4.33,
+          "kill_chances": 6,
+          "avg_bet_position": 4.89
+        },
+        {
+          "player": "Joe K",
+          "kills": 2.83,
+          "kill_chances": 6,
+          "avg_bet_position": 3.17
+        },
+        {
+          "player": "Flanders",
+          "kills": 2.33,
+          "kill_chances": 3,
+          "avg_bet_position": 6.94
+        },
+        {
+          "player": "Brad",
+          "kills": 1.5,
+          "kill_chances": 4,
+          "avg_bet_position": 5.94
+        },
+        {
+          "player": "Collin",
+          "kills": 1.5,
+          "kill_chances": 3,
+          "avg_bet_position": 5.67
+        },
+        {
+          "player": "Jon",
+          "kills": 1.5,
+          "kill_chances": 3,
+          "avg_bet_position": 7.22
+        },
+        {
+          "player": "Jared",
+          "kills": 1.0,
+          "kill_chances": 3,
+          "avg_bet_position": 4.33
+        },
+        {
+          "player": "Chad",
+          "kills": 1.0,
+          "kill_chances": 2,
+          "avg_bet_position": 5.44
+        },
+        {
+          "player": "Ben",
+          "kills": 1.0,
+          "kill_chances": 2,
+          "avg_bet_position": 6.5
+        },
+        {
+          "player": "TJ",
+          "kills": 1.0,
+          "kill_chances": 2,
+          "avg_bet_position": 6.94
+        },
+        {
+          "player": "Joe G",
+          "kills": 0.0,
+          "kill_chances": 1,
+          "avg_bet_position": 6.22
+        },
+        {
+          "player": "Kris",
+          "kills": 0.0,
+          "kill_chances": 1,
+          "avg_bet_position": 8.11
+        }
+      ],
+      "potential_earnings": [
+        {
+          "player": "Ben",
+          "winnings": 634195.5,
+          "losses": 195298.56
+        },
+        {
+          "player": "Joe G",
+          "winnings": 564642.29,
+          "losses": 264851.77
+        },
+        {
+          "player": "Kris",
+          "winnings": 445951.63,
+          "losses": 383542.43
+        },
+        {
+          "player": "Collin",
+          "winnings": 376698.67,
+          "losses": 452795.39
+        },
+        {
+          "player": "Jared",
+          "winnings": 354498.07,
+          "losses": 474995.99
+        },
+        {
+          "player": "Chad",
+          "winnings": 350831.74,
+          "losses": 478662.32
+        },
+        {
+          "player": "TJ",
+          "winnings": 345572.9,
+          "losses": 483921.16
+        },
+        {
+          "player": "Brad",
+          "winnings": 306833.12,
+          "losses": 522660.94
+        },
+        {
+          "player": "Jon",
+          "winnings": 302748.16,
+          "losses": 526745.9
+        },
+        {
+          "player": "Flanders",
+          "winnings": 281740.93,
+          "losses": 547753.13
+        },
+        {
+          "player": "Jeff",
+          "winnings": 263300.39,
+          "losses": 566193.67
+        },
+        {
+          "player": "Joe K",
+          "winnings": 171991.85,
+          "losses": 657502.21
+        }
+      ],
+      "streaks": [
+        {
+          "player": "Joe G",
+          "current": -1,
+          "longest_win": 6,
+          "longest_loss": 2
+        },
+        {
+          "player": "Jeff",
+          "current": 1,
+          "longest_win": 5,
+          "longest_loss": 8
+        },
+        {
+          "player": "TJ",
+          "current": -3,
+          "longest_win": 5,
+          "longest_loss": 5
+        },
+        {
+          "player": "Jared",
+          "current": 4,
+          "longest_win": 4,
+          "longest_loss": 5
+        },
+        {
+          "player": "Ben",
+          "current": 1,
+          "longest_win": 4,
+          "longest_loss": 3
+        },
+        {
+          "player": "Chad",
+          "current": -3,
+          "longest_win": 3,
+          "longest_loss": 4
+        },
+        {
+          "player": "Flanders",
+          "current": 2,
+          "longest_win": 2,
+          "longest_loss": 3
+        },
+        {
+          "player": "Collin",
+          "current": 1,
+          "longest_win": 2,
+          "longest_loss": 4
+        },
+        {
+          "player": "Brad",
+          "current": -1,
+          "longest_win": 2,
+          "longest_loss": 4
+        },
+        {
+          "player": "Kris",
+          "current": -1,
+          "longest_win": 2,
+          "longest_loss": 3
+        },
+        {
+          "player": "Jon",
+          "current": -1,
+          "longest_win": 2,
+          "longest_loss": 5
+        },
+        {
+          "player": "Joe K",
+          "current": -2,
+          "longest_win": 2,
+          "longest_loss": 7
+        }
+      ],
+      "biggest_hits": [
+        {
+          "player": "Jon",
+          "odds": 300.0,
+          "pick": "Anytime TD: 2x Rashee Rice",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 12
+        },
+        {
+          "player": "Kris",
+          "odds": 250.0,
+          "pick": "Anytime TD: Jaxson Dart",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 6
+        },
+        {
+          "player": "Jared",
+          "odds": 165.0,
+          "pick": "Money Line: Magic vs. Pistons",
+          "sport": "NBA",
+          "year": 2025,
+          "week": 12
+        },
+        {
+          "player": "TJ",
+          "odds": 150.0,
+          "pick": "Money Line: Newcastle United vs. Everton",
+          "sport": "Futbol",
+          "year": 2025,
+          "week": 12
+        },
+        {
+          "player": "Brad",
+          "odds": 135.0,
+          "pick": "Money Line: Lions vs. Bears",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 17
+        },
+        {
+          "player": "Flanders",
+          "odds": 135.0,
+          "pick": "Money Line: Titans vs. Chiefs",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 15
+        },
+        {
+          "player": "Joe G",
+          "odds": 120.0,
+          "pick": "Money Line: #12 GT vs. Duke",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 6
+        },
+        {
+          "player": "Jeff",
+          "odds": 115.0,
+          "pick": "Money Line: Fiorentina vs. Udinese",
+          "sport": "Futbol",
+          "year": 2025,
+          "week": 15
+        },
+        {
+          "player": "Ben",
+          "odds": 110.0,
+          "pick": "Anytime TD: Ja'Marr Chase",
+          "sport": "NFL",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Chad",
+          "odds": -105.0,
+          "pick": "Spread: #23 Illinois +6.5 vs. #21 USC",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 3
+        },
+        {
+          "player": "Joe K",
+          "odds": -105.0,
+          "pick": "Total Points: Over 48.5 Kentucky vs. #12 Georgia",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 4
+        },
+        {
+          "player": "Collin",
+          "odds": -105.0,
+          "pick": "Spread: Steelers -6 vs. Browns",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 5
+        }
+      ],
+      "safest_losses": [
+        {
+          "player": "Jared",
+          "odds": -300.0,
+          "pick": "Money Line: Chargers vs. Giants",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 3
+        },
+        {
+          "player": "Joe G",
+          "odds": -300.0,
+          "pick": "Money Line: #24 ASU vs. Houston",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 7
+        },
+        {
+          "player": "Joe K",
+          "odds": -300.0,
+          "pick": "Money Line: Arkansas vs. Memphis",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 2
+        },
+        {
+          "player": "Collin",
+          "odds": -300.0,
+          "pick": "Money Line: #8 Notre Dame vs. #16 Texas A&M",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 1
+        },
+        {
+          "player": "Kris",
+          "odds": -260.0,
+          "pick": "Anytime TD: Jonathan Taylor",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 11
+        },
+        {
+          "player": "Chad",
+          "odds": -260.0,
+          "pick": "Money Line: #3 Georgia vs. #6 Ole Miss",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 16
+        },
+        {
+          "player": "TJ",
+          "odds": -185.0,
+          "pick": "Money Line: Stars vs. Blackhawks",
+          "sport": "NHL",
+          "year": 2025,
+          "week": 17
+        },
+        {
+          "player": "Flanders",
+          "odds": -180.0,
+          "pick": "Money Line: 49ers vs. Jags",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 3
+        },
+        {
+          "player": "Brad",
+          "odds": -180.0,
+          "pick": "Money Line: Cowboys vs. Panthers",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 5
+        },
+        {
+          "player": "Ben",
+          "odds": -155.0,
+          "pick": "Money Line: Chargers vs. Jaguars",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 10
+        },
+        {
+          "player": "Jeff",
+          "odds": -120.0,
+          "pick": "Total Goals: Over 2.5 Celta Vigo vs. Atletico Madrid",
+          "sport": "Futbol",
+          "year": 2025,
+          "week": 4
+        },
+        {
+          "player": "Jon",
+          "odds": 105.0,
+          "pick": "Anytime TD: Ceedee Lamb",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 13
+        }
+      ],
+      "flat_bet_profit": [
+        {
+          "player": "Ben",
+          "profit": 301.41,
+          "bets": 18
+        },
+        {
+          "player": "Joe G",
+          "profit": 83.42,
+          "bets": 18
+        },
+        {
+          "player": "Flanders",
+          "profit": -164.94,
+          "bets": 18
+        },
+        {
+          "player": "Kris",
+          "profit": -372.81,
+          "bets": 18
+        },
+        {
+          "player": "Jon",
+          "profit": -454.76,
+          "bets": 18
+        },
+        {
+          "player": "Jeff",
+          "profit": -541.91,
+          "bets": 18
+        },
+        {
+          "player": "Chad",
+          "profit": -564.07,
+          "bets": 18
+        },
+        {
+          "player": "Jared",
+          "profit": -580.92,
+          "bets": 18
+        },
+        {
+          "player": "Collin",
+          "profit": -594.51,
+          "bets": 18
+        },
+        {
+          "player": "Brad",
+          "profit": -612.4,
+          "bets": 18
+        },
+        {
+          "player": "TJ",
+          "profit": -687.68,
+          "bets": 18
+        },
+        {
+          "player": "Joe K",
+          "profit": -1153.74,
+          "bets": 18
+        }
+      ],
+      "sport_wl": [
+        {
+          "sport": "Boxing",
+          "w": 1,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "sport": "NBA",
+          "w": 6,
+          "l": 2,
+          "win_pct": 75.0
+        },
+        {
+          "sport": "NHL",
+          "w": 2,
+          "l": 1,
+          "win_pct": 66.7
+        },
+        {
+          "sport": "Futbol",
+          "w": 9,
+          "l": 10,
+          "win_pct": 47.4
+        },
+        {
+          "sport": "NFL",
+          "w": 47,
+          "l": 66,
+          "win_pct": 41.6
+        },
+        {
+          "sport": "NCAAF",
+          "w": 25,
+          "l": 42,
+          "win_pct": 37.3
+        },
+        {
+          "sport": "UFC",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "sport": "Womens Tennis",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "sport": "Hockey",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "sport": "MLB",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "sport": "NCAAM",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        }
+      ],
+      "bet_type_wl": [
+        {
+          "bet_type": "Passing TD",
+          "w": 3,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "bet_type": "Alt Spread",
+          "w": 3,
+          "l": 2,
+          "win_pct": 60.0
+        },
+        {
+          "bet_type": "Total Goals",
+          "w": 6,
+          "l": 5,
+          "win_pct": 54.5
+        },
+        {
+          "bet_type": "Total Rounds",
+          "w": 1,
+          "l": 1,
+          "win_pct": 50.0
+        },
+        {
+          "bet_type": "Total Points",
+          "w": 6,
+          "l": 7,
+          "win_pct": 46.2
+        },
+        {
+          "bet_type": "Money Line",
+          "w": 41,
+          "l": 49,
+          "win_pct": 45.6
+        },
+        {
+          "bet_type": "Receiving Yards",
+          "w": 2,
+          "l": 3,
+          "win_pct": 40.0
+        },
+        {
+          "bet_type": "Spread",
+          "w": 16,
+          "l": 28,
+          "win_pct": 36.4
+        },
+        {
+          "bet_type": "Anytime TD",
+          "w": 12,
+          "l": 24,
+          "win_pct": 33.3
+        },
+        {
+          "bet_type": "1st Half Spread",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Home Runs",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Player Points",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Interceptions",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Total Yards",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Receptions",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Coin Toss",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        }
+      ],
+      "odds_type_wl": [
+        {
+          "odds_type": "Favorite",
+          "w": 74,
+          "l": 80,
+          "win_pct": 48.1
+        },
+        {
+          "odds_type": "Underdog",
+          "w": 16,
+          "l": 46,
+          "win_pct": 25.8
+        }
+      ],
+      "over_under_wl": [
+        {
+          "side": "Under",
+          "w": 1,
+          "l": 1,
+          "win_pct": 50.0
+        },
+        {
+          "side": "Over",
+          "w": 17,
+          "l": 20,
+          "win_pct": 45.9
+        }
+      ],
+      "odds_range_wl": [
+        {
+          "range": "Heavy Favorite",
+          "w": 14,
+          "l": 10,
+          "win_pct": 58.3
+        },
+        {
+          "range": "Favorite",
+          "w": 25,
+          "l": 19,
+          "win_pct": 56.8
+        },
+        {
+          "range": "Toss-Up",
+          "w": 42,
+          "l": 68,
+          "win_pct": 38.2
+        },
+        {
+          "range": "Underdog",
+          "w": 7,
+          "l": 23,
+          "win_pct": 23.3
+        },
+        {
+          "range": "Longshot",
+          "w": 2,
+          "l": 6,
+          "win_pct": 25.0
+        }
+      ],
+      "day_of_week_wl": [
+        {
+          "day": "Thursday",
+          "w": 12,
+          "l": 21,
+          "win_pct": 36.4
+        },
+        {
+          "day": "Friday",
+          "w": 9,
+          "l": 11,
+          "win_pct": 45.0
+        },
+        {
+          "day": "Saturday",
+          "w": 27,
+          "l": 40,
+          "win_pct": 40.3
+        },
+        {
+          "day": "Sunday",
+          "w": 39,
+          "l": 52,
+          "win_pct": 42.9
+        },
+        {
+          "day": "Mon-Wed",
+          "w": 3,
+          "l": 2,
+          "win_pct": 60.0
+        }
+      ],
+      "biggest_misses": [
+        {
+          "year": 2025,
+          "week": 6,
+          "payout": 115829.21,
+          "legs_hit": 8,
+          "killed_by": [
+            "Jeff"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 7,
+          "payout": 94099.68,
+          "legs_hit": 3,
+          "killed_by": [
+            "Jeff"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 9,
+          "payout": 75570.7,
+          "legs_hit": 4,
+          "killed_by": [
+            "Flanders",
+            "Joe K",
+            "Jeff"
+          ]
+        }
+      ],
+      "closest_calls": [
+        {
+          "year": 2025,
+          "week": 15,
+          "payout": 63129.5,
+          "legs_hit": 9,
+          "killed_by": [
+            "Ben"
+          ],
+          "lost_by": [
+            "Brad",
+            "Ben",
+            "Kris"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 12,
+          "payout": 56878.78,
+          "legs_hit": 9,
+          "killed_by": [
+            "Flanders"
+          ],
+          "lost_by": [
+            "Flanders",
+            "Chad",
+            "Kris"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 6,
+          "payout": 115829.21,
+          "legs_hit": 8,
+          "killed_by": [
+            "Jeff"
+          ],
+          "lost_by": [
+            "Flanders",
+            "Joe K",
+            "Jeff",
+            "Collin"
+          ]
+        }
+      ],
+      "legs_won_per_parlay": [
+        {
+          "legs": 0,
+          "occurrences": 0
+        },
+        {
+          "legs": 1,
+          "occurrences": 0
+        },
+        {
+          "legs": 2,
+          "occurrences": 1
+        },
+        {
+          "legs": 3,
+          "occurrences": 4
+        },
+        {
+          "legs": 4,
+          "occurrences": 3
+        },
+        {
+          "legs": 5,
+          "occurrences": 5
+        },
+        {
+          "legs": 6,
+          "occurrences": 1
+        },
+        {
+          "legs": 7,
+          "occurrences": 1
+        },
+        {
+          "legs": 8,
+          "occurrences": 1
+        },
+        {
+          "legs": 9,
+          "occurrences": 2
+        },
+        {
+          "legs": 10,
+          "occurrences": 0
+        },
+        {
+          "legs": 11,
+          "occurrences": 0
+        },
+        {
+          "legs": 12,
+          "occurrences": 0
+        }
+      ],
+      "legs_won_before_loss": [
+        {
+          "legs": 0,
+          "occurrences": 12
+        },
+        {
+          "legs": 1,
+          "occurrences": 3
+        },
+        {
+          "legs": 2,
+          "occurrences": 3
+        },
+        {
+          "legs": 3,
+          "occurrences": 0
+        },
+        {
+          "legs": 4,
+          "occurrences": 0
+        },
+        {
+          "legs": 5,
+          "occurrences": 0
+        },
+        {
+          "legs": 6,
+          "occurrences": 0
+        },
+        {
+          "legs": 7,
+          "occurrences": 0
+        },
+        {
+          "legs": 8,
+          "occurrences": 0
+        },
+        {
+          "legs": 9,
+          "occurrences": 0
+        },
+        {
+          "legs": 10,
+          "occurrences": 0
+        },
+        {
+          "legs": 11,
+          "occurrences": 0
+        },
+        {
+          "legs": 12,
+          "occurrences": 0
+        }
+      ]
+    },
+    "2025": {
+      "weekly_sackos": [
+        {
+          "player": "Jared",
+          "sackos": 3,
+          "cost": 60
+        },
+        {
+          "player": "Joe K",
+          "sackos": 3,
+          "cost": 60
+        },
+        {
+          "player": "Jeff",
+          "sackos": 3,
+          "cost": 60
+        },
+        {
+          "player": "TJ",
+          "sackos": 3,
+          "cost": 60
+        },
+        {
+          "player": "Jon",
+          "sackos": 2,
+          "cost": 40
+        },
+        {
+          "player": "Joe G",
+          "sackos": 1,
+          "cost": 20
+        },
+        {
+          "player": "Chad",
+          "sackos": 1,
+          "cost": 20
+        },
+        {
+          "player": "Collin",
+          "sackos": 1,
+          "cost": 20
+        },
+        {
+          "player": "Brad",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Flanders",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Ben",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Kris",
+          "sackos": 0,
+          "cost": 0
+        }
+      ],
+      "individual_wl": [
+        {
+          "player": "Joe G",
+          "w": 12,
+          "l": 5,
+          "win_pct": 70.6
+        },
+        {
+          "player": "Ben",
+          "w": 11,
+          "l": 6,
+          "win_pct": 64.7
+        },
+        {
+          "player": "Flanders",
+          "w": 8,
+          "l": 9,
+          "win_pct": 47.1
+        },
+        {
+          "player": "Kris",
+          "w": 8,
+          "l": 9,
+          "win_pct": 47.1
+        },
+        {
+          "player": "Chad",
+          "w": 7,
+          "l": 10,
+          "win_pct": 41.2
+        },
+        {
+          "player": "Brad",
+          "w": 6,
+          "l": 11,
+          "win_pct": 35.3
+        },
+        {
+          "player": "Jared",
+          "w": 6,
+          "l": 11,
+          "win_pct": 35.3
+        },
+        {
+          "player": "Jeff",
+          "w": 6,
+          "l": 11,
+          "win_pct": 35.3
+        },
+        {
+          "player": "Collin",
+          "w": 6,
+          "l": 11,
+          "win_pct": 35.3
+        },
+        {
+          "player": "TJ",
+          "w": 6,
+          "l": 11,
+          "win_pct": 35.3
+        },
+        {
+          "player": "Jon",
+          "w": 5,
+          "l": 12,
+          "win_pct": 29.4
+        },
+        {
+          "player": "Joe K",
+          "w": 4,
+          "l": 13,
+          "win_pct": 23.5
+        }
+      ],
+      "average_odds": [
+        {
+          "player": "Jon",
+          "avg_odds": 162
+        },
+        {
+          "player": "Jeff",
+          "avg_odds": -101
+        },
+        {
+          "player": "Brad",
+          "avg_odds": -108
+        },
+        {
+          "player": "Jared",
+          "avg_odds": -108
+        },
+        {
+          "player": "Flanders",
+          "avg_odds": -115
+        },
+        {
+          "player": "TJ",
+          "avg_odds": -117
+        },
+        {
+          "player": "Joe K",
+          "avg_odds": -123
+        },
+        {
+          "player": "Chad",
+          "avg_odds": -128
+        },
+        {
+          "player": "Ben",
+          "avg_odds": -134
+        },
+        {
+          "player": "Kris",
+          "avg_odds": -141
+        },
+        {
+          "player": "Collin",
+          "avg_odds": -158
+        },
+        {
+          "player": "Joe G",
+          "avg_odds": -184
+        }
+      ],
+      "parlays_killed": [
+        {
+          "player": "Jeff",
+          "kills": 4.33,
+          "kill_chances": 6,
+          "avg_bet_position": 4.47
+        },
+        {
+          "player": "Flanders",
+          "kills": 2.33,
+          "kill_chances": 3,
+          "avg_bet_position": 7.06
+        },
+        {
+          "player": "Joe K",
+          "kills": 2.33,
+          "kill_chances": 5,
+          "avg_bet_position": 3.29
+        },
+        {
+          "player": "Brad",
+          "kills": 1.5,
+          "kill_chances": 4,
+          "avg_bet_position": 6.0
+        },
+        {
+          "player": "Collin",
+          "kills": 1.5,
+          "kill_chances": 3,
+          "avg_bet_position": 5.71
+        },
+        {
+          "player": "Jon",
+          "kills": 1.5,
+          "kill_chances": 3,
+          "avg_bet_position": 7.35
+        },
+        {
+          "player": "Jared",
+          "kills": 1.0,
+          "kill_chances": 3,
+          "avg_bet_position": 4.41
+        },
+        {
+          "player": "Ben",
+          "kills": 1.0,
+          "kill_chances": 2,
+          "avg_bet_position": 6.59
+        },
+        {
+          "player": "TJ",
+          "kills": 1.0,
+          "kill_chances": 2,
+          "avg_bet_position": 6.71
+        },
+        {
+          "player": "Chad",
+          "kills": 0.5,
+          "kill_chances": 1,
+          "avg_bet_position": 5.71
+        },
+        {
+          "player": "Joe G",
+          "kills": 0.0,
+          "kill_chances": 1,
+          "avg_bet_position": 6.35
+        },
+        {
+          "player": "Kris",
+          "kills": 0.0,
+          "kill_chances": 1,
+          "avg_bet_position": 8.29
+        }
+      ],
+      "potential_earnings": [
+        {
+          "player": "Ben",
+          "winnings": 614658.47,
+          "losses": 195298.56
+        },
+        {
+          "player": "Joe G",
+          "winnings": 564642.29,
+          "losses": 245314.74
+        },
+        {
+          "player": "Kris",
+          "winnings": 445951.63,
+          "losses": 364005.4
+        },
+        {
+          "player": "Collin",
+          "winnings": 357161.64,
+          "losses": 452795.39
+        },
+        {
+          "player": "Chad",
+          "winnings": 350831.74,
+          "losses": 459125.29
+        },
+        {
+          "player": "TJ",
+          "winnings": 345572.9,
+          "losses": 464384.13
+        },
+        {
+          "player": "Jared",
+          "winnings": 334961.04,
+          "losses": 474995.99
+        },
+        {
+          "player": "Brad",
+          "winnings": 306833.12,
+          "losses": 503123.91
+        },
+        {
+          "player": "Jon",
+          "winnings": 302748.16,
+          "losses": 507208.87
+        },
+        {
+          "player": "Flanders",
+          "winnings": 262203.9,
+          "losses": 547753.13
+        },
+        {
+          "player": "Jeff",
+          "winnings": 243763.36,
+          "losses": 566193.67
+        },
+        {
+          "player": "Joe K",
+          "winnings": 171991.85,
+          "losses": 637965.18
+        }
+      ],
+      "streaks": [
+        {
+          "player": "Joe G",
+          "current": 6,
+          "longest_win": 6,
+          "longest_loss": 2
+        },
+        {
+          "player": "Jeff",
+          "current": -2,
+          "longest_win": 5,
+          "longest_loss": 8
+        },
+        {
+          "player": "TJ",
+          "current": -2,
+          "longest_win": 5,
+          "longest_loss": 5
+        },
+        {
+          "player": "Ben",
+          "current": -3,
+          "longest_win": 4,
+          "longest_loss": 3
+        },
+        {
+          "player": "Jared",
+          "current": 3,
+          "longest_win": 3,
+          "longest_loss": 5
+        },
+        {
+          "player": "Chad",
+          "current": -2,
+          "longest_win": 3,
+          "longest_loss": 4
+        },
+        {
+          "player": "Kris",
+          "current": 2,
+          "longest_win": 2,
+          "longest_loss": 3
+        },
+        {
+          "player": "Brad",
+          "current": 1,
+          "longest_win": 2,
+          "longest_loss": 4
+        },
+        {
+          "player": "Flanders",
+          "current": 1,
+          "longest_win": 2,
+          "longest_loss": 3
+        },
+        {
+          "player": "Jon",
+          "current": 1,
+          "longest_win": 2,
+          "longest_loss": 5
+        },
+        {
+          "player": "Joe K",
+          "current": -1,
+          "longest_win": 2,
+          "longest_loss": 7
+        },
+        {
+          "player": "Collin",
+          "current": -2,
+          "longest_win": 2,
+          "longest_loss": 4
+        }
+      ],
+      "biggest_hits": [
+        {
+          "player": "Jon",
+          "odds": 300.0,
+          "pick": "Anytime TD: 2x Rashee Rice",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 12
+        },
+        {
+          "player": "Kris",
+          "odds": 250.0,
+          "pick": "Anytime TD: Jaxson Dart",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 6
+        },
+        {
+          "player": "Jared",
+          "odds": 165.0,
+          "pick": "Money Line: Magic vs. Pistons",
+          "sport": "NBA",
+          "year": 2025,
+          "week": 12
+        },
+        {
+          "player": "TJ",
+          "odds": 150.0,
+          "pick": "Money Line: Newcastle United vs. Everton",
+          "sport": "Futbol",
+          "year": 2025,
+          "week": 12
+        },
+        {
+          "player": "Brad",
+          "odds": 135.0,
+          "pick": "Money Line: Lions vs. Bears",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 17
+        },
+        {
+          "player": "Flanders",
+          "odds": 135.0,
+          "pick": "Money Line: Titans vs. Chiefs",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 15
+        },
+        {
+          "player": "Joe G",
+          "odds": 120.0,
+          "pick": "Money Line: #12 GT vs. Duke",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 6
+        },
+        {
+          "player": "Jeff",
+          "odds": 115.0,
+          "pick": "Money Line: Fiorentina vs. Udinese",
+          "sport": "Futbol",
+          "year": 2025,
+          "week": 15
+        },
+        {
+          "player": "Chad",
+          "odds": -105.0,
+          "pick": "Spread: #23 Illinois +6.5 vs. #21 USC",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 3
+        },
+        {
+          "player": "Ben",
+          "odds": -105.0,
+          "pick": "Spread: Buccs +2.5 vs. Texans",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 1
+        },
+        {
+          "player": "Joe K",
+          "odds": -105.0,
+          "pick": "Total Points: Over 48.5 Kentucky vs. #12 Georgia",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 4
+        },
+        {
+          "player": "Collin",
+          "odds": -105.0,
+          "pick": "Spread: Steelers -6 vs. Browns",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 5
+        }
+      ],
+      "safest_losses": [
+        {
+          "player": "Jared",
+          "odds": -300.0,
+          "pick": "Money Line: Chargers vs. Giants",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 3
+        },
+        {
+          "player": "Joe G",
+          "odds": -300.0,
+          "pick": "Money Line: #24 ASU vs. Houston",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 7
+        },
+        {
+          "player": "Joe K",
+          "odds": -300.0,
+          "pick": "Money Line: Arkansas vs. Memphis",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 2
+        },
+        {
+          "player": "Collin",
+          "odds": -300.0,
+          "pick": "Money Line: #8 Notre Dame vs. #16 Texas A&M",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 1
+        },
+        {
+          "player": "Kris",
+          "odds": -260.0,
+          "pick": "Anytime TD: Jonathan Taylor",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 11
+        },
+        {
+          "player": "Chad",
+          "odds": -260.0,
+          "pick": "Money Line: #3 Georgia vs. #6 Ole Miss",
+          "sport": "NCAAF",
+          "year": 2025,
+          "week": 16
+        },
+        {
+          "player": "TJ",
+          "odds": -185.0,
+          "pick": "Money Line: Stars vs. Blackhawks",
+          "sport": "NHL",
+          "year": 2025,
+          "week": 17
+        },
+        {
+          "player": "Flanders",
+          "odds": -180.0,
+          "pick": "Money Line: 49ers vs. Jags",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 3
+        },
+        {
+          "player": "Brad",
+          "odds": -180.0,
+          "pick": "Money Line: Cowboys vs. Panthers",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 5
+        },
+        {
+          "player": "Ben",
+          "odds": -155.0,
+          "pick": "Money Line: Chargers vs. Jaguars",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 10
+        },
+        {
+          "player": "Jeff",
+          "odds": -120.0,
+          "pick": "Total Goals: Over 2.5 Celta Vigo vs. Atletico Madrid",
+          "sport": "Futbol",
+          "year": 2025,
+          "week": 4
+        },
+        {
+          "player": "Jon",
+          "odds": 105.0,
+          "pick": "Anytime TD: Ceedee Lamb",
+          "sport": "NFL",
+          "year": 2025,
+          "week": 13
+        }
+      ],
+      "flat_bet_profit": [
+        {
+          "player": "Ben",
+          "profit": 191.41,
+          "bets": 17
+        },
+        {
+          "player": "Joe G",
+          "profit": 183.42,
+          "bets": 17
+        },
+        {
+          "player": "Flanders",
+          "profit": -255.85,
+          "bets": 17
+        },
+        {
+          "player": "Kris",
+          "profit": -272.81,
+          "bets": 17
+        },
+        {
+          "player": "Jon",
+          "profit": -354.76,
+          "bets": 17
+        },
+        {
+          "player": "Chad",
+          "profit": -464.07,
+          "bets": 17
+        },
+        {
+          "player": "Brad",
+          "profit": -512.4,
+          "bets": 17
+        },
+        {
+          "player": "Jeff",
+          "profit": -575.24,
+          "bets": 17
+        },
+        {
+          "player": "TJ",
+          "profit": -587.68,
+          "bets": 17
+        },
+        {
+          "player": "Jared",
+          "profit": -609.49,
+          "bets": 17
+        },
+        {
+          "player": "Collin",
+          "profit": -674.51,
+          "bets": 17
+        },
+        {
+          "player": "Joe K",
+          "profit": -1053.74,
+          "bets": 17
+        }
+      ],
+      "sport_wl": [
+        {
+          "sport": "Boxing",
+          "w": 1,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "sport": "NBA",
+          "w": 6,
+          "l": 2,
+          "win_pct": 75.0
+        },
+        {
+          "sport": "NHL",
+          "w": 2,
+          "l": 1,
+          "win_pct": 66.7
+        },
+        {
+          "sport": "Futbol",
+          "w": 9,
+          "l": 10,
+          "win_pct": 47.4
+        },
+        {
+          "sport": "NFL",
+          "w": 43,
+          "l": 62,
+          "win_pct": 41.0
+        },
+        {
+          "sport": "NCAAF",
+          "w": 24,
+          "l": 39,
+          "win_pct": 38.1
+        },
+        {
+          "sport": "UFC",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "sport": "Womens Tennis",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "sport": "Hockey",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "sport": "MLB",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "sport": "NCAAM",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        }
+      ],
+      "bet_type_wl": [
+        {
+          "bet_type": "Passing TD",
+          "w": 3,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "bet_type": "Alt Spread",
+          "w": 3,
+          "l": 2,
+          "win_pct": 60.0
+        },
+        {
+          "bet_type": "Total Goals",
+          "w": 6,
+          "l": 5,
+          "win_pct": 54.5
+        },
+        {
+          "bet_type": "Total Points",
+          "w": 6,
+          "l": 6,
+          "win_pct": 50.0
+        },
+        {
+          "bet_type": "Receiving Yards",
+          "w": 2,
+          "l": 2,
+          "win_pct": 50.0
+        },
+        {
+          "bet_type": "Total Rounds",
+          "w": 1,
+          "l": 1,
+          "win_pct": 50.0
+        },
+        {
+          "bet_type": "Money Line",
+          "w": 40,
+          "l": 47,
+          "win_pct": 46.0
+        },
+        {
+          "bet_type": "Spread",
+          "w": 13,
+          "l": 26,
+          "win_pct": 33.3
+        },
+        {
+          "bet_type": "Anytime TD",
+          "w": 11,
+          "l": 23,
+          "win_pct": 32.4
+        },
+        {
+          "bet_type": "1st Half Spread",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Home Runs",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Player Points",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Interceptions",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Total Yards",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Receptions",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Coin Toss",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        }
+      ],
+      "odds_type_wl": [
+        {
+          "odds_type": "Favorite",
+          "w": 70,
+          "l": 74,
+          "win_pct": 48.6
+        },
+        {
+          "odds_type": "Underdog",
+          "w": 15,
+          "l": 45,
+          "win_pct": 25.0
+        }
+      ],
+      "over_under_wl": [
+        {
+          "side": "Under",
+          "w": 1,
+          "l": 1,
+          "win_pct": 50.0
+        },
+        {
+          "side": "Over",
+          "w": 17,
+          "l": 18,
+          "win_pct": 48.6
+        }
+      ],
+      "odds_range_wl": [
+        {
+          "range": "Heavy Favorite",
+          "w": 12,
+          "l": 10,
+          "win_pct": 54.5
+        },
+        {
+          "range": "Favorite",
+          "w": 25,
+          "l": 17,
+          "win_pct": 59.5
+        },
+        {
+          "range": "Toss-Up",
+          "w": 39,
+          "l": 64,
+          "win_pct": 37.9
+        },
+        {
+          "range": "Underdog",
+          "w": 7,
+          "l": 22,
+          "win_pct": 24.1
+        },
+        {
+          "range": "Longshot",
+          "w": 2,
+          "l": 6,
+          "win_pct": 25.0
+        }
+      ],
+      "day_of_week_wl": [
+        {
+          "day": "Thursday",
+          "w": 12,
+          "l": 21,
+          "win_pct": 36.4
+        },
+        {
+          "day": "Friday",
+          "w": 8,
+          "l": 9,
+          "win_pct": 47.1
+        },
+        {
+          "day": "Saturday",
+          "w": 27,
+          "l": 39,
+          "win_pct": 40.9
+        },
+        {
+          "day": "Sunday",
+          "w": 35,
+          "l": 48,
+          "win_pct": 42.2
+        },
+        {
+          "day": "Mon-Wed",
+          "w": 3,
+          "l": 2,
+          "win_pct": 60.0
+        }
+      ],
+      "biggest_misses": [
+        {
+          "year": 2025,
+          "week": 6,
+          "payout": 115829.21,
+          "legs_hit": 8,
+          "killed_by": [
+            "Jeff"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 7,
+          "payout": 94099.68,
+          "legs_hit": 3,
+          "killed_by": [
+            "Jeff"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 9,
+          "payout": 75570.7,
+          "legs_hit": 4,
+          "killed_by": [
+            "Flanders",
+            "Joe K",
+            "Jeff"
+          ]
+        }
+      ],
+      "closest_calls": [
+        {
+          "year": 2025,
+          "week": 15,
+          "payout": 63129.5,
+          "legs_hit": 9,
+          "killed_by": [
+            "Ben"
+          ],
+          "lost_by": [
+            "Brad",
+            "Ben",
+            "Kris"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 12,
+          "payout": 56878.78,
+          "legs_hit": 9,
+          "killed_by": [
+            "Flanders"
+          ],
+          "lost_by": [
+            "Flanders",
+            "Chad",
+            "Kris"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 6,
+          "payout": 115829.21,
+          "legs_hit": 8,
+          "killed_by": [
+            "Jeff"
+          ],
+          "lost_by": [
+            "Flanders",
+            "Joe K",
+            "Jeff",
+            "Collin"
+          ]
+        }
+      ],
+      "legs_won_per_parlay": [
+        {
+          "legs": 0,
+          "occurrences": 0
+        },
+        {
+          "legs": 1,
+          "occurrences": 0
+        },
+        {
+          "legs": 2,
+          "occurrences": 1
+        },
+        {
+          "legs": 3,
+          "occurrences": 4
+        },
+        {
+          "legs": 4,
+          "occurrences": 3
+        },
+        {
+          "legs": 5,
+          "occurrences": 4
+        },
+        {
+          "legs": 6,
+          "occurrences": 1
+        },
+        {
+          "legs": 7,
+          "occurrences": 1
+        },
+        {
+          "legs": 8,
+          "occurrences": 1
+        },
+        {
+          "legs": 9,
+          "occurrences": 2
+        },
+        {
+          "legs": 10,
+          "occurrences": 0
+        },
+        {
+          "legs": 11,
+          "occurrences": 0
+        },
+        {
+          "legs": 12,
+          "occurrences": 0
+        }
+      ],
+      "legs_won_before_loss": [
+        {
+          "legs": 0,
+          "occurrences": 11
+        },
+        {
+          "legs": 1,
+          "occurrences": 3
+        },
+        {
+          "legs": 2,
+          "occurrences": 3
+        },
+        {
+          "legs": 3,
+          "occurrences": 0
+        },
+        {
+          "legs": 4,
+          "occurrences": 0
+        },
+        {
+          "legs": 5,
+          "occurrences": 0
+        },
+        {
+          "legs": 6,
+          "occurrences": 0
+        },
+        {
+          "legs": 7,
+          "occurrences": 0
+        },
+        {
+          "legs": 8,
+          "occurrences": 0
+        },
+        {
+          "legs": 9,
+          "occurrences": 0
+        },
+        {
+          "legs": 10,
+          "occurrences": 0
+        },
+        {
+          "legs": 11,
+          "occurrences": 0
+        },
+        {
+          "legs": 12,
+          "occurrences": 0
+        }
+      ]
+    },
+    "2026": {
+      "weekly_sackos": [
+        {
+          "player": "Joe K",
+          "sackos": 1,
+          "cost": 20
+        },
+        {
+          "player": "Brad",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Flanders",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Jared",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Joe G",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Chad",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Jeff",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Ben",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Kris",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Collin",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "Jon",
+          "sackos": 0,
+          "cost": 0
+        },
+        {
+          "player": "TJ",
+          "sackos": 0,
+          "cost": 0
+        }
+      ],
+      "individual_wl": [
+        {
+          "player": "Flanders",
+          "w": 1,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "player": "Jared",
+          "w": 1,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "player": "Jeff",
+          "w": 1,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "player": "Ben",
+          "w": 1,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "player": "Collin",
+          "w": 1,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "player": "Brad",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "player": "Joe G",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "player": "Joe K",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "player": "Chad",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "player": "Kris",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "player": "Jon",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "player": "TJ",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        }
+      ],
+      "average_odds": [
+        {
+          "player": "Jon",
+          "avg_odds": 165
+        },
+        {
+          "player": "Ben",
+          "avg_odds": 110
+        },
+        {
+          "player": "Flanders",
+          "avg_odds": -110
+        },
+        {
+          "player": "Chad",
+          "avg_odds": -110
+        },
+        {
+          "player": "Brad",
+          "avg_odds": -115
+        },
+        {
+          "player": "Joe K",
+          "avg_odds": -115
+        },
+        {
+          "player": "TJ",
+          "avg_odds": -115
+        },
+        {
+          "player": "Collin",
+          "avg_odds": -125
+        },
+        {
+          "player": "Joe G",
+          "avg_odds": -150
+        },
+        {
+          "player": "Kris",
+          "avg_odds": -225
+        },
+        {
+          "player": "Jeff",
+          "avg_odds": -300
+        },
+        {
+          "player": "Jared",
+          "avg_odds": -350
+        }
+      ],
+      "parlays_killed": [
+        {
+          "player": "Joe K",
+          "kills": 0.5,
+          "kill_chances": 1,
+          "avg_bet_position": 1.0
+        },
+        {
+          "player": "Chad",
+          "kills": 0.5,
+          "kill_chances": 1,
+          "avg_bet_position": 1.0
+        },
+        {
+          "player": "Brad",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 5.0
+        },
+        {
+          "player": "Flanders",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 5.0
+        },
+        {
+          "player": "Jared",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 3.0
+        },
+        {
+          "player": "Joe G",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 4.0
+        },
+        {
+          "player": "Jeff",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 12.0
+        },
+        {
+          "player": "Ben",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 5.0
+        },
+        {
+          "player": "Kris",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 5.0
+        },
+        {
+          "player": "Collin",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 5.0
+        },
+        {
+          "player": "Jon",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 5.0
+        },
+        {
+          "player": "TJ",
+          "kills": 0.0,
+          "kill_chances": 0,
+          "avg_bet_position": 11.0
+        }
+      ],
+      "potential_earnings": [
+        {
+          "player": "Flanders",
+          "winnings": 19537.03,
+          "losses": 0.0
+        },
+        {
+          "player": "Jared",
+          "winnings": 19537.03,
+          "losses": 0.0
+        },
+        {
+          "player": "Jeff",
+          "winnings": 19537.03,
+          "losses": 0.0
+        },
+        {
+          "player": "Ben",
+          "winnings": 19537.03,
+          "losses": 0.0
+        },
+        {
+          "player": "Collin",
+          "winnings": 19537.03,
+          "losses": 0.0
+        },
+        {
+          "player": "Brad",
+          "winnings": 0.0,
+          "losses": 19537.03
+        },
+        {
+          "player": "Joe G",
+          "winnings": 0.0,
+          "losses": 19537.03
+        },
+        {
+          "player": "Joe K",
+          "winnings": 0.0,
+          "losses": 19537.03
+        },
+        {
+          "player": "Chad",
+          "winnings": 0.0,
+          "losses": 19537.03
+        },
+        {
+          "player": "Kris",
+          "winnings": 0.0,
+          "losses": 19537.03
+        },
+        {
+          "player": "Jon",
+          "winnings": 0.0,
+          "losses": 19537.03
+        },
+        {
+          "player": "TJ",
+          "winnings": 0.0,
+          "losses": 19537.03
+        }
+      ],
+      "streaks": [
+        {
+          "player": "Flanders",
+          "current": 1,
+          "longest_win": 1,
+          "longest_loss": 0
+        },
+        {
+          "player": "Jared",
+          "current": 1,
+          "longest_win": 1,
+          "longest_loss": 0
+        },
+        {
+          "player": "Jeff",
+          "current": 1,
+          "longest_win": 1,
+          "longest_loss": 0
+        },
+        {
+          "player": "Ben",
+          "current": 1,
+          "longest_win": 1,
+          "longest_loss": 0
+        },
+        {
+          "player": "Collin",
+          "current": 1,
+          "longest_win": 1,
+          "longest_loss": 0
+        },
+        {
+          "player": "Brad",
+          "current": -1,
+          "longest_win": 0,
+          "longest_loss": 1
+        },
+        {
+          "player": "Joe G",
+          "current": -1,
+          "longest_win": 0,
+          "longest_loss": 1
+        },
+        {
+          "player": "Joe K",
+          "current": -1,
+          "longest_win": 0,
+          "longest_loss": 1
+        },
+        {
+          "player": "Chad",
+          "current": -1,
+          "longest_win": 0,
+          "longest_loss": 1
+        },
+        {
+          "player": "Kris",
+          "current": -1,
+          "longest_win": 0,
+          "longest_loss": 1
+        },
+        {
+          "player": "Jon",
+          "current": -1,
+          "longest_win": 0,
+          "longest_loss": 1
+        },
+        {
+          "player": "TJ",
+          "current": -1,
+          "longest_win": 0,
+          "longest_loss": 1
+        }
+      ],
+      "biggest_hits": [
+        {
+          "player": "Ben",
+          "odds": 110.0,
+          "pick": "Anytime TD: Ja'Marr Chase",
+          "sport": "NFL",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Flanders",
+          "odds": -110.0,
+          "pick": "Spread: Saints +8 vs. Ravens",
+          "sport": "NFL",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Collin",
+          "odds": -125.0,
+          "pick": "Spread: Panthers -1.5 vs. Falcons",
+          "sport": "NFL",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Jeff",
+          "odds": -300.0,
+          "pick": "Spread: Chiefs -1 vs. Colts",
+          "sport": "NFL",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Jared",
+          "odds": -350.0,
+          "pick": "Money Line: #13 Texas Tech vs. #22 Houston",
+          "sport": "NCAAF",
+          "year": 2026,
+          "week": 1
+        }
+      ],
+      "safest_losses": [
+        {
+          "player": "Kris",
+          "odds": -225.0,
+          "pick": "Money Line: Bears vs. Vikings",
+          "sport": "NFL",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Joe G",
+          "odds": -150.0,
+          "pick": "Money Line: #7 LSU vs. #8 Ole Miss",
+          "sport": "NCAAF",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Brad",
+          "odds": -115.0,
+          "pick": "Spread: Buccaneers -8 vs. Browns",
+          "sport": "NFL",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Joe K",
+          "odds": -115.0,
+          "pick": "Total Points: Over 55.5 #5 Miami vs. Wake Forest",
+          "sport": "NCAAF",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "TJ",
+          "odds": -115.0,
+          "pick": "Receiving Yards: Over 38.5 Michael Wilson",
+          "sport": "NFL",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Chad",
+          "odds": -110.0,
+          "pick": "Spread: #5 Miami -21.5 vs. Wake Forest",
+          "sport": "NCAAF",
+          "year": 2026,
+          "week": 1
+        },
+        {
+          "player": "Jon",
+          "odds": 165.0,
+          "pick": "Anytime TD: Lamar Jackson",
+          "sport": "NFL",
+          "year": 2026,
+          "week": 1
+        }
+      ],
+      "flat_bet_profit": [
+        {
+          "player": "Ben",
+          "profit": 110.0,
+          "bets": 1
+        },
+        {
+          "player": "Flanders",
+          "profit": 90.91,
+          "bets": 1
+        },
+        {
+          "player": "Collin",
+          "profit": 80.0,
+          "bets": 1
+        },
+        {
+          "player": "Jeff",
+          "profit": 33.33,
+          "bets": 1
+        },
+        {
+          "player": "Jared",
+          "profit": 28.57,
+          "bets": 1
+        },
+        {
+          "player": "Brad",
+          "profit": -100.0,
+          "bets": 1
+        },
+        {
+          "player": "Joe G",
+          "profit": -100.0,
+          "bets": 1
+        },
+        {
+          "player": "Joe K",
+          "profit": -100.0,
+          "bets": 1
+        },
+        {
+          "player": "Chad",
+          "profit": -100.0,
+          "bets": 1
+        },
+        {
+          "player": "Kris",
+          "profit": -100.0,
+          "bets": 1
+        },
+        {
+          "player": "Jon",
+          "profit": -100.0,
+          "bets": 1
+        },
+        {
+          "player": "TJ",
+          "profit": -100.0,
+          "bets": 1
+        }
+      ],
+      "sport_wl": [
+        {
+          "sport": "NFL",
+          "w": 4,
+          "l": 4,
+          "win_pct": 50.0
+        },
+        {
+          "sport": "NCAAF",
+          "w": 1,
+          "l": 3,
+          "win_pct": 25.0
+        }
+      ],
+      "bet_type_wl": [
+        {
+          "bet_type": "Spread",
+          "w": 3,
+          "l": 2,
+          "win_pct": 60.0
+        },
+        {
+          "bet_type": "Anytime TD",
+          "w": 1,
+          "l": 1,
+          "win_pct": 50.0
+        },
+        {
+          "bet_type": "Money Line",
+          "w": 1,
+          "l": 2,
+          "win_pct": 33.3
+        },
+        {
+          "bet_type": "Total Points",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "bet_type": "Receiving Yards",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        }
+      ],
+      "odds_type_wl": [
+        {
+          "odds_type": "Underdog",
+          "w": 1,
+          "l": 1,
+          "win_pct": 50.0
+        },
+        {
+          "odds_type": "Favorite",
+          "w": 4,
+          "l": 6,
+          "win_pct": 40.0
+        }
+      ],
+      "over_under_wl": [
+        {
+          "side": "Over",
+          "w": 0,
+          "l": 2,
+          "win_pct": 0.0
+        },
+        {
+          "side": "Under",
+          "w": 0,
+          "l": 0,
+          "win_pct": null
+        }
+      ],
+      "odds_range_wl": [
+        {
+          "range": "Heavy Favorite",
+          "w": 2,
+          "l": 0,
+          "win_pct": 100.0
+        },
+        {
+          "range": "Favorite",
+          "w": 0,
+          "l": 2,
+          "win_pct": 0.0
+        },
+        {
+          "range": "Toss-Up",
+          "w": 3,
+          "l": 4,
+          "win_pct": 42.9
+        },
+        {
+          "range": "Underdog",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "range": "Longshot",
+          "w": 0,
+          "l": 0,
+          "win_pct": null
+        }
+      ],
+      "day_of_week_wl": [
+        {
+          "day": "Thursday",
+          "w": 0,
+          "l": 0,
+          "win_pct": null
+        },
+        {
+          "day": "Friday",
+          "w": 1,
+          "l": 2,
+          "win_pct": 33.3
+        },
+        {
+          "day": "Saturday",
+          "w": 0,
+          "l": 1,
+          "win_pct": 0.0
+        },
+        {
+          "day": "Sunday",
+          "w": 4,
+          "l": 4,
+          "win_pct": 50.0
+        },
+        {
+          "day": "Mon-Wed",
+          "w": 0,
+          "l": 0,
+          "win_pct": null
+        }
+      ],
+      "biggest_misses": [
+        {
+          "year": 2026,
+          "week": 1,
+          "payout": 19537.03,
+          "legs_hit": 5,
+          "killed_by": [
+            "Joe K",
+            "Chad"
+          ]
+        }
+      ],
+      "closest_calls": [
+        {
+          "year": 2026,
+          "week": 1,
+          "payout": 19537.03,
+          "legs_hit": 5,
+          "killed_by": [
+            "Joe K",
+            "Chad"
+          ],
+          "lost_by": [
+            "Brad",
+            "Joe G",
+            "Joe K",
+            "Chad",
+            "Kris",
+            "Jon",
+            "TJ"
+          ]
+        }
+      ],
+      "legs_won_per_parlay": [
+        {
+          "legs": 0,
+          "occurrences": 0
+        },
+        {
+          "legs": 1,
+          "occurrences": 0
+        },
+        {
+          "legs": 2,
+          "occurrences": 0
+        },
+        {
+          "legs": 3,
+          "occurrences": 0
+        },
+        {
+          "legs": 4,
+          "occurrences": 0
+        },
+        {
+          "legs": 5,
+          "occurrences": 1
+        },
+        {
+          "legs": 6,
+          "occurrences": 0
+        },
+        {
+          "legs": 7,
+          "occurrences": 0
+        },
+        {
+          "legs": 8,
+          "occurrences": 0
+        },
+        {
+          "legs": 9,
+          "occurrences": 0
+        },
+        {
+          "legs": 10,
+          "occurrences": 0
+        },
+        {
+          "legs": 11,
+          "occurrences": 0
+        },
+        {
+          "legs": 12,
+          "occurrences": 0
+        }
+      ],
+      "legs_won_before_loss": [
+        {
+          "legs": 0,
+          "occurrences": 1
+        },
+        {
+          "legs": 1,
+          "occurrences": 0
+        },
+        {
+          "legs": 2,
+          "occurrences": 0
+        },
+        {
+          "legs": 3,
+          "occurrences": 0
+        },
+        {
+          "legs": 4,
+          "occurrences": 0
+        },
+        {
+          "legs": 5,
+          "occurrences": 0
+        },
+        {
+          "legs": 6,
+          "occurrences": 0
+        },
+        {
+          "legs": 7,
+          "occurrences": 0
+        },
+        {
+          "legs": 8,
+          "occurrences": 0
+        },
+        {
+          "legs": 9,
+          "occurrences": 0
+        },
+        {
+          "legs": 10,
+          "occurrences": 0
+        },
+        {
+          "legs": 11,
+          "occurrences": 0
+        },
+        {
+          "legs": 12,
+          "occurrences": 0
+        }
+      ]
+    }
   }
 }

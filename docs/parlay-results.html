@@ -38,6 +38,15 @@
   .back-link:hover{ background: rgba(186,155,55,0.1); }
   .back-link[hidden]{ display: none; }
 
+  .tab-row{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .scope-tab{
+    background: var(--surface); border: 1px solid var(--line); color: var(--text-dim);
+    font-family: var(--body); font-size: 0.86rem; font-weight: 600; padding: 9px 16px;
+    border-radius: 999px; cursor: pointer;
+  }
+  .scope-tab:hover{ border-color: var(--gold); color: var(--text); }
+  .scope-tab.active{ background: rgba(186,155,55,0.12); border-color: var(--gold); color: var(--gold); }
+
   /* ---------- Parlay summary + legs ---------- */
   .parlay-card{
     background: var(--surface);
@@ -173,6 +182,10 @@
         <button type="button" class="back-link" id="back-to-current" hidden>Back to current</button>
       </div>
       <div id="current-container"><div class="loading-row">Loading parlay…</div></div>
+    </section>
+
+    <section>
+      <div class="tab-row" id="scope-tab-row"></div>
     </section>
 
     <section>
@@ -470,9 +483,26 @@
       weekSel.addEventListener('change', showSelected);
       backBtn.addEventListener('click', selectCurrent);
 
-      document.getElementById('leaders-container').innerHTML = renderLeaders(stats);
-      document.getElementById('breakdown-container').innerHTML = renderBreakdowns(stats);
-      document.getElementById('legs-container').innerHTML = renderLegs(stats);
+      // ---------- Stats scope tabs (year / all-time) ----------
+      const scopeTabRow = document.getElementById('scope-tab-row');
+      const scopeYears = [...(data.years || [])].sort((a, b) => b - a);
+      const scopes = [...scopeYears.map(String), 'all'];
+      const scopeLabel = s => s === 'all' ? 'All Time' : s;
+      scopeTabRow.innerHTML = scopes.map(s => `<button type="button" class="scope-tab${s === String(current.year) ? ' active' : ''}" data-scope="${s}">${scopeLabel(s)}</button>`).join('');
+
+      function showScope(scope) {
+        const s = stats[scope];
+        if (!s) return;
+        [...scopeTabRow.children].forEach(btn => btn.classList.toggle('active', btn.dataset.scope === scope));
+        document.getElementById('leaders-container').innerHTML = renderLeaders(s);
+        document.getElementById('breakdown-container').innerHTML = renderBreakdowns(s);
+        document.getElementById('legs-container').innerHTML = renderLegs(s);
+      }
+      scopeTabRow.addEventListener('click', e => {
+        const btn = e.target.closest('.scope-tab');
+        if (btn) showScope(btn.dataset.scope);
+      });
+      showScope(String(current.year));
 
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
     })
