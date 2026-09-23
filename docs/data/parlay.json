@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T04:33:43.141623+00:00",
+  "generated_at": "2026-09-23T09:28:04.675208+00:00",
   "players": [
     "Brad",
     "Flanders",
@@ -465,7 +465,7 @@
         },
         "Jeff": {
           "pick": "Spread: Lightning -1.5 vs. Senators",
-          "sport": "Hockey",
+          "sport": "NHL",
           "odds": 140.0,
           "gametime": "2025-10-09T19:00:00",
           "result": "Loss"
@@ -492,7 +492,7 @@
           "result": "Win"
         },
         "Jon": {
-          "pick": "Pass",
+          "pick": "Passing TD: Over 1.5 Bryce Young",
           "sport": "NFL",
           "odds": 120.0,
           "gametime": "2025-10-12T13:00:00",
@@ -1526,7 +1526,7 @@
       "sacko": "TJ",
       "picks": {
         "Brad": {
-          "pick": "Spread: Chargers vs. Texans",
+          "pick": "Spread: Chargers -2 vs. Texans",
           "sport": "NFL",
           "odds": -115.0,
           "gametime": "2025-12-27T16:30:00",
@@ -1689,7 +1689,7 @@
           "result": "Win"
         },
         "Collin": {
-          "pick": "Spread: #4 Texas Tech vs. #5 Oregon",
+          "pick": "Spread: #4 Texas Tech +2 vs. #5 Oregon",
           "sport": "NCAAF",
           "odds": -110.0,
           "gametime": "2026-01-01T12:00:00",
@@ -2582,8 +2582,8 @@
         {
           "sport": "NHL",
           "w": 2,
-          "l": 1,
-          "win_pct": 66.7
+          "l": 2,
+          "win_pct": 50.0
         },
         {
           "sport": "Futbol",
@@ -2616,12 +2616,6 @@
           "win_pct": 0.0
         },
         {
-          "sport": "Hockey",
-          "w": 0,
-          "l": 1,
-          "win_pct": 0.0
-        },
-        {
           "sport": "MLB",
           "w": 0,
           "l": 1,
@@ -2637,7 +2631,7 @@
       "bet_type_wl": [
         {
           "bet_type": "Passing TD",
-          "w": 2,
+          "w": 3,
           "l": 0,
           "win_pct": 100.0
         },
@@ -2761,9 +2755,9 @@
         },
         {
           "side": "Over",
-          "w": 16,
+          "w": 17,
           "l": 20,
-          "win_pct": 44.4
+          "win_pct": 45.9
         }
       ],
       "odds_range_wl": [
@@ -3686,8 +3680,8 @@
         {
           "sport": "NHL",
           "w": 2,
-          "l": 1,
-          "win_pct": 66.7
+          "l": 2,
+          "win_pct": 50.0
         },
         {
           "sport": "Futbol",
@@ -3720,12 +3714,6 @@
           "win_pct": 0.0
         },
         {
-          "sport": "Hockey",
-          "w": 0,
-          "l": 1,
-          "win_pct": 0.0
-        },
-        {
           "sport": "MLB",
           "w": 0,
           "l": 1,
@@ -3741,7 +3729,7 @@
       "bet_type_wl": [
         {
           "bet_type": "Passing TD",
-          "w": 2,
+          "w": 3,
           "l": 0,
           "win_pct": 100.0
         },
@@ -3859,9 +3847,9 @@
         },
         {
           "side": "Over",
-          "w": 16,
+          "w": 17,
           "l": 18,
-          "win_pct": 47.1
+          "win_pct": 48.6
         }
       ],
       "odds_range_wl": [
