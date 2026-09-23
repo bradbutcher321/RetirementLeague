@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T02:51:54.723164+00:00",
+  "generated_at": "2026-09-23T04:16:10.848681+00:00",
   "players": [
     "Brad",
     "Flanders",
@@ -492,7 +492,7 @@
           "result": "Win"
         },
         "Jon": {
-          "pick": "Passing TD: Over 1.5 Bryce Young",
+          "pick": "Pass",
           "sport": "NFL",
           "odds": 120.0,
           "gametime": "2025-10-12T13:00:00",
@@ -1826,10 +1826,31 @@
       "week": 2,
       "sacko": "Flanders",
       "picks": {
+        "Brad": {
+          "pick": "Spread: Panthers -3 vs. Browns",
+          "sport": "NFL",
+          "odds": -105.0,
+          "gametime": "2026-09-27T13:00:00",
+          "result": "Pending"
+        },
+        "Flanders": {
+          "pick": "Passing Yards: Under 225 Matthew Stafford",
+          "sport": "NFL",
+          "odds": -115.0,
+          "gametime": "2026-09-27T13:00:00",
+          "result": "Pending"
+        },
         "Jared": {
           "pick": "Money Line: #17 Iowa vs. #18 Michigan",
           "sport": "NCAAF",
           "odds": 170.0,
+          "gametime": "2026-09-26T15:30:00",
+          "result": "Pending"
+        },
+        "Joe G": {
+          "pick": "Money Line: #4 Ole Miss vs. #21 Gators",
+          "sport": "NCAAF",
+          "odds": 135.0,
           "gametime": "2026-09-26T15:30:00",
           "result": "Pending"
         },
@@ -1838,6 +1859,13 @@
           "sport": "NFL",
           "odds": -240.0,
           "gametime": "2026-09-27T13:00:00",
+          "result": "Pending"
+        },
+        "Ben": {
+          "pick": "Anytime TD: Jaylen Waddle",
+          "sport": "NFL",
+          "odds": 180.0,
+          "gametime": "2026-09-27T20:20:00",
           "result": "Pending"
         },
         "Kris": {
@@ -2046,16 +2074,16 @@
           "avg_odds": -117
         },
         {
+          "player": "Ben",
+          "avg_odds": -125
+        },
+        {
           "player": "Joe K",
           "avg_odds": -127
         },
         {
           "player": "Chad",
           "avg_odds": -127
-        },
-        {
-          "player": "Ben",
-          "avg_odds": -131
         },
         {
           "player": "Kris",
@@ -2067,7 +2095,7 @@
         },
         {
           "player": "Joe G",
-          "avg_odds": -182
+          "avg_odds": -173
         }
       ],
       "parlays_killed": [
@@ -2081,31 +2109,31 @@
           "player": "Joe K",
           "kills": 2.83,
           "kill_chances": 6,
-          "avg_bet_position": 3.11
+          "avg_bet_position": 3.16
         },
         {
           "player": "Flanders",
           "kills": 2.33,
           "kill_chances": 3,
-          "avg_bet_position": 6.94
+          "avg_bet_position": 6.74
         },
         {
           "player": "Brad",
           "kills": 1.5,
           "kill_chances": 4,
-          "avg_bet_position": 5.94
+          "avg_bet_position": 5.79
         },
         {
           "player": "Collin",
           "kills": 1.5,
           "kill_chances": 3,
-          "avg_bet_position": 5.58
+          "avg_bet_position": 5.74
         },
         {
           "player": "Jon",
           "kills": 1.5,
           "kill_chances": 3,
-          "avg_bet_position": 7.05
+          "avg_bet_position": 7.21
         },
         {
           "player": "Jared",
@@ -2123,25 +2151,25 @@
           "player": "Ben",
           "kills": 1.0,
           "kill_chances": 2,
-          "avg_bet_position": 6.5
+          "avg_bet_position": 6.63
         },
         {
           "player": "TJ",
           "kills": 1.0,
           "kill_chances": 2,
-          "avg_bet_position": 6.89
+          "avg_bet_position": 7.11
         },
         {
           "player": "Joe G",
           "kills": 0.0,
           "kill_chances": 1,
-          "avg_bet_position": 6.22
+          "avg_bet_position": 5.95
         },
         {
           "player": "Kris",
           "kills": 0.0,
           "kill_chances": 1,
-          "avg_bet_position": 7.79
+          "avg_bet_position": 7.84
         }
       ],
       "potential_earnings": [
@@ -2609,7 +2637,7 @@
       "bet_type_wl": [
         {
           "bet_type": "Passing TD",
-          "w": 3,
+          "w": 2,
           "l": 0,
           "win_pct": 100.0
         },
@@ -2702,6 +2730,12 @@
           "w": 0,
           "l": 1,
           "win_pct": 0.0
+        },
+        {
+          "bet_type": "Passing Yards",
+          "w": 0,
+          "l": 0,
+          "win_pct": null
         }
       ],
       "odds_type_wl": [
@@ -2727,9 +2761,9 @@
         },
         {
           "side": "Over",
-          "w": 17,
+          "w": 16,
           "l": 20,
-          "win_pct": 45.9
+          "win_pct": 44.4
         }
       ],
       "odds_range_wl": [
@@ -3707,7 +3741,7 @@
       "bet_type_wl": [
         {
           "bet_type": "Passing TD",
-          "w": 3,
+          "w": 2,
           "l": 0,
           "win_pct": 100.0
         },
@@ -3825,9 +3859,9 @@
         },
         {
           "side": "Over",
-          "w": 17,
+          "w": 16,
           "l": 18,
-          "win_pct": 48.6
+          "win_pct": 47.1
         }
       ],
       "odds_range_wl": [
@@ -4223,10 +4257,14 @@
         },
         {
           "player": "Ben",
-          "avg_odds": 110
+          "avg_odds": 140
         },
         {
-          "player": "Flanders",
+          "player": "Joe G",
+          "avg_odds": -105
+        },
+        {
+          "player": "Brad",
           "avg_odds": -110
         },
         {
@@ -4234,12 +4272,12 @@
           "avg_odds": -110
         },
         {
-          "player": "TJ",
+          "player": "Flanders",
           "avg_odds": -112
         },
         {
-          "player": "Brad",
-          "avg_odds": -115
+          "player": "TJ",
+          "avg_odds": -112
         },
         {
           "player": "Collin",
@@ -4248,10 +4286,6 @@
         {
           "player": "Jared",
           "avg_odds": -135
-        },
-        {
-          "player": "Joe G",
-          "avg_odds": -150
         },
         {
           "player": "Kris",
@@ -4271,7 +4305,7 @@
           "player": "Joe K",
           "kills": 0.5,
           "kill_chances": 1,
-          "avg_bet_position": 1.5
+          "avg_bet_position": 2.0
         },
         {
           "player": "Chad",
@@ -4283,13 +4317,13 @@
           "player": "Brad",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 5.0
+          "avg_bet_position": 4.0
         },
         {
           "player": "Flanders",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 5.0
+          "avg_bet_position": 4.0
         },
         {
           "player": "Jared",
@@ -4301,7 +4335,7 @@
           "player": "Joe G",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 4.0
+          "avg_bet_position": 2.5
         },
         {
           "player": "Jeff",
@@ -4313,31 +4347,31 @@
           "player": "Ben",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 5.0
+          "avg_bet_position": 7.0
         },
         {
           "player": "Kris",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 3.5
+          "avg_bet_position": 4.0
         },
         {
           "player": "Collin",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 4.5
+          "avg_bet_position": 6.0
         },
         {
           "player": "Jon",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 4.5
+          "avg_bet_position": 6.0
         },
         {
           "player": "TJ",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 8.5
+          "avg_bet_position": 10.5
         }
       ],
       "potential_earnings": [
@@ -4682,6 +4716,12 @@
           "w": 0,
           "l": 1,
           "win_pct": 0.0
+        },
+        {
+          "bet_type": "Passing Yards",
+          "w": 0,
+          "l": 0,
+          "win_pct": null
         }
       ],
       "odds_type_wl": [
