@@ -64,7 +64,13 @@ Standings, Head to Head, Overview, and Game Records all read
   `Parlay Results` tab computes, and writes `docs/data/parlay.json`. Runs
   every 30 minutes and on-demand
   (`.github/workflows/refresh_parlay_data.yml`), and only commits when the
-  data actually changed.
+  data actually changed. A "Refresh Data" button on the Parlay Results page
+  can also dispatch this on demand via the Worker
+  (`worker/src/parlayRefresh.js`, `POST /refresh-parlay`).
+  See [PARLAY_DATA_MIGRATION.md](PARLAY_DATA_MIGRATION.md) for the
+  in-progress effort to move this tab's data off the sheet the same way
+  league history moved to D1 — Phase 1 (normalized entry format on a new
+  "Auto Parlay Tracker" tab) is done; this script itself hasn't changed yet.
 
 - **`generate_league_data.py`** — writes `docs/data/league.json` (the game
   log, per-season rollups, draft order, and earnings) from Game Tracker,
