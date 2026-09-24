@@ -34,12 +34,20 @@ jobs:
     - name: Create Google Secret File
       run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > google_secret.json
 
+    # These three are independent operations sharing one credential-setup
+    # step, so each runs regardless of whether an earlier one failed
+    # (`!cancelled()` -- everything except an actual cancellation) --
+    # confirmed directly this matters: Publish once failed on a Cloudflare
+    # token permission issue and silently skipped the unrelated D1 sync
+    # right after it, even though nothing about D1 was broken.
     - name: Grade Finished Games
+      if: ${{ !cancelled() }}
       env:
         GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
       run: python auto_grade_results.py
 
     - name: Publish Parlay Stats to Cloudflare KV
+      if: ${{ !cancelled() }}
       env:
         GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -47,6 +55,7 @@ jobs:
       run: python publish_parlay_stats.py
 
     - name: Sync Picks to D1
+      if: ${{ !cancelled() }}
       env:
         GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
