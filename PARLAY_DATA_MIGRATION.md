@@ -152,6 +152,39 @@ yet.
     NCAAF) now resolves to the Jaguars. Any other kind of ambiguity (e.g.
     two different NFL players sharing a name) is still left unresolved
     rather than guessed.
+  With all 3 fixes in place, the real week-2 note now resolves 12 of 12
+  picks automatically (up from 9 of 12).
+- **GUI usability pass on `parlay_gui.py`:**
+  - **Gametime displays/edits in human-readable form** ("Sat 09/26/2026
+    03:30 PM") instead of the raw ISO the sheet actually needs
+    (`2026-09-26T15:30:00`) — converted back to exact ISO right before
+    writing (in both `WeekGrid.player_rows()` and, defensively, in
+    `SheetClient.save_week()` itself, so it's correct no matter which
+    caller builds the row dict). Manually typing a human time is far less
+    error-prone than the strict ISO format.
+  - **Result defaults to "Pending"** for every freshly parsed pick (a new
+    week is for games that haven't been played yet), but only fills a
+    still-blank Result — re-parsing a note over an already-graded row
+    can't wipe out a real Win/Loss.
+  - **Red "needs attention" highlighting** — after Parse (including the
+    gametime lookup), any field still needing a human look — an
+    unconfidently parsed bet detail, a missing odds value, or a
+    gametime/sport the lookup couldn't find — gets a red field
+    background. Uses the `clam` ttk theme specifically, since Windows'
+    default theme largely ignores custom field colors on Entry/Combobox.
+  - **Irrelevant fields grey out (disable) live** as Bet Type changes —
+    e.g. Player Prop/Side disable for a Spread pick, Team/Opponent/Line
+    disable for a player prop — using the same bet-type-category
+    breakdown as `format_parlay_sheet.py`'s header notes.
+  - **`parlay_note_parser.py` now understands the note's header block**
+    (the "`<year> Week <n>:`" line, `Sacko:`, `Legs Due:`, `Max Odds:`)
+    instead of flagging those lines as unmatched — Year/Week/Sacko are
+    pulled out and used to prefill the GUI (Legs Due/Max Odds are
+    silently skipped, since nothing in the sheet tracks them).
+  All verified against the real week-2 note end to end (12/12 picks and
+  the full header block parsed cleanly) plus a live scratch-row save
+  confirming the gametime round-trips to the exact ISO format the
+  sheet's validation requires.
 
 **Resolved loose end:** the `Jon, 2025 week 5` pick that used to read
 `Bet Type = Pass` (but carried real odds, gametime, and a graded "Win",
