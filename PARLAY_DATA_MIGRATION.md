@@ -74,11 +74,14 @@ insert blank rows in the correct position rather than appending at the end.
 actually reads (see Phase 3) — nothing about the real pipeline has changed
 yet.
 
-**Unresolved loose end:** one historical pick, `Jon, 2025 week 5`, has
-`Bet Type = Pass` but also carries real odds (+120), a real gametime, and a
-graded "Win" — doesn't look like a genuine "no bet" skip, more like a
-mislabeled bet. Flagged to the user, never resolved. Worth asking about
-before it's relied on for anything.
+**Resolved loose end:** the `Jon, 2025 week 5` pick that used to read
+`Bet Type = Pass` (but carried real odds, gametime, and a graded "Win",
+so it clearly wasn't a genuine skip) has been fixed at the source in
+"Parlay Tracker" -- it was a truncated entry, actually
+`Passing TD: Over 1.5 Bryce Young`. Verified live: "Auto Parlay Tracker"
+correctly reflects the fix (Bet Type `Passing TD`, Player Prop
+`Bryce Young`, Line `1.5`, Side `Over`), and the Raw Pick column and the
+source tab agree.
 
 ## Phase 2 — Auto-grade results (NOT STARTED)
 
