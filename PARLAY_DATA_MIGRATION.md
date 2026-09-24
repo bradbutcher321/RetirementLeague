@@ -128,6 +128,31 @@ yet.
   Takes ~30-40s for a full week the first time; the window will look
   unresponsive during that stretch since tkinter is single-threaded.
 
+  All 3 of those misses were then addressed directly:
+  - **Single-side fallback matching** — if a team+opponent search finds no
+    game matching both sides, it now also tries matching just one side
+    (team or opponent alone), and accepts that as a confident answer only
+    if it's the *one* game across the whole 5-day window that side
+    matches. This handles a misspelled team ("Gaytors") when the opponent
+    ("Ole Miss") is spelled correctly — verified live: `find_gametime`
+    now correctly resolves that exact real pick, while two intentionally
+    bad team names on both sides still correctly returns no match.
+  - **Nickname normalization for player search** — ESPN's player-search
+    index wants the formal first name (confirmed: "Matt Stafford" finds
+    nothing, "Matthew Stafford" finds one clean hit), so a small
+    nickname→formal-name table (Matt/Mike/Chris/Nick/Josh/Jon/Zach/etc.)
+    is tried as a fallback whenever the literal name from a note comes up
+    empty. Verified live against "Matt Stafford" (resolves to Rams/NFL).
+  - **NFL-over-NCAAF tiebreak** — when a name resolves to more than one
+    real person and the ambiguity is *exactly* an NFL/NCAAF split (the
+    common case — a player-prop bet type like "Receiving Yards" is
+    plausible for both), it now prefers the NFL player as a last resort,
+    per league request. Verified live: "Brian Thomas Jr." (two real
+    people share that name — Jacksonville Jaguars NFL, Memphis Tigers
+    NCAAF) now resolves to the Jaguars. Any other kind of ambiguity (e.g.
+    two different NFL players sharing a name) is still left unresolved
+    rather than guessed.
+
 **Resolved loose end:** the `Jon, 2025 week 5` pick that used to read
 `Bet Type = Pass` (but carried real odds, gametime, and a graded "Win",
 so it clearly wasn't a genuine skip) has been fixed at the source in
