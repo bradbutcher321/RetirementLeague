@@ -185,6 +185,21 @@ yet.
   the full header block parsed cleanly) plus a live scratch-row save
   confirming the gametime round-trips to the exact ISO format the
   sheet's validation requires.
+- **Follow-up polish pass, after actually running the GUI:**
+  - `find_gametime()` now also hands back ESPN's own clean team names for
+    whichever game it matched, and Parse overwrites Team/Opponent with
+    them -- fixes typos ("Gaytors" -> "Florida"), non-canonical
+    alternates ("Carolina" -> "Panthers"), and prefixes ranked college
+    teams with their current AP/CFP-style rank ("#4 Ole Miss"), sourced
+    from ESPN's `curatedRank.current` (which uses 99, not 0/null, to mean
+    "unranked" -- confirmed directly, filtered out explicitly).
+  - Disabled (greyed-out) fields weren't visually distinct enough in
+    practice -- fixed with an explicit ttk style map so enabled/disabled/
+    needs-attention are three clearly different colors.
+  - "Enter New Week" is now the first and default tab.
+  - Applied a UCF Knights black-and-gold look to the app chrome, keeping
+    every data-entry field white/black for legibility per explicit
+    request.
 
 **Resolved loose end:** the `Jon, 2025 week 5` pick that used to read
 `Bet Type = Pass` (but carried real odds, gametime, and a graded "Win",
