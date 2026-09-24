@@ -224,6 +224,15 @@ yet.
   a full paste-to-save round trip against the real note (still 12/12
   picks resolved), and a live scratch-row save confirming the gametime
   ISO round-trip still works correctly under the new widget stack.
+- **Save now also writes Raw Pick (column O)** -- previously Save only
+  wrote E:N, silently dropping the original note line the parser already
+  extracts per pick. It's threaded through as a non-visible field (no
+  grid widget -- it's an audit trail, not meant to be hand-edited):
+  apply_parsed() sets it from the parse, load() reads it back so an
+  existing week survives a load-then-resave in Browse/Grade without
+  losing it, and the write range extends to E:O. "Load / Start This
+  Week" is now just "Load" -- the existing logic already starts fresh
+  whenever the entered week has no rows.
 
 **Resolved loose end:** the `Jon, 2025 week 5` pick that used to read
 `Bet Type = Pass` (but carried real odds, gametime, and a graded "Win",
