@@ -70,7 +70,9 @@ Standings, Head to Head, Overview, and Game Records all read
   See [PARLAY_DATA_MIGRATION.md](PARLAY_DATA_MIGRATION.md) for the
   in-progress effort to move this tab's data off the sheet the same way
   league history moved to D1 — Phase 1 (normalized entry format on a new
-  "Auto Parlay Tracker" tab) is done; this script itself hasn't changed yet.
+  "Auto Parlay Tracker" tab, plus a `parlay_gui.py` desktop tool for
+  entering/grading picks — see [PARLAY_GUI_SETUP.md](PARLAY_GUI_SETUP.md)
+  to set it up) is done; this script itself hasn't changed yet.
 
 - **`generate_league_data.py`** — writes `docs/data/league.json` (the game
   log, per-season rollups, draft order, and earnings) from Game Tracker,

@@ -103,10 +103,12 @@ yet.
   full paste-to-save round trip against scratch rows with before/after
   verification) — next step is for you to actually run it and sanity-check
   the layout/usability, since tkinter layouts can surprise you in practice.
-  Needs `gspread`, `google-auth`, and `customtkinter` installed
-  (`pip install gspread google-auth customtkinter`) and `google_secret.json`
-  present — since that's a write-scoped credential, think about how to get
-  it to the second person safely rather than just emailing/texting the file.
+  Needs `gspread`, `google-auth`, `customtkinter`, and `tzdata` installed
+  (`pip install -r requirements.txt`) and `google_secret.json` present —
+  since that's a write-scoped credential, think about how to get it to the
+  second person safely rather than just emailing/texting the file. See
+  [PARLAY_GUI_SETUP.md](PARLAY_GUI_SETUP.md) for a full line-by-line setup
+  guide for a second person starting from a bare Windows PC.
 - **`espn_gametime_lookup.py`** — auto-fills Gametime (and Sport, since the
   note never mentions it either) right after Parse, for both team-based
   picks (Spread/Money Line/Totals) and player props (Anytime TD, Receiving
