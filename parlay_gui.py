@@ -55,12 +55,17 @@ BET_TYPES = ["Money Line", "Spread", "Alt Spread", "1st Half Spread", "Anytime T
 SIDES = ["", "Over", "Under"]
 RESULTS = ["", "Pending", "Win", "Loss"]
 
-# Row field order, matching migrate_parlay_tracker.py's HEADER for columns E..N
-ROW_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "odds", "gametime", "result"]
+# Visible grid columns (E..N) -- what the user actually edits. Raw Pick
+# (O) tags along as a data field with no visible widget: it's the original
+# note text a pick was parsed from, useful as an audit trail, but not
+# something meant to be hand-typed. ROW_FIELDS is the full save/load field
+# order matching migrate_parlay_tracker.py's HEADER for columns E..O.
+VISIBLE_ROW_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "odds", "gametime", "result"]
+ROW_FIELDS = VISIBLE_ROW_FIELDS + ["raw_pick"]
 COL_LETTERS = {  # field -> its column in Auto Parlay Tracker
     "sacko": "C", "sport": "E", "bet_type": "F", "team": "G", "opponent": "H",
     "player_prop": "I", "line": "J", "side": "K", "odds": "L", "gametime": "M",
-    "result": "N", "final_odds": "P", "final_payout": "Q", "final_split": "R",
+    "result": "N", "raw_pick": "O", "final_odds": "P", "final_payout": "Q", "final_split": "R",
 }
 
 # Which of the free-text fields actually apply to a given Bet Type -- same
@@ -225,7 +230,7 @@ class SheetClient:
                     # as-is would fail the sheet's strict ISO validation.
                     v = _gametime_to_iso(v)
                 row_values.append(v)
-            self.ws.update([row_values], f"E{row_num}:N{row_num}")
+            self.ws.update([row_values], f"E{row_num}:O{row_num}")
 
 
 def _entry(parent, var, width=120):
@@ -312,7 +317,7 @@ class WeekGrid(ctk.CTkFrame):
                 "gametime": _entry(grid, v["gametime"], width=self.COL_WIDTHS["gametime"]),
                 "result": _combo(grid, v["result"], RESULTS, width=self.COL_WIDTHS["result"]),
             }
-            for c, field in enumerate(ROW_FIELDS, start=1):
+            for c, field in enumerate(VISIBLE_ROW_FIELDS, start=1):
                 w[field].grid(row=r, column=c, padx=3, pady=2)
             self.row_widgets[player] = w
             v["bet_type"].trace_add("write", lambda *_a, p=player: self._update_relevance(p))
@@ -328,7 +333,7 @@ class WeekGrid(ctk.CTkFrame):
         automatically derived from widget state, so there's no separate
         "disabled color just works" behavior to lean on."""
         relevant = FIELD_RELEVANCE.get(self.row_vars[player]["bet_type"].get())
-        for f in ROW_FIELDS:
+        for f in VISIBLE_ROW_FIELDS:
             widget = self.row_widgets[player][f]
             irrelevant = f in GREYABLE_FIELDS and relevant is not None and f not in relevant
             if irrelevant:
@@ -381,7 +386,7 @@ class WeekGrid(ctk.CTkFrame):
                 continue
             v = self.row_vars[player]
             sheet_cols = ["", "", "", "", "sport", "bet_type", "team", "opponent",
-                          "player_prop", "line", "side", "odds", "gametime", "result"]
+                          "player_prop", "line", "side", "odds", "gametime", "result", "raw_pick"]
             for i, field in enumerate(sheet_cols):
                 if field:
                     value = row[i] if i < len(row) else ""
@@ -408,6 +413,7 @@ class WeekGrid(ctk.CTkFrame):
             v["side"].set(data.get("side", "") or "")
             if data.get("odds") is not None:
                 v["odds"].set(_fmt_odds(data["odds"]))
+            v["raw_pick"].set(data.get("raw_line", ""))
             if not v["result"].get() and data.get("result"):
                 v["result"].set(data["result"])
 
@@ -488,7 +494,7 @@ class NewWeekTab:
         ctk.CTkLabel(top, text="Week:", text_color=TEXT_LIGHT).pack(side="left")
         self.week_var = tk.StringVar(value="")
         _entry(top, self.week_var, width=50).pack(side="left", padx=(2, 12))
-        _button(top, "Load / Start This Week", self.load, width=190).pack(side="left")
+        _button(top, "Load", self.load, width=90).pack(side="left")
         _button(top, "Save", self.save, width=90).pack(side="left", padx=8)
         self.status = ctk.CTkLabel(top, text="", text_color=TEXT_LIGHT)
         self.status.pack(side="left", padx=12)
