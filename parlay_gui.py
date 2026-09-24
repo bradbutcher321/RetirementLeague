@@ -17,8 +17,10 @@ with write access to the sheet.
 Usage: python parlay_gui.py
 """
 import os
+import re
 import sys
 import tkinter as tk
+from datetime import datetime
 from tkinter import ttk, messagebox, scrolledtext
 
 import gspread
@@ -26,7 +28,10 @@ from google.oauth2.service_account import Credentials
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from generate_franchise_data import SHEET_ID, CREDS_PATH
-from parlay_note_parser import parse_note_text, parse_signed_number, parse_money
+from parlay_note_parser import (
+    parse_note_text, parse_signed_number, parse_money,
+    TEAM_LINE_VS, VS_ONLY, TOTAL_VS, PLAYER_OU, PLAYER_ONLY,
+)
 from espn_gametime_lookup import (
     find_gametime, find_player_team, find_gametime_for_team, thursday_to_monday_window,
 )
@@ -49,6 +54,62 @@ COL_LETTERS = {  # field -> its column in Auto Parlay Tracker
     "player_prop": "I", "line": "J", "side": "K", "odds": "L", "gametime": "M",
     "result": "N", "final_odds": "P", "final_payout": "Q", "final_split": "R",
 }
+
+# Which of the free-text fields actually apply to a given Bet Type -- same
+# breakdown as format_parlay_sheet.py's HEADER_NOTES, reused here to grey
+# out (disable) the ones that don't, e.g. Player Prop/Side for a Spread
+# pick. A bet type not in this map (blank, or something new) leaves
+# everything enabled rather than guessing.
+GREYABLE_FIELDS = ["team", "opponent", "player_prop", "line", "side"]
+FIELD_RELEVANCE = {}
+for _bt in TEAM_LINE_VS:
+    FIELD_RELEVANCE[_bt] = {"team", "opponent", "line"}
+for _bt in VS_ONLY:
+    FIELD_RELEVANCE[_bt] = {"team", "opponent"}
+for _bt in TOTAL_VS:
+    FIELD_RELEVANCE[_bt] = {"team", "opponent", "side", "line"}
+for _bt in PLAYER_OU:
+    FIELD_RELEVANCE[_bt] = {"player_prop", "side", "line"}
+for _bt in PLAYER_ONLY:
+    FIELD_RELEVANCE[_bt] = {"player_prop"}
+
+GAMETIME_ISO_FMT = "%Y-%m-%dT%H:%M:%S"
+GAMETIME_DISPLAY_FMT = "%a %m/%d/%Y %I:%M %p"
+
+
+def _gametime_to_display(iso_text):
+    """'2026-09-26T15:30:00' -> 'Sat 09/26/2026 03:30 PM' for on-screen
+    editing -- typing a human time by hand is much less error-prone than
+    the sheet's strict ISO format. Text that isn't valid ISO (blank, or
+    something a person already typed) is shown as-is rather than hidden,
+    since it still needs to round-trip back out unchanged."""
+    iso_text = (iso_text or "").strip()
+    if not iso_text:
+        return ""
+    try:
+        dt = datetime.strptime(iso_text, GAMETIME_ISO_FMT)
+    except ValueError:
+        return iso_text
+    return dt.strftime(GAMETIME_DISPLAY_FMT)
+
+
+def _gametime_to_iso(display_text):
+    """Inverse of _gametime_to_display -- converts back to the sheet's
+    exact ISO format right before writing. Also accepts ISO typed directly
+    (a power user, or text that round-tripped through unchanged), and
+    tolerates the leading weekday abbreviation being edited out or left
+    off, since it's only there for readability."""
+    display_text = (display_text or "").strip()
+    if not display_text:
+        return ""
+    stripped = re.sub(r"^[A-Za-z]{3},?\s+", "", display_text)
+    for fmt in ("%m/%d/%Y %I:%M %p", GAMETIME_ISO_FMT):
+        try:
+            dt = datetime.strptime(stripped, fmt)
+            return dt.strftime(GAMETIME_ISO_FMT)
+        except ValueError:
+            continue
+    return display_text  # unrecognized -- pass through; sheet validation will flag it
 
 
 def authorize_write():
@@ -128,6 +189,13 @@ class SheetClient:
                 if f == "odds" and v != "":
                     v = parse_signed_number(v)
                     v = v if v is not None else ""
+                elif f == "gametime" and v != "":
+                    # Converted here too (not just in WeekGrid.player_rows)
+                    # so save_week is correct regardless of what shape of
+                    # dict a caller hands it -- confirmed directly this
+                    # matters: a human-readable display string written
+                    # as-is would fail the sheet's strict ISO validation.
+                    v = _gametime_to_iso(v)
                 row_values.append(v)
             self.ws.update([row_values], f"E{row_num}:N{row_num}")
 
@@ -141,6 +209,7 @@ class WeekGrid(ttk.Frame):
         super().__init__(parent)
         self.players = players
         self.row_vars = {p: {f: tk.StringVar() for f in ROW_FIELDS} for p in players}
+        self.row_widgets = {}
         self.sacko_var = tk.StringVar()
         self.final_odds_var = tk.StringVar()
         self.final_payout_var = tk.StringVar()
@@ -170,16 +239,55 @@ class WeekGrid(ttk.Frame):
         for r, player in enumerate(self.players, start=1):
             ttk.Label(grid, text=player, width=9).grid(row=r, column=0, padx=2, pady=1, sticky="w")
             v = self.row_vars[player]
-            ttk.Combobox(grid, textvariable=v["sport"], values=SPORTS, width=9).grid(row=r, column=1, padx=2)
-            ttk.Combobox(grid, textvariable=v["bet_type"], values=BET_TYPES, width=13).grid(row=r, column=2, padx=2)
-            ttk.Entry(grid, textvariable=v["team"], width=13).grid(row=r, column=3, padx=2)
-            ttk.Entry(grid, textvariable=v["opponent"], width=13).grid(row=r, column=4, padx=2)
-            ttk.Entry(grid, textvariable=v["player_prop"], width=14).grid(row=r, column=5, padx=2)
-            ttk.Entry(grid, textvariable=v["line"], width=6).grid(row=r, column=6, padx=2)
-            ttk.Combobox(grid, textvariable=v["side"], values=SIDES, width=6).grid(row=r, column=7, padx=2)
-            ttk.Entry(grid, textvariable=v["odds"], width=7).grid(row=r, column=8, padx=2)
-            ttk.Entry(grid, textvariable=v["gametime"], width=17).grid(row=r, column=9, padx=2)
-            ttk.Combobox(grid, textvariable=v["result"], values=RESULTS, width=8).grid(row=r, column=10, padx=2)
+            w = {}
+            w["sport"] = ttk.Combobox(grid, textvariable=v["sport"], values=SPORTS, width=9)
+            w["bet_type"] = ttk.Combobox(grid, textvariable=v["bet_type"], values=BET_TYPES, width=13)
+            w["team"] = ttk.Entry(grid, textvariable=v["team"], width=13)
+            w["opponent"] = ttk.Entry(grid, textvariable=v["opponent"], width=13)
+            w["player_prop"] = ttk.Entry(grid, textvariable=v["player_prop"], width=14)
+            w["line"] = ttk.Entry(grid, textvariable=v["line"], width=6)
+            w["side"] = ttk.Combobox(grid, textvariable=v["side"], values=SIDES, width=6)
+            w["odds"] = ttk.Entry(grid, textvariable=v["odds"], width=7)
+            w["gametime"] = ttk.Entry(grid, textvariable=v["gametime"], width=22)
+            w["result"] = ttk.Combobox(grid, textvariable=v["result"], values=RESULTS, width=8)
+            for c, field in enumerate(ROW_FIELDS, start=1):
+                w[field].grid(row=r, column=c, padx=2)
+            self.row_widgets[player] = w
+            v["bet_type"].trace_add("write", lambda *_a, p=player: self._update_relevance(p))
+            self._update_relevance(player)
+
+    def _update_relevance(self, player):
+        """Greys out (disables) whichever free-text fields don't apply to
+        this row's current Bet Type -- e.g. Player Prop/Side for a Spread
+        pick. A blank or unrecognized Bet Type leaves everything enabled
+        rather than guessing."""
+        relevant = FIELD_RELEVANCE.get(self.row_vars[player]["bet_type"].get())
+        for f in GREYABLE_FIELDS:
+            widget = self.row_widgets[player][f]
+            if relevant is not None and f not in relevant:
+                widget.state(["disabled"])
+            else:
+                widget.state(["!disabled"])
+
+    def clear_highlights(self):
+        for widgets in self.row_widgets.values():
+            for field, widget in widgets.items():
+                base = "TCombobox" if isinstance(widget, ttk.Combobox) else "TEntry"
+                widget.configure(style=base)
+
+    def highlight_needs_attention(self, needs_by_player):
+        """needs_by_player: {player: {field, ...}} -- marks each listed
+        field red. Always starts from a clean slate so highlights from a
+        previous Parse don't linger on fields that are now fine."""
+        self.clear_highlights()
+        for player, fields in needs_by_player.items():
+            widgets = self.row_widgets.get(player, {})
+            for f in fields:
+                widget = widgets.get(f)
+                if widget is None:
+                    continue
+                style = "Needs.TCombobox" if isinstance(widget, ttk.Combobox) else "Needs.TEntry"
+                widget.configure(style=style)
 
     def _recompute_split(self, *_):
         payout = parse_money(self.final_payout_var.get()) if self.final_payout_var.get() else None
@@ -208,12 +316,17 @@ class WeekGrid(ttk.Frame):
                           "player_prop", "line", "side", "odds", "gametime", "result"]
             for i, field in enumerate(sheet_cols):
                 if field:
-                    v[field].set(row[i] if i < len(row) else "")
+                    value = row[i] if i < len(row) else ""
+                    if field == "gametime":
+                        value = _gametime_to_display(value)
+                    v[field].set(value)
 
     def apply_parsed(self, picks):
         """Fills in only the fields a parse actually produced, leaving
         anything already in the grid (from a Load) untouched for players
-        the note didn't mention."""
+        the note didn't mention. Result only gets set if it's still blank
+        -- re-parsing a note over an already-graded row shouldn't wipe out
+        a real Win/Loss back to Pending."""
         for player, data in picks.items():
             if player not in self.row_vars:
                 continue
@@ -227,9 +340,16 @@ class WeekGrid(ttk.Frame):
             v["side"].set(data.get("side", "") or "")
             if data.get("odds") is not None:
                 v["odds"].set(_fmt_odds(data["odds"]))
+            if not v["result"].get() and data.get("result"):
+                v["result"].set(data["result"])
 
     def player_rows(self):
-        return {p: {f: self.row_vars[p][f].get().strip() for f in ROW_FIELDS} for p in self.players}
+        rows = {}
+        for p in self.players:
+            row = {f: self.row_vars[p][f].get().strip() for f in ROW_FIELDS}
+            row["gametime"] = _gametime_to_iso(row["gametime"])
+            rows[p] = row
+        return rows
 
 
 def _fmt_odds(n):
@@ -342,6 +462,12 @@ class NewWeekTab(ttk.Frame):
         text = self.paste_box.get("1.0", "end")
         picks, final, unmatched = parse_note_text(text, self.client.players)
         self.grid_widget.apply_parsed(picks)
+        if final.get("year"):
+            self.year_var.set(final["year"])
+        if final.get("week"):
+            self.week_var.set(final["week"])
+        if final.get("sacko"):
+            self.grid_widget.sacko_var.set(final["sacko"])
         if final["odds"] is not None:
             self.grid_widget.final_odds_var.set(_fmt_odds(final["odds"]))
         if final["payout"] is not None:
@@ -359,21 +485,37 @@ class NewWeekTab(ttk.Frame):
         self.update_idletasks()
         window = thursday_to_monday_window()
         found, tried = 0, 0
+        needs_by_player = {}
         for player, data in picks.items():
+            relevant = FIELD_RELEVANCE.get(data.get("bet_type"), set())
+            needs = set()
+            if not data.get("ok"):
+                needs |= {f for f in relevant if not data.get(f)}
+                if data.get("odds") is None:
+                    needs.add("odds")
+
+            attempted = bool(data.get("team") and data.get("opponent")) or bool(data.get("player_prop"))
             gametime = matched_sport = None
-            if data.get("team") and data.get("opponent"):
+            if attempted:
                 tried += 1
-                gametime, matched_sport = find_gametime(data["team"], data["opponent"], days=window)
-            elif data.get("player_prop"):
-                tried += 1
-                team, sport = find_player_team(data["player_prop"], data.get("bet_type"))
-                if team:
-                    matched_sport = sport
-                    gametime = find_gametime_for_team(team, sport, days=window)
+                if data.get("team") and data.get("opponent"):
+                    gametime, matched_sport = find_gametime(data["team"], data["opponent"], days=window)
+                else:
+                    team, sport = find_player_team(data["player_prop"], data.get("bet_type"))
+                    if team:
+                        matched_sport = sport
+                        gametime = find_gametime_for_team(team, sport, days=window)
             if gametime:
-                self.grid_widget.row_vars[player]["gametime"].set(gametime)
+                self.grid_widget.row_vars[player]["gametime"].set(_gametime_to_display(gametime))
                 self.grid_widget.row_vars[player]["sport"].set(matched_sport)
                 found += 1
+            elif attempted:
+                needs.add("gametime")
+                needs.add("sport")
+
+            if needs:
+                needs_by_player[player] = needs
+        self.grid_widget.highlight_needs_attention(needs_by_player)
         if tried:
             msg += f" Game times: found {found} of {tried} picks (rest need manual entry)."
         self.parse_status.config(text=msg)
@@ -401,6 +543,19 @@ def main():
     root = tk.Tk()
     root.title("Retirement League Parlay Entry")
     root.geometry("1300x520")
+
+    # "clam" is used specifically because it's the one bundled ttk theme
+    # that reliably honors a custom fieldbackground color on Entry/Combobox
+    # -- confirmed the default Windows theme ("vista") largely ignores it
+    # for those widgets, which would silently make the red "needs
+    # attention" highlighting invisible.
+    style = ttk.Style(root)
+    try:
+        style.theme_use("clam")
+    except tk.TclError:
+        pass
+    style.configure("Needs.TEntry", fieldbackground="#ffc9c9")
+    style.configure("Needs.TCombobox", fieldbackground="#ffc9c9")
 
     status_label = ttk.Label(root, text="Connecting to Google Sheets...")
     status_label.pack(pady=20)

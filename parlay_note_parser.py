@@ -53,6 +53,16 @@ ODDS_SUFFIX_RE = re.compile(r"^(.*?)\s*\(\s*([+-]?\d+(?:\.\d+)?)\s*\)\s*$")
 
 SIDE_MAP = {"o": "Over", "over": "Over", "u": "Under", "under": "Under"}
 
+# The note also has a small header block above the picks (year/week, who's
+# Sacko, when picks are due, the max combined odds) -- Legs Due/Max Odds
+# aren't tracked anywhere in the sheet, so they're recognized and silently
+# skipped rather than flagged as unmatched lines needing a human to sort
+# out. Sacko and the "<year> Week <n>:" line ARE useful (Sacko already has
+# a sheet column, year/week are needed to place the week at all), so those
+# get pulled into `final` instead.
+HEADER_SKIP_KEYS = {"legs due", "max odds"}
+YEAR_WEEK_RE = re.compile(r"^(\d{4})\s+week\s+(\d+):?\s*$", re.IGNORECASE)
+
 
 def normalize_side(token):
     return SIDE_MAP.get(token.lower())
@@ -160,31 +170,46 @@ def parse_bet_details(bet_type, details):
 def parse_note_text(raw_text, players):
     """Returns (picks, final, unmatched):
       picks: {player: {bet_type, team, opponent, player_prop, line, side,
-              odds, raw_line, ok}} -- ok is False if anything short of the
-              odds couldn't be confidently split, same "write it anyway,
-              flag it" approach as the historical migration.
-      final: {"odds": float|None, "payout": float|None}
-      unmatched: [raw lines that couldn't be attributed to a player or a
-                   Final Odds/Payout line at all]
+              odds, result, raw_line, ok}} -- ok is False if anything short
+              of the odds couldn't be confidently split, same "write it
+              anyway, flag it" approach as the historical migration.
+              result defaults to "Pending" -- a freshly parsed pick is for
+              a game that hasn't happened yet.
+      final: {"odds": float|None, "payout": float|None, "year": str|None,
+              "week": str|None, "sacko": str|None}
+      unmatched: [raw lines that couldn't be attributed to a player, a
+                   Final Odds/Payout line, or a recognized header line]
     """
     picks = {}
-    final = {"odds": None, "payout": None}
+    final = {"odds": None, "payout": None, "year": None, "week": None, "sacko": None}
     unmatched = []
 
     for line in raw_text.splitlines():
         line = line.strip()
         if not line:
             continue
+
+        m_yw = YEAR_WEEK_RE.match(line)
+        if m_yw:
+            final["year"], final["week"] = m_yw.group(1), m_yw.group(2)
+            continue
+
         m = re.match(r"^([^:]+):\s*(.+)$", line)
         if not m:
             unmatched.append(line)
             continue
         key, rest = m.group(1).strip(), m.group(2).strip()
+        key_lower = key.lower()
 
-        if key.lower() == "final odds":
+        if key_lower in HEADER_SKIP_KEYS:
+            continue
+        if key_lower == "sacko":
+            final["sacko"] = match_player(rest, players) or rest
+            continue
+        if key_lower == "final odds":
             final["odds"] = parse_signed_number(rest)
             continue
-        if key.lower() == "final payout":
+        if key_lower == "final payout":
             final["payout"] = parse_money(rest)
             continue
 
@@ -209,14 +234,15 @@ def parse_note_text(raw_text, players):
         if bet_type is None:
             picks[player] = {
                 "bet_type": bet_type_raw, "team": "", "opponent": "", "player_prop": "",
-                "line": "", "side": "", "odds": odds, "raw_line": line, "ok": False,
+                "line": "", "side": "", "odds": odds, "result": "Pending",
+                "raw_line": line, "ok": False,
             }
             continue
 
         parsed, ok = parse_bet_details(bet_type, details)
         picks[player] = {
-            "bet_type": bet_type, **parsed, "odds": odds, "raw_line": line,
-            "ok": ok and odds is not None,
+            "bet_type": bet_type, **parsed, "odds": odds, "result": "Pending",
+            "raw_line": line, "ok": ok and odds is not None,
         }
 
     return picks, final, unmatched
