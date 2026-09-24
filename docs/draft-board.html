@@ -28,10 +28,10 @@
      same size across years and only grows wider when a year has more
      teams — never stretched to fill the container. */
   .board-scroll{ overflow-x: auto; border: 1px solid var(--line); background: var(--surface); padding: 2px; }
-  table.board{ border-collapse: separate; border-spacing: 3px; width: auto; }
+  table.board{ border-collapse: separate; border-spacing: 3px; width: auto; table-layout: fixed; }
   table.board th, table.board td{ padding: 0; }
   table.board thead th{
-    background: var(--surface-raised); color: var(--text); font-family: var(--scoreboard);
+    width: 92px; background: var(--surface-raised); color: var(--text); font-family: var(--scoreboard);
     font-weight: 700; font-size: 0.78rem; padding: 8px 4px; text-align: center; white-space: nowrap;
     position: sticky; top: 0; z-index: 2; border-radius: 4px;
   }
@@ -40,25 +40,27 @@
 
   .pick-cell{
     width: 92px; height: 64px; padding: 6px 6px !important; vertical-align: top;
-    background: var(--surface-raised); border: 1px solid var(--line); border-radius: 5px; overflow: visible;
+    background: var(--surface-raised); border: 1px solid var(--line); border-radius: 5px; overflow: hidden;
     position: relative; color: var(--text);
   }
-  .pick-top{ display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .pick-top{ display: flex; align-items: center; justify-content: space-between; gap: 4px; overflow: hidden; }
+  .pick-tag{ display: flex; align-items: center; gap: 3px; min-width: 0; overflow: hidden; }
   .pick-rank{
-    display: inline-block; font-weight: 800; font-size: 0.64rem; font-family: var(--scoreboard);
-    color: #fff; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.01em;
+    flex-shrink: 0; font-weight: 800; font-size: 0.64rem; font-family: var(--scoreboard);
+    color: #fff; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.01em; white-space: nowrap;
   }
   .pick-team{
-    display: inline-block; color: #111; font-weight: 700; font-size: 0.58rem; margin-left: 3px;
+    color: #111; font-weight: 700; font-size: 0.58rem;
     background: rgba(255,255,255,0.88); padding: 1px 4px; border-radius: 3px;
+    white-space: nowrap; overflow: hidden;
   }
-  .pick-overall{ font-size: 0.6rem; font-variant-numeric: tabular-nums; color: var(--text-dim); white-space: nowrap; }
-  .pick-player{ font-size: 0.72rem; font-weight: 700; line-height: 1.18; margin-top: 4px; white-space: nowrap; overflow: visible; color: var(--text); }
+  .pick-overall{ flex-shrink: 0; font-size: 0.6rem; font-variant-numeric: tabular-nums; color: var(--text-dim); white-space: nowrap; }
+  .pick-player{ font-size: 0.72rem; font-weight: 700; line-height: 1.18; margin-top: 4px; white-space: nowrap; overflow: hidden; color: var(--text); }
   .pick-player span{ display: block; }
   .pick-arrow{ position: absolute; bottom: 2px; right: 4px; font-size: 0.62rem; line-height: 1; color: var(--text-dim); }
   .pick-keeper{
-    position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%;
-    background: var(--gold); border: 2px solid var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+    position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--gold); box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
   }
   .pick-empty{ color: var(--text-dim); font-size: 0.7rem; text-align: center; padding-top: 22px !important; height: 100%; }
 
@@ -75,6 +77,7 @@
 
   @media (max-width: 480px){
     .pick-cell{ width: 78px; height: 60px; }
+    table.board thead th{ width: 78px; }
   }
 </style>
 </head>
@@ -146,7 +149,10 @@
       <td class="pick-cell ${posClass(pick.position)}">
         ${pick.keeper ? '<div class="pick-keeper" title="Keeper"></div>' : ''}
         <div class="pick-top">
-          <span class="pick-rank">${esc(pick.position_rank || pick.position || '')}${pick.pro_team ? `<span class="pick-team">${esc(pick.pro_team)}</span>` : ''}</span>
+          <span class="pick-tag">
+            <span class="pick-rank">${esc(pick.position_rank || pick.position || '')}</span>
+            ${pick.pro_team ? `<span class="pick-team">${esc(pick.pro_team)}</span>` : ''}
+          </span>
           <span class="pick-overall">${round}.${pickInRound}</span>
         </div>
         <div class="pick-player"><span>${esc(first)}</span>${last ? `<span>${esc(last)}</span>` : ''}</div>
