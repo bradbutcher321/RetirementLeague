@@ -4,15 +4,22 @@ Simple desktop tool for the two people who enter parlay picks, on top of
 sheet via the API instead of clicking through cells by hand.
 
 Two tabs:
-  - Browse / Grade Past Weeks: pick a year + week, see and edit all 12
-    picks (including grading Result), save changes back.
   - Enter New Week: pick a year + week, loads whatever's already there for
     it (so re-opening a partially-entered week shows what's already saved
     instead of starting blank), paste the shared note's raw text and hit
     Parse to fill in the grid, review/fix anything, then Save.
+  - Browse / Grade Past Weeks: pick a year + week, see and edit all 12
+    picks (including grading Result), save changes back.
+
+Built on CustomTkinter (a themeable skin over tkinter/ttk, not a separate
+toolkit) rather than plain ttk -- ttk's per-widget styling turned out too
+limited for the look this needed (state-based colors only apply through
+its style-map system, which is finicky, and there's no real way to get
+rounded corners or a proper dark theme that isn't fighting the OS theme).
+CustomTkinter widgets take color parameters directly per instance instead.
 
 Requires google_secret.json in this directory (same as the other scripts)
-with write access to the sheet.
+with write access to the sheet, and `pip install customtkinter`.
 
 Usage: python parlay_gui.py
 """
@@ -21,8 +28,9 @@ import re
 import sys
 import tkinter as tk
 from datetime import datetime
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import messagebox
 
+import customtkinter as ctk
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -75,6 +83,26 @@ for _bt in PLAYER_ONLY:
 
 GAMETIME_ISO_FMT = "%Y-%m-%dT%H:%M:%S"
 GAMETIME_DISPLAY_FMT = "%a %m/%d/%Y %I:%M %p"
+
+# Muted gold on charcoal. Gold is spent only on a few accent spots --
+# buttons, the active tab, section titles, and column headers -- while
+# everyday text (field labels, player names, status messages) is a soft
+# off-white, after feedback that full-saturation gold on pure black
+# everywhere read as loud/gaudy on a dense data grid. Data-entry fields
+# stay white/black for legibility, per explicit request. Defined at module
+# level (not just inside main()) since widgets now take these colors
+# directly at construction time rather than looking them up by ttk style
+# name at render time.
+BG_DARK = "#1b1b1d"
+BG_PANEL = "#242426"
+TEXT_LIGHT = "#e8e6e1"
+GOLD = "#D4AF37"
+GOLD_ACTIVE = "#b8952e"
+FIELD_WHITE = "#ffffff"
+FIELD_TEXT = "#1b1b1d"
+DISABLED_BG = "#d8d8d8"
+DISABLED_FG = "#8a8a8a"
+NEEDS_BG = "#ffb3b3"
 
 
 def _gametime_to_display(iso_text):
@@ -200,13 +228,38 @@ class SheetClient:
             self.ws.update([row_values], f"E{row_num}:N{row_num}")
 
 
-class WeekGrid(ttk.Frame):
+def _entry(parent, var, width=120):
+    return ctk.CTkEntry(parent, textvariable=var, width=width, height=26,
+                         fg_color=FIELD_WHITE, text_color=FIELD_TEXT, border_width=1)
+
+
+def _combo(parent, var, values, width=110):
+    return ctk.CTkComboBox(parent, variable=var, values=values, width=width, height=26,
+                            fg_color=FIELD_WHITE, text_color=FIELD_TEXT,
+                            button_color=GOLD, button_hover_color=GOLD_ACTIVE,
+                            dropdown_fg_color=FIELD_WHITE, dropdown_text_color=FIELD_TEXT,
+                            dropdown_hover_color="#e6e6e6", border_width=1)
+
+
+def _button(parent, text, command, width=150):
+    return ctk.CTkButton(parent, text=text, command=command, width=width, height=30,
+                          fg_color=GOLD, text_color=BG_DARK, hover_color=GOLD_ACTIVE,
+                          font=("Segoe UI", 10, "bold"))
+
+
+class WeekGrid(ctk.CTkFrame):
     """12 rows (one per player) of editable fields, plus the week-level
     Sacko/Final Odds/Final Payout/Final Split fields above them. Shared by
     both tabs."""
 
+    COL_WIDTHS = {
+        "sport": 85, "bet_type": 130, "team": 120, "opponent": 120,
+        "player_prop": 130, "line": 55, "side": 75, "odds": 65,
+        "gametime": 190, "result": 90,
+    }
+
     def __init__(self, parent, players):
-        super().__init__(parent)
+        super().__init__(parent, fg_color="transparent")
         self.players = players
         self.row_vars = {p: {f: tk.StringVar() for f in ROW_FIELDS} for p in players}
         self.row_widgets = {}
@@ -217,41 +270,50 @@ class WeekGrid(ttk.Frame):
         self._build()
 
     def _build(self):
-        top = ttk.Frame(self)
-        top.pack(fill="x", pady=(0, 8))
-        ttk.Label(top, text="Sacko:").grid(row=0, column=0, padx=4)
-        ttk.Combobox(top, textvariable=self.sacko_var, values=[""] + self.players, width=10).grid(row=0, column=1)
-        ttk.Label(top, text="Final Odds:").grid(row=0, column=2, padx=(16, 4))
-        ttk.Entry(top, textvariable=self.final_odds_var, width=12).grid(row=0, column=3)
-        ttk.Label(top, text="Final Payout ($):").grid(row=0, column=4, padx=(16, 4))
-        ttk.Entry(top, textvariable=self.final_payout_var, width=12).grid(row=0, column=5)
-        ttk.Label(top, text="Split (auto):").grid(row=0, column=6, padx=(16, 4))
-        ttk.Label(top, textvariable=self.final_split_var, width=12).grid(row=0, column=7)
+        top = ctk.CTkFrame(self, fg_color="transparent")
+        top.pack(fill="x", pady=(0, 10))
+        ctk.CTkLabel(top, text="Sacko:", text_color=TEXT_LIGHT).grid(row=0, column=0, padx=4)
+        _combo(top, self.sacko_var, [""] + self.players, width=110).grid(row=0, column=1)
+        ctk.CTkLabel(top, text="Final Odds:", text_color=TEXT_LIGHT).grid(row=0, column=2, padx=(16, 4))
+        _entry(top, self.final_odds_var, width=100).grid(row=0, column=3)
+        ctk.CTkLabel(top, text="Final Payout ($):", text_color=TEXT_LIGHT).grid(row=0, column=4, padx=(16, 4))
+        _entry(top, self.final_payout_var, width=100).grid(row=0, column=5)
+        ctk.CTkLabel(top, text="Split (auto):", text_color=TEXT_LIGHT).grid(row=0, column=6, padx=(16, 4))
+        # CTkLabel doesn't actually support live textvariable binding
+        # (confirmed directly -- it silently accepts the kwarg but never
+        # updates), so the split figure is pushed in manually via
+        # _recompute_split() instead of relying on a variable trace alone.
+        self.final_split_label = ctk.CTkLabel(top, text="", text_color=GOLD, font=("Segoe UI", 10, "bold"))
+        self.final_split_label.grid(row=0, column=7)
         self.final_payout_var.trace_add("write", self._recompute_split)
 
         headers = ["Player", "Sport", "Bet Type", "Team", "Opponent", "Player Prop",
                    "Line", "Side", "Odds", "Gametime", "Result"]
-        grid = ttk.Frame(self)
+        grid = ctk.CTkFrame(self, fg_color="transparent")
         grid.pack(fill="both", expand=True)
         for c, h in enumerate(headers):
-            ttk.Label(grid, text=h, style="Header.TLabel").grid(row=0, column=c, padx=2, pady=2)
+            ctk.CTkLabel(grid, text=h, text_color=GOLD, font=("Segoe UI", 10, "bold")).grid(
+                row=0, column=c, padx=3, pady=(0, 4))
 
         for r, player in enumerate(self.players, start=1):
-            ttk.Label(grid, text=player, width=9, style="PlayerName.TLabel").grid(row=r, column=0, padx=2, pady=1, sticky="w")
+            ctk.CTkLabel(grid, text=player, width=80, anchor="w",
+                         text_color=TEXT_LIGHT, font=("Segoe UI", 10, "bold")).grid(
+                row=r, column=0, padx=3, pady=2, sticky="w")
             v = self.row_vars[player]
-            w = {}
-            w["sport"] = ttk.Combobox(grid, textvariable=v["sport"], values=SPORTS, width=9)
-            w["bet_type"] = ttk.Combobox(grid, textvariable=v["bet_type"], values=BET_TYPES, width=13)
-            w["team"] = ttk.Entry(grid, textvariable=v["team"], width=13)
-            w["opponent"] = ttk.Entry(grid, textvariable=v["opponent"], width=13)
-            w["player_prop"] = ttk.Entry(grid, textvariable=v["player_prop"], width=14)
-            w["line"] = ttk.Entry(grid, textvariable=v["line"], width=6)
-            w["side"] = ttk.Combobox(grid, textvariable=v["side"], values=SIDES, width=6)
-            w["odds"] = ttk.Entry(grid, textvariable=v["odds"], width=7)
-            w["gametime"] = ttk.Entry(grid, textvariable=v["gametime"], width=22)
-            w["result"] = ttk.Combobox(grid, textvariable=v["result"], values=RESULTS, width=8)
+            w = {
+                "sport": _combo(grid, v["sport"], SPORTS, width=self.COL_WIDTHS["sport"]),
+                "bet_type": _combo(grid, v["bet_type"], BET_TYPES, width=self.COL_WIDTHS["bet_type"]),
+                "team": _entry(grid, v["team"], width=self.COL_WIDTHS["team"]),
+                "opponent": _entry(grid, v["opponent"], width=self.COL_WIDTHS["opponent"]),
+                "player_prop": _entry(grid, v["player_prop"], width=self.COL_WIDTHS["player_prop"]),
+                "line": _entry(grid, v["line"], width=self.COL_WIDTHS["line"]),
+                "side": _combo(grid, v["side"], SIDES, width=self.COL_WIDTHS["side"]),
+                "odds": _entry(grid, v["odds"], width=self.COL_WIDTHS["odds"]),
+                "gametime": _entry(grid, v["gametime"], width=self.COL_WIDTHS["gametime"]),
+                "result": _combo(grid, v["result"], RESULTS, width=self.COL_WIDTHS["result"]),
+            }
             for c, field in enumerate(ROW_FIELDS, start=1):
-                w[field].grid(row=r, column=c, padx=2)
+                w[field].grid(row=r, column=c, padx=3, pady=2)
             self.row_widgets[player] = w
             v["bet_type"].trace_add("write", lambda *_a, p=player: self._update_relevance(p))
             self._update_relevance(player)
@@ -260,25 +322,30 @@ class WeekGrid(ttk.Frame):
         """Greys out (disables) whichever free-text fields don't apply to
         this row's current Bet Type -- e.g. Player Prop/Side for a Spread
         pick. A blank or unrecognized Bet Type leaves everything enabled
-        rather than guessing."""
+        rather than guessing. Also the single place that resets a field's
+        color back to its normal (non-highlighted) state -- unlike ttk,
+        CustomTkinter colors are set directly per widget rather than
+        automatically derived from widget state, so there's no separate
+        "disabled color just works" behavior to lean on."""
         relevant = FIELD_RELEVANCE.get(self.row_vars[player]["bet_type"].get())
-        for f in GREYABLE_FIELDS:
+        for f in ROW_FIELDS:
             widget = self.row_widgets[player][f]
-            if relevant is not None and f not in relevant:
-                widget.state(["disabled"])
+            irrelevant = f in GREYABLE_FIELDS and relevant is not None and f not in relevant
+            if irrelevant:
+                widget.configure(state="disabled", fg_color=DISABLED_BG, text_color=DISABLED_FG)
             else:
-                widget.state(["!disabled"])
+                widget.configure(state="normal", fg_color=FIELD_WHITE, text_color=FIELD_TEXT)
 
     def clear_highlights(self):
-        for widgets in self.row_widgets.values():
-            for field, widget in widgets.items():
-                base = "TCombobox" if isinstance(widget, ttk.Combobox) else "TEntry"
-                widget.configure(style=base)
+        for player in self.players:
+            self._update_relevance(player)
 
     def highlight_needs_attention(self, needs_by_player):
         """needs_by_player: {player: {field, ...}} -- marks each listed
-        field red. Always starts from a clean slate so highlights from a
-        previous Parse don't linger on fields that are now fine."""
+        field red. Always starts from a clean slate (via clear_highlights,
+        which also correctly leaves irrelevant/disabled fields grey rather
+        than white) so highlights from a previous Parse don't linger on
+        fields that are now fine."""
         self.clear_highlights()
         for player, fields in needs_by_player.items():
             widgets = self.row_widgets.get(player, {})
@@ -286,12 +353,13 @@ class WeekGrid(ttk.Frame):
                 widget = widgets.get(f)
                 if widget is None:
                     continue
-                style = "Needs.TCombobox" if isinstance(widget, ttk.Combobox) else "Needs.TEntry"
-                widget.configure(style=style)
+                widget.configure(fg_color=NEEDS_BG, text_color=FIELD_TEXT)
 
     def _recompute_split(self, *_):
         payout = parse_money(self.final_payout_var.get()) if self.final_payout_var.get() else None
-        self.final_split_var.set(f"{payout / PLAYERS_PER_WEEK:,.2f}" if payout is not None else "")
+        text = f"{payout / PLAYERS_PER_WEEK:,.2f}" if payout is not None else ""
+        self.final_split_var.set(text)
+        self.final_split_label.configure(text=text)
 
     def load(self, block_rows):
         """block_rows: 12 rows of columns A:R from the sheet, or None to clear."""
@@ -357,24 +425,29 @@ def _fmt_odds(n):
     return f"+{n}" if n > 0 else str(n)
 
 
-class BrowseTab(ttk.Frame):
-    def __init__(self, parent, client):
-        super().__init__(parent)
+class BrowseTab:
+    """Builds directly into `master` (the CTkFrame CTkTabview hands back
+    from .add()) rather than being a widget itself -- CTkTabview owns and
+    places that frame, so this is a plain controller object, not a Frame
+    subclass added to a notebook the way the ttk version worked."""
+
+    def __init__(self, master, client):
+        self.master = master
         self.client = client
-        top = ttk.Frame(self)
-        top.pack(fill="x", pady=6)
-        ttk.Label(top, text="Year:").pack(side="left")
+        top = ctk.CTkFrame(master, fg_color="transparent")
+        top.pack(fill="x", pady=8, padx=6)
+        ctk.CTkLabel(top, text="Year:", text_color=TEXT_LIGHT).pack(side="left")
         self.year_var = tk.StringVar(value="2026")
-        ttk.Entry(top, textvariable=self.year_var, width=6).pack(side="left", padx=(2, 12))
-        ttk.Label(top, text="Week:").pack(side="left")
+        _entry(top, self.year_var, width=70).pack(side="left", padx=(2, 12))
+        ctk.CTkLabel(top, text="Week:", text_color=TEXT_LIGHT).pack(side="left")
         self.week_var = tk.StringVar(value="1")
-        ttk.Entry(top, textvariable=self.week_var, width=4).pack(side="left", padx=(2, 12))
-        ttk.Button(top, text="Load", command=self.load).pack(side="left")
-        ttk.Button(top, text="Save Changes", command=self.save).pack(side="left", padx=8)
-        self.status = ttk.Label(top, text="")
+        _entry(top, self.week_var, width=50).pack(side="left", padx=(2, 12))
+        _button(top, "Load", self.load, width=90).pack(side="left")
+        _button(top, "Save Changes", self.save, width=140).pack(side="left", padx=8)
+        self.status = ctk.CTkLabel(top, text="", text_color=TEXT_LIGHT)
         self.status.pack(side="left", padx=12)
 
-        self.grid_widget = WeekGrid(self, client.players)
+        self.grid_widget = WeekGrid(master, client.players)
         self.grid_widget.pack(fill="both", expand=True, padx=6)
         self.start_row = None
 
@@ -386,7 +459,7 @@ class BrowseTab(ttk.Frame):
             return
         self.start_row, block = self.client.find_week(year, week)
         self.grid_widget.load(block)
-        self.status.config(text="Loaded." if block else "That week has no rows yet.")
+        self.status.configure(text="Loaded." if block else "That week has no rows yet.")
 
     def save(self):
         if not self.start_row:
@@ -400,38 +473,38 @@ class BrowseTab(ttk.Frame):
             parse_money(g.final_payout_var.get()) if g.final_payout_var.get() else None,
             g.player_rows(),
         )
-        self.status.config(text="Saved.")
+        self.status.configure(text="Saved.")
 
 
-class NewWeekTab(ttk.Frame):
-    def __init__(self, parent, client):
-        super().__init__(parent)
+class NewWeekTab:
+    def __init__(self, master, client):
+        self.master = master
         self.client = client
-        top = ttk.Frame(self)
-        top.pack(fill="x", pady=6)
-        ttk.Label(top, text="Year:").pack(side="left")
+        top = ctk.CTkFrame(master, fg_color="transparent")
+        top.pack(fill="x", pady=8, padx=6)
+        ctk.CTkLabel(top, text="Year:", text_color=TEXT_LIGHT).pack(side="left")
         self.year_var = tk.StringVar(value="2026")
-        ttk.Entry(top, textvariable=self.year_var, width=6).pack(side="left", padx=(2, 12))
-        ttk.Label(top, text="Week:").pack(side="left")
+        _entry(top, self.year_var, width=70).pack(side="left", padx=(2, 12))
+        ctk.CTkLabel(top, text="Week:", text_color=TEXT_LIGHT).pack(side="left")
         self.week_var = tk.StringVar(value="")
-        ttk.Entry(top, textvariable=self.week_var, width=4).pack(side="left", padx=(2, 12))
-        ttk.Button(top, text="Load / Start This Week", command=self.load).pack(side="left")
-        ttk.Button(top, text="Save", command=self.save).pack(side="left", padx=8)
-        self.status = ttk.Label(top, text="")
+        _entry(top, self.week_var, width=50).pack(side="left", padx=(2, 12))
+        _button(top, "Load / Start This Week", self.load, width=190).pack(side="left")
+        _button(top, "Save", self.save, width=90).pack(side="left", padx=8)
+        self.status = ctk.CTkLabel(top, text="", text_color=TEXT_LIGHT)
         self.status.pack(side="left", padx=12)
 
-        paste_frame = ttk.LabelFrame(self, text="Paste the shared note's raw text, then Parse")
-        paste_frame.pack(fill="x", padx=6, pady=(0, 6))
-        self.paste_box = scrolledtext.ScrolledText(
-            paste_frame, height=6, background=FIELD_WHITE, foreground=FIELD_TEXT, insertbackground=FIELD_TEXT)
-        self.paste_box.pack(fill="x", padx=4, pady=4)
-        btn_row = ttk.Frame(paste_frame)
-        btn_row.pack(fill="x", padx=4, pady=(0, 4))
-        ttk.Button(btn_row, text="Parse", command=self.parse_note).pack(side="left")
-        self.parse_status = ttk.Label(btn_row, text="")
+        ctk.CTkLabel(master, text="Paste the shared note's raw text, then Parse",
+                     text_color=GOLD, font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=6, pady=(4, 2))
+        self.paste_box = ctk.CTkTextbox(master, height=110, fg_color=FIELD_WHITE, text_color=FIELD_TEXT,
+                                         wrap="word", border_width=1, border_color=GOLD)
+        self.paste_box.pack(fill="x", padx=6, pady=(0, 4))
+        btn_row = ctk.CTkFrame(master, fg_color="transparent")
+        btn_row.pack(fill="x", padx=6, pady=(0, 6))
+        _button(btn_row, "Parse", self.parse_note, width=90).pack(side="left")
+        self.parse_status = ctk.CTkLabel(btn_row, text="", text_color=TEXT_LIGHT)
         self.parse_status.pack(side="left", padx=8)
 
-        self.grid_widget = WeekGrid(self, client.players)
+        self.grid_widget = WeekGrid(master, client.players)
         self.grid_widget.pack(fill="both", expand=True, padx=6)
         self.start_row = None
 
@@ -448,16 +521,16 @@ class NewWeekTab(ttk.Frame):
             if start_row:
                 self.start_row = start_row
                 self.grid_widget.load(block)
-                self.status.config(text=f"Loaded existing data for week {week}.")
+                self.status.configure(text=f"Loaded existing data for week {week}.")
                 return
         else:
             week = None
         self.start_row = self.client.next_new_week_row()
         self.grid_widget.load(None)
         if week is not None:
-            self.status.config(text=f"No existing rows for week {week} -- starting fresh at row {self.start_row}.")
+            self.status.configure(text=f"No existing rows for week {week} -- starting fresh at row {self.start_row}.")
         else:
-            self.status.config(text=f"Enter a week number above, then Load. Next free block starts at row {self.start_row}.")
+            self.status.configure(text=f"Enter a week number above, then Load. Next free block starts at row {self.start_row}.")
 
     def parse_note(self):
         text = self.paste_box.get("1.0", "end")
@@ -479,11 +552,11 @@ class NewWeekTab(ttk.Frame):
             msg += f" Needs a look: {', '.join(not_ok)}."
         if unmatched:
             msg += f" Unmatched lines: {len(unmatched)}."
-        self.parse_status.config(text=msg)
-        self.update_idletasks()
+        self.parse_status.configure(text=msg)
+        self.master.update_idletasks()
 
-        self.parse_status.config(text=msg + " Looking up game times...")
-        self.update_idletasks()
+        self.parse_status.configure(text=msg + " Looking up game times...")
+        self.master.update_idletasks()
         window = thursday_to_monday_window()
         found, tried = 0, 0
         needs_by_player = {}
@@ -524,7 +597,7 @@ class NewWeekTab(ttk.Frame):
         self.grid_widget.highlight_needs_attention(needs_by_player)
         if tried:
             msg += f" Game times: found {found} of {tried} picks (rest need manual entry)."
-        self.parse_status.config(text=msg)
+        self.parse_status.configure(text=msg)
 
     def save(self):
         if not self.start_row:
@@ -542,85 +615,41 @@ class NewWeekTab(ttk.Frame):
             parse_money(g.final_payout_var.get()) if g.final_payout_var.get() else None,
             g.player_rows(),
         )
-        self.status.config(text=f"Saved to row {self.start_row}.")
-
-
-# Muted gold on charcoal, chosen over the earlier bright-gold-on-black
-# UCF scheme after feedback that full-saturation gold on pure black
-# everywhere (every label, every header) read as loud/gaudy on a dense
-# data grid. Gold is now spent only on a few accent spots -- buttons, the
-# active tab, section titles, and column headers -- while everyday text
-# (field labels, player names, status messages) is a soft off-white.
-# Data-entry fields stay white/black for legibility, per explicit request.
-BG_DARK = "#1b1b1d"
-TEXT_LIGHT = "#e8e6e1"
-GOLD = "#D4AF37"
-GOLD_ACTIVE = "#b8952e"
-FIELD_WHITE = "#ffffff"
-FIELD_TEXT = "#1b1b1d"
-DISABLED_BG = "#d8d8d8"
-DISABLED_FG = "#8a8a8a"
-NEEDS_BG = "#ffb3b3"
+        self.status.configure(text=f"Saved to row {self.start_row}.")
 
 
 def main():
-    root = tk.Tk()
+    ctk.set_appearance_mode("dark")
+
+    root = ctk.CTk()
     root.title("Retirement League Parlay Entry")
-    root.geometry("1300x560")
-    root.configure(background=BG_DARK)
+    root.geometry("1350x620")
+    root.configure(fg_color=BG_DARK)
 
-    # "clam" is used specifically because it's the one bundled ttk theme
-    # that reliably honors custom colors (fieldbackground, state-based
-    # maps) on Entry/Combobox/Notebook -- confirmed the default Windows
-    # theme ("vista") largely ignores these, which is why the red "needs
-    # attention" highlighting was invisible and disabled fields looked
-    # almost identical to enabled ones.
-    style = ttk.Style(root)
-    try:
-        style.theme_use("clam")
-    except tk.TclError:
-        pass
-
-    style.configure("TFrame", background=BG_DARK)
-    style.configure("TLabelframe", background=BG_DARK, bordercolor=GOLD)
-    style.configure("TLabelframe.Label", background=BG_DARK, foreground=GOLD, font=("Segoe UI", 10, "bold"))
-    # Default body text (field labels, player names, status messages) --
-    # off-white, not gold, so gold reads as "this is interactive/important"
-    # rather than covering every word on screen.
-    style.configure("TLabel", background=BG_DARK, foreground=TEXT_LIGHT)
-    style.configure("PlayerName.TLabel", background=BG_DARK, foreground=TEXT_LIGHT, font=("Segoe UI", 9, "bold"))
-    style.configure("Header.TLabel", background=BG_DARK, foreground=GOLD, font=("Segoe UI", 9, "bold"))
-    style.configure("TButton", background=GOLD, foreground=BG_DARK, font=("Segoe UI", 9, "bold"), padding=6)
-    style.map("TButton", background=[("active", GOLD_ACTIVE)], foreground=[("active", TEXT_LIGHT)])
-    style.configure("TNotebook", background=BG_DARK, bordercolor=GOLD)
-    style.configure("TNotebook.Tab", background=BG_DARK, foreground=TEXT_LIGHT, padding=(16, 7), font=("Segoe UI", 10, "bold"))
-    style.map("TNotebook.Tab", background=[("selected", GOLD)], foreground=[("selected", BG_DARK)])
-
-    # Data-entry fields stay white/black for legibility (explicit request),
-    # just with a visibly distinct grey when disabled -- clam's own default
-    # disabled shade turned out too close to white to notice at a glance.
-    style.configure("TEntry", fieldbackground=FIELD_WHITE, foreground=FIELD_TEXT)
-    style.configure("TCombobox", fieldbackground=FIELD_WHITE, foreground=FIELD_TEXT, arrowsize=14)
-    style.map("TEntry", fieldbackground=[("disabled", DISABLED_BG)], foreground=[("disabled", DISABLED_FG)])
-    style.map("TCombobox", fieldbackground=[("disabled", DISABLED_BG)], foreground=[("disabled", DISABLED_FG)],
-              selectbackground=[("disabled", DISABLED_BG)], selectforeground=[("disabled", DISABLED_FG)])
-    style.configure("Needs.TEntry", fieldbackground=NEEDS_BG, foreground=FIELD_TEXT)
-    style.configure("Needs.TCombobox", fieldbackground=NEEDS_BG, foreground=FIELD_TEXT)
-
-    status_label = ttk.Label(root, text="Connecting to Google Sheets...")
+    status_label = ctk.CTkLabel(root, text="Connecting to Google Sheets...", text_color=TEXT_LIGHT)
     status_label.pack(pady=20)
     root.update()
     try:
         client = SheetClient()
     except Exception as e:
-        status_label.config(text=f"Failed to connect: {e}")
+        status_label.configure(text=f"Failed to connect: {e}")
         return
     status_label.destroy()
 
-    notebook = ttk.Notebook(root)
-    notebook.pack(fill="both", expand=True)
-    notebook.add(NewWeekTab(notebook, client), text="Enter New Week")
-    notebook.add(BrowseTab(notebook, client), text="Browse / Grade Past Weeks")
+    tabview = ctk.CTkTabview(
+        root, fg_color=BG_DARK,
+        segmented_button_fg_color=BG_DARK,
+        segmented_button_selected_color=GOLD,
+        segmented_button_selected_hover_color=GOLD_ACTIVE,
+        segmented_button_unselected_color=BG_PANEL,
+        segmented_button_unselected_hover_color="#333335",
+        text_color=TEXT_LIGHT,
+    )
+    tabview.pack(fill="both", expand=True, padx=6, pady=6)
+    new_week_frame = tabview.add("Enter New Week")
+    browse_frame = tabview.add("Browse / Grade Past Weeks")
+    NewWeekTab(new_week_frame, client)
+    BrowseTab(browse_frame, client)
 
     root.mainloop()
 

@@ -103,10 +103,10 @@ yet.
   full paste-to-save round trip against scratch rows with before/after
   verification) — next step is for you to actually run it and sanity-check
   the layout/usability, since tkinter layouts can surprise you in practice.
-  Needs `gspread` and `google-auth` installed (`pip install gspread
-  google-auth`) and `google_secret.json` present — since that's a
-  write-scoped credential, think about how to get it to the second person
-  safely rather than just emailing/texting the file.
+  Needs `gspread`, `google-auth`, and `customtkinter` installed
+  (`pip install gspread google-auth customtkinter`) and `google_secret.json`
+  present — since that's a write-scoped credential, think about how to get
+  it to the second person safely rather than just emailing/texting the file.
 - **`espn_gametime_lookup.py`** — auto-fills Gametime (and Sport, since the
   note never mentions it either) right after Parse, for both team-based
   picks (Spread/Money Line/Totals) and player props (Anytime TD, Receiving
@@ -200,6 +200,30 @@ yet.
   - Applied a UCF Knights black-and-gold look to the app chrome, keeping
     every data-entry field white/black for legibility per explicit
     request.
+- **Ported the GUI from ttk to CustomTkinter**, after feedback that the
+  bright-gold-on-black ttk version looked "kinda bad" -- three palette
+  options (muted gold, cool blue/teal, light) were mocked up as an HTML
+  comparison first (see the memory this session saved on that workflow),
+  muted gold was picked, and then the question came up of whether the
+  actual app could look as polished as the HTML mockup. ttk's per-widget
+  styling turned out to be the real limiter (state-based colors only work
+  through its finicky style-map system, no real rounded corners, fighting
+  the OS theme), so the whole widget layer was ported to CustomTkinter
+  (`pip install customtkinter`), which takes colors directly per widget
+  instance instead. All business logic (SheetClient, note parsing,
+  gametime lookup wiring, field relevance/highlighting) is unchanged --
+  only the widget classes changed (ttk.Frame/Label/Entry/Combobox/
+  Notebook -> CTkFrame/Label/Entry/ComboBox/Tabview). Two behavioral notes
+  from the port: CTkLabel doesn't actually support live `textvariable`
+  binding (silently a no-op, confirmed directly), so the Split figure is
+  pushed in manually via `.configure(text=...)` instead; and CTkTabview's
+  segmented-button text color is a single value with no separate
+  selected/unselected override, so both tab states share one off-white
+  text color rather than the exact dark-on-gold/light-on-charcoal split
+  the mockup showed for the active tab. Verified via headless construction,
+  a full paste-to-save round trip against the real note (still 12/12
+  picks resolved), and a live scratch-row save confirming the gametime
+  ISO round-trip still works correctly under the new widget stack.
 
 **Resolved loose end:** the `Jon, 2025 week 5` pick that used to read
 `Bet Type = Pass` (but carried real odds, gametime, and a graded "Win",
