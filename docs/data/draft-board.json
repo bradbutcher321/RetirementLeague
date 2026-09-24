@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T05:49:28.623291+00:00",
+  "generated_at": "2026-09-24T23:16:39.339882+00:00",
   "years": [
     2026,
     2025,
@@ -16077,7 +16077,7 @@
             "player_name": "Matthew Stafford",
             "position": "QB",
             "position_rank": "QB17",
-            "pro_team": null,
+            "pro_team": "LAR",
             "keeper": false
           },
           "2": {
@@ -16159,7 +16159,7 @@
             "player_name": "Alvin Kamara",
             "position": "RB",
             "position_rank": "RB56",
-            "pro_team": null,
+            "pro_team": "NO",
             "keeper": false
           },
           "9": {
