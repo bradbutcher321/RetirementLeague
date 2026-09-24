@@ -422,7 +422,8 @@ class NewWeekTab(ttk.Frame):
 
         paste_frame = ttk.LabelFrame(self, text="Paste the shared note's raw text, then Parse")
         paste_frame.pack(fill="x", padx=6, pady=(0, 6))
-        self.paste_box = scrolledtext.ScrolledText(paste_frame, height=6)
+        self.paste_box = scrolledtext.ScrolledText(
+            paste_frame, height=6, background=FIELD_WHITE, foreground=FIELD_TEXT, insertbackground=FIELD_TEXT)
         self.paste_box.pack(fill="x", padx=4, pady=4)
         btn_row = ttk.Frame(paste_frame)
         btn_row.pack(fill="x", padx=4, pady=(0, 4))
@@ -499,7 +500,12 @@ class NewWeekTab(ttk.Frame):
             if attempted:
                 tried += 1
                 if data.get("team") and data.get("opponent"):
-                    gametime, matched_sport = find_gametime(data["team"], data["opponent"], days=window)
+                    gametime, matched_sport, resolved_team, resolved_opp = find_gametime(
+                        data["team"], data["opponent"], days=window)
+                    if resolved_team:
+                        self.grid_widget.row_vars[player]["team"].set(resolved_team)
+                    if resolved_opp:
+                        self.grid_widget.row_vars[player]["opponent"].set(resolved_opp)
                 else:
                     team, sport = find_player_team(data["player_prop"], data.get("bet_type"))
                     if team:
@@ -539,23 +545,56 @@ class NewWeekTab(ttk.Frame):
         self.status.config(text=f"Saved to row {self.start_row}.")
 
 
+# UCF Knights black-and-gold, with data entry kept white/legible per
+# explicit request rather than themed to match.
+BG_BLACK = "#111111"
+GOLD = "#FFC904"
+GOLD_DIM = "#9c7d10"
+FIELD_WHITE = "#ffffff"
+FIELD_TEXT = "#111111"
+DISABLED_BG = "#8a8a8a"
+DISABLED_FG = "#3a3a3a"
+NEEDS_BG = "#ffb3b3"
+
+
 def main():
     root = tk.Tk()
     root.title("Retirement League Parlay Entry")
-    root.geometry("1300x520")
+    root.geometry("1300x560")
+    root.configure(background=BG_BLACK)
 
     # "clam" is used specifically because it's the one bundled ttk theme
-    # that reliably honors a custom fieldbackground color on Entry/Combobox
-    # -- confirmed the default Windows theme ("vista") largely ignores it
-    # for those widgets, which would silently make the red "needs
-    # attention" highlighting invisible.
+    # that reliably honors custom colors (fieldbackground, state-based
+    # maps) on Entry/Combobox/Notebook -- confirmed the default Windows
+    # theme ("vista") largely ignores these, which is why the red "needs
+    # attention" highlighting was invisible and disabled fields looked
+    # almost identical to enabled ones.
     style = ttk.Style(root)
     try:
         style.theme_use("clam")
     except tk.TclError:
         pass
-    style.configure("Needs.TEntry", fieldbackground="#ffc9c9")
-    style.configure("Needs.TCombobox", fieldbackground="#ffc9c9")
+
+    style.configure("TFrame", background=BG_BLACK)
+    style.configure("TLabelframe", background=BG_BLACK, bordercolor=GOLD_DIM)
+    style.configure("TLabelframe.Label", background=BG_BLACK, foreground=GOLD, font=("Segoe UI", 10, "bold"))
+    style.configure("TLabel", background=BG_BLACK, foreground=GOLD)
+    style.configure("TButton", background=GOLD, foreground=BG_BLACK, font=("Segoe UI", 9, "bold"), padding=6)
+    style.map("TButton", background=[("active", GOLD_DIM)], foreground=[("active", GOLD)])
+    style.configure("TNotebook", background=BG_BLACK, bordercolor=GOLD_DIM)
+    style.configure("TNotebook.Tab", background=BG_BLACK, foreground=GOLD, padding=(16, 7), font=("Segoe UI", 10, "bold"))
+    style.map("TNotebook.Tab", background=[("selected", GOLD)], foreground=[("selected", BG_BLACK)])
+
+    # Data-entry fields stay white/black for legibility (explicit request),
+    # just with a visibly distinct grey when disabled -- clam's own default
+    # disabled shade turned out too close to white to notice at a glance.
+    style.configure("TEntry", fieldbackground=FIELD_WHITE, foreground=FIELD_TEXT)
+    style.configure("TCombobox", fieldbackground=FIELD_WHITE, foreground=FIELD_TEXT, arrowsize=14)
+    style.map("TEntry", fieldbackground=[("disabled", DISABLED_BG)], foreground=[("disabled", DISABLED_FG)])
+    style.map("TCombobox", fieldbackground=[("disabled", DISABLED_BG)], foreground=[("disabled", DISABLED_FG)],
+              selectbackground=[("disabled", DISABLED_BG)], selectforeground=[("disabled", DISABLED_FG)])
+    style.configure("Needs.TEntry", fieldbackground=NEEDS_BG, foreground=FIELD_TEXT)
+    style.configure("Needs.TCombobox", fieldbackground=NEEDS_BG, foreground=FIELD_TEXT)
 
     status_label = ttk.Label(root, text="Connecting to Google Sheets...")
     status_label.pack(pady=20)
@@ -569,8 +608,8 @@ def main():
 
     notebook = ttk.Notebook(root)
     notebook.pack(fill="both", expand=True)
-    notebook.add(BrowseTab(notebook, client), text="Browse / Grade Past Weeks")
     notebook.add(NewWeekTab(notebook, client), text="Enter New Week")
+    notebook.add(BrowseTab(notebook, client), text="Browse / Grade Past Weeks")
 
     root.mainloop()
 

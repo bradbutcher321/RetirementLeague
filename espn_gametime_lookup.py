@@ -171,6 +171,23 @@ def _team_matches(candidate, espn_team):
     return candidate in display
 
 
+def _canonical_name(team_obj, competitor):
+    """The team's clean, correctly-spelled short name (e.g. "Florida",
+    "Ole Miss", "Panthers") -- matches the sheet's own naming convention
+    better than whatever a note happened to type, so a matched pick's
+    Team/Opponent get overwritten with this rather than left as-is (fixes
+    typos like "Gaytors" and non-canonical alternates like "Carolina" for
+    the Panthers in one move). Prefixed with the current AP/CFP-style
+    ranking when ESPN has one for this game -- ESPN uses 99 to mean
+    "unranked" (confirmed directly), not 0 or null, so that has to be
+    filtered out explicitly or every team would show "#99"."""
+    name = team_obj.get("shortDisplayName") or team_obj.get("displayName") or ""
+    rank = (competitor.get("curatedRank") or {}).get("current")
+    if rank and rank <= 25:
+        return f"#{rank} {name}".strip()
+    return name
+
+
 def _to_eastern_iso(espn_date):
     """'2026-09-27T17:00Z' -> '2026-09-27T13:00:00' (naive Eastern), matching
     the format the rest of the pipeline already uses everywhere else."""
@@ -278,13 +295,21 @@ def find_gametime_for_team(team, sport, days=None):
 
 
 def find_gametime(team, opponent, sport=None, days=None):
-    """Returns (gametime_iso, matched_sport), or (None, None) if no
-    confident match was found (never raises -- any ESPN hiccup just means
-    no match). Never fed a specific sport -- the shared note doesn't
-    mention one -- so this can search across every sport currently in use
-    and hand back whichever one actually matched, letting the GUI
-    auto-fill Sport too, not just Gametime. Pass sport to restrict the
-    search once it's already known (e.g. re-checking one row by hand).
+    """Returns (gametime_iso, matched_sport, resolved_team, resolved_opponent),
+    or (None, None, None, None) if no confident match was found (never
+    raises -- any ESPN hiccup just means no match). Never fed a specific
+    sport -- the shared note doesn't mention one -- so this can search
+    across every sport currently in use and hand back whichever one
+    actually matched, letting the GUI auto-fill Sport too, not just
+    Gametime. Pass sport to restrict the search once it's already known
+    (e.g. re-checking one row by hand).
+
+    resolved_team/resolved_opponent are ESPN's own clean names for
+    whichever real game was matched (see _canonical_name) -- overwriting
+    the note's raw text with these fixes typos, non-canonical alternates
+    ("Carolina" -> "Panthers"), and adds a ranking prefix for ranked
+    college teams, all in one pass, rather than just confirming the note's
+    text was directionally right.
 
     A full team+opponent match is always preferred. But a note can
     misspell one side (confirmed directly: "Gaytors" for "Gators") while
@@ -297,13 +322,15 @@ def find_gametime(team, opponent, sport=None, days=None):
     that could mean more than one real game stays unresolved rather than
     guessed."""
     if not team or not opponent:
-        return None, None
+        return None, None, None, None
     team = re.sub(r"^#\d+\s*", "", team)
     opponent = re.sub(r"^#\d+\s*", "", opponent)
     days = days or thursday_to_monday_window()
     sports = [sport] if sport else list(SPORT_ESPN_PATHS)
 
-    partial_matches = []  # [(gametime_iso, sport)] for games matching exactly one side
+    # [(gametime_iso, sport, resolved_team, resolved_opponent)] for games
+    # matching exactly one side.
+    partial_matches = []
     for d in days:
         date_str = d.strftime("%Y%m%d")
         for s in sports:
@@ -317,28 +344,41 @@ def find_gametime(team, opponent, sport=None, days=None):
                         competitors = comp["competitors"]
                         if len(competitors) != 2:
                             continue
-                        t0, t1 = competitors[0]["team"], competitors[1]["team"]
+                        c0, c1 = competitors
+                        t0, t1 = c0["team"], c1["team"]
                     except (KeyError, IndexError):
                         continue
-                    both_match = (
-                        (_team_matches(team, t0) and _team_matches(opponent, t1)) or
-                        (_team_matches(team, t1) and _team_matches(opponent, t0))
-                    )
-                    if both_match:
+
+                    team_t0, team_t1 = _team_matches(team, t0), _team_matches(team, t1)
+                    opp_t0, opp_t1 = _team_matches(opponent, t0), _team_matches(opponent, t1)
+
+                    if team_t0 and opp_t1:
                         try:
-                            return _to_eastern_iso(comp["date"]), s
+                            return (_to_eastern_iso(comp["date"]), s,
+                                    _canonical_name(t0, c0), _canonical_name(t1, c1))
                         except (KeyError, ValueError):
                             continue
-                    one_side_matches = (
-                        _team_matches(team, t0) or _team_matches(team, t1) or
-                        _team_matches(opponent, t0) or _team_matches(opponent, t1)
-                    )
-                    if one_side_matches:
+                    if team_t1 and opp_t0:
                         try:
-                            partial_matches.append((_to_eastern_iso(comp["date"]), s))
+                            return (_to_eastern_iso(comp["date"]), s,
+                                    _canonical_name(t1, c1), _canonical_name(t0, c0))
                         except (KeyError, ValueError):
                             continue
 
+                    if team_t0 or opp_t1:
+                        team_side, opp_side = (t0, c0), (t1, c1)
+                    elif team_t1 or opp_t0:
+                        team_side, opp_side = (t1, c1), (t0, c0)
+                    else:
+                        continue
+                    try:
+                        partial_matches.append((
+                            _to_eastern_iso(comp["date"]), s,
+                            _canonical_name(*team_side), _canonical_name(*opp_side),
+                        ))
+                    except (KeyError, ValueError):
+                        continue
+
     if len(partial_matches) == 1:
         return partial_matches[0]
-    return None, None
+    return None, None, None, None
