@@ -738,6 +738,10 @@
       // Pages rebuild involved anymore.
       const jtRefreshBtn = document.getElementById('jt-refresh-btn');
       const jtRefreshStatus = document.getElementById('jt-refresh-status');
+      // Measured from a real Action run: ~33s of actual job execution plus
+      // a few seconds of dispatch/queue time -- this leaves headroom
+      // rather than cutting it close.
+      const RELOAD_DELAY_SECONDS = 55;
       jtRefreshBtn.addEventListener('click', () => {
         jtRefreshBtn.disabled = true;
         jtRefreshStatus.textContent = 'Requesting refresh…';
@@ -745,15 +749,35 @@
           .then(res => res.json().then(body => ({ ok: res.ok, body })))
           .then(({ ok, body }) => {
             if (ok) {
-              jtRefreshStatus.textContent = 'Refresh started — check back in about a minute.';
+              // The page only ever fetches parlay data once, at load, so
+              // without this the refresh would finish on the server with
+              // nothing on screen changing until the user thought to
+              // reload manually -- counts down and reloads automatically
+              // instead. Button stays disabled through the countdown
+              // (the reload will reset everything shortly anyway).
+              let remaining = RELOAD_DELAY_SECONDS;
+              const tick = () => {
+                if (remaining <= 0) {
+                  location.reload();
+                  return;
+                }
+                jtRefreshStatus.textContent = `Refresh started — reloading in ${remaining}s…`;
+                remaining -= 1;
+                setTimeout(tick, 1000);
+              };
+              tick();
             } else if (body && body.error === 'cooldown') {
               jtRefreshStatus.textContent = `Just refreshed — try again in ${body.retryAfterSeconds}s.`;
+              jtRefreshBtn.disabled = false;
             } else {
               jtRefreshStatus.textContent = 'Refresh failed — try again shortly.';
+              jtRefreshBtn.disabled = false;
             }
           })
-          .catch(() => { jtRefreshStatus.textContent = 'Refresh failed — try again shortly.'; })
-          .finally(() => { jtRefreshBtn.disabled = false; });
+          .catch(() => {
+            jtRefreshStatus.textContent = 'Refresh failed — try again shortly.';
+            jtRefreshBtn.disabled = false;
+          });
       });
 
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
