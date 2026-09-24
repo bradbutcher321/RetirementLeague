@@ -24,41 +24,49 @@
   .legend-chip{ display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: var(--text-dim); }
   .legend-swatch{ width: 10px; height: 10px; border-radius: 2px; }
 
-  .board-scroll{ overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
-  table.board{ border-collapse: collapse; width: 100%; min-width: max-content; }
-  table.board th, table.board td{ border: 1px solid var(--line); padding: 0; }
+  /* Table width is intrinsic (cell size × column count) so it stays the
+     same size across years and only grows wider when a year has more
+     teams — never stretched to fill the container. */
+  .board-scroll{ overflow-x: auto; border: 1px solid var(--line); background: var(--surface); padding: 2px; }
+  table.board{ border-collapse: separate; border-spacing: 3px; width: auto; }
+  table.board th, table.board td{ padding: 0; }
   table.board thead th{
     background: var(--surface-raised); color: var(--text); font-family: var(--scoreboard);
-    font-weight: 700; font-size: 0.82rem; padding: 10px 8px; text-align: center; white-space: nowrap;
-    position: sticky; top: 0; z-index: 2;
+    font-weight: 700; font-size: 0.78rem; padding: 8px 4px; text-align: center; white-space: nowrap;
+    position: sticky; top: 0; z-index: 2; border-radius: 4px;
   }
-  table.board thead th .slot-manager{ display: block; color: var(--gold); font-size: 0.78rem; margin-bottom: 2px; }
-  table.board thead th .slot-team{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.68rem; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto; }
-  table.board .round-header{
-    position: sticky; left: 0; z-index: 3; background: var(--surface-raised);
-    font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); font-size: 0.8rem;
-    text-align: center; padding: 8px; white-space: nowrap;
+  table.board thead th .slot-manager{ display: block; color: var(--gold); font-size: 0.74rem; margin-bottom: 2px; }
+  table.board thead th .slot-team{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.64rem; max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto; }
+
+  .pick-cell{
+    width: 92px; height: 64px; padding: 5px 6px !important; vertical-align: top;
+    background: var(--surface-raised); border-radius: 5px; overflow: visible;
   }
-  table.board thead th.corner{ position: sticky; left: 0; top: 0; z-index: 4; background: var(--surface-raised); }
+  .pick-top{ display: flex; align-items: baseline; justify-content: space-between; gap: 4px; }
+  .pick-rank{ font-weight: 800; font-size: 0.72rem; font-family: var(--scoreboard); }
+  .pick-overall{ font-size: 0.6rem; font-variant-numeric: tabular-nums; opacity: 0.75; white-space: nowrap; }
+  .pick-player{ font-size: 0.72rem; font-weight: 700; line-height: 1.18; margin-top: 3px; white-space: nowrap; overflow: visible; }
+  .pick-player span{ display: block; }
+  .pick-keeper{
+    position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--gold); border: 2px solid var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+  }
+  .pick-empty{ color: var(--text-dim); font-size: 0.7rem; text-align: center; padding-top: 22px !important; height: 100%; }
 
-  .pick-cell{ width: 132px; height: 56px; padding: 6px 8px !important; vertical-align: top; background: var(--surface); border-left-width: 3px !important; }
-  .pick-overall{ color: var(--text-dim); font-size: 0.62rem; font-variant-numeric: tabular-nums; }
-  .pick-rank{ font-weight: 800; font-size: 0.78rem; font-family: var(--scoreboard); }
-  .pick-player{ font-size: 0.76rem; line-height: 1.15; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pick-keeper{ font-size: 0.6rem; color: var(--gold); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 1px; }
-  .pick-empty{ color: var(--text-dim); font-size: 0.72rem; text-align: center; padding-top: 14px !important; }
-
-  /* Position color coding */
-  .pos-QB{ border-left-color: #E0644F; } .pos-QB .pick-rank{ color: #E0644F; }
-  .pos-RB{ border-left-color: #4C9A6B; } .pos-RB .pick-rank{ color: #4C9A6B; }
-  .pos-WR{ border-left-color: #4A90D9; } .pos-WR .pick-rank{ color: #4A90D9; }
-  .pos-TE{ border-left-color: #D9852F; } .pos-TE .pick-rank{ color: #D9852F; }
-  .pos-K{ border-left-color: #9B6BC4; } .pos-K .pick-rank{ color: #9B6BC4; }
-  .pos-DST{ border-left-color: #8A8A85; } .pos-DST .pick-rank{ color: #8A8A85; }
-  .pos-none{ border-left-color: var(--line); }
+  /* Position color coding — full card fill, white text for contrast. */
+  .pick-cell{ position: relative; color: #fff; }
+  .pos-QB{ background: #E0644F; }
+  .pos-RB{ background: #4C9A6B; }
+  .pos-WR{ background: #4A90D9; }
+  .pos-TE{ background: #D9852F; }
+  .pos-K{ background: #9B6BC4; }
+  .pos-DST{ background: #8A8A85; }
+  .pos-none{ background: var(--surface-raised); color: var(--text-dim); }
+  .pick-cell .pick-overall{ color: rgba(255,255,255,0.8); }
+  .pos-none .pick-overall{ color: var(--text-dim); }
 
   @media (max-width: 480px){
-    .pick-cell{ width: 104px; }
+    .pick-cell{ width: 78px; height: 60px; }
   }
 </style>
 </head>
@@ -114,16 +122,26 @@
     ).join('');
   }
 
-  function renderCell(pick) {
+  function splitName(name) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return [parts[0], ''];
+    return [parts[0], parts.slice(1).join(' ')];
+  }
+
+  function renderCell(pick, round, teamCount) {
     if (!pick || !pick.player_name) {
       return `<td class="pick-cell pos-none"><div class="pick-empty">—</div></td>`;
     }
+    const pickInRound = pick.overall - (round - 1) * teamCount;
+    const [first, last] = splitName(pick.player_name);
     return `
       <td class="pick-cell ${posClass(pick.position)}">
-        <div class="pick-overall">#${pick.overall}</div>
-        <div class="pick-rank">${esc(pick.position_rank || pick.position || '')}</div>
-        <div class="pick-player">${esc(pick.player_name)}</div>
-        ${pick.keeper ? '<div class="pick-keeper">Keeper</div>' : ''}
+        ${pick.keeper ? '<div class="pick-keeper" title="Keeper"></div>' : ''}
+        <div class="pick-top">
+          <span class="pick-rank">${esc(pick.position_rank || pick.position || '')}</span>
+          <span class="pick-overall">${round}.${pickInRound}</span>
+        </div>
+        <div class="pick-player"><span>${esc(first)}</span>${last ? `<span>${esc(last)}</span>` : ''}</div>
       </td>`;
   }
 
@@ -135,14 +153,14 @@
       </th>`).join('');
 
     const rows = board.rounds.map(round => {
-      const cells = board.columns.map(c => renderCell(board.grid[round] && board.grid[round][c.slot])).join('');
-      return `<tr><td class="round-header">Rd ${round}</td>${cells}</tr>`;
+      const cells = board.columns.map(c => renderCell(board.grid[round] && board.grid[round][c.slot], round, board.team_count)).join('');
+      return `<tr>${cells}</tr>`;
     }).join('');
 
     return `
       <div class="board-scroll">
         <table class="board">
-          <thead><tr><th class="corner"></th>${headerCells}</tr></thead>
+          <thead><tr>${headerCells}</tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
