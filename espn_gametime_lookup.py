@@ -382,3 +382,66 @@ def find_gametime(team, opponent, sport=None, days=None):
     if len(partial_matches) == 1:
         return partial_matches[0]
     return None, None, None, None
+
+
+def find_final_score(team, opponent, sport, gametime_iso):
+    """Returns (team_score, opponent_score, team_won) for a specific
+    already-known game, or (None, None, None) if the game can't be found
+    or hasn't finished yet. Unlike find_gametime(), this is handed a sport
+    and gametime that a prior successful lookup (or the sheet) already
+    recorded, so it only checks that one specific day rather than
+    searching a whole window, and only accepts a full team+opponent match
+    (no single-side fallback -- by this point the names should already be
+    the corrected, ESPN-normalized ones from when the pick was first
+    resolved). team_won comes directly from ESPN's own `winner` field
+    (confirmed directly it's present and handles overtime etc. correctly)
+    rather than a hand-rolled score comparison, so a genuine tie -- where
+    ESPN sets neither side's `winner` true -- is reported as such
+    (team_won=False for both, but scores equal) rather than guessed."""
+    if not team or not opponent or not sport or not gametime_iso:
+        return None, None, None
+    team = re.sub(r"^#\d+\s*", "", team)
+    opponent = re.sub(r"^#\d+\s*", "", opponent)
+    try:
+        game_date = datetime.strptime(gametime_iso[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None, None, None
+
+    for espn_path in SPORT_ESPN_PATHS.get(sport, []):
+        data = _fetch(espn_path, game_date.strftime("%Y%m%d"))
+        if not data:
+            continue
+        for event in data.get("events", []):
+            try:
+                comp = event["competitions"][0]
+                competitors = comp["competitors"]
+                if len(competitors) != 2:
+                    continue
+                c0, c1 = competitors
+                t0, t1 = c0["team"], c1["team"]
+            except (KeyError, IndexError):
+                continue
+
+            if _team_matches(team, t0) and _team_matches(opponent, t1):
+                team_c, opp_c = c0, c1
+            elif _team_matches(team, t1) and _team_matches(opponent, t0):
+                team_c, opp_c = c1, c0
+            else:
+                continue
+
+            if not comp.get("status", {}).get("type", {}).get("completed"):
+                return None, None, None  # found the game, but it isn't final yet
+            team_score = to_num(team_c.get("score"))
+            opp_score = to_num(opp_c.get("score"))
+            if team_score is None or opp_score is None:
+                return None, None, None
+            return team_score, opp_score, bool(team_c.get("winner"))
+
+    return None, None, None
+
+
+def to_num(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
