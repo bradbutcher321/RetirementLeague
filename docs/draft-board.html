@@ -39,35 +39,39 @@
   table.board thead th .slot-team{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.64rem; max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto; }
 
   .pick-cell{
-    width: 92px; height: 64px; padding: 5px 6px !important; vertical-align: top;
-    background: var(--surface-raised); border-radius: 5px; overflow: visible;
+    width: 92px; height: 64px; padding: 6px 6px !important; vertical-align: top;
+    background: var(--surface-raised); border: 1px solid var(--line); border-radius: 5px; overflow: visible;
+    position: relative; color: var(--text);
   }
-  .pick-top{ display: flex; align-items: baseline; justify-content: space-between; gap: 4px; }
-  .pick-rank{ font-weight: 800; font-size: 0.72rem; font-family: var(--scoreboard); }
-  .pick-team{ font-weight: 600; font-size: 0.6rem; margin-left: 3px; opacity: 0.85; }
-  .pick-overall{ font-size: 0.6rem; font-variant-numeric: tabular-nums; opacity: 0.8; white-space: nowrap; }
-  .pick-player{ font-size: 0.72rem; font-weight: 700; line-height: 1.18; margin-top: 3px; white-space: nowrap; overflow: visible; }
+  .pick-top{ display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .pick-rank{
+    display: inline-block; font-weight: 800; font-size: 0.64rem; font-family: var(--scoreboard);
+    color: #fff; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.01em;
+  }
+  .pick-team{
+    display: inline-block; color: #111; font-weight: 700; font-size: 0.58rem; margin-left: 3px;
+    background: rgba(255,255,255,0.88); padding: 1px 4px; border-radius: 3px;
+  }
+  .pick-overall{ font-size: 0.6rem; font-variant-numeric: tabular-nums; color: var(--text-dim); white-space: nowrap; }
+  .pick-player{ font-size: 0.72rem; font-weight: 700; line-height: 1.18; margin-top: 4px; white-space: nowrap; overflow: visible; color: var(--text); }
   .pick-player span{ display: block; }
-  .pick-arrow{ position: absolute; bottom: 2px; right: 4px; font-size: 0.62rem; line-height: 1; opacity: 0.55; }
+  .pick-arrow{ position: absolute; bottom: 2px; right: 4px; font-size: 0.62rem; line-height: 1; color: var(--text-dim); }
   .pick-keeper{
     position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%;
     background: var(--gold); border: 2px solid var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
   }
   .pick-empty{ color: var(--text-dim); font-size: 0.7rem; text-align: center; padding-top: 22px !important; height: 100%; }
 
-  /* Position color coding — full card fill. Rank/team/pick# in dark grey,
-     player name in black, for contrast against the saturated backgrounds. */
-  .pick-cell{ position: relative; color: #1a1a1a; }
-  .pos-QB{ background: #E0644F; }
-  .pos-RB{ background: #4C9A6B; }
-  .pos-WR{ background: #4A90D9; }
-  .pos-TE{ background: #D9852F; }
-  .pos-K{ background: #9B6BC4; }
-  .pos-DST{ background: #8A8A85; }
+  /* Position color coding — tinted glass: a soft wash + border, with the
+     rank as a solid-color pill so the position still reads at a glance
+     without a full-bleed saturated card on every one of 150+ picks. */
+  .pos-QB{ background: rgba(224,100,79,0.16); border-color: rgba(224,100,79,0.45); } .pos-QB .pick-rank{ background: #E0644F; }
+  .pos-RB{ background: rgba(76,154,107,0.18); border-color: rgba(76,154,107,0.45); } .pos-RB .pick-rank{ background: #4C9A6B; }
+  .pos-WR{ background: rgba(74,144,217,0.18); border-color: rgba(74,144,217,0.45); } .pos-WR .pick-rank{ background: #4A90D9; }
+  .pos-TE{ background: rgba(217,133,47,0.18); border-color: rgba(217,133,47,0.45); } .pos-TE .pick-rank{ background: #D9852F; }
+  .pos-K{ background: rgba(155,107,196,0.18); border-color: rgba(155,107,196,0.45); } .pos-K .pick-rank{ background: #9B6BC4; }
+  .pos-DST{ background: rgba(138,138,133,0.18); border-color: rgba(138,138,133,0.45); } .pos-DST .pick-rank{ background: #8A8A85; }
   .pos-none{ background: var(--surface-raised); color: var(--text-dim); }
-  .pick-cell .pick-rank, .pick-cell .pick-team, .pick-cell .pick-overall, .pick-cell .pick-arrow{ color: rgba(26,26,26,0.7); }
-  .pick-cell .pick-player{ color: #000; }
-  .pos-none .pick-overall{ color: var(--text-dim); }
 
   @media (max-width: 480px){
     .pick-cell{ width: 78px; height: 60px; }
