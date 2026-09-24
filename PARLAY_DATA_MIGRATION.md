@@ -74,6 +74,40 @@ insert blank rows in the correct position rather than appending at the end.
 actually reads (see Phase 3) — nothing about the real pipeline has changed
 yet.
 
+**Added since the above was first written:**
+
+- **Final Odds / Final Payout / Final Split columns** (P/Q/R, after Raw
+  Pick) — the combined 12-leg parlay's own odds and payout for the week,
+  which the tidy layout was missing. Final Odds/Payout are once-per-week
+  facts like Sacko; Final Split is a formula (`Final Payout / 12`, verified
+  exactly against all 19 historical weeks), not something typed in. The
+  "Player Order" helper list moved from column Q to U to make room.
+- **`parlay_note_parser.py`** — a lenient parser for the actual shared iOS
+  Note format (confirmed with a real sample), which is messier than the
+  sheet's own convention: bet-type abbreviations (ML, Pass Yards, Rec
+  Yards), reversed word order for player props ("Brian Thomas Jr o38.5"),
+  odds with no explicit "+", and a trailing Final Odds/Payout pair. Tested
+  against a real week's note two ways: every line round-trips correctly on
+  its own, and cross-checked field by field against that week's
+  already-transcribed sheet row (every difference found was a legitimate
+  human correction, not a parser bug).
+- **`parlay_gui.py`** — a simple tkinter desktop tool (for the 2 people who
+  do data entry, not all 12 managers) with two tabs: Browse/Grade Past
+  Weeks (load a year+week, edit any field including Result, save), and
+  Enter New Week (loads whatever's already saved for that week so a
+  partially-entered week doesn't start blank, paste the note and Parse it
+  in, review/fix, Save). Reads/writes "Auto Parlay Tracker" directly via
+  the same API pattern as the other scripts — no new backend.
+  **Not yet run interactively** (verified as thoroughly as possible
+  without a display: headless widget construction, real sheet reads, a
+  full paste-to-save round trip against scratch rows with before/after
+  verification) — next step is for you to actually run it and sanity-check
+  the layout/usability, since tkinter layouts can surprise you in practice.
+  Needs `gspread` and `google-auth` installed (`pip install gspread
+  google-auth`) and `google_secret.json` present — since that's a
+  write-scoped credential, think about how to get it to the second person
+  safely rather than just emailing/texting the file.
+
 **Resolved loose end:** the `Jon, 2025 week 5` pick that used to read
 `Bet Type = Pass` (but carried real odds, gametime, and a graded "Win",
 so it clearly wasn't a genuine skip) has been fixed at the source in
