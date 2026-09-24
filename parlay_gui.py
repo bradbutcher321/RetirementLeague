@@ -234,10 +234,10 @@ class WeekGrid(ttk.Frame):
         grid = ttk.Frame(self)
         grid.pack(fill="both", expand=True)
         for c, h in enumerate(headers):
-            ttk.Label(grid, text=h, font=("", 9, "bold")).grid(row=0, column=c, padx=2, pady=2)
+            ttk.Label(grid, text=h, style="Header.TLabel").grid(row=0, column=c, padx=2, pady=2)
 
         for r, player in enumerate(self.players, start=1):
-            ttk.Label(grid, text=player, width=9).grid(row=r, column=0, padx=2, pady=1, sticky="w")
+            ttk.Label(grid, text=player, width=9, style="PlayerName.TLabel").grid(row=r, column=0, padx=2, pady=1, sticky="w")
             v = self.row_vars[player]
             w = {}
             w["sport"] = ttk.Combobox(grid, textvariable=v["sport"], values=SPORTS, width=9)
@@ -545,15 +545,21 @@ class NewWeekTab(ttk.Frame):
         self.status.config(text=f"Saved to row {self.start_row}.")
 
 
-# UCF Knights black-and-gold, with data entry kept white/legible per
-# explicit request rather than themed to match.
-BG_BLACK = "#111111"
-GOLD = "#FFC904"
-GOLD_DIM = "#9c7d10"
+# Muted gold on charcoal, chosen over the earlier bright-gold-on-black
+# UCF scheme after feedback that full-saturation gold on pure black
+# everywhere (every label, every header) read as loud/gaudy on a dense
+# data grid. Gold is now spent only on a few accent spots -- buttons, the
+# active tab, section titles, and column headers -- while everyday text
+# (field labels, player names, status messages) is a soft off-white.
+# Data-entry fields stay white/black for legibility, per explicit request.
+BG_DARK = "#1b1b1d"
+TEXT_LIGHT = "#e8e6e1"
+GOLD = "#D4AF37"
+GOLD_ACTIVE = "#b8952e"
 FIELD_WHITE = "#ffffff"
-FIELD_TEXT = "#111111"
-DISABLED_BG = "#8a8a8a"
-DISABLED_FG = "#3a3a3a"
+FIELD_TEXT = "#1b1b1d"
+DISABLED_BG = "#d8d8d8"
+DISABLED_FG = "#8a8a8a"
 NEEDS_BG = "#ffb3b3"
 
 
@@ -561,7 +567,7 @@ def main():
     root = tk.Tk()
     root.title("Retirement League Parlay Entry")
     root.geometry("1300x560")
-    root.configure(background=BG_BLACK)
+    root.configure(background=BG_DARK)
 
     # "clam" is used specifically because it's the one bundled ttk theme
     # that reliably honors custom colors (fieldbackground, state-based
@@ -575,15 +581,20 @@ def main():
     except tk.TclError:
         pass
 
-    style.configure("TFrame", background=BG_BLACK)
-    style.configure("TLabelframe", background=BG_BLACK, bordercolor=GOLD_DIM)
-    style.configure("TLabelframe.Label", background=BG_BLACK, foreground=GOLD, font=("Segoe UI", 10, "bold"))
-    style.configure("TLabel", background=BG_BLACK, foreground=GOLD)
-    style.configure("TButton", background=GOLD, foreground=BG_BLACK, font=("Segoe UI", 9, "bold"), padding=6)
-    style.map("TButton", background=[("active", GOLD_DIM)], foreground=[("active", GOLD)])
-    style.configure("TNotebook", background=BG_BLACK, bordercolor=GOLD_DIM)
-    style.configure("TNotebook.Tab", background=BG_BLACK, foreground=GOLD, padding=(16, 7), font=("Segoe UI", 10, "bold"))
-    style.map("TNotebook.Tab", background=[("selected", GOLD)], foreground=[("selected", BG_BLACK)])
+    style.configure("TFrame", background=BG_DARK)
+    style.configure("TLabelframe", background=BG_DARK, bordercolor=GOLD)
+    style.configure("TLabelframe.Label", background=BG_DARK, foreground=GOLD, font=("Segoe UI", 10, "bold"))
+    # Default body text (field labels, player names, status messages) --
+    # off-white, not gold, so gold reads as "this is interactive/important"
+    # rather than covering every word on screen.
+    style.configure("TLabel", background=BG_DARK, foreground=TEXT_LIGHT)
+    style.configure("PlayerName.TLabel", background=BG_DARK, foreground=TEXT_LIGHT, font=("Segoe UI", 9, "bold"))
+    style.configure("Header.TLabel", background=BG_DARK, foreground=GOLD, font=("Segoe UI", 9, "bold"))
+    style.configure("TButton", background=GOLD, foreground=BG_DARK, font=("Segoe UI", 9, "bold"), padding=6)
+    style.map("TButton", background=[("active", GOLD_ACTIVE)], foreground=[("active", TEXT_LIGHT)])
+    style.configure("TNotebook", background=BG_DARK, bordercolor=GOLD)
+    style.configure("TNotebook.Tab", background=BG_DARK, foreground=TEXT_LIGHT, padding=(16, 7), font=("Segoe UI", 10, "bold"))
+    style.map("TNotebook.Tab", background=[("selected", GOLD)], foreground=[("selected", BG_DARK)])
 
     # Data-entry fields stay white/black for legibility (explicit request),
     # just with a visibly distinct grey when disabled -- clam's own default
