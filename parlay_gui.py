@@ -27,7 +27,9 @@ from google.oauth2.service_account import Credentials
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from generate_franchise_data import SHEET_ID, CREDS_PATH
 from parlay_note_parser import parse_note_text, parse_signed_number, parse_money
-from espn_gametime_lookup import find_gametime, thursday_to_monday_window
+from espn_gametime_lookup import (
+    find_gametime, find_player_team, find_gametime_for_team, thursday_to_monday_window,
+)
 
 TARGET_TAB = "Auto Parlay Tracker"
 PLAYERS_PER_WEEK = 12
@@ -358,16 +360,22 @@ class NewWeekTab(ttk.Frame):
         window = thursday_to_monday_window()
         found, tried = 0, 0
         for player, data in picks.items():
-            if not data.get("team") or not data.get("opponent"):
-                continue  # player props have no team to search on
-            tried += 1
-            gametime, matched_sport = find_gametime(data["team"], data["opponent"], days=window)
+            gametime = matched_sport = None
+            if data.get("team") and data.get("opponent"):
+                tried += 1
+                gametime, matched_sport = find_gametime(data["team"], data["opponent"], days=window)
+            elif data.get("player_prop"):
+                tried += 1
+                team, sport = find_player_team(data["player_prop"], data.get("bet_type"))
+                if team:
+                    matched_sport = sport
+                    gametime = find_gametime_for_team(team, sport, days=window)
             if gametime:
                 self.grid_widget.row_vars[player]["gametime"].set(gametime)
                 self.grid_widget.row_vars[player]["sport"].set(matched_sport)
                 found += 1
         if tried:
-            msg += f" Game times: found {found} of {tried} team-based picks (rest need manual entry)."
+            msg += f" Game times: found {found} of {tried} picks (rest need manual entry)."
         self.parse_status.config(text=msg)
 
     def save(self):
