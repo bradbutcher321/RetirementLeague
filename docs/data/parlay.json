@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T00:46:48.439465+00:00",
+  "generated_at": "2026-09-24T05:01:49.107622+00:00",
   "players": [
     "Brad",
     "Flanders",
@@ -108,7 +108,6 @@
       "final": {
         "odds": 246142.0,
         "payout": 49248.31,
-        "split": 4104.025833333333,
         "result": "Loss"
       },
       "killed_by": [
@@ -198,7 +197,7 @@
           "result": "Loss"
         },
         "TJ": {
-          "pick": "Spread: -4.5 Falcons vs. Panthers",
+          "pick": "Spread: Falcons -4.5 vs. Panthers",
           "sport": "NFL",
           "odds": -115.0,
           "gametime": "2025-09-21T13:00:00",
@@ -208,7 +207,6 @@
       "final": {
         "odds": 69998.0,
         "payout": 14019.67,
-        "split": 1168.3058333333333,
         "result": "Loss"
       },
       "killed_by": [
@@ -309,7 +307,6 @@
       "final": {
         "odds": 242635.0,
         "payout": 48546.98,
-        "split": 4045.581666666667,
         "result": "Loss"
       },
       "killed_by": [
@@ -357,7 +354,7 @@
           "result": "Win"
         },
         "Chad": {
-          "pick": "Spread: Mississippi State +15.5 vs #6 Texas A&M",
+          "pick": "Spread: Mississippi State +15.5 vs. #6 Texas A&M",
           "sport": "NCAAF",
           "odds": -110.0,
           "gametime": "2025-10-04T19:30:00",
@@ -399,7 +396,7 @@
           "result": "Loss"
         },
         "TJ": {
-          "pick": "Money Line: Brighton vs Wolves",
+          "pick": "Money Line: Brighton vs. Wolves",
           "sport": "Futbol",
           "odds": 100.0,
           "gametime": "2025-10-05T09:00:00",
@@ -409,7 +406,6 @@
       "final": {
         "odds": 118486.0,
         "payout": 23717.17,
-        "split": 1976.430833333333,
         "result": "Loss"
       },
       "killed_by": [
@@ -457,7 +453,7 @@
           "result": "Loss"
         },
         "Chad": {
-          "pick": "Spread: #5 Texas A&M -7.5 vs Florida",
+          "pick": "Spread: #5 Texas A&M -7.5 vs. Florida",
           "sport": "NCAAF",
           "odds": -105.0,
           "gametime": "2025-10-11T19:00:00",
@@ -499,7 +495,7 @@
           "result": "Win"
         },
         "TJ": {
-          "pick": "Money Line: USA vs Ecuador",
+          "pick": "Money Line: USA vs. Ecuador",
           "sport": "Futbol",
           "odds": 125.0,
           "gametime": "2025-10-10T20:30:00",
@@ -509,7 +505,6 @@
       "final": {
         "odds": 185203.0,
         "payout": 37060.64,
-        "split": 3088.3866666666668,
         "result": "Loss"
       },
       "killed_by": [
@@ -609,7 +604,6 @@
       "final": {
         "odds": 579046.0,
         "payout": 115829.21,
-        "split": 9652.434166666668,
         "result": "Loss"
       },
       "killed_by": [
@@ -709,7 +703,6 @@
       "final": {
         "odds": 470398.0,
         "payout": 94099.68,
-        "split": 7841.639999999999,
         "result": "Loss"
       },
       "killed_by": [
@@ -809,7 +802,6 @@
       "final": {
         "odds": 204936.0,
         "payout": 41007.12,
-        "split": 3417.26,
         "result": "Loss"
       },
       "killed_by": [
@@ -872,7 +864,7 @@
           "result": "Loss"
         },
         "Ben": {
-          "pick": "Total Goals: Over 2.5 Tottenham vs Man U",
+          "pick": "Total Goals: Over 2.5 Tottenham vs. Man U",
           "sport": "Futbol",
           "odds": -150.0,
           "gametime": "2025-11-08T07:30:00",
@@ -910,7 +902,6 @@
       "final": {
         "odds": 377754.0,
         "payout": 75570.7,
-        "split": 6297.558333333333,
         "result": "Loss"
       },
       "killed_by": [
@@ -1012,7 +1003,6 @@
       "final": {
         "odds": 109778.0,
         "payout": 22997.43,
-        "split": 1916.4525,
         "result": "Loss"
       },
       "killed_by": [
@@ -1112,7 +1102,6 @@
       "final": {
         "odds": 146161.0,
         "payout": 30422.34,
-        "split": 2535.195,
         "result": "Loss"
       },
       "killed_by": [
@@ -1154,7 +1143,7 @@
           "result": "Win"
         },
         "Joe K": {
-          "pick": "Money Line: #7 Ole Miss vs Mississippi State",
+          "pick": "Money Line: #7 Ole Miss vs. Mississippi State",
           "sport": "NCAAF",
           "odds": -275.0,
           "gametime": "2025-11-28T12:00:00",
@@ -1168,7 +1157,7 @@
           "result": "Loss"
         },
         "Jeff": {
-          "pick": "Spread: Bears +7 vs Eagles",
+          "pick": "Spread: Bears +7 vs. Eagles",
           "sport": "NFL",
           "odds": -115.0,
           "gametime": "2025-11-28T15:00:00",
@@ -1213,7 +1202,6 @@
       "final": {
         "odds": 284294.0,
         "payout": 56878.78,
-        "split": 4739.8983333333335,
         "result": "Loss"
       },
       "killed_by": [
@@ -1313,7 +1301,6 @@
       "final": {
         "odds": 69873.0,
         "payout": 13994.56,
-        "split": 1166.2133333333334,
         "result": "Loss"
       },
       "killed_by": [
@@ -1413,7 +1400,6 @@
       "final": {
         "odds": 326493.0,
         "payout": 65318.51,
-        "split": 5443.2091666666665,
         "result": "Loss"
       },
       "killed_by": [
@@ -1513,7 +1499,6 @@
       "final": {
         "odds": 157724.0,
         "payout": 63129.5,
-        "split": 5260.791666666667,
         "result": "Loss"
       },
       "killed_by": [
@@ -1613,7 +1598,6 @@
       "final": {
         "odds": 141232.0,
         "payout": 28266.4,
-        "split": 2355.5333333333333,
         "result": "Loss"
       },
       "killed_by": [
@@ -1713,7 +1697,6 @@
       "final": {
         "odds": 149250.0,
         "payout": 29850.03,
-        "split": 2487.5025,
         "result": "Loss"
       },
       "killed_by": [
@@ -1813,7 +1796,6 @@
       "final": {
         "odds": 97585.0,
         "payout": 19537.03,
-        "split": 1628.0858333333333,
         "result": "Loss"
       },
       "killed_by": [
@@ -1834,10 +1816,10 @@
           "result": "Pending"
         },
         "Flanders": {
-          "pick": "Passing Yards: Under 225 Matthew Stafford",
+          "pick": "Passing Yards: Under 225 Matt Stafford",
           "sport": "NFL",
           "odds": -115.0,
-          "gametime": "2026-09-27T13:00:00",
+          "gametime": "2026-09-27T20:20:00",
           "result": "Pending"
         },
         "Jared": {
@@ -1848,7 +1830,7 @@
           "result": "Pending"
         },
         "Joe G": {
-          "pick": "Money Line: #4 Ole Miss vs. #21 Gators",
+          "pick": "Money Line: #4 Ole Miss vs. #21 Florida",
           "sport": "NCAAF",
           "odds": 130.0,
           "gametime": "2026-09-26T15:30:00",
@@ -1862,7 +1844,7 @@
           "result": "Pending"
         },
         "Chad": {
-          "pick": "Money Line: Coastal Carolina vs. Liberty",
+          "pick": "Money Line: Coastal vs. Liberty",
           "sport": "NCAAF",
           "odds": 115.0,
           "gametime": "2026-09-24T19:30:00",
@@ -1883,7 +1865,7 @@
           "result": "Pending"
         },
         "Kris": {
-          "pick": "Receiving Yards: Over 38.5 Brian Thomas Jr.",
+          "pick": "Receiving Yards: Over 38.5 Brian Thomas Jr",
           "sport": "NFL",
           "odds": -115.0,
           "gametime": "2026-09-27T13:00:00",
@@ -1914,7 +1896,6 @@
       "final": {
         "odds": 449263.0,
         "payout": 103353.59,
-        "split": 8612.799166666666,
         "result": "Pending"
       },
       "killed_by": []
@@ -2117,7 +2098,7 @@
           "player": "Jeff",
           "kills": 4.33,
           "kill_chances": 6,
-          "avg_bet_position": 5.05
+          "avg_bet_position": 5.0
         },
         {
           "player": "Joe K",
@@ -2129,7 +2110,7 @@
           "player": "Flanders",
           "kills": 2.33,
           "kill_chances": 3,
-          "avg_bet_position": 6.79
+          "avg_bet_position": 7.11
         },
         {
           "player": "Brad",
@@ -2141,13 +2122,13 @@
           "player": "Collin",
           "kills": 1.5,
           "kill_chances": 3,
-          "avg_bet_position": 5.79
+          "avg_bet_position": 5.74
         },
         {
           "player": "Jon",
           "kills": 1.5,
           "kill_chances": 3,
-          "avg_bet_position": 7.26
+          "avg_bet_position": 7.21
         },
         {
           "player": "Jared",
@@ -2165,7 +2146,7 @@
           "player": "Ben",
           "kills": 1.0,
           "kill_chances": 2,
-          "avg_bet_position": 6.74
+          "avg_bet_position": 6.68
         },
         {
           "player": "TJ",
@@ -4325,7 +4306,7 @@
           "player": "Flanders",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 4.5
+          "avg_bet_position": 7.5
         },
         {
           "player": "Jared",
@@ -4343,13 +4324,13 @@
           "player": "Jeff",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 10.0
+          "avg_bet_position": 9.5
         },
         {
           "player": "Ben",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 8.0
+          "avg_bet_position": 7.5
         },
         {
           "player": "Kris",
@@ -4361,13 +4342,13 @@
           "player": "Collin",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 6.5
+          "avg_bet_position": 6.0
         },
         {
           "player": "Jon",
           "kills": 0.0,
           "kill_chances": 0,
-          "avg_bet_position": 6.5
+          "avg_bet_position": 6.0
         },
         {
           "player": "TJ",

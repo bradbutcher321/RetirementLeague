@@ -1,32 +1,41 @@
 """
 Builds docs/data/parlay.json for parlay-results.html from the league sheet's
-"Parlay Tracker" tab (the hand-entered picks/results).
+"Auto Parlay Tracker" tab (the tidy one-row-per-pick layout -- see
+PARLAY_DATA_MIGRATION.md; this replaces reading the old one-column-per-week
+"Parlay Tracker" tab, Phase 3 of that migration).
 
-The sheet's own "Parlay Results" tab computes the stats with Sheets formulas;
-this script reproduces that logic in Python so the static site doesn't need a
-live Sheets dependency at page-load time.
-
-Tracker layout: one column per week (row 2 = year, row 3 = week, row 4 = that
-week's Sacko), then a 5-row block per player (Pick / Sport / Odds / Gametime /
-Result), then Final Odds / Payout / Split / Result rows for the whole group's
-parlay. Gametime cells are real datetimes in the sheet (America/New_York), so
-values are read unformatted and converted from Sheets serial numbers.
+The sheet's own "Parlay Results" tab used to compute the stats with Sheets
+formulas; this script reproduces that logic in Python so the static site
+doesn't need a live Sheets dependency at page-load time. compute_stats() and
+everything downstream of load_tracker() is unchanged from the old tab's
+version -- it still works on the exact same {players, weeks} shape, with
+each pick's "pick" text reconstructed from Auto Parlay Tracker's structured
+columns (Bet Type/Team/Opponent/Player Prop/Line/Side) into the same
+"{Bet Type}: {details}" convention the old tab's Pick column already used,
+rather than trusting the Raw Pick column directly -- Raw Pick holds whatever
+text a pick was actually entered from (clean for historically-migrated rows,
+messier for notes parsed through the GUI), so it isn't reliably reparseable
+on its own the way the reconstructed structured-column text is.
 """
 import json
 import os
 import re
-from datetime import datetime, timedelta, timezone
+import sys
+
+from datetime import datetime, timezone
 
 import gspread
 from google.oauth2.service_account import Credentials
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from parlay_note_parser import TEAM_LINE_VS, VS_ONLY, TOTAL_VS, PLAYER_OU, PLAYER_ONLY
+
 SHEET_ID = os.environ.get("GOOGLE_SHEET_ID", "1WghofPfu0Df9eEuePopV8Y0LJbPUYRdMOsPE-fZUtb4")
 CREDS_PATH = os.environ.get("GOOGLE_CREDS_PATH", "google_secret.json")
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data", "parlay.json")
+TARGET_TAB = "Auto Parlay Tracker"
 
 SACKO_COST = 20
-SHEETS_EPOCH = datetime(1899, 12, 30)
-FIELDS = ("Pick", "Sport", "Odds", "Gametime", "Result")
 GRADED = ("Win", "Loss")
 
 
@@ -60,15 +69,6 @@ def to_int(value):
     return int(f) if f is not None else None
 
 
-def serial_to_iso(value):
-    """Sheets serial number -> naive local (Eastern) ISO string. ISO strings
-    of one format sort chronologically, so they double as sort keys."""
-    if not isinstance(value, (int, float)) or value <= 0:
-        return None
-    dt = SHEETS_EPOCH + timedelta(minutes=round(value * 1440))
-    return dt.strftime("%Y-%m-%dT%H:%M:00")
-
-
 def american_to_prob(odds):
     return 100 / (odds + 100) if odds > 0 else -odds / (-odds + 100)
 
@@ -81,58 +81,77 @@ def prob_to_american(prob):
 # Loading
 # --------------------------------------------------------------------------
 
+def reconstruct_pick_text(bet_type, team, opponent, player_prop, line, side):
+    """Rebuilds the canonical "{Bet Type}: {details}" text compute_stats()
+    parses (bet-type breakdown via pick.split(":")[0], over/under side via
+    regex) from Auto Parlay Tracker's structured columns, matching the
+    exact shape migrate_parlay_tracker.py's historical rows already used --
+    so compute_stats() needed zero changes for the new tab. Deliberately
+    not using the Raw Pick column for this: it holds whatever text a pick
+    was actually entered from (clean for historically-migrated rows,
+    messier and inconsistently shaped for notes parsed through the GUI),
+    so it isn't reliably reparseable the way freshly-rebuilt text from the
+    structured columns always is."""
+    if not bet_type:
+        return ""
+    if bet_type in TEAM_LINE_VS:
+        return f"{bet_type}: {team} {line} vs. {opponent}".strip()
+    if bet_type in VS_ONLY:
+        return f"{bet_type}: {team} vs. {opponent}".strip()
+    if bet_type in TOTAL_VS:
+        return f"{bet_type}: {side} {line} {team} vs. {opponent}".strip()
+    if bet_type in PLAYER_OU:
+        return f"{bet_type}: {side} {line} {player_prop}".strip()
+    if bet_type in PLAYER_ONLY:
+        return f"{bet_type}: {player_prop}".strip()
+    return f"{bet_type}: {team}{opponent}{player_prop}".strip()  # unrecognized bet type -- best effort
+
+
 def load_tracker(spreadsheet):
-    ws = spreadsheet.worksheet("Parlay Tracker")
-    rows = ws.get_values("A1:68", value_render_option="UNFORMATTED_VALUE")
-    by_label = {}
+    ws = spreadsheet.worksheet(TARGET_TAB)
+    # Canonical 12-player order from the same named-range helper list the
+    # Player auto-fill formula reads (see setup_player_autofill.py) --
+    # more robust than deriving the roster from which names happen to
+    # appear in the data, since a short/gapped week (see the Chad/Jeff
+    # incident in PARLAY_DATA_MIGRATION.md) would otherwise misorder it.
+    players = [v[0] for v in ws.get_values("U2:U13") if v]
+
+    rows = ws.get_values("A2:Q3000")
+    weeks_by_key = {}
+    order = []
     for r in rows:
-        label = str(cell(r, 0)).strip()
-        if label:
-            by_label.setdefault(label, r)
-
-    players = [str(cell(r, 0)).strip()[:-5] for r in rows if str(cell(r, 0)).strip().endswith(" Pick")]
-    for player in players:
-        for field in FIELDS:
-            if f"{player} {field}" not in by_label:
-                raise ValueError(f"Parlay Tracker is missing the '{player} {field}' row")
-    for label in ("Year", "Week", "Sacko", "Final Odds", "Final Payout", "Final Split", "Final Result"):
-        if label not in by_label:
-            raise ValueError(f"Parlay Tracker is missing the '{label}' row")
-
-    width = max(len(r) for r in rows)
-    weeks = []
-    for col in range(1, width):
-        year = to_int(cell(by_label["Year"], col))
-        week = to_int(cell(by_label["Week"], col))
-        if year is None or week is None:
+        year = to_int(cell(r, 0))
+        week_num = to_int(cell(r, 1))
+        player = str(cell(r, 3)).strip()
+        if year is None or week_num is None or not player:
             continue
-        picks = {}
-        for player in players:
-            pick = str(cell(by_label[f"{player} Pick"], col)).strip()
-            if not pick:
-                continue
-            result = str(cell(by_label[f"{player} Result"], col)).strip().capitalize()
-            picks[player] = {
-                "pick": pick,
-                "sport": str(cell(by_label[f"{player} Sport"], col)).strip() or None,
-                "odds": to_float(cell(by_label[f"{player} Odds"], col)),
-                "gametime": serial_to_iso(cell(by_label[f"{player} Gametime"], col)),
-                "result": result if result in ("Win", "Loss") else "Pending",
+        key = (year, week_num)
+        if key not in weeks_by_key:
+            weeks_by_key[key] = {
+                "year": year, "week": week_num,
+                "sacko": str(cell(r, 2)).strip() or None,
+                "picks": {},
+                "final": {"odds": to_float(cell(r, 15)), "payout": to_float(cell(r, 16))},
             }
-        if not picks:
-            continue  # header pre-created for a week nobody has picked yet
-        sacko = str(cell(by_label["Sacko"], col)).strip() or None
-        weeks.append({
-            "year": year,
-            "week": week,
-            "sacko": sacko,
-            "picks": picks,
-            "final": {
-                "odds": to_float(cell(by_label["Final Odds"], col)),
-                "payout": to_float(cell(by_label["Final Payout"], col)),
-                "split": to_float(cell(by_label["Final Split"], col)),
-            },
-        })
+            order.append(key)
+
+        bet_type = str(cell(r, 5)).strip()
+        if not bet_type:
+            continue  # this player hasn't entered a pick for this week yet
+        pick_text = reconstruct_pick_text(
+            bet_type, str(cell(r, 6)).strip(), str(cell(r, 7)).strip(),
+            str(cell(r, 8)).strip(), str(cell(r, 9)).strip(), str(cell(r, 10)).strip(),
+        )
+        result = str(cell(r, 13)).strip().capitalize()
+        weeks_by_key[key]["picks"][player] = {
+            "pick": pick_text,
+            "sport": str(cell(r, 4)).strip() or None,
+            "odds": to_float(cell(r, 11)),
+            "gametime": str(cell(r, 12)).strip() or None,
+            "result": result if result in ("Win", "Loss") else "Pending",
+        }
+
+    weeks = [weeks_by_key[k] for k in order if weeks_by_key[k]["picks"]]
     weeks.sort(key=lambda w: (w["year"], w["week"]))
     return players, weeks
 
@@ -388,10 +407,10 @@ def main():
     print("Connecting to Google Sheets API...")
     spreadsheet = authorize().open_by_key(SHEET_ID)
 
-    print("Loading Parlay Tracker...")
+    print(f"Loading {TARGET_TAB}...")
     players, weeks = load_tracker(spreadsheet)
     if not weeks:
-        raise SystemExit("No parlay weeks found in Parlay Tracker; refusing to overwrite parlay.json")
+        raise SystemExit(f"No parlay weeks found in {TARGET_TAB}; refusing to overwrite parlay.json")
 
     for week in weeks:
         week["final"]["result"] = week_state(week, players)["result"]
