@@ -700,6 +700,41 @@
       });
       renderJonsTable();
 
+      // ---------- Restore view state after an auto-refresh reload ----------
+      // (see the Refresh Data handler below, which saves this right before
+      // reloading -- without it, a refresh would silently reset the
+      // visitor back to the current week, "All Time" stats, and a closed
+      // Jon's Table, even if they'd navigated somewhere else first.)
+      try {
+        const saved = sessionStorage.getItem('parlay-view-state');
+        if (saved) {
+          sessionStorage.removeItem('parlay-view-state');
+          const st = JSON.parse(saved);
+          if (st.year !== undefined && [...yearSel.options].some(o => o.value === st.year)) {
+            yearSel.value = st.year;
+            fillWeeks(Number(st.week));
+            showSelected();
+          }
+          if (st.scope && stats[st.scope]) {
+            activeScope = st.scope;
+            [...scopeTabRow.children].forEach(b => b.classList.toggle('on', b.dataset.scope === activeScope));
+          }
+          if (st.category !== undefined && CATEGORIES[st.category]) {
+            activeCategory = st.category;
+            [...categoryTabRow.children].forEach((b, i) => b.classList.toggle('on', i === activeCategory));
+          }
+          if (st.sub) Object.assign(activeSub, st.sub);
+          renderStats();
+          if (st.jtScope && stats[st.jtScope]) {
+            jtScope = st.jtScope;
+            [...jtScopeRow.children].forEach(b => b.classList.toggle('on', b.dataset.scope === jtScope));
+            renderJonsTable();
+          }
+          if (st.jtOpen) document.querySelector('.tray').open = true;
+          if (typeof st.scrollY === 'number') window.scrollTo(0, st.scrollY);
+        }
+      } catch (e) { /* corrupted/stale saved state -- page already rendered normally, just ignore it */ }
+
       function fallbackCopy(text, done) {
         const ta = document.createElement('textarea');
         ta.value = text;
@@ -754,10 +789,22 @@
               // nothing on screen changing until the user thought to
               // reload manually -- counts down and reloads automatically
               // instead. Button stays disabled through the countdown
-              // (the reload will reset everything shortly anyway).
+              // (the reload will restore the current view -- see below --
+              // shortly anyway). Saves what's currently on screen first so
+              // the reload doesn't silently drop the visitor back to the
+              // current week / All Time / a closed Jon's Table if they'd
+              // navigated somewhere else.
               let remaining = RELOAD_DELAY_SECONDS;
               const tick = () => {
                 if (remaining <= 0) {
+                  try {
+                    sessionStorage.setItem('parlay-view-state', JSON.stringify({
+                      year: yearSel.value, week: weekSel.value,
+                      scope: activeScope, category: activeCategory, sub: activeSub,
+                      jtScope, jtOpen: document.querySelector('.tray').open,
+                      scrollY: window.scrollY,
+                    }));
+                  } catch (e) { /* sessionStorage unavailable -- reload still happens, just without state restore */ }
                   location.reload();
                   return;
                 }
