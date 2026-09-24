@@ -18,6 +18,11 @@
  * POST /refresh-parlay -> dispatches the Parlay data refresh Action on
  *                      demand (see parlayRefresh.js); used by the "Refresh
  *                      Data" button on the Parlay Results page.
+ * GET /parlay-stats  -> the parlay stats payload, read straight from KV
+ *                      (see publish_parlay_stats.py, which computes and
+ *                      pushes it there -- same "no git commit needed" idea
+ *                      as this whole file, just for parlay data instead
+ *                      of the live dashboard).
  *
  * Required setup:
  *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT   (wrangler secret put ...)
@@ -69,6 +74,18 @@ export default {
       if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await dispatchParlayRefresh(env).catch((err) => ({ status: 502, body: { error: String(err) } }));
       return jsonResponse(result.body, headers, result.status);
+    }
+    if (path === "/parlay-stats") {
+      // Precomputed elsewhere (publish_parlay_stats.py, run on a schedule
+      // or via /refresh-parlay) and pushed straight into this same KV
+      // namespace -- this route is just a plain read, no live computation
+      // here, since reproducing the Python stats logic in JS would be a
+      // large duplicate-maintenance risk for no real benefit at this
+      // site's traffic level.
+      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const data = await env.COOLDOWN_KV.get("parlay_stats_v1", "json");
+      if (!data) return jsonResponse({ error: "No parlay stats published yet" }, headers, 404);
+      return jsonResponse(data, headers);
     }
     if (request.method !== "GET") {
       return jsonResponse({ error: "Method not allowed" }, headers, 405);

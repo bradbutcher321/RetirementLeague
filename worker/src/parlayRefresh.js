@@ -1,10 +1,11 @@
 /**
  * Manually dispatches the "Refresh Parlay Data" GitHub Action so anyone can
- * force a refresh right after editing the Parlay Tracker sheet, instead of
+ * force a refresh right after editing Auto Parlay Tracker, instead of
  * waiting for the next scheduled run (every 30 minutes). The dispatched
- * workflow re-reads the sheet, regenerates docs/data/parlay.json, and pushes
- * it if it changed -- same as the schedule does -- which GitHub Pages then
- * rebuilds from automatically.
+ * workflow re-reads the sheet and pushes the recomputed stats straight to
+ * Cloudflare KV (see publish_parlay_stats.py) -- no git commit involved,
+ * so the site's own /parlay-stats fetch (via this same Worker) picks it up
+ * immediately, no GitHub Pages rebuild needed.
  *
  * Requires:
  *   - Secret:  GITHUB_PAT  (fine-grained, this repo only, Actions: read/write)

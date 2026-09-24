@@ -564,7 +564,10 @@
   ];
 
   // ---------- Wiring ----------
-  fetch('data/parlay.json', { cache: 'no-store' })
+  // Reads straight from the Worker/KV now instead of a committed static
+  // file (see publish_parlay_stats.py) -- same shape either way, so
+  // nothing downstream of this fetch needed to change.
+  fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
     .then(res => res.json())
     .then(data => {
       const { players, weeks, stats } = data;
