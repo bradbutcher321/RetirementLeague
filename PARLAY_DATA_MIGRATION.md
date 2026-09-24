@@ -107,6 +107,18 @@ yet.
   google-auth`) and `google_secret.json` present — since that's a
   write-scoped credential, think about how to get it to the second person
   safely rather than just emailing/texting the file.
+- **`espn_gametime_lookup.py`** — auto-fills Gametime (and Sport, since the
+  note never mentions it either) for team-based picks, right after Parse.
+  Picks are entered Tue-Thu for games that can only be Thu through the
+  following Monday, so it just checks ESPN's public scoreboard for those 5
+  days across every sport currently in use, rather than needing each
+  sport's own "week number" (confirmed college football's doesn't line up
+  with the NFL's). Verified against 10 real historical picks across NFL,
+  NCAAF, and 3 soccer leagues, all exact matches including correct
+  UTC->Eastern conversion (needed the `tzdata` package on Windows). Player
+  props are out of scope (no team in the pick text to search on). Takes
+  ~15s for a full week the first time; the window will look unresponsive
+  during that stretch since tkinter is single-threaded.
 
 **Resolved loose end:** the `Jon, 2025 week 5` pick that used to read
 `Bet Type = Pass` (but carried real odds, gametime, and a graded "Win",
