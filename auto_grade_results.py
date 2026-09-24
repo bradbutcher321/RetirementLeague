@@ -18,13 +18,21 @@ manual review rather than guessed -- the sheet's Result column only has
 Win/Loss/Pending today, and inventing a value for a push isn't this
 script's call to make (see PARLAY_DATA_MIGRATION.md's Phase 2 notes).
 
-Runs as a script you run yourself, not on a schedule -- it needs the same
-write-scoped Google credential parlay_gui.py does, and keeping that
-credential out of CI for now, while this grading logic is new and
-unproven, was an explicit choice. Automating it later (once it's been
-watched grade a few real weeks correctly) is one line: point a scheduled
-job at it the same way refresh_parlay_data.yml already runs on a
-schedule.
+Runs every 30 minutes as a step in the "Refresh Parlay Data" GitHub
+Action (.github/workflows/refresh_parlay_data.yml), right before that
+same run republishes stats to KV and syncs picks to D1 -- so a pick
+grades and the site reflects it within one 30-minute cycle of its game
+actually finishing, with no one needing to run anything by hand. Uses
+the same GOOGLE_CREDENTIALS secret (write-scoped) the other scheduled
+scripts already have available in CI -- no new secret was needed, since
+that credential was never scope-*restricted* to read-only, the read-only
+scripts just never asked for write scope. Safe to run unattended and
+this often precisely because of the guarantees below: it can only ever
+add a Win/Loss to a currently-blank Result, checks each of a week's 12
+picks independently (grading whichever games have actually finished
+without waiting on the other 11), and leaves anything it can't grade
+confidently for a human instead of guessing. Can still be run by hand
+too, e.g. with --dry-run to preview what a run would do.
 
 Never overwrites a Result that's already Win/Loss -- only ever fills a
 blank/Pending cell -- and leaves a cell note on anything it grades
