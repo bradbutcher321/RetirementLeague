@@ -59,20 +59,25 @@ Standings, Head to Head, Overview, and Game Records all read
   computes each manager's career stats, and writes `docs/data/franchise.json`.
   Runs Tuesday/Thursday mornings and on-demand
   (`.github/workflows/refresh_franchise_data.yml`).
-- **`generate_parlay_data.py`** — reads the sheet's `Parlay Tracker` tab
-  (the hand-entered picks and results), reproduces the stats the sheet's
-  `Parlay Results` tab computes, and writes `docs/data/parlay.json`. Runs
+- **`generate_parlay_data.py`** — reads the sheet's `Auto Parlay Tracker`
+  tab (one row per pick) and reproduces the stats the sheet's old `Parlay
+  Results` tab used to compute with formulas. Its output isn't written to
+  a committed file anymore — **`publish_parlay_stats.py`** reuses this
+  script's stats logic unchanged but pushes the result straight to
+  Cloudflare KV, which a Worker route (`GET /parlay-stats`) serves to the
+  site directly, no git commit or GitHub Pages rebuild involved. Runs
   every 30 minutes and on-demand
-  (`.github/workflows/refresh_parlay_data.yml`), and only commits when the
-  data actually changed. A "Refresh Data" button on the Parlay Results page
-  can also dispatch this on demand via the Worker
-  (`worker/src/parlayRefresh.js`, `POST /refresh-parlay`).
-  See [PARLAY_DATA_MIGRATION.md](PARLAY_DATA_MIGRATION.md) for the
-  in-progress effort to move this tab's data off the sheet the same way
-  league history moved to D1 — Phase 1 (normalized entry format on a new
-  "Auto Parlay Tracker" tab, plus a `parlay_gui.py` desktop tool for
-  entering/grading picks — see [PARLAY_GUI_SETUP.md](PARLAY_GUI_SETUP.md)
-  to set it up) is done; this script itself hasn't changed yet.
+  (`.github/workflows/refresh_parlay_data.yml`, also dispatchable via the
+  "Refresh Data" button on the Parlay Results page —
+  `worker/src/parlayRefresh.js`, `POST /refresh-parlay`), and also syncs
+  every pick into a dedicated D1 database (`sync_parlay_to_d1.py`) for
+  durable, queryable storage. **`auto_grade_results.py`** fills in
+  Result (Win/Loss) for finished games using real ESPN final scores —
+  run by hand, not scheduled, since it needs write access to the sheet.
+  See [PARLAY_DATA_MIGRATION.md](PARLAY_DATA_MIGRATION.md) for the full
+  story of this migration (now complete) and
+  [PARLAY_GUI_SETUP.md](PARLAY_GUI_SETUP.md) to set up `parlay_gui.py`,
+  the desktop tool for entering/grading picks.
 
 - **`generate_league_data.py`** — writes `docs/data/league.json` (the game
   log, per-season rollups, draft order, and earnings) from Game Tracker,

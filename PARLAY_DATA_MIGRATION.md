@@ -7,7 +7,9 @@ has to type in what they actually bet) as easy and low-error as possible,
 and eventually auto-grade results against real game data instead of typing
 Win/Loss by hand every week.
 
-Three phases. **Phase 1 is done. Phases 2 and 3 have not been started.**
+Three phases, **all three now done** -- plus a fourth piece folded in along
+the way: the site no longer needs a git commit to show fresh parlay data
+at all (see "Cloudflare architecture" below).
 
 ## Phase 1 — Normalize entry format (DONE)
 
@@ -70,9 +72,11 @@ for both in their correct positions. If a week is ever short again (someone
 hasn't picked by the time you need the sheet fully aligned), do the same:
 insert blank rows in the correct position rather than appending at the end.
 
-**Old "Parlay Tracker" is untouched** and is still what the live site
-actually reads (see Phase 3) — nothing about the real pipeline has changed
-yet.
+**Update:** the above described the state when Phase 1 first shipped. The
+old "Parlay Tracker" tab has since been fully retired — see Phase 3 below,
+which switched the live pipeline over to read "Auto Parlay Tracker"
+directly, and the Cloudflare architecture section, which moved the site
+off a git-committed JSON file entirely.
 
 **Added since the above was first written:**
 
@@ -245,40 +249,121 @@ correctly reflects the fix (Bet Type `Passing TD`, Player Prop
 `Bryce Young`, Line `1.5`, Side `Over`), and the Raw Pick column and the
 source tab agree.
 
-## Phase 2 — Auto-grade results (NOT STARTED)
+## Phase 2 — Auto-grade results (DONE)
 
-Idea, not yet built: reuse `worker/src/espn.js`'s `fetchNflScoreboard()`
-pattern — a Workers-compatible, unauthenticated final-score feed at
-`cdn.espn.com/core/nfl/scoreboard` (deliberately not `site.api.espn.com`,
-which blocks Workers' IPs — see that file's comments). The same
-`cdn.espn.com/core/{sport}/scoreboard` URL shape likely exists for other
-ESPN-covered sports. Moneyline/Spread/Total bets (~72% of historical picks)
-should be resolvable from final score alone; player props need a deeper
-box-score endpoint not yet explored, and won't always be gradable that way.
+**`auto_grade_results.py`** fills in Result ("Win"/"Loss") for picks still
+Pending whose Gametime has passed, using real final scores from ESPN
+(`site.api.espn.com`, reusing `espn_gametime_lookup.py`'s fetch/team-
+matching machinery directly -- accessible from a plain Python script
+without the Workers-IP-blocking problem `cdn.espn.com` was originally
+going to work around, since this runs as a script, not inside a Worker).
 
-Plan discussed with the user:
-- Distinguish "Pending" (game hasn't happened) from "Needs Review" (game's
-  over, resolver couldn't confidently grade it) so a human only has to look
-  at the flagged handful, not scan every pick every week.
-- The resolver can write results back into the sheet (needs the read-write
-  Sheets scope, already used by the migration scripts) — but must **only
-  fill blank Result cells, never overwrite an existing manual entry**, and
-  should mark what it auto-graded (e.g. a cell note) so it's not a black box.
-- Categories that will likely always need manual grading: player props
-  (until a box-score source is built), sports/leagues ESPN doesn't cover,
-  and anything a "push" needs to account for (the data model doesn't have a
-  Push result yet, only Win/Loss/Pending — worth deciding if that's needed).
+Only Money Line, Spread/Alt Spread, and Total Points/Goals/Rounds are
+graded — fully determined by a final score alone. Everything else (1st
+Half Spread needs the halftime score; player props and Anytime TD need a
+box score; Coin Toss isn't something ESPN reports) always needs a human,
+and is reported separately rather than silently skipped. A push (the
+score lands exactly on the line) is also left for manual review rather
+than guessed, since the Result column still only has Win/Loss/Pending —
+deliberately not extended to a fourth "Push" value for now (a plain
+"leave it pending, flag it" approach was chosen over a data-model change
+that would also touch the sheet's validation, the GUI, and
+`generate_parlay_data.py`'s stats math).
 
-## Phase 3 — Switch the live pipeline (NOT STARTED — do this last)
+**Runs as a script you run yourself, not on a schedule** — it needs the
+same write-scoped Google credential `parlay_gui.py` does, and keeping
+that credential out of CI for now, while this grading logic is new and
+unproven, was an explicit choice. Automating it later (once it's been
+watched grade a few real weeks correctly) is one line: point a scheduled
+job at it the same way `refresh_parlay_data.yml` already runs on a
+schedule. Never touches a Result that's already Win/Loss, and leaves a
+cell note (final score + when) on anything it grades.
 
-`generate_parlay_data.py` (and therefore the site, the refresh button, the
-scheduled GitHub Action) still reads from the old "Parlay Tracker" tab. The
-user explicitly wants this switched **last**, after Phases 1 and 2 have
-settled and the league is comfortable entering picks directly into
-"Auto Parlay Tracker". When ready: rewrite `load_tracker()` (or a new
-loader) to read the tidy layout instead, add dropdown-based sport/bet-type
-validation is already in place, and only then tell the league to stop
-using the old tab.
+Verified two ways: `--dry-run` against the live sheet's current Pending
+picks, and — more thoroughly — by running the grading logic against 165
+already-graded historical picks without writing anything: 136 exact
+matches, 26 "no score found" (informal historical team names like
+"Bucs"/"Pats" that don't match any of ESPN's own team name fields — fails
+safe, flagged rather than guessed, and not a concern going forward since
+new picks get ESPN-normalized names automatically via the GUI's lookup),
+and 3 cases investigated directly against raw ESPN data: one genuine tie
+(correctly left unresolved for a money line), one exact push the sheet
+recorded as a Loss instead of a push, and **one that looks like a real
+pre-existing grading error in the historical sheet** — a 2025 week 15
+Ole Miss/Tulane Total Points pick, final score 41-10 (a 51 total),
+recorded as a Win for an "Over 52" bet, when 51 is actually under 52 and
+should have lost. Not corrected automatically — flagged for a human
+decision, same principle as everything else this script does.
+
+## Phase 3 — Switch the live pipeline (DONE)
+
+`generate_parlay_data.py`'s `load_tracker()` now reads "Auto Parlay
+Tracker" directly — the old "Parlay Tracker" tab is no longer read by
+anything. Each pick's "pick" text (used for the bet-type breakdown and
+over/under stats) is reconstructed from the new tab's structured columns
+into the exact same `"{Bet Type}: {details}"` convention the old tab's
+Pick column already used, so `compute_stats()` and every per-week
+derivation function needed zero changes.
+
+Verified by loading both tabs' current data side by side and diffing the
+full computed output: every difference was either cosmetic text
+normalization ("vs" vs "vs.") or reflected genuinely fresher data already
+corrected in the live sheet (team names/gametime the GUI's ESPN lookup
+had already fixed) — zero actual win/loss or stat computation
+differences. The league can now stop using "Parlay Tracker" entirely.
+
+## Cloudflare architecture — parlay data no longer needs a git commit
+
+Folded in alongside Phases 2/3, after discussing it directly: the site
+used to need a git commit (via the scheduled/on-demand "Refresh Parlay
+Data" Action writing `docs/data/parlay.json`) for any data update to
+reach it. That's now gone, using the exact pattern the Dashboard rewrite
+already proved out for live fantasy data (see `worker/src/index.js`'s own
+comments) — a KV-cached payload served by the Worker, no GitHub Pages
+rebuild in the loop:
+
+- **`publish_parlay_stats.py`** — reuses `generate_parlay_data.py`'s
+  `load_tracker()`/`week_state()`/`compute_stats()` completely unchanged,
+  but pushes the resulting JSON straight to Cloudflare KV (`wrangler kv
+  key put --remote`, the KV namespace already shared with the Dashboard
+  cache) instead of writing a file for git to commit. Reuses the exact
+  CI secrets (`CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID`) the D1
+  history sync already has — no new credential needed anywhere.
+- **`GET /parlay-stats`** (new Worker route, `worker/src/index.js`) — a
+  plain KV read, no live computation in the Worker itself. Reusing the
+  proven Python stats logic here (rather than reimplementing win/loss
+  tie-break, kill, and highlighting logic in JS) was a deliberate choice
+  to avoid a parallel-maintenance risk for a system that's been tuned
+  over many iterations.
+- **`docs/parlay-results.html`** now fetches from that endpoint instead
+  of the static JSON file — identical shape, so nothing downstream of
+  the fetch changed.
+- **`refresh_parlay_data.yml`** (same scheduled/on-demand Action, same
+  filename so the site's existing "Refresh Data" button needed no
+  changes) now runs `publish_parlay_stats.py` instead of committing a
+  file.
+- **`sync_parlay_to_d1.py`** + a new Cloudflare D1 database
+  (`retirement-league-parlay`, see `parlay_schema.sql`) additionally
+  mirrors every raw pick row into D1 — durable, queryable storage for
+  the picks themselves, the same Sheet-is-source-of-truth /
+  D1-is-a-synced-mirror relationship league history already has. Not
+  what the site actually reads day to day (that's still the KV blob
+  above) — this is for durability and whatever queries the future wants,
+  wired into the same scheduled Action.
+- Read/write volume at this project's actual scale (a private 12-person
+  league site) is roughly 0.01–1% of either service's free tier no
+  matter how this is built — confirmed by walking through the actual
+  numbers (picks/week, page views/week) before starting, so this wasn't
+  a quota-driven decision.
+
+One real gotcha hit along the way, worth remembering: `wrangler kv key
+put ... --remote` failed with a confusing "Authentication error" on a
+colon-containing key name (e.g. `"parlay:stats"`) from this CLI/account,
+even though the account's OAuth token clearly had the right scopes and a
+plain alphanumeric key name worked fine — and even though the Worker's
+own runtime KV binding handles colon-containing keys (like the existing
+`"dashboard:v2"`) without any issue. Not chased further; every key this
+session writes via the CLI just avoids colons.
 
 ## Unrelated but same session: manual refresh button
 
