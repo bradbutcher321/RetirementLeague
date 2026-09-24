@@ -24,6 +24,12 @@ from generate_franchise_data import SHEET_ID, CREDS_PATH
 TARGET_TAB = "Auto Parlay Tracker"
 VALIDATION_LAST_ROW = 3000  # matches add_parlay_validation.py
 PLAYERS_PER_WEEK = 12  # every week is always all 12 managers, one row each
+# Real width of the main table (Year .. Final Split, see migrate_parlay_tracker.py's
+# HEADER) -- hardcoded rather than read from row 1 live, since row_values()
+# doesn't stop at interior blanks and was sweeping in the Player Order
+# helper list's own header cell out past column R, widening banding/borders
+# well past where the actual table ends.
+TABLE_COLUMN_COUNT = 18
 
 WHITE = {"red": 1, "green": 1, "blue": 1}
 BAND_COLOR = {"red": 0.949, "green": 0.961, "blue": 0.976}  # light gray-blue
@@ -58,8 +64,8 @@ def main():
     spreadsheet = gc.open_by_key(SHEET_ID)
     target = spreadsheet.worksheet(TARGET_TAB)
 
-    header = target.row_values(1)
-    n_cols = len(header)
+    header = target.row_values(1)[:TABLE_COLUMN_COUNT]
+    n_cols = TABLE_COLUMN_COUNT
 
     meta = spreadsheet.fetch_sheet_metadata()
     sheet_props = next(s for s in meta["sheets"] if s["properties"]["sheetId"] == target.id)

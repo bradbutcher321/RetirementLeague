@@ -36,8 +36,10 @@ TARGET_TAB = "Auto Parlay Tracker"
 VALIDATION_LAST_ROW = 3000  # generous headroom for future picks, 0-indexed exclusive
 
 # Column indices match migrate_parlay_tracker.py's HEADER order (0-indexed).
-# Player (3) is intentionally excluded -- see module docstring.
+# Player (3) and Final Split (17, a formula) are intentionally excluded --
+# see module docstring and setup_player_autofill.py.
 COL_SACKO, COL_SPORT, COL_BET_TYPE, COL_SIDE, COL_GAMETIME, COL_RESULT = 2, 4, 5, 10, 12, 13
+COL_FINAL_ODDS, COL_FINAL_PAYOUT = 15, 16
 GAMETIME_PATTERN = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$"
 
 # NHL and Hockey both appear in history for the same sport -- NHL is the
@@ -124,6 +126,33 @@ def regex_validation_request(sheet_id, col, pattern, allow_blank=True):
     }
 
 
+def numeric_validation_request(sheet_id, col, allow_blank=True):
+    """Rejects anything that isn't a plain number -- guards against someone
+    typing the combined-parlay odds/payout with its $ sign or commas still
+    attached (e.g. "$103,353.59"), which would silently break the Final
+    Split formula's division."""
+    cell = f"${column_letter(col)}2"
+    formula = f"=ISNUMBER({cell})"
+    if allow_blank:
+        formula = f'=OR({cell}="",{formula[1:]})'
+    return {
+        "setDataValidation": {
+            "range": {
+                "sheetId": sheet_id,
+                "startRowIndex": 1,
+                "endRowIndex": VALIDATION_LAST_ROW,
+                "startColumnIndex": col,
+                "endColumnIndex": col + 1,
+            },
+            "rule": {
+                "condition": {"type": "CUSTOM_FORMULA", "values": [{"userEnteredValue": formula}]},
+                "strict": True,
+                "showCustomUi": True,
+            },
+        }
+    }
+
+
 def ensure_row_count(spreadsheet, worksheet, min_rows):
     """A range request beyond the sheet's actual grid size is silently
     clamped to it, not rejected -- this is why validation only ever
@@ -156,10 +185,13 @@ def main():
         validation_request(target.id, COL_SIDE, SIDES, strict=True),
         validation_request(target.id, COL_RESULT, RESULTS, strict=True),
         regex_validation_request(target.id, COL_GAMETIME, GAMETIME_PATTERN),
+        numeric_validation_request(target.id, COL_FINAL_ODDS),
+        numeric_validation_request(target.id, COL_FINAL_PAYOUT),
     ]
     spreadsheet.batch_update({"requests": requests})
     print(f"Applied dropdown validation to Sacko, Sport, Bet Type, Side, Result, "
-          f"and a strict ISO-format check on Gametime, on '{TARGET_TAB}' (rows 2-{VALIDATION_LAST_ROW}).")
+          f"a strict ISO-format check on Gametime, and strict number checks on "
+          f"Final Odds/Final Payout, on '{TARGET_TAB}' (rows 2-{VALIDATION_LAST_ROW}).")
 
 
 if __name__ == "__main__":

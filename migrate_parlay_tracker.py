@@ -10,6 +10,11 @@ with the league). Rows the parser can't confidently split (e.g. a Spread
 pick missing its line) are still written, with just the unparseable fields
 left blank, so they're easy to spot and fix by hand rather than guessed at.
 
+Final Odds and Final Payout (the combined 12-leg parlay's own odds and
+payout for the week, as opposed to any one pick's) are once-per-week facts
+like Sacko -- written only on a week's first row. Final Split is a formula
+(Final Payout / 12), not something this script writes.
+
 WARNING: this only rewrites the rows generated from "Parlay Tracker"'s own
 history (currently 228). Once new picks start being entered directly into
 "Auto Parlay Tracker" going forward, re-running this script will overwrite
@@ -31,7 +36,8 @@ import generate_parlay_data as gp
 
 TARGET_TAB = "Auto Parlay Tracker"
 HEADER = ["Year", "Week", "Sacko", "Player", "Sport", "Bet Type", "Team", "Opponent",
-          "Player Prop", "Line", "Side", "Odds", "Gametime", "Result", "Raw Pick"]
+          "Player Prop", "Line", "Side", "Odds", "Gametime", "Result", "Raw Pick",
+          "Final Odds", "Final Payout", "Final Split"]
 
 TEAM_LINE_VS = {"Spread", "Alt Spread", "1st Half Spread"}
 VS_ONLY = {"Money Line"}
@@ -135,22 +141,27 @@ def main():
     rows = []
     flagged = []
     for week in weeks:
-        # Sacko is a once-per-week fact, not a per-pick one -- write it only
-        # on that week's first row so it isn't repeated down the block.
-        sacko_written = False
+        # Sacko and the week's combined-parlay stats are once-per-week
+        # facts, not per-pick ones -- write them only on that week's first
+        # row so they aren't repeated down the block.
+        first_row_written = False
         for player in players:
             pick = week["picks"].get(player)
             if not pick:
                 continue
             parsed = parse_pick(pick["pick"])
             sacko = week["sacko"] or ""
+            final = week["final"]
+            final_odds = final["odds"] if final["odds"] is not None else ""
+            final_payout = final["payout"] if final["payout"] is not None else ""
             row = [
-                week["year"], week["week"], sacko if not sacko_written else "", player, pick["sport"] or "",
+                week["year"], week["week"], sacko if not first_row_written else "", player, pick["sport"] or "",
                 parsed["bet_type"], parsed["team"], parsed["opponent"], parsed["player_prop"],
                 parsed["line"], parsed["side"], pick["odds"] if pick["odds"] is not None else "",
                 pick["gametime"] or "", pick["result"], pick["pick"],
+                final_odds if not first_row_written else "", final_payout if not first_row_written else "",
             ]
-            sacko_written = True
+            first_row_written = True
             rows.append(row)
             missing_expected = (
                 (parsed["bet_type"] in TEAM_LINE_VS and not parsed["line"]) or
@@ -173,7 +184,7 @@ def main():
     target.batch_clear(["A2:C3000", "E2:O3000"])
     target.update([HEADER], "A1")
     left = [row[:3] for row in rows]      # Year, Week, Sacko
-    right = [row[4:] for row in rows]     # Sport .. Raw Pick
+    right = [row[4:] for row in rows]     # Sport .. Final Payout (E through Q; Final Split at R is a formula)
     if rows:
         target.update(left, "A2")
         target.update(right, "E2")
@@ -182,7 +193,7 @@ def main():
     if flagged:
         print("\nFlagged rows (missing a field the format expects):")
         for r in flagged:
-            print(" ", r[3], r[0], "wk", r[1], "-", r[-1])
+            print(" ", r[3], r[0], "wk", r[1], "-", r[14])  # Raw Pick
 
 
 if __name__ == "__main__":
