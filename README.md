@@ -27,6 +27,10 @@ career stats in sync with the league's Google Sheet.
   year's managers; plus a timeline below recapping what changed each year
   (format, buy-in, and manager turnover). Reads a static
   `docs/data/rule-changes.json` file.
+- **Draft Board** (`docs/draft-board.html`) — every year's snake draft as a
+  round-by-round grid, one card per pick (position, positional rank, NFL
+  team, keeper flag), with a year picker. Reads a static
+  `docs/data/draft-board.json` file.
 - **Standings** (`docs/standings.html`) — regular-season or final standings
   for any year.
 - **Head to Head** (`docs/head-to-head.html`) — pick two teams to compare
@@ -54,11 +58,20 @@ Standings, Head to Head, Overview, and Game Records all read
   Activity" section shows active now, unique visitors and page views today,
   the last 7 days, and top pages. Set `localStorage.setItem('rl-notrack', '1')`
   in a browser to stop counting your own visits.
-- **`generate_franchise_data.py`** — reads the sheet's `Game Tracker`,
-  `PlayerStats`, `RandomInfo`, `Parlay Tracker`, and `Money Tracker` tabs,
-  computes each manager's career stats, and writes `docs/data/franchise.json`.
-  Runs Tuesday/Thursday mornings and on-demand
+- **`generate_franchise_data_d1.py`** — reads career stats from D1 (the
+  same history the Worker and Standings/Overview pages use) plus the
+  sheet's `Money Tracker` tab, and writes `docs/data/franchise.json`. It
+  reuses `authorize`, `load_money`, and `SHEET_ID` from the older
+  **`generate_franchise_data.py`** (the pre-D1, sheet-only version, kept
+  around as a shared module rather than a second pipeline) instead of
+  duplicating them. Runs Tuesday/Thursday mornings and on-demand, in the
+  same workflow as the Draft Board and Rule Changes scripts below
   (`.github/workflows/refresh_franchise_data.yml`).
+- **`generate_draft_board_data.py`** — reads `teams`, `draft_picks`, and
+  `players` from D1 (plus each player's NFL team, taken from their
+  earliest scored `roster_entries` row that year) and writes every year's
+  draft as a round × slot grid to `docs/data/draft-board.json`. Runs on
+  the same Tuesday/Thursday schedule as the Franchise script above.
 - **`generate_parlay_data.py`** — reads the sheet's `Auto Parlay Tracker`
   tab (one row per pick) and reproduces the stats the sheet's old `Parlay
   Results` tab used to compute with formulas. Its output isn't written to
@@ -98,10 +111,11 @@ Sheets API locally. In GitHub Actions this is written from the
 ## Repo layout
 
 ```
-docs/                   GitHub Pages site (HTML/CSS/JS + franchise.json, parlay.json)
+docs/                   GitHub Pages site (HTML/CSS/JS + franchise.json, parlay.json, draft-board.json)
 worker/                 Cloudflare Worker powering the live Dashboard
 espn_api/               Vendored ESPN Fantasy API client library (Python, used by generate_franchise_data.py)
-generate_franchise_data.py    Franchise page data pipeline
+generate_franchise_data_d1.py  Franchise page data pipeline (D1-backed; shares helpers with generate_franchise_data.py)
+generate_draft_board_data.py  Draft Board page data pipeline
 generate_parlay_data.py       Parlay Results page data pipeline
 generate_league_data.py       Standings / Head to Head / Overview / Game Records data pipeline
 generate_rule_changes_data.py Rule Changes page data pipeline
