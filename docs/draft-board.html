@@ -44,17 +44,20 @@
   }
   .pick-top{ display: flex; align-items: baseline; justify-content: space-between; gap: 4px; }
   .pick-rank{ font-weight: 800; font-size: 0.72rem; font-family: var(--scoreboard); }
-  .pick-overall{ font-size: 0.6rem; font-variant-numeric: tabular-nums; opacity: 0.75; white-space: nowrap; }
+  .pick-team{ font-weight: 600; font-size: 0.6rem; margin-left: 3px; opacity: 0.85; }
+  .pick-overall{ font-size: 0.6rem; font-variant-numeric: tabular-nums; opacity: 0.8; white-space: nowrap; }
   .pick-player{ font-size: 0.72rem; font-weight: 700; line-height: 1.18; margin-top: 3px; white-space: nowrap; overflow: visible; }
   .pick-player span{ display: block; }
+  .pick-arrow{ position: absolute; bottom: 2px; right: 4px; font-size: 0.62rem; line-height: 1; opacity: 0.55; }
   .pick-keeper{
     position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%;
     background: var(--gold); border: 2px solid var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
   }
   .pick-empty{ color: var(--text-dim); font-size: 0.7rem; text-align: center; padding-top: 22px !important; height: 100%; }
 
-  /* Position color coding — full card fill, white text for contrast. */
-  .pick-cell{ position: relative; color: #fff; }
+  /* Position color coding — full card fill. Rank/team/pick# in dark grey,
+     player name in black, for contrast against the saturated backgrounds. */
+  .pick-cell{ position: relative; color: #1a1a1a; }
   .pos-QB{ background: #E0644F; }
   .pos-RB{ background: #4C9A6B; }
   .pos-WR{ background: #4A90D9; }
@@ -62,7 +65,8 @@
   .pos-K{ background: #9B6BC4; }
   .pos-DST{ background: #8A8A85; }
   .pos-none{ background: var(--surface-raised); color: var(--text-dim); }
-  .pick-cell .pick-overall{ color: rgba(255,255,255,0.8); }
+  .pick-cell .pick-rank, .pick-cell .pick-team, .pick-cell .pick-overall, .pick-cell .pick-arrow{ color: rgba(26,26,26,0.7); }
+  .pick-cell .pick-player{ color: #000; }
   .pos-none .pick-overall{ color: var(--text-dim); }
 
   @media (max-width: 480px){
@@ -128,7 +132,7 @@
     return [parts[0], parts.slice(1).join(' ')];
   }
 
-  function renderCell(pick, round, teamCount) {
+  function renderCell(pick, round, teamCount, arrow) {
     if (!pick || !pick.player_name) {
       return `<td class="pick-cell pos-none"><div class="pick-empty">—</div></td>`;
     }
@@ -138,14 +142,17 @@
       <td class="pick-cell ${posClass(pick.position)}">
         ${pick.keeper ? '<div class="pick-keeper" title="Keeper"></div>' : ''}
         <div class="pick-top">
-          <span class="pick-rank">${esc(pick.position_rank || pick.position || '')}</span>
+          <span class="pick-rank">${esc(pick.position_rank || pick.position || '')}${pick.pro_team ? `<span class="pick-team">${esc(pick.pro_team)}</span>` : ''}</span>
           <span class="pick-overall">${round}.${pickInRound}</span>
         </div>
         <div class="pick-player"><span>${esc(first)}</span>${last ? `<span>${esc(last)}</span>` : ''}</div>
+        ${arrow ? `<div class="pick-arrow">${arrow}</div>` : ''}
       </td>`;
   }
 
   function renderBoard(board) {
+    const teamCount = board.team_count;
+    const lastRound = board.rounds[board.rounds.length - 1];
     const headerCells = board.columns.map(c => `
       <th>
         <span class="slot-manager">${esc(c.manager || '')}</span>
@@ -153,7 +160,13 @@
       </th>`).join('');
 
     const rows = board.rounds.map(round => {
-      const cells = board.columns.map(c => renderCell(board.grid[round] && board.grid[round][c.slot], round, board.team_count)).join('');
+      const ascending = round % 2 === 1;
+      const turnSlot = ascending ? teamCount : 1;
+      const cells = board.columns.map(c => {
+        const isTurn = c.slot === turnSlot;
+        const arrow = isTurn ? (round === lastRound ? '' : '↓') : (ascending ? '→' : '←');
+        return renderCell(board.grid[round] && board.grid[round][c.slot], round, teamCount, arrow);
+      }).join('');
       return `<tr>${cells}</tr>`;
     }).join('');
 

@@ -23,10 +23,19 @@ def load_d1():
         "FROM draft_picks ORDER BY year, round_num, round_pick"
     )
     players = hl.d1_query("SELECT player_id, position FROM players")
-    return teams, picks, players
+    # Earliest-week pro team per player per year -- the team they were on
+    # closest to that year's draft, before any in-season trades.
+    pro_teams = hl.d1_query(
+        "SELECT year, player_id, pro_team FROM ("
+        "  SELECT year, player_id, pro_team, "
+        "    ROW_NUMBER() OVER (PARTITION BY year, player_id ORDER BY week) rn "
+        "  FROM roster_entries"
+        ") WHERE rn = 1"
+    )
+    return teams, picks, players, pro_teams
 
 
-def build_year_board(year, team_rows, year_picks, position_by_id):
+def build_year_board(year, team_rows, year_picks, position_by_id, pro_team_by_player):
     team_name_by_id = {t["team_id"]: t["team_name"] for t in team_rows}
     manager_by_team_id = {
         t["team_id"]: hl.ESPN_ID_TO_SHEET_NAME.get(t["owner_espn_id"])
@@ -70,6 +79,7 @@ def build_year_board(year, team_rows, year_picks, position_by_id):
             "player_name": p["player_name"] or None,
             "position": position_by_id.get(p["player_id"]),
             "position_rank": position_rank_by_pick.get((p["round_num"], p["round_pick"])),
+            "pro_team": pro_team_by_player.get(p["player_id"]),
             "keeper": bool(p["keeper_status"]),
         }
 
@@ -82,8 +92,8 @@ def build_year_board(year, team_rows, year_picks, position_by_id):
 
 
 def main():
-    print("Loading D1 (teams + draft_picks + players)...")
-    teams, picks, players = load_d1()
+    print("Loading D1 (teams + draft_picks + players + roster_entries)...")
+    teams, picks, players, pro_teams = load_d1()
     position_by_id = {p["player_id"]: p["position"] for p in players}
 
     teams_by_year = {}
@@ -92,11 +102,17 @@ def main():
     picks_by_year = {}
     for p in picks:
         picks_by_year.setdefault(p["year"], []).append(p)
+    pro_team_by_year_player = {}
+    for r in pro_teams:
+        pro_team_by_year_player.setdefault(r["year"], {})[r["player_id"]] = r["pro_team"]
 
     years = sorted(set(picks_by_year) & set(teams_by_year))
     boards = {}
     for year in years:
-        board = build_year_board(year, teams_by_year[year], picks_by_year[year], position_by_id)
+        board = build_year_board(
+            year, teams_by_year[year], picks_by_year[year], position_by_id,
+            pro_team_by_year_player.get(year, {}),
+        )
         if board["rounds"]:
             boards[str(year)] = board
         print(f"  {year}: {len(board['rounds'])} rounds x {board['team_count']} teams")
