@@ -270,14 +270,22 @@ deliberately not extended to a fourth "Push" value for now (a plain
 that would also touch the sheet's validation, the GUI, and
 `generate_parlay_data.py`'s stats math).
 
-**Runs as a script you run yourself, not on a schedule** — it needs the
-same write-scoped Google credential `parlay_gui.py` does, and keeping
-that credential out of CI for now, while this grading logic is new and
-unproven, was an explicit choice. Automating it later (once it's been
-watched grade a few real weeks correctly) is one line: point a scheduled
-job at it the same way `refresh_parlay_data.yml` already runs on a
-schedule. Never touches a Result that's already Win/Loss, and leaves a
-cell note (final score + when) on anything it grades.
+**Now runs automatically every 30 minutes**, as a step in
+`refresh_parlay_data.yml` right before that same run republishes stats to
+KV and syncs picks to D1 — so any of a week's 12 picks grades within one
+cycle of its own game finishing (each pick checked independently; nothing
+waits for all 12 games to be done), no manual trigger needed. Uses the
+same `GOOGLE_CREDENTIALS` secret every other scheduled script already has
+— no new credential was needed, since a service-account key isn't
+scope-*restricted* to read-only, the read-only scripts just never asked
+for write scope. (Originally this ran by hand only, keeping the
+write-scoped credential out of CI while the logic was unproven — promoted
+to scheduled after the extensive historical verification below, and
+confirmed working live in CI: the "Grade Finished Games" step ran clean
+on the very first scheduled run after being added.) Never touches a
+Result that's already Win/Loss, and leaves a cell note (final score +
+when) on anything it grades. Can still be run by hand too, including
+`--dry-run` to preview.
 
 Verified two ways: `--dry-run` against the live sheet's current Pending
 picks, and — more thoroughly — by running the grading logic against 165
@@ -356,14 +364,32 @@ rebuild in the loop:
   numbers (picks/week, page views/week) before starting, so this wasn't
   a quota-driven decision.
 
-One real gotcha hit along the way, worth remembering: `wrangler kv key
-put ... --remote` failed with a confusing "Authentication error" on a
-colon-containing key name (e.g. `"parlay:stats"`) from this CLI/account,
-even though the account's OAuth token clearly had the right scopes and a
-plain alphanumeric key name worked fine — and even though the Worker's
-own runtime KV binding handles colon-containing keys (like the existing
-`"dashboard:v2"`) without any issue. Not chased further; every key this
-session writes via the CLI just avoids colons.
+Two real gotchas hit along the way, worth remembering:
+- `wrangler kv key put ... --remote` failed with a confusing
+  "Authentication error" on a colon-containing key name (e.g.
+  `"parlay:stats"`) from this CLI/account, even though the account's
+  OAuth token clearly had the right scopes and a plain alphanumeric key
+  name worked fine — and even though the Worker's own runtime KV binding
+  handles colon-containing keys (like the existing `"dashboard:v2"`)
+  without any issue. Not chased further; every key this session writes
+  via the CLI just avoids colons.
+- **The first live CI run of the KV publish step failed** with the same
+  "Authentication error" — this one for a real reason: the
+  `CLOUDFLARE_API_TOKEN` GitHub secret is a narrowly-scoped API token
+  (not the full-account OAuth login used for local testing), and it only
+  had `Account.D1` permission — enough for the D1 sync (and for the
+  pre-existing league-history D1 sync, which is presumably what it was
+  originally created for) but nothing for KV. Fixed by adding "Workers
+  KV Storage: Edit" to that same token in the Cloudflare dashboard and
+  updating the GitHub secret with the refreshed value. Also exposed a
+  real workflow bug in the process: GitHub Actions skips later steps in a
+  job by default once one fails, so the KV failure was silently also
+  skipping the unrelated D1 sync step right after it — fixed by adding
+  `if: ${{ !cancelled() }}` to the three independent steps (grade,
+  publish, sync) so one failing doesn't hide whether the others would
+  have worked. Confirmed fixed: both steps ran clean on the next attempt,
+  verified live against both the `/parlay-stats` endpoint and a direct
+  D1 row count.
 
 ## Unrelated but same session: manual refresh button
 
