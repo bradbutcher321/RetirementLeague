@@ -108,17 +108,25 @@ yet.
   write-scoped credential, think about how to get it to the second person
   safely rather than just emailing/texting the file.
 - **`espn_gametime_lookup.py`** — auto-fills Gametime (and Sport, since the
-  note never mentions it either) for team-based picks, right after Parse.
-  Picks are entered Tue-Thu for games that can only be Thu through the
-  following Monday, so it just checks ESPN's public scoreboard for those 5
-  days across every sport currently in use, rather than needing each
-  sport's own "week number" (confirmed college football's doesn't line up
-  with the NFL's). Verified against 10 real historical picks across NFL,
-  NCAAF, and 3 soccer leagues, all exact matches including correct
-  UTC->Eastern conversion (needed the `tzdata` package on Windows). Player
-  props are out of scope (no team in the pick text to search on). Takes
-  ~15s for a full week the first time; the window will look unresponsive
-  during that stretch since tkinter is single-threaded.
+  note never mentions it either) right after Parse, for both team-based
+  picks (Spread/Money Line/Totals) and player props (Anytime TD, Receiving
+  Yards, etc. — via ESPN's player search, which returns the person's sport
+  and current team in one call). Picks are entered Tue-Thu for games that
+  can only be Thu through the following Monday, so it just checks ESPN's
+  public scoreboard for those 5 days across every sport currently in use,
+  rather than needing each sport's own "week number" (confirmed college
+  football's doesn't line up with the NFL's). Team matching checks every
+  name ESPN exposes (mascot, school/city, abbreviation), not just
+  display name, since a pick can reasonably use either half (e.g. "Gators"
+  or "Florida", "Knights" or "UCF"). Same-named people across sports are
+  narrowed by which sports the bet type itself could plausibly be, and
+  left unresolved (not guessed) if genuinely ambiguous.
+  Verified end to end against the real shared note: 9 of 12 picks
+  resolved automatically; the 3 misses were all legitimate (a genuine
+  typo in the note, a real ambiguity between two same-named athletes, and
+  a nickname ESPN's own search doesn't recognize) rather than lookup bugs.
+  Takes ~30-40s for a full week the first time; the window will look
+  unresponsive during that stretch since tkinter is single-threaded.
 
 **Resolved loose end:** the `Jon, 2025 week 5` pick that used to read
 `Bet Type = Pass` (but carried real odds, gametime, and a graded "Win",
