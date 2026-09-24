@@ -1249,7 +1249,12 @@
     if (opts.locks && known) {
       const finished = withScore.filter(m => m.done).map(m => m.cur);
       const upLine = finished.length >= half ? [...finished].sort((a, b) => a - b)[half - 1] : null;
-      const downLine = withScore.length > half ? withScore.map(m => m.cur).sort((a, b) => b - a)[half - 1] : null;
+      // Also requires a finished team to exist -- with nobody done yet
+      // (e.g. before Thursday kickoff), no team can be locked below this
+      // line regardless of its numeric value, so it shouldn't draw.
+      const downLine = finished.length > 0 && withScore.length > half
+        ? withScore.map(m => m.cur).sort((a, b) => b - a)[half - 1]
+        : null;
       withScore.forEach(m => {
         m.lockedAbove = upLine !== null && m.cur > upLine;
         m.lockedBelow = m.done && downLine !== null && m.cur < downLine;
