@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T05:01:49.107622+00:00",
+  "generated_at": "2026-09-24T05:30:24.253623+00:00",
   "players": [
     "Brad",
     "Flanders",
@@ -108,6 +108,7 @@
       "final": {
         "odds": 246142.0,
         "payout": 49248.31,
+        "split": 4104.03,
         "result": "Loss"
       },
       "killed_by": [
@@ -207,6 +208,7 @@
       "final": {
         "odds": 69998.0,
         "payout": 14019.67,
+        "split": 1168.31,
         "result": "Loss"
       },
       "killed_by": [
@@ -307,6 +309,7 @@
       "final": {
         "odds": 242635.0,
         "payout": 48546.98,
+        "split": 4045.58,
         "result": "Loss"
       },
       "killed_by": [
@@ -406,6 +409,7 @@
       "final": {
         "odds": 118486.0,
         "payout": 23717.17,
+        "split": 1976.43,
         "result": "Loss"
       },
       "killed_by": [
@@ -505,6 +509,7 @@
       "final": {
         "odds": 185203.0,
         "payout": 37060.64,
+        "split": 3088.39,
         "result": "Loss"
       },
       "killed_by": [
@@ -604,6 +609,7 @@
       "final": {
         "odds": 579046.0,
         "payout": 115829.21,
+        "split": 9652.43,
         "result": "Loss"
       },
       "killed_by": [
@@ -703,6 +709,7 @@
       "final": {
         "odds": 470398.0,
         "payout": 94099.68,
+        "split": 7841.64,
         "result": "Loss"
       },
       "killed_by": [
@@ -802,6 +809,7 @@
       "final": {
         "odds": 204936.0,
         "payout": 41007.12,
+        "split": 3417.26,
         "result": "Loss"
       },
       "killed_by": [
@@ -902,6 +910,7 @@
       "final": {
         "odds": 377754.0,
         "payout": 75570.7,
+        "split": 6297.56,
         "result": "Loss"
       },
       "killed_by": [
@@ -1003,6 +1012,7 @@
       "final": {
         "odds": 109778.0,
         "payout": 22997.43,
+        "split": 1916.45,
         "result": "Loss"
       },
       "killed_by": [
@@ -1102,6 +1112,7 @@
       "final": {
         "odds": 146161.0,
         "payout": 30422.34,
+        "split": 2535.2,
         "result": "Loss"
       },
       "killed_by": [
@@ -1202,6 +1213,7 @@
       "final": {
         "odds": 284294.0,
         "payout": 56878.78,
+        "split": 4739.9,
         "result": "Loss"
       },
       "killed_by": [
@@ -1301,6 +1313,7 @@
       "final": {
         "odds": 69873.0,
         "payout": 13994.56,
+        "split": 1166.21,
         "result": "Loss"
       },
       "killed_by": [
@@ -1400,6 +1413,7 @@
       "final": {
         "odds": 326493.0,
         "payout": 65318.51,
+        "split": 5443.21,
         "result": "Loss"
       },
       "killed_by": [
@@ -1444,7 +1458,7 @@
           "sport": "NCAAF",
           "odds": -185.0,
           "gametime": "2025-12-20T15:30:00",
-          "result": "Win"
+          "result": "Loss"
         },
         "Chad": {
           "pick": "Money Line: Saints vs. Jets",
@@ -1499,6 +1513,7 @@
       "final": {
         "odds": 157724.0,
         "payout": 63129.5,
+        "split": 5260.79,
         "result": "Loss"
       },
       "killed_by": [
@@ -1598,6 +1613,7 @@
       "final": {
         "odds": 141232.0,
         "payout": 28266.4,
+        "split": 2355.53,
         "result": "Loss"
       },
       "killed_by": [
@@ -1697,6 +1713,7 @@
       "final": {
         "odds": 149250.0,
         "payout": 29850.03,
+        "split": 2487.5,
         "result": "Loss"
       },
       "killed_by": [
@@ -1796,6 +1813,7 @@
       "final": {
         "odds": 97585.0,
         "payout": 19537.03,
+        "split": 1628.09,
         "result": "Loss"
       },
       "killed_by": [
@@ -1896,6 +1914,7 @@
       "final": {
         "odds": 449263.0,
         "payout": 103353.59,
+        "split": 8612.8,
         "result": "Pending"
       },
       "killed_by": []
@@ -2038,9 +2057,9 @@
         },
         {
           "player": "Joe K",
-          "w": 4,
-          "l": 14,
-          "win_pct": 22.2
+          "w": 3,
+          "l": 15,
+          "win_pct": 16.7
         }
       ],
       "average_odds": [
@@ -2225,8 +2244,8 @@
         },
         {
           "player": "Joe K",
-          "winnings": 171991.85,
-          "losses": 657502.21
+          "winnings": 108862.35,
+          "losses": 720631.71
         }
       ],
       "streaks": [
@@ -2299,7 +2318,7 @@
         {
           "player": "Joe K",
           "current": -2,
-          "longest_win": 2,
+          "longest_win": 1,
           "longest_loss": 7
         }
       ],
@@ -2557,7 +2576,7 @@
         },
         {
           "player": "Joe K",
-          "profit": -1153.74,
+          "profit": -1307.79,
           "bets": 18
         }
       ],
@@ -2594,9 +2613,9 @@
         },
         {
           "sport": "NCAAF",
-          "w": 25,
-          "l": 42,
-          "win_pct": 37.3
+          "w": 24,
+          "l": 43,
+          "win_pct": 35.8
         },
         {
           "sport": "UFC",
@@ -2649,12 +2668,6 @@
           "win_pct": 50.0
         },
         {
-          "bet_type": "Total Points",
-          "w": 6,
-          "l": 7,
-          "win_pct": 46.2
-        },
-        {
           "bet_type": "Money Line",
           "w": 41,
           "l": 49,
@@ -2665,6 +2678,12 @@
           "w": 2,
           "l": 3,
           "win_pct": 40.0
+        },
+        {
+          "bet_type": "Total Points",
+          "w": 5,
+          "l": 8,
+          "win_pct": 38.5
         },
         {
           "bet_type": "Spread",
@@ -2730,9 +2749,9 @@
       "odds_type_wl": [
         {
           "odds_type": "Favorite",
-          "w": 74,
-          "l": 80,
-          "win_pct": 48.1
+          "w": 73,
+          "l": 81,
+          "win_pct": 47.4
         },
         {
           "odds_type": "Underdog",
@@ -2750,9 +2769,9 @@
         },
         {
           "side": "Over",
-          "w": 17,
-          "l": 20,
-          "win_pct": 45.9
+          "w": 16,
+          "l": 21,
+          "win_pct": 43.2
         }
       ],
       "odds_range_wl": [
@@ -2764,9 +2783,9 @@
         },
         {
           "range": "Favorite",
-          "w": 25,
-          "l": 19,
-          "win_pct": 56.8
+          "w": 24,
+          "l": 20,
+          "win_pct": 54.5
         },
         {
           "range": "Toss-Up",
@@ -2802,9 +2821,9 @@
         },
         {
           "day": "Saturday",
-          "w": 27,
-          "l": 40,
-          "win_pct": 40.3
+          "w": 26,
+          "l": 41,
+          "win_pct": 38.8
         },
         {
           "day": "Sunday",
@@ -2853,20 +2872,6 @@
       "closest_calls": [
         {
           "year": 2025,
-          "week": 15,
-          "payout": 63129.5,
-          "legs_hit": 9,
-          "killed_by": [
-            "Ben"
-          ],
-          "lost_by": [
-            "Brad",
-            "Ben",
-            "Kris"
-          ]
-        },
-        {
-          "year": 2025,
           "week": 12,
           "payout": 56878.78,
           "legs_hit": 9,
@@ -2892,6 +2897,21 @@
             "Joe K",
             "Jeff",
             "Collin"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 15,
+          "payout": 63129.5,
+          "legs_hit": 8,
+          "killed_by": [
+            "Ben"
+          ],
+          "lost_by": [
+            "Brad",
+            "Joe K",
+            "Ben",
+            "Kris"
           ]
         }
       ],
@@ -2930,11 +2950,11 @@
         },
         {
           "legs": 8,
-          "occurrences": 1
+          "occurrences": 2
         },
         {
           "legs": 9,
-          "occurrences": 2
+          "occurrences": 1
         },
         {
           "legs": 10,
@@ -3136,9 +3156,9 @@
         },
         {
           "player": "Joe K",
-          "w": 4,
-          "l": 13,
-          "win_pct": 23.5
+          "w": 3,
+          "l": 14,
+          "win_pct": 17.6
         }
       ],
       "average_odds": [
@@ -3323,8 +3343,8 @@
         },
         {
           "player": "Joe K",
-          "winnings": 171991.85,
-          "losses": 637965.18
+          "winnings": 108862.35,
+          "losses": 701094.68
         }
       ],
       "streaks": [
@@ -3389,16 +3409,16 @@
           "longest_loss": 5
         },
         {
-          "player": "Joe K",
-          "current": -1,
-          "longest_win": 2,
-          "longest_loss": 7
-        },
-        {
           "player": "Collin",
           "current": -2,
           "longest_win": 2,
           "longest_loss": 4
+        },
+        {
+          "player": "Joe K",
+          "current": -1,
+          "longest_win": 1,
+          "longest_loss": 7
         }
       ],
       "biggest_hits": [
@@ -3655,7 +3675,7 @@
         },
         {
           "player": "Joe K",
-          "profit": -1053.74,
+          "profit": -1207.79,
           "bets": 17
         }
       ],
@@ -3692,9 +3712,9 @@
         },
         {
           "sport": "NCAAF",
-          "w": 24,
-          "l": 39,
-          "win_pct": 38.1
+          "w": 23,
+          "l": 40,
+          "win_pct": 36.5
         },
         {
           "sport": "UFC",
@@ -3741,12 +3761,6 @@
           "win_pct": 54.5
         },
         {
-          "bet_type": "Total Points",
-          "w": 6,
-          "l": 6,
-          "win_pct": 50.0
-        },
-        {
           "bet_type": "Receiving Yards",
           "w": 2,
           "l": 2,
@@ -3763,6 +3777,12 @@
           "w": 40,
           "l": 47,
           "win_pct": 46.0
+        },
+        {
+          "bet_type": "Total Points",
+          "w": 5,
+          "l": 7,
+          "win_pct": 41.7
         },
         {
           "bet_type": "Spread",
@@ -3822,9 +3842,9 @@
       "odds_type_wl": [
         {
           "odds_type": "Favorite",
-          "w": 70,
-          "l": 74,
-          "win_pct": 48.6
+          "w": 69,
+          "l": 75,
+          "win_pct": 47.9
         },
         {
           "odds_type": "Underdog",
@@ -3842,9 +3862,9 @@
         },
         {
           "side": "Over",
-          "w": 17,
-          "l": 18,
-          "win_pct": 48.6
+          "w": 16,
+          "l": 19,
+          "win_pct": 45.7
         }
       ],
       "odds_range_wl": [
@@ -3856,9 +3876,9 @@
         },
         {
           "range": "Favorite",
-          "w": 25,
-          "l": 17,
-          "win_pct": 59.5
+          "w": 24,
+          "l": 18,
+          "win_pct": 57.1
         },
         {
           "range": "Toss-Up",
@@ -3894,9 +3914,9 @@
         },
         {
           "day": "Saturday",
-          "w": 27,
-          "l": 39,
-          "win_pct": 40.9
+          "w": 26,
+          "l": 40,
+          "win_pct": 39.4
         },
         {
           "day": "Sunday",
@@ -3945,20 +3965,6 @@
       "closest_calls": [
         {
           "year": 2025,
-          "week": 15,
-          "payout": 63129.5,
-          "legs_hit": 9,
-          "killed_by": [
-            "Ben"
-          ],
-          "lost_by": [
-            "Brad",
-            "Ben",
-            "Kris"
-          ]
-        },
-        {
-          "year": 2025,
           "week": 12,
           "payout": 56878.78,
           "legs_hit": 9,
@@ -3984,6 +3990,21 @@
             "Joe K",
             "Jeff",
             "Collin"
+          ]
+        },
+        {
+          "year": 2025,
+          "week": 15,
+          "payout": 63129.5,
+          "legs_hit": 8,
+          "killed_by": [
+            "Ben"
+          ],
+          "lost_by": [
+            "Brad",
+            "Joe K",
+            "Ben",
+            "Kris"
           ]
         }
       ],
@@ -4022,11 +4043,11 @@
         },
         {
           "legs": 8,
-          "occurrences": 1
+          "occurrences": 2
         },
         {
           "legs": 9,
-          "occurrences": 2
+          "occurrences": 1
         },
         {
           "legs": 10,

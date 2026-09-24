@@ -127,11 +127,22 @@ def load_tracker(spreadsheet):
             continue
         key = (year, week_num)
         if key not in weeks_by_key:
+            payout = to_float(cell(r, 16))
             weeks_by_key[key] = {
                 "year": year, "week": week_num,
                 "sacko": str(cell(r, 2)).strip() or None,
                 "picks": {},
-                "final": {"odds": to_float(cell(r, 15)), "payout": to_float(cell(r, 16))},
+                # Split is computed here rather than read from column R --
+                # that column is itself just a sheet formula (Final Payout
+                # / 12, see setup_player_autofill.py), and computing it
+                # directly avoids a real bug this had: the loader never
+                # read column R at all, so every week's Split silently
+                # showed "--" on the site (fmtMoney(undefined)) after the
+                # Phase 3 switch, caught from a live screenshot.
+                "final": {
+                    "odds": to_float(cell(r, 15)), "payout": payout,
+                    "split": round(payout / len(players), 2) if payout is not None and players else None,
+                },
             }
             order.append(key)
 
