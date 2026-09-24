@@ -111,38 +111,44 @@ def _to_eastern_iso(espn_date):
     return dt_eastern.strftime("%Y-%m-%dT%H:%M:00")
 
 
-def find_gametime(sport, team, opponent, days=None):
-    """Returns an ISO Eastern gametime string, or None if no confident
-    match was found (never raises -- any ESPN hiccup just means no match)."""
+def find_gametime(team, opponent, sport=None, days=None):
+    """Returns (gametime_iso, matched_sport), or (None, None) if no
+    confident match was found (never raises -- any ESPN hiccup just means
+    no match). Never fed a specific sport -- the shared note doesn't
+    mention one -- so this can search across every sport currently in use
+    and hand back whichever one actually matched, letting the GUI
+    auto-fill Sport too, not just Gametime. Pass sport to restrict the
+    search once it's already known (e.g. re-checking one row by hand)."""
     if not team or not opponent:
-        return None
+        return None, None
     team = re.sub(r"^#\d+\s*", "", team)
     opponent = re.sub(r"^#\d+\s*", "", opponent)
-    paths = SPORT_ESPN_PATHS.get(sport, [])
     days = days or thursday_to_monday_window()
+    sports = [sport] if sport else list(SPORT_ESPN_PATHS)
 
     for d in days:
         date_str = d.strftime("%Y%m%d")
-        for espn_path in paths:
-            data = _fetch(espn_path, date_str)
-            if not data:
-                continue
-            for event in data.get("events", []):
-                try:
-                    comp = event["competitions"][0]
-                    competitors = comp["competitors"]
-                    if len(competitors) != 2:
-                        continue
-                    t0, t1 = competitors[0]["team"], competitors[1]["team"]
-                except (KeyError, IndexError):
+        for s in sports:
+            for espn_path in SPORT_ESPN_PATHS.get(s, []):
+                data = _fetch(espn_path, date_str)
+                if not data:
                     continue
-                both_match = (
-                    (_team_matches(team, t0) and _team_matches(opponent, t1)) or
-                    (_team_matches(team, t1) and _team_matches(opponent, t0))
-                )
-                if both_match:
+                for event in data.get("events", []):
                     try:
-                        return _to_eastern_iso(comp["date"])
-                    except (KeyError, ValueError):
+                        comp = event["competitions"][0]
+                        competitors = comp["competitors"]
+                        if len(competitors) != 2:
+                            continue
+                        t0, t1 = competitors[0]["team"], competitors[1]["team"]
+                    except (KeyError, IndexError):
                         continue
-    return None
+                    both_match = (
+                        (_team_matches(team, t0) and _team_matches(opponent, t1)) or
+                        (_team_matches(team, t1) and _team_matches(opponent, t0))
+                    )
+                    if both_match:
+                        try:
+                            return _to_eastern_iso(comp["date"]), s
+                        except (KeyError, ValueError):
+                            continue
+    return None, None
