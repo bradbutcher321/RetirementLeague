@@ -36,3 +36,12 @@ database_id = "5bf8d0cf-b461-437b-9367-7818a00a431d"
 binding = "HISTORY_DB"
 database_name = "retirement-league-history"
 database_id = "a8caf66c-650a-4e93-af94-a909c32f0808"
+
+# Parlay pick data synced from the "Auto Parlay Tracker" sheet tab -- see
+# parlay_schema.sql and sync_parlay_to_d1.py. Durable/queryable storage for
+# the raw picks; the site itself reads a precomputed stats blob from KV
+# (see publish_parlay_stats.py), not this database directly.
+[[d1_databases]]
+binding = "PARLAY_DB"
+database_name = "retirement-league-parlay"
+database_id = "32836608-69e2-4cae-87f6-78c89e99a66f"

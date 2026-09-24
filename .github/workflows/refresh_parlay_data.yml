@@ -41,6 +41,13 @@ jobs:
         CLOUDFLARE_ACCOUNT_ID: f53f8e388e691eca52769f9f586713df
       run: python publish_parlay_stats.py
 
+    - name: Sync Picks to D1
+      env:
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: f53f8e388e691eca52769f9f586713df
+      run: python sync_parlay_to_d1.py
+
     - name: Remove Google Secret File
       if: always()
       run: rm -f google_secret.json
