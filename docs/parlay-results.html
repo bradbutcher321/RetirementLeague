@@ -732,8 +732,10 @@
 
       // Kicks off the "Refresh Parlay Data" GitHub Action on demand (see
       // worker/src/parlayRefresh.js) instead of waiting for its 30-minute
-      // schedule. It only dispatches the run -- the sheet -> commit ->
-      // GitHub Pages rebuild still takes a minute or two after that.
+      // schedule. It only dispatches the run -- grading, republishing to
+      // KV, and syncing to D1 (see refresh_parlay_data.yml) typically
+      // finish in under a minute after that, no git commit or GitHub
+      // Pages rebuild involved anymore.
       const jtRefreshBtn = document.getElementById('jt-refresh-btn');
       const jtRefreshStatus = document.getElementById('jt-refresh-status');
       jtRefreshBtn.addEventListener('click', () => {
@@ -743,7 +745,7 @@
           .then(res => res.json().then(body => ({ ok: res.ok, body })))
           .then(({ ok, body }) => {
             if (ok) {
-              jtRefreshStatus.textContent = 'Refresh started — check back in a minute or two.';
+              jtRefreshStatus.textContent = 'Refresh started — check back in about a minute.';
             } else if (body && body.error === 'cooldown') {
               jtRefreshStatus.textContent = `Just refreshed — try again in ${body.retryAfterSeconds}s.`;
             } else {
