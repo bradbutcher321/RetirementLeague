@@ -24,6 +24,7 @@ narrowed using what sports the bet type itself could plausibly be
 more than one person, it's left unresolved rather than guessing.
 """
 import re
+import time
 import unicodedata
 import urllib.parse
 import urllib.request
@@ -33,6 +34,7 @@ from zoneinfo import ZoneInfo
 
 USER_AGENT = "Mozilla/5.0"
 EASTERN = ZoneInfo("America/New_York")
+FETCH_ATTEMPTS = 2  # one retry on a transient failure (timeout, network blip)
 
 # Sport (as used in Auto Parlay Tracker) -> ESPN site-API sport/league
 # path(s) to try, in order. Soccer needs several since there's no single
@@ -135,11 +137,21 @@ def _fetch(espn_path, date_str):
     if espn_path in NEEDS_FBS_GROUP:
         url += "&groups=80&limit=200"
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read())
-    except Exception:
-        data = None
+    # A transient timeout/network blip (the NCAAF scoreboard's a fairly
+    # large payload -- every FBS game that day) shouldn't read as "no such
+    # game" the same way a genuine 0 results does -- confirmed directly:
+    # a scheduled run reported a real, already-final game as ungradeable,
+    # then an identical call moments later succeeded.
+    data = None
+    for attempt in range(FETCH_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+            break
+        except Exception:
+            data = None
+            if attempt < FETCH_ATTEMPTS - 1:
+                time.sleep(1)
     _scoreboard_cache[key] = data
     return data
 
@@ -206,16 +218,20 @@ def search_player(name):
     url = "https://site.web.api.espn.com/apis/search/v2?query=" + urllib.parse.quote(name)
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     hits = []
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read())
-        for group in data.get("results", []):
-            if group.get("type") == "player":
-                for c in group.get("contents", []):
-                    hits.append({"name": c.get("displayName"), "sport": c.get("description"),
-                                 "team": c.get("subtitle")})
-    except Exception:
-        pass
+    for attempt in range(FETCH_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+            for group in data.get("results", []):
+                if group.get("type") == "player":
+                    for c in group.get("contents", []):
+                        hits.append({"name": c.get("displayName"), "sport": c.get("description"),
+                                     "team": c.get("subtitle")})
+            break
+        except Exception:
+            hits = []
+            if attempt < FETCH_ATTEMPTS - 1:
+                time.sleep(1)
     _search_cache[name] = hits
     return hits
 
