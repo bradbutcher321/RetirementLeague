@@ -49,9 +49,12 @@ Standings, Head to Head, Overview, and Game Records all read
   calls directly. It hits the ESPN Fantasy API itself (JS port of the
   vendored `espn_api/` Python library's logic), computes the same payload
   `index.html` needs, and caches it in Workers KV for two minutes so
-  repeated page loads don't hammer ESPN. See `worker/wrangler.toml` for
-  config; `ESPN_SWID`/`ESPN_S2` are set via `wrangler secret put` rather
-  than committed.
+  repeated page loads don't hammer ESPN. It also runs on a Cloudflare Cron
+  Trigger (see the Parlay bullet below) — the one part of this repo's
+  scheduling that isn't GitHub Actions, because GitHub's own `schedule:`
+  trigger proved unreliable at 30-minute granularity. See
+  `worker/wrangler.toml` for config; `ESPN_SWID`/`ESPN_S2`/`GITHUB_PAT` are
+  set via `wrangler secret put` rather than committed.
 - **Site analytics** — every page loads `docs/track.js`, which sends an
   anonymous random id plus the page name to the Worker (`worker/src/analytics.js`),
   stored in a D1 database (`worker/schema.sql`). The Live Dashboard's "Site
@@ -79,10 +82,17 @@ Standings, Head to Head, Overview, and Game Records all read
   script's stats logic unchanged but pushes the result straight to
   Cloudflare KV, which a Worker route (`GET /parlay-stats`) serves to the
   site directly, no git commit or GitHub Pages rebuild involved. Runs
-  every 30 minutes and on-demand
-  (`.github/workflows/refresh_parlay_data.yml`, also dispatchable via the
-  "Refresh Data" button on the Parlay Results page —
-  `worker/src/parlayRefresh.js`, `POST /refresh-parlay`), and also syncs
+  every 30 minutes via a **Cloudflare Cron Trigger** (`worker/wrangler.toml`'s
+  `[triggers]`, handled by `scheduled()` in `worker/src/index.js`), not
+  GitHub Actions' own `schedule:` — that was observed firing every 2.5-5.5
+  hours instead of every 30 minutes (a documented GitHub Actions
+  limitation: the `schedule` event is best-effort and can be silently
+  dropped, worst right at `:00`/`:30` when everyone else's crons also
+  fire). The Cron Trigger dispatches
+  `.github/workflows/refresh_parlay_data.yml` (`workflow_dispatch`-only
+  now) the same way the "Refresh Data" button on the Parlay Results page
+  already did — `worker/src/parlayRefresh.js`, `POST /refresh-parlay` —
+  so both paths share one dispatch function and its cooldown. Also syncs
   every pick into a dedicated D1 database (`sync_parlay_to_d1.py`) for
   durable, queryable storage. **`auto_grade_results.py`** fills in
   Result (Win/Loss) for finished games using real ESPN final scores — it's

@@ -114,4 +114,16 @@ export default {
       return jsonResponse({ error: String(err) }, headers, 502);
     }
   },
+
+  // Cloudflare Cron Trigger (see wrangler.toml [triggers]) -- fires
+  // refresh_parlay_data.yml on a real schedule, since GitHub's own
+  // `schedule:` trigger is best-effort and was observed firing every
+  // 2.5-5.5 hours instead of every 30 minutes. Reuses the same dispatch
+  // the manual "Refresh Data" button calls, cooldown and all.
+  async scheduled(event, env, ctx) {
+    const result = await dispatchParlayRefresh(env);
+    if (result.status >= 400) {
+      console.error("Scheduled parlay refresh dispatch failed:", result.status, result.body);
+    }
+  },
 };
