@@ -85,9 +85,11 @@ Standings, Head to Head, Overview, and Game Records all read
   `worker/src/parlayRefresh.js`, `POST /refresh-parlay`), and also syncs
   every pick into a dedicated D1 database (`sync_parlay_to_d1.py`) for
   durable, queryable storage. **`auto_grade_results.py`** fills in
-  Result (Win/Loss) for finished games using real ESPN final scores —
-  run by hand, not scheduled, since it needs write access to the sheet.
-  See [PARLAY_DATA_MIGRATION.md](PARLAY_DATA_MIGRATION.md) for the full
+  Result (Win/Loss) for finished games using real ESPN final scores — it's
+  the first step in that same 30-minute workflow run, so a pick grades
+  within 30 minutes of its game finishing with nobody needing to run
+  anything by hand; also runnable on-demand and with `--dry-run` to
+  preview without writing. See [PARLAY_DATA_MIGRATION.md](PARLAY_DATA_MIGRATION.md) for the full
   story of this migration (now complete) and
   [PARLAY_GUI_SETUP.md](PARLAY_GUI_SETUP.md) to set up `parlay_gui.py`,
   the desktop tool for entering/grading picks.
@@ -114,8 +116,7 @@ Standings, Head to Head, Overview, and Game Records all read
   (`.github/workflows/sync_scores_to_sheet.yml`) and on-demand: Tuesday
   12:30am Eastern, shortly after Monday Night Football wraps, and again
   Wednesday 5pm Eastern to catch any score ESPN revises after first
-  marking a game final. Unlike `auto_grade_results.py`, which stays
-  manual-only, this one's scheduled; run it locally with `--dry-run` first
+  marking a game final. Run it locally with `--dry-run` first
   to preview a week before trusting a new run, or `--simulate
   YEAR:INTO_WEEK:FROM_WEEK` to exercise the full pipeline against a
   not-yet-played week using an already-final week's real scores (always
