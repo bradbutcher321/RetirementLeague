@@ -13,14 +13,17 @@ career stats in sync with the league's Google Sheet.
   matchups, superlatives, and standings. Fetches directly from the
   `worker/` Cloudflare Worker on page load, auto-refreshing every couple
   minutes.
-- **Franchise** (`docs/franchise.html`) — career stats per manager (record,
-  streaks, rivalries, scoring extremes, money, season-by-season history).
-  Reads a static `docs/data/franchise.json` file, since this data only
-  changes when results are entered.
+- **Franchise** (`docs/franchise.html`) — career stats per manager, picked
+  from a dropdown, in tabs: Performance (streaks, regular season/playoffs),
+  Scoring (points, median, money), Efficiency (starters vs. the best lineup
+  that could've been set — see below), Rivalries, Draft & Roster, and
+  History. Reads a static `docs/data/franchise.json` file, since this data
+  only changes when results are entered.
 - **Parlay Results** (`docs/parlay-results.html`) — the current week's
   parlay (with a week/year picker for past weeks), plus betting stats,
   breakdowns, and "how far parlays get" charts, each with their own
-  year / all-time tabs. Reads a static `docs/data/parlay.json` file.
+  year / all-time tabs. Reads live from the Worker's `/parlay-stats` route
+  (see the Cloudflare architecture note below), not a committed file.
 - **Rule Changes** (`docs/rule-changes.html`) — year tabs (2015, and every
   later year something changed) for a full rules card shown side by side
   with the current rules, each including buy-in/payout amounts and that
@@ -67,9 +70,18 @@ Standings, Head to Head, Overview, and Game Records all read
   reuses `authorize`, `load_money`, and `SHEET_ID` from the older
   **`generate_franchise_data.py`** (the pre-D1, sheet-only version, kept
   around as a shared module rather than a second pipeline) instead of
-  duplicating them. Runs Tuesday/Thursday mornings and on-demand, in the
-  same workflow as the Draft Board and Rule Changes scripts below
-  (`.github/workflows/refresh_franchise_data.yml`).
+  duplicating them. Also computes lineup-efficiency stats (career/season
+  starters-vs-optimal percentage, points left on the bench, the single
+  worst bench miss, and an "optimal record" recomputing regular-season
+  W/L with each week's best possible lineup instead of what was actually
+  started) from D1's `roster_entries` table — per-player weekly box scores,
+  starters and bench both, only populated 2019 on (see `database/schema.sql`)
+  — using a greedy optimal-lineup solver (`optimal_lineup_points`) that
+  fills each strict position slot with its best scorer(s) first, then the
+  flex slot(s) with the best players left over; provably optimal since
+  there's exactly one flex category. Runs Tuesday/Thursday mornings and
+  on-demand, in the same workflow as the Draft Board and Rule Changes
+  scripts below (`.github/workflows/refresh_franchise_data.yml`).
 - **`generate_draft_board_data.py`** — reads `teams`, `draft_picks`, and
   `players` from D1 (plus each player's NFL team, taken from their
   earliest scored `roster_entries` row that year) and writes every year's

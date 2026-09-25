@@ -3,14 +3,20 @@ Builds docs/data/franchise.json from the D1 league-history database instead
 of the Google Sheet -- the D1-backed replacement for generate_franchise_data.py.
 
 Everything ESPN itself knows about (records, streaks, rivalries, score
-extremes, standings, draft position, roster moves, season-by-season history)
-is computed here from D1's teams/matchups/draft_picks tables. The weekly
-"Sacko" (lowest scorer of the week, capped at 3/year since it costs $20 --
-past the cap it falls to the next-lowest scorer, cascading as needed) is
-also computed from D1's scores rather than read off the Parlay Tracker
-sheet; verified against every sheet-recorded week since the rule started in
-2025 and it matches exactly. Only Money Tracker (real-money dues/earnings/
-parlay buy-ins) has no ESPN equivalent and always comes from the sheet.
+extremes, standings, draft position, roster moves, season-by-season history,
+lineup efficiency) is computed here from D1's teams/matchups/draft_picks/
+roster_entries tables. The weekly "Sacko" (lowest scorer of the week, capped
+at 3/year since it costs $20 -- past the cap it falls to the next-lowest
+scorer, cascading as needed) is also computed from D1's scores rather than
+read off the Parlay Tracker sheet; verified against every sheet-recorded
+week since the rule started in 2025 and it matches exactly. Only Money
+Tracker (real-money dues/earnings/parlay buy-ins) has no ESPN equivalent and
+always comes from the sheet.
+
+Lineup efficiency (starters vs. the best lineup that could have been set
+from that week's full roster -- see optimal_lineup_points) only covers
+EFFICIENCY_START_YEAR on, since that's as far back as ESPN's API retains
+per-week bench rosters (see database/schema.sql).
 
 The output JSON shape is identical to generate_franchise_data.py's, so
 docs/franchise.html needs no changes at all.
@@ -31,6 +37,13 @@ OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "
 MEDIAN_ERA_START_YEAR = 2025
 SACKO_START_YEAR = 2025
 SACKO_CAP_PER_YEAR = 3
+# roster_entries (per-player weekly box scores, starters + bench) only goes
+# back to 2019 -- ESPN's API doesn't retain that detail for earlier seasons
+# (see database/schema.sql) -- so lineup-efficiency stats can't cover a
+# player's full career the way the rest of this file's stats do.
+EFFICIENCY_START_YEAR = 2019
+STRICT_LINEUP_SLOTS = ("QB", "RB", "WR", "TE", "D/ST", "K")
+FLEX_ELIGIBLE_POSITIONS = ("RB", "WR", "TE")
 
 
 # --------------------------------------------------------------------------
@@ -50,7 +63,12 @@ def load_d1():
         "SELECT year, round_num, round_pick, team_id FROM draft_picks WHERE round_num = 1"
     )
     season_sackos = hl.d1_query("SELECT year, team_id, opponent_team_id FROM season_sackos")
-    return teams, matchups, draft_picks, season_sackos
+    league_settings = hl.d1_query("SELECT year, settings_json FROM league_settings")
+    roster_entries = hl.d1_query(
+        "SELECT year, week, team_id, player_id, player_name, position, is_starter, points "
+        f"FROM roster_entries WHERE year >= {EFFICIENCY_START_YEAR}"
+    )
+    return teams, matchups, draft_picks, season_sackos, league_settings, roster_entries
 
 
 # --------------------------------------------------------------------------
@@ -330,12 +348,172 @@ def compute_season_history(teams_by_player, games):
 
 
 # --------------------------------------------------------------------------
+# Lineup efficiency (starters vs. optimal, 2019+ only -- see EFFICIENCY_START_YEAR)
+# --------------------------------------------------------------------------
+
+def roster_slot_counts_by_year(league_settings):
+    """year -> {slot: starting-slot count}, from league_settings.settings_json,
+    with the two non-starting slots (BE, IR) dropped -- what's left is
+    exactly the lineup optimal_lineup_points needs to fill."""
+    out = {}
+    for row in league_settings:
+        counts = json.loads(row["settings_json"]).get("position_slot_counts") or {}
+        out[row["year"]] = {k: v for k, v in counts.items() if k not in ("BE", "IR")}
+    return out
+
+
+def optimal_lineup_points(entries, slot_counts):
+    """The most points a valid starting lineup could have scored from this
+    team-week's full roster (bench and IR included -- anyone rostered was
+    legally startable that week), given that year's starting-slot structure.
+    Fills each strict slot (QB/RB/WR/TE/D-ST/K) with its best available
+    player(s) first, then the flex slot(s) (RB/WR/TE) with the best players
+    left over regardless of position. That greedy order is provably optimal
+    here -- there's exactly one flex category and no overlap against the
+    strict slots, so a player who out-scores the field at their own strict
+    position can never be better used by bumping a worse player into flex
+    instead.
+
+    One known gap: eligibility is read from the player's primary `position`
+    that week, not ESPN's actual per-player eligible-slot list (not stored
+    here), so a rare real case like 2020's Taysom Hill -- ESPN listed him as
+    TE-eligible that season despite being a true QB -- is treated as
+    QB-only. That can only ever make this function's answer a slight
+    underestimate of the true optimal, never an overestimate.
+    """
+    by_pos = {}
+    for e in entries:
+        by_pos.setdefault(e["position"], []).append(e)
+    used_ids, total = set(), 0.0
+    for pos in STRICT_LINEUP_SLOTS:
+        need = slot_counts.get(pos, 0)
+        if not need:
+            continue
+        for e in sorted(by_pos.get(pos, []), key=lambda e: -(e["points"] or 0))[:need]:
+            used_ids.add(e["player_id"])
+            total += e["points"] or 0
+    flex_need = slot_counts.get("RB/WR/TE", 0)
+    if flex_need:
+        flex_pool = sorted(
+            (e for e in entries if e["position"] in FLEX_ELIGIBLE_POSITIONS and e["player_id"] not in used_ids),
+            key=lambda e: -(e["points"] or 0),
+        )
+        total += sum(e["points"] or 0 for e in flex_pool[:flex_need])
+    return round(total, 2)
+
+
+def compute_team_week_efficiency(roster_entries, matchups, slot_counts_by_year):
+    """One row per (year, week, team_id) that has both a decided matchup and
+    roster data: the actual score (what was really started, from the
+    matchup itself), the optimal score (see optimal_lineup_points above),
+    and that week's single highest-scoring benched player (for the "worst
+    bench miss" stat). Shared across every player's aggregation below,
+    computed once rather than re-scanned per player."""
+    entries_by_team_week = {}
+    for e in roster_entries:
+        entries_by_team_week.setdefault((e["year"], e["week"], e["team_id"]), []).append(e)
+
+    matchup_by_team_week = {(m["year"], m["week"], m["team_id"]): m for m in matchups if m["outcome"] is not None}
+
+    rows = []
+    for (year, week, team_id), entries in entries_by_team_week.items():
+        slot_counts = slot_counts_by_year.get(year)
+        m = matchup_by_team_week.get((year, week, team_id))
+        if not slot_counts or not m or m["team_score"] is None:
+            continue
+        bench = [e for e in entries if not e["is_starter"]]
+        best_bench = max(bench, key=lambda e: e["points"] or 0) if bench else None
+        rows.append({
+            "year": year, "week": week, "team_id": team_id,
+            "bracket_type": m["bracket_type"], "opponent_score": m["opponent_score"],
+            "actual": round(m["team_score"], 2),
+            "optimal": optimal_lineup_points(entries, slot_counts),
+            "best_bench": best_bench,
+        })
+    return rows
+
+
+def compute_efficiency(team_week_rows, team_id_to_player_by_year, player):
+    rows = [r for r in team_week_rows if team_id_to_player_by_year.get((r["year"], r["team_id"])) == player]
+    if not rows:
+        return None
+
+    total_actual = sum(r["actual"] for r in rows)
+    total_optimal = sum(r["optimal"] for r in rows)
+    # A tiny epsilon rather than exact equality -- these are sums of
+    # rounded-to-2-decimal floats, so a truly "perfect" lineup can still be
+    # off by a fraction of a cent's worth of floating-point noise.
+    perfect_lineups = sum(1 for r in rows if r["optimal"] - r["actual"] <= 0.005)
+
+    worst = max(rows, key=lambda r: r["optimal"] - r["actual"])
+    worst_game = None
+    if worst["optimal"] - worst["actual"] > 0.005:
+        worst_game = {
+            "year": worst["year"], "week": worst["week"], "bracket_type": worst["bracket_type"],
+            "actual": worst["actual"], "optimal": worst["optimal"],
+            "diff": round(worst["optimal"] - worst["actual"], 2),
+        }
+
+    bench_rows = [r for r in rows if r["best_bench"]]
+    worst_bench_miss = None
+    if bench_rows:
+        wb = max(bench_rows, key=lambda r: r["best_bench"]["points"] or 0)
+        b = wb["best_bench"]
+        worst_bench_miss = {
+            "year": wb["year"], "week": wb["week"], "bracket_type": wb["bracket_type"],
+            "player_name": b["player_name"], "points": round(b["points"] or 0, 2),
+            "actual_score": wb["actual"], "optimal_score": wb["optimal"],
+        }
+
+    # Optimal record is regular-season only, matching how "record" is
+    # scoped everywhere else in this file -- and compares this player's
+    # optimal score against the OPPONENT'S REAL score, i.e. "what if only
+    # I had set my best lineup," not a hypothetical rematch.
+    reg_rows = [r for r in rows if r["bracket_type"] == "NONE" and r["opponent_score"] is not None]
+
+    def outcome(mine, theirs):
+        return "w" if mine > theirs else "l" if mine < theirs else "t"
+
+    def record(score_key):
+        w = sum(1 for r in reg_rows if outcome(r[score_key], r["opponent_score"]) == "w")
+        l = sum(1 for r in reg_rows if outcome(r[score_key], r["opponent_score"]) == "l")
+        t = sum(1 for r in reg_rows if outcome(r[score_key], r["opponent_score"]) == "t")
+        return {"w": w, "l": l, "t": t}
+
+    actual_record, optimal_record = record("actual"), record("optimal")
+
+    by_year = {}
+    for r in rows:
+        y = by_year.setdefault(r["year"], {"actual": 0.0, "optimal": 0.0, "games": 0})
+        y["actual"] += r["actual"]
+        y["optimal"] += r["optimal"]
+        y["games"] += 1
+    by_season = [
+        {"year": year, "games": v["games"], "pct": round(v["actual"] / v["optimal"] * 100, 1) if v["optimal"] else None}
+        for year, v in sorted(by_year.items())
+    ]
+
+    return {
+        "games_analyzed": len(rows),
+        "career_pct": round(total_actual / total_optimal * 100, 1) if total_optimal else None,
+        "points_left_on_bench": round(total_optimal - total_actual, 2),
+        "avg_points_left": round((total_optimal - total_actual) / len(rows), 2),
+        "perfect_lineups": perfect_lineups,
+        "worst_game": worst_game,
+        "worst_bench_miss": worst_bench_miss,
+        "optimal_record": {"actual": actual_record, "optimal": optimal_record,
+                            "extra_wins": optimal_record["w"] - actual_record["w"], "games": len(reg_rows)},
+        "by_season": by_season,
+    }
+
+
+# --------------------------------------------------------------------------
 # Main
 # --------------------------------------------------------------------------
 
 def main():
-    print("Loading D1 (teams + matchups + draft_picks + season_sackos)...")
-    teams, matchups, draft_picks, season_sackos = load_d1()
+    print("Loading D1 (teams + matchups + draft_picks + season_sackos + league_settings + roster_entries)...")
+    teams, matchups, draft_picks, season_sackos, league_settings, roster_entries = load_d1()
 
     # Overwrite ESPN's own final_standing with the league's actual rule --
     # see history_lib.apply_final_standings.
@@ -382,6 +560,9 @@ def main():
     money_block = load_money(spreadsheet)
     weekly_sacko_counts = compute_weekly_sackos(matchups, team_id_to_player_by_year)
 
+    slot_counts_by_year = roster_slot_counts_by_year(league_settings)
+    team_week_efficiency = compute_team_week_efficiency(roster_entries, matchups, slot_counts_by_year)
+
     players_out = []
     for player in all_players:
         teams_by_player = [t for t in teams if team_id_to_player_by_year.get((t["year"], t["team_id"])) == player]
@@ -416,11 +597,13 @@ def main():
             "median_luck": median_luck,
             "money": money_block.get(player),
             "season_history": compute_season_history(teams_by_player, games),
+            "efficiency": compute_efficiency(team_week_efficiency, team_id_to_player_by_year, player),
         })
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "median_era_start_year": MEDIAN_ERA_START_YEAR,
+        "efficiency_start_year": EFFICIENCY_START_YEAR,
         "players": players_out,
     }
 

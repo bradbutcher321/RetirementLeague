@@ -15,6 +15,11 @@
   .franchise-select{ width: 190px; background: var(--surface); border: 1px solid var(--line); color: var(--text); font-family: var(--body); font-size: 1rem; font-weight: 600; padding: 10px 14px; border-radius: 4px; }
   .franchise-select:focus{ outline: 1px solid var(--gold); }
 
+  .tabs{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tab{ background: none; border: 1px solid var(--line); color: var(--text-dim); font-family: var(--body); font-size: 0.82rem; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+  .tab.on{ border-color: var(--gold); color: var(--gold); background: rgba(186,155,55,0.10); }
+  .tab-group + .tab-group{ margin-top: 14px; }
+
   /* ---------- Cards ---------- */
   .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
   .card-grid.three{ grid-template-columns: repeat(3, 1fr); }
@@ -164,13 +169,10 @@
     </div>
 
     <section><div id="hero-container"><div class="loading-row">Loading franchise…</div></div></section>
-    <section><h2>Streaks</h2><div class="card-grid three" id="streaks-container"></div></section>
-    <section><h2>Regular Season &amp; Playoffs</h2><div class="card-grid" id="performance-container"></div></section>
-    <section><h2>Scoring and More</h2><div class="card-grid" id="scoring-container"></div></section>
-    <section><h2>Rivalries</h2><div class="card-grid" id="rivalry-container"></div></section>
-    <section><h2>Luck Index</h2><div id="luck-container"></div></section>
-    <section><h2>Draft &amp; Roster Management</h2><div class="card-grid" id="draft-container"></div></section>
-    <section><h2>Season History</h2><div id="history-container"></div></section>
+    <section>
+      <div class="tabs" id="tabs"></div>
+      <div id="tab-content"></div>
+    </section>
 
     <footer>Data via ESPN Fantasy (Money Tracker from the league sheet) · Updates Tuesday &amp; Thursday mornings</footer>
   </div>
@@ -317,6 +319,46 @@
       card('Roster Moves', pods([['Total Moves', fmt(p.moves.total), { hl: true }], ['Avg / Season', fmt(p.moves.avg_per_season, 1)], ['Busiest Season', b ? `'${String(b.year).slice(2)}` : '—', { sub: b ? `${b.moves} moves` : '' }]]));
   }
 
+  const BRACKET_LABELS = { NONE: 'Regular Season', WINNERS_BRACKET: 'Playoffs', WINNERS_CONSOLATION_LADDER: 'Playoffs (Consolation)', LOSERS_CONSOLATION_LADDER: 'Consolation' };
+  const bracketLabel = bt => BRACKET_LABELS[bt] || bt;
+  const weekLabel = r => `${bracketLabel(r.bracket_type)} · ${r.year} Week ${r.week}`;
+
+  function renderEfficiency(p) {
+    const e = p.efficiency;
+    if (!e) {
+      return card('Lineup Efficiency', `<div class="empty-note">No box-score data for this franchise since ${data.efficiency_start_year} -- ESPN doesn't retain per-week rosters further back.</div>`);
+    }
+    const headline = card('Lineup Efficiency', pods([
+      ['Career Efficiency', fmtPct(e.career_pct), { hl: true }],
+      ['Left on Bench', fmt(e.points_left_on_bench, 1), { hl: true, sub: `${fmt(e.avg_points_left, 1)} / game avg` }],
+      ['Perfect Lineups', fmt(e.perfect_lineups), { hl: true, sub: `of ${e.games_analyzed} games` }],
+    ]) + `<div class="row-sub" style="text-align:center;padding:2px 4px 6px">Since ${data.efficiency_start_year} -- the earliest year ESPN retains full weekly rosters</div>`);
+
+    const rec = e.optimal_record;
+    const fmtRec = r => `${r.w}-${r.l}${r.t ? '-' + r.t : ''}`;
+    const recordCard = card('Optimal Record', pods([
+      ['Actual', fmtRec(rec.actual)],
+      ['Optimal', fmtRec(rec.optimal), { hl: true }],
+      ['Extra Wins', rec.extra_wins > 0 ? `+${rec.extra_wins}` : fmt(rec.extra_wins), rec.extra_wins > 0 ? { tone: 'win' } : { hl: true }],
+    ]) + `<div class="row-sub" style="text-align:center;padding:2px 4px 6px">Regular season only · vs. each week's real opponent score · ${rec.games} games</div>`);
+
+    const wg = e.worst_game;
+    const worstGameCard = card('Worst Lineup-Setting Week', wg
+      ? `<div class="feature"><div class="luck-val unlucky">-${fmt(wg.diff, 1)}</div>
+          <div class="feature-sub">Scored ${fmt(wg.actual, 1)}, best possible lineup was ${fmt(wg.optimal, 1)}<br>${weekLabel(wg)}</div></div>`
+      : '<div class="empty-note">Every week was optimal, or close to it.</div>');
+
+    const wb = e.worst_bench_miss;
+    const worstBenchCard = card('Worst Bench Miss', wb
+      ? `<div class="feature"><div class="luck-val unlucky">${fmt(wb.points, 1)}</div>
+          <div class="feature-sub">${esc(wb.player_name)} put up ${fmt(wb.points, 1)} pts on your bench<br>${weekLabel(wb)}</div></div>`
+      : '<div class="empty-note">No bench data yet.</div>');
+
+    const seasonCard = card('By Season', rows(e.by_season.map(s => [String(s.year), [[fmtPct(s.pct), 'Efficiency'], [fmt(s.games), 'Games']]])));
+
+    return headline + `<div class="card-grid">${recordCard}${worstGameCard}${worstBenchCard}${seasonCard}</div>`;
+  }
+
   function badge(season) {
     const games = (season.reg_record || '0-0').split('-').reduce((a, b) => a + (parseInt(b, 10) || 0), 0);
     if (games < 10) return '<span class="badge progress">In Progress</span>';
@@ -336,19 +378,30 @@
     return `<div class="stat-card"><div class="stat-card-body">${list || '<div class="empty-note">No seasons on record yet.</div>'}</div></div>`;
   }
 
-  let data = null;
+  const TABS = [
+    { label: 'Performance', render: p => `<div class="card-grid three">${renderStreaks(p)}</div><div class="tab-group card-grid">${renderPerformance(p)}</div>` },
+    { label: 'Scoring', render: p => `<div class="card-grid">${renderScoring(p)}</div>` },
+    { label: 'Efficiency', render: p => renderEfficiency(p) },
+    { label: 'Rivalries', render: p => `<div class="card-grid">${renderRivalries(p)}</div><div class="tab-group">${renderLuck(p)}</div>` },
+    { label: 'Draft & Roster', render: p => `<div class="card-grid">${renderDraft(p)}</div>` },
+    { label: 'History', render: p => renderHistory(p) },
+  ];
+
+  let data = null, tab = 0;
   function show(name) {
     const p = data.players.find(x => x.name === name);
     if (!p) return;
     document.getElementById('hero-container').innerHTML = renderHero(p);
-    document.getElementById('streaks-container').innerHTML = renderStreaks(p);
-    document.getElementById('performance-container').innerHTML = renderPerformance(p);
-    document.getElementById('scoring-container').innerHTML = renderScoring(p);
-    document.getElementById('rivalry-container').innerHTML = renderRivalries(p);
-    document.getElementById('luck-container').innerHTML = renderLuck(p);
-    document.getElementById('draft-container').innerHTML = renderDraft(p);
-    document.getElementById('history-container').innerHTML = renderHistory(p);
+    document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
+    document.getElementById('tab-content').innerHTML = TABS[tab].render(p);
   }
+
+  document.addEventListener('click', e => {
+    const t = e.target.closest('.tab');
+    if (!t) return;
+    tab = Number(t.dataset.i);
+    show(document.getElementById('franchise-select').value);
+  });
 
   fetch('data/franchise.json', { cache: 'no-store' }).then(r => r.json()).then(d => {
     data = d;
