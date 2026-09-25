@@ -235,16 +235,28 @@ def box_scores_to_rows(year, week, box_scores) -> tuple:
         is_playoff = 1 if bracket_type in REAL_PLAYOFF_BRACKET_TYPES else 0
         home_id = box.home_team.team_id if box.home_team is not None else None
         away_id = box.away_team.team_id if box.away_team is not None else None
-        sides = [(home_id, box.home_score, away_id, box.away_score, box.home_lineup)]
+        sides = [(home_id, box.home_score, away_id, box.away_score, box.home_lineup, True)]
         if away_id is not None:
-            sides.append((away_id, box.away_score, home_id, box.home_score, box.away_lineup))
+            sides.append((away_id, box.away_score, home_id, box.home_score, box.away_lineup, False))
 
-        for team_id, team_score, opp_id, opp_score, lineup in sides:
+        # box.winner ('UNDECIDED' until final) is the reliable signal here,
+        # not the scores -- ESPN's box score API returns 0 (not None) for
+        # both scores on a matchup period that's technically "current"
+        # (currentMatchupPeriod ticks over before that week's games
+        # actually kick off) but hasn't been played yet, and a real but
+        # partial live total once it has, so neither case can be told
+        # apart from a finished game by score alone.
+        def outcome_for(is_home):
+            if box.winner == "UNDECIDED" or opp_id is None:
+                return None
+            if box.winner == "TIE":
+                return "T"
+            return "W" if (box.winner == "HOME") == is_home else "L"
+
+        for team_id, team_score, opp_id, opp_score, lineup, is_home in sides:
             if team_id is None:
                 continue
-            outcome = None
-            if opp_id is not None and team_score is not None and opp_score is not None:
-                outcome = "T" if team_score == opp_score else ("W" if team_score > opp_score else "L")
+            outcome = outcome_for(is_home)
             matchup_rows.append((year, week, team_id, opp_id, team_score, opp_score, is_playoff, outcome, bracket_type))
 
             for p in lineup:

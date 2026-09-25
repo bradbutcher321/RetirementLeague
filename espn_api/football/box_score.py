@@ -5,6 +5,12 @@ class BoxScore(object):
     def __init__(self, data, pro_schedule, positional_rankings, week, year, player_team_cache=None):
         self.matchup_type = data.get('playoffTierType', 'NONE')
         self.is_playoff = self.matchup_type != 'NONE'
+        # 'UNDECIDED' until the matchup is actually final -- home_score/
+        # away_score are 0 (not None), not missing, for a period that's
+        # technically "current" but hasn't kicked off yet, or a partial
+        # live total once it has, so they can't be used on their own to
+        # tell an unplayed/in-progress game from a finished one.
+        self.winner = data.get('winner', 'UNDECIDED')
 
         (self.home_team, self.home_score, self.home_projected, self.home_lineup) = self._get_team_data('home', data, pro_schedule, positional_rankings, week, year, player_team_cache)
         self.home_projected = self._get_projected_score(self.home_projected, self.home_lineup)
