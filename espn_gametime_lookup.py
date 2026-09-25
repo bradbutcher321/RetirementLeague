@@ -32,7 +32,18 @@ import json
 from datetime import date, timedelta, datetime, timezone
 from zoneinfo import ZoneInfo
 
-USER_AGENT = "Mozilla/5.0"
+# A bare "Mozilla/5.0" doesn't match any real browser's actual UA string,
+# which is itself a common bot-detection signal -- a full, current desktop
+# Chrome UA plus the headers a real browser sends alongside it.
+USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
+REQUEST_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.espn.com/",
+    "Origin": "https://www.espn.com",
+}
 EASTERN = ZoneInfo("America/New_York")
 FETCH_ATTEMPTS = 2  # one retry on a transient failure (timeout, network blip)
 
@@ -136,7 +147,7 @@ def _fetch(espn_path, date_str):
     url = f"https://site.api.espn.com/apis/site/v2/sports/{espn_path}/scoreboard?dates={date_str}"
     if espn_path in NEEDS_FBS_GROUP:
         url += "&groups=80&limit=200"
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, headers=REQUEST_HEADERS)
     # A transient timeout/network blip (the NCAAF scoreboard's a fairly
     # large payload -- every FBS game that day) shouldn't read as "no such
     # game" the same way a genuine 0 results does -- confirmed directly:
@@ -225,7 +236,7 @@ def search_player(name):
     if name in _search_cache:
         return _search_cache[name]
     url = "https://site.web.api.espn.com/apis/search/v2?query=" + urllib.parse.quote(name)
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, headers=REQUEST_HEADERS)
     hits = []
     for attempt in range(FETCH_ATTEMPTS):
         try:
