@@ -97,20 +97,21 @@ Standings, Head to Head, Overview, and Game Records all read
   durable, queryable storage. **`auto_grade_results.py`** fills in
   Result (Win/Loss) for finished games using real ESPN final scores; also
   runnable on-demand and with `--dry-run` to preview without writing. It's
-  still the first step in that same 30-minute cloud workflow run, but
-  ESPN blocks its scoreboard/search API outright from GitHub Actions' and
-  Cloudflare's shared IP ranges (confirmed directly: HTTP 403 on every
-  attempt, unaffected by browser-real headers, an authenticated ESPN
-  session cookie, or a 37s retry/backoff schedule — see
-  `espn_gametime_lookup.py`'s `_fetch`), so grading only actually succeeds
-  there when a pick doesn't need a live score lookup. **`run_parlay_refresh.ps1`**
-  runs the same three steps (grade, publish, sync) locally instead, on a
+  the first step in that same 30-minute cloud workflow run, and grading
+  works from there again as of `espn_gametime_lookup.py`'s `_fetch` using
+  `site.web.api.espn.com` instead of `site.api.espn.com` — same request
+  shape, but not behind the WAF rule that blocked every scoreboard lookup
+  from GitHub Actions'/Cloudflare's shared IP ranges outright (confirmed
+  directly: HTTP 403 on `site.api.espn.com` from every cloud IP tried,
+  unaffected by browser-real headers, an authenticated ESPN session
+  cookie, or a 37s retry/backoff schedule; `site.web.api.espn.com` just
+  works — `search_player()` in the same file was already on that host).
+  **`run_parlay_refresh.ps1`** runs the same three steps (grade, publish,
+  sync) locally as a fallback, but isn't currently scheduled — it was a
   Windows Scheduled Task ("RetirementLeague Parlay Refresh") every 30
-  minutes — proven reliable, since this machine's IP was never blocked —
-  logging to `logs/parlay_refresh.log` (gitignored). The cloud schedule
-  stays in place too, since the publish/sync steps don't need ESPN and
-  still keep the site's stats fresh even when this machine is off; only
-  grading depends on the local run. See [PARLAY_DATA_MIGRATION.md](PARLAY_DATA_MIGRATION.md) for the full
+  minutes while cloud grading was blocked, removed now that it isn't;
+  re-register it the same way if `site.web.api.espn.com` ever gets
+  blocked too. See [PARLAY_DATA_MIGRATION.md](PARLAY_DATA_MIGRATION.md) for the full
   story of this migration (now complete) and
   [PARLAY_GUI_SETUP.md](PARLAY_GUI_SETUP.md) to set up `parlay_gui.py`,
   the desktop tool for entering/grading picks.
