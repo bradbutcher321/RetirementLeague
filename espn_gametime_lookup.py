@@ -153,7 +153,13 @@ def _fetch(espn_path, date_str):
     key = (espn_path, date_str)
     if key in _scoreboard_cache:
         return _scoreboard_cache[key]
-    url = f"https://site.api.espn.com/apis/site/v2/sports/{espn_path}/scoreboard?dates={date_str}"
+    # site.web.api.espn.com, not site.api.espn.com -- confirmed directly:
+    # identical path/query shape, correctly date-filtered (unlike
+    # cdn.espn.com's core scoreboard, which silently ignores dates= and
+    # only respects week=+year=), and not behind the block site.api.espn.com
+    # is (HTTP 403 from every cloud IP tried, headers/cookies/retries all
+    # made no difference). search_player() below was already on this host.
+    url = f"https://site.web.api.espn.com/apis/site/v2/sports/{espn_path}/scoreboard?dates={date_str}"
     if espn_path in NEEDS_FBS_GROUP:
         url += "&groups=80&limit=200"
     req = urllib.request.Request(url, headers=REQUEST_HEADERS)
