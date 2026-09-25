@@ -148,10 +148,19 @@ def _fetch(espn_path, date_str):
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read())
             break
-        except Exception:
+        except Exception as e:
+            # Swallowed by every caller (a lookup failure just means "no
+            # match" to them), but printed here so a real cause -- rate
+            # limiting, a block on the runner's shared IP range, a genuine
+            # timeout -- shows up in the run's own log instead of looking
+            # identical to a game that's simply not final yet.
+            print(f"  [espn_gametime_lookup] fetch failed ({espn_path} {date_str}, "
+                  f"attempt {attempt + 1}/{FETCH_ATTEMPTS}): {type(e).__name__}: {e}")
             data = None
             if attempt < FETCH_ATTEMPTS - 1:
                 time.sleep(1)
+    if data is not None:
+        print(f"  [espn_gametime_lookup] fetched {espn_path} {date_str}: {len(data.get('events', []))} event(s)")
     _scoreboard_cache[key] = data
     return data
 
