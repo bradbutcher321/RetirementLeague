@@ -92,10 +92,24 @@ Standings, Head to Head, Overview, and Game Records all read
   [PARLAY_GUI_SETUP.md](PARLAY_GUI_SETUP.md) to set up `parlay_gui.py`,
   the desktop tool for entering/grading picks.
 
-- **`generate_league_data.py`** — writes `docs/data/league.json` (the game
-  log, per-season rollups, draft order, and earnings) from Game Tracker,
-  PlayerStats, RandomInfo, and Money Tracker. Runs every few hours and
-  on-demand (`.github/workflows/refresh_league_data.yml`).
+- **`generate_league_data_d1.py`** — writes `docs/data/league.json`'s
+  per-season rollups and draft order from D1 (`teams`/`matchups`/
+  `draft_picks`), the same way `generate_franchise_data_d1.py` does. The raw
+  game log (`games`, with each game's Reg/Play/Champ/3rd/5th/Sacko/Cons/Bye
+  type tag) and earnings still come from Game Tracker/Money Tracker — D1
+  can't reproduce those bracket-position labels, and Money Tracker has no
+  ESPN equivalent. Runs every few hours and on-demand
+  (`.github/workflows/refresh_league_data.yml`).
+- **Final standings**: both scripts above override ESPN's own
+  `final_standing` with the league's actual rule
+  (`database/history_lib.compute_final_standings`, one shared function so
+  Franchise and Standings/Overview can never disagree) — a team that made
+  the real playoff bracket keeps ESPN's result; every other team just keeps
+  its regular-season standing, since the "loser's bracket" placement games
+  don't mean anything to this league; and from 2025 on, the two worst
+  regular-season teams' spots are instead decided by the Sacko game
+  (`season_sackos`) — the winner takes 2nd-to-last, the loser is the Sacko,
+  dead last.
 - **`generate_rule_changes_data.py`** — writes `docs/data/rule-changes.json`
   from D1's `league_settings` and `teams` tables (real ESPN rule and
   manager-roster history, every year 2015-present) plus the sheet's
@@ -117,7 +131,8 @@ espn_api/               Vendored ESPN Fantasy API client library (Python, used b
 generate_franchise_data_d1.py  Franchise page data pipeline (D1-backed; shares helpers with generate_franchise_data.py)
 generate_draft_board_data.py  Draft Board page data pipeline
 generate_parlay_data.py       Parlay Results page data pipeline
-generate_league_data.py       Standings / Head to Head / Overview / Game Records data pipeline
+generate_league_data_d1.py    Standings / Head to Head / Overview / Game Records data pipeline (D1-backed)
 generate_rule_changes_data.py Rule Changes page data pipeline
+database/history_lib.py       Shared D1 row-building + final-standings logic, used by every *_d1.py script above
 .github/workflows/      Scheduled + manual automation
 ```

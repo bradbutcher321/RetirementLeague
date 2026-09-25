@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T23:16:32.212008+00:00",
+  "generated_at": "2026-09-25T00:50:32.421078+00:00",
   "median_era_start_year": 2025,
   "players": [
     {
@@ -161,7 +161,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 9,
+          "final_standing": 10,
           "champion": false,
           "points_for": 1412.54
         },
@@ -227,7 +227,7 @@
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 9,
+          "final_standing": 7,
           "champion": false,
           "points_for": 1606.82
         },
@@ -238,7 +238,7 @@
           "reg_standing": 6,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 6,
           "champion": false,
           "points_for": 195.48
         }
@@ -367,7 +367,7 @@
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 7,
           "champion": false,
           "points_for": 1383.84
         },
@@ -378,7 +378,7 @@
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 6,
+          "final_standing": 7,
           "champion": false,
           "points_for": 1462.28
         },
@@ -389,7 +389,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 10,
           "champion": false,
           "points_for": 1366.92
         },
@@ -444,7 +444,7 @@
           "reg_standing": 12,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 12,
           "champion": false,
           "points_for": 1543.12
         },
@@ -488,7 +488,7 @@
           "reg_standing": 11,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 11,
           "champion": false,
           "points_for": 163.68
         }
@@ -658,7 +658,7 @@
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 9,
           "champion": false,
           "points_for": 1480.0
         },
@@ -669,7 +669,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 10,
+          "final_standing": 8,
           "champion": false,
           "points_for": 1604.52
         },
@@ -680,7 +680,7 @@
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 10,
+          "final_standing": 7,
           "champion": false,
           "points_for": 1665.08
         },
@@ -691,7 +691,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 11,
+          "final_standing": 10,
           "champion": false,
           "points_for": 1640.06
         },
@@ -713,7 +713,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 10,
+          "final_standing": 8,
           "champion": false,
           "points_for": 1649.86
         },
@@ -735,7 +735,7 @@
           "reg_standing": 12,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 12,
           "champion": false,
           "points_for": 163.46
         }
@@ -941,7 +941,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 10,
+          "final_standing": 8,
           "champion": false,
           "points_for": 1652.58
         },
@@ -985,7 +985,7 @@
           "reg_standing": 4,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 4,
           "champion": false,
           "points_for": 228.94
         }
@@ -1119,7 +1119,7 @@
           "reg_standing": 6,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 7,
+          "final_standing": 6,
           "champion": false,
           "points_for": 1474.48
         },
@@ -1130,7 +1130,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 7,
+          "final_standing": 8,
           "champion": false,
           "points_for": 1453.36
         },
@@ -1218,7 +1218,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 9,
+          "final_standing": 10,
           "champion": false,
           "points_for": 1689.72
         },
@@ -1229,7 +1229,7 @@
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 7,
+          "final_standing": 9,
           "champion": false,
           "points_for": 1575.42
         },
@@ -1240,7 +1240,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 8,
           "champion": false,
           "points_for": 158.82
         }
@@ -1383,7 +1383,7 @@
           "reg_standing": 6,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 6,
           "champion": false,
           "points_for": 1399.06
         },
@@ -1394,7 +1394,7 @@
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 7,
+          "final_standing": 9,
           "champion": false,
           "points_for": 1281.56
         },
@@ -1438,7 +1438,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 10,
           "champion": false,
           "points_for": 1636.66
         },
@@ -1449,7 +1449,7 @@
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 7,
+          "final_standing": 9,
           "champion": false,
           "points_for": 1660.84
         },
@@ -1460,7 +1460,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 9,
+          "final_standing": 10,
           "champion": false,
           "points_for": 1567.04
         },
@@ -1493,7 +1493,7 @@
           "reg_standing": 5,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 5,
           "champion": false,
           "points_for": 259.76
         }
@@ -1626,7 +1626,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 6,
+          "final_standing": 8,
           "champion": false,
           "points_for": 1382.58
         },
@@ -1648,7 +1648,7 @@
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 9,
+          "final_standing": 7,
           "champion": false,
           "points_for": 1403.14
         },
@@ -1670,7 +1670,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 10,
+          "final_standing": 8,
           "champion": false,
           "points_for": 1484.26
         },
@@ -1714,7 +1714,7 @@
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 9,
           "champion": false,
           "points_for": 1509.72
         },
@@ -1747,7 +1747,7 @@
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 9,
           "champion": false,
           "points_for": 153.8
         }
@@ -1869,7 +1869,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 10,
+          "final_standing": 8,
           "champion": false,
           "points_for": 1313.94
         },
@@ -1880,7 +1880,7 @@
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 10,
+          "final_standing": 9,
           "champion": false,
           "points_for": 1494.58
         },
@@ -1968,7 +1968,7 @@
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 7,
           "champion": false,
           "points_for": 161.44
         }
@@ -2017,7 +2017,7 @@
           "best_regular_finish": 1,
           "worst_regular_finish": 11,
           "playoff_appearances": 5,
-          "champ_appearances": 0,
+          "champ_appearances": 1,
           "championships": 0,
           "sackos": 0,
           "byes": 2
@@ -2136,7 +2136,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 7,
+          "final_standing": 8,
           "champion": false,
           "points_for": 1905.24
         },
@@ -2147,7 +2147,7 @@
           "reg_standing": 11,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 9,
+          "final_standing": 11,
           "champion": false,
           "points_for": 1697.84
         },
@@ -2191,7 +2191,7 @@
           "reg_standing": 2,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 2,
           "champion": false,
           "points_for": 250.88
         }
@@ -2328,7 +2328,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 10,
           "champion": false,
           "points_for": 1632.96
         },
@@ -2350,7 +2350,7 @@
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 12,
+          "final_standing": 7,
           "champion": false,
           "points_for": 1623.8
         },
@@ -2394,7 +2394,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 10,
           "champion": false,
           "points_for": 180.5
         }
@@ -2439,8 +2439,8 @@
           "best_regular_finish": 1,
           "worst_regular_finish": 8,
           "playoff_appearances": 2,
-          "champ_appearances": 1,
-          "championships": 0,
+          "champ_appearances": 2,
+          "championships": 1,
           "sackos": 0,
           "byes": 0
         }
@@ -2558,8 +2558,8 @@
           "reg_standing": 1,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
-          "champion": false,
+          "final_standing": 1,
+          "champion": true,
           "points_for": 262.36
         }
       ]
@@ -2687,7 +2687,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 10,
+          "final_standing": 8,
           "champion": false,
           "points_for": 1633.08
         },
@@ -2698,7 +2698,7 @@
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 9,
           "champion": false,
           "points_for": 1666.82
         },
@@ -2720,7 +2720,7 @@
           "reg_standing": 3,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 0,
+          "final_standing": 3,
           "champion": false,
           "points_for": 244.56
         }
@@ -2879,7 +2879,7 @@
           "total_pf": 2650.82,
           "total_pa": 3061.28,
           "avg_pf": 82.84,
-          "avg_pa": 95.66
+          "avg_pa": 95.67
         },
         "median": {
           "wins": 0,
@@ -2972,7 +2972,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 9,
+          "final_standing": 10,
           "champion": false,
           "points_for": 1345.96
         }

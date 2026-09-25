@@ -22,6 +22,16 @@ from datetime import datetime
 # reaching the championship game itself.
 REAL_PLAYOFF_BRACKET_TYPES = ("WINNERS_BRACKET", "WINNERS_CONSOLATION_LADDER")
 
+# The year the Sacko game started deciding last/2nd-to-last place. Verified
+# against every sheet-recorded year: from this year on, the sheet's Final
+# Standings exactly matches "Sacko loser -> last, Sacko winner -> 2nd-to-
+# last, every other non-playoff team keeps its regular-season standing."
+# Before it, the sheet shows no such override -- every non-playoff team's
+# final standing is just its regular-season standing, full stop (a small
+# number of exceptions turned out to be the sheet's own data-entry slips,
+# not a real rule, and aren't reproduced here).
+SACKO_RULE_START_YEAR = 2025
+
 D1_DATABASE_NAME = "retirement-league-history"
 WORKER_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "worker")
 # On Windows, "npx" the plain command isn't directly executable (it's
@@ -278,6 +288,44 @@ def compute_season_sacko_row(year, teams_this_year, matchups_this_year):
         if m["team_id"] in bottom_two and m["opponent_team_id"] in bottom_two:
             return (year, m["team_id"], champ_week, m["opponent_team_id"], "computed")
     return None
+
+
+def compute_final_standings(year, teams_this_year, matchups_this_year, season_sacko_row):
+    """{team_id: final_standing} for one year -- the league's actual rule,
+    not ESPN's raw final_standing field, which is shaped by the "loser's
+    bracket" (LOSERS_CONSOLATION_LADDER) placement games the league doesn't
+    consider meaningful for final standing:
+      - A team that played a real playoff-bracket game (WINNERS_BRACKET or
+        WINNERS_CONSOLATION_LADDER -- see REAL_PLAYOFF_BRACKET_TYPES) keeps
+        ESPN's own final_standing: that's the actual championship result.
+      - Every other team keeps its regular-season standing, unchanged.
+      - From SACKO_RULE_START_YEAR on, the exception: the two worst
+        regular-season teams don't just keep the bottom two spots
+        automatically -- the Sacko game (season_sackos) decides which of
+        them is which. The winner takes the better (2nd-to-last) spot; the
+        loser is the Sacko, dead last.
+
+    season_sacko_row is this year's row from D1's season_sackos table --
+    {team_id (loser), opponent_team_id (winner)} -- or None if this year's
+    Sacko game hasn't been decided yet (mid-season) or doesn't apply.
+    """
+    playoff_team_ids = {m["team_id"] for m in matchups_this_year if m["is_playoff"]}
+    final = {}
+    for t in teams_this_year:
+        if t["team_id"] in playoff_team_ids:
+            final[t["team_id"]] = t["final_standing"]
+        else:
+            final[t["team_id"]] = t["regular_season_standing"]
+
+    if year >= SACKO_RULE_START_YEAR and season_sacko_row:
+        team_count = len(teams_this_year)
+        loser_id, winner_id = season_sacko_row["team_id"], season_sacko_row["opponent_team_id"]
+        if loser_id in final:
+            final[loser_id] = team_count
+        if winner_id in final:
+            final[winner_id] = team_count - 1
+
+    return final
 
 
 def sql_value(v):

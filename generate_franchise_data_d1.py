@@ -49,7 +49,7 @@ def load_d1():
     draft_picks = hl.d1_query(
         "SELECT year, round_num, round_pick, team_id FROM draft_picks WHERE round_num = 1"
     )
-    season_sackos = hl.d1_query("SELECT year, team_id FROM season_sackos")
+    season_sackos = hl.d1_query("SELECT year, team_id, opponent_team_id FROM season_sackos")
     return teams, matchups, draft_picks, season_sackos
 
 
@@ -352,6 +352,25 @@ def compute_season_history(teams_by_player, games):
 def main():
     print("Loading D1 (teams + matchups + draft_picks + season_sackos)...")
     teams, matchups, draft_picks, season_sackos = load_d1()
+
+    # Overwrite ESPN's own final_standing with the league's actual rule
+    # (see history_lib.compute_final_standings) -- the loser's-bracket
+    # placement games it's otherwise based on don't mean anything to this
+    # league. Mutating in place means every downstream computation that
+    # already reads t["final_standing"] picks up the corrected value for
+    # free, with no separate lookup to keep in sync.
+    teams_by_year, matchups_by_year = {}, {}
+    for t in teams:
+        teams_by_year.setdefault(t["year"], []).append(t)
+    for m in matchups:
+        matchups_by_year.setdefault(m["year"], []).append(m)
+    season_sacko_by_year = {s["year"]: s for s in season_sackos}
+    for year, teams_this_year in teams_by_year.items():
+        final_by_team = hl.compute_final_standings(
+            year, teams_this_year, matchups_by_year.get(year, []), season_sacko_by_year.get(year)
+        )
+        for t in teams_this_year:
+            t["final_standing"] = final_by_team.get(t["team_id"], t["final_standing"])
 
     # Keyed by (year, team_id), not just team_id -- ESPN does sometimes
     # reassign a departed owner's numeric team_id to a new owner in a later
