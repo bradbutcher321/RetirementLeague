@@ -45,7 +45,16 @@ REQUEST_HEADERS = {
     "Origin": "https://www.espn.com",
 }
 EASTERN = ZoneInfo("America/New_York")
-FETCH_ATTEMPTS = 2  # one retry on a transient failure (timeout, network blip)
+# Confirmed directly: ESPN's scoreboard/search API intermittently 403s even
+# from a residential IP under rapid repeated requests, then recovers within
+# under a minute on its own -- an intermittent rate-limit/bot-heuristic
+# window, not a hard IP ban. It triggers far more often from GitHub
+# Actions/Cloudflare specifically because those IPs are shared across many
+# unrelated callers, so the aggregate request volume crosses whatever
+# threshold much more often than a lightly-used residential IP does. A
+# 1-second retry wasn't patient enough to ride that window out; this one is.
+FETCH_ATTEMPTS = 5
+FETCH_RETRY_DELAYS = [2, 5, 10, 20]  # seconds between attempts (len == FETCH_ATTEMPTS - 1)
 
 # Sport (as used in Auto Parlay Tracker) -> ESPN site-API sport/league
 # path(s) to try, in order. Soccer needs several since there's no single
@@ -148,11 +157,11 @@ def _fetch(espn_path, date_str):
     if espn_path in NEEDS_FBS_GROUP:
         url += "&groups=80&limit=200"
     req = urllib.request.Request(url, headers=REQUEST_HEADERS)
-    # A transient timeout/network blip (the NCAAF scoreboard's a fairly
-    # large payload -- every FBS game that day) shouldn't read as "no such
-    # game" the same way a genuine 0 results does -- confirmed directly:
-    # a scheduled run reported a real, already-final game as ungradeable,
-    # then an identical call moments later succeeded.
+    # A transient failure (timeout, or ESPN's intermittent rate-limit --
+    # see FETCH_ATTEMPTS above) shouldn't read as "no such game" the same
+    # way a genuine 0 results does -- confirmed directly: a scheduled run
+    # reported a real, already-final game as ungradeable, then an
+    # identical call moments later succeeded.
     data = None
     for attempt in range(FETCH_ATTEMPTS):
         try:
@@ -162,14 +171,14 @@ def _fetch(espn_path, date_str):
         except Exception as e:
             # Swallowed by every caller (a lookup failure just means "no
             # match" to them), but printed here so a real cause -- rate
-            # limiting, a block on the runner's shared IP range, a genuine
-            # timeout -- shows up in the run's own log instead of looking
-            # identical to a game that's simply not final yet.
+            # limiting, a genuine timeout -- shows up in the run's own log
+            # instead of looking identical to a game that's simply not
+            # final yet.
             print(f"  [espn_gametime_lookup] fetch failed ({espn_path} {date_str}, "
                   f"attempt {attempt + 1}/{FETCH_ATTEMPTS}): {type(e).__name__}: {e}")
             data = None
             if attempt < FETCH_ATTEMPTS - 1:
-                time.sleep(1)
+                time.sleep(FETCH_RETRY_DELAYS[attempt])
     if data is not None:
         print(f"  [espn_gametime_lookup] fetched {espn_path} {date_str}: {len(data.get('events', []))} event(s)")
     _scoreboard_cache[key] = data
@@ -251,7 +260,7 @@ def search_player(name):
         except Exception:
             hits = []
             if attempt < FETCH_ATTEMPTS - 1:
-                time.sleep(1)
+                time.sleep(FETCH_RETRY_DELAYS[attempt])
     _search_cache[name] = hits
     return hits
 
