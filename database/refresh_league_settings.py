@@ -9,8 +9,6 @@ Usage: ESPN_S2=... ESPN_SWID=... python refresh_league_settings.py [--years 2015
 import argparse
 import os
 import sys
-import tempfile
-import subprocess
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,21 +19,8 @@ import history_lib as hl
 def run_sql(statements, label):
     if not statements:
         return
-    with tempfile.NamedTemporaryFile("w", suffix=".sql", delete=False, encoding="utf-8") as f:
-        f.write("\n".join(statements))
-        path = f.name
-    try:
-        result = subprocess.run(
-            [hl.NPX, "-y", "wrangler", "d1", "execute", hl.D1_DATABASE_NAME, "--remote", f"--file={path}"],
-            cwd=hl.WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
-        )
-        if result.returncode != 0:
-            print(result.stdout)
-            print(result.stderr)
-            raise SystemExit(f"wrangler d1 execute failed for {label}")
-        print(f"  {label}: written")
-    finally:
-        os.unlink(path)
+    hl.run_d1_sql(statements, label)
+    print(f"  {label}: written")
 
 
 def main():

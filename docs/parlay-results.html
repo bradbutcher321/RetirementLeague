@@ -260,13 +260,11 @@
   </div>
 
 <script src="nav.js"></script>
+<script src="page-common.js"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
   function fmtOdds(o) {
     if (o === null || o === undefined) return '—';
     const n = Math.round(o);
@@ -278,14 +276,6 @@
   }
   function fmtPct(n) {
     return n === null || n === undefined ? '—' : Number(n).toFixed(1) + '%';
-  }
-  // Time only if it was today, otherwise "Sep 17 · 3:42 PM".
-  function formatUpdated(iso) {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '—';
-    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    if (d.toDateString() === new Date().toDateString()) return time;
-    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
   }
   function fmtTime(iso) {
     if (!iso) return 'TBD';

@@ -33,18 +33,12 @@ from google.oauth2.service_account import Credentials
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from generate_franchise_data import SHEET_ID, CREDS_PATH
 import generate_parlay_data as gp
+from parlay_note_parser import TEAM_LINE_VS, VS_ONLY, TOTAL_VS, PLAYER_OU, PLAYER_ONLY
 
 TARGET_TAB = "Auto Parlay Tracker"
 HEADER = ["Year", "Week", "Sacko", "Player", "Sport", "Bet Type", "Team", "Opponent",
           "Player Prop", "Line", "Side", "Odds", "Gametime", "Result", "Raw Pick",
           "Final Odds", "Final Payout", "Final Split"]
-
-TEAM_LINE_VS = {"Spread", "Alt Spread", "1st Half Spread"}
-VS_ONLY = {"Money Line"}
-TOTAL_VS = {"Total Points", "Total Goals", "Total Rounds"}
-PLAYER_OU = {"Receiving Yards", "Passing TD", "Home Runs", "Player Points",
-             "Interceptions", "Total Yards", "Receptions", "Passing Yards"}
-PLAYER_ONLY = {"Anytime TD", "Coin Toss"}
 
 LINE_TEAM_VS = re.compile(r"^([+-]\d+(?:\.\d+)?)\s+(.+?)\s+vs\.?\s+(.+)$")
 TEAM_LINE_VS_RE = re.compile(r"^(.+?)\s+([+-]\d+(?:\.\d+)?)\s+vs\.?\s+(.+)$")

@@ -157,25 +157,57 @@ Standings, Head to Head, Overview, and Game Records all read
   from D1's `league_settings` and `teams` tables (real ESPN rule and
   manager-roster history, every year 2015-present) plus the sheet's
   `Money Tracker` tab (buy-in and payout amounts, which have no ESPN
-  equivalent). Run on-demand whenever a rule, the buy-in, or the league's
-  managers change — there's no schedule for it since that's rare.
+  equivalent). Runs on the same Tuesday/Thursday schedule as the Franchise
+  and Draft Board scripts above (a rule/buy-in/manager change is rare, but
+  riding the existing schedule is free), plus on-demand.
+- **`database/update_history_d1.py`** — the daily foundation everything
+  above reads from: re-derives the whole current season from ESPN
+  (teams/matchups/draft picks/box scores) and writes it straight to D1 via
+  `INSERT OR REPLACE`, so finished games and stat corrections show up
+  without tracking "which week is new". Runs daily at 9am UTC and on-demand
+  (`.github/workflows/update_history_d1.yml`).
 
 All scripts need a Google service account key at
 `google_secret.json` (gitignored, not committed) to authenticate with the
 Sheets API locally. In GitHub Actions this is written from the
 `GOOGLE_CREDENTIALS` secret.
 
+## Manual / one-off tools
+
+Not scheduled anywhere — run by hand when their specific situation comes up.
+Each has a full docstring; short version:
+
+- **`database/build_history_db.py`** — builds/updates a local
+  `league_history.sqlite` dev/backup copy of full league history. The
+  original one-time backfill tool; D1 (via `update_history_d1.py`) is the
+  canonical copy now.
+- **`database/export_to_d1_sql.py`** — dumps that local `.sqlite` into
+  one `.sql` file per year, for pushing to D1 in resumable chunks.
+- **`database/backfill_draft_positions.py`** — fills D1's `players` table
+  (position per player) from ESPN's full player pool. Run once initially,
+  then again roughly yearly after a draft picks up new players.
+- **`database/import_season_sackos.py`** — one-time import of
+  historical Sacko games into D1's `season_sackos` table from Game
+  Tracker's own historical labeling.
+- **`database/refresh_league_settings.py`** — re-pushes `league_settings`
+  for a range of years; useful after adding a new field to
+  `history_lib.league_settings_row()` that existing D1 rows need to pick up.
+- **`database/compare_sheet_vs_d1.py`** — cross-checks Game Tracker
+  against D1 for weekly matchup discrepancies (wrong scores/opponents,
+  missing games in either source).
+
 ## Repo layout
 
 ```
-docs/                   GitHub Pages site (HTML/CSS/JS + franchise.json, parlay.json, draft-board.json)
-worker/                 Cloudflare Worker powering the live Dashboard
+docs/                   GitHub Pages site (HTML/CSS/JS + franchise.json, league.json, draft-board.json, rule-changes.json)
+worker/                 Cloudflare Worker powering the live Dashboard and parlay stats (KV-served, no committed JSON)
 espn_api/               Vendored ESPN Fantasy API client library (Python, used by generate_franchise_data.py)
 generate_franchise_data_d1.py  Franchise page data pipeline (D1-backed; shares helpers with generate_franchise_data.py)
 generate_draft_board_data.py  Draft Board page data pipeline
-generate_parlay_data.py       Parlay Results page data pipeline
+generate_parlay_data.py       Parlay stats logic, shared by publish_parlay_stats.py (live) and its own local-preview main()
 generate_league_data_d1.py    Standings / Head to Head / Overview / Game Records data pipeline (D1-backed)
 generate_rule_changes_data.py Rule Changes page data pipeline
-database/history_lib.py       Shared D1 row-building + final-standings logic, used by every *_d1.py script above
+database/history_lib.py       Shared D1 row-building + final-standings + wrangler-CLI logic, used by every D1-writing script above
+database/update_history_d1.py Daily D1 sync from ESPN -- the foundation every *_d1.py script above reads from
 .github/workflows/      Scheduled + manual automation
 ```

@@ -6,9 +6,8 @@ cycle, the same way league history already reaches D1 directly (see
 database/update_history_d1.py) and the Dashboard already reads straight
 from KV (see worker/src/index.js).
 
-Reuses generate_parlay_data.py's load_tracker()/week_state()/compute_stats()
-completely unchanged -- only the output step differs (KV instead of a
-committed file).
+Reuses generate_parlay_data.py's build_payload() completely unchanged --
+only the output step differs (KV instead of a committed file).
 
 Talks to KV through `wrangler kv key put --remote`, the same wrangler-CLI
 approach database/update_history_d1.py already uses for D1, so it inherits
@@ -22,11 +21,10 @@ import os
 import subprocess
 import sys
 import tempfile
-from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
-from generate_parlay_data import authorize, SHEET_ID, load_tracker, week_state, compute_stats
+from generate_parlay_data import authorize, SHEET_ID, build_payload
 import history_lib as hl
 
 KV_NAMESPACE_ID = "1521d1a4fe954b00a05b4542c7a44670"  # COOLDOWN_KV, shared with the Dashboard cache
@@ -41,27 +39,8 @@ KV_KEY = "parlay_stats_v1"
 def main():
     print("Connecting to Google Sheets API...")
     spreadsheet = authorize().open_by_key(SHEET_ID)
-
-    print("Loading Auto Parlay Tracker...")
-    players, weeks = load_tracker(spreadsheet)
-    if not weeks:
-        raise SystemExit("No parlay weeks found; refusing to publish an empty payload")
-
-    for week in weeks:
-        week["final"]["result"] = week_state(week, players)["result"]
-
-    years = sorted({w["year"] for w in weeks})
-    stats_by_scope = {"all": compute_stats(players, weeks)}
-    for year in years:
-        stats_by_scope[str(year)] = compute_stats(players, [w for w in weeks if w["year"] == year])
-
-    output = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "players": players,
-        "weeks": weeks,
-        "years": years,
-        "stats": stats_by_scope,
-    }
+    output = build_payload(spreadsheet)
+    weeks = output["weeks"]
 
     payload = json.dumps(output)
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:

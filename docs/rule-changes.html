@@ -94,17 +94,8 @@
   </div>
 
 <script src="nav.js"></script>
+<script src="page-common.js"></script>
 <script>
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
-  function formatUpdated(iso) {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '—';
-    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    if (d.toDateString() === new Date().toDateString()) return time;
-    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
-  }
 
   function section(title, lines, footnote) {
     if (!lines.length) return '';

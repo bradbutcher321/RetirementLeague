@@ -72,23 +72,8 @@ def main():
         print("  missing ids (sample):", list(missing)[:20])
 
     stmts = hl.insert_or_replace_sql("players", ("player_id", "full_name", "position"), rows)
-    import subprocess
-    import tempfile
-    with tempfile.NamedTemporaryFile("w", suffix=".sql", delete=False, encoding="utf-8") as f:
-        f.write("\n".join(stmts))
-        path = f.name
-    try:
-        result = subprocess.run(
-            [hl.NPX, "-y", "wrangler", "d1", "execute", hl.D1_DATABASE_NAME, "--remote", f"--file={path}"],
-            cwd=hl.WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
-        )
-        if result.returncode != 0:
-            print(result.stdout)
-            print(result.stderr)
-            raise SystemExit("wrangler d1 execute failed for players")
-        print(f"Wrote {len(rows)} rows to players.")
-    finally:
-        os.unlink(path)
+    hl.run_d1_sql(stmts, "players")
+    print(f"Wrote {len(rows)} rows to players.")
 
 
 if __name__ == "__main__":

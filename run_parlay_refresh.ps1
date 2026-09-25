@@ -1,13 +1,17 @@
 # Runs the same three steps as .github/workflows/refresh_parlay_data.yml's
-# scheduled job, but locally. Why: ESPN blocks its scoreboard/search API
-# outright from GitHub Actions' (and Cloudflare's) shared IP ranges --
-# confirmed directly (HTTP 403 on every attempt, even with browser-real
-# headers, an authenticated ESPN session cookie, and a 37s retry/backoff
-# schedule) -- with no known fix short of a residential IP. This machine's
-# IP has worked every time, so Windows Task Scheduler runs this here every
-# 30 minutes instead. Needs google_secret.json in this same folder and an
-# active `wrangler login` session (both already set up on this machine) --
-# no env vars to configure.
+# scheduled job, but locally. Why it exists: ESPN was blocking its
+# scoreboard/search API outright from GitHub Actions' (and Cloudflare's)
+# shared IP ranges -- confirmed directly (HTTP 403 on every attempt, even
+# with browser-real headers, an authenticated ESPN session cookie, and a
+# 37s retry/backoff schedule). Fixed since by switching to
+# site.web.api.espn.com (see espn_gametime_lookup.py), so cloud grading
+# works again and this is NOT currently scheduled -- the Windows Scheduled
+# Task ("RetirementLeague Parlay Refresh") that ran this every 30 minutes
+# has been removed. Kept as a manual fallback: re-register that task the
+# same way if site.web.api.espn.com ever gets blocked too. Needs
+# google_secret.json in this same folder and an active `wrangler login`
+# session (both already set up on this machine) -- no env vars to
+# configure.
 
 $ErrorActionPreference = "Continue"
 $env:PATH = "C:\Program Files\nodejs;C:\Program Files\GitHub CLI;" + $env:PATH

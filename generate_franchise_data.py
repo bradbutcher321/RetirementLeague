@@ -2,10 +2,10 @@
 Computes career/franchise stats for every manager who has ever played in the
 league and writes them to docs/data/franchise.json for franchise.html to load.
 
-Unlike the live Dashboard (update_page_and_sheets.py), this data doesn't need
-to refresh every couple minutes — it's driven by Game Tracker, which is
-updated manually once a week — so this is meant to run occasionally (a
-schedule + a manual button in GitHub Actions), not continuously. The page
+Unlike the live Dashboard (the Cloudflare Worker in worker/src/), this data
+doesn't need to refresh every couple minutes — it's driven by Game Tracker,
+which is updated manually once a week — so this is meant to run occasionally
+(a schedule + a manual button in GitHub Actions), not continuously. The page
 reads the committed JSON directly; there's no live Google Sheets dependency
 at page-load time.
 

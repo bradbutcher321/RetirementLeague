@@ -15,10 +15,11 @@ so there's nothing for a person to type there to validate.
 
 Gametime gets a strict pattern check instead of a list -- it has to be the
 plain ISO format (YYYY-MM-DDTHH:MM:SS) the rest of the pipeline already
-relies on for chronological sorting (see generate_parlay_data.py's
-serial_to_iso()), since anything else either sorts wrong silently or
-crashes a script that parses it strictly later. Blank is always allowed --
-most rows haven't had a pick entered yet.
+relies on for chronological sorting (produced by espn_gametime_lookup.py's
+_to_eastern_iso(), consumed by generate_parlay_data.py's day_bucket()),
+since anything else either sorts wrong silently or crashes a script that
+parses it strictly later. Blank is always allowed -- most rows haven't had
+a pick entered yet.
 
 Usage: python add_parlay_validation.py
 """

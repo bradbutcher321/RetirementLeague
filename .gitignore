@@ -189,3 +189,9 @@ tmp/
 database/*.sqlite
 database/d1_dump/
 database/backfill.log
+
+# Parlay data: lives in Cloudflare KV now (see publish_parlay_stats.py).
+# generate_parlay_data.py can still write this locally as a debug preview
+# (python generate_parlay_data.py), but it's not read by the live site --
+# see that script's docstring -- so it shouldn't go back into git history.
+docs/data/parlay.json

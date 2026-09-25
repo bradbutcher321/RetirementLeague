@@ -1,7 +1,7 @@
 """
 Writes docs/data/league.json from D1 for everything except the raw game
-log -- the D1-backed replacement for generate_league_data.py, following the
-same pattern as generate_franchise_data_d1.py.
+log -- the D1-backed pipeline for Standings/Head to Head/Overview/Game
+Records, following the same pattern as generate_franchise_data_d1.py.
 
 Two pieces still come from the Google Sheet, since neither has a full D1
 equivalent:
@@ -20,8 +20,8 @@ sacko, and draft order -- comes from D1's teams/matchups/draft_picks/
 season_sackos, computed the same way generate_franchise_data_d1.py computes
 them at the career level, just scoped to one year at a time here.
 
-The output JSON shape is identical to generate_league_data.py's, so
-Standings/Head to Head/Overview/Game Records need no changes at all.
+The output JSON shape matches what Standings/Head to Head/Overview/Game
+Records already expect, so those pages need no changes.
 
 Usage: python generate_league_data_d1.py
 """
@@ -120,22 +120,10 @@ def main():
     teams, matchups, draft_picks, season_sackos = load_d1()
 
     # Overwrite ESPN's own final_standing with the league's actual rule --
-    # see history_lib.compute_final_standings. Mutating in place (same as
-    # generate_franchise_data_d1) means every downstream read of
-    # t["final_standing"] picks up the corrected value automatically, so
-    # this and the Franchise page can never drift apart on it.
-    teams_by_year, matchups_by_year = {}, {}
-    for t in teams:
-        teams_by_year.setdefault(t["year"], []).append(t)
-    for m in matchups:
-        matchups_by_year.setdefault(m["year"], []).append(m)
-    season_sacko_by_year = {s["year"]: s for s in season_sackos}
-    for year, teams_this_year in teams_by_year.items():
-        final_by_team = hl.compute_final_standings(
-            year, teams_this_year, matchups_by_year.get(year, []), season_sacko_by_year.get(year)
-        )
-        for t in teams_this_year:
-            t["final_standing"] = final_by_team.get(t["team_id"], t["final_standing"])
+    # see history_lib.apply_final_standings. Same helper
+    # generate_franchise_data_d1.py uses, so this and the Franchise page can
+    # never drift apart on it.
+    hl.apply_final_standings(teams, matchups, season_sackos)
 
     # Keyed by (year, team_id), not just team_id -- see generate_franchise_data_d1
     # for why (a departed owner's team_id can be reassigned in a later year).

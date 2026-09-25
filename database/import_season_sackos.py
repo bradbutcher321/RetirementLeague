@@ -64,23 +64,7 @@ def main():
     stmts = hl.insert_or_replace_sql(
         "season_sackos", ("year", "team_id", "week", "opponent_team_id", "source"), rows
     )
-    if stmts:
-        result_label = "season_sackos"
-        import tempfile, subprocess
-        with tempfile.NamedTemporaryFile("w", suffix=".sql", delete=False, encoding="utf-8") as f:
-            f.write("\n".join(stmts))
-            path = f.name
-        try:
-            result = subprocess.run(
-                [hl.NPX, "-y", "wrangler", "d1", "execute", hl.D1_DATABASE_NAME, "--remote", f"--file={path}"],
-                cwd=hl.WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
-            )
-            print(result.stdout[-1500:].encode("ascii", "replace").decode("ascii"))
-            if result.returncode != 0:
-                print(result.stderr)
-                raise SystemExit(f"wrangler d1 execute failed for {result_label}")
-        finally:
-            os.unlink(path)
+    hl.run_d1_sql(stmts, "season_sackos")
     print(f"Done. Wrote {len(rows)} season_sackos rows.")
 
 

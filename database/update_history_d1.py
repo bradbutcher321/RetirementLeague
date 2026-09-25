@@ -25,9 +25,7 @@ Usage:
 """
 import argparse
 import os
-import subprocess
 import sys
-import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from espn_api.football import League
@@ -38,21 +36,8 @@ def run_sql(statements, label):
     if not statements:
         print(f"  {label}: nothing to write")
         return
-    with tempfile.NamedTemporaryFile("w", suffix=".sql", delete=False, encoding="utf-8") as f:
-        f.write("\n".join(statements))
-        path = f.name
-    try:
-        result = subprocess.run(
-            [hl.NPX, "-y", "wrangler", "d1", "execute", hl.D1_DATABASE_NAME, "--remote", f"--file={path}"],
-            cwd=hl.WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
-        )
-        if result.returncode != 0:
-            print(result.stdout)
-            print(result.stderr)
-            raise SystemExit(f"wrangler d1 execute failed for {label}")
-        print(f"  {label}: {len(statements)} statements written")
-    finally:
-        os.unlink(path)
+    hl.run_d1_sql(statements, label)
+    print(f"  {label}: {len(statements)} statements written")
 
 
 def main():

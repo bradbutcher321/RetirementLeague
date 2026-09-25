@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
-from generate_franchise_data import authorize, load_money, SHEET_ID
+from generate_franchise_data import authorize, load_money, SHEET_ID, longest_and_current_streak
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data", "franchise.json")
 MEDIAN_ERA_START_YEAR = 2025
@@ -159,22 +159,6 @@ def compute_extremes(games):
         "lowest_loss_margin": min(loss_margins) if loss_margins else None,
         "score_stdev": round(statistics.pstdev(scores), 2) if len(scores) > 1 else None,
     }
-
-
-def longest_and_current_streak(outcomes):
-    if not outcomes:
-        return 0, 0, 0
-    longest_win = longest_loss = 0
-    run = 0
-    prev = None
-    for outcome in outcomes:
-        run = run + 1 if outcome == prev else 1
-        prev = outcome
-        if outcome:
-            longest_win = max(longest_win, run)
-        else:
-            longest_loss = max(longest_loss, run)
-    return longest_win, longest_loss, (run if prev else -run)
 
 
 def compute_streaks(games, reg_games_by_year_week):
@@ -353,24 +337,9 @@ def main():
     print("Loading D1 (teams + matchups + draft_picks + season_sackos)...")
     teams, matchups, draft_picks, season_sackos = load_d1()
 
-    # Overwrite ESPN's own final_standing with the league's actual rule
-    # (see history_lib.compute_final_standings) -- the loser's-bracket
-    # placement games it's otherwise based on don't mean anything to this
-    # league. Mutating in place means every downstream computation that
-    # already reads t["final_standing"] picks up the corrected value for
-    # free, with no separate lookup to keep in sync.
-    teams_by_year, matchups_by_year = {}, {}
-    for t in teams:
-        teams_by_year.setdefault(t["year"], []).append(t)
-    for m in matchups:
-        matchups_by_year.setdefault(m["year"], []).append(m)
-    season_sacko_by_year = {s["year"]: s for s in season_sackos}
-    for year, teams_this_year in teams_by_year.items():
-        final_by_team = hl.compute_final_standings(
-            year, teams_this_year, matchups_by_year.get(year, []), season_sacko_by_year.get(year)
-        )
-        for t in teams_this_year:
-            t["final_standing"] = final_by_team.get(t["team_id"], t["final_standing"])
+    # Overwrite ESPN's own final_standing with the league's actual rule --
+    # see history_lib.apply_final_standings.
+    hl.apply_final_standings(teams, matchups, season_sackos)
 
     # Keyed by (year, team_id), not just team_id -- ESPN does sometimes
     # reassign a departed owner's numeric team_id to a new owner in a later

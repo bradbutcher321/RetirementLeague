@@ -1,12 +1,11 @@
 """
-Builds docs/data/parlay.json for parlay-results.html from the league sheet's
-"Auto Parlay Tracker" tab (the tidy one-row-per-pick layout -- see
-PARLAY_DATA_MIGRATION.md; this replaces reading the old one-column-per-week
-"Parlay Tracker" tab, Phase 3 of that migration).
+Reads the league sheet's "Auto Parlay Tracker" tab (the tidy one-row-per-pick
+layout -- see PARLAY_DATA_MIGRATION.md; this replaces reading the old
+one-column-per-week "Parlay Tracker" tab, Phase 3 of that migration) and
+computes the parlay-results stats payload.
 
 The sheet's own "Parlay Results" tab used to compute the stats with Sheets
-formulas; this script reproduces that logic in Python so the static site
-doesn't need a live Sheets dependency at page-load time. compute_stats() and
+formulas; this script reproduces that logic in Python. compute_stats() and
 everything downstream of load_tracker() is unchanged from the old tab's
 version -- it still works on the exact same {players, weeks} shape, with
 each pick's "pick" text reconstructed from Auto Parlay Tracker's structured
@@ -16,6 +15,14 @@ rather than trusting the Raw Pick column directly -- Raw Pick holds whatever
 text a pick was actually entered from (clean for historically-migrated rows,
 messier for notes parsed through the GUI), so it isn't reliably reparseable
 on its own the way the reconstructed structured-column text is.
+
+The live site no longer reads this script's output file -- publish_parlay_stats.py
+imports build_payload() from here and pushes the same payload straight to
+Cloudflare KV instead (see that script's docstring). Running this file
+directly (`python generate_parlay_data.py`) still writes docs/data/parlay.json,
+but only as a local preview/debug artifact -- it's gitignored from being
+meaningfully relied on by nothing else, so don't expect it to reflect the
+live site.
 """
 import json
 import os
@@ -414,14 +421,14 @@ def compute_stats(players, weeks):
     }
 
 
-def main():
-    print("Connecting to Google Sheets API...")
-    spreadsheet = authorize().open_by_key(SHEET_ID)
-
+def build_payload(spreadsheet):
+    """Loads Auto Parlay Tracker and computes the full stats payload -- the
+    shared core both main() (local preview) and publish_parlay_stats.py
+    (the live KV publisher) use."""
     print(f"Loading {TARGET_TAB}...")
     players, weeks = load_tracker(spreadsheet)
     if not weeks:
-        raise SystemExit(f"No parlay weeks found in {TARGET_TAB}; refusing to overwrite parlay.json")
+        raise SystemExit(f"No parlay weeks found in {TARGET_TAB}")
 
     for week in weeks:
         week["final"]["result"] = week_state(week, players)["result"]
@@ -431,13 +438,20 @@ def main():
     for year in years:
         stats_by_scope[str(year)] = compute_stats(players, [w for w in weeks if w["year"] == year])
 
-    output = {
+    return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "players": players,
         "weeks": weeks,
         "years": years,
         "stats": stats_by_scope,
     }
+
+
+def main():
+    print("Connecting to Google Sheets API...")
+    spreadsheet = authorize().open_by_key(SHEET_ID)
+    output = build_payload(spreadsheet)
+    weeks = output["weeks"]
 
     # Skip the write when only the timestamp would change, so frequent
     # scheduled runs don't produce a commit every time.

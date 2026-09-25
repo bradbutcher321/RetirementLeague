@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 from datetime import datetime
 
 # ESPN's playoffTierType has 4 values: NONE (regular season), WINNERS_BRACKET
@@ -340,6 +341,27 @@ def compute_final_standings(year, teams_this_year, matchups_this_year, season_sa
     return final
 
 
+def apply_final_standings(teams, matchups, season_sackos):
+    """Overwrites every team dict's final_standing in place with the
+    league's actual rule (see compute_final_standings above) instead of
+    ESPN's own value. Mutating in place means every downstream read of
+    t["final_standing"] picks up the corrected value automatically, with no
+    separate lookup to keep in sync -- shared by generate_franchise_data_d1.py
+    and generate_league_data_d1.py so they can never drift apart on it."""
+    teams_by_year, matchups_by_year = {}, {}
+    for t in teams:
+        teams_by_year.setdefault(t["year"], []).append(t)
+    for m in matchups:
+        matchups_by_year.setdefault(m["year"], []).append(m)
+    season_sacko_by_year = {s["year"]: s for s in season_sackos}
+    for year, teams_this_year in teams_by_year.items():
+        final_by_team = compute_final_standings(
+            year, teams_this_year, matchups_by_year.get(year, []), season_sacko_by_year.get(year)
+        )
+        for t in teams_this_year:
+            t["final_standing"] = final_by_team.get(t["team_id"], t["final_standing"])
+
+
 def sql_value(v):
     if v is None:
         return "NULL"
@@ -354,6 +376,35 @@ def insert_or_replace_sql(table, columns, rows) -> list:
         values = ", ".join(sql_value(v) for v in row)
         stmts.append(f"INSERT OR REPLACE INTO {table} ({', '.join(columns)}) VALUES ({values});")
     return stmts
+
+
+def run_d1_sql(statements, label, db_name=None):
+    """Writes `statements` to a temp .sql file and applies it to Cloudflare
+    D1 via `wrangler d1 execute --remote`, raising SystemExit with the
+    wrangler output on failure. This is the write counterpart to d1_query()
+    below, and is shared by every script that writes to D1 directly
+    (update_history_d1.py, refresh_league_settings.py,
+    backfill_draft_positions.py, import_season_sackos.py,
+    sync_parlay_to_d1.py) instead of each re-implementing the same
+    temp-file/subprocess/error-handling around wrangler. Output is
+    ascii-encoded defensively on failure -- wrangler output has crashed a
+    plain print() on Windows consoles before with a non-ascii character."""
+    if not statements:
+        return
+    with tempfile.NamedTemporaryFile("w", suffix=".sql", delete=False, encoding="utf-8") as f:
+        f.write("\n".join(statements))
+        path = f.name
+    try:
+        result = subprocess.run(
+            [NPX, "-y", "wrangler", "d1", "execute", db_name or D1_DATABASE_NAME, "--remote", f"--file={path}"],
+            cwd=WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
+        )
+        if result.returncode != 0:
+            print(result.stdout.encode("ascii", "replace").decode("ascii"))
+            print(result.stderr.encode("ascii", "replace").decode("ascii"))
+            raise SystemExit(f"wrangler d1 execute failed for {label}")
+    finally:
+        os.unlink(path)
 
 
 def d1_query(sql):

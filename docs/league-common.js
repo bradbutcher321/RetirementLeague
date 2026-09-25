@@ -36,39 +36,10 @@ const LG = (() => {
       (note ? `<div class="stat-card-note">${note}</div>` : '') + `<div class="stat-card-body">${body}</div></div>`;
   }
 
-  // items: { name, sub, val, tone, long }. Top 3 become podium tiles when podium is true.
-  function ranked(items, { podium = true, ranks = true } = {}) {
-    if (!items.length) return '<div class="empty-note">No data yet.</div>';
-    let html = '';
-    let rest = items;
-    let offset = 0;
-    if (podium && items.length >= 3) {
-      html += '<div class="podium">' + items.slice(0, 3).map((it, i) =>
-        `<div class="pod"><div class="pod-rank">#${it.rank ?? i + 1}</div><div class="pod-name">${esc(it.name)}</div>` +
-        `<div class="pod-val ${it.tone || ''}${String(it.val).length > 6 ? ' long' : ''}">${it.val}</div>` +
-        `<div class="pod-sub">${it.sub ? esc(it.sub) : '&nbsp;'}</div></div>`).join('') + '</div>';
-      rest = items.slice(3);
-      offset = 3;
-    }
-    html += rest.map((it, i) => rowHtml(it, ranks ? (it.rank ?? offset + i + 1) : null)).join('');
-    return html;
-  }
-
-  function rowHtml(it, rank) {
-    const cls = ['row', rank === null ? 'norank' : '', it.wide ? 'wide-rank' : '', it.hl ? 'hl' : ''].filter(Boolean).join(' ');
-    const right = it.stats
-      ? `<div class="row-stats">${it.stats.map(s => `<div class="row-stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`
-      : `<div class="row-val ${it.tone || ''}">${it.val}</div>`;
-    return `<div class="${cls}">` +
-      (rank === null ? '' : `<div class="row-rank${it.wide ? ' year' : ''}">${rank}</div>`) +
-      `<div style="min-width:0"><div class="row-name${it.wrap ? ' breaks' : ''}">${esc(it.name)}${it.badge || ''}</div>` +
-      (it.sub ? `<div class="row-sub">${esc(it.sub)}</div>` : '') + `</div>${right}</div>`;
-  }
-
   function showError(id, err) {
     const el = document.getElementById(id);
     if (el) el.innerHTML = `<div class="loading-row">Couldn't load league data (${esc(err.message)}).</div>`;
   }
 
-  return { esc, f1, f2, pct, money, load, card, ranked, rowHtml, showError };
+  return { esc, f1, f2, pct, money, load, card, showError };
 })();

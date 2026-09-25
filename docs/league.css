@@ -14,9 +14,6 @@
 }
 .lg-select:focus{ outline: 1px solid var(--gold); }
 
-.card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-.card-grid.stretch{ align-items: stretch; }
-@media (max-width: 720px){ .card-grid{ grid-template-columns: 1fr; } }
 .stat-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); }
 .stat-card-title{ padding: 12px 16px 4px; font-weight: 700; font-size: 0.95rem; }
 .stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 0 16px 8px; }
@@ -38,11 +35,8 @@
   background: var(--surface-raised); border: 1px solid var(--line); padding: 9px 12px; margin-top: 6px; min-height: 58px;
 }
 .row.norank{ grid-template-columns: minmax(0,1fr) auto; }
-.row.wide-rank{ grid-template-columns: 46px minmax(0,1fr) auto; }
 .row-rank{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; color: var(--text-dim); text-align: center; }
-.row-rank.year{ font-size: 1.05rem; }
 .row-name{ font-weight: 700; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row-name.breaks{ white-space: normal; }
 .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.25rem; font-variant-numeric: tabular-nums; text-align: right; }
 .row-val.gold{ color: var(--gold); }

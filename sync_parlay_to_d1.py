@@ -21,9 +21,7 @@ computed blob).
 Usage: python sync_parlay_to_d1.py
 """
 import os
-import subprocess
 import sys
-import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
@@ -79,21 +77,8 @@ def run_sql(statements):
     if not statements:
         print("Nothing to sync.")
         return
-    with tempfile.NamedTemporaryFile("w", suffix=".sql", delete=False, encoding="utf-8") as f:
-        f.write("\n".join(statements))
-        path = f.name
-    try:
-        result = subprocess.run(
-            [hl.NPX, "-y", "wrangler", "d1", "execute", D1_DATABASE_NAME, "--remote", f"--file={path}"],
-            cwd=hl.WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
-        )
-        if result.returncode != 0:
-            print(result.stdout)
-            print(result.stderr)
-            raise SystemExit("wrangler d1 execute failed")
-        print(f"Synced {len(statements)} rows to D1.")
-    finally:
-        os.unlink(path)
+    hl.run_d1_sql(statements, "parlay picks", db_name=D1_DATABASE_NAME)
+    print(f"Synced {len(statements)} rows to D1.")
 
 
 def main():

@@ -42,7 +42,8 @@ database_id = "5bf8d0cf-b461-437b-9367-7818a00a431d"
 
 # Full league history (2015-present): team/matchup records for every season,
 # plus full weekly box scores (starters + bench, every stat) from 2019 on.
-# See RetirementLeague/database/schema.sql and build_history_db.py.
+# See database/schema.sql; database/update_history_d1.py is what keeps this
+# live (database/build_history_db.py builds the original/backup .sqlite copy).
 [[d1_databases]]
 binding = "HISTORY_DB"
 database_name = "retirement-league-history"
