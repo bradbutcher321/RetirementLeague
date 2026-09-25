@@ -135,13 +135,57 @@ def infer_names(rows_parsed, player_by_year_team, matchups_by_year_week, sacko_b
             row["p1"], row["p2"], row["inferred"] = p1, p2, True
 
 
+def apply_simulation(year, into_week, from_week, matchup_by_year_week_team, matchups_by_year_week):
+    """Overrides `into_week`'s D1 data with `from_week`'s real, final
+    scores -- keeping `into_week`'s real pairings (already known from the
+    schedule regardless of whether it's been played) and only substituting
+    scores, recomputing W/L/T for the new pairing rather than copying
+    from_week's own outcome. Lets a not-yet-played week be exercised
+    through the exact same matching/inference code a real run would use,
+    entirely in memory -- nothing about a simulated week is ever written."""
+    into_games = matchups_by_year_week.get((year, into_week), [])
+    from_by_team = {m["team_id"]: m for m in matchups_by_year_week.get((year, from_week), [])}
+
+    simulated = []
+    for m in into_games:
+        src = from_by_team.get(m["team_id"])
+        if src is None or src["team_score"] is None:
+            continue  # this team has no real score in the "from" week either
+        opp_src = from_by_team.get(m["opponent_team_id"]) if m["opponent_team_id"] is not None else None
+        team_score = src["team_score"]
+        opp_score = opp_src["team_score"] if opp_src is not None else None
+        if m["opponent_team_id"] is None:
+            outcome = None
+        elif opp_score is None:
+            continue
+        else:
+            outcome = "T" if team_score == opp_score else ("W" if team_score > opp_score else "L")
+        sim_row = dict(m, team_score=team_score, opponent_score=opp_score, outcome=outcome)
+        simulated.append(sim_row)
+        matchup_by_year_week_team[(year, into_week, m["team_id"])] = sim_row
+    matchups_by_year_week[(year, into_week)] = simulated
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="Report what would be written without writing anything")
+    parser.add_argument(
+        "--simulate", metavar="YEAR:INTO_WEEK:FROM_WEEK",
+        help="Test-only: pretend INTO_WEEK's games used FROM_WEEK's real scores (pairings stay real). "
+             "Always implies --dry-run -- a simulated week is never written."
+    )
     args = parser.parse_args()
+    if args.simulate:
+        args.dry_run = True
 
     print("Loading D1 (teams + matchups + season_sackos)...")
     team_id_by_year_player, player_by_year_team, matchup_by_year_week_team, matchups_by_year_week, sacko_by_year = load_d1_lookup()
+
+    if args.simulate:
+        year_s, into_s, from_s = args.simulate.split(":")
+        year, into_week, from_week = int(year_s), int(into_s), int(from_s)
+        apply_simulation(year, into_week, from_week, matchup_by_year_week_team, matchups_by_year_week)
+        print(f"SIMULATING: {year} week {into_week} using week {from_week}'s real scores (dry-run only, forced).\n")
 
     print("Loading Google Sheet (Game Tracker)...")
     gc = authorize_write()

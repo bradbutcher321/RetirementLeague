@@ -100,6 +100,18 @@ Standings, Head to Head, Overview, and Game Records all read
   can't reproduce those bracket-position labels, and Money Tracker has no
   ESPN equivalent. Runs every few hours and on-demand
   (`.github/workflows/refresh_league_data.yml`).
+- **`sync_scores_to_sheet.py`** — fills Game Tracker's S1/S2 score cells
+  (and, for a still-blank Reg/Bye/Sacko row, the player names too) from D1
+  once a game is actually decided there; Winner/Margin/Total/Median are
+  sheet formulas derived from S1/S2, so nothing else needs writing. Never
+  overwrites an existing name or score, and never guesses at a Play/Cons/
+  3rd/5th/Champ row's pairing (same bracket-position limitation as final
+  standings below). Runs Tuesday 12:30am Eastern — after Monday Night
+  Football wraps, so the whole week should be decided by then — and
+  on-demand (`.github/workflows/sync_scores_to_sheet.yml`). Unlike
+  `auto_grade_results.py`, which stays manual-only, this one's scheduled;
+  run it locally with `--dry-run` first to preview a week before trusting
+  a new run.
 - **Final standings**: both scripts above override ESPN's own
   `final_standing` with the league's actual rule
   (`database/history_lib.compute_final_standings`, one shared function so
