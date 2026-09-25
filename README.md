@@ -104,14 +104,22 @@ Standings, Head to Head, Overview, and Game Records all read
   (and, for a still-blank Reg/Bye/Sacko row, the player names too) from D1
   once a game is actually decided there; Winner/Margin/Total/Median are
   sheet formulas derived from S1/S2, so nothing else needs writing. Never
-  overwrites an existing name or score, and never guesses at a Play/Cons/
-  3rd/5th/Champ row's pairing (same bracket-position limitation as final
-  standings below). Runs Tuesday 12:30am Eastern — after Monday Night
-  Football wraps, so the whole week should be decided by then — and
-  on-demand (`.github/workflows/sync_scores_to_sheet.yml`). Unlike
-  `auto_grade_results.py`, which stays manual-only, this one's scheduled;
-  run it locally with `--dry-run` first to preview a week before trusting
-  a new run.
+  overwrites a name once it's set, and never guesses at a Play/Cons/3rd/
+  5th/Champ row's pairing (same bracket-position limitation as final
+  standings below) — but a score that no longer matches D1's current value
+  *is* re-written, so it doubles as a correction check, not just a
+  first-fill. Only ever looks at the current season; older, settled
+  seasons are never re-touched even if D1 and the sheet happen to disagree
+  on some long-ago score. Runs twice
+  (`.github/workflows/sync_scores_to_sheet.yml`) and on-demand: Tuesday
+  12:30am Eastern, shortly after Monday Night Football wraps, and again
+  Wednesday 5pm Eastern to catch any score ESPN revises after first
+  marking a game final. Unlike `auto_grade_results.py`, which stays
+  manual-only, this one's scheduled; run it locally with `--dry-run` first
+  to preview a week before trusting a new run, or `--simulate
+  YEAR:INTO_WEEK:FROM_WEEK` to exercise the full pipeline against a
+  not-yet-played week using an already-final week's real scores (always
+  forces `--dry-run` unless `--confirm-write` is also given).
 - **Final standings**: both scripts above override ESPN's own
   `final_standing` with the league's actual rule
   (`database/history_lib.compute_final_standings`, one shared function so

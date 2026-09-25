@@ -8,7 +8,11 @@ Two things it fills, both only once D1 shows the games actually decided:
     each name to its team_id for that year via SHEET_NAME_TO_ESPN_IDS,
     looks up that team's D1 matchup for the row's week, and reports a
     mismatch for manual review rather than writing over a name that
-    doesn't match what D1 says that team actually played).
+    doesn't match what D1 says that team actually played). If a score is
+    already filled in but no longer matches D1's current value, it's
+    re-written as a correction -- ESPN does sometimes revise a stat after
+    a game was first marked final, and this runs again a day and a half
+    later (see the two workflow schedules) specifically to catch that.
   - Names AND scores for a still-blank Reg/Bye/Sacko row, inferred
     straight from D1's schedule -- regular-season pairings and byes are
     fully known there regardless of whether anyone's typed them in yet,
@@ -22,9 +26,12 @@ bracket game is which isn't reconstructable from bracket_type alone (see
 history_lib.compute_final_standings' docstring) -- those still need a
 human, same as before.
 
-Never overwrites an existing name or score. Meant to be run by hand once a
-week's games are final, not scheduled -- see auto_grade_results.py for the
-same judgment call on a script with sheet write access.
+Never overwrites a name once it's set (inferring one is the only time a
+name gets written at all), and never touches a score that already matches
+D1 -- there's nothing to correct, so nothing gets written or re-noted.
+Only ever looks at the current season (history_lib.current_nfl_season_year)
+-- older, settled seasons are never re-touched, even if D1 and the sheet
+happen to disagree on some long-ago score.
 
 Usage:
     python sync_scores_to_sheet.py            # find and write
@@ -33,7 +40,6 @@ Usage:
 import argparse
 import os
 import sys
-from datetime import datetime
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -53,12 +59,18 @@ def authorize_write():
     return gspread.authorize(creds)
 
 
-def load_d1_lookup():
-    teams = hl.d1_query("SELECT year, team_id, owner_espn_id FROM teams")
+def load_d1_lookup(year):
+    # Scoped to one year (the current season) -- older seasons are settled
+    # history and shouldn't get silently re-touched by a scheduled
+    # correction check just because D1 and the sheet disagree on some
+    # long-ago score; that's a deliberate, manual call, same as any other
+    # historical data fix.
+    teams = hl.d1_query(f"SELECT year, team_id, owner_espn_id FROM teams WHERE year = {year}")
     matchups = hl.d1_query(
-        "SELECT year, week, team_id, opponent_team_id, team_score, opponent_score, outcome, bracket_type FROM matchups"
+        "SELECT year, week, team_id, opponent_team_id, team_score, opponent_score, outcome, bracket_type "
+        f"FROM matchups WHERE year = {year}"
     )
-    season_sackos = hl.d1_query("SELECT year, team_id, opponent_team_id FROM season_sackos")
+    season_sackos = hl.d1_query(f"SELECT year, team_id, opponent_team_id FROM season_sackos WHERE year = {year}")
 
     team_id_by_year_player, player_by_year_team = {}, {}
     for player, ids in hl.SHEET_NAME_TO_ESPN_IDS.items():
@@ -172,20 +184,29 @@ def main():
     parser.add_argument(
         "--simulate", metavar="YEAR:INTO_WEEK:FROM_WEEK",
         help="Test-only: pretend INTO_WEEK's games used FROM_WEEK's real scores (pairings stay real). "
-             "Always implies --dry-run -- a simulated week is never written."
+             "Implies --dry-run unless --confirm-write is also given."
+    )
+    parser.add_argument(
+        "--confirm-write", action="store_true",
+        help="Required alongside --simulate to let a simulated run actually write -- this is still a real "
+             "write to the real sheet (fake scores under real names), meant to be manually cleaned up after."
     )
     args = parser.parse_args()
-    if args.simulate:
+    if args.simulate and not args.confirm_write:
         args.dry_run = True
 
-    print("Loading D1 (teams + matchups + season_sackos)...")
-    team_id_by_year_player, player_by_year_team, matchup_by_year_week_team, matchups_by_year_week, sacko_by_year = load_d1_lookup()
+    current_year = hl.current_nfl_season_year()
+    print(f"Loading D1 (teams + matchups + season_sackos for {current_year})...")
+    team_id_by_year_player, player_by_year_team, matchup_by_year_week_team, matchups_by_year_week, sacko_by_year = load_d1_lookup(current_year)
 
     if args.simulate:
-        year_s, into_s, from_s = args.simulate.split(":")
-        year, into_week, from_week = int(year_s), int(into_s), int(from_s)
-        apply_simulation(year, into_week, from_week, matchup_by_year_week_team, matchups_by_year_week)
-        print(f"SIMULATING: {year} week {into_week} using week {from_week}'s real scores (dry-run only, forced).\n")
+        sim_year_s, into_s, from_s = args.simulate.split(":")
+        sim_year, into_week, from_week = int(sim_year_s), int(into_s), int(from_s)
+        if sim_year != current_year:
+            print(f"WARNING: --simulate year {sim_year} != current season {current_year} -- "
+                  "no D1 data was loaded for it, so this will find nothing.\n")
+        apply_simulation(sim_year, into_week, from_week, matchup_by_year_week_team, matchups_by_year_week)
+        print(f"SIMULATING: {sim_year} week {into_week} using week {from_week}'s real scores (dry-run only, forced).\n")
 
     print("Loading Google Sheet (Game Tracker)...")
     gc = authorize_write()
@@ -208,15 +229,26 @@ def main():
     needs_review, not_final_yet, skipped_types = [], [], set()
     infer_names(rows_parsed, player_by_year_team, matchups_by_year_week, sacko_by_year, needs_review)
 
+    def differs(sheet_val, d1_val):
+        """True if the sheet's current cell doesn't already match D1 --
+        blank counts as different from any real value. Float-tolerant so
+        this doesn't flag a write on formatting/precision noise alone."""
+        if sheet_val == "":
+            return True
+        try:
+            return abs(float(sheet_val) - d1_val) > 0.005
+        except (TypeError, ValueError):
+            return True
+
     to_write = []
     for row in rows_parsed:
+        if row["year"] != current_year:
+            continue  # settled history -- never re-touched by this script
         p1, p2 = row["p1"], row["p2"]
         if not p1:
             if row["gtype"] not in ("Reg", "Bye", "Sacko"):
                 skipped_types.add(row["gtype"])
             continue
-        if not row["inferred"] and row["s1"] != "" and (row["s2"] != "" or not p2):
-            continue  # already fully scored by hand -- never touch
 
         p1_id = team_id_by_year_player.get((row["year"], p1))
         if p1_id is None:
@@ -238,15 +270,26 @@ def main():
                     f"{p1} vs {p2} wk{row['week']} {row['year']} -- D1 has {p1} playing a different opponent that week"
                 ))
                 continue
-            to_write.append((row["row_num"], p1, p2, m["team_score"], m["opponent_score"], row["inferred"]))
+            corrected = row["s1"] != "" or row["s2"] != ""
+            if not row["inferred"] and not differs(row["s1"], m["team_score"]) and not differs(row["s2"], m["opponent_score"]):
+                continue  # already matches D1 -- nothing to do
+            to_write.append((row["row_num"], p1, p2, m["team_score"], m["opponent_score"], row["inferred"], corrected))
         else:
-            to_write.append((row["row_num"], p1, None, m["team_score"], None, row["inferred"]))
+            corrected = row["s1"] != ""
+            if not row["inferred"] and not differs(row["s1"], m["team_score"]):
+                continue
+            to_write.append((row["row_num"], p1, None, m["team_score"], None, row["inferred"], corrected))
 
     print(f"\n{len(to_write)} row(s) to fill, {len(needs_review)} need manual review, "
           f"{len(not_final_yet)} not final in D1 yet.\n")
-    for row_num, p1, p2, s1, s2, inferred in to_write:
+    for row_num, p1, p2, s1, s2, inferred, corrected in to_write:
         label = f"{p1} vs {p2}" if p2 else f"{p1} (Bye)"
-        tag = " [names inferred]" if inferred else ""
+        tags = []
+        if inferred:
+            tags.append("names inferred")
+        if corrected:
+            tags.append("CORRECTION -- had a different score")
+        tag = f" [{', '.join(tags)}]" if tags else ""
         print(f"  row {row_num}: {label} -> {s1:g}" + (f"-{s2:g}" if s2 is not None else "") + tag)
     if needs_review:
         print("\nNeeds manual review:")
@@ -262,16 +305,18 @@ def main():
         print(f"\nDry run -- {len(to_write)} row(s) would be written, nothing actually written.")
         return
 
-    note_stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-    for row_num, p1, p2, s1, s2, inferred in to_write:
+    # One batch_update call for every cell -- regardless of row count --
+    # instead of a separate update() per cell (slow enough on its own to
+    # blow past a 2-minute budget for a single week).
+    value_updates = []
+    for row_num, p1, p2, s1, s2, inferred, corrected in to_write:
         if inferred:
-            ws.update([[p1, p2 or ""]], f"D{row_num}:E{row_num}")
-            ws.update_note(f"D{row_num}", f"Auto-filled from D1 {note_stamp}")
-        ws.update([[s1]], f"F{row_num}")
-        ws.update_note(f"F{row_num}", f"Auto-filled from D1 {note_stamp}")
+            value_updates.append({"range": f"D{row_num}:E{row_num}", "values": [[p1, p2 or ""]]})
+        value_updates.append({"range": f"F{row_num}", "values": [[s1]]})
         if p2:
-            ws.update([[s2]], f"G{row_num}")
-            ws.update_note(f"G{row_num}", f"Auto-filled from D1 {note_stamp}")
+            value_updates.append({"range": f"G{row_num}", "values": [[s2]]})
+
+    ws.batch_update(value_updates)
     print(f"\nWrote {len(to_write)} row(s).")
 
 

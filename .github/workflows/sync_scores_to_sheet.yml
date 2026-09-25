@@ -8,6 +8,12 @@ on:
     # so 4:30 UTC lands around 12:30-1:30am Eastern depending on daylight
     # saving -- adjust the hour here if you want it more precise.
     - cron: '30 4 * * 2'
+    # Wednesday 5pm US Eastern -- a second pass a day and a half later to
+    # catch any score ESPN revised after first marking a game final (21:00
+    # UTC lands around 5-6pm Eastern depending on daylight saving). A
+    # correction only ever overwrites a score that's actually changed;
+    # everything else is a no-op.
+    - cron: '0 21 * * 3'
   workflow_dispatch: # Manual button inside GitHub web console
 
 jobs:
