@@ -87,7 +87,7 @@ from google.oauth2.service_account import Credentials
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from generate_franchise_data import SHEET_ID, CREDS_PATH
 from parlay_note_parser import VS_ONLY, TOTAL_VS, TEAM_LINE_VS, PLAYER_OU, parse_signed_number
-from espn_gametime_lookup import find_final_score, find_half_score, find_prop_stat
+from espn_gametime_lookup import find_final_score, find_half_score, find_prop_stat, find_individual_result, INDIVIDUAL_SPORTS
 
 TARGET_TAB = "Auto Parlay Tracker"
 EASTERN = ZoneInfo("America/New_York")
@@ -163,6 +163,21 @@ def grade_over_under(value, line_text, side_text):
         return None  # push
     above = value > line
     return "Win" if (above if side_text == "Over" else not above) else "Loss"
+
+
+def grade_individual_pick(bet_type, a_won, rounds, line_text, side_text):
+    """Returns 'Win'/'Loss'/None for a matchup in one of INDIVIDUAL_SPORTS
+    (currently just UFC) -- Money Line from who won, Total Rounds from the
+    round the bout ended in via grade_over_under. There's no team_score/
+    opp_score to sum for Total Rounds the way a team sport's total has --
+    `rounds` (from find_individual_result) is the one number that exists."""
+    if bet_type in VS_ONLY:
+        return "Win" if a_won else "Loss"
+    if bet_type in TOTAL_VS:
+        if rounds is None:
+            return None
+        return grade_over_under(rounds, line_text, side_text)
+    return None
 
 
 def grade_prop(bet_type, player_prop_text, sport, gametime, line_text, side_text):
@@ -271,6 +286,21 @@ def main():
             needs_review.append((row_num, player, "missing Team/Opponent"))
             continue
 
+        if sport in INDIVIDUAL_SPORTS:
+            result = find_individual_result(team, opponent, sport, gametime)
+            if result is None:
+                needs_review.append((row_num, player, f"matchup not found or not final yet ({team} vs {opponent}, {sport})"))
+                continue
+            outcome = grade_individual_pick(bet_type, result["a_won"], result["rounds"], line, side)
+            if outcome is None:
+                needs_review.append((row_num, player, f"push, missing Line/Side, or '{bet_type}' isn't gradable for {sport}"))
+                continue
+            winner = team if result["a_won"] else opponent
+            rounds = result["rounds"]
+            detail = f"{winner} won" + (f" (round {rounds:g})" if rounds is not None else "")
+            graded.append((row_num, player, outcome, detail))
+            continue
+
         if bet_type in HALF_SCORE_BET_TYPES:
             team_score, opp_score = find_half_score(team, opponent, sport, gametime)
             score_label = "1st half"
@@ -352,6 +382,17 @@ def run_backfill(ws, rows, dry_run):
                 skipped.append((row_num, player, reason))
                 continue
             detail = f"{player_prop}: {stat_total:g}"
+        elif sport in INDIVIDUAL_SPORTS:
+            if not team or not opponent:
+                skipped.append((row_num, player, "missing Team/Opponent"))
+                continue
+            result = find_individual_result(team, opponent, sport, gametime)
+            if result is None:
+                skipped.append((row_num, player, f"matchup not found or not final yet ({team} vs {opponent}, {sport})"))
+                continue
+            winner = team if result["a_won"] else opponent
+            rounds = result["rounds"]
+            detail = f"{winner} won" + (f" (round {rounds:g})" if rounds is not None else "")
         elif bet_type in SCORE_BET_TYPES | HALF_SCORE_BET_TYPES:
             if not team or not opponent:
                 skipped.append((row_num, player, "missing Team/Opponent"))

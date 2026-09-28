@@ -449,7 +449,49 @@ spelling "Isaiah"), is a genuine pick-entry typo -- deliberately not
 "fixed" with a generic typo-correction map, since "Isiah" is itself a
 real, distinct name for other real people (e.g. NBA Hall-of-Famer Isiah
 Thomas), so guessing it always means "Isaiah" risks a wrong resolution
-for someone else down the line. Better fixed at the source, in the sheet.
+for someone else down the line. Better fixed at the source, in the sheet
+-- corrected directly (`Isiah Likely` -> `Isaiah Likely` in row 159's
+Player Prop) once confirmed. Its Grade Detail still couldn't be
+backfilled even after the correction, though -- the real reason turned
+out to be a DNP (he doesn't appear in the Ravens' box score for that
+game at all, consistent with a real injury absence that week), not a
+name-matching gap, so it's deliberately left blank rather than guessed.
+
+**Also added: UFC (one of the individual sports).** Unlike every other
+sport here, an individual-sport ESPN "event" isn't one game -- it's an
+entire fight card, with every fight as a separate entry in that event's
+`competitions` list (confirmed directly for UFC 320: `competitions[0]`
+was an undercard fight, not the Ankalaev/Pereira main event the pick was
+actually about). Competitors are `athlete` objects, not `team` ones, and
+there's no final-score number for a "Total Rounds" bet -- that's the
+round the bout ended in (`status.period`), not a score to sum.
+`INDIVIDUAL_SPORTS`, `_find_individual_competition`, and
+`find_individual_result` in `espn_gametime_lookup.py` handle this shape;
+`auto_grade_results.py` dispatches to them by sport before falling into
+the normal team-score path. Matching a fighter also needed to be more
+permissive than an exact name compare -- a pick is often entered as just
+a last name ("Ankalaev" for "Magomed Ankalaev"), confirmed directly this
+matters, so it's matched the same permissive way `_team_matches` checks
+a team (exact match against several fields, or a substring of the full
+name).
+
+**Boxing and Women's Tennis remain unsupported, for different reasons:**
+- **Boxing has no working ESPN scoreboard path at all**, confirmed
+  directly -- every candidate tried (`boxing/boxing`, `boxing/mens`,
+  `boxing/fight`, `combat/boxing`, bare `boxing`) returns HTTP 400/404,
+  not just "no events that day." The previously-listed `boxing/boxing`
+  path was removed from `SPORT_ESPN_PATHS` -- it never worked, so a
+  Boxing pick now fails fast to manual review instead of burning a full
+  retry-with-backoff cycle (up to ~37s) on a request that can never
+  succeed.
+- **Women's Tennis has a much more complex shape than any other sport
+  here**, confirmed directly: one ESPN "event" is an entire ~2-week
+  tournament (with a date range, not a single date), containing
+  `groupings` (e.g. Women's Singles vs. doubles), each with its own
+  `competitions` list spanning every day of the tournament -- nothing
+  like the "one event = one game/card on one date" shape every other
+  sport (including UFC) fits. Deferred as a separate, larger piece of
+  work for what's so far been a single historical pick.
 
 ## Phase 3 — Switch the live pipeline (DONE)
 

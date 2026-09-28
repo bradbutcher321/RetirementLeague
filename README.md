@@ -133,7 +133,12 @@ Standings, Head to Head, Overview, and Game Records all read
   ESPN's own "Hawai'i") beyond ESPN's own name fields -- see
   `TEAM_NICKNAMES` in `espn_gametime_lookup.py` -- and NCAAM games request
   the full Division I scoreboard the same way NCAAF already did, not just
-  ESPN's small default "featured games" subset. A player who can't be
+  ESPN's small default "featured games" subset. UFC (an individual sport
+  -- fighters, not teams, and a whole fight card as one ESPN "event"
+  rather than one game) is also supported, via `find_individual_result`;
+  Boxing has no working ESPN scoreboard path at all (confirmed directly),
+  and Women's Tennis has a much more complex tournament-spanning shape,
+  so neither is supported yet. A player who can't be
   confidently found in the box score (a real DNP, a name ESPN's box score
   spells differently, or genuine same-name ambiguity) is left for manual
   review rather than graded a guessed zero. Also writes the score/stat it graded

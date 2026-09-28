@@ -76,13 +76,34 @@ SPORT_ESPN_PATHS = {
     "NHL": ["hockey/nhl"],
     "MLB": ["baseball/mlb"],
     "UFC": ["mma/ufc"],
-    "Boxing": ["boxing/boxing"],
+    # No working path found for boxing -- every candidate tried
+    # ("boxing/boxing", "boxing/mens", "boxing/fight", "combat/boxing", and
+    # bare "boxing") returns HTTP 400/404, confirmed directly, not just "no
+    # events that day." ESPN doesn't appear to expose a public boxing
+    # scoreboard the way it does for the other sports here. Deliberately
+    # left out of this dict (rather than pointed at a guessed/broken path)
+    # so a Boxing pick fails fast to manual entry/review instead of
+    # burning a full FETCH_ATTEMPTS retry-with-backoff cycle on a request
+    # that can never succeed.
     "Womens Tennis": ["tennis/wta"],
     "Futbol": [
         "soccer/eng.1", "soccer/uefa.champions", "soccer/esp.1",
         "soccer/usa.1", "soccer/ger.1", "soccer/ita.1", "soccer/uefa.europa",
     ],
 }
+
+# Sports whose ESPN scoreboard is shaped completely differently from a
+# team sport's "one event = one game": UFC's events are whole fight
+# cards, with every fight on the card as a separate `competitions` entry
+# under one event (not `competitions[0]`, the only index every team-sport
+# function above assumes) -- confirmed directly for UFC 320, where
+# `competitions[0]` was an undercard fight, not the main event the pick
+# was actually about. Competitors are `athlete` objects, not `team` ones,
+# and there's no separate final-score number for a bet like "Total
+# Rounds" -- that's the round the bout ended in (status.period), not a
+# score to sum. _find_individual_competition/find_individual_result below
+# handle this shape instead of _find_event/find_final_score.
+INDIVIDUAL_SPORTS = {"UFC"}
 # Some sports' default scoreboard only returns a small "featured games"
 # subset for a date, not the full slate -- confirmed directly for both:
 # college football needs every FBS game (group 80), and college
@@ -634,6 +655,74 @@ def find_final_score(team, opponent, sport, gametime_iso):
     if team_score is None or opp_score is None:
         return None, None, None
     return team_score, opp_score, bool(team_c.get("winner"))
+
+
+def _find_individual_competition(name_a, name_b, sport, gametime_iso):
+    """Like _find_event, but for INDIVIDUAL_SPORTS: one ESPN "event" here
+    is a whole fight card (e.g. "UFC 320"), not one game, with every fight
+    on the card as its own entry in that event's `competitions` list -- so
+    every competition of every event has to be checked, not just
+    `competitions[0]` the way every team-sport function above does.
+    Competitors are `athlete` objects (fullName/displayName/shortName),
+    not `team` ones -- matched the same permissive way _team_matches
+    checks a team (exact match against any of several fields, or a
+    substring of the full name), not just an exact _fold_name compare,
+    since a pick is often entered as just a fighter's last name (e.g.
+    "Ankalaev" for "Magomed Ankalaev") -- confirmed directly this was
+    needed, an exact-full-name-only compare missed the real UFC 320
+    main event entirely. Returns (competition, competitor_a,
+    competitor_b) -- competitor_a always the one matching name_a -- or
+    (None, None, None)."""
+    if not name_a or not name_b or not sport or not gametime_iso:
+        return None, None, None
+    try:
+        game_date = datetime.strptime(gametime_iso[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None, None, None
+    date_str = game_date.strftime("%Y%m%d")
+
+    def athlete_matches(candidate, athlete):
+        candidate = _fold_name(candidate)
+        if not candidate:
+            return False
+        fields = {_fold_name(athlete.get(f) or "") for f in ("fullName", "displayName", "shortName")}
+        if candidate in fields:
+            return True
+        return candidate in _fold_name(athlete.get("fullName") or "")
+
+    for espn_path in SPORT_ESPN_PATHS.get(sport, []):
+        data = _fetch(espn_path, date_str)
+        if not data:
+            continue
+        for event in data.get("events", []):
+            for comp in event.get("competitions", []):
+                competitors = comp.get("competitors", [])
+                if len(competitors) != 2 or any("athlete" not in c for c in competitors):
+                    continue
+                c0, c1 = competitors
+                a0, a1 = c0["athlete"], c1["athlete"]
+                if athlete_matches(name_a, a0) and athlete_matches(name_b, a1):
+                    return comp, c0, c1
+                if athlete_matches(name_a, a1) and athlete_matches(name_b, a0):
+                    return comp, c1, c0
+    return None, None, None
+
+
+def find_individual_result(name_a, name_b, sport, gametime_iso):
+    """Returns {a_won, rounds} for a specific already-known individual-
+    sport matchup (e.g. one UFC fight), or None if it can't be found or
+    hasn't finished yet. `rounds` is the round/period the bout ended in
+    (ESPN's status.period) -- what a "Total Rounds" bet needs to grade
+    against, since there's no separate final-score number for a fight the
+    way team sports have one. `a_won` comes directly from ESPN's own
+    `winner` field, same reasoning as find_final_score above."""
+    comp, ca, cb = _find_individual_competition(name_a, name_b, sport, gametime_iso)
+    if comp is None:
+        return None
+    status = comp.get("status") or {}
+    if not (status.get("type") or {}).get("completed"):
+        return None
+    return {"a_won": bool(ca.get("winner")), "rounds": status.get("period")}
 
 
 def find_live_score(team, opponent, sport, gametime_iso):
