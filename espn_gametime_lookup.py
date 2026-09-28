@@ -22,6 +22,14 @@ different sports (confirmed directly, e.g. multiple "Josh Jacobs") get
 narrowed using what sports the bet type itself could plausibly be
 (a "Receiving Yards" prop can only be NFL/NCAAF) -- if that still leaves
 more than one person, it's left unresolved rather than guessing.
+
+Also holds the box-score/half-score lookups auto_grade_results.py uses to
+grade a finished game -- find_final_score (full-game score, the common
+case), find_half_score (1st Half Spread), and find_prop_stat (every player
+prop, via PROP_STAT_SPECS). All three are built on the same underlying
+event lookup (_find_event/_find_event_for_team) as the gametime functions
+above, just checking a specific already-known game instead of searching a
+whole week's window.
 """
 import re
 import time
@@ -118,6 +126,30 @@ NICKNAME_TO_FORMAL = {
 
 _scoreboard_cache = {}
 _search_cache = {}
+_summary_cache = {}
+
+# Player-prop bet type -> [(stat label, group hint), ...] to sum from a box
+# score (see find_prop_stat below). "Anytime TD" sums across every way a
+# skill player scores; "Total Yards" sums rushing + receiving. The hint
+# disambiguates a label that appears in more than one stat group for the
+# same sport -- it's checked against both a group's `name` (football's
+# groups are named "passing"/"rushing"/etc.) and its `labels` (basketball
+# and baseball's groups aren't named at all, so e.g. MLB's "HR" needs "AB",
+# an at-bats column that's batting-only, to avoid matching a pitcher's HR-
+# allowed line instead of a batter's HR-hit line). None means "only one
+# group will ever have this label anyway" (true for every sport currently
+# in BET_TYPE_SPORTS except football and MLB).
+PROP_STAT_SPECS = {
+    "Anytime TD": [("TD", "rushing"), ("TD", "receiving"), ("TD", "kickReturns"), ("TD", "puntReturns")],
+    "Passing TD": [("TD", "passing")],
+    "Passing Yards": [("YDS", "passing")],
+    "Receiving Yards": [("YDS", "receiving")],
+    "Receptions": [("REC", "receiving")],
+    "Interceptions": [("INT", "passing")],
+    "Total Yards": [("YDS", "rushing"), ("YDS", "receiving")],
+    "Player Points": [("PTS", None)],
+    "Home Runs": [("HR", "AB")],
+}
 
 
 def _nickname_variant(name):
@@ -191,6 +223,34 @@ def _fetch(espn_path, date_str):
     return data
 
 
+def _fetch_summary(espn_path, event_id):
+    """Fetches ESPN's per-event summary (box score, linescores, and more)
+    for one specific already-known game -- unlike _fetch's scoreboard
+    (a whole day/league at once), this is scoped to a single event.
+    Same host and retry behavior as _fetch, for the same reason (see
+    _fetch's own comment on why site.web.api.espn.com, not
+    site.api.espn.com)."""
+    key = (espn_path, event_id)
+    if key in _summary_cache:
+        return _summary_cache[key]
+    url = f"https://site.web.api.espn.com/apis/site/v2/sports/{espn_path}/summary?event={event_id}"
+    req = urllib.request.Request(url, headers=REQUEST_HEADERS)
+    data = None
+    for attempt in range(FETCH_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+            break
+        except Exception as e:
+            print(f"  [espn_gametime_lookup] summary fetch failed ({espn_path} event {event_id}, "
+                  f"attempt {attempt + 1}/{FETCH_ATTEMPTS}): {type(e).__name__}: {e}")
+            data = None
+            if attempt < FETCH_ATTEMPTS - 1:
+                time.sleep(FETCH_RETRY_DELAYS[attempt])
+    _summary_cache[key] = data
+    return data
+
+
 def _fold(text):
     """Lowercase and strip accents (e.g. "Atlético" -> "atletico") so
     international team names match regardless of diacritics -- confirmed
@@ -198,6 +258,17 @@ def _fold(text):
     didn't match the sheet's unaccented spelling otherwise."""
     text = unicodedata.normalize("NFKD", text.strip().lower())
     return "".join(c for c in text if not unicodedata.combining(c))
+
+
+def _fold_name(name):
+    """Loose player-name comparison key: _fold (case/accent-insensitive)
+    plus punctuation stripped and a trailing suffix dropped -- confirmed
+    needed directly: the same real player appears as both "Ja'Marr Chase"
+    and "JaMarr Chase" across different weeks' picks, and a box score's
+    "Michael Penix Jr." should still match a pick that just says "Michael
+    Penix"."""
+    folded = re.sub(r"[^a-z0-9 ]", "", _fold(name))
+    return re.sub(r"\s+(jr|sr|ii|iii|iv)$", "", folded).strip()
 
 
 def _team_matches(candidate, espn_team):
@@ -287,7 +358,7 @@ def find_player_team(player_name, bet_type=None):
     # also returns a "Josh Jacobson"), which can turn a genuinely
     # resolvable name into a falsely-ambiguous one once mixed in with the
     # real hits -- narrow to hits whose own name actually matches first.
-    exact = [h for h in hits if _fold(h.get("name") or "") == _fold(player_name)]
+    exact = [h for h in hits if _fold_name(h.get("name") or "") == _fold_name(player_name)]
     if not exact:
         # ESPN's index wants the formal first name (confirmed: "Matt
         # Stafford" -> 0 hits, "Matthew Stafford" -> 1 clean hit) -- retry
@@ -295,7 +366,7 @@ def find_player_team(player_name, bet_type=None):
         variant = _nickname_variant(player_name)
         if variant:
             variant_hits = search_player(variant)
-            exact = [h for h in variant_hits if _fold(h.get("name") or "") == _fold(variant)]
+            exact = [h for h in variant_hits if _fold_name(h.get("name") or "") == _fold_name(variant)]
     hits = exact or hits
     if not hits:
         return None, None
@@ -435,20 +506,15 @@ def find_gametime(team, opponent, sport=None, days=None):
     return None, None, None, None
 
 
-def find_final_score(team, opponent, sport, gametime_iso):
-    """Returns (team_score, opponent_score, team_won) for a specific
-    already-known game, or (None, None, None) if the game can't be found
-    or hasn't finished yet. Unlike find_gametime(), this is handed a sport
-    and gametime that a prior successful lookup (or the sheet) already
-    recorded, so it only checks that one specific day rather than
-    searching a whole window, and only accepts a full team+opponent match
-    (no single-side fallback -- by this point the names should already be
-    the corrected, ESPN-normalized ones from when the pick was first
-    resolved). team_won comes directly from ESPN's own `winner` field
-    (confirmed directly it's present and handles overtime etc. correctly)
-    rather than a hand-rolled score comparison, so a genuine tie -- where
-    ESPN sets neither side's `winner` true -- is reported as such
-    (team_won=False for both, but scores equal) rather than guessed."""
+def _find_event(team, opponent, sport, gametime_iso):
+    """Locates the ESPN event for a specific already-known team-vs-opponent
+    game (full match only, no single-side fallback -- by this point the
+    names should already be the corrected, ESPN-normalized ones from when
+    the pick was first resolved). Shared by every function below that needs
+    "the one game a sheet row is about," given how it's actually
+    recorded -- as a specific sport+gametime, not an ESPN event id.
+    Returns (event, team_competitor, opponent_competitor), or
+    (None, None, None) if no match is found on gametime_iso's date."""
     if not team or not opponent or not sport or not gametime_iso:
         return None, None, None
     team = re.sub(r"^#\d+\s*", "", team)
@@ -472,23 +538,224 @@ def find_final_score(team, opponent, sport, gametime_iso):
                 t0, t1 = c0["team"], c1["team"]
             except (KeyError, IndexError):
                 continue
-
             if _team_matches(team, t0) and _team_matches(opponent, t1):
-                team_c, opp_c = c0, c1
-            elif _team_matches(team, t1) and _team_matches(opponent, t0):
-                team_c, opp_c = c1, c0
-            else:
-                continue
-
-            if not comp.get("status", {}).get("type", {}).get("completed"):
-                return None, None, None  # found the game, but it isn't final yet
-            team_score = to_num(team_c.get("score"))
-            opp_score = to_num(opp_c.get("score"))
-            if team_score is None or opp_score is None:
-                return None, None, None
-            return team_score, opp_score, bool(team_c.get("winner"))
-
+                return event, c0, c1
+            if _team_matches(team, t1) and _team_matches(opponent, t0):
+                return event, c1, c0
     return None, None, None
+
+
+def _find_event_for_team(team, sport, gametime_iso):
+    """Like _find_event, but for a single known team with no opponent to
+    check against -- player-prop picks only record the player (and the
+    Sport their search hit resolved to), not a Team/Opponent, so the
+    specific game has to be found from the team side alone. Returns
+    (event, team_competitor), or (None, None)."""
+    if not team or not sport or not gametime_iso:
+        return None, None
+    team = re.sub(r"^#\d+\s*", "", team)
+    try:
+        game_date = datetime.strptime(gametime_iso[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None, None
+
+    for espn_path in SPORT_ESPN_PATHS.get(sport, []):
+        data = _fetch(espn_path, game_date.strftime("%Y%m%d"))
+        if not data:
+            continue
+        for event in data.get("events", []):
+            try:
+                competitors = event["competitions"][0]["competitors"]
+            except (KeyError, IndexError):
+                continue
+            for c in competitors:
+                if _team_matches(team, c.get("team", {})):
+                    return event, c
+    return None, None
+
+
+def find_final_score(team, opponent, sport, gametime_iso):
+    """Returns (team_score, opponent_score, team_won) for a specific
+    already-known game, or (None, None, None) if the game can't be found
+    or hasn't finished yet. team_won comes directly from ESPN's own
+    `winner` field (confirmed directly it's present and handles overtime
+    etc. correctly) rather than a hand-rolled score comparison, so a
+    genuine tie -- where ESPN sets neither side's `winner` true -- is
+    reported as such (team_won=False for both, but scores equal) rather
+    than guessed."""
+    event, team_c, opp_c = _find_event(team, opponent, sport, gametime_iso)
+    if event is None:
+        return None, None, None
+    comp = event["competitions"][0]
+    if not comp.get("status", {}).get("type", {}).get("completed"):
+        return None, None, None  # found the game, but it isn't final yet
+    team_score = to_num(team_c.get("score"))
+    opp_score = to_num(opp_c.get("score"))
+    if team_score is None or opp_score is None:
+        return None, None, None
+    return team_score, opp_score, bool(team_c.get("winner"))
+
+
+def find_live_score(team, opponent, sport, gametime_iso):
+    """Returns a dict describing this specific team-vs-opponent game's
+    current state -- score so far (0-0 before kickoff), period/clock, and
+    whether it's finished -- or None if the game can't be found at all.
+    Unlike find_final_score, this works no matter the game's state (still
+    scheduled, in progress, or already final); used to show a live score
+    next to a still-Pending pick while its game is being played (see
+    publish_parlay_stats.py and docs/parlay-results.html), not to grade
+    anything."""
+    event, team_c, opp_c = _find_event(team, opponent, sport, gametime_iso)
+    if event is None:
+        return None
+    status = event["competitions"][0].get("status") or {}
+    type_ = status.get("type") or {}
+    return {
+        "state": type_.get("state"),  # "pre" | "in" | "post"
+        "completed": bool(type_.get("completed")),
+        "period": status.get("period"),
+        "clock": status.get("displayClock"),
+        "team_score": to_num(team_c.get("score")),
+        "opponent_score": to_num(opp_c.get("score")),
+    }
+
+
+def find_half_score(team, opponent, sport, gametime_iso):
+    """Returns (team_half_score, opponent_half_score) -- the sum of the
+    first two periods' linescores, i.e. the score at halftime -- for
+    grading a "1st Half Spread" pick, which find_final_score's full-game
+    score can't settle. (None, None) if the game can't be found, isn't
+    final yet, or doesn't have at least two periods of linescore data."""
+    event, team_c, opp_c = _find_event(team, opponent, sport, gametime_iso)
+    if event is None:
+        return None, None
+    comp = event["competitions"][0]
+    if not comp.get("status", {}).get("type", {}).get("completed"):
+        return None, None
+
+    def half(competitor):
+        lines = competitor.get("linescores") or []
+        if len(lines) < 2:
+            return None
+        values = [l.get("value") for l in lines[:2]]
+        if any(v is None for v in values):
+            return None
+        return sum(values)
+
+    team_half, opp_half = half(team_c), half(opp_c)
+    if team_half is None or opp_half is None:
+        return None, None
+    return team_half, opp_half
+
+
+def _group_matches_hint(group, hint):
+    """A stat group is a match for `hint` if it's the group's own name
+    (football's groups are named "passing"/"rushing"/etc.) or one of its
+    other labels (basketball/baseball's groups aren't named, so e.g. MLB's
+    batting table is told apart from its pitching table by the presence of
+    an "AB" label, batting-only)."""
+    if hint is None:
+        return True
+    if group.get("name") == hint:
+        return True
+    return hint in (group.get("labels") or [])
+
+
+def find_prop_stat(player_name, bet_type, sport, gametime_iso, require_final=True):
+    """Resolves player_name's team via find_player_team (the same ESPN
+    player-search this bet type's Sport/Gametime were originally resolved
+    with), locates that team's specific game on gametime_iso's date, and
+    sums the box-score stat(s) PROP_STAT_SPECS maps this bet_type to (e.g.
+    Anytime TD sums rushing + receiving + return TDs).
+
+    Returns (total, found). `found` is True only if the player was
+    confidently located somewhere in their team's box score at all -- so a
+    caller can tell "recorded a genuine zero in this stat" (found=True,
+    total=0) apart from "couldn't find this player" (found=False, needs a
+    human instead of a guessed zero -- could be a real DNP, a name that
+    doesn't match ESPN's box score spelling, or the game not being final
+    yet).
+
+    require_final=False skips the "is this game actually over" check, for
+    showing a live in-progress stat (see find_live_score) rather than
+    grading a final one -- auto_grade_results.py never passes this, since
+    grading a still-in-progress stat as a final answer would be wrong."""
+    team, resolved_sport = find_player_team(player_name, bet_type)
+    if not team:
+        return None, False
+    sport = resolved_sport or sport
+
+    event, team_c = _find_event_for_team(team, sport, gametime_iso)
+    if event is None:
+        return None, False
+    comp = event["competitions"][0]
+    if require_final and not comp.get("status", {}).get("type", {}).get("completed"):
+        return None, False
+
+    summary = None
+    for espn_path in SPORT_ESPN_PATHS.get(sport, []):
+        summary = _fetch_summary(espn_path, event["id"])
+        if summary and (summary.get("boxscore") or {}).get("players"):
+            break
+    if not summary:
+        return None, False
+
+    team_abbrev = (team_c.get("team") or {}).get("abbreviation")
+    team_block = next(
+        (p for p in summary["boxscore"]["players"] if (p.get("team") or {}).get("abbreviation") == team_abbrev),
+        None,
+    )
+    if not team_block:
+        return None, False
+
+    # Same nickname fallback find_player_team above already relies on
+    # (ESPN's own search wants the formal first name) -- confirmed
+    # directly this matters here too: "Matt Stafford" resolves to the Rams
+    # via the search's nickname fallback, but the box score itself lists
+    # him as "Matthew Stafford", so the name match right below needs the
+    # same two spellings to try, not just the one the pick was entered as.
+    targets = {_fold_name(player_name)}
+    variant = _nickname_variant(player_name)
+    if variant:
+        targets.add(_fold_name(variant))
+    found_anywhere = False
+
+    def stat_value(group, label):
+        nonlocal found_anywhere
+        labels = group.get("labels") or []
+        if label not in labels:
+            return None
+        idx = labels.index(label)
+        for ath in group.get("athletes", []):
+            if _fold_name((ath.get("athlete") or {}).get("displayName") or "") not in targets:
+                continue
+            found_anywhere = True
+            stats = ath.get("stats") or []
+            return to_num(stats[idx]) if idx < len(stats) else None
+        return None
+
+    total = 0.0
+    for label, hint in PROP_STAT_SPECS[bet_type]:
+        groups = [g for g in team_block.get("statistics", []) if label in (g.get("labels") or [])]
+        groups = [g for g in groups if _group_matches_hint(g, hint)] or groups
+        value = next((v for g in groups for v in [stat_value(g, label)] if v is not None), None)
+        if value is not None:
+            total += value
+
+    if not found_anywhere:
+        # Never showed up under any of this stat's own labels -- confirm
+        # they're in the box score at all (any group, any label) before
+        # trusting a 0, since "didn't play" and "played, recorded a real
+        # zero here" would otherwise look identical.
+        for group in team_block.get("statistics", []):
+            if any(_fold_name((a.get("athlete") or {}).get("displayName") or "") in targets
+                   for a in group.get("athletes", [])):
+                found_anywhere = True
+                break
+        if not found_anywhere:
+            return None, False
+
+    return round(total, 2), True
 
 
 def to_num(value):

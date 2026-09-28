@@ -23,7 +23,11 @@ career stats in sync with the league's Google Sheet.
   parlay (with a week/year picker for past weeks), plus betting stats,
   breakdowns, and "how far parlays get" charts, each with their own
   year / all-time tabs. Reads live from the Worker's `/parlay-stats` route
-  (see the Cloudflare architecture note below), not a committed file.
+  (see the Cloudflare architecture note below), not a committed file. A
+  still-Pending pick whose game has actually started shows a live score
+  (or live stat, for a player prop) that updates every 2 minutes, tinted
+  green/red by whether it's currently covering -- see
+  `publish_parlay_stats.py`'s `build_live_scores()`.
 - **Rule Changes** (`docs/rule-changes.html`) — year tabs (2015, and every
   later year something changed) for a full rules card shown side by side
   with the current rules, each including buy-in/payout amounts and that
@@ -107,10 +111,21 @@ Standings, Head to Head, Overview, and Game Records all read
   so both paths share one dispatch function and its cooldown. Also syncs
   every pick into a dedicated D1 database (`sync_parlay_to_d1.py`) for
   durable, queryable storage. **`auto_grade_results.py`** fills in
-  Result (Win/Loss) for finished games using real ESPN final scores; also
-  runnable on-demand and with `--dry-run` to preview without writing. It's
-  the first step in that same 30-minute cloud workflow run, and grading
-  works from there again as of `espn_gametime_lookup.py`'s `_fetch` using
+  Result (Win/Loss) for finished picks -- every bet type except Coin Toss
+  (ESPN's public API doesn't report one anywhere): Money Line/Spread/Alt
+  Spread/Totals from the final score, 1st Half Spread from the halftime
+  linescore, and every player prop (Anytime TD, Receiving/Passing Yards,
+  Receptions, Interceptions, Total Yards, Player Points, Home Runs) from a
+  box-score stat line, via `espn_gametime_lookup.py`'s `find_prop_stat()`
+  -- the player's team isn't recorded for these picks, so it's re-resolved
+  through the same ESPN player search used at entry time, then matched
+  against that team's specific game. A player who can't be confidently
+  found in the box score (a real DNP, a name ESPN's box score spells
+  differently, or genuine same-name ambiguity) is left for manual review
+  rather than graded a guessed zero. Also runnable on-demand and with
+  `--dry-run` to preview without writing. It's the first step in that same
+  30-minute cloud workflow run, and grading works from there again as of
+  `espn_gametime_lookup.py`'s `_fetch` using
   `site.web.api.espn.com` instead of `site.api.espn.com` — same request
   shape, but not behind the WAF rule that blocked every scoreboard lookup
   from GitHub Actions'/Cloudflare's shared IP ranges outright (confirmed

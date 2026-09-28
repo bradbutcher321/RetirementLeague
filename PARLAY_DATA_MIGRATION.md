@@ -303,6 +303,56 @@ recorded as a Win for an "Over 52" bet, when 51 is actually under 52 and
 should have lost. Not corrected automatically — flagged for a human
 decision, same principle as everything else this script does.
 
+**Extended since the above was first written: every bet type except Coin
+Toss is now auto-graded**, not just Money Line/Spread/Alt Spread/Totals.
+Two more kinds of ESPN data feed this, alongside the plain final score:
+
+- **1st Half Spread** — `find_half_score()` sums the first two periods'
+  linescores (ESPN's scoreboard event already includes these, no separate
+  fetch needed) to get the score at halftime specifically, since the
+  final score can't settle this one.
+- **Player props** (Anytime TD, Receiving/Passing Yards, Receptions,
+  Interceptions, Total Yards, Player Points, Home Runs) —
+  `find_prop_stat()` resolves the player's team via the same ESPN player
+  search `find_player_team()` already used at entry time (Team isn't
+  recorded on these rows, only Sport and Player Prop), locates that
+  team's specific game, and reads the relevant stat off ESPN's box score
+  (`.../summary?event=...`, `boxscore.players[].statistics[]` — a set of
+  named stat groups for football, one flat group for basketball, batting
+  + pitching for baseball; `PROP_STAT_SPECS` in `espn_gametime_lookup.py`
+  maps each bet type to the label(s) to sum, e.g. Anytime TD sums rushing
+  + receiving + return TDs). "Nx Name" (e.g. "2x Rashee Rice", a 2-or-more
+  -TDs leg) is handled by requiring the summed count meet N instead of 1.
+  A player who can't be confidently matched in the box score at all is
+  left for manual review rather than graded a guessed zero.
+
+  Verified against 49 already-graded historical picks covering every prop
+  bet type in real use: 38 confidently regraded, all 38 matching the
+  sheet's existing Win/Loss exactly (0 mismatches); the other 11 came back
+  "needs review" for a legitimate reason each time — genuine same-name
+  ambiguity ESPN's own search doesn't resolve (two different real NFL
+  players both named "Josh Allen"), a real pick-entry typo ("Isiah" for
+  "Isaiah" Likely), or an ESPN search-index quirk (a punctuation variant
+  of a name returning zero hits), not a grading bug. One real bug *was*
+  found and fixed along the way: `find_player_team`'s exact-name match
+  compared names with punctuation still in them, so "DJ Moore" (as
+  entered) never matched ESPN's own "D.J. Moore" search result at all —
+  fixed by comparing through the same punctuation-stripped fold used for
+  box-score name matching (`_fold_name`), which incidentally also fixed
+  this for the entry-time GUI autofill, not just grading.
+
+**Also added: an intermittently-updating live score.** While a pending
+pick's game is actually in progress, `publish_parlay_stats.py`'s
+`build_live_scores()` (run in the same 30-minute cycle as grading) looks
+up its current score (team bets) or current stat (player props) via
+`find_live_score()`/`find_prop_stat(..., require_final=False)`, and tints
+it green or red by feeding that in-progress number through the exact same
+grading math (`grade_pick`/`grade_over_under`) used for the final result
+— "currently covering," not just "currently ahead." `docs/parlay-results.html`
+re-polls `/parlay-stats` every 2 minutes (independent of the full
+30-minute data refresh) and re-renders just the current parlay card, so a
+game's score updates without a manual reload.
+
 ## Phase 3 — Switch the live pipeline (DONE)
 
 `generate_parlay_data.py`'s `load_tracker()` now reads "Auto Parlay

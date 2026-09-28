@@ -112,6 +112,11 @@
   .result-pill.Pending{ border-style: dashed; }
   .val-win{ color: var(--turf); }
   .val-loss{ color: var(--loss); }
+  .leg.live-up{ background: rgba(76,154,107,0.08); border-left-color: var(--turf-dim); }
+  .leg.live-down{ background: rgba(192,87,75,0.08); border-left-color: var(--loss); }
+  .leg-live{ display: flex; align-items: center; gap: 6px; color: var(--text-dim); font-size: 0.78rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .leg-live .dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: leg-live-pulse 1.5s ease-in-out infinite; }
+  @keyframes leg-live-pulse{ 0%, 100%{ opacity: 1; } 50%{ opacity: 0.25; } }
   @media (max-width: 560px){
     .leg{ grid-template-columns: minmax(0, 1fr) auto; }
     .leg-pick{ grid-column: 1 / -1; grid-row: 2; }
@@ -256,7 +261,7 @@
       </details>
     </section>
 
-    <footer id="footer">Auto-refreshes every 30 minutes · Data from the league sheet</footer>
+    <footer id="footer">Live scores update every 2 minutes during a game · Full refresh every 30 minutes · Data from the league sheet</footer>
   </div>
 
 <script src="nav.js"></script>
@@ -295,7 +300,18 @@
       .sort((a, b) => (a[1].gametime || '9999').localeCompare(b[1].gametime || '9999'));
   }
 
-  function renderParlay(week, players) {
+  // entry: {kind: 'team', team_score, opponent_score, period, clock, tone} or
+  // {kind: 'prop', stat, tone} -- see publish_parlay_stats.py's build_live_scores.
+  function liveLine(entry) {
+    if (!entry) return '';
+    const clock = entry.kind === 'team' && entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '';
+    const text = entry.kind === 'team'
+      ? `${Math.round(entry.team_score)}-${Math.round(entry.opponent_score)}${clock}`
+      : `${entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1)} so far`;
+    return `<div class="leg-live"><span class="dot"></span>${esc(text)}</div>`;
+  }
+
+  function renderParlay(week, players, live) {
     const legs = legsSorted(week, players);
     const wins = legs.filter(([, p]) => p.result === 'Win').length;
     const losses = legs.filter(([, p]) => p.result === 'Loss').length;
@@ -312,15 +328,20 @@
       tile('Payout', fmtMoney(week.final.payout)) +
       tile('Split', fmtMoney(week.final.split));
 
-    const rows = legs.map(([name, p]) => `
-      <div class="leg ${p.result}">
+    const rows = legs.map(([name, p]) => {
+      const entry = p.result === 'Pending' ? (live || {})[`${week.year}:${week.week}:${name}`] : null;
+      const tone = entry && entry.tone ? ` live-${entry.tone}` : '';
+      return `
+      <div class="leg ${p.result}${tone}">
         <div class="leg-player">${esc(name)}</div>
         <div class="leg-pick">
           <div class="leg-bet">${esc(p.pick)}</div>
           <div class="leg-meta">${p.sport ? esc(p.sport) + ' · ' : ''}${fmtOdds(p.odds)} · ${fmtTime(p.gametime)}</div>
+          ${liveLine(entry)}
         </div>
         <span class="result-pill ${p.result}">${p.result}</span>
-      </div>`).join('') +
+      </div>`;
+    }).join('') +
       missing.map(name => `
       <div class="leg">
         <div class="leg-player">${esc(name)}</div>
@@ -561,6 +582,7 @@
     .then(res => res.json())
     .then(data => {
       const { players, weeks, stats } = data;
+      let live = data.live || {};
       const current = weeks[weeks.length - 1];
       const years = [...new Set(weeks.map(w => w.year))].sort((a, b) => b - a);
       const yearSel = document.getElementById('year-select');
@@ -581,7 +603,7 @@
         const isCurrent = w === current;
         heading.textContent = isCurrent ? 'Current Parlay' : 'Past Parlay';
         backBtn.hidden = isCurrent;
-        container.innerHTML = renderParlay(w, players);
+        container.innerHTML = renderParlay(w, players, live);
       }
       function selectCurrent() {
         yearSel.value = current.year;
@@ -592,6 +614,20 @@
       yearSel.addEventListener('change', () => { fillWeeks(); showSelected(); });
       weekSel.addEventListener('change', showSelected);
       backBtn.addEventListener('click', selectCurrent);
+
+      // Re-checks just the live-score map every couple minutes (the same
+      // endpoint, re-fetched -- one cheap KV read) and re-renders the
+      // currently-displayed week in place, without touching the
+      // year/week selection or the Stats section below. publish_parlay_stats.py
+      // only refreshes this data every 30 minutes itself, but polling a
+      // little faster here means a game that just went live (or just
+      // ended) shows up close to as soon as the backend has it.
+      setInterval(() => {
+        fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
+          .then(res => res.json())
+          .then(fresh => { live = fresh.live || {}; showSelected(); })
+          .catch(() => {}); // a missed poll just tries again next interval
+      }, 120000);
 
       // ---------- Stats: scope (Season-equivalent) > category tabs > subsections ----------
       let activeCategory = 0;
