@@ -524,13 +524,15 @@ competition type).
 Two of these five (USA/Ecuador, Netherlands/Poland) turned out to be
 genuine 1-1 draws at full time (confirmed directly: `STATUS_FULL_TIME`,
 no shootout), yet the sheet's already-recorded Result for both is
-"Loss." Backfilled the real score anyway (a plain, accurate "1-1 final"
-either way) rather than guessing at or silently encoding a tie-counts-
-as-a-loss rule into `grade_pick` -- that would change how *future*
-Money Line picks on a draw get auto-graded, a real behavior change
-worth its own explicit decision, not something to fold into a backfill
-pass. `grade_pick` still returns `None` (needs a human) for a Money Line
-tie, same as before.
+"Loss." Backfilled the real score first (a plain, accurate "1-1 final"
+either way) without changing the grading rule on the strength of just
+those two -- flagged the question instead. **Confirmed directly: a tie
+is a Loss for a 2-way money line in this league, not a push.**
+`grade_pick` now returns `"Loss"` for a Money Line tie instead of `None`
+(previously "needs a human," on the theory that a 2-way line had no
+defined outcome for a draw -- it does, here). This only touches Money
+Line; Spread/Total landing exactly on the line is still a real push, a
+different, standard betting concept this doesn't affect.
 
 Grade Detail coverage: 223 of 228 historical picks.
 

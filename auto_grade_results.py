@@ -131,8 +131,12 @@ def grade_pick(bet_type, team_score, opp_score, line_text, side_text):
     types, or the halftime score for 1st Half Spread -- grade_pick doesn't
     care which, the spread math is identical either way."""
     if bet_type in VS_ONLY:  # Money Line
-        if team_score == opp_score:
-            return None  # a 2-way money line has no defined outcome for a tie
+        # A tie is a Loss for a 2-way money line, not a push -- confirmed
+        # directly (both by real historical picks already graded that way
+        # -- two soccer Money Line ties, both recorded Loss -- and
+        # explicitly). Not a general "push" rule -- Spread/Total still
+        # treat landing exactly on the line as a real push below, a
+        # different, standard betting concept this doesn't touch.
         return "Win" if team_score > opp_score else "Loss"
 
     if bet_type in TEAM_LINE_VS:  # Spread, Alt Spread, 1st Half Spread
