@@ -493,6 +493,16 @@ name).
   sport (including UFC) fits. Deferred as a separate, larger piece of
   work for what's so far been a single historical pick.
 
+**Also fixed: the "stale Gametime" Knicks picks turned out to be two
+different things, not one.** One (`Knicks vs Magic`) really did have a
+wrong recorded Gametime -- corrected directly in the sheet. The other
+(`Knicks vs Cavs`) had a perfectly correct Gametime; "Cavs" just doesn't
+appear in any of ESPN's own name fields for the Cavaliers, the same class
+of gap as "Bucs"/"Pats"/etc. above -- added `"cavs": "cavaliers"` to
+`TEAM_NICKNAMES`. Both now regrade correctly (132-120 and 126-124,
+matching the sheet's existing Win for each). Grade Detail coverage: 217
+of 228 historical picks.
+
 ## Phase 3 — Switch the live pipeline (DONE)
 
 `generate_parlay_data.py`'s `load_tracker()` now reads "Auto Parlay
