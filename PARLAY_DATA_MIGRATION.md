@@ -406,9 +406,50 @@ exactly before anything was written.
   vs Magic" pick whose recorded date has no such game on ESPN's
   schedule at all) -- a data-entry issue to fix in the sheet directly,
   not something a lookup-logic change can paper over.
-- Everything else still skipped is the player-name-matching class of gap
-  already covered above (genuine same-name ambiguity, a real pick-entry
-  typo, or an ESPN search-index quirk), unrelated to team names.
+**Also fixed: the player-name-matching gaps from above turned out to be
+mostly one root cause, not several.** Working through them individually
+against real ESPN data found that most weren't genuine ambiguity at all --
+ESPN's own player-search index returns a **stale "current team"** for a
+recently-traded player (confirmed directly for more than one real case:
+Hollywood Brown's search hit still listed Philadelphia months after his
+real trade to Kansas City; D.J. Moore's still listed Carolina years after
+his trade to Chicago; A.J. Brown's search hit resolves to an unrelated
+"New England Patriots" entry instead of the real Eagles WR at all). Since
+`find_prop_stat` was trusting that team field to know which game's box
+score to check, a stale or wrong team meant it always came up empty, even
+though the player really did show up in a real box score that week -- just
+for a different team than search claimed.
+
+`find_prop_stat` now tries a fast path first (search-resolved team, as
+before), and if that doesn't find the player, falls back to
+`_sweep_prop_stat`: scan every game the recorded sport played on
+Gametime's date directly and check each one's box score for the player by
+name, instead of trusting search's team field at all. Slower (one
+box-score fetch per game that day instead of one), which is why it's a
+fallback and not the primary path -- but it doesn't need
+`find_player_team`'s search to have found anything to begin with, so it
+also recovers a name ESPN's search returns zero hits for (e.g. "JaMarr
+Chase", which only matches search as "Ja'Marr Chase" but matches a real
+box score either way once compared through the punctuation-stripped
+`_fold_name`). Only trusts a match if the player turns up in exactly one
+of that day's games -- a real remaining ambiguity (two different NFL
+players sharing a name, both actually playing that day) still stays
+unresolved rather than guessing.
+
+Also added "vlad" -> "vladimir" to `NICKNAME_TO_FORMAL` (same pattern as
+the existing Matt/Mike/Chris/etc. entries) -- Vlad Guerrero Jr.'s pick
+text doesn't match the box score's "Vladimir Guerrero Jr." without it.
+
+Verified against the real historical data: re-ran the full 49-pick
+verification from Phase 2's original check afterward -- 48 of 49 now
+regrade correctly (up from 38), still 0 mismatches. Ran `--backfill`
+again, bringing Grade Detail coverage to 214 of 228 historical picks (up
+from 204). The one player case still unresolved, "Isiah Likely" (real
+spelling "Isaiah"), is a genuine pick-entry typo -- deliberately not
+"fixed" with a generic typo-correction map, since "Isiah" is itself a
+real, distinct name for other real people (e.g. NBA Hall-of-Famer Isiah
+Thomas), so guessing it always means "Isaiah" risks a wrong resolution
+for someone else down the line. Better fixed at the source, in the sheet.
 
 ## Phase 3 — Switch the live pipeline (DONE)
 

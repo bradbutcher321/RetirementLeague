@@ -146,7 +146,7 @@ NICKNAME_TO_FORMAL = {
     "jim": "james", "jimmy": "james", "jack": "john", "ed": "edward", "eddie": "edward",
     "tony": "anthony", "greg": "gregory", "pat": "patrick", "ken": "kenneth",
     "larry": "lawrence", "ron": "ronald", "rich": "richard", "ricky": "richard",
-    "dave": "david", "abe": "abraham",
+    "dave": "david", "abe": "abraham", "vlad": "vladimir",
 }
 
 _scoreboard_cache = {}
@@ -701,59 +701,23 @@ def _group_matches_hint(group, hint):
     return hint in (group.get("labels") or [])
 
 
-def find_prop_stat(player_name, bet_type, sport, gametime_iso, require_final=True):
-    """Resolves player_name's team via find_player_team (the same ESPN
-    player-search this bet type's Sport/Gametime were originally resolved
-    with), locates that team's specific game on gametime_iso's date, and
-    sums the box-score stat(s) PROP_STAT_SPECS maps this bet_type to (e.g.
-    Anytime TD sums rushing + receiving + return TDs).
+def _read_prop_stat_from_team_block(team_block, player_name, bet_type):
+    """The box-score-reading half of find_prop_stat: given one team's
+    block from a box-score summary, sums PROP_STAT_SPECS[bet_type] for
+    player_name. Split out so both the fast (search-resolved team) path
+    and the sweep-every-game-that-day fallback below share the exact same
+    reading/matching logic.
 
     Returns (total, found). `found` is True only if the player was
-    confidently located somewhere in their team's box score at all -- so a
+    confidently located somewhere in this team's box score at all -- so a
     caller can tell "recorded a genuine zero in this stat" (found=True,
-    total=0) apart from "couldn't find this player" (found=False, needs a
-    human instead of a guessed zero -- could be a real DNP, a name that
-    doesn't match ESPN's box score spelling, or the game not being final
-    yet).
-
-    require_final=False skips the "is this game actually over" check, for
-    showing a live in-progress stat (see find_live_score) rather than
-    grading a final one -- auto_grade_results.py never passes this, since
-    grading a still-in-progress stat as a final answer would be wrong."""
-    team, resolved_sport = find_player_team(player_name, bet_type)
-    if not team:
-        return None, False
-    sport = resolved_sport or sport
-
-    event, team_c = _find_event_for_team(team, sport, gametime_iso)
-    if event is None:
-        return None, False
-    comp = event["competitions"][0]
-    if require_final and not comp.get("status", {}).get("type", {}).get("completed"):
-        return None, False
-
-    summary = None
-    for espn_path in SPORT_ESPN_PATHS.get(sport, []):
-        summary = _fetch_summary(espn_path, event["id"])
-        if summary and (summary.get("boxscore") or {}).get("players"):
-            break
-    if not summary:
-        return None, False
-
-    team_abbrev = (team_c.get("team") or {}).get("abbreviation")
-    team_block = next(
-        (p for p in summary["boxscore"]["players"] if (p.get("team") or {}).get("abbreviation") == team_abbrev),
-        None,
-    )
-    if not team_block:
-        return None, False
-
-    # Same nickname fallback find_player_team above already relies on
-    # (ESPN's own search wants the formal first name) -- confirmed
-    # directly this matters here too: "Matt Stafford" resolves to the Rams
-    # via the search's nickname fallback, but the box score itself lists
-    # him as "Matthew Stafford", so the name match right below needs the
-    # same two spellings to try, not just the one the pick was entered as.
+    total=0) apart from "not on this team's box score" (found=False)."""
+    # Same nickname fallback find_player_team relies on (ESPN's own search
+    # wants the formal first name) -- confirmed directly this matters here
+    # too: "Matt Stafford" resolves to the Rams via the search's nickname
+    # fallback, but the box score itself lists him as "Matthew Stafford",
+    # so the name match below needs the same two spellings to try, not
+    # just the one the pick was entered as.
     targets = {_fold_name(player_name)}
     variant = _nickname_variant(player_name)
     if variant:
@@ -796,6 +760,114 @@ def find_prop_stat(player_name, bet_type, sport, gametime_iso, require_final=Tru
             return None, False
 
     return round(total, 2), True
+
+
+def _prop_stat_for_team(team, sport, gametime_iso, player_name, bet_type, require_final):
+    """Looks up player_name's stat from one specific, already-known team's
+    game -- the fast path find_prop_stat tries first. Returns (total, found)."""
+    event, team_c = _find_event_for_team(team, sport, gametime_iso)
+    if event is None:
+        return None, False
+    comp = event["competitions"][0]
+    if require_final and not comp.get("status", {}).get("type", {}).get("completed"):
+        return None, False
+
+    summary = None
+    for espn_path in SPORT_ESPN_PATHS.get(sport, []):
+        summary = _fetch_summary(espn_path, event["id"])
+        if summary and (summary.get("boxscore") or {}).get("players"):
+            break
+    if not summary:
+        return None, False
+
+    team_abbrev = (team_c.get("team") or {}).get("abbreviation")
+    team_block = next(
+        (p for p in summary["boxscore"]["players"] if (p.get("team") or {}).get("abbreviation") == team_abbrev),
+        None,
+    )
+    if not team_block:
+        return None, False
+    return _read_prop_stat_from_team_block(team_block, player_name, bet_type)
+
+
+def _sweep_prop_stat(player_name, bet_type, sport, gametime_iso, require_final):
+    """Fallback for find_prop_stat when the fast (search-resolved team)
+    path can't find the player: scans every game `sport` played on
+    gametime_iso's date directly and checks each one's box score for
+    player_name by name, instead of trusting find_player_team's search-
+    based "current team" -- confirmed stale for more than one real
+    recently-traded player (e.g. a WR's ESPN search hit still listing
+    their old team months after a real trade). Doesn't need find_player_team
+    to have found anything at all, either -- it only needs a name to
+    fold-compare against real box-score athlete names, so this also
+    recovers a player ESPN's own search returns zero hits for.
+
+    Slower (one box-score fetch per game that day instead of one), which
+    is exactly why it's a fallback, not the primary path. Only trusts a
+    match if the player turns up in exactly one of that day's games -- if
+    the same name shows up in two different teams' box scores that day,
+    this stays unresolved rather than guessing which one was meant."""
+    try:
+        game_date = datetime.strptime(gametime_iso[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None, False
+    date_str = game_date.strftime("%Y%m%d")
+
+    hits = []
+    for espn_path in SPORT_ESPN_PATHS.get(sport, []):
+        data = _fetch(espn_path, date_str)
+        if not data:
+            continue
+        for event in data.get("events", []):
+            comp = (event.get("competitions") or [{}])[0]
+            if require_final and not comp.get("status", {}).get("type", {}).get("completed"):
+                continue
+            summary = _fetch_summary(espn_path, event.get("id"))
+            if not summary or not (summary.get("boxscore") or {}).get("players"):
+                continue
+            for team_block in summary["boxscore"]["players"]:
+                total, found = _read_prop_stat_from_team_block(team_block, player_name, bet_type)
+                if found:
+                    hits.append(total)
+
+    if len(hits) == 1:
+        return hits[0], True
+    return None, False
+
+
+def find_prop_stat(player_name, bet_type, sport, gametime_iso, require_final=True):
+    """Sums the box-score stat(s) PROP_STAT_SPECS maps bet_type to (e.g.
+    Anytime TD sums rushing + receiving + return TDs) for player_name on
+    gametime_iso's date.
+
+    Two-tier lookup: first the fast path -- resolve player_name's team via
+    find_player_team (the same ESPN player search this bet type's Sport/
+    Gametime were originally resolved with) and check just that team's
+    game. If that doesn't find the player (including if find_player_team
+    itself found nothing), fall back to _sweep_prop_stat, which checks
+    every game the sport played that date directly by name -- slower, but
+    doesn't depend on search's "current team" field being accurate (it
+    isn't, always -- confirmed directly for more than one real recently-
+    traded player) or even returning a hit at all.
+
+    Returns (total, found). `found` is True only if the player was
+    confidently located somewhere in a box score at all -- so a caller
+    can tell "recorded a genuine zero in this stat" (found=True, total=0)
+    apart from "couldn't find this player" (found=False, needs a human
+    instead of a guessed zero -- could be a real DNP, a name that doesn't
+    match ESPN's box score spelling, genuine same-name ambiguity, or the
+    game not being final yet).
+
+    require_final=False skips the "is this game actually over" check, for
+    showing a live in-progress stat (see find_live_score) rather than
+    grading a final one -- auto_grade_results.py never passes this, since
+    grading a still-in-progress stat as a final answer would be wrong."""
+    team, resolved_sport = find_player_team(player_name, bet_type)
+    if team:
+        total, found = _prop_stat_for_team(team, resolved_sport or sport, gametime_iso, player_name, bet_type, require_final)
+        if found:
+            return total, found
+    return _sweep_prop_stat(player_name, bet_type, sport, gametime_iso, require_final)
 
 
 def to_num(value):

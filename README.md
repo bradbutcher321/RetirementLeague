@@ -122,7 +122,13 @@ Standings, Head to Head, Overview, and Game Records all read
   box-score stat line, via `espn_gametime_lookup.py`'s `find_prop_stat()`
   -- the player's team isn't recorded for these picks, so it's re-resolved
   through the same ESPN player search used at entry time, then matched
-  against that team's specific game. Team matching itself handles informal
+  against that team's specific game. Since that search's "current team"
+  can be stale for a recently-traded player (confirmed directly for more
+  than one real case), a fallback (`_sweep_prop_stat`) scans every game
+  the sport played that date directly and checks each box score for the
+  player by name if the fast path comes up empty -- slower, but doesn't
+  depend on search having current or even any data for that player at
+  all. Team matching itself handles informal
   nicknames ("Bucs", "Pats", "Man U", ...) and punctuation ("Hawaii" vs
   ESPN's own "Hawai'i") beyond ESPN's own name fields -- see
   `TEAM_NICKNAMES` in `espn_gametime_lookup.py` -- and NCAAM games request
