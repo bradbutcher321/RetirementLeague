@@ -89,6 +89,14 @@ SPORT_ESPN_PATHS = {
     "Futbol": [
         "soccer/eng.1", "soccer/uefa.champions", "soccer/esp.1",
         "soccer/usa.1", "soccer/ger.1", "soccer/ita.1", "soccer/uefa.europa",
+        # Added after real picks turned up in each of these and weren't
+        # found anywhere above -- verified directly against the actual
+        # date each pick needed, not just that the path returns 200:
+        "soccer/fra.1",             # Ligue 1 (France) -- Nice vs Marseille
+        "soccer/nor.1",             # Eliteserien (Norway) -- Tromso vs Rosenborg
+        "soccer/eng.2",             # English Championship -- Southampton vs Oxford Utd
+        "soccer/fifa.friendly",     # International friendlies -- USA vs Ecuador
+        "soccer/fifa.worldq.uefa",  # UEFA World Cup qualifiers -- Netherlands vs Poland
     ],
 }
 
@@ -132,6 +140,7 @@ TEAM_NICKNAMES = {
     "wv": "west virginia",
     "cavs": "cavaliers",
     "tt": "texas tech",
+    "rosenberg": "rosenborg",
 }
 
 # Player-prop bet types -> the sport(s) they could plausibly be. ESPN's

@@ -508,7 +508,31 @@ blindly), but confirmed unambiguous for this league's actual usage.
 Verified before backfilling: 34-10, matching the sheet's existing Loss
 for an Over 57.5 Total Points bet (44 total lands well under the line).
 
-Grade Detail coverage: 218 of 228 historical picks.
+**Also added the 5 missing soccer leagues/competitions** the remaining
+Futbol picks actually needed, each verified against the exact real match
+before being trusted, not just that the ESPN path returns 200: Ligue 1
+(`soccer/fra.1`, Nice vs Marseille), Eliteserien (`soccer/nor.1`, Tromso
+vs Rosenborg -- also added `"rosenberg": "rosenborg"` to
+`TEAM_NICKNAMES`, a real misspelling in the pick), the English
+Championship (`soccer/eng.2`, Southampton vs Oxford Utd -- both really
+are Championship clubs this season), international friendlies
+(`soccer/fifa.friendly`, USA vs Ecuador), and UEFA World Cup qualifiers
+(`soccer/fifa.worldq.uefa`, Netherlands vs Poland -- not a friendly,
+despite the sheet's generic "Futbol" sport label not distinguishing
+competition type).
+
+Two of these five (USA/Ecuador, Netherlands/Poland) turned out to be
+genuine 1-1 draws at full time (confirmed directly: `STATUS_FULL_TIME`,
+no shootout), yet the sheet's already-recorded Result for both is
+"Loss." Backfilled the real score anyway (a plain, accurate "1-1 final"
+either way) rather than guessing at or silently encoding a tie-counts-
+as-a-loss rule into `grade_pick` -- that would change how *future*
+Money Line picks on a draw get auto-graded, a real behavior change
+worth its own explicit decision, not something to fold into a backfill
+pass. `grade_pick` still returns `None` (needs a human) for a Money Line
+tie, same as before.
+
+Grade Detail coverage: 223 of 228 historical picks.
 
 ## Phase 3 — Switch the live pipeline (DONE)
 
