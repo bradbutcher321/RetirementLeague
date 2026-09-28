@@ -331,12 +331,19 @@
     const rows = legs.map(([name, p]) => {
       const entry = p.result === 'Pending' ? (live || {})[`${week.year}:${week.week}:${name}`] : null;
       const tone = entry && entry.tone ? ` live-${entry.tone}` : '';
+      // detail: the score/stat the pick was actually graded from (see
+      // auto_grade_results.py's Grade Detail column) -- shown once a leg
+      // is decided, so "why" is visible next to the Win/Loss pill, not
+      // just while the game's still live.
+      const detail = p.result !== 'Pending' && p.detail
+        ? `<div class="leg-meta">${esc(p.detail)}</div>` : '';
       return `
       <div class="leg ${p.result}${tone}">
         <div class="leg-player">${esc(name)}</div>
         <div class="leg-pick">
           <div class="leg-bet">${esc(p.pick)}</div>
           <div class="leg-meta">${p.sport ? esc(p.sport) + ' · ' : ''}${fmtOdds(p.odds)} · ${fmtTime(p.gametime)}</div>
+          ${detail}
           ${liveLine(entry)}
         </div>
         <span class="result-pill ${p.result}">${p.result}</span>

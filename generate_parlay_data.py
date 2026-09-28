@@ -123,7 +123,7 @@ def load_tracker(spreadsheet):
     # incident in PARLAY_DATA_MIGRATION.md) would otherwise misorder it.
     players = [v[0] for v in ws.get_values("U2:U13") if v]
 
-    rows = ws.get_values("A2:Q3000")
+    rows = ws.get_values("A2:S3000")
     weeks_by_key = {}
     order = []
     for r in rows:
@@ -167,6 +167,13 @@ def load_tracker(spreadsheet):
             "odds": to_float(cell(r, 11)),
             "gametime": str(cell(r, 12)).strip() or None,
             "result": result if result in ("Win", "Loss") else "Pending",
+            # The score/stat auto_grade_results.py actually graded this pick
+            # from (e.g. "17-10 final" or "Matt Stafford: 390"), written to
+            # column S -- shows why a leg won or lost, not just the pill.
+            # Only ever present for a graded pick; a manually-entered
+            # Win/Loss (or one from before this column existed and hasn't
+            # been backfilled -- see auto_grade_results.py --backfill) has none.
+            "detail": str(cell(r, 18)).strip() or None,
         }
 
     weeks = [weeks_by_key[k] for k in order if weeks_by_key[k]["picks"]]

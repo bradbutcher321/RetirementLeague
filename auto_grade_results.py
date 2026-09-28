@@ -61,9 +61,18 @@ pick-entry typo ("Isiah" for "Isaiah" Likely), or an ESPN search-index
 quirk (a punctuation variant of a name returning zero hits) -- not a
 grading error.
 
+Also writes the score/stat a pick was actually graded from into a
+"Grade Detail" column (see DETAIL_COLUMN) -- e.g. "17-10 final" or
+"Matt Stafford: 390" -- so docs/parlay-results.html can show *why* a leg
+won or lost, not just the Win/Loss pill. Normal grading writes this
+alongside Result as it goes; --backfill instead fills it in for picks
+that already have a Result but no detail yet (everything graded before
+this column existed), without touching Result at all.
+
 Usage:
-    python auto_grade_results.py            # grade and write
-    python auto_grade_results.py --dry-run   # report only, write nothing
+    python auto_grade_results.py             # grade and write
+    python auto_grade_results.py --dry-run    # report only, write nothing
+    python auto_grade_results.py --backfill   # fill in Grade Detail for old graded picks
 """
 import argparse
 import os
@@ -82,6 +91,15 @@ from espn_gametime_lookup import find_final_score, find_half_score, find_prop_st
 
 TARGET_TAB = "Auto Parlay Tracker"
 EASTERN = ZoneInfo("America/New_York")
+# Column S -- empty in the sheet until this was added, with T left as a
+# gap (matching how the sheet has made room for new columns before, e.g.
+# the "Player Order" helper list moving from Q to U -- see
+# PARLAY_DATA_MIGRATION.md). Holds the plain-text score/stat a pick's
+# Result was actually graded from (e.g. "17-10 final" or "Matt Stafford:
+# 390"), so docs/parlay-results.html can show *why* a leg won or lost,
+# not just the Win/Loss pill -- see generate_parlay_data.py's load_tracker().
+DETAIL_COLUMN = "S"
+DETAIL_COLUMN_IDX = 18
 
 SCORE_BET_TYPES = (TEAM_LINE_VS - {"1st Half Spread"}) | VS_ONLY | TOTAL_VS
 HALF_SCORE_BET_TYPES = {"1st Half Spread"}
@@ -176,16 +194,30 @@ def grade_prop(bet_type, player_prop_text, sport, gametime, line_text, side_text
     return outcome, total, None
 
 
+def ensure_detail_header(ws):
+    if not (ws.get_values(f"{DETAIL_COLUMN}1:{DETAIL_COLUMN}1") or [[""]])[0]:
+        ws.update([["Grade Detail"]], f"{DETAIL_COLUMN}1")
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dry-run", action="store_true", help="Report what would be graded without writing anything")
+    parser.add_argument("--dry-run", action="store_true", help="Report what would happen without writing anything")
+    parser.add_argument("--backfill", action="store_true",
+                         help="Fill in Grade Detail for already-graded historical picks that don't have one yet, "
+                              "without touching Result or grading anything new")
     args = parser.parse_args()
 
     gc = authorize_write()
     spreadsheet = gc.open_by_key(SHEET_ID)
     ws = spreadsheet.worksheet(TARGET_TAB)
+    ensure_detail_header(ws)
 
-    rows = ws.get_values("A2:N3000")  # Year..Result
+    rows = ws.get_values(f"A2:{DETAIL_COLUMN}3000")  # Year..Grade Detail
+
+    if args.backfill:
+        run_backfill(ws, rows, args.dry_run)
+        return
+
     now_eastern = datetime.now(EASTERN).replace(tzinfo=None)
 
     graded, needs_review, still_pending = [], [], []
@@ -276,7 +308,87 @@ def main():
     for row_num, player, outcome, detail in graded:
         ws.update([[outcome]], f"N{row_num}")
         ws.update_note(f"N{row_num}", f"Auto-graded {note_stamp} ({detail})")
+        ws.update([[detail]], f"{DETAIL_COLUMN}{row_num}")
     print(f"\nWrote {len(graded)} result(s).")
+
+
+def run_backfill(ws, rows, dry_run):
+    """One-time (re-runnable) sweep: fills in Grade Detail for picks that
+    already have a Win/Loss Result but no detail yet -- everything graded
+    before this column existed. Reuses the exact same lookup functions as
+    normal grading, just to recover the score/stat text; never writes
+    Result, even implicitly -- ESPN's historical data for an already-final
+    game doesn't change, so there's nothing to re-grade, only an
+    explanation to recover."""
+    to_write, skipped = [], []
+
+    for i, r in enumerate(rows):
+        row_num = i + 2
+        result = r[13].strip() if len(r) > 13 else ""
+        if result not in ("Win", "Loss"):
+            continue
+        if r[DETAIL_COLUMN_IDX].strip() if len(r) > DETAIL_COLUMN_IDX else "":
+            continue  # already has a detail -- don't overwrite a value a human might have hand-adjusted
+
+        player = r[3].strip() if len(r) > 3 else ""
+        bet_type = r[5].strip() if len(r) > 5 else ""
+        sport = r[4].strip() if len(r) > 4 else ""
+        team = r[6].strip() if len(r) > 6 else ""
+        opponent = r[7].strip() if len(r) > 7 else ""
+        player_prop = r[8].strip() if len(r) > 8 else ""
+        line = r[9].strip() if len(r) > 9 else ""
+        side = r[10].strip() if len(r) > 10 else ""
+        gametime = r[12].strip() if len(r) > 12 else ""
+        if not gametime:
+            skipped.append((row_num, player, "no Gametime recorded"))
+            continue
+
+        if bet_type in PROP_BET_TYPES:
+            if not player_prop:
+                skipped.append((row_num, player, "missing Player Prop"))
+                continue
+            _outcome, stat_total, reason = grade_prop(bet_type, player_prop, sport, gametime, line, side)
+            if stat_total is None:
+                skipped.append((row_num, player, reason))
+                continue
+            detail = f"{player_prop}: {stat_total:g}"
+        elif bet_type in SCORE_BET_TYPES | HALF_SCORE_BET_TYPES:
+            if not team or not opponent:
+                skipped.append((row_num, player, "missing Team/Opponent"))
+                continue
+            if bet_type in HALF_SCORE_BET_TYPES:
+                team_score, opp_score = find_half_score(team, opponent, sport, gametime)
+                score_label = "1st half"
+            else:
+                team_score, opp_score, _team_won = find_final_score(team, opponent, sport, gametime)
+                score_label = "final"
+            if team_score is None:
+                skipped.append((row_num, player, f"game not found or not final yet ({team} vs {opponent}, {sport})"))
+                continue
+            detail = f"{team_score:g}-{opp_score:g} {score_label}"
+        else:
+            skipped.append((row_num, player, f"'{bet_type}' isn't auto-gradable"))
+            continue
+
+        to_write.append((row_num, player, detail))
+
+    print(f"{len(to_write)} detail(s) to backfill, {len(skipped)} skipped.\n")
+    for row_num, player, detail in to_write:
+        print(f"  row {row_num} ({player}): {detail}")
+    if skipped:
+        print("\nSkipped:")
+        for row_num, player, why in skipped:
+            print(f"  row {row_num} ({player}): {why}")
+
+    if not to_write:
+        print("\nNothing to write.")
+        return
+    if dry_run:
+        print(f"\nDry run -- {len(to_write)} detail(s) would be written, nothing actually written.")
+        return
+
+    ws.batch_update([{"range": f"{DETAIL_COLUMN}{row_num}", "values": [[detail]]} for row_num, _player, detail in to_write])
+    print(f"\nWrote {len(to_write)} detail(s).")
 
 
 if __name__ == "__main__":

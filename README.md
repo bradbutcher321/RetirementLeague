@@ -27,7 +27,10 @@ career stats in sync with the league's Google Sheet.
   still-Pending pick whose game has actually started shows a live score
   (or live stat, for a player prop) that updates every 2 minutes, tinted
   green/red by whether it's currently covering -- see
-  `publish_parlay_stats.py`'s `build_live_scores()`.
+  `publish_parlay_stats.py`'s `build_live_scores()`. Once a leg is decided,
+  that same score/stat sticks around permanently as the reason why (from
+  the sheet's "Grade Detail" column -- see `auto_grade_results.py`), for
+  the current week and every past week the picker can reach.
 - **Rule Changes** (`docs/rule-changes.html`) — year tabs (2015, and every
   later year something changed) for a full rules card shown side by side
   with the current rules, each including buy-in/payout amounts and that
@@ -122,7 +125,12 @@ Standings, Head to Head, Overview, and Game Records all read
   against that team's specific game. A player who can't be confidently
   found in the box score (a real DNP, a name ESPN's box score spells
   differently, or genuine same-name ambiguity) is left for manual review
-  rather than graded a guessed zero. Also runnable on-demand and with
+  rather than graded a guessed zero. Also writes the score/stat it graded
+  from into a "Grade Detail" sheet column (e.g. "17-10 final" or "Matt
+  Stafford: 390"), so the Parlay Results page can show *why* a leg won or
+  lost next to the pill, not just the pill itself; `--backfill` fills this
+  in for picks that were graded before that column existed, without
+  touching their already-correct Result. Also runnable on-demand and with
   `--dry-run` to preview without writing. It's the first step in that same
   30-minute cloud workflow run, and grading works from there again as of
   `espn_gametime_lookup.py`'s `_fetch` using
