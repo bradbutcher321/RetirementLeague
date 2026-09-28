@@ -122,10 +122,15 @@ Standings, Head to Head, Overview, and Game Records all read
   box-score stat line, via `espn_gametime_lookup.py`'s `find_prop_stat()`
   -- the player's team isn't recorded for these picks, so it's re-resolved
   through the same ESPN player search used at entry time, then matched
-  against that team's specific game. A player who can't be confidently
-  found in the box score (a real DNP, a name ESPN's box score spells
-  differently, or genuine same-name ambiguity) is left for manual review
-  rather than graded a guessed zero. Also writes the score/stat it graded
+  against that team's specific game. Team matching itself handles informal
+  nicknames ("Bucs", "Pats", "Man U", ...) and punctuation ("Hawaii" vs
+  ESPN's own "Hawai'i") beyond ESPN's own name fields -- see
+  `TEAM_NICKNAMES` in `espn_gametime_lookup.py` -- and NCAAM games request
+  the full Division I scoreboard the same way NCAAF already did, not just
+  ESPN's small default "featured games" subset. A player who can't be
+  confidently found in the box score (a real DNP, a name ESPN's box score
+  spells differently, or genuine same-name ambiguity) is left for manual
+  review rather than graded a guessed zero. Also writes the score/stat it graded
   from into a "Grade Detail" sheet column (e.g. "17-10 final" or "Matt
   Stafford: 390"), so the Parlay Results page can show *why* a leg won or
   lost next to the pill, not just the pill itself; `--backfill` fills this

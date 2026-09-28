@@ -353,6 +353,63 @@ re-polls `/parlay-stats` every 2 minutes (independent of the full
 30-minute data refresh) and re-renders just the current parlay card, so a
 game's score updates without a manual reload.
 
+**Also added: a permanent "why" once a leg is decided.** `auto_grade_results.py`
+now writes the score/stat it actually graded a pick from into a "Grade
+Detail" sheet column (e.g. "17-10 final" or "Matt Stafford: 390"), so
+`docs/parlay-results.html` can show it next to the Win/Loss pill for the
+current week and every past week the picker can reach, not just while the
+game's live. `--backfill` fills this in for picks graded before the
+column existed, without touching their already-correct Result; run once
+against the full history, covering 204 of 228 picks after the team-name
+fixes below (up from 189 the first time).
+
+**Also fixed: several of the "no score found" gaps from the original
+verification above weren't genuine ESPN coverage gaps at all.** Working
+through the remaining skipped picks one by one against real ESPN
+responses found three distinct, fixable causes, not one:
+- **Informal team nicknames** ("Bucs"/"Buccs", "Pats", "Jags", "Preds",
+  "Man U", "WV") don't appear in any of ESPN's own name fields for that
+  team -- confirmed directly for each. `TEAM_NICKNAMES` in
+  `espn_gametime_lookup.py` maps them to a name ESPN does expose, checked
+  as an additional exact-match candidate in `_team_matches` (not folded
+  into the substring fallback, so a short one like "WV" can't accidentally
+  match an unrelated team).
+- **Punctuation** -- "Hawaii" (as entered) vs ESPN's own "Hawai'i" -- the
+  same class of gap already fixed for player names via `_fold_name`, now
+  also applied to team matching as a punctuation-stripped fallback
+  comparison.
+- **NCAAM's default scoreboard only returns a small "featured games"
+  subset**, not the full Division I slate -- confirmed directly: a real
+  Friday's response had 2 games instead of 26. College football already
+  worked around this same behavior for FBS (group 80); `FULL_GROUP_BY_PATH`
+  generalizes that to also request college basketball's Division I group
+  (50).
+
+Verified against the real historical data these fixes apply to: all 15
+newly-resolvable picks matched the sheet's already-recorded Win/Loss
+exactly before anything was written.
+
+**Remaining known gaps, categorized (not yet fixed):**
+- **Missing soccer leagues** -- Ligue 1 (France), Eliteserien (Norway),
+  the English Championship/League One, and international/national-team
+  friendlies aren't in `SPORT_ESPN_PATHS` at all. Adding a league is
+  cheap; the open question is which ones are worth it for how often
+  they'd actually come up.
+- **Individual sports have a completely different ESPN response shape**
+  -- UFC/Boxing use `athlete` competitors instead of `team` ones (not
+  just different field names, a different competitor object entirely),
+  and Women's Tennis events don't even have the `competitions` key
+  `_find_event` assumes every sport has. Fixing this means new matching
+  logic, not a name mapping -- a bigger, separate piece of work for very
+  few historical picks (one each).
+- **At least one pick's recorded Gametime looks stale/wrong** (a "Knicks
+  vs Magic" pick whose recorded date has no such game on ESPN's
+  schedule at all) -- a data-entry issue to fix in the sheet directly,
+  not something a lookup-logic change can paper over.
+- Everything else still skipped is the player-name-matching class of gap
+  already covered above (genuine same-name ambiguity, a real pick-entry
+  typo, or an ESPN search-index quirk), unrelated to team names.
+
 ## Phase 3 — Switch the live pipeline (DONE)
 
 `generate_parlay_data.py`'s `load_tracker()` now reads "Auto Parlay

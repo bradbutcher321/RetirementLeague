@@ -83,8 +83,33 @@ SPORT_ESPN_PATHS = {
         "soccer/usa.1", "soccer/ger.1", "soccer/ita.1", "soccer/uefa.europa",
     ],
 }
-# College football needs every FBS game, not just a default subset.
-NEEDS_FBS_GROUP = {"football/college-football"}
+# Some sports' default scoreboard only returns a small "featured games"
+# subset for a date, not the full slate -- confirmed directly for both:
+# college football needs every FBS game (group 80), and college
+# basketball needs every Division I game (group 50) -- a real Friday's
+# NCAAM scoreboard came back with only 2 games without this, 26 with it.
+# (group id, limit) per path that needs the wider request.
+FULL_GROUP_BY_PATH = {
+    "football/college-football": (80, 200),
+    "basketball/mens-college-basketball": (50, 300),
+}
+
+# Common informal team nicknames/abbreviations a pick is sometimes entered
+# with, that don't appear in any of ESPN's own name fields for that team
+# (see _team_matches) -- confirmed directly for each of these that a plain
+# "Bucs" or "Man U" pick couldn't be matched against ESPN's "Buccaneers"/
+# "Man United" otherwise. Checked as an additional exact-match candidate,
+# not folded into the substring fallback, so short ones (like "WV") stay
+# precise instead of accidentally matching an unrelated team whose name
+# happens to contain those letters.
+TEAM_NICKNAMES = {
+    "bucs": "buccaneers", "buccs": "buccaneers",
+    "pats": "patriots",
+    "jags": "jaguars",
+    "preds": "predators",
+    "man u": "man united",
+    "wv": "west virginia",
+}
 
 # Player-prop bet types -> the sport(s) they could plausibly be. ESPN's
 # player search often returns several same-named people across different
@@ -192,8 +217,10 @@ def _fetch(espn_path, date_str):
     # is (HTTP 403 from every cloud IP tried, headers/cookies/retries all
     # made no difference). search_player() below was already on this host.
     url = f"https://site.web.api.espn.com/apis/site/v2/sports/{espn_path}/scoreboard?dates={date_str}"
-    if espn_path in NEEDS_FBS_GROUP:
-        url += "&groups=80&limit=200"
+    group_limit = FULL_GROUP_BY_PATH.get(espn_path)
+    if group_limit:
+        group_id, limit = group_limit
+        url += f"&groups={group_id}&limit={limit}"
     req = urllib.request.Request(url, headers=REQUEST_HEADERS)
     # A transient failure (timeout, or ESPN's intermittent rate-limit --
     # see FETCH_ATTEMPTS above) shouldn't read as "no such game" the same
@@ -277,16 +304,29 @@ def _team_matches(candidate, espn_team):
     Gators", shortDisplayName is "Florida" (the school) while the mascot
     "Gators" only appears in the separate `name` field, and for "UCF
     Knights", shortDisplayName is "UCF" while the mascot "Knights" is
-    again only in `name`. A pick can reasonably use either half."""
+    again only in `name`. A pick can reasonably use either half.
+
+    Also tries TEAM_NICKNAMES ("Bucs" -> "Buccaneers") and a punctuation-
+    stripped comparison ("Hawaii" vs ESPN's own "Hawai'i") as additional
+    exact-match candidates -- confirmed directly both were needed, the
+    second the same class of gap already fixed for player names via
+    _fold_name."""
     candidate = _fold(candidate)
     if not candidate:
         return False
     fields = ["shortDisplayName", "displayName", "name", "location", "abbreviation"]
     exact = {_fold(espn_team.get(f) or "") for f in fields}
-    if candidate in exact:
+    candidates = {candidate}
+    mapped = TEAM_NICKNAMES.get(candidate)
+    if mapped:
+        candidates.add(mapped)
+    if candidates & exact:
+        return True
+    loose = lambda s: re.sub(r"[^a-z0-9 ]", "", s)
+    if {loose(c) for c in candidates} & {loose(e) for e in exact}:
         return True
     display = _fold(espn_team.get("displayName") or "")
-    return candidate in display
+    return any(c in display for c in candidates)
 
 
 def _canonical_name(team_obj, competitor):
