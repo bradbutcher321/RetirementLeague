@@ -131,6 +131,7 @@ TEAM_NICKNAMES = {
     "man u": "man united",
     "wv": "west virginia",
     "cavs": "cavaliers",
+    "tt": "texas tech",
 }
 
 # Player-prop bet types -> the sport(s) they could plausibly be. ESPN's

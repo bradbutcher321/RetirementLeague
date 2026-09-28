@@ -500,8 +500,15 @@ wrong recorded Gametime -- corrected directly in the sheet. The other
 appear in any of ESPN's own name fields for the Cavaliers, the same class
 of gap as "Bucs"/"Pats"/etc. above -- added `"cavs": "cavaliers"` to
 `TEAM_NICKNAMES`. Both now regrade correctly (132-120 and 126-124,
-matching the sheet's existing Win for each). Grade Detail coverage: 217
-of 228 historical picks.
+matching the sheet's existing Win for each).
+
+Also added `"tt": "texas tech"` -- deliberately left out at first over
+collision-risk caution (a two-letter code felt too generic to trust
+blindly), but confirmed unambiguous for this league's actual usage.
+Verified before backfilling: 34-10, matching the sheet's existing Loss
+for an Over 57.5 Total Points bet (44 total lands well under the line).
+
+Grade Detail coverage: 218 of 228 historical picks.
 
 ## Phase 3 — Switch the live pipeline (DONE)
 
