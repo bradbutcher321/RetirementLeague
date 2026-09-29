@@ -1,7 +1,7 @@
 /**
  * Manually dispatches the "Refresh Parlay Data" GitHub Action so anyone can
  * force a refresh right after editing Auto Parlay Tracker, instead of
- * waiting for the next scheduled run (every 30 minutes). The dispatched
+ * waiting for the next scheduled run (every 10 minutes). The dispatched
  * workflow re-reads the sheet and pushes the recomputed stats straight to
  * Cloudflare KV (see publish_parlay_stats.py) -- no git commit involved,
  * so the site's own /parlay-stats fetch (via this same Worker) picks it up

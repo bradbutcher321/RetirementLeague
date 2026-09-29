@@ -30,10 +30,10 @@ review rather than guessed -- the sheet's Result column only has
 Win/Loss/Pending today, and inventing a value for a push isn't this
 script's call to make (see PARLAY_DATA_MIGRATION.md's Phase 2 notes).
 
-Runs every 30 minutes as a step in the "Refresh Parlay Data" GitHub
+Runs every 10 minutes as a step in the "Refresh Parlay Data" GitHub
 Action (.github/workflows/refresh_parlay_data.yml), right before that
 same run republishes stats to KV and syncs picks to D1 -- so a pick
-grades and the site reflects it within one 30-minute cycle of its game
+grades and the site reflects it within one 10-minute cycle of its game
 actually finishing, with no one needing to run anything by hand. Uses
 the same GOOGLE_CREDENTIALS secret (write-scoped) the other scheduled
 scripts already have available in CI -- no new secret was needed, since

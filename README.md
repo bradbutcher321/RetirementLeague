@@ -101,10 +101,10 @@ Standings, Head to Head, Overview, and Game Records all read
   script's stats logic unchanged but pushes the result straight to
   Cloudflare KV, which a Worker route (`GET /parlay-stats`) serves to the
   site directly, no git commit or GitHub Pages rebuild involved. Runs
-  every 30 minutes via a **Cloudflare Cron Trigger** (`worker/wrangler.toml`'s
+  every 10 minutes via a **Cloudflare Cron Trigger** (`worker/wrangler.toml`'s
   `[triggers]`, handled by `scheduled()` in `worker/src/index.js`), not
   GitHub Actions' own `schedule:` — that was observed firing every 2.5-5.5
-  hours instead of every 30 minutes (a documented GitHub Actions
+  hours instead of every 10 minutes (a documented GitHub Actions
   limitation: the `schedule` event is best-effort and can be silently
   dropped, worst right at `:00`/`:30` when everyone else's crons also
   fire). The Cron Trigger dispatches
@@ -112,8 +112,11 @@ Standings, Head to Head, Overview, and Game Records all read
   now) the same way the "Refresh Data" button on the Parlay Results page
   already did — `worker/src/parlayRefresh.js`, `POST /refresh-parlay` —
   so both paths share one dispatch function and its cooldown. Also syncs
-  every pick into a dedicated D1 database (`sync_parlay_to_d1.py`) for
-  durable, queryable storage. **`auto_grade_results.py`** fills in
+  picks into a dedicated D1 database (`sync_parlay_to_d1.py`) for
+  durable, queryable storage — only the rows that actually changed since
+  the last sync, since re-syncing all of them on a 10-minute cadence would
+  eat a meaningful chunk of D1's free-tier daily rows-written budget for
+  no reason. **`auto_grade_results.py`** fills in
   Result (Win/Loss) for finished picks -- every bet type except Coin Toss
   (ESPN's public API doesn't report one anywhere): Money Line/Spread/Alt
   Spread/Totals from the final score, 1st Half Spread from the halftime
@@ -148,7 +151,7 @@ Standings, Head to Head, Overview, and Game Records all read
   in for picks that were graded before that column existed, without
   touching their already-correct Result. Also runnable on-demand and with
   `--dry-run` to preview without writing. It's the first step in that same
-  30-minute cloud workflow run, and grading works from there again as of
+  10-minute cloud workflow run, and grading works from there again as of
   `espn_gametime_lookup.py`'s `_fetch` using
   `site.web.api.espn.com` instead of `site.api.espn.com` — same request
   shape, but not behind the WAF rule that blocked every scoreboard lookup

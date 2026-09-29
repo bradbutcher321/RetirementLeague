@@ -261,7 +261,7 @@
       </details>
     </section>
 
-    <footer id="footer">Live scores update every 2 minutes during a game · Full refresh every 30 minutes · Data from the league sheet</footer>
+    <footer id="footer">Full refresh every 10 minutes · Data from the league sheet</footer>
   </div>
 
 <script src="nav.js"></script>
@@ -626,7 +626,7 @@
       // endpoint, re-fetched -- one cheap KV read) and re-renders the
       // currently-displayed week in place, without touching the
       // year/week selection or the Stats section below. publish_parlay_stats.py
-      // only refreshes this data every 30 minutes itself, but polling a
+      // only refreshes this data every 10 minutes itself, but polling a
       // little faster here means a game that just went live (or just
       // ended) shows up close to as soon as the backend has it.
       setInterval(() => {

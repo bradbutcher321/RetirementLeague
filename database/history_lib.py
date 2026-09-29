@@ -407,14 +407,16 @@ def run_d1_sql(statements, label, db_name=None):
         os.unlink(path)
 
 
-def d1_query(sql):
+def d1_query(sql, db_name=None):
     """Runs a read-only query against remote D1 via `wrangler d1 execute
     --json` and returns the result rows as a list of dicts. Uses the same
     wrangler-CLI approach as the write path (update_history_d1.py) rather
     than D1's raw HTTP API, so both read and write inherit wrangler's
-    already-proven auth/retry behavior."""
+    already-proven auth/retry behavior. db_name defaults to
+    D1_DATABASE_NAME (retirement-league-history) -- pass it explicitly to
+    query a different D1 database, same as run_d1_sql already does."""
     result = subprocess.run(
-        [NPX, "-y", "wrangler", "d1", "execute", D1_DATABASE_NAME, "--remote", f"--command={sql}", "--json"],
+        [NPX, "-y", "wrangler", "d1", "execute", db_name or D1_DATABASE_NAME, "--remote", f"--command={sql}", "--json"],
         cwd=WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if result.returncode != 0:

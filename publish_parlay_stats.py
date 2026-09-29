@@ -12,9 +12,9 @@ file). Additionally attaches a "live" block (see build_live_scores below):
 for every pick still Pending, an in-progress score/stat pulled straight
 from ESPN, so docs/parlay-results.html can show a currently-playing game's
 running score next to the pick, tinted green/red by whether it's
-currently covering. This runs every 30 minutes (same cadence as
+currently covering. This runs every 10 minutes (same cadence as
 auto_grade_results.py, right before it in the same workflow step order),
-so a pick's live score is never more than ~30 minutes stale, and it stops
+so a pick's live score is never more than ~10 minutes stale, and it stops
 appearing the moment auto_grade_results.py grades the pick Win/Loss (the
 "Pending" filter that selects which rows get a live lookup here is the
 same Result column that script fills in).

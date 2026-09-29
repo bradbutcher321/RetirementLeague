@@ -270,7 +270,7 @@ deliberately not extended to a fourth "Push" value for now (a plain
 that would also touch the sheet's validation, the GUI, and
 `generate_parlay_data.py`'s stats math).
 
-**Now runs automatically every 30 minutes**, as a step in
+**Now runs automatically every 10 minutes**, as a step in
 `refresh_parlay_data.yml` right before that same run republishes stats to
 KV and syncs picks to D1 — so any of a week's 12 picks grades within one
 cycle of its own game finishing (each pick checked independently; nothing

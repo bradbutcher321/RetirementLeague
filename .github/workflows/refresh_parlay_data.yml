@@ -2,10 +2,10 @@ name: Refresh Parlay Data
 
 on:
   # No schedule: trigger here -- GitHub's own cron is best-effort and was
-  # observed firing every 2.5-5.5 hours instead of every 30 minutes
+  # observed firing every 2.5-5.5 hours instead of every 10 minutes
   # (silently dropped rather than queued, worst right at :00/:30 when
   # everyone else's crons also fire). A Cloudflare Cron Trigger dispatches
-  # this workflow every 30 minutes instead -- see worker/wrangler.toml's
+  # this workflow every 10 minutes instead -- see worker/wrangler.toml's
   # [triggers] and the scheduled() handler in worker/src/index.js.
   workflow_dispatch: # Manual button inside GitHub web console, and Cloudflare's cron dispatch
 

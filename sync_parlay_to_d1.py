@@ -7,11 +7,18 @@ database (see database/update_history_d1.py, whose wrangler-CLI pattern
 this reuses directly via database/history_lib.py's NPX/WORKER_DIR/
 sql_value helpers).
 
-Always re-syncs every row (not just "new" ones) -- cheap (a couple hundred
-rows total), and every write is INSERT OR REPLACE keyed on
-(year, week, player), so it self-heals any later correction made in the
-sheet (a fixed team name, a graded Result, etc.) without needing to track
-what changed.
+Diffs every row in the sheet against what's already in D1 and only writes
+the ones that changed (including new rows) -- every write is still
+INSERT OR REPLACE keyed on (year, week, player), so it still self-heals
+any later correction made in the sheet (a fixed team name, a graded
+Result, etc.), just without paying D1's rows-written cost for the
+~200+ rows that didn't change on a given run. This matters because this
+script runs every 10 minutes (see refresh_parlay_data.yml) -- unconditionally
+rewriting the whole table that often would eat a large, unnecessary chunk
+of D1's free-tier daily rows-written budget, which is shared account-wide
+with the history and analytics D1 databases. The one-time cost is a
+single extra read of the whole table from D1, which is cheap (D1's free
+daily rows-*read* budget is 50x the rows-written one).
 
 Meant to run right alongside publish_parlay_stats.py (see
 .github/workflows/refresh_parlay_data.yml) -- same read of the sheet,
@@ -73,12 +80,25 @@ def load_rows(spreadsheet):
     return rows
 
 
+def load_existing_rows():
+    """{(year, week, player): row tuple in COLUMNS order} for every row
+    already in D1, so main() can skip rewriting the ones that haven't
+    changed. Column types line up with load_rows()'s without extra
+    coercion: year/week are D1 INTEGER columns (JSON ints, matching
+    to_int()), odds/final_odds/final_payout are REAL columns (SQLite's
+    REAL column affinity always stores/returns these as floats, matching
+    to_float()'s always-float-or-None), and everything else is TEXT
+    (JSON strings or null, matching the str(...) or None fields below)."""
+    existing = hl.d1_query(f"SELECT {', '.join(COLUMNS)} FROM picks", db_name=D1_DATABASE_NAME)
+    return {(r["year"], r["week"], r["player"]): tuple(r[c] for c in COLUMNS) for r in existing}
+
+
 def run_sql(statements):
     if not statements:
         print("Nothing to sync.")
         return
     hl.run_d1_sql(statements, "parlay picks", db_name=D1_DATABASE_NAME)
-    print(f"Synced {len(statements)} rows to D1.")
+    print(f"Synced {len(statements)} row(s) to D1.")
 
 
 def main():
@@ -90,7 +110,12 @@ def main():
     if not rows:
         raise SystemExit(f"No picks found in {TARGET_TAB}; refusing to sync nothing")
 
-    statements = hl.insert_or_replace_sql("picks", COLUMNS, rows)
+    print("Checking which rows changed since the last sync...")
+    existing = load_existing_rows()
+    changed_rows = [row for row in rows if existing.get((row[0], row[1], row[2])) != row]
+    print(f"{len(changed_rows)} of {len(rows)} row(s) changed or new; {len(rows) - len(changed_rows)} unchanged, skipped.")
+
+    statements = hl.insert_or_replace_sql("picks", COLUMNS, changed_rows)
     run_sql(statements)
 
 

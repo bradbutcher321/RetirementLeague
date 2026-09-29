@@ -3,7 +3,7 @@ main = "src/index.js"
 compatibility_date = "2024-09-23"
 
 # GitHub Actions' own `schedule:` trigger is best-effort and was observed
-# firing every 2.5-5.5 hours instead of the configured 30 minutes (GitHub
+# firing every 2.5-5.5 hours instead of the configured 10 minutes (GitHub
 # silently drops a scheduled run rather than queuing it, worse right at
 # :00/:30 when everyone else's crons also fire). Cloudflare Cron Triggers
 # are not best-effort, so this fires refresh_parlay_data.yml on a real
@@ -11,7 +11,7 @@ compatibility_date = "2024-09-23"
 # reuses the same dispatchParlayRefresh() the manual "Refresh Data" button
 # already calls.
 [triggers]
-crons = ["*/30 * * * *"]
+crons = ["*/10 * * * *"]
 
 # Plain-text config (safe to commit — these are not secrets)
 [vars]
