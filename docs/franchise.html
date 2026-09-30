@@ -18,7 +18,7 @@
   .tabs{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
   .tab{ background: none; border: 1px solid var(--line); color: var(--text-dim); font-family: var(--body); font-size: 0.82rem; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
   .tab.on{ border-color: var(--gold); color: var(--gold); background: rgba(186,155,55,0.10); }
-  .tab-group + .tab-group{ margin-top: 14px; }
+  #tab-content > * + *{ margin-top: 14px; }
 
   /* ---------- Cards ---------- */
   .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
@@ -428,7 +428,9 @@
 
     const seasonCard = card('By Season', rows(e.by_season.map(s => [String(s.year), [[fmtPct(s.pct), 'Efficiency'], [fmt(s.games), 'Games']]])));
 
-    return headline + `<div class="card-grid">${recordCard}${worstGameCard}${worstBenchCard}${seasonCard}</div>`;
+    return `<div class="card-grid">${headline}${recordCard}</div>` +
+      `<div class="card-grid">${worstGameCard}${worstBenchCard}</div>` +
+      seasonCard;
   }
 
   function badge(season) {
@@ -451,10 +453,10 @@
   }
 
   const TABS = [
-    { label: 'Performance', render: p => `<div class="card-grid three">${renderStreaks(p)}</div><div class="tab-group card-grid">${renderPerformance(p)}</div>` },
+    { label: 'Performance', render: p => `<div class="card-grid three">${renderStreaks(p)}</div><div class="card-grid">${renderPerformance(p)}</div>` },
     { label: 'Scoring', render: p => `<div class="card-grid">${renderScoring(p)}</div>` },
     { label: 'Efficiency', render: p => renderEfficiency(p) },
-    { label: 'Rivalries', render: p => `<div class="card-grid">${renderRivalries(p)}</div><div class="tab-group">${renderLuck(p)}</div>` },
+    { label: 'Rivalries', render: p => `<div class="card-grid three">${renderRivalries(p)}${renderLuck(p)}</div>` },
     { label: 'Draft & Roster', render: p => `<div class="card-grid">${renderDraft(p)}</div>` },
     { label: 'History', render: p => renderHistory(p) },
   ];
