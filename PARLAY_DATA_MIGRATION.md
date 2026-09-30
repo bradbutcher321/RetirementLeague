@@ -553,6 +553,98 @@ corrected in the live sheet (team names/gametime the GUI's ESPN lookup
 had already fixed) — zero actual win/loss or stat computation
 differences. The league can now stop using "Parlay Tracker" entirely.
 
+**Update — the sheet's own "Parlay Results" tab was the last thing still
+reading "Parlay Tracker" directly**, via five `QUERY(...)` formulas
+pulling from that tab's pre-computed summary blocks (Weekly Sacko Count,
+Individual W/L, Average Odds, Parlays Killed, Current Parlay). Rebuilt as
+native Sheets formulas against "Auto Parlay Tracker" instead, so
+`generate_parlay_data.py`'s `load_tracker()` really is the only remaining
+reader of "Parlay Tracker" now, and only for the sake of leaving old rows
+untouched, not because it's still relied on. Weekly Sacko Count,
+Individual W/L, and Average Odds are single formulas against "Auto
+Parlay Tracker" directly. Parlays Killed and Current Parlay needed a new
+hidden helper tab, **"Parlay Results Helpers"**, because native Sheets
+formulas can't cleanly express "whoever's leg lost at the earliest game
+time that week, ties split" or "reconstruct this week's pick text and
+rank it by game time" without per-week/per-row scratch columns — it holds
+each week's earliest-loss gametime and tie count, plus per-pick
+kill-credit/chance/bet-position, all keyed to `PlayerOrder` the same way
+the rest of the tab already is.
+
+Verified every value against `generate_parlay_data.py`'s already-tested
+`compute_stats()`, computed live from the same "Auto Parlay Tracker"
+data, not just spot-checked: exact match on Weekly Sacko Count,
+Average Odds, Parlays Killed (kills/chances/avg bet position), and
+Current Parlay (bet text, odds, result) for all 12 players; Individual
+W/L matches exactly on W/L counts, with only tie-order differing
+cosmetically since the native formula doesn't replicate Python's
+avg-odds tiebreak for players tied on win %.
+
+Two real formula bugs found and fixed along the way, worth remembering
+for any future formula work against this sheet: a self-referential
+`COUNTIFS("<"&range)` bet-position-ranking trick was flaky at the full
+3000-row range Auto Parlay Tracker nominally allows (correct on a first
+check, then silently wrong on a later one) — fixed by shrinking to a
+realistic 400-row range and switching to a `MAP`/`LAMBDA` per-row rank
+instead, which evaluates each row independently rather than leaning on
+COUNTIFS's array-broadcast behavior; and a `COUNTIFS` criteria written
+against a formula-derived helper column (rather than a real sheet
+column) was silently ignored when combined with the `PlayerOrder`
+array-criteria-broadcast pattern used everywhere else on this tab — fixed
+by criteria-filtering against the real "Auto Parlay Tracker" column
+instead of the helper column, using the helper column only as a sum/value
+range, never as a criteria range, in that broadcast pattern.
+
+**Update — seven more sections on the same tab were still reading
+"Parlay Tracker" too** (Potential Earnings, Sport W/L, Legs Won per
+Parlay, Odds Type W/L, Bet Type W/L, Legs Won Before Loss, and a
+"Past Parlay Lookup Tool" that shows an arbitrary past week's picks by
+Year/Week typed into `W21`/`W22`) — missed in the first pass since they're
+further down the tab, past the five already covered above. All seven now
+also read "Auto Parlay Tracker" instead, verified the same way (exact
+match against `compute_stats()` computed live from the same data), and
+the Lookup Tool reuses the exact same per-pick reconstruction logic as
+Current Parlay, just keyed off the typed Year/Week instead of always the
+latest one.
+
+Three more formula quirks found fixing these, on top of the two above:
+- **`SUMIFS` doesn't reliably array-broadcast past a single criteria
+  pair** (unlike `COUNTIFS`, which broadcasts fine with two or more) --
+  Potential Earnings needed a per-player sum of "this week's payout, but
+  only on rows where this pick won" and a naive
+  `SUMIFS(payout, player, PlayerOrder, result, "Win")` silently returned
+  one player's total instead of all twelve. Fixed by pre-masking the
+  amount into a real helper column (`0` unless the row's own Result
+  matches) and summing that with a plain single-criteria `SUMIF`, which
+  does broadcast reliably.
+- **`COUNTIFS`'s `PlayerOrder`-style array-broadcast only works against a
+  real, materialized range** -- a `LET`-bound array built from
+  `SORT(UNIQUE(FILTER(...)))` (e.g. the list of distinct sports, for Sport
+  W/L and Bet Type W/L, which unlike players aren't a fixed list) silently
+  broke the broadcast. Fixed by writing that UNIQUE list into real helper
+  cells first (`Parlay Results Helpers!W3:W20` / `Y3:Y25`) and pointing
+  `COUNTIFS` at those instead of the virtual `LET` array.
+- **An array literal that combines a computed expression with the
+  arrays it was computed from breaks with `#REF!`/`#VALUE!`**, even
+  something as simple as `{w, l, w+l}` — confirmed this isn't about
+  division or `IFERROR` specifically, since even a plain sum triggers it.
+  Worked around by keeping each derived array (`pct`, `WeekPayout`, etc.)
+  out of literals alongside its own inputs, computing it as its own
+  separate step instead. Related: the `={"header row";LET(...)}` pattern
+  used for every section's fixed header **also breaks** the moment the
+  `LET`'s result itself is one of these derived-array literals (Odds Type
+  W/L's `{"Favorite",fw,...;"Underdog",uw,...}` build) — swapping to
+  `VSTACK({"header row"}, LET(...))` fixed it, the same technique the
+  original "Past Parlay Lookup Tool" formula was already using for
+  exactly this reason.
+
+Also hit twice: Google Sheets rejects a write to any cell inside another
+formula's already-spilled array range with `#REF!`, which looks
+identical to a real formula bug until you check whether something else
+is still occupying that space — `batch_clear` the range before
+re-deploying a fixed formula to the same cell, don't just overwrite the
+anchor.
+
 ## Cloudflare architecture — parlay data no longer needs a git commit
 
 Folded in alongside Phases 2/3, after discussing it directly: the site
