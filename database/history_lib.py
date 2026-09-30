@@ -323,6 +323,15 @@ def compute_final_standings(year, teams_this_year, matchups_this_year, season_sa
     Sacko game hasn't been decided yet (mid-season) or doesn't apply.
     """
     playoff_team_ids = {m["team_id"] for m in matchups_this_year if m["is_playoff"]}
+    if not playoff_team_ids:
+        # No team has reached a real playoff-bracket game yet this year, so
+        # the regular season itself is still in progress -- every team's
+        # regular_season_standing is a live, moving snapshot, not a final
+        # placement. Assigning it here would crown whoever's currently
+        # leading the live regular season a "champion" before the
+        # playoffs even start. Leave ESPN's own (still-provisional)
+        # final_standing alone instead of computing one.
+        return {t["team_id"]: t["final_standing"] for t in teams_this_year}
     final = {}
     for t in teams_this_year:
         if t["team_id"] in playoff_team_ids:
