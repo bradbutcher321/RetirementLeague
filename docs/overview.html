@@ -139,6 +139,25 @@
     const earn = Object.entries(D.earnings).filter(([, v]) => v != null).sort((a, b) => b[1] - a[1])
       .map(([name, v]) => ({ name, sub: 'Net after dues and parlays', val: money(v), tone: v > 0 ? 'up' : v < 0 ? 'down' : '', hl: true }));
 
+    const effView = () => !F ? [] : F.players.filter(p => p.efficiency && p.efficiency.career_pct != null)
+      .map(p => ({ name: p.name, sub: `${p.efficiency.games_analyzed} games analyzed`, val: f1(p.efficiency.career_pct) + '%' }))
+      .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
+    const benchView = () => !F ? [] : F.players.filter(p => p.efficiency && p.efficiency.avg_points_left != null)
+      .map(p => ({ name: p.name, sub: `${f1(p.efficiency.points_left_on_bench)} total over ${p.efficiency.games_analyzed} games`, val: f2(p.efficiency.avg_points_left) }))
+      .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
+    const extraWinsView = () => !F ? [] : F.players.filter(p => p.efficiency && p.efficiency.optimal_record)
+      .map(p => ({ name: p.name, sub: `${p.efficiency.optimal_record.games} regular season games`, val: (p.efficiency.optimal_record.extra_wins > 0 ? '+' : '') + p.efficiency.optimal_record.extra_wins }))
+      .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
+    const consistencyView = () => !F ? [] : F.players.filter(p => p.extremes && p.extremes.score_stdev != null)
+      .map(p => ({ name: p.name, sub: 'Weekly score, standard deviation', val: f2(p.extremes.score_stdev) }))
+      .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
+    const medianLuckView = () => !F ? [] : F.players.filter(p => p.median_luck !== null && p.median_luck !== undefined)
+      .map(p => ({ name: p.name, sub: 'Actual vs. median-implied win rate', val: (p.median_luck > 0 ? '+' : '') + f1(p.median_luck) + '%', tone: p.median_luck > 0 ? 'up' : p.median_luck < 0 ? 'down' : '' }))
+      .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
+    const draftPosView = () => !F ? [] : F.players.filter(p => p.draft && p.draft.avg_position != null)
+      .map(p => ({ name: p.name, sub: `Best ${p.draft.best_position} · Worst ${p.draft.worst_position}`, val: f1(p.draft.avg_position) }))
+      .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
+
     const streakView = key => {
       if (!F) return [];
       const cur = n => (n > 0 ? `<em style="color:var(--turf)">W${n}</em>` : n < 0 ? `<em style="color:var(--loss)">L${-n}</em>` : '—');
@@ -181,8 +200,9 @@
       { label: 'Summary', tiles },
       { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true }), V('Title Count', champC, { hl: true }), V('Title Games', titleGames('Champ', true), { year: true })] },
       { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, tone: 'bad' }), V('Sacko Count', sackC, { hl: true, tone: 'bad' }), V('Sacko Games', titleGames('Sacko', false), { year: true, tone: 'bad' })] },
-      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good', pick: 'max' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad', pick: 'min' }), V('Weekly High', weekly(true), { year: true, tone: 'good', pick: 'max' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad', pick: 'min' }), V('Average Median', avgMedian, { year: true, marks: true })] },
-      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true })] },
+      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good', pick: 'max' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad', pick: 'min' }), V('Weekly High', weekly(true), { year: true, tone: 'good', pick: 'max' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad', pick: 'min' }), V('Average Median', avgMedian, { year: true, marks: true }), V('Consistency', consistencyView(), { hl: true, note: 'Standard deviation of weekly score — lower is steadier' })] },
+      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true }), V('Draft Position', draftPosView(), { hl: true, note: 'Average first-round draft slot' }), V('Median Luck', medianLuckView(), { hl: true, note: 'How much better or worse a manager\'s record is than their scoring vs. the weekly median alone would suggest' })] },
+      { label: 'Efficiency', views: [V('Career Efficiency', effView(), { hl: true, tone: 'good', note: 'Actual points scored as a share of the best possible lineup, since ' + (F ? F.efficiency_start_year : '') }), V('Points Left on Bench', benchView(), { hl: true, note: 'Average points left unstarted per game — lower is more efficient' }), V('Extra Wins Available', extraWinsView(), { hl: true, note: 'Regular season wins an optimal lineup would have added' })] },
       { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { note: 'Head-to-head games only' }), V('With Median', streakView('combined'), { note: 'Includes the weekly median game (2025 onward)' })] },
     ];
   }

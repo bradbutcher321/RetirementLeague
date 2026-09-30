@@ -36,6 +36,7 @@
   .hero-meta{ margin-top: 4px; color: var(--text-dim); font-size: 0.88rem; }
   .hero-pills{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   .aka{ background: var(--surface-raised); border: 1px solid var(--line); color: var(--text-dim); font-size: 0.74rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .rank-badge{ background: rgba(186,155,55,0.14); border: 1px solid var(--gold); color: var(--gold); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
   .tiles{ display: flex; flex-wrap: wrap; gap: 1px; background: var(--line); }
   .tile{ flex: 1 1 110px; background: var(--surface); padding: 14px 10px; text-align: center; }
   .tile-label{ color: var(--text-dim); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 5px; white-space: nowrap; }
@@ -209,18 +210,39 @@
   const card = (title, body, cls) => `<div class="stat-card${cls ? ' ' + cls : ''}">${title ? `<div class="stat-card-title">${title}</div>` : ''}<div class="stat-card-body">${body}</div></div>`;
   const tile = (label, value) => `<div class="tile"><div class="tile-label">${label}</div><div class="tile-value">${value}</div></div>`;
 
+  function leagueRankBadges(p, all) {
+    const rank = (getter, higherBetter = true) => {
+      const mine = getter(p);
+      if (mine === null || mine === undefined) return null;
+      const better = all.filter(x => {
+        const v = getter(x);
+        return v !== null && v !== undefined && (higherBetter ? v > mine : v < mine);
+      }).length;
+      return better + 1;
+    };
+    const badges = [];
+    const champRank = rank(x => x.career.standings.championships);
+    if (champRank && champRank <= 3 && p.career.standings.championships > 0) badges.push(`#${champRank} in Championships`);
+    const effRank = rank(x => x.efficiency && x.efficiency.career_pct);
+    if (effRank && effRank <= 3) badges.push(`#${effRank} in Career Efficiency`);
+    const ptsRank = rank(x => x.career.points.total_pf);
+    if (ptsRank && ptsRank <= 3) badges.push(`#${ptsRank} in Total Points`);
+    return badges;
+  }
+
   function renderHero(p) {
     const rec = p.career.record;
     const w = (rec.reg_w || 0) + (rec.playoff_w || 0), l = (rec.reg_l || 0) + (rec.playoff_l || 0);
     const pct = w + l ? w / (w + l) * 100 : null;
     const akas = (p.previous_team_names || []).map(n => `<span class="aka">aka ${esc(n)}</span>`).join('');
+    const ranks = leagueRankBadges(p, data.players).map(b => `<span class="rank-badge">${esc(b)}</span>`).join('');
     const tenure = p.founded_year ? `Founded ${p.founded_year} · ${p.seasons} season${p.seasons === 1 ? '' : 's'}` : '';
     return `
       <div class="stat-card">
         <div class="hero-head">
           <div class="hero-team-name">${esc(p.current_team_name || p.name)}</div>
           <div class="hero-meta">${esc(p.name)} · ${tenure}</div>
-          ${akas ? `<div class="hero-pills">${akas}</div>` : ''}
+          ${akas || ranks ? `<div class="hero-pills">${ranks}${akas}</div>` : ''}
         </div>
         <div class="tiles">
           ${tile('Record', `${w}-${l}`)}${tile('Win %', fmtPct(pct))}${tile('Ships', fmt(p.career.standings.championships))}
@@ -242,9 +264,21 @@
     const reg = card('Regular Season',
       pods([['Win Rate', fmtPct(wr.reg_pct), rateTone(wr.reg_pct)], ['Record', `${fmt(r.reg_w)}-${fmt(r.reg_l)}${r.reg_t ? '-' + r.reg_t : ''}`], ['Reg Szn Champ', fmt(s.reg_season_champs)]]) +
       rows([['Finish', [[fmt(s.best_regular_finish), 'Best'], [fmt(s.worst_regular_finish), 'Worst']]], ['Sackos', [[fmt(s.sackos), 'Total']]]]));
+
+    const extraRows = [];
+    if ((r.playoff_w || 0) + (r.playoff_l || 0) > 0 && wr.reg_pct != null && wr.playoff_pct != null) {
+      const delta = wr.playoff_pct - wr.reg_pct;
+      extraRows.push(['Clutch Factor', [[`${delta > 0 ? '+' : ''}${fmt(delta, 1)}%`, 'Playoff vs Reg %', delta > 0 ? 'win' : delta < 0 ? 'loss' : '']]]);
+    }
+    if (s.champ_appearances > 0) {
+      extraRows.push(['Title Games', [[`${fmt(s.championships)}-${fmt(s.champ_appearances - s.championships)}`, 'Record']]]);
+    }
+    if ((r.consolation_w || 0) + (r.consolation_l || 0) > 0) {
+      extraRows.push(['Consolation', [[`${fmt(r.consolation_w)}-${fmt(r.consolation_l)}`, 'Record']]]);
+    }
     const po = card('Playoffs',
       pods([['Win Rate', fmtPct(wr.playoff_pct), rateTone(wr.playoff_pct)], ['Record', `${fmt(r.playoff_w)}-${fmt(r.playoff_l)}`], ['Ships', fmt(s.championships)]]) +
-      rows([['Appearances', [[fmt(s.playoff_appearances), 'Playoffs'], [fmt(s.champ_appearances), 'Finals']]], ['Byes', [[fmt(s.byes), 'Total']]]]));
+      rows([['Appearances', [[fmt(s.playoff_appearances), 'Playoffs'], [fmt(s.champ_appearances), 'Finals']]], ['Byes', [[fmt(s.byes), 'Total']]], ...extraRows]));
     return reg + po;
   }
 
@@ -256,6 +290,7 @@
       ['Single Game', [[fmt(ex.highest_score, 2), 'High'], [fmt(ex.lowest_score, 2), 'Low']]],
       ['Win Margin', [[fmt(ex.biggest_win_margin, 2), 'Largest'], [fmt(ex.lowest_win_margin, 2), 'Smallest']]],
       ['Loss Margin', [[fmt(ex.biggest_loss_margin, 2), 'Largest'], [fmt(ex.lowest_loss_margin, 2), 'Smallest']]],
+      ['Consistency', [[fmt(ex.score_stdev, 2), 'Std Dev']], 'Lower means steadier week-to-week scoring'],
     ]));
     const median = card('Median', pods([['Win Rate', fmtPct(med.pct), rateTone(med.pct)], ['Wins', fmt(med.wins)], ['Losses', fmt(med.losses)]]));
     const money = p.money
