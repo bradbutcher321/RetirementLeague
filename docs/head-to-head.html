@@ -55,13 +55,19 @@
   .arc-who{ color:var(--text-dim); font-size:0.6rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .cmp{ padding:2px 16px 12px; }
-  .cmp-row{ display:grid; grid-template-columns:minmax(0,1fr) 130px minmax(0,1fr); align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); }
+  .cmp-group{ color:var(--gold); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; padding:16px 4px 6px; }
+  .cmp-group:first-child{ padding-top:6px; }
+  .cmp-row{ padding:8px 0; border-bottom:1px solid var(--line); }
   .cmp-row:last-child{ border-bottom:none; }
+  .cmp-line{ display:grid; grid-template-columns:minmax(0,1fr) 130px minmax(0,1fr); align-items:center; gap:12px; }
   .cmp-label{ text-align:center; color:var(--text-dim); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; }
   .cmp-val{ font-family:var(--scoreboard); font-weight:700; font-size:1.3rem; font-variant-numeric:tabular-nums; }
   .cmp-val.r{ text-align:right; }
   .cmp-val.win{ color:var(--turf); }
   .cmp-val.lose{ color:var(--text-dim); }
+  .cmp-bar{ display:flex; height:5px; border-radius:999px; overflow:hidden; background:var(--line); margin-top:8px; }
+  .cmp-bar-seg.win{ background:var(--turf); }
+  .cmp-bar-seg.lose{ background:var(--text-dim); opacity:0.35; }
   .gap{ height:14px; }
 
   .game{ display:grid; grid-template-columns:86px minmax(0,1fr); gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); padding:9px 12px; margin-top:6px; border-left:3px solid transparent; }
@@ -81,7 +87,7 @@
   @media (max-width:720px){ .callouts{ grid-template-columns:1fr 1fr; } }
   @media (max-width:560px){
     .game{ grid-template-columns:1fr; gap:4px; }
-    .cmp-row{ grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr); }
+    .cmp-line{ grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr); }
     .side .nm{ font-size:1.6rem; } .rec b{ font-size:2.4rem; }
     .pill{ font-size:0.7rem; padding:3px 9px; }
     .form{ gap:3px; } .chip{ font-size:0.6rem; height:30px; }
@@ -157,12 +163,23 @@
     };
   }
 
-  function cmpRow(label, l, r, fmt, higherWins = true) {
-    let ls = '', rs = '';
-    if (higherWins && l !== null && r !== null && l !== r) { ls = l > r ? ' win' : ' lose'; rs = r > l ? ' win' : ' lose'; }
-    const f = v => (v === null ? '—' : fmt(v));
-    return `<div class="cmp-row"><div class="cmp-val${ls}">${f(l)}</div><div class="cmp-label">${label}</div><div class="cmp-val r${rs}">${f(r)}</div></div>`;
+  // Mirrored share bar beneath each stat -- how the two teams' values split, by magnitude. Skipped for
+  // zero-sum stats like Total Margin, where one side's value is always the exact negative of the other's
+  // (so a magnitude-share bar would always read as a meaningless 50/50 split).
+  function cmpBar(l, r) {
+    const al = Math.abs(l), ar = Math.abs(r), total = al + ar;
+    const pl = total ? al / total * 100 : 50;
+    const lWin = l > r;
+    return `<div class="cmp-bar"><div class="cmp-bar-seg ${lWin ? 'win' : 'lose'}" style="width:${pl}%"></div><div class="cmp-bar-seg ${lWin ? 'lose' : 'win'}" style="width:${100 - pl}%"></div></div>`;
   }
+  function cmpRow(label, l, r, fmt, color = true, showBar = color) {
+    let ls = '', rs = '';
+    if (color && l !== null && r !== null && l !== r) { ls = l > r ? ' win' : ' lose'; rs = r > l ? ' win' : ' lose'; }
+    const f = v => (v === null ? '—' : fmt(v));
+    const bar = showBar && l !== null && r !== null ? cmpBar(l, r) : '';
+    return `<div class="cmp-row"><div class="cmp-line"><div class="cmp-val${ls}">${f(l)}</div><div class="cmp-label">${label}</div><div class="cmp-val r${rs}">${f(r)}</div></div>${bar}</div>`;
+  }
+  const cmpGroup = t => `<div class="cmp-group">${t}</div>`;
   const ABBR = { Ben: 'Ben', Brad: 'Brd', Chad: 'Chd', Collin: 'Cln', Flanders: 'Fla', Jared: 'Jar', Jeff: 'Jef', 'Joe G': 'JoG', 'Joe K': 'JoK', Jon: 'Jon', Kris: 'Krs', TJ: 'TJ', Chappy: 'Chp', Corey: 'Cor' };
   const abbr = n => ABBR[n] || n.slice(0, 3);
   const tone = (x, y) => (x > y ? 'up' : x < y ? 'down' : 'flat');
@@ -233,14 +250,19 @@
       (stakes.length ? callout('Title/Sacko clashes', stakes.length, tone(stakesA, stakesB), `${LG.esc(a)} ${stakesA}-${stakesB} ${LG.esc(b)}`) : '') + '</div>';
 
     const allStats = '<div class="cmp">' +
+      cmpGroup('Series Record') +
       cmpRow('Games Played', A.games, B.games, int, false) + cmpRow('Wins', A.wins, B.wins, int) + cmpRow('Win %', A.pct, B.pct, pc) +
       cmpRow('Current Streak', A.cur, B.cur, int) + cmpRow('Best Win Streak', A.best, B.best, int) +
-      cmpRow('Total Points', A.pts, B.pts, dec) + cmpRow('Total Margin', A.margin, B.margin, plus) + cmpRow('Average Points', A.avg, B.avg, dec) +
+      cmpGroup('Scoring') +
+      cmpRow('Total Points', A.pts, B.pts, dec) + cmpRow('Total Margin', A.margin, B.margin, plus, true, false) + cmpRow('Average Points', A.avg, B.avg, dec) +
       cmpRow('Highest Score', A.hi, B.hi, dec) + cmpRow('Lowest Score', A.lo, B.lo, dec) +
-      cmpRow('Largest Win', A.bigWin, B.bigWin, dec) + cmpRow('Smallest Win', A.smallWin, B.smallWin, dec, false) + '</div>';
+      cmpGroup('Margins') +
+      cmpRow('Largest Win', A.bigWin, B.bigWin, dec) + cmpRow('Smallest Win', A.smallWin, B.smallWin, dec) + '</div>';
     const postStats = '<div class="cmp">' +
+      cmpGroup('Series Record') +
       cmpRow('Games Played', PA.games, PB.games, int, false) + cmpRow('Wins', PA.wins, PB.wins, int) + cmpRow('Win %', PA.pct, PB.pct, pc) +
-      cmpRow('Total Points', PA.pts, PB.pts, dec) + cmpRow('Total Margin', PA.margin, PB.margin, plus) + '</div>';
+      cmpGroup('Scoring') +
+      cmpRow('Total Points', PA.pts, PB.pts, dec) + cmpRow('Total Margin', PA.margin, PB.margin, plus, true, false) + '</div>';
 
     $('compare').innerHTML = `<div class="stat-card">${banner}${domBar(A, B, all.length)}${form}${callouts}</div><div class="gap"></div>` +
       `<div class="stat-card"><div class="stat-card-title">Season by Season</div>${seasonArc(all, a, b)}</div><div class="gap"></div>` +
