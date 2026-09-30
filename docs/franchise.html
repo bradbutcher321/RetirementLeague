@@ -365,15 +365,6 @@
     return false;
   }
 
-  function longestChampionshipGap(p, ctx) {
-    let lastTitleYear = p.founded_year - 1, maxGap = 0;
-    for (const s of [...p.season_history].sort((a, b) => a.year - b.year)) {
-      maxGap = Math.max(maxGap, s.year - lastTitleYear);
-      if (s.champion) lastTitleYear = s.year;
-    }
-    return Math.max(maxGap, ctx.currentYear - lastTitleYear);
-  }
-
   const EFFICIENCY_EXPERT_PCT = 85;
 
   const ACHIEVEMENTS = [
@@ -435,9 +426,6 @@
     { name: 'Whipping Boy', icon: 'snow', bad: true, desc: '25% or worse all-time vs. your nemesis',
       test: p => !!(p.rivalries.nemesis && p.rivalries.nemesis.win_pct <= 25),
       sub: p => `${fmtPct(p.rivalries.nemesis.win_pct)} vs. ${p.rivalries.nemesis.opponent}` },
-    { name: 'Championship Drought', icon: 'snow', bad: true, desc: '5+ years without a title',
-      test: (p, ctx) => longestChampionshipGap(p, ctx) >= 5,
-      sub: (p, ctx) => `${longestChampionshipGap(p, ctx)} years without a title` },
   ];
 
   function achCard(a, unlocked, ctx, p) {
