@@ -24,8 +24,9 @@
 
   .form-wrap{ padding:14px 16px 6px; }
   .form-title{ color:var(--text-dim); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; text-align:center; margin-bottom:10px; }
-  .form{ display:flex; gap:6px; justify-content:center; flex-wrap:nowrap; }
-  .chip{ flex:1 1 0; min-width:0; max-width:46px; height:34px; display:grid; place-items:center; font-size:0.7rem; font-weight:700; border:1px solid; }
+  .form-scroll{ overflow-x:auto; padding-bottom:2px; }
+  .form{ display:flex; gap:6px; min-width:max-content; }
+  .chip{ flex:0 0 auto; height:32px; padding:0 12px; display:flex; align-items:center; font-size:0.78rem; font-weight:700; border:1px solid; border-radius:999px; white-space:nowrap; }
   .chip.up{ color:var(--turf); border-color:var(--turf-dim); background:rgba(76,154,107,0.12); }
   .chip.down{ color:var(--loss); border-color:var(--loss); background:rgba(192,87,75,0.12); }
 
@@ -42,6 +43,14 @@
   .dom-seg.down{ background:var(--loss); }
   .dom-seg.tie{ background:var(--text-dim); opacity:0.4; }
 
+  .momentum-wrap{ padding:16px 16px 18px; }
+  .momentum{ width:100%; height:140px; display:block; }
+  .mo-base{ stroke:var(--line); stroke-width:1; stroke-dasharray:5 4; }
+  .mo-fill.up{ fill:var(--turf); opacity:0.32; }
+  .mo-fill.down{ fill:var(--loss); opacity:0.32; }
+  .mo-line{ fill:none; stroke:var(--text); stroke-width:2; vector-effect:non-scaling-stroke; }
+  .momentum-caption{ text-align:center; color:var(--text-dim); font-size:0.82rem; margin-top:12px; line-height:1.4; }
+
   .arc-wrap{ padding:2px 16px 14px; }
   .arc-scroll{ overflow-x:auto; padding-bottom:4px; }
   .arc{ display:flex; gap:8px; min-width:max-content; }
@@ -57,17 +66,14 @@
   .cmp{ padding:2px 16px 12px; }
   .cmp-group{ color:var(--gold); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; padding:16px 4px 6px; }
   .cmp-group:first-child{ padding-top:6px; }
-  .cmp-row{ padding:8px 0; border-bottom:1px solid var(--line); }
-  .cmp-row:last-child{ border-bottom:none; }
-  .cmp-line{ display:grid; grid-template-columns:minmax(0,1fr) 130px minmax(0,1fr); align-items:center; gap:12px; }
-  .cmp-label{ text-align:center; color:var(--text-dim); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; }
-  .cmp-val{ font-family:var(--scoreboard); font-weight:700; font-size:1.3rem; font-variant-numeric:tabular-nums; }
-  .cmp-val.r{ text-align:right; }
-  .cmp-val.win{ color:var(--turf); }
-  .cmp-val.lose{ color:var(--text-dim); }
-  .cmp-bar{ display:flex; height:5px; border-radius:999px; overflow:hidden; background:var(--line); margin-top:8px; }
-  .cmp-bar-seg.win{ background:var(--turf); }
-  .cmp-bar-seg.lose{ background:var(--text-dim); opacity:0.35; }
+  .stat-pods{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .stat-pod{ background:var(--surface-raised); border:1px solid var(--line); padding:11px 8px; text-align:center; min-width:0; }
+  .sp-t{ color:var(--text-dim); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:7px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sp-row{ display:flex; align-items:baseline; justify-content:center; gap:6px; }
+  .sp-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.15rem; font-variant-numeric:tabular-nums; }
+  .sp-v.win{ color:var(--turf); }
+  .sp-v.lose{ color:var(--text-dim); }
+  .sp-sep{ color:var(--text-dim); font-size:0.68rem; }
   .gap{ height:14px; }
 
   .game{ display:grid; grid-template-columns:86px minmax(0,1fr); gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); padding:9px 12px; margin-top:6px; border-left:3px solid transparent; }
@@ -84,13 +90,15 @@
   .game-bar{ height:100%; }
   .game.up .game-bar{ background:var(--turf); }
   .game.down .game-bar{ background:var(--loss); }
-  @media (max-width:720px){ .callouts{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:720px){
+    .callouts, .callouts.five{ grid-template-columns:1fr 1fr; }
+    .callouts.five .co:last-child{ grid-column:1 / -1; }
+  }
   @media (max-width:560px){
     .game{ grid-template-columns:1fr; gap:4px; }
-    .cmp-line{ grid-template-columns:minmax(0,1fr) 92px minmax(0,1fr); }
+    .stat-pods{ grid-template-columns:1fr 1fr; }
     .side .nm{ font-size:1.6rem; } .rec b{ font-size:2.4rem; }
     .pill{ font-size:0.7rem; padding:3px 9px; }
-    .form{ gap:3px; } .chip{ font-size:0.6rem; height:30px; }
   }
 </style>
 </head>
@@ -163,23 +171,13 @@
     };
   }
 
-  // Mirrored share bar beneath each stat -- how the two teams' values split, by magnitude. Skipped for
-  // zero-sum stats like Total Margin, where one side's value is always the exact negative of the other's
-  // (so a magnitude-share bar would always read as a meaningless 50/50 split).
-  function cmpBar(l, r) {
-    const al = Math.abs(l), ar = Math.abs(r), total = al + ar;
-    const pl = total ? al / total * 100 : 50;
-    const lWin = l > r;
-    return `<div class="cmp-bar"><div class="cmp-bar-seg ${lWin ? 'win' : 'lose'}" style="width:${pl}%"></div><div class="cmp-bar-seg ${lWin ? 'lose' : 'win'}" style="width:${100 - pl}%"></div></div>`;
-  }
-  function cmpRow(label, l, r, fmt, color = true, showBar = color) {
-    let ls = '', rs = '';
-    if (color && l !== null && r !== null && l !== r) { ls = l > r ? ' win' : ' lose'; rs = r > l ? ' win' : ' lose'; }
+  function statPod(label, l, r, fmt, color = true) {
     const f = v => (v === null ? '—' : fmt(v));
-    const bar = showBar && l !== null && r !== null ? cmpBar(l, r) : '';
-    return `<div class="cmp-row"><div class="cmp-line"><div class="cmp-val${ls}">${f(l)}</div><div class="cmp-label">${label}</div><div class="cmp-val r${rs}">${f(r)}</div></div>${bar}</div>`;
+    let lc = '', rc = '';
+    if (color && l !== null && r !== null && l !== r) { lc = l > r ? ' win' : ' lose'; rc = r > l ? ' win' : ' lose'; }
+    return `<div class="stat-pod"><div class="sp-t">${label}</div><div class="sp-row"><span class="sp-v${lc}">${f(l)}</span><span class="sp-sep">–</span><span class="sp-v${rc}">${f(r)}</span></div></div>`;
   }
-  const cmpGroup = t => `<div class="cmp-group">${t}</div>`;
+  const statGroup = t => `<div class="cmp-group">${t}</div>`;
   const ABBR = { Ben: 'Ben', Brad: 'Brd', Chad: 'Chd', Collin: 'Cln', Flanders: 'Fla', Jared: 'Jar', Jeff: 'Jef', 'Joe G': 'JoG', 'Joe K': 'JoK', Jon: 'Jon', Kris: 'Krs', TJ: 'TJ', Chappy: 'Chp', Corey: 'Cor' };
   const abbr = n => ABBR[n] || n.slice(0, 3);
   const tone = (x, y) => (x > y ? 'up' : x < y ? 'down' : 'flat');
@@ -191,6 +189,36 @@
     const tie = total - A.wins - B.wins;
     const seg = (n, cls) => n ? `<div class="dom-seg ${cls}" style="width:${n / total * 100}%"></div>` : '';
     return `<div class="dom-bar">${seg(A.wins, tone(A.pct, B.pct))}${seg(tie, 'tie')}${seg(B.wins, tone(B.pct, A.pct))}</div>`;
+  }
+
+  // Running (cumulative wins A) - (cumulative wins B) after each meeting, as a two-tone area chart -- shows
+  // who's been on top across the whole history of the pair, and how the lead has swung, rather than just the
+  // final tally. Y is clamped to the positive/negative side per point to build the two fills without needing
+  // an SVG clip-path; the one visible seam this creates at a sign change (a straight-line interpolation
+  // artifact right where the fill briefly touches zero) is too small to read as wrong at this scale.
+  function momentumChart(all, a, b) {
+    const N = all.length, W = 600, H = 140, PAD = 14;
+    let diff = 0;
+    const diffs = [0];
+    all.forEach(g => { diff += g.winner === a ? 1 : g.winner === b ? -1 : 0; diffs.push(diff); });
+    const maxAbs = Math.max(1, ...diffs.map(Math.abs));
+    const scale = (H / 2 - PAD) / maxAbs;
+    const x = i => (i / N) * (W - 2 * PAD) + PAD;
+    const y = v => H / 2 - v * scale;
+    const pt = (i, v) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`;
+    const posArea = `${x(0)},${H / 2} ` + diffs.map((d, i) => pt(i, Math.max(d, 0))).join(' ') + ` ${x(N)},${H / 2}`;
+    const negArea = `${x(0)},${H / 2} ` + diffs.map((d, i) => pt(i, Math.min(d, 0))).join(' ') + ` ${x(N)},${H / 2}`;
+    const line = diffs.map((d, i) => pt(i, d)).join(' ');
+    const final = diffs[diffs.length - 1];
+    const peak = diffs.reduce((m, d) => (Math.abs(d) > Math.abs(m) ? d : m), 0);
+    const caption = final === 0
+      ? 'Dead even across the all-time series'
+      : `${LG.esc(final > 0 ? a : b)} leads the all-time cumulative count by ${Math.abs(final)}` +
+        (peak !== final ? ` · peaked at a ${Math.abs(peak)}-win lead for ${LG.esc(peak > 0 ? a : b)}` : '');
+    return `<div class="momentum-wrap"><svg class="momentum" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">` +
+      `<line x1="${PAD}" y1="${H / 2}" x2="${W - PAD}" y2="${H / 2}" class="mo-base" />` +
+      `<polygon points="${posArea}" class="mo-fill up" /><polygon points="${negArea}" class="mo-fill down" />` +
+      `<polyline points="${line}" class="mo-line" /></svg><div class="momentum-caption">${caption}</div></div>`;
   }
 
   // One tile per year the pair has met, so a long rivalry's trend is visible at a glance rather than buried in the full game log.
@@ -232,8 +260,8 @@
       `<div class="side r"><div class="nm">${eb}</div><span class="pill ${tone(B.pct, A.pct)}">${LG.pct(B.pct)}</span></div></div>`;
 
     const last = all.slice(-10);
-    const form = `<div class="form-wrap"><div class="form-title">Last ${last.length} meetings</div><div class="form">` +
-      last.map(g => `<div class="chip ${g.winner === a ? 'up' : 'down'}" title="${g.year} week ${g.week}">${LG.esc(abbr(g.winner))}</div>`).join('') + '</div></div>';
+    const form = `<div class="form-wrap"><div class="form-title">Last ${last.length} meetings</div><div class="form-scroll"><div class="form">` +
+      last.map(g => `<div class="chip ${g.winner === a ? 'up' : 'down'}" title="${g.year} week ${g.week}">${LG.esc(g.winner)}</div>`).join('') + '</div></div></div>';
 
     const closest = all.reduce((m, g) => (margin(g) < margin(m) ? g : m));
     const blowout = all.reduce((m, g) => (margin(g) > margin(m) ? g : m));
@@ -250,21 +278,22 @@
       (stakes.length ? callout('Title/Sacko clashes', stakes.length, tone(stakesA, stakesB), `${LG.esc(a)} ${stakesA}-${stakesB} ${LG.esc(b)}`) : '') + '</div>';
 
     const allStats = '<div class="cmp">' +
-      cmpGroup('Series Record') +
-      cmpRow('Games Played', A.games, B.games, int, false) + cmpRow('Wins', A.wins, B.wins, int) + cmpRow('Win %', A.pct, B.pct, pc) +
-      cmpRow('Current Streak', A.cur, B.cur, int) + cmpRow('Best Win Streak', A.best, B.best, int) +
-      cmpGroup('Scoring') +
-      cmpRow('Total Points', A.pts, B.pts, dec) + cmpRow('Total Margin', A.margin, B.margin, plus, true, false) + cmpRow('Average Points', A.avg, B.avg, dec) +
-      cmpRow('Highest Score', A.hi, B.hi, dec) + cmpRow('Lowest Score', A.lo, B.lo, dec) +
-      cmpGroup('Margins') +
-      cmpRow('Largest Win', A.bigWin, B.bigWin, dec) + cmpRow('Smallest Win', A.smallWin, B.smallWin, dec) + '</div>';
+      statGroup('Series Record') + '<div class="stat-pods">' +
+      statPod('Games Played', A.games, B.games, int, false) + statPod('Wins', A.wins, B.wins, int) + statPod('Win %', A.pct, B.pct, pc) +
+      statPod('Current Streak', A.cur, B.cur, int) + statPod('Best Win Streak', A.best, B.best, int) + '</div>' +
+      statGroup('Scoring') + '<div class="stat-pods">' +
+      statPod('Total Points', A.pts, B.pts, dec) + statPod('Total Margin', A.margin, B.margin, plus) + statPod('Average Points', A.avg, B.avg, dec) +
+      statPod('Highest Score', A.hi, B.hi, dec) + statPod('Lowest Score', A.lo, B.lo, dec) + '</div>' +
+      statGroup('Margins') + '<div class="stat-pods">' +
+      statPod('Largest Win', A.bigWin, B.bigWin, dec) + statPod('Smallest Win', A.smallWin, B.smallWin, dec) + '</div></div>';
     const postStats = '<div class="cmp">' +
-      cmpGroup('Series Record') +
-      cmpRow('Games Played', PA.games, PB.games, int, false) + cmpRow('Wins', PA.wins, PB.wins, int) + cmpRow('Win %', PA.pct, PB.pct, pc) +
-      cmpGroup('Scoring') +
-      cmpRow('Total Points', PA.pts, PB.pts, dec) + cmpRow('Total Margin', PA.margin, PB.margin, plus, true, false) + '</div>';
+      statGroup('Series Record') + '<div class="stat-pods">' +
+      statPod('Games Played', PA.games, PB.games, int, false) + statPod('Wins', PA.wins, PB.wins, int) + statPod('Win %', PA.pct, PB.pct, pc) + '</div>' +
+      statGroup('Scoring') + '<div class="stat-pods">' +
+      statPod('Total Points', PA.pts, PB.pts, dec) + statPod('Total Margin', PA.margin, PB.margin, plus) + '</div></div>';
 
     $('compare').innerHTML = `<div class="stat-card">${banner}${domBar(A, B, all.length)}${form}${callouts}</div><div class="gap"></div>` +
+      `<div class="stat-card"><div class="stat-card-title">Rivalry Momentum</div>${momentumChart(all, a, b)}</div><div class="gap"></div>` +
       `<div class="stat-card"><div class="stat-card-title">Season by Season</div>${seasonArc(all, a, b)}</div><div class="gap"></div>` +
       `<div class="stat-card"><div class="stat-card-title">All Games</div>${allStats}</div>` +
       (post.length ? `<div class="gap"></div><div class="stat-card"><div class="stat-card-title">Postseason</div><div class="stat-card-note">Playoffs, finals, consolation and every other postseason game</div>${postStats}</div>` : '');
