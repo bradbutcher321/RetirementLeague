@@ -30,11 +30,29 @@
   .chip.down{ color:var(--loss); border-color:var(--loss); background:rgba(192,87,75,0.12); }
 
   .callouts{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:14px 10px 12px; }
+  .callouts.five{ grid-template-columns:repeat(5,1fr); }
   .co{ background:var(--surface-raised); border:1px solid var(--line); padding:12px 10px; text-align:center; min-width:0; }
   .co-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.04em; }
   .co-n{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; margin:4px 0 2px; }
   .co-n.up{ color:var(--turf); } .co-n.down{ color:var(--loss); } .co-n.flat{ color:var(--text); }
   .co-s{ color:var(--text-dim); font-size:0.72rem; }
+
+  .dom-bar{ display:flex; height:8px; border-radius:999px; overflow:hidden; background:var(--line); margin:0 16px 4px; }
+  .dom-seg.up{ background:var(--turf); }
+  .dom-seg.down{ background:var(--loss); }
+  .dom-seg.tie{ background:var(--text-dim); opacity:0.4; }
+
+  .arc-wrap{ padding:2px 16px 14px; }
+  .arc-scroll{ overflow-x:auto; padding-bottom:4px; }
+  .arc{ display:flex; gap:8px; min-width:max-content; }
+  .arc-tile{ width:66px; flex-shrink:0; background:var(--surface-raised); border:1px solid var(--line); border-top:3px solid var(--text-dim); text-align:center; padding:10px 4px 8px; }
+  .arc-tile.a{ border-top-color:var(--turf); }
+  .arc-tile.b{ border-top-color:var(--loss); }
+  .arc-year{ color:var(--text-dim); font-size:0.62rem; letter-spacing:0.03em; }
+  .arc-rec{ font-family:var(--scoreboard); font-weight:800; font-size:1.1rem; margin:3px 0 1px; }
+  .arc-tile.a .arc-rec{ color:var(--turf); }
+  .arc-tile.b .arc-rec{ color:var(--loss); }
+  .arc-who{ color:var(--text-dim); font-size:0.6rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .cmp{ padding:2px 16px 12px; }
   .cmp-row{ display:grid; grid-template-columns:minmax(0,1fr) 130px minmax(0,1fr); align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--line); }
@@ -50,10 +68,16 @@
   .game.up{ border-left-color:var(--turf); } .game.down{ border-left-color:var(--loss); }
   .game-when{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); font-size:0.95rem; }
   .game-when small{ display:block; font-family:var(--body); font-size:0.68rem; font-weight:400; }
+  .game-when small.champ{ color:var(--gold); font-weight:700; }
+  .game-when small.sacko{ color:var(--loss); font-weight:700; }
   .game-line{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:10px; align-items:center; font-size:0.92rem; }
   .game-line .sc{ font-family:var(--scoreboard); font-weight:700; font-size:1.05rem; font-variant-numeric:tabular-nums; }
   .game-line .who.right{ text-align:right; }
   .game-line .won{ font-weight:700; } .game-line .lost{ color:var(--text-dim); }
+  .game-bar-wrap{ margin-top:7px; height:4px; border-radius:999px; background:var(--line); overflow:hidden; }
+  .game-bar{ height:100%; }
+  .game.up .game-bar{ background:var(--turf); }
+  .game.down .game-bar{ background:var(--loss); }
   @media (max-width:720px){ .callouts{ grid-template-columns:1fr 1fr; } }
   @media (max-width:560px){
     .game{ grid-template-columns:1fr; gap:4px; }
@@ -143,6 +167,28 @@
   const abbr = n => ABBR[n] || n.slice(0, 3);
   const tone = (x, y) => (x > y ? 'up' : x < y ? 'down' : 'flat');
   const callout = (t, n, cls, s) => `<div class="co"><div class="co-t">${t}</div><div class="co-n ${cls}">${n}</div><div class="co-s">${s}</div></div>`;
+  const STAKES_CLS = { Champ: 'champ', Sacko: 'sacko' };
+
+  // Win-share bar: how the head-to-head record splits between the two teams, ties (if any) shown as a neutral middle segment.
+  function domBar(A, B, total) {
+    const tie = total - A.wins - B.wins;
+    const seg = (n, cls) => n ? `<div class="dom-seg ${cls}" style="width:${n / total * 100}%"></div>` : '';
+    return `<div class="dom-bar">${seg(A.wins, tone(A.pct, B.pct))}${seg(tie, 'tie')}${seg(B.wins, tone(B.pct, A.pct))}</div>`;
+  }
+
+  // One tile per year the pair has met, so a long rivalry's trend is visible at a glance rather than buried in the full game log.
+  function seasonArc(all, a, b) {
+    const byYear = {};
+    all.forEach(g => (byYear[g.year] || (byYear[g.year] = [])).push(g));
+    const years = Object.keys(byYear).map(Number).sort((x, y) => x - y);
+    const tiles = years.map(y => {
+      const gs = byYear[y], aw = gs.filter(g => g.winner === a).length, bw = gs.filter(g => g.winner === b).length;
+      const cls = aw > bw ? 'a' : bw > aw ? 'b' : '';
+      const who = aw === bw ? 'Split' : LG.esc(abbr(aw > bw ? a : b));
+      return `<div class="arc-tile ${cls}"><div class="arc-year">${y}</div><div class="arc-rec">${aw}-${bw}</div><div class="arc-who">${who}</div></div>`;
+    }).join('');
+    return `<div class="arc-wrap"><div class="arc-scroll"><div class="arc">${tiles}</div></div></div>`;
+  }
 
   function render() {
     const a = $('p1').value, b = $('p2').value;
@@ -174,13 +220,17 @@
 
     const closest = all.reduce((m, g) => (margin(g) < margin(m) ? g : m));
     const blowout = all.reduce((m, g) => (margin(g) > margin(m) ? g : m));
+    const maxMargin = margin(blowout);
     const curTeam = A.cur ? a : b, curN = A.cur || B.cur;
     const bestTeam = A.best >= B.best ? a : b;
-    const callouts = '<div class="callouts">' +
+    const stakes = all.filter(g => g.type === 'Champ' || g.type === 'Sacko');
+    const stakesA = stakes.filter(g => g.winner === a).length, stakesB = stakes.length - stakesA;
+    const callouts = `<div class="callouts${stakes.length ? ' five' : ''}">` +
       callout('Current streak', curN + (curN === 1 ? ' win' : ' in a row'), curTeam === a ? 'up' : 'down', `${LG.esc(curTeam)} won the last ${curN === 1 ? 'meeting' : curN}`) +
       callout('Best streak', Math.max(A.best, B.best), bestTeam === a ? 'up' : 'down', `${LG.esc(bestTeam)} · longest run`) +
       callout('Biggest blowout', LG.f1(margin(blowout)), blowout.winner === a ? 'up' : 'down', `${LG.esc(blowout.winner)} · ${blowout.year}`) +
-      callout('Closest game', LG.f2(margin(closest)), closest.winner === a ? 'up' : 'down', `${LG.esc(closest.winner)} · ${closest.year}`) + '</div>';
+      callout('Closest game', LG.f2(margin(closest)), closest.winner === a ? 'up' : 'down', `${LG.esc(closest.winner)} · ${closest.year}`) +
+      (stakes.length ? callout('Title/Sacko clashes', stakes.length, tone(stakesA, stakesB), `${LG.esc(a)} ${stakesA}-${stakesB} ${LG.esc(b)}`) : '') + '</div>';
 
     const allStats = '<div class="cmp">' +
       cmpRow('Games Played', A.games, B.games, int, false) + cmpRow('Wins', A.wins, B.wins, int) + cmpRow('Win %', A.pct, B.pct, pc) +
@@ -192,16 +242,20 @@
       cmpRow('Games Played', PA.games, PB.games, int, false) + cmpRow('Wins', PA.wins, PB.wins, int) + cmpRow('Win %', PA.pct, PB.pct, pc) +
       cmpRow('Total Points', PA.pts, PB.pts, dec) + cmpRow('Total Margin', PA.margin, PB.margin, plus) + '</div>';
 
-    $('compare').innerHTML = `<div class="stat-card">${banner}${form}${callouts}</div><div class="gap"></div>` +
+    $('compare').innerHTML = `<div class="stat-card">${banner}${domBar(A, B, all.length)}${form}${callouts}</div><div class="gap"></div>` +
+      `<div class="stat-card"><div class="stat-card-title">Season by Season</div>${seasonArc(all, a, b)}</div><div class="gap"></div>` +
       `<div class="stat-card"><div class="stat-card-title">All Games</div>${allStats}</div>` +
       (post.length ? `<div class="gap"></div><div class="stat-card"><div class="stat-card-title">Postseason</div><div class="stat-card-note">Playoffs, finals, consolation and every other postseason game</div>${postStats}</div>` : '');
 
     $('games-heading').textContent = `Every Game · ${a} vs ${b}`;
     $('games').innerHTML = '<div class="stat-card"><div class="stat-card-body">' + all.slice().reverse().map(g => {
       const s1 = scoreOf(g, a), s2 = scoreOf(g, b), aw = g.winner === a;
-      return `<div class="game ${aw ? 'up' : 'down'}"><div class="game-when">${g.year}<small>Wk ${g.week} · ${TYPE[g.type] || g.type}</small></div>` +
-        `<div class="game-line"><div class="who ${aw ? 'won' : 'lost'}">${ea}</div><div class="sc">${LG.f2(s1)} – ${LG.f2(s2)}</div>` +
-        `<div class="who right ${aw ? 'lost' : 'won'}">${eb}</div></div></div>`;
+      const stakesCls = STAKES_CLS[g.type] || '';
+      const barPct = maxMargin ? margin(g) / maxMargin * 100 : 0;
+      return `<div class="game ${aw ? 'up' : 'down'}"><div class="game-when">${g.year}<small class="${stakesCls}">Wk ${g.week} · ${TYPE[g.type] || g.type}</small></div>` +
+        `<div><div class="game-line"><div class="who ${aw ? 'won' : 'lost'}">${ea}</div><div class="sc">${LG.f2(s1)} – ${LG.f2(s2)}</div>` +
+        `<div class="who right ${aw ? 'lost' : 'won'}">${eb}</div></div>` +
+        `<div class="game-bar-wrap"><div class="game-bar" style="width:${barPct}%"></div></div></div></div>`;
     }).join('') + '</div></div>';
     $('games-section').hidden = false;
   }
