@@ -150,7 +150,15 @@
 
   /* ---------- Achievement shelf ---------- */
   .shelf{ display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-  .ach{ background: var(--surface-raised); border: 1px solid var(--line); border-radius: 2px; padding: 14px 12px; display: flex; gap: 11px; align-items: flex-start; }
+  .shelf:empty{ display: none; }
+  .ach{ position: relative; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 2px; min-height: 76px; }
+  .ach.flippable{ cursor: pointer; perspective: 800px; }
+  .ach-face-static, .ach-face{ padding: 14px 12px; display: flex; gap: 11px; align-items: flex-start; }
+  .ach-face-static{ height: 100%; }
+  .ach-flip-inner{ position: relative; width: 100%; height: 100%; min-height: 76px; transition: transform 0.5s; transform-style: preserve-3d; }
+  .ach.flipped .ach-flip-inner{ transform: rotateY(180deg); }
+  .ach-face{ position: absolute; inset: 0; backface-visibility: hidden; }
+  .ach-back{ transform: rotateY(180deg); }
   .ach-icon{ flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   .ach-icon svg{ width: 18px; height: 18px; }
   .ach.good .ach-icon{ background: rgba(186,155,55,0.14); color: var(--gold); }
@@ -159,6 +167,7 @@
   .ach-name{ font-weight: 700; font-size: 0.9rem; }
   .ach.locked .ach-name{ color: var(--text-dim); }
   .ach-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 2px; line-height: 1.4; }
+  .ach-divider{ color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 18px 0 12px; padding-top: 14px; border-top: 1px solid var(--line); }
 
   /* ---------- Season arc ---------- */
   .arc-scroll{ overflow-x: auto; padding-bottom: 6px; }
@@ -347,10 +356,42 @@
     dollar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.1-4.5 3 2 2.6 4.5 3 4.5 1.1 4.5 3-2 3-4.5 3-4.5-1.1-4.5-3"/></svg>',
   };
 
-  function lastChampionshipYear(p) {
-    const years = p.season_history.filter(s => s.champion).map(s => s.year);
-    return years.length ? Math.max(...years) : null;
+  // Historical scans, not live snapshots -- so these can only ever go from
+  // locked to unlocked, never back, even when the underlying season stats
+  // that feed the rank badges keep moving (e.g. a manager can win a title
+  // *after* enduring a 5-year drought without the drought un-happening).
+  function bestChampionshipStreak(p) {
+    const years = p.season_history.filter(s => s.champion).map(s => s.year).sort((a, b) => a - b);
+    let best = 0, bestEnd = null, run = 0, prevYear = null;
+    for (const y of years) {
+      run = (prevYear !== null && y === prevYear + 1) ? run + 1 : 1;
+      prevYear = y;
+      if (run > best) { best = run; bestEnd = y; }
+    }
+    return { length: best, endYear: bestEnd };
   }
+
+  function everHitPlayoffRate(p, minSeasons, minRate) {
+    let played = 0, made = 0;
+    for (const s of [...p.season_history].sort((a, b) => a.year - b.year)) {
+      if (seasonState(s) === 'progress') continue;
+      played++;
+      if (s.made_playoffs) made++;
+      if (played >= minSeasons && made / played >= minRate) return true;
+    }
+    return false;
+  }
+
+  function longestChampionshipGap(p, ctx) {
+    let lastTitleYear = p.founded_year - 1, maxGap = 0;
+    for (const s of [...p.season_history].sort((a, b) => a.year - b.year)) {
+      maxGap = Math.max(maxGap, s.year - lastTitleYear);
+      if (s.champion) lastTitleYear = s.year;
+    }
+    return Math.max(maxGap, ctx.currentYear - lastTitleYear);
+  }
+
+  const EFFICIENCY_EXPERT_PCT = 85;
 
   const ACHIEVEMENTS = [
     { name: 'Founding Member', icon: 'shield', desc: 'Been in the league since year one',
@@ -365,8 +406,16 @@
       test: p => p.career.standings.championships >= 2, sub: p => `${p.career.standings.championships} titles` },
     { name: 'Dynasty', icon: 'trophy', desc: 'Win 3 championships',
       test: p => p.career.standings.championships >= 3, sub: p => `${p.career.standings.championships} titles` },
-    { name: 'Iron Manager', icon: 'shield', desc: 'Make the playoffs in 75%+ of your seasons (min. 8)',
-      test: p => p.seasons >= 8 && p.career.standings.playoff_appearances / p.seasons >= 0.75,
+    { name: 'Five-Time Champion', icon: 'trophy', desc: 'Win 5 championships',
+      test: p => p.career.standings.championships >= 5, sub: p => `${p.career.standings.championships} titles` },
+    { name: 'Two-Peat', icon: 'flame', desc: 'Win it back-to-back',
+      test: p => bestChampionshipStreak(p).length >= 2,
+      sub: p => { const s = bestChampionshipStreak(p); return `Back-to-back champion, ${s.endYear - 1}-${s.endYear}`; } },
+    { name: 'Three-Peat', icon: 'flame', desc: 'Win it three years running',
+      test: p => bestChampionshipStreak(p).length >= 3,
+      sub: p => { const s = bestChampionshipStreak(p); return `Three straight titles, ${s.endYear - 2}-${s.endYear}`; } },
+    { name: 'Iron Manager', icon: 'shield', desc: 'Make the playoffs in 75%+ of your seasons (min. 4)',
+      test: p => everHitPlayoffRate(p, 4, 0.75),
       sub: p => `Playoffs in ${p.career.standings.playoff_appearances} of ${p.seasons} seasons` },
     { name: 'The Heater', icon: 'flame', desc: 'Win 5 games in a row',
       test: p => p.streaks.head_to_head.longest_win >= 5, sub: p => `${p.streaks.head_to_head.longest_win}-game win streak` },
@@ -376,24 +425,25 @@
       test: p => p.streaks.head_to_head.longest_loss >= 5, sub: p => `${p.streaks.head_to_head.longest_loss}-game losing streak` },
     { name: 'Rock Bottom', icon: 'snow', bad: true, desc: 'Lose 8 games in a row',
       test: p => p.streaks.head_to_head.longest_loss >= 8, sub: p => `${p.streaks.head_to_head.longest_loss}-game losing streak` },
-    { name: 'Efficiency Expert', icon: 'target', desc: '90%+ career lineup efficiency',
-      test: p => !!(p.efficiency && p.efficiency.career_pct >= 90), sub: p => `${fmtPct(p.efficiency.career_pct)} career efficiency` },
-    { name: 'Butter Fingers', icon: 'snow', bad: true, desc: 'Average 15+ bench points left per game',
-      test: p => !!(p.efficiency && p.efficiency.avg_points_left >= 15), sub: p => `${fmt(p.efficiency.avg_points_left, 1)} pts left on the bench per game` },
+    { name: 'Efficiency Expert', icon: 'target', desc: `${EFFICIENCY_EXPERT_PCT}%+ lineup efficiency in a season`,
+      test: p => !!(p.efficiency && p.efficiency.by_season.some(s => s.pct >= EFFICIENCY_EXPERT_PCT)),
+      sub: p => { const s = p.efficiency.by_season.filter(s => s.pct >= EFFICIENCY_EXPERT_PCT).sort((a, b) => b.pct - a.pct)[0]; return `${fmtPct(s.pct)} efficiency in ${s.year}`; } },
     { name: '150 Club', icon: 'target', desc: 'Score 150+ in a single game',
       test: p => !!(p.extremes.highest_score >= 150), sub: p => `${fmt(p.extremes.highest_score, 1)} in a single game` },
+    { name: '200 Club', icon: 'target', desc: 'Score 200+ in a single game',
+      test: p => !!(p.extremes.highest_score >= 200), sub: p => `${fmt(p.extremes.highest_score, 1)} in a single game` },
     { name: 'Snake Eyes', icon: 'snow', bad: true, desc: 'Score under 50 in a single game',
       test: p => !!(p.extremes.lowest_score > 0 && p.extremes.lowest_score < 50), sub: p => `${fmt(p.extremes.lowest_score, 1)} in a single game` },
     { name: 'Heartbreaker', icon: 'snow', bad: true, desc: 'Lose 5 games decided by under 5 points',
       test: p => !!(p.extremes.close_losses >= 5), sub: p => `${p.extremes.close_losses} losses decided by under 5 points` },
     { name: 'Blowout Artist', icon: 'flame', desc: 'Win 3 games by 50+ points',
       test: p => !!(p.extremes.blowout_wins >= 3), sub: p => `${p.extremes.blowout_wins} wins by 50+ points` },
+    { name: 'In the Green', icon: 'dollar', desc: 'Finish with a positive career net',
+      test: p => !!(p.money && p.money.net_result > 0), sub: p => `${fmtMoney(p.money.net_result)} net career` },
     { name: 'High Roller', icon: 'dollar', desc: '$1,000+ net career earnings',
       test: p => !!(p.money && p.money.net_result >= 1000), sub: p => `${fmtMoney(p.money.net_result)} net career` },
-    { name: 'In the Red', icon: 'dollar', bad: true, desc: 'Finish your career in the red',
-      test: p => !!(p.money && p.money.net_result < 0), sub: p => `${fmtMoney(p.money.net_result)} net career` },
-    { name: 'Sacko Survivor', icon: 'shield', desc: 'Never take home a season-long Sacko (min. 5 seasons)',
-      test: p => p.seasons >= 5 && p.career.standings.sackos === 0, sub: p => `0 season-long Sackos in ${p.seasons} seasons` },
+    { name: 'Wooden Spoon', icon: 'snow', bad: true, desc: 'Finish dead last at least once',
+      test: p => p.career.standings.sackos >= 1, sub: p => `${p.career.standings.sackos} season${p.career.standings.sackos === 1 ? '' : 's'} finished last` },
     { name: 'Frequent Flyer', icon: 'snow', bad: true, desc: '5+ weekly Sackos',
       test: p => p.weekly_sackos >= 5, sub: p => `${p.weekly_sackos} weekly Sackos` },
     { name: 'Got Next', icon: 'flame', desc: '80%+ all-time vs. your favorite opponent',
@@ -402,20 +452,34 @@
     { name: 'Whipping Boy', icon: 'snow', bad: true, desc: '25% or worse all-time vs. your nemesis',
       test: p => !!(p.rivalries.nemesis && p.rivalries.nemesis.win_pct <= 25),
       sub: p => `${fmtPct(p.rivalries.nemesis.win_pct)} vs. ${p.rivalries.nemesis.opponent}` },
-    { name: 'Championship Drought', icon: 'snow', bad: true, desc: '5+ years since your last title',
-      test: (p, ctx) => { const y = lastChampionshipYear(p); return y !== null && ctx.currentYear - y >= 5; },
-      sub: (p, ctx) => `${ctx.currentYear - lastChampionshipYear(p)} years since your last title` },
+    { name: 'Championship Drought', icon: 'snow', bad: true, desc: '5+ years without a title',
+      test: (p, ctx) => longestChampionshipGap(p, ctx) >= 5,
+      sub: (p, ctx) => `${longestChampionshipGap(p, ctx)} years without a title` },
   ];
 
+  function achCard(a, unlocked, ctx, p) {
+    const cls = !unlocked ? 'locked' : (a.bad ? 'bad' : 'good');
+    const icon = `<div class="ach-icon">${ICONS[a.icon]}</div>`;
+    const name = `<div class="ach-name">${esc(a.name)}</div>`;
+    if (!unlocked) {
+      return `<div class="ach ${cls}"><div class="ach-face-static">${icon}<div>${name}<div class="ach-sub">${esc(a.desc)}</div></div></div></div>`;
+    }
+    return `<div class="ach ${cls} flippable" title="Click to see how you earned this">
+      <div class="ach-flip-inner">
+        <div class="ach-face ach-front">${icon}<div>${name}<div class="ach-sub">${esc(a.desc)}</div></div></div>
+        <div class="ach-face ach-back">${icon}<div>${name}<div class="ach-sub">${esc(a.sub(p, ctx))}</div></div></div>
+      </div>
+    </div>`;
+  }
+
   function renderAchievements(p, ctx) {
-    const unlocked = ACHIEVEMENTS.map(a => a.test(p, ctx));
-    const items = ACHIEVEMENTS.map((a, i) => {
-      const cls = !unlocked[i] ? 'locked' : (a.bad ? 'bad' : 'good');
-      const sub = unlocked[i] ? a.sub(p, ctx) : a.desc;
-      return `<div class="ach ${cls}"><div class="ach-icon">${ICONS[a.icon]}</div><div><div class="ach-name">${esc(a.name)}</div><div class="ach-sub">${esc(sub)}</div></div></div>`;
-    }).join('');
-    const count = unlocked.filter(Boolean).length;
-    return card(`Achievements <span style="color:var(--text-dim);font-weight:600;font-size:0.8rem">${count} / ${ACHIEVEMENTS.length} unlocked</span>`, `<div class="shelf">${items}</div>`);
+    const unlocked = [], locked = [];
+    ACHIEVEMENTS.forEach(a => (a.test(p, ctx) ? unlocked : locked).push(a));
+    const divider = locked.length ? `<div class="ach-divider">Locked — ${locked.length}</div>` : '';
+    const body = `<div class="shelf">${unlocked.map(a => achCard(a, true, ctx, p)).join('')}</div>`
+      + divider
+      + `<div class="shelf">${locked.map(a => achCard(a, false, ctx, p)).join('')}</div>`;
+    return card(`Achievements <span style="color:var(--text-dim);font-weight:600;font-size:0.8rem">${unlocked.length} / ${ACHIEVEMENTS.length} unlocked</span>`, body);
   }
 
   // ---------- Season arc ----------
@@ -734,9 +798,9 @@
 
   document.addEventListener('click', e => {
     const t = e.target.closest('.tab');
-    if (!t) return;
-    tab = Number(t.dataset.i);
-    show(document.getElementById('franchise-select').value);
+    if (t) { tab = Number(t.dataset.i); show(document.getElementById('franchise-select').value); return; }
+    const ach = e.target.closest('.ach.flippable');
+    if (ach) ach.classList.toggle('flipped');
   });
 
   fetch('data/franchise.json', { cache: 'no-store' }).then(r => r.json()).then(d => {
