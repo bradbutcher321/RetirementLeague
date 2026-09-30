@@ -217,11 +217,29 @@
     return wr.playoff_pct - wr.reg_pct;
   }
 
+  function leagueCurrentYear(all) {
+    let max = -Infinity;
+    all.forEach(x => x.season_history.forEach(s => { if (s.year > max) max = s.year; }));
+    return max;
+  }
+
+  function isActivePlayer(p, currentYear) {
+    return p.season_history.length > 0 && p.season_history[p.season_history.length - 1].year === currentYear;
+  }
+
   function leagueRankBadges(p, all) {
+    // Retired managers neither compete for these badges nor count toward
+    // anyone else's ranking -- otherwise someone who left the league years
+    // ago could permanently "hold" a bad-stat badge nobody currently
+    // playing can ever take from them.
+    const currentYear = leagueCurrentYear(all);
+    if (!isActivePlayer(p, currentYear)) return [];
+    const pool = all.filter(x => isActivePlayer(x, currentYear));
+
     const rank = (getter, higherBetter = true) => {
       const mine = getter(p);
       if (mine === null || mine === undefined) return null;
-      const better = all.filter(x => {
+      const better = pool.filter(x => {
         const v = getter(x);
         return v !== null && v !== undefined && (higherBetter ? v > mine : v < mine);
       }).length;
@@ -233,7 +251,7 @@
     // Good (gold)
     add(rank(x => x.career.standings.championships), p.career.standings.championships > 0, 'Championships', false);
     add(rank(x => x.efficiency && x.efficiency.career_pct), !!(p.efficiency && p.efficiency.career_pct != null), 'Career Efficiency', false);
-    add(rank(x => x.career.points.total_pf), true, 'Total Points', false);
+    add(rank(x => x.career.points.avg_pf), true, 'Average Points', false);
     add(rank(x => x.money && x.money.net_result), !!(p.money && p.money.net_result > 0), 'Net Money Won', false);
     add(rank(x => clutchDelta(x)), clutchDelta(p) > 0, 'Clutch Factor', false);
 
