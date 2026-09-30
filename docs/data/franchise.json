@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-30T03:49:54.751805+00:00",
+  "generated_at": "2026-09-30T03:53:57.106018+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -30,8 +30,8 @@
         "points": {
           "total_pf": 18965.06,
           "total_pa": 18165.9,
-          "avg_pf": 102.51,
-          "avg_pa": 98.19
+          "avg_pf": 103.07,
+          "avg_pa": 98.73
         },
         "median": {
           "wins": 8,
@@ -56,7 +56,7 @@
         "lowest_win_margin": 0.78,
         "biggest_loss_margin": 89.52,
         "lowest_loss_margin": 0.42,
-        "score_stdev": 25.25,
+        "score_stdev": 24.16,
         "close_wins": 6,
         "close_losses": 10,
         "blowout_wins": 14,
@@ -66,17 +66,17 @@
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 7,
-          "current": -2
+          "current": -1
         },
         "combined": {
           "longest_win": 6,
           "longest_loss": 7,
-          "current": -5
+          "current": -3
         },
         "median": {
           "longest_win": 2,
           "longest_loss": 3,
-          "current": -3
+          "current": -2
         }
       },
       "rivalries": {
@@ -444,8 +444,8 @@
         "points": {
           "total_pf": 19259.2,
           "total_pa": 17948.26,
-          "avg_pf": 104.1,
-          "avg_pa": 97.02
+          "avg_pf": 104.67,
+          "avg_pa": 97.54
         },
         "median": {
           "wins": 8,
@@ -470,7 +470,7 @@
         "lowest_win_margin": 0.08,
         "biggest_loss_margin": 87.54,
         "lowest_loss_margin": 0.12,
-        "score_stdev": 26.43,
+        "score_stdev": 25.36,
         "close_wins": 14,
         "close_losses": 10,
         "blowout_wins": 17,
@@ -480,17 +480,17 @@
         "head_to_head": {
           "longest_win": 10,
           "longest_loss": 7,
-          "current": -1
+          "current": 1
         },
         "combined": {
           "longest_win": 10,
           "longest_loss": 7,
-          "current": -3
+          "current": -1
         },
         "median": {
           "longest_win": 4,
-          "longest_loss": 5,
-          "current": -5
+          "longest_loss": 4,
+          "current": -4
         }
       },
       "rivalries": {
@@ -843,8 +843,8 @@
         "points": {
           "total_pf": 17402.64,
           "total_pa": 18297.3,
-          "avg_pf": 94.07,
-          "avg_pa": 98.9
+          "avg_pf": 94.58,
+          "avg_pa": 99.44
         },
         "median": {
           "wins": 5,
@@ -869,7 +869,7 @@
         "lowest_win_margin": 0.1,
         "biggest_loss_margin": 97.72,
         "lowest_loss_margin": 0.06,
-        "score_stdev": 21.79,
+        "score_stdev": 20.71,
         "close_wins": 11,
         "close_losses": 17,
         "blowout_wins": 5,
@@ -879,17 +879,17 @@
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 9,
-          "current": -1
+          "current": 1
         },
         "combined": {
           "longest_win": 6,
           "longest_loss": 12,
-          "current": -2
+          "current": 2
         },
         "median": {
           "longest_win": 2,
           "longest_loss": 6,
-          "current": -1
+          "current": 1
         }
       },
       "rivalries": {
@@ -1257,8 +1257,8 @@
         "points": {
           "total_pf": 18534.24,
           "total_pa": 18125.5,
-          "avg_pf": 100.19,
-          "avg_pa": 97.98
+          "avg_pf": 100.73,
+          "avg_pa": 98.51
         },
         "median": {
           "wins": 13,
@@ -1283,7 +1283,7 @@
         "lowest_win_margin": 0.1,
         "biggest_loss_margin": 71.66,
         "lowest_loss_margin": 0.08,
-        "score_stdev": 23.02,
+        "score_stdev": 21.86,
         "close_wins": 11,
         "close_losses": 11,
         "blowout_wins": 8,
@@ -1293,17 +1293,17 @@
         "head_to_head": {
           "longest_win": 5,
           "longest_loss": 5,
-          "current": -2
+          "current": -1
         },
         "combined": {
           "longest_win": 6,
           "longest_loss": 5,
-          "current": -4
+          "current": -2
         },
         "median": {
           "longest_win": 6,
-          "longest_loss": 2,
-          "current": -2
+          "longest_loss": 1,
+          "current": -1
         }
       },
       "rivalries": {
@@ -1676,8 +1676,8 @@
         "points": {
           "total_pf": 17978.92,
           "total_pa": 18166.08,
-          "avg_pf": 97.18,
-          "avg_pa": 98.2
+          "avg_pf": 97.71,
+          "avg_pa": 98.73
         },
         "median": {
           "wins": 6,
@@ -1702,7 +1702,7 @@
         "lowest_win_margin": 0.06,
         "biggest_loss_margin": 84.9,
         "lowest_loss_margin": 0.1,
-        "score_stdev": 22.46,
+        "score_stdev": 21.35,
         "close_wins": 11,
         "close_losses": 14,
         "blowout_wins": 6,
@@ -1712,17 +1712,17 @@
         "head_to_head": {
           "longest_win": 9,
           "longest_loss": 5,
-          "current": -4
+          "current": -3
         },
         "combined": {
           "longest_win": 9,
           "longest_loss": 9,
-          "current": -4
+          "current": -2
         },
         "median": {
           "longest_win": 2,
           "longest_loss": 5,
-          "current": -2
+          "current": -1
         }
       },
       "rivalries": {
@@ -2087,8 +2087,8 @@
         "points": {
           "total_pf": 18127.96,
           "total_pa": 18036.14,
-          "avg_pf": 97.99,
-          "avg_pa": 97.49
+          "avg_pf": 98.52,
+          "avg_pa": 98.02
         },
         "median": {
           "wins": 12,
@@ -2113,7 +2113,7 @@
         "lowest_win_margin": 0.12,
         "biggest_loss_margin": 72.52,
         "lowest_loss_margin": 0.16,
-        "score_stdev": 22.77,
+        "score_stdev": 21.65,
         "close_wins": 16,
         "close_losses": 10,
         "blowout_wins": 8,
@@ -2123,17 +2123,17 @@
         "head_to_head": {
           "longest_win": 10,
           "longest_loss": 6,
-          "current": -1
+          "current": 1
         },
         "combined": {
           "longest_win": 10,
           "longest_loss": 6,
-          "current": -2
+          "current": 3
         },
         "median": {
           "longest_win": 4,
           "longest_loss": 1,
-          "current": -1
+          "current": 3
         }
       },
       "rivalries": {
@@ -2505,8 +2505,8 @@
         "points": {
           "total_pf": 17597.52,
           "total_pa": 18503.28,
-          "avg_pf": 95.12,
-          "avg_pa": 100.02
+          "avg_pf": 95.64,
+          "avg_pa": 100.56
         },
         "median": {
           "wins": 4,
@@ -2531,7 +2531,7 @@
         "lowest_win_margin": 1.8,
         "biggest_loss_margin": 108.58,
         "lowest_loss_margin": 0.36,
-        "score_stdev": 23.56,
+        "score_stdev": 22.55,
         "close_wins": 6,
         "close_losses": 14,
         "blowout_wins": 6,
@@ -2541,17 +2541,17 @@
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 16,
-          "current": -1
+          "current": 1
         },
         "combined": {
           "longest_win": 6,
           "longest_loss": 14,
-          "current": -2
+          "current": 2
         },
         "median": {
           "longest_win": 1,
           "longest_loss": 6,
-          "current": -1
+          "current": 1
         }
       },
       "rivalries": {
@@ -2912,8 +2912,8 @@
         "points": {
           "total_pf": 15305.58,
           "total_pa": 14854.34,
-          "avg_pf": 100.04,
-          "avg_pa": 97.09
+          "avg_pf": 100.69,
+          "avg_pa": 97.73
         },
         "median": {
           "wins": 4,
@@ -2938,7 +2938,7 @@
         "lowest_win_margin": 0.14,
         "biggest_loss_margin": 71.62,
         "lowest_loss_margin": 0.82,
-        "score_stdev": 24.61,
+        "score_stdev": 23.31,
         "close_wins": 14,
         "close_losses": 8,
         "blowout_wins": 8,
@@ -2948,17 +2948,17 @@
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 5,
-          "current": -2
+          "current": -1
         },
         "combined": {
           "longest_win": 6,
           "longest_loss": 6,
-          "current": -2
+          "current": 1
         },
         "median": {
           "longest_win": 1,
           "longest_loss": 6,
-          "current": -1
+          "current": 1
         }
       },
       "rivalries": {
@@ -3293,8 +3293,8 @@
         "points": {
           "total_pf": 15263.68,
           "total_pa": 14875.5,
-          "avg_pf": 99.76,
-          "avg_pa": 97.23
+          "avg_pf": 100.42,
+          "avg_pa": 97.87
         },
         "median": {
           "wins": 12,
@@ -3319,7 +3319,7 @@
         "lowest_win_margin": 0.56,
         "biggest_loss_margin": 108.08,
         "lowest_loss_margin": 0.14,
-        "score_stdev": 21.75,
+        "score_stdev": 20.26,
         "close_wins": 6,
         "close_losses": 8,
         "blowout_wins": 7,
@@ -3329,17 +3329,17 @@
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 6,
-          "current": -1
+          "current": 4
         },
         "combined": {
           "longest_win": 12,
           "longest_loss": 6,
-          "current": -3
+          "current": -1
         },
         "median": {
           "longest_win": 6,
           "longest_loss": 2,
-          "current": -2
+          "current": -1
         }
       },
       "rivalries": {
@@ -3676,8 +3676,8 @@
         "points": {
           "total_pf": 12397.82,
           "total_pa": 12168.92,
-          "avg_pf": 102.46,
-          "avg_pa": 100.57
+          "avg_pf": 103.32,
+          "avg_pa": 101.41
         },
         "median": {
           "wins": 11,
@@ -3702,7 +3702,7 @@
         "lowest_win_margin": 0.96,
         "biggest_loss_margin": 70.06,
         "lowest_loss_margin": 1.04,
-        "score_stdev": 23.71,
+        "score_stdev": 21.88,
         "close_wins": 6,
         "close_losses": 6,
         "blowout_wins": 10,
@@ -3712,17 +3712,17 @@
         "head_to_head": {
           "longest_win": 10,
           "longest_loss": 7,
-          "current": -1
+          "current": 1
         },
         "combined": {
           "longest_win": 10,
           "longest_loss": 7,
-          "current": -2
+          "current": 2
         },
         "median": {
           "longest_win": 5,
           "longest_loss": 2,
-          "current": -1
+          "current": 1
         }
       },
       "rivalries": {
@@ -4025,8 +4025,8 @@
         "points": {
           "total_pf": 7174.46,
           "total_pa": 6751.28,
-          "avg_pf": 99.65,
-          "avg_pa": 93.77
+          "avg_pf": 101.05,
+          "avg_pa": 95.09
         },
         "median": {
           "wins": 9,
@@ -4051,7 +4051,7 @@
         "lowest_win_margin": 0.74,
         "biggest_loss_margin": 63.94,
         "lowest_loss_margin": 1.56,
-        "score_stdev": 24.86,
+        "score_stdev": 22.02,
         "close_wins": 6,
         "close_losses": 2,
         "blowout_wins": 9,
@@ -4061,17 +4061,17 @@
         "head_to_head": {
           "longest_win": 4,
           "longest_loss": 4,
-          "current": -2
+          "current": -1
         },
         "combined": {
           "longest_win": 4,
           "longest_loss": 9,
-          "current": -2
+          "current": 1
         },
         "median": {
           "longest_win": 4,
           "longest_loss": 5,
-          "current": -1
+          "current": 3
         }
       },
       "rivalries": {
@@ -4324,8 +4324,8 @@
         "points": {
           "total_pf": 6910.82,
           "total_pa": 6835.92,
-          "avg_pf": 95.98,
-          "avg_pa": 94.94
+          "avg_pf": 97.34,
+          "avg_pa": 96.28
         },
         "median": {
           "wins": 10,
@@ -4350,7 +4350,7 @@
         "lowest_win_margin": 0.52,
         "biggest_loss_margin": 88.42,
         "lowest_loss_margin": 0.1,
-        "score_stdev": 24.51,
+        "score_stdev": 21.86,
         "close_wins": 6,
         "close_losses": 7,
         "blowout_wins": 6,
@@ -4360,17 +4360,17 @@
         "head_to_head": {
           "longest_win": 5,
           "longest_loss": 3,
-          "current": -2
+          "current": -1
         },
         "combined": {
           "longest_win": 5,
           "longest_loss": 5,
-          "current": -4
+          "current": -2
         },
         "median": {
           "longest_win": 2,
           "longest_loss": 2,
-          "current": -2
+          "current": -1
         }
       },
       "rivalries": {
