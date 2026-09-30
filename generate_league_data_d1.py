@@ -140,10 +140,14 @@ def main():
         matchups_by_team_year.setdefault((m["year"], m["team_id"]), []).append(m)
 
     # League-wide regular-season median score per (year, week), median era
-    # only -- same computation as generate_franchise_data_d1.
+    # only -- same computation as generate_franchise_data_d1. Excludes real
+    # matchups ESPN hasn't decided yet (see the games filter below for why
+    # that's not the same as a missing score).
     reg_scores_by_year_week = {}
     for m in matchups:
         if m["bracket_type"] != "NONE" or m["year"] < MEDIAN_ERA_START_YEAR:
+            continue
+        if m["opponent_team_id"] is not None and m["outcome"] is None:
             continue
         reg_scores_by_year_week.setdefault((m["year"], m["week"]), []).append(m["team_score"])
     reg_median_by_year_week = {k: statistics.median(v) for k, v in reg_scores_by_year_week.items() if v}
@@ -153,7 +157,19 @@ def main():
         player = team_id_to_player_by_year.get((t["year"], t["team_id"]))
         if player is None:
             continue
-        games_this_team_year = matchups_by_team_year.get((t["year"], t["team_id"]), [])
+        # Drop real matchups ESPN hasn't decided yet. currentMatchupPeriod
+        # can tick over to a new week before that week's games actually
+        # kick off, so a still-undecided matchup can already have a D1 row
+        # -- scores both 0 pre-kickoff, or a real but partial live total
+        # once they've started -- with outcome still None either way, and
+        # compute_season_row's median comparison below only checks
+        # team_score for None, not outcome. Byes are unaffected -- no
+        # opponent, and outcome is always None for those even long after
+        # the fact.
+        games_this_team_year = [
+            g for g in matchups_by_team_year.get((t["year"], t["team_id"]), [])
+            if g["opponent_team_id"] is None or g["outcome"] is not None
+        ]
         is_sacko = (t["year"], t["team_id"]) in sacko_teams
         season_out.append(compute_season_row(player, t, games_this_team_year, reg_median_by_year_week, is_sacko))
     season_out.sort(key=lambda s: (s["year"], s["player"]))
