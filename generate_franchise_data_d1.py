@@ -557,9 +557,13 @@ def main():
 
     # Median-era regular-season median score per (year, week), across every
     # team that played that week -- used for combined/median streaks and luck.
+    # Excludes real matchups ESPN hasn't decided yet (see the `games` filter
+    # below for why that's not the same as a missing score).
     reg_scores_by_year_week = {}
     for m in matchups:
         if m["bracket_type"] != "NONE" or m["year"] < MEDIAN_ERA_START_YEAR:
+            continue
+        if m["opponent_team_id"] is not None and m["outcome"] is None:
             continue
         reg_scores_by_year_week.setdefault((m["year"], m["week"]), []).append(m["team_score"])
     reg_median_by_year_week = {k: statistics.median(v) for k, v in reg_scores_by_year_week.items() if v}
@@ -586,6 +590,21 @@ def main():
         games = []
         for t in teams_by_player:
             games += matchups_by_team_year.get((t["year"], t["team_id"]), [])
+        # Drop real matchups ESPN hasn't decided yet. currentMatchupPeriod
+        # can tick over to a new week before that week's games actually
+        # kick off, so a still-undecided matchup can already have a D1 row
+        # -- team_score/opponent_score both 0 pre-kickoff, or a real but
+        # partial live total once they've started -- with outcome still
+        # None either way. Every consumer below (record/points, extremes,
+        # streaks, rivalries) only ever checked score fields for None, so a
+        # 0-0 "game" that hasn't happened yet was passing straight through
+        # as a counted loss (0 is not > or < 0, but score comparisons
+        # elsewhere could go either way once real partial scores are
+        # involved). Byes are unaffected -- opponent_team_id is None and
+        # outcome is *always* None for those even long after the fact, and
+        # everything downstream already treats a None opponent as "not a
+        # real game" on its own.
+        games = [g for g in games if g["opponent_team_id"] is None or g["outcome"] is not None]
         games.sort(key=lambda g: (g["year"], g["week"]))
         reg_games = [g for g in games if g["bracket_type"] == "NONE"]
 
