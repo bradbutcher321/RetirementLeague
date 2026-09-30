@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-30T03:19:27.471601+00:00",
+  "generated_at": "2026-09-30T03:41:54.376172+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -323,7 +323,7 @@
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 10,
+          "final_standing": 0,
           "champion": false,
           "points_for": 260.2
         }
@@ -731,7 +731,7 @@
           "reg_standing": 11,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 11,
+          "final_standing": 0,
           "champion": false,
           "points_for": 255.24
         }
@@ -1142,7 +1142,7 @@
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 8,
+          "final_standing": 0,
           "champion": false,
           "points_for": 272.4
         }
@@ -1556,7 +1556,7 @@
           "reg_standing": 5,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 5,
+          "final_standing": 0,
           "champion": false,
           "points_for": 323.02
         }
@@ -1969,7 +1969,7 @@
           "reg_standing": 12,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 12,
+          "final_standing": 0,
           "champion": false,
           "points_for": 233.26
         }
@@ -2100,8 +2100,8 @@
           "best_regular_finish": 1,
           "worst_regular_finish": 10,
           "playoff_appearances": 6,
-          "champ_appearances": 4,
-          "championships": 4,
+          "champ_appearances": 3,
+          "championships": 3,
           "sackos": 1,
           "byes": 2
         }
@@ -2386,8 +2386,8 @@
           "reg_standing": 1,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 1,
-          "champion": true,
+          "final_standing": 0,
+          "champion": false,
           "points_for": 396.64
         }
       ],
@@ -2798,7 +2798,7 @@
           "reg_standing": 6,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 6,
+          "final_standing": 0,
           "champion": false,
           "points_for": 272.4
         }
@@ -3177,7 +3177,7 @@
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 9,
+          "final_standing": 0,
           "champion": false,
           "points_for": 264.02
         }
@@ -3558,7 +3558,7 @@
           "reg_standing": 3,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 3,
+          "final_standing": 0,
           "champion": false,
           "points_for": 323.64
         }
@@ -3913,7 +3913,7 @@
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 7,
+          "final_standing": 0,
           "champion": false,
           "points_for": 289.7
         }
@@ -4038,7 +4038,7 @@
           "best_regular_finish": 2,
           "worst_regular_finish": 8,
           "playoff_appearances": 2,
-          "champ_appearances": 2,
+          "champ_appearances": 1,
           "championships": 0,
           "sackos": 0,
           "byes": 0
@@ -4229,7 +4229,7 @@
           "reg_standing": 2,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 2,
+          "final_standing": 0,
           "champion": false,
           "points_for": 357.9
         }
@@ -4528,7 +4528,7 @@
           "reg_standing": 4,
           "made_playoffs": false,
           "playoff_record": null,
-          "final_standing": 4,
+          "final_standing": 0,
           "champion": false,
           "points_for": 336.58
         }
