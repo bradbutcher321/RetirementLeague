@@ -210,6 +210,12 @@
   const card = (title, body, cls) => `<div class="stat-card${cls ? ' ' + cls : ''}">${title ? `<div class="stat-card-title">${title}</div>` : ''}<div class="stat-card-body">${body}</div></div>`;
   const tile = (label, value) => `<div class="tile"><div class="tile-label">${label}</div><div class="tile-value">${value}</div></div>`;
 
+  function clutchDelta(x) {
+    const r = x.career.record, wr = x.career.win_rates;
+    if ((r.playoff_w || 0) + (r.playoff_l || 0) === 0 || wr.reg_pct == null || wr.playoff_pct == null) return null;
+    return wr.playoff_pct - wr.reg_pct;
+  }
+
   function leagueRankBadges(p, all) {
     const rank = (getter, higherBetter = true) => {
       const mine = getter(p);
@@ -227,6 +233,10 @@
     if (effRank && effRank <= 3) badges.push(`#${effRank} in Career Efficiency`);
     const ptsRank = rank(x => x.career.points.total_pf);
     if (ptsRank && ptsRank <= 3) badges.push(`#${ptsRank} in Total Points`);
+    const moneyRank = rank(x => x.money && x.money.net_result);
+    if (moneyRank && moneyRank <= 3 && p.money && p.money.net_result > 0) badges.push(`#${moneyRank} in Net Money Won`);
+    const clutchRank = rank(x => clutchDelta(x));
+    if (clutchRank && clutchRank <= 3 && clutchDelta(p) > 0) badges.push(`#${clutchRank} in Clutch Factor`);
     return badges;
   }
 
@@ -266,8 +276,8 @@
       rows([['Finish', [[fmt(s.best_regular_finish), 'Best'], [fmt(s.worst_regular_finish), 'Worst']]], ['Sackos', [[fmt(s.sackos), 'Total']]]]));
 
     const extraRows = [];
-    if ((r.playoff_w || 0) + (r.playoff_l || 0) > 0 && wr.reg_pct != null && wr.playoff_pct != null) {
-      const delta = wr.playoff_pct - wr.reg_pct;
+    const delta = clutchDelta(p);
+    if (delta !== null) {
       extraRows.push(['Clutch Factor', [[`${delta > 0 ? '+' : ''}${fmt(delta, 1)}%`, 'Playoff vs Reg %', delta > 0 ? 'win' : delta < 0 ? 'loss' : '']]]);
     }
     if (s.champ_appearances > 0) {
