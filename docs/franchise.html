@@ -189,15 +189,6 @@
   .arc-legend-item{ display: flex; align-items: center; gap: 7px; color: var(--text-dim); font-size: 0.76rem; }
   .arc-swatch{ width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
 
-  /* ---------- Scouting report ---------- */
-  .scout-layout{ display: flex; gap: 24px; flex-wrap: wrap; align-items: center; justify-content: center; }
-  .scout-svg{ width: 100%; max-width: 300px; height: auto; flex-shrink: 0; }
-  .scout-svg .axis-val{ font-family: var(--scoreboard); font-weight: 700; fill: var(--gold); }
-  .scout-grade{ text-align: center; min-width: 160px; max-width: 220px; }
-  .scout-letter{ font-family: var(--scoreboard); font-weight: 800; font-size: 4rem; color: var(--gold); line-height: 1; }
-  .scout-letter-label{ color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
-  .scout-note{ color: var(--text-dim); font-size: 0.78rem; margin-top: 12px; line-height: 1.5; }
-
   /* ---------- Rival grid ---------- */
   .grid-scroll{ overflow-x: auto; }
   table.rivals{ border-collapse: collapse; width: 100%; min-width: 460px; font-size: 0.86rem; }
@@ -299,14 +290,6 @@
       return v !== null && v !== undefined && (higherBetter ? v > mine : v < mine);
     }).length;
     return better + 1;
-  }
-
-  function computePercentile(mine, pool, getter, higherBetter = true) {
-    const r = computeRank(mine, pool, getter, higherBetter);
-    if (r === null) return null;
-    const n = pool.filter(x => { const v = getter(x); return v !== null && v !== undefined; }).length;
-    if (n <= 1) return 50;
-    return Math.round(100 * (n - r) / (n - 1));
   }
 
   function leagueRankBadges(p, all) {
@@ -497,74 +480,6 @@
       return `<div class="arc-legend-item"><span class="arc-swatch" style="${swatch}"></span>${label}</div>`;
     }).join('');
     return card('Season Arc', `<div class="arc-scroll"><div class="arc">${tiles}</div></div><div class="arc-legend">${legend}</div>`);
-  }
-
-  // ---------- Scouting report ----------
-  const SCOUT_AXES = [
-    { label: 'SCORING', get: x => x.career.points.avg_pf, higherBetter: true },
-    { label: 'CONSISTENCY', get: x => x.extremes && x.extremes.score_stdev, higherBetter: false },
-    { label: 'CLUTCH', get: x => clutchDelta(x), higherBetter: true },
-    { label: 'MEDIAN LUCK', get: x => x.median_luck, higherBetter: true },
-    { label: 'EFFICIENCY', get: x => x.efficiency && x.efficiency.career_pct, higherBetter: true },
-    { label: 'PLAYOFF SUCCESS', get: x => x.career.standings.championships * 3 + x.career.standings.champ_appearances, higherBetter: true },
-  ];
-  // Label anchor positions, hand-placed around the same hexagon the data
-  // polygon is plotted on (cx=165, cy=160, maxR=100).
-  const SCOUT_LABEL_POS = [
-    [165, 38, 'middle'], [267.2, 97, 'start'], [267.2, 222, 'start'],
-    [165, 290, 'middle'], [62.8, 222, 'end'], [62.8, 97, 'end'],
-  ];
-  const SCOUT_BG = `
-    <polygon points="165,60 251.6,110 251.6,210 165,260 78.4,210 78.4,110" fill="none" stroke="var(--line)"/>
-    <polygon points="165,110 208.3,135 208.3,185 165,210 121.7,185 121.7,135" fill="none" stroke="var(--line)"/>
-    <line x1="165" y1="160" x2="165" y2="60" stroke="var(--line)"/>
-    <line x1="165" y1="160" x2="251.6" y2="110" stroke="var(--line)"/>
-    <line x1="165" y1="160" x2="251.6" y2="210" stroke="var(--line)"/>
-    <line x1="165" y1="160" x2="165" y2="260" stroke="var(--line)"/>
-    <line x1="165" y1="160" x2="78.4" y2="210" stroke="var(--line)"/>
-    <line x1="165" y1="160" x2="78.4" y2="110" stroke="var(--line)"/>`;
-
-  function radarPoints(values, cx, cy, maxR) {
-    return values.map((v, i) => {
-      const angle = (-90 + i * 60) * Math.PI / 180;
-      const r = (Math.max(0, Math.min(100, v)) / 100) * maxR;
-      return `${(cx + r * Math.cos(angle)).toFixed(1)},${(cy + r * Math.sin(angle)).toFixed(1)}`;
-    }).join(' ');
-  }
-
-  function letterGrade(pct) {
-    if (pct >= 95) return 'A+'; if (pct >= 90) return 'A'; if (pct >= 85) return 'A-';
-    if (pct >= 80) return 'B+'; if (pct >= 75) return 'B'; if (pct >= 70) return 'B-';
-    if (pct >= 65) return 'C+'; if (pct >= 60) return 'C'; if (pct >= 55) return 'C-';
-    if (pct >= 45) return 'D';
-    return 'F';
-  }
-
-  function renderScoutingReport(p, ctx) {
-    const values = SCOUT_AXES.map(ax => {
-      const raw = ax.get(p);
-      if (raw === null || raw === undefined) return null;
-      return computePercentile(raw, ctx.pool, ax.get, ax.higherBetter);
-    });
-    const plotted = radarPoints(values.map(v => v === null ? 0 : v), 165, 160, 100);
-    const labels = SCOUT_AXES.map((ax, i) => {
-      const [x, y, anchor] = SCOUT_LABEL_POS[i];
-      const val = values[i];
-      return `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="11">${ax.label}</text>
-        <text x="${x}" y="${y + 12}" text-anchor="${anchor}" font-size="15" class="axis-val">${val === null ? 'N/A' : val}</text>`;
-    }).join('');
-    const valid = values.filter(v => v !== null);
-    const avg = valid.length ? Math.round(valid.reduce((a, b) => a + b, 0) / valid.length) : null;
-    const svg = `<svg class="scout-svg" viewBox="0 0 330 320">${SCOUT_BG}
-      <polygon points="${plotted}" fill="rgba(186,155,55,0.22)" stroke="var(--gold)" stroke-width="2"/>
-      <g font-family="Inter, sans-serif" fill="var(--text-dim)">${labels}</g>
-    </svg>`;
-    const grade = `<div class="scout-grade">
-      <div class="scout-letter">${avg === null ? '—' : letterGrade(avg)}</div>
-      <div class="scout-letter-label">Composite Grade</div>
-      <div class="scout-note">Percentile against this season's active managers on six axes -- scoring, consistency, clutch, median luck, lineup efficiency, and playoff success.</div>
-    </div>`;
-    return card('Scouting Report', `<div class="scout-layout">${svg}${grade}</div>`);
   }
 
   // ---------- Rival grid ----------
@@ -778,7 +693,7 @@
   }
 
   const TABS = [
-    { label: 'Performance', render: p => `${renderScoutingReport(p, CTX)}<div class="card-grid three">${renderStreaks(p)}</div><div class="card-grid">${renderPerformance(p)}</div>` },
+    { label: 'Performance', render: p => `<div class="card-grid three">${renderStreaks(p)}</div><div class="card-grid">${renderPerformance(p)}</div>` },
     { label: 'Scoring', render: p => `<div class="card-grid">${renderScoring(p)}</div>` },
     { label: 'Efficiency', render: p => renderEfficiency(p) },
     { label: 'Rivalries', render: p => `<div class="card-grid three">${renderRivalries(p)}${renderLuck(p)}</div>${renderRivalGrid(p)}` },
@@ -808,7 +723,6 @@
     const currentYear = leagueCurrentYear(d.players);
     CTX = {
       currentYear,
-      pool: d.players.filter(x => isActivePlayer(x, currentYear)),
       foundingYear: Math.min(...d.players.map(x => x.founded_year).filter(y => y != null)),
     };
     document.getElementById('updated-at').textContent = formatUpdated(d.generated_at);
