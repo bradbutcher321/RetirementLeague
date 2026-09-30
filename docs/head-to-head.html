@@ -64,16 +64,19 @@
   .arc-who{ color:var(--text-dim); font-size:0.6rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .cmp{ padding:2px 16px 12px; }
+  .cmp-legend{ display:flex; justify-content:space-between; gap:8px; padding:0 4px 10px; color:var(--text-dim); font-size:0.78rem; font-weight:700; }
+  .cmp-legend span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .cmp-legend span:last-child{ text-align:right; }
   .cmp-group{ color:var(--gold); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; padding:16px 4px 6px; }
   .cmp-group:first-child{ padding-top:6px; }
   .stat-pods{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   .stat-pod{ background:var(--surface-raised); border:1px solid var(--line); padding:11px 8px; text-align:center; min-width:0; }
   .sp-t{ color:var(--text-dim); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.03em; margin-bottom:7px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sp-row{ display:flex; align-items:baseline; justify-content:center; gap:6px; }
-  .sp-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.15rem; font-variant-numeric:tabular-nums; }
+  .sp-row{ display:flex; align-items:center; justify-content:center; gap:8px; }
+  .sp-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.15rem; line-height:1; font-variant-numeric:tabular-nums; }
   .sp-v.win{ color:var(--turf); }
   .sp-v.lose{ color:var(--text-dim); }
-  .sp-sep{ color:var(--text-dim); font-size:0.68rem; }
+  .sp-dot{ width:5px; height:5px; border-radius:50%; background:var(--text-dim); flex-shrink:0; }
   .gap{ height:14px; }
 
   .game{ display:grid; grid-template-columns:86px minmax(0,1fr); gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); padding:9px 12px; margin-top:6px; border-left:3px solid transparent; }
@@ -175,9 +178,13 @@
     const f = v => (v === null ? '—' : fmt(v));
     let lc = '', rc = '';
     if (color && l !== null && r !== null && l !== r) { lc = l > r ? ' win' : ' lose'; rc = r > l ? ' win' : ' lose'; }
-    return `<div class="stat-pod"><div class="sp-t">${label}</div><div class="sp-row"><span class="sp-v${lc}">${f(l)}</span><span class="sp-sep">–</span><span class="sp-v${rc}">${f(r)}</span></div></div>`;
+    return `<div class="stat-pod"><div class="sp-t">${label}</div><div class="sp-row"><span class="sp-v${lc}">${f(l)}</span><span class="sp-dot"></span><span class="sp-v${rc}">${f(r)}</span></div></div>`;
   }
+  // Games Played is always identical for both teams (they're each other's opponent), so it gets one
+  // centered number instead of the usual "X • X" -- showing the same value twice read as a display bug.
+  const statPodSingle = (label, v, fmt) => `<div class="stat-pod"><div class="sp-t">${label}</div><div class="sp-row"><span class="sp-v">${fmt(v)}</span></div></div>`;
   const statGroup = t => `<div class="cmp-group">${t}</div>`;
+  const cmpLegend = (a, b) => `<div class="cmp-legend"><span>${LG.esc(a)}</span><span>${LG.esc(b)}</span></div>`;
   const ABBR = { Ben: 'Ben', Brad: 'Brd', Chad: 'Chd', Collin: 'Cln', Flanders: 'Fla', Jared: 'Jar', Jeff: 'Jef', 'Joe G': 'JoG', 'Joe K': 'JoK', Jon: 'Jon', Kris: 'Krs', TJ: 'TJ', Chappy: 'Chp', Corey: 'Cor' };
   const abbr = n => ABBR[n] || n.slice(0, 3);
   const tone = (x, y) => (x > y ? 'up' : x < y ? 'down' : 'flat');
@@ -277,18 +284,18 @@
       callout('Closest game', LG.f2(margin(closest)), closest.winner === a ? 'up' : 'down', `${LG.esc(closest.winner)} · ${closest.year}`) +
       (stakes.length ? callout('Title/Sacko clashes', stakes.length, tone(stakesA, stakesB), `${LG.esc(a)} ${stakesA}-${stakesB} ${LG.esc(b)}`) : '') + '</div>';
 
-    const allStats = '<div class="cmp">' +
+    const allStats = '<div class="cmp">' + cmpLegend(a, b) +
       statGroup('Series Record') + '<div class="stat-pods">' +
-      statPod('Games Played', A.games, B.games, int, false) + statPod('Wins', A.wins, B.wins, int) + statPod('Win %', A.pct, B.pct, pc) +
+      statPodSingle('Games Played', A.games, int) + statPod('Wins', A.wins, B.wins, int) + statPod('Win %', A.pct, B.pct, pc) +
       statPod('Current Streak', A.cur, B.cur, int) + statPod('Best Win Streak', A.best, B.best, int) + '</div>' +
       statGroup('Scoring') + '<div class="stat-pods">' +
       statPod('Total Points', A.pts, B.pts, dec) + statPod('Total Margin', A.margin, B.margin, plus) + statPod('Average Points', A.avg, B.avg, dec) +
       statPod('Highest Score', A.hi, B.hi, dec) + statPod('Lowest Score', A.lo, B.lo, dec) + '</div>' +
       statGroup('Margins') + '<div class="stat-pods">' +
       statPod('Largest Win', A.bigWin, B.bigWin, dec) + statPod('Smallest Win', A.smallWin, B.smallWin, dec) + '</div></div>';
-    const postStats = '<div class="cmp">' +
+    const postStats = '<div class="cmp">' + cmpLegend(a, b) +
       statGroup('Series Record') + '<div class="stat-pods">' +
-      statPod('Games Played', PA.games, PB.games, int, false) + statPod('Wins', PA.wins, PB.wins, int) + statPod('Win %', PA.pct, PB.pct, pc) + '</div>' +
+      statPodSingle('Games Played', PA.games, int) + statPod('Wins', PA.wins, PB.wins, int) + statPod('Win %', PA.pct, PB.pct, pc) + '</div>' +
       statGroup('Scoring') + '<div class="stat-pods">' +
       statPod('Total Points', PA.pts, PB.pts, dec) + statPod('Total Margin', PA.margin, PB.margin, plus) + '</div></div>';
 
