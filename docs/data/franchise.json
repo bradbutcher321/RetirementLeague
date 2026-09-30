@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-29T17:31:38.936580+00:00",
+  "generated_at": "2026-09-30T03:19:27.471601+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -56,7 +56,11 @@
         "lowest_win_margin": 0.78,
         "biggest_loss_margin": 89.52,
         "lowest_loss_margin": 0.42,
-        "score_stdev": 25.25
+        "score_stdev": 25.25,
+        "close_wins": 6,
+        "close_losses": 10,
+        "blowout_wins": 14,
+        "blowout_losses": 10
       },
       "streaks": {
         "head_to_head": {
@@ -87,7 +91,87 @@
           "wins": 6,
           "losses": 1,
           "win_pct": 85.7
-        }
+        },
+        "all": [
+          {
+            "opponent": "Jon",
+            "wins": 6,
+            "losses": 1,
+            "win_pct": 85.7
+          },
+          {
+            "opponent": "TJ",
+            "wins": 5,
+            "losses": 1,
+            "win_pct": 83.3
+          },
+          {
+            "opponent": "Jared",
+            "wins": 14,
+            "losses": 4,
+            "win_pct": 77.8
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 10,
+            "losses": 6,
+            "win_pct": 62.5
+          },
+          {
+            "opponent": "Corey",
+            "wins": 3,
+            "losses": 2,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Collin",
+            "wins": 6,
+            "losses": 4,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 12,
+            "losses": 9,
+            "win_pct": 57.1
+          },
+          {
+            "opponent": "Chappy",
+            "wins": 2,
+            "losses": 2,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 11,
+            "losses": 11,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Chad",
+            "wins": 10,
+            "losses": 10,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Ben",
+            "wins": 8,
+            "losses": 8,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 8,
+            "losses": 11,
+            "win_pct": 42.1
+          },
+          {
+            "opponent": "Kris",
+            "wins": 7,
+            "losses": 11,
+            "win_pct": 38.9
+          }
+        ]
       },
       "moves": {
         "total": 262,
@@ -386,7 +470,11 @@
         "lowest_win_margin": 0.08,
         "biggest_loss_margin": 87.54,
         "lowest_loss_margin": 0.12,
-        "score_stdev": 26.43
+        "score_stdev": 26.43,
+        "close_wins": 14,
+        "close_losses": 10,
+        "blowout_wins": 17,
+        "blowout_losses": 8
       },
       "streaks": {
         "head_to_head": {
@@ -417,7 +505,81 @@
           "wins": 11,
           "losses": 5,
           "win_pct": 68.8
-        }
+        },
+        "all": [
+          {
+            "opponent": "Ben",
+            "wins": 11,
+            "losses": 5,
+            "win_pct": 68.8
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 15,
+            "losses": 8,
+            "win_pct": 65.2
+          },
+          {
+            "opponent": "Collin",
+            "wins": 9,
+            "losses": 5,
+            "win_pct": 64.3
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 14,
+            "losses": 8,
+            "win_pct": 63.6
+          },
+          {
+            "opponent": "Kris",
+            "wins": 10,
+            "losses": 6,
+            "win_pct": 62.5
+          },
+          {
+            "opponent": "Jon",
+            "wins": 3,
+            "losses": 2,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 10,
+            "losses": 7,
+            "win_pct": 58.8
+          },
+          {
+            "opponent": "Brad",
+            "wins": 11,
+            "losses": 8,
+            "win_pct": 57.9
+          },
+          {
+            "opponent": "Jared",
+            "wins": 7,
+            "losses": 9,
+            "win_pct": 43.8
+          },
+          {
+            "opponent": "Chad",
+            "wins": 9,
+            "losses": 12,
+            "win_pct": 42.9
+          },
+          {
+            "opponent": "Chappy",
+            "wins": 1,
+            "losses": 3,
+            "win_pct": 25.0
+          },
+          {
+            "opponent": "TJ",
+            "wins": 1,
+            "losses": 4,
+            "win_pct": 20.0
+          }
+        ]
       },
       "moves": {
         "total": 379,
@@ -707,7 +869,11 @@
         "lowest_win_margin": 0.1,
         "biggest_loss_margin": 97.72,
         "lowest_loss_margin": 0.06,
-        "score_stdev": 21.79
+        "score_stdev": 21.79,
+        "close_wins": 11,
+        "close_losses": 17,
+        "blowout_wins": 5,
+        "blowout_losses": 16
       },
       "streaks": {
         "head_to_head": {
@@ -744,7 +910,87 @@
             "losses": 7,
             "win_pct": 69.6
           }
-        }
+        },
+        "all": [
+          {
+            "opponent": "Corey",
+            "wins": 3,
+            "losses": 0,
+            "win_pct": 100.0
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 16,
+            "losses": 7,
+            "win_pct": 69.6
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 11,
+            "losses": 8,
+            "win_pct": 57.9
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 9,
+            "losses": 7,
+            "win_pct": 56.2
+          },
+          {
+            "opponent": "Chad",
+            "wins": 11,
+            "losses": 9,
+            "win_pct": 55.0
+          },
+          {
+            "opponent": "Chappy",
+            "wins": 3,
+            "losses": 3,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Jon",
+            "wins": 4,
+            "losses": 4,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Kris",
+            "wins": 5,
+            "losses": 9,
+            "win_pct": 35.7
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 7,
+            "losses": 13,
+            "win_pct": 35.0
+          },
+          {
+            "opponent": "Collin",
+            "wins": 3,
+            "losses": 8,
+            "win_pct": 27.3
+          },
+          {
+            "opponent": "Ben",
+            "wins": 4,
+            "losses": 13,
+            "win_pct": 23.5
+          },
+          {
+            "opponent": "Brad",
+            "wins": 4,
+            "losses": 14,
+            "win_pct": 22.2
+          },
+          {
+            "opponent": "TJ",
+            "wins": 1,
+            "losses": 7,
+            "win_pct": 12.5
+          }
+        ]
       },
       "moves": {
         "total": 150,
@@ -1037,7 +1283,11 @@
         "lowest_win_margin": 0.1,
         "biggest_loss_margin": 71.66,
         "lowest_loss_margin": 0.08,
-        "score_stdev": 23.02
+        "score_stdev": 23.02,
+        "close_wins": 11,
+        "close_losses": 11,
+        "blowout_wins": 8,
+        "blowout_losses": 6
       },
       "streaks": {
         "head_to_head": {
@@ -1074,7 +1324,87 @@
             "losses": 6,
             "win_pct": 70.0
           }
-        }
+        },
+        "all": [
+          {
+            "opponent": "Chappy",
+            "wins": 4,
+            "losses": 1,
+            "win_pct": 80.0
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 14,
+            "losses": 6,
+            "win_pct": 70.0
+          },
+          {
+            "opponent": "TJ",
+            "wins": 4,
+            "losses": 2,
+            "win_pct": 66.7
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 12,
+            "losses": 8,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Corey",
+            "wins": 3,
+            "losses": 2,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Jon",
+            "wins": 3,
+            "losses": 2,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Collin",
+            "wins": 8,
+            "losses": 6,
+            "win_pct": 57.1
+          },
+          {
+            "opponent": "Chad",
+            "wins": 11,
+            "losses": 10,
+            "win_pct": 52.4
+          },
+          {
+            "opponent": "Brad",
+            "wins": 11,
+            "losses": 11,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Kris",
+            "wins": 7,
+            "losses": 7,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Jared",
+            "wins": 8,
+            "losses": 11,
+            "win_pct": 42.1
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 7,
+            "losses": 10,
+            "win_pct": 41.2
+          },
+          {
+            "opponent": "Ben",
+            "wins": 4,
+            "losses": 11,
+            "win_pct": 26.7
+          }
+        ]
       },
       "moves": {
         "total": 90,
@@ -1372,7 +1702,11 @@
         "lowest_win_margin": 0.06,
         "biggest_loss_margin": 84.9,
         "lowest_loss_margin": 0.1,
-        "score_stdev": 22.46
+        "score_stdev": 22.46,
+        "close_wins": 11,
+        "close_losses": 14,
+        "blowout_wins": 6,
+        "blowout_losses": 12
       },
       "streaks": {
         "head_to_head": {
@@ -1409,7 +1743,81 @@
           "wins": 10,
           "losses": 5,
           "win_pct": 66.7
-        }
+        },
+        "all": [
+          {
+            "opponent": "Ben",
+            "wins": 10,
+            "losses": 5,
+            "win_pct": 66.7
+          },
+          {
+            "opponent": "Jared",
+            "wins": 13,
+            "losses": 7,
+            "win_pct": 65.0
+          },
+          {
+            "opponent": "Chad",
+            "wins": 10,
+            "losses": 6,
+            "win_pct": 62.5
+          },
+          {
+            "opponent": "Kris",
+            "wins": 9,
+            "losses": 7,
+            "win_pct": 56.2
+          },
+          {
+            "opponent": "TJ",
+            "wins": 4,
+            "losses": 4,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Jon",
+            "wins": 4,
+            "losses": 5,
+            "win_pct": 44.4
+          },
+          {
+            "opponent": "Brad",
+            "wins": 9,
+            "losses": 12,
+            "win_pct": 42.9
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 8,
+            "losses": 11,
+            "win_pct": 42.1
+          },
+          {
+            "opponent": "Collin",
+            "wins": 4,
+            "losses": 6,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 8,
+            "losses": 15,
+            "win_pct": 34.8
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 6,
+            "losses": 14,
+            "win_pct": 30.0
+          },
+          {
+            "opponent": "Chappy",
+            "wins": 1,
+            "losses": 3,
+            "win_pct": 25.0
+          }
+        ]
       },
       "moves": {
         "total": 285,
@@ -1705,7 +2113,11 @@
         "lowest_win_margin": 0.12,
         "biggest_loss_margin": 72.52,
         "lowest_loss_margin": 0.16,
-        "score_stdev": 22.77
+        "score_stdev": 22.77,
+        "close_wins": 16,
+        "close_losses": 10,
+        "blowout_wins": 8,
+        "blowout_losses": 7
       },
       "streaks": {
         "head_to_head": {
@@ -1742,7 +2154,87 @@
             "losses": 5,
             "win_pct": 64.3
           }
-        }
+        },
+        "all": [
+          {
+            "opponent": "Corey",
+            "wins": 4,
+            "losses": 0,
+            "win_pct": 100.0
+          },
+          {
+            "opponent": "Kris",
+            "wins": 9,
+            "losses": 5,
+            "win_pct": 64.3
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 12,
+            "losses": 8,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 12,
+            "losses": 9,
+            "win_pct": 57.1
+          },
+          {
+            "opponent": "Brad",
+            "wins": 10,
+            "losses": 10,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 10,
+            "losses": 11,
+            "win_pct": 47.6
+          },
+          {
+            "opponent": "Jared",
+            "wins": 9,
+            "losses": 11,
+            "win_pct": 45.0
+          },
+          {
+            "opponent": "Collin",
+            "wins": 5,
+            "losses": 7,
+            "win_pct": 41.7
+          },
+          {
+            "opponent": "Chappy",
+            "wins": 2,
+            "losses": 3,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Jon",
+            "wins": 2,
+            "losses": 3,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 6,
+            "losses": 10,
+            "win_pct": 37.5
+          },
+          {
+            "opponent": "Ben",
+            "wins": 6,
+            "losses": 10,
+            "win_pct": 37.5
+          },
+          {
+            "opponent": "TJ",
+            "wins": 3,
+            "losses": 5,
+            "win_pct": 37.5
+          }
+        ]
       },
       "moves": {
         "total": 167,
@@ -2039,7 +2531,11 @@
         "lowest_win_margin": 1.8,
         "biggest_loss_margin": 108.58,
         "lowest_loss_margin": 0.36,
-        "score_stdev": 23.56
+        "score_stdev": 23.56,
+        "close_wins": 6,
+        "close_losses": 14,
+        "blowout_wins": 6,
+        "blowout_losses": 15
       },
       "streaks": {
         "head_to_head": {
@@ -2076,7 +2572,81 @@
           "wins": 11,
           "losses": 8,
           "win_pct": 57.9
-        }
+        },
+        "all": [
+          {
+            "opponent": "Joe K",
+            "wins": 11,
+            "losses": 8,
+            "win_pct": 57.9
+          },
+          {
+            "opponent": "Ben",
+            "wins": 9,
+            "losses": 7,
+            "win_pct": 56.2
+          },
+          {
+            "opponent": "Collin",
+            "wins": 7,
+            "losses": 6,
+            "win_pct": 53.8
+          },
+          {
+            "opponent": "Chad",
+            "wins": 8,
+            "losses": 12,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 8,
+            "losses": 12,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Brad",
+            "wins": 6,
+            "losses": 10,
+            "win_pct": 37.5
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 8,
+            "losses": 14,
+            "win_pct": 36.4
+          },
+          {
+            "opponent": "Kris",
+            "wins": 5,
+            "losses": 9,
+            "win_pct": 35.7
+          },
+          {
+            "opponent": "Jon",
+            "wins": 3,
+            "losses": 6,
+            "win_pct": 33.3
+          },
+          {
+            "opponent": "Jared",
+            "wins": 7,
+            "losses": 16,
+            "win_pct": 30.4
+          },
+          {
+            "opponent": "TJ",
+            "wins": 1,
+            "losses": 4,
+            "win_pct": 20.0
+          },
+          {
+            "opponent": "Chappy",
+            "wins": 0,
+            "losses": 4,
+            "win_pct": 0.0
+          }
+        ]
       },
       "moves": {
         "total": 239,
@@ -2368,7 +2938,11 @@
         "lowest_win_margin": 0.14,
         "biggest_loss_margin": 71.62,
         "lowest_loss_margin": 0.82,
-        "score_stdev": 24.61
+        "score_stdev": 24.61,
+        "close_wins": 14,
+        "close_losses": 8,
+        "blowout_wins": 8,
+        "blowout_losses": 8
       },
       "streaks": {
         "head_to_head": {
@@ -2399,7 +2973,81 @@
           "wins": 13,
           "losses": 4,
           "win_pct": 76.5
-        }
+        },
+        "all": [
+          {
+            "opponent": "Jared",
+            "wins": 13,
+            "losses": 4,
+            "win_pct": 76.5
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 11,
+            "losses": 4,
+            "win_pct": 73.3
+          },
+          {
+            "opponent": "TJ",
+            "wins": 4,
+            "losses": 2,
+            "win_pct": 66.7
+          },
+          {
+            "opponent": "Chad",
+            "wins": 10,
+            "losses": 6,
+            "win_pct": 62.5
+          },
+          {
+            "opponent": "Kris",
+            "wins": 8,
+            "losses": 7,
+            "win_pct": 53.3
+          },
+          {
+            "opponent": "Brad",
+            "wins": 8,
+            "losses": 8,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Corey",
+            "wins": 2,
+            "losses": 2,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Collin",
+            "wins": 4,
+            "losses": 4,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 7,
+            "losses": 9,
+            "win_pct": 43.8
+          },
+          {
+            "opponent": "Jon",
+            "wins": 2,
+            "losses": 3,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 5,
+            "losses": 10,
+            "win_pct": 33.3
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 5,
+            "losses": 11,
+            "win_pct": 31.2
+          }
+        ]
       },
       "moves": {
         "total": 177,
@@ -2671,7 +3319,11 @@
         "lowest_win_margin": 0.56,
         "biggest_loss_margin": 108.08,
         "lowest_loss_margin": 0.14,
-        "score_stdev": 21.75
+        "score_stdev": 21.75,
+        "close_wins": 6,
+        "close_losses": 8,
+        "blowout_wins": 7,
+        "blowout_losses": 5
       },
       "streaks": {
         "head_to_head": {
@@ -2702,7 +3354,81 @@
           "wins": 9,
           "losses": 5,
           "win_pct": 64.3
-        }
+        },
+        "all": [
+          {
+            "opponent": "Jeff",
+            "wins": 9,
+            "losses": 5,
+            "win_pct": 64.3
+          },
+          {
+            "opponent": "Jared",
+            "wins": 9,
+            "losses": 5,
+            "win_pct": 64.3
+          },
+          {
+            "opponent": "Brad",
+            "wins": 11,
+            "losses": 7,
+            "win_pct": 61.1
+          },
+          {
+            "opponent": "TJ",
+            "wins": 3,
+            "losses": 2,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 7,
+            "losses": 7,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Jon",
+            "wins": 3,
+            "losses": 3,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Ben",
+            "wins": 7,
+            "losses": 8,
+            "win_pct": 46.7
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 7,
+            "losses": 9,
+            "win_pct": 43.8
+          },
+          {
+            "opponent": "Corey",
+            "wins": 2,
+            "losses": 3,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Collin",
+            "wins": 5,
+            "losses": 8,
+            "win_pct": 38.5
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 6,
+            "losses": 10,
+            "win_pct": 37.5
+          },
+          {
+            "opponent": "Chad",
+            "wins": 5,
+            "losses": 9,
+            "win_pct": 35.7
+          }
+        ]
       },
       "moves": {
         "total": 220,
@@ -2976,7 +3702,11 @@
         "lowest_win_margin": 0.96,
         "biggest_loss_margin": 70.06,
         "lowest_loss_margin": 1.04,
-        "score_stdev": 23.71
+        "score_stdev": 23.71,
+        "close_wins": 6,
+        "close_losses": 6,
+        "blowout_wins": 10,
+        "blowout_losses": 8
       },
       "streaks": {
         "head_to_head": {
@@ -3007,7 +3737,75 @@
           "wins": 8,
           "losses": 3,
           "win_pct": 72.7
-        }
+        },
+        "all": [
+          {
+            "opponent": "Jared",
+            "wins": 8,
+            "losses": 3,
+            "win_pct": 72.7
+          },
+          {
+            "opponent": "TJ",
+            "wins": 5,
+            "losses": 3,
+            "win_pct": 62.5
+          },
+          {
+            "opponent": "Kris",
+            "wins": 8,
+            "losses": 5,
+            "win_pct": 61.5
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 6,
+            "losses": 4,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Chad",
+            "wins": 7,
+            "losses": 5,
+            "win_pct": 58.3
+          },
+          {
+            "opponent": "Ben",
+            "wins": 4,
+            "losses": 4,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Jon",
+            "wins": 3,
+            "losses": 3,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 6,
+            "losses": 7,
+            "win_pct": 46.2
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 6,
+            "losses": 8,
+            "win_pct": 42.9
+          },
+          {
+            "opponent": "Brad",
+            "wins": 4,
+            "losses": 6,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 5,
+            "losses": 9,
+            "win_pct": 35.7
+          }
+        ]
       },
       "moves": {
         "total": 230,
@@ -3253,7 +4051,11 @@
         "lowest_win_margin": 0.74,
         "biggest_loss_margin": 63.94,
         "lowest_loss_margin": 1.56,
-        "score_stdev": 24.86
+        "score_stdev": 24.86,
+        "close_wins": 6,
+        "close_losses": 2,
+        "blowout_wins": 9,
+        "blowout_losses": 2
       },
       "streaks": {
         "head_to_head": {
@@ -3284,7 +4086,75 @@
           "wins": 5,
           "losses": 1,
           "win_pct": 83.3
-        }
+        },
+        "all": [
+          {
+            "opponent": "TJ",
+            "wins": 5,
+            "losses": 1,
+            "win_pct": 83.3
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 6,
+            "losses": 3,
+            "win_pct": 66.7
+          },
+          {
+            "opponent": "Ben",
+            "wins": 3,
+            "losses": 2,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Chad",
+            "wins": 3,
+            "losses": 2,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 5,
+            "losses": 4,
+            "win_pct": 55.6
+          },
+          {
+            "opponent": "Kris",
+            "wins": 3,
+            "losses": 3,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Jared",
+            "wins": 4,
+            "losses": 4,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Collin",
+            "wins": 3,
+            "losses": 3,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 2,
+            "losses": 3,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 2,
+            "losses": 3,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Brad",
+            "wins": 1,
+            "losses": 6,
+            "win_pct": 14.3
+          }
+        ]
       },
       "moves": {
         "total": 72,
@@ -3480,7 +4350,11 @@
         "lowest_win_margin": 0.52,
         "biggest_loss_margin": 88.42,
         "lowest_loss_margin": 0.1,
-        "score_stdev": 24.51
+        "score_stdev": 24.51,
+        "close_wins": 6,
+        "close_losses": 7,
+        "blowout_wins": 6,
+        "blowout_losses": 2
       },
       "streaks": {
         "head_to_head": {
@@ -3511,7 +4385,75 @@
           "wins": 7,
           "losses": 1,
           "win_pct": 87.5
-        }
+        },
+        "all": [
+          {
+            "opponent": "Jared",
+            "wins": 7,
+            "losses": 1,
+            "win_pct": 87.5
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 4,
+            "losses": 1,
+            "win_pct": 80.0
+          },
+          {
+            "opponent": "Jeff",
+            "wins": 4,
+            "losses": 1,
+            "win_pct": 80.0
+          },
+          {
+            "opponent": "Chad",
+            "wins": 5,
+            "losses": 3,
+            "win_pct": 62.5
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 4,
+            "losses": 4,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Kris",
+            "wins": 2,
+            "losses": 3,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Collin",
+            "wins": 3,
+            "losses": 5,
+            "win_pct": 37.5
+          },
+          {
+            "opponent": "Ben",
+            "wins": 2,
+            "losses": 4,
+            "win_pct": 33.3
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 2,
+            "losses": 4,
+            "win_pct": 33.3
+          },
+          {
+            "opponent": "Jon",
+            "wins": 1,
+            "losses": 5,
+            "win_pct": 16.7
+          },
+          {
+            "opponent": "Brad",
+            "wins": 1,
+            "losses": 5,
+            "win_pct": 16.7
+          }
+        ]
       },
       "moves": {
         "total": 153,
@@ -3709,7 +4651,11 @@
         "lowest_win_margin": 1.3,
         "biggest_loss_margin": 40.34,
         "lowest_loss_margin": 6.1,
-        "score_stdev": 16.58
+        "score_stdev": 16.58,
+        "close_wins": 5,
+        "close_losses": 0,
+        "blowout_wins": 0,
+        "blowout_losses": 0
       },
       "streaks": {
         "head_to_head": {
@@ -3740,7 +4686,51 @@
           "wins": 4,
           "losses": 0,
           "win_pct": 100.0
-        }
+        },
+        "all": [
+          {
+            "opponent": "Jeff",
+            "wins": 4,
+            "losses": 0,
+            "win_pct": 100.0
+          },
+          {
+            "opponent": "Flanders",
+            "wins": 3,
+            "losses": 1,
+            "win_pct": 75.0
+          },
+          {
+            "opponent": "Joe K",
+            "wins": 3,
+            "losses": 1,
+            "win_pct": 75.0
+          },
+          {
+            "opponent": "Chad",
+            "wins": 3,
+            "losses": 2,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Brad",
+            "wins": 2,
+            "losses": 2,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Jared",
+            "wins": 3,
+            "losses": 3,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 1,
+            "losses": 4,
+            "win_pct": 20.0
+          }
+        ]
       },
       "moves": {
         "total": 96,
@@ -3836,7 +4826,11 @@
         "lowest_win_margin": 4.44,
         "biggest_loss_margin": 75.02,
         "lowest_loss_margin": 0.3,
-        "score_stdev": 18.54
+        "score_stdev": 18.54,
+        "close_wins": 1,
+        "close_losses": 2,
+        "blowout_wins": 1,
+        "blowout_losses": 6
       },
       "streaks": {
         "head_to_head": {
@@ -3867,7 +4861,45 @@
           "wins": 3,
           "losses": 2,
           "win_pct": 60.0
-        }
+        },
+        "all": [
+          {
+            "opponent": "Kris",
+            "wins": 3,
+            "losses": 2,
+            "win_pct": 60.0
+          },
+          {
+            "opponent": "Ben",
+            "wins": 2,
+            "losses": 2,
+            "win_pct": 50.0
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 2,
+            "losses": 3,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Brad",
+            "wins": 2,
+            "losses": 3,
+            "win_pct": 40.0
+          },
+          {
+            "opponent": "Chad",
+            "wins": 0,
+            "losses": 4,
+            "win_pct": 0.0
+          },
+          {
+            "opponent": "Jared",
+            "wins": 0,
+            "losses": 3,
+            "win_pct": 0.0
+          }
+        ]
       },
       "moves": {
         "total": 34,
