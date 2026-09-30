@@ -3,23 +3,26 @@ Fills in Game Tracker rows from D1's real data -- Winner/Margin/Total/Median
 (columns H/I/J/L) are all formulas derived from S1/S2, so writing just
 names + scores is enough for the rest of the row to compute itself.
 
-Two things it fills, both only once D1 shows the games actually decided:
+Two things it fills:
   - Scores for a row that already has both player names typed in (matches
     each name to its team_id for that year via SHEET_NAME_TO_ESPN_IDS,
     looks up that team's D1 matchup for the row's week, and reports a
     mismatch for manual review rather than writing over a name that
-    doesn't match what D1 says that team actually played). If a score is
-    already filled in but no longer matches D1's current value, it's
-    re-written as a correction -- ESPN does sometimes revise a stat after
-    a game was first marked final, and this runs again a day and a half
-    later (see the two workflow schedules) specifically to catch that.
+    doesn't match what D1 says that team actually played). This writes
+    D1's current score as soon as D1 has one at all -- it deliberately
+    does NOT wait for ESPN to mark the matchup officially final, since
+    that flag lags real game completion by hours. If a score is already
+    filled in but no longer matches D1's current value, it's re-written as
+    a correction -- covering both a normal in-week update and ESPN revising
+    a stat after the fact -- and this runs again a day and a half later
+    (see the two workflow schedules) specifically to catch the latter.
   - Names AND scores for a still-blank Reg/Bye/Sacko row, inferred
     straight from D1's schedule -- regular-season pairings and byes are
     fully known there regardless of whether anyone's typed them in yet,
-    and the Sacko game is already resolved via season_sackos. Only
-    attempted once every blank row for that (year, week, type) has a
-    matching, fully-decided D1 game to assign -- a partially-finished week
-    is left alone rather than guessing which blank row is which.
+    and the Sacko game is already resolved via season_sackos. Unlike the
+    score-only case above, this still waits for D1 to show the game fully
+    decided (an actual W/L outcome, not just a score) before guessing
+    which blank row is which -- a partially-finished week is left alone.
 
 Play/Cons/3rd/5th/Champ rows are never auto-filled when blank: which
 bracket game is which isn't reconstructable from bracket_type alone (see
@@ -255,8 +258,8 @@ def main():
             needs_review.append((row["row_num"], f"'{p1}' doesn't map to a team_id in {row['year']}"))
             continue
         m = matchup_by_year_week_team.get((row["year"], row["week"], p1_id))
-        if m is None or m["outcome"] is None:
-            not_final_yet.append((row["row_num"], f"{p1} wk{row['week']} {row['year']} -- not final in D1 yet"))
+        if m is None or m["team_score"] is None:
+            not_final_yet.append((row["row_num"], f"{p1} wk{row['week']} {row['year']} -- no score in D1 yet"))
             continue
 
         if p2:
@@ -281,7 +284,7 @@ def main():
             to_write.append((row["row_num"], p1, None, m["team_score"], None, row["inferred"], corrected))
 
     print(f"\n{len(to_write)} row(s) to fill, {len(needs_review)} need manual review, "
-          f"{len(not_final_yet)} not final in D1 yet.\n")
+          f"{len(not_final_yet)} with no score in D1 yet.\n")
     for row_num, p1, p2, s1, s2, inferred, corrected in to_write:
         label = f"{p1} vs {p2}" if p2 else f"{p1} (Bye)"
         tags = []

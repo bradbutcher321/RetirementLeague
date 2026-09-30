@@ -10,8 +10,50 @@ compatibility_date = "2024-09-23"
 # schedule instead -- see the scheduled() handler in src/index.js, which
 # reuses the same dispatchParlayRefresh() the manual "Refresh Data" button
 # already calls.
+#
+# Parlay picks only change around games, so this deliberately isn't a flat
+# */10 anymore -- it's off entirely early in the week, hourly the rest of
+# the time, and only every 10 minutes during an actual NCAAF/NFL window.
+# Cloudflare Cron Triggers always run in UTC (no named-timezone option), so
+# every time below is US Eastern + 4h (the EDT offset) -- during EST
+# (roughly Nov-early March) each of these fires about an hour later than
+# the ET time in its comment.
+#
+# Only 5 cron strings total: the Workers Free plan caps an account at 5
+# cron triggers total (not per Worker -- confirmed by a failed deploy that
+# hit "This account has reached the Workers Free limit of 5 cron triggers
+# per account" [code: 10072]), so the exact 13-window design this schedule
+# was meant to express doesn't fit as originally cut. Instead this overlays
+# a 10-minute cadence (A/B/C below) on top of an always-on hourly baseline
+# (D/E below) for every day that isn't in the blackout -- the overlap is
+# harmless (just extra runs where both match), and the union of the two
+# reproduces the intended per-window cadence almost exactly, at the cost of
+# a few windows starting ~1 hour early/late (noted below) rather than on
+# the exact boundary. Also note: Cloudflare's day-of-week field wants
+# Sunday as `7`, not the usual cron `0` -- `0` was rejected outright as an
+# "invalid cron string" [code: 10100].
+#
+#   A) every 10 min, Mon/Tue/Fri/Sun 12am-4:59am UTC -- tail end of a
+#      Sunday-night or Thursday-night game (or MNF) that ran past midnight.
+#   B) every 10 min, Mon/Thu 11pm UTC -- kickoff hour for MNF and
+#      Thursday-night NCAAF/NFL.
+#   C) every 10 min, Sat/Sun 4pm-11:59pm UTC -- Saturday NCAAF and Sunday
+#      NFL afternoon/night (starts ~1hr early on Sunday: noon ET, not 1pm).
+#   D) hourly, Thu 12pm-11:59pm UTC -- Thursday daytime before kickoff.
+#   E) hourly, every hour, Mon/Fri/Sat/Sun -- the "otherwise" baseline for
+#      every remaining game day (redundant with A/B/C where they overlap).
+#
+# Nothing runs Tue 5am UTC (Tue 1am ET) through Thu noon UTC (Thu 8am ET,
+# when D takes over) -- that's the deliberate blackout window, and neither
+# Wednesday nor early Thursday appears in any entry below.
 [triggers]
-crons = ["*/10 * * * *"]
+crons = [
+  "*/10 0-4 * * 1,2,5,7", # A
+  "*/10 23 * * 1,4",      # B
+  "*/10 16-23 * * 6,7",   # C
+  "0 12-23 * * 4",        # D
+  "0 * * * 1,5,6,7",      # E
+]
 
 # Plain-text config (safe to commit — these are not secrets)
 [vars]

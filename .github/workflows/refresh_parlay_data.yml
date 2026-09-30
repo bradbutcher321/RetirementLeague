@@ -2,11 +2,13 @@ name: Refresh Parlay Data
 
 on:
   # No schedule: trigger here -- GitHub's own cron is best-effort and was
-  # observed firing every 2.5-5.5 hours instead of every 10 minutes
+  # observed firing every 2.5-5.5 hours instead of the configured cadence
   # (silently dropped rather than queued, worst right at :00/:30 when
-  # everyone else's crons also fire). A Cloudflare Cron Trigger dispatches
-  # this workflow every 10 minutes instead -- see worker/wrangler.toml's
-  # [triggers] and the scheduled() handler in worker/src/index.js.
+  # everyone else's crons also fire). Cloudflare Cron Triggers dispatch
+  # this workflow on a real schedule instead -- see worker/wrangler.toml's
+  # [triggers] (off midweek, hourly on a game day, every 10 min during an
+  # actual NCAAF/NFL window) and the scheduled() handler in
+  # worker/src/index.js.
   workflow_dispatch: # Manual button inside GitHub web console, and Cloudflare's cron dispatch
 
 permissions:

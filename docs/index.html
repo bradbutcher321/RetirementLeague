@@ -1426,15 +1426,23 @@
     const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
     const started = teams.some(t => (t.current || 0) > 0);
 
-    if (!hasPrior || !started) {
-      // Week 1, or nothing scored yet: no earlier weeks to compare against.
+    if (!hasPrior) {
+      // Week 1: no earlier week to compare against.
       toggle.innerHTML = '';
       standingsMode = 'through';
       container.innerHTML = teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
       return;
     }
 
-    const modes = [['through', `Through Week ${week - 1}`], ['live', `+ Week ${week} live`], ['proj', `+ Week ${week} projected`]];
+    // Before kickoff every team's live score is 0, so "+ live" would just
+    // duplicate "through" -- skip it until someone's actually on the board.
+    // Projections are available pre-kickoff too, so "+ projected" stays.
+    const modes = [
+      ['through', `Through Week ${week - 1}`],
+      ...(started ? [['live', `+ Week ${week} live`]] : []),
+      ['proj', `+ Week ${week} projected`],
+    ];
+    if (!modes.some(([k]) => k === standingsMode)) standingsMode = 'through';
     const m = standingsMode;
     toggle.innerHTML = `<div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-stand="${k}" class="${k === m ? 'on' : ''}">${l}</button>`).join('')}</div>`;
 

@@ -6,7 +6,14 @@ on:
     # writes it straight to Cloudflare D1 via INSERT OR REPLACE, so a daily
     # run is plenty to pick up finished games and any later stat corrections
     # without needing to track "which week is new".
-    - cron: '0 9 * * *'
+    #
+    # Timed to land at 12:22am US Eastern -- 8 minutes before the Tuesday
+    # sheet sync (sync_scores_to_sheet.yml, 12:30am Eastern) so that first
+    # pass reads freshly-refreshed D1 data instead of the previous day's
+    # snapshot. GitHub Actions cron always runs in UTC (no named-timezone
+    # option), so 4:22 UTC lands around 12:22-1:22am Eastern depending on
+    # daylight saving -- adjust the hour here if you want it more precise.
+    - cron: '22 4 * * *'
   workflow_dispatch: # Manual button inside GitHub web console
 
 permissions:
