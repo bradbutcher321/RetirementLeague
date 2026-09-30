@@ -42,6 +42,9 @@ SACKO_CAP_PER_YEAR = 3
 # (see database/schema.sql) -- so lineup-efficiency stats can't cover a
 # player's full career the way the rest of this file's stats do.
 EFFICIENCY_START_YEAR = 2019
+# Thresholds for the "close game" / "blowout" counts in compute_extremes.
+CLOSE_GAME_MARGIN = 5
+BLOWOUT_MARGIN = 50
 STRICT_LINEUP_SLOTS = ("QB", "RB", "WR", "TE", "D/ST", "K")
 FLEX_ELIGIBLE_POSITIONS = ("RB", "WR", "TE")
 
@@ -176,6 +179,13 @@ def compute_extremes(games):
         "biggest_loss_margin": max(loss_margins) if loss_margins else None,
         "lowest_loss_margin": min(loss_margins) if loss_margins else None,
         "score_stdev": round(statistics.pstdev(scores), 2) if len(scores) > 1 else None,
+        # Close/blowout counts, for achievement-style milestones ("Heartbreaker",
+        # "Blowout Artist") -- cheap to add since win_margins/loss_margins are
+        # already fully materialized above, just never counted before.
+        "close_wins": sum(1 for m in win_margins if m < CLOSE_GAME_MARGIN),
+        "close_losses": sum(1 for m in loss_margins if m < CLOSE_GAME_MARGIN),
+        "blowout_wins": sum(1 for m in win_margins if m >= BLOWOUT_MARGIN),
+        "blowout_losses": sum(1 for m in loss_margins if m >= BLOWOUT_MARGIN),
     }
 
 
@@ -218,7 +228,7 @@ def compute_rivalries(games, team_id_to_player_by_year, active_players):
 
     qualifying = {opp: r for opp, r in records.items() if r["w"] + r["l"] >= 3}
     if not qualifying:
-        return {"nemesis": None, "favorite_opponent": None}
+        return {"nemesis": None, "favorite_opponent": None, "all": []}
 
     def pct(rec):
         total = rec["w"] + rec["l"]
@@ -241,7 +251,11 @@ def compute_rivalries(games, team_id_to_player_by_year, active_players):
     favorite_opp, favorite = build(lambda pool: max(pool, key=lambda o: pct(pool[o])))
     if nemesis_opp == favorite_opp:
         favorite = None
-    return {"nemesis": nemesis, "favorite_opponent": favorite}
+
+    # Every qualifying opponent, not just the best/worst -- nemesis/favorite
+    # above stay as they were for anything still reading just those two.
+    all_opponents = sorted((package(opp) for opp in qualifying), key=lambda r: r["win_pct"], reverse=True)
+    return {"nemesis": nemesis, "favorite_opponent": favorite, "all": all_opponents}
 
 
 def compute_weekly_sackos(matchups, team_id_to_player_by_year):

@@ -38,6 +38,9 @@ OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "
 # The weekly "median" game was added starting this season; before it, there
 # was nothing to compare a Median-only or Combined streak against.
 MEDIAN_ERA_START_YEAR = 2025
+# Thresholds for the "close game" / "blowout" counts in compute_extremes.
+CLOSE_GAME_MARGIN = 5
+BLOWOUT_MARGIN = 50
 
 
 def authorize():
@@ -228,6 +231,13 @@ def compute_extremes(perspectives_for_player):
         "biggest_loss_margin": max(loss_margins) if loss_margins else None,
         "lowest_loss_margin": min(loss_margins) if loss_margins else None,
         "score_stdev": round(statistics.pstdev(scores), 2) if len(scores) > 1 else None,
+        # Close/blowout counts, for achievement-style milestones ("Heartbreaker",
+        # "Blowout Artist") -- cheap to add since win_margins/loss_margins are
+        # already fully materialized above, just never counted before.
+        "close_wins": sum(1 for m in win_margins if m < CLOSE_GAME_MARGIN),
+        "close_losses": sum(1 for m in loss_margins if m < CLOSE_GAME_MARGIN),
+        "blowout_wins": sum(1 for m in win_margins if m >= BLOWOUT_MARGIN),
+        "blowout_losses": sum(1 for m in loss_margins if m >= BLOWOUT_MARGIN),
     }
 
 
@@ -254,7 +264,7 @@ def compute_rivalries(perspectives_for_player, active_players):
 
     qualifying = {opp: r for opp, r in records.items() if r["w"] + r["l"] >= 3}
     if not qualifying:
-        return {"nemesis": None, "favorite_opponent": None}
+        return {"nemesis": None, "favorite_opponent": None, "all": []}
 
     def win_pct(rec):
         total = rec["w"] + rec["l"]
@@ -280,7 +290,11 @@ def compute_rivalries(perspectives_for_player, active_players):
     # 3+ times), don't show the same record twice as if it were two facts.
     if nemesis_opp == favorite_opp:
         favorite = None
-    return {"nemesis": nemesis, "favorite_opponent": favorite}
+
+    # Every qualifying opponent, not just the best/worst -- nemesis/favorite
+    # above stay as they were for anything still reading just those two.
+    all_opponents = sorted((package(opp) for opp in qualifying), key=lambda r: r["win_pct"], reverse=True)
+    return {"nemesis": nemesis, "favorite_opponent": favorite, "all": all_opponents}
 
 
 # --------------------------------------------------------------------------
