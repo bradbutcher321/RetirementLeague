@@ -27,7 +27,7 @@
   /* Table width is intrinsic (cell size × column count) so it stays the
      same size across years and only grows wider when a year has more
      teams — never stretched to fill the container. */
-  .board-scroll{ overflow-x: auto; border: 1px solid var(--line); background: var(--surface); padding: 2px; }
+  .board-scroll{ overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 2px; }
   table.board{ border-collapse: separate; border-spacing: 3px; width: auto; table-layout: fixed; }
   table.board th, table.board td{ padding: 0; }
   table.board thead th{
@@ -200,7 +200,7 @@
     })
     .catch(err => {
       console.error('Draft board data error:', err);
-      document.getElementById('board-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading draft board data.</div>';
+      document.getElementById('board-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading draft board data.</div>';
     });
 </script>
 <script src="track.js?v=1" defer></script>

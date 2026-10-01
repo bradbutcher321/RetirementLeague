@@ -22,7 +22,7 @@
   .year-tab.is-current:hover{ border-color: var(--turf); color: var(--text); }
   .year-tab.is-current.active{ background: rgba(76,154,107,0.14); border-color: var(--turf); color: var(--turf); }
 
-  .rules-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); max-width: 640px; }
+  .rules-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); border-top: 3px solid var(--gold); max-width: 640px; overflow: hidden; }
   .rules-card.is-current{ border-top-color: var(--turf); }
   .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
   .rules-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; }
@@ -256,7 +256,7 @@
     })
     .catch(err => {
       console.error('Rule changes data error:', err);
-      document.getElementById('selected-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading rule changes data.</div>';
+      document.getElementById('selected-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading rule changes data.</div>';
     });
 </script>
 <script src="track.js?v=1" defer></script>
