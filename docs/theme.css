@@ -89,6 +89,7 @@ body{
 /* ---------- Pill badge (champion/sacko markers inline with a name) ---------- */
 .badge{ font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:2px 7px; border-radius:999px; border:1px solid; white-space:nowrap; flex:none; line-height:1.4; }
 .badge.gold{ color:var(--gold); border-color:var(--gold); }
+.badge.turf{ color:var(--turf); border-color:var(--turf); }
 .badge.loss{ color:var(--loss); border-color:var(--loss); }
 
 /* ---------- Quiet tile strip ---------- */
