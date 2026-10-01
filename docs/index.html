@@ -35,6 +35,11 @@
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
   }
+  /* Full-bleed wash toward whichever side is the projected favorite --
+     layered on top of the base surface gradient (first-listed background
+     paints on top), strongest at that side's edge and fading by center. */
+  .matchup-card.fav-away{ background: linear-gradient(90deg, rgba(212,180,106,0.10) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
+  .matchup-card.fav-home{ background: linear-gradient(270deg, rgba(212,180,106,0.10) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
   /* A live game gets a faint warm wash across the whole card -- a glance
      down the list should pick out what's in progress before reading any
      text. Sits behind everything else (z-index 0), which is why .side /
@@ -987,6 +992,14 @@
 
   function renderMatchupCard(m) {
     const homeLeading = parseFloat(m.homeScore) >= parseFloat(m.awayScore);
+    // Full-bleed wash leans toward whichever side is *projected* to win
+    // (win probability), not whichever is currently ahead on the live
+    // score -- those two can disagree mid-game, and the wash is meant to
+    // read as "who's expected to take this," not a live-score indicator
+    // (the score glow and .leading border already cover that).
+    const awayWP = typeof m.awayWinProbability === 'number' ? m.awayWinProbability
+      : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : null;
+    const favClass = awayWP === null ? '' : awayWP >= 50 ? ' fav-away' : ' fav-home';
     const homeInPlay = parseInt(m.homeInPlay, 10) || 0;
     const awayInPlay = parseInt(m.awayInPlay, 10) || 0;
     const homeRemaining = parseInt(m.homeRemaining, 10) || 0;
@@ -1024,7 +1037,7 @@
     const expanded = expandedMatchups.has(key);
 
     return `
-      <div class="matchup-card ${expanded ? 'expanded' : ''}${isLive ? ' live' : ''}" data-key="${encodeURIComponent(key)}">
+      <div class="matchup-card ${expanded ? 'expanded' : ''}${isLive ? ' live' : ''}${favClass}" data-key="${encodeURIComponent(key)}">
         ${isLive ? `<span class="live-indicator"><span class="pulse-dot"></span>Live</span>` : ''}
         <div class="side away ${sideClass(!homeLeading)}">
           <div class="team-name">${m.awayName}</div>
