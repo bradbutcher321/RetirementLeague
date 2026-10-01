@@ -6,52 +6,120 @@
 <title>Retirement League — Overview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
 <link rel="stylesheet" href="league.css?v=4">
 <style>
-  .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  /* War Room treatment: the page header/nav stay on the site's standard scoreboard
+     font (consistent with every other page); everything below is data-dense and
+     monospace, left-accent cards instead of top-accent, tighter rhythm. */
+  :root{ --mono:'IBM Plex Mono', monospace; }
+
+  .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
   @media (max-width:800px){ .hero-grid{ grid-template-columns:1fr 1fr; } }
-  .hero{ background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--gold); padding:14px 12px; text-align:center; min-width:0; }
-  .hero-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; min-height:2.2em; }
-  .hero-v{ font-family:var(--scoreboard); font-weight:800; font-size:2.2rem; line-height:1.1; color:var(--gold); margin:6px 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .hero{ background:var(--surface); border-left:2px solid var(--gold); padding:14px 14px; min-width:0; }
+  .hero-t{ color:var(--text-dim); font-size:0.64rem; text-transform:uppercase; letter-spacing:0.05em; min-height:2.2em; }
+  .hero-v{ font-family:var(--mono); font-weight:700; font-size:1.8rem; line-height:1.15; color:var(--gold); margin:6px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
   .hero-v.good{ color:var(--turf); } .hero-v.bad{ color:var(--loss); }
-  .hero-n{ font-weight:700; font-size:0.88rem; min-height:1.3em; }
-  .hero-s{ color:var(--text-dim); font-size:0.72rem; margin-top:4px; min-height:1.1em; }
+  .hero-n{ font-weight:600; font-size:0.86rem; min-height:1.3em; }
+  .hero-s{ color:var(--text-dim); font-size:0.7rem; margin-top:4px; min-height:1.1em; }
 
   .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-  .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer; }
-  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(186,155,55,0.10); }
+  .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.8rem; font-weight:600; padding:7px 13px; cursor:pointer; }
+  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(186,155,55,0.08); }
   .seg{ display:flex; flex-wrap:wrap; border:1px solid var(--line); margin:4px 16px 8px; width:fit-content; max-width:calc(100% - 32px); }
-  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.78rem; padding:7px 14px; cursor:pointer; }
-  .seg button.on{ background:rgba(186,155,55,0.14); color:var(--gold); }
-  .seg button.on.good{ background:rgba(76,154,107,0.14); color:var(--turf); }
-  .seg button.on.bad{ background:rgba(192,87,75,0.14); color:var(--loss); }
+  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.76rem; padding:7px 13px; cursor:pointer; }
+  .seg button.on{ background:rgba(186,155,55,0.12); color:var(--gold); }
+  .seg button.on.good{ background:rgba(76,154,107,0.12); color:var(--turf); }
+  .seg button.on.bad{ background:rgba(192,87,75,0.12); color:var(--loss); }
 
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
-  .ln{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); border-left:3px solid var(--gold); padding:9px 12px; margin-top:6px; min-height:58px; }
-  .ln.yr{ grid-template-columns:46px minmax(0,1fr) auto; }
+  .ln{ display:grid; grid-template-columns:28px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); border-left:2px solid var(--gold); padding:8px 11px; margin-top:5px; min-height:50px; }
+  .ln.yr{ grid-template-columns:42px minmax(0,1fr) auto; }
   .ln.good{ border-left-color:var(--turf); } .ln.bad{ border-left-color:var(--loss); }
-  .ln .rk{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); text-align:center; font-size:1.2rem; }
-  .ln.yr .rk{ font-size:1.05rem; }
-  .ln .tm{ font-weight:700; font-size:0.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ln .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ln.rec{ border-color:var(--gold); background:rgba(186,155,55,0.07); }
-  .ln.rec.good{ border-color:var(--turf); background:rgba(76,154,107,0.07); }
-  .ln.rec.bad{ border-color:var(--loss); background:rgba(192,87,75,0.07); }
+  .ln .rk{ font-family:var(--mono); font-weight:600; color:var(--text-dim); text-align:center; font-size:0.9rem; }
+  .ln .tm{ font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ln .meta{ color:var(--text-dim); font-size:0.7rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ln.rec{ border-color:var(--gold); background:rgba(186,155,55,0.06); }
+  .ln.rec.good{ border-color:var(--turf); background:rgba(76,154,107,0.06); }
+  .ln.rec.bad{ border-color:var(--loss); background:rgba(192,87,75,0.06); }
   .ln.rec .rk, .ln.rec .val{ color:var(--gold); }
   .ln.rec.good .rk, .ln.rec.good .val{ color:var(--turf); }
   .ln.rec.bad .rk, .ln.rec.bad .val{ color:var(--loss); }
-  .ln.rec .val{ font-size:1.5rem; font-weight:800; }
-  .ln .val{ font-family:var(--scoreboard); font-weight:700; font-size:1.2rem; color:var(--text); font-variant-numeric:tabular-nums; text-align:right; min-width:50px; }
+  .ln.rec .val{ font-size:1.3rem; font-weight:700; }
+  .ln .val{ font-family:var(--mono); font-weight:600; font-size:1.05rem; color:var(--text); font-variant-numeric:tabular-nums; text-align:right; min-width:46px; }
   .ln .val.up{ color:var(--turf); } .ln .val.down{ color:var(--loss); }
-  .stats{ display:flex; gap:12px; }
-  .stats div{ text-align:center; min-width:38px; }
-  .stats b{ display:block; font-family:var(--scoreboard); font-size:1.1rem; font-weight:700; }
+  .stats{ display:flex; gap:10px; }
+  .stats div{ text-align:center; min-width:34px; }
+  .stats b{ display:block; font-family:var(--mono); font-size:0.95rem; font-weight:600; }
   .stats b em{ font-style:normal; }
-  .stats span{ font-size:0.58rem; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; }
+  .stats span{ font-size:0.56rem; color:var(--text-dim); letter-spacing:0.03em; text-transform:uppercase; }
+
+  /* ---------- Achievement Leaderboard ---------- */
+  .ach-row{ display:grid; grid-template-columns:24px minmax(0,1fr) 170px 56px; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:0.8rem; }
+  .ach-row:last-child{ border-bottom:none; }
+  .ach-rank{ color:var(--text-dim); font-family:var(--mono); }
+  .ach-name{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ach-ticks{ display:flex; gap:1.5px; flex-wrap:wrap; align-content:center; }
+  .ach-ticks i{ width:4px; height:12px; background:var(--line); flex-shrink:0; }
+  .ach-ticks i.on{ background:var(--gold); }
+  .ach-count{ text-align:right; font-family:var(--mono); font-weight:700; }
+  .ach-count span{ color:var(--text-dim); font-weight:400; }
+  @media (max-width:640px){ .ach-row{ grid-template-columns:20px minmax(0,1fr) 44px; } .ach-ticks{ display:none; } }
+
+  /* ---------- Dynasty Heatmap ---------- */
+  .heat-scroll{ overflow-x:auto; padding-bottom:4px; }
+  .heat-grid{ display:grid; width:max-content; }
+  .heat-name{ position:sticky; left:0; background:var(--surface); font-weight:600; font-size:0.78rem; display:flex; align-items:center; padding-right:8px; border-right:1px solid var(--line); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .heat-yr{ text-align:center; color:var(--text-dim); font-size:0.6rem; padding:4px 0; font-family:var(--mono); }
+  .heat-cell{ margin:1px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:600; font-size:0.68rem; color:var(--text-dim); min-height:26px; border:1px solid var(--line); }
+  .heat-cell.champ{ background:rgba(186,155,55,0.22); color:var(--gold); border-color:var(--gold); }
+  .heat-legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; padding:0 2px; }
+  .heat-legend-item{ display:flex; align-items:center; gap:6px; color:var(--text-dim); font-size:0.72rem; }
+  .heat-swatch{ width:12px; height:12px; border:1px solid var(--line); flex-shrink:0; }
+
+  /* ---------- Power Index ---------- */
+  .pow-row{ margin-bottom:11px; }
+  .pow-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; gap:10px; }
+  .pow-name{ display:flex; align-items:baseline; gap:8px; font-weight:600; font-size:0.88rem; min-width:0; }
+  .pow-name .r{ color:var(--text-dim); font-family:var(--mono); font-size:0.78rem; }
+  .pow-score{ font-family:var(--mono); font-weight:700; font-size:0.95rem; color:var(--gold); white-space:nowrap; }
+  .pow-track{ height:10px; background:var(--surface-raised); border:1px solid var(--line); overflow:hidden; }
+  .pow-fill{ height:100%; background:var(--gold); }
+  .pow-breakdown{ display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+  .pow-chip{ background:var(--surface-raised); border:1px solid var(--line); padding:3px 8px; font-size:0.66rem; color:var(--text-dim); font-family:var(--mono); }
+  .pow-chip b{ color:var(--text); font-weight:700; }
+
+  /* ---------- Season Timeline ---------- */
+  .tl-scroll{ overflow-x:auto; padding:4px 0 8px; }
+  .tl-rail{ display:flex; gap:0; min-width:max-content; position:relative; }
+  .tl-rail::before{ content:''; position:absolute; left:0; right:0; top:40px; height:1px; background:var(--line); z-index:0; }
+  .tl-card{ width:150px; flex-shrink:0; padding:0 8px; position:relative; z-index:1; }
+  .tl-dot{ width:8px; height:8px; background:var(--gold); margin:36px auto 10px; }
+  .tl-card.progress .tl-dot{ background:var(--text-dim); }
+  .tl-year{ text-align:center; font-family:var(--mono); font-weight:700; font-size:0.9rem; color:var(--text-dim); margin-bottom:8px; }
+  .tl-body{ background:var(--surface-raised); border:1px solid var(--line); border-left:2px solid var(--gold); padding:9px; min-height:70px; }
+  .tl-card.progress .tl-body{ border-left-color:var(--line); border-style:dashed; }
+  .tl-line{ font-size:0.74rem; margin-bottom:4px; }
+  .tl-line.champ{ color:var(--gold); font-weight:700; }
+  .tl-line.sacko{ color:var(--loss); display:flex; align-items:center; gap:5px; }
+  .tl-sacko-dot{ width:7px; height:7px; border:1px solid var(--loss); flex-shrink:0; }
+  .tl-cap{ color:var(--text-dim); font-size:0.66rem; line-height:1.4; margin-top:6px; border-top:1px solid var(--line); padding-top:6px; }
+
+  /* ---------- Scoring Trends ---------- */
+  .sc-chart{ width:100%; height:200px; display:block; }
+  .sc-grid-line{ stroke:var(--line); stroke-width:1; }
+  .sc-band{ fill:var(--gold); opacity:0.1; }
+  .sc-line{ fill:none; stroke:var(--gold); stroke-width:2; vector-effect:non-scaling-stroke; }
+  .sc-dot{ fill:var(--gold); stroke:var(--surface); stroke-width:1.5; vector-effect:non-scaling-stroke; }
+  .sc-axis-label{ fill:var(--text-dim); font-size:9px; font-family:'IBM Plex Mono',monospace; }
+  .sc-end-label{ fill:var(--text); font-weight:700; font-size:11px; font-family:'IBM Plex Mono',monospace; }
+  .sc-annot-line{ stroke:var(--text-dim); stroke-width:1; stroke-dasharray:3 3; }
+  .sc-annot-text{ fill:var(--text-dim); font-size:9px; font-family:'IBM Plex Mono',monospace; }
+  .sc-caption{ text-align:center; color:var(--text-dim); font-size:0.76rem; margin-top:6px; }
+  .sc-caption b{ color:var(--text); }
 </style>
 </head>
 <body>
@@ -81,6 +149,7 @@
 
 <script src="nav.js"></script>
 <script src="league-common.js?v=2"></script>
+<script src="achievements.js"></script>
 <script>
   const { f1, f2, money, card, esc } = LG;
   let TABS = [], tab = 0;
@@ -196,8 +265,146 @@
       t('Best Average Finish', finish[0], finish[0].val, 'good', finish[0].sub, finish[0].name),
     ];
 
+    // ----- Season Timeline -----
+    function timelineHtml() {
+      const champByYear = {}; champs.forEach(c => champByYear[c.year] = c);
+      const sackoByYear = {}; sackos.forEach(s => sackoByYear[s.year] = s);
+      const highByYear = {}; weekly(true).forEach(w => highByYear[w.rank] = w);
+      const cards = D.years.map(y => {
+        const isDone = complete.has(y);
+        const c = champByYear[y], s = sackoByYear[y], h = highByYear[y];
+        const body = (isDone && c)
+          ? `<div class="tl-line champ">${esc(c.player)}</div><div class="tl-line sacko"><span class="tl-sacko-dot"></span>${esc(s ? s.player : '—')}</div>`
+          : `<div class="tl-line" style="color:var(--text-dim)">In progress</div>`;
+        const capText = h ? `${h.name} put up ${h.val}, ${h.sub}` : '';
+        return `<div class="tl-card${isDone ? '' : ' progress'}"><div class="tl-year">${y}</div><div class="tl-dot"></div>` +
+          `<div class="tl-body">${body}${capText ? `<div class="tl-cap">${esc(capText)}</div>` : ''}</div></div>`;
+      }).join('');
+      return card('Season Timeline', `<div class="tl-scroll"><div class="tl-rail">${cards}</div></div>`,
+        'Champion, Sacko and the season’s top single-game score, one card per year');
+    }
+
+    // ----- Dynasty Heatmap -----
+    function dynastyHtml() {
+      const teamsByYear = {};
+      done.forEach(s => { teamsByYear[s.year] = (teamsByYear[s.year] || 0) + 1; });
+      const byPlayer = {};
+      done.forEach(s => { (byPlayer[s.player] || (byPlayer[s.player] = [])).push(s); });
+      const playerList = Object.keys(byPlayer).sort((a, b) => byPlayer[b].length - byPlayer[a].length || a.localeCompare(b));
+      const years = D.completeYears;
+      const cell = s => {
+        if (!s || s.final_rank == null) return `<div class="heat-cell">—</div>`;
+        const r = s.final_rank, teamsN = teamsByYear[s.year] || r;
+        if (r === 1) return `<div class="heat-cell champ" title="${s.year} — Champion">1</div>`;
+        const frac = r / teamsN;
+        let bg = 'transparent', borderStyle = '';
+        if (frac <= 0.3) bg = `rgba(76,154,107,${(0.5 - (frac / 0.3) * 0.3).toFixed(2)})`;
+        else if (frac >= 0.8) bg = `rgba(192,87,75,${(0.16 + ((frac - 0.8) / 0.2) * 0.34).toFixed(2)})`;
+        if (s.sacko > 0) borderStyle = 'border-color:var(--loss);';
+        return `<div class="heat-cell" style="background:${bg};${borderStyle}" title="${s.year} — ${r} of ${teamsN}${s.sacko > 0 ? ' (Sacko)' : ''}">${r}</div>`;
+      };
+      const grid = `<div class="heat-name"></div>${years.map(y => `<div class="heat-yr">${y}</div>`).join('')}` +
+        playerList.map(name => `<div class="heat-name">${esc(name)}</div>${years.map(y => cell(byPlayer[name].find(s => s.year === y))).join('')}`).join('');
+      const legend = `<div class="heat-legend">
+        <div class="heat-legend-item"><span class="heat-swatch" style="background:var(--gold);border-color:var(--gold)"></span>Champion</div>
+        <div class="heat-legend-item"><span class="heat-swatch" style="background:rgba(76,154,107,0.45)"></span>Top tier</div>
+        <div class="heat-legend-item"><span class="heat-swatch"></span>Mid-table</div>
+        <div class="heat-legend-item"><span class="heat-swatch" style="background:rgba(192,87,75,0.4)"></span>Bottom tier</div>
+        <div class="heat-legend-item"><span class="heat-swatch" style="border-color:var(--loss)"></span>Sacko</div></div>`;
+      return card('Dynasty Heatmap',
+        `<div class="heat-scroll"><div class="heat-grid" style="grid-template-columns:118px repeat(${years.length},32px)">${grid}</div></div>${legend}`,
+        'Final standing every season — a run of green is a dynasty, a run of red is a rut');
+    }
+
+    // ----- Achievement Leaderboard -----
+    function achievementsHtml() {
+      if (!F) return card('Achievement Leaderboard', '<div class="empty-note">Franchise data not available.</div>');
+      const ctx = { foundingYear: ACHIEVEMENTS_LIB.foundingYear(F.players) };
+      const total = ACHIEVEMENTS_LIB.ACHIEVEMENTS.length;
+      const rows = F.players.map(p => ({ name: p.name, count: ACHIEVEMENTS_LIB.unlockedCount(p, ctx) }))
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+      const body = rows.map((r, i) => `<div class="ach-row"><div class="ach-rank">${i + 1}</div><div class="ach-name">${esc(r.name)}</div>` +
+        `<div class="ach-ticks">${Array.from({ length: total }, (_, k) => `<i class="${k < r.count ? 'on' : ''}"></i>`).join('')}</div>` +
+        `<div class="ach-count">${r.count}<span>/${total}</span></div></div>`).join('');
+      return card('Achievement Leaderboard', body, `Ranked by badges unlocked out of ${total} on the Franchise page`);
+    }
+
+    // ----- Power Index -----
+    function powerIndexHtml() {
+      if (!F) return card('Power Index', '<div class="empty-note">Franchise data not available.</div>');
+      const base = F.players.map(p => ({
+        name: p.name,
+        titles: p.career.standings.championships || 0,
+        win: p.career.win_rates.reg_pct ?? null,
+        ppg: p.career.points.avg_pf ?? null,
+        eff: (p.efficiency && p.efficiency.career_pct != null) ? p.efficiency.career_pct : null,
+        earn: (p.money && p.money.net_result != null) ? p.money.net_result : null,
+      }));
+      const WEIGHTS = { titles: 35, win: 25, ppg: 15, eff: 15, earn: 10 };
+      const LABELS = { titles: 'Titles', win: 'Win %', ppg: 'PPG', eff: 'Efficiency', earn: 'Earnings' };
+      const normFns = {};
+      Object.keys(WEIGHTS).forEach(key => {
+        const vals = base.map(r => r[key]).filter(v => v != null);
+        const lo = Math.min(...vals), hi = Math.max(...vals);
+        normFns[key] = v => (v == null ? null : (hi === lo ? 100 : (v - lo) / (hi - lo) * 100));
+      });
+      const rows = base.map(r => {
+        const parts = Object.keys(WEIGHTS).map(key => [key, normFns[key](r[key])]).filter(([, v]) => v != null);
+        const totalW = parts.reduce((a, [key]) => a + WEIGHTS[key], 0);
+        const score = totalW ? parts.reduce((a, [key, v]) => a + v * WEIGHTS[key], 0) / totalW : 0;
+        return { name: r.name, score, parts: parts.map(([key, v]) => [LABELS[key], Math.round(v * WEIGHTS[key] / 100)]) };
+      }).sort((a, b) => b.score - a.score);
+      const maxScore = Math.max(...rows.map(r => r.score));
+      const body = rows.map((r, i) => `<div class="pow-row">` +
+        `<div class="pow-top"><div class="pow-name"><span class="r">${i + 1}</span>${esc(r.name)}</div><div class="pow-score">${r.score.toFixed(1)}</div></div>` +
+        `<div class="pow-track"><div class="pow-fill" style="width:${maxScore ? r.score / maxScore * 100 : 0}%"></div></div>` +
+        `<div class="pow-breakdown">${r.parts.map(([l, v]) => `<div class="pow-chip">${l} <b>${v}</b></div>`).join('')}</div></div>`).join('');
+      return card('Power Index', body,
+        'Composite score blending titles, win%, scoring, lineup efficiency and earnings, weighted 35/25/15/15/10 — a component is skipped and the rest reweighted when a manager has no data for it');
+    }
+
+    // ----- Scoring Trends -----
+    function scoringTrendHtml() {
+      const rows = D.years.map(y => {
+        const scores = [];
+        D.games.filter(g => g.year === y && g.type !== 'Bye' && g.p2 && g.winner !== 'In Progress').forEach(g => {
+          if (g.s1 > 0) scores.push(g.s1);
+          if (g.s2 > 0) scores.push(g.s2);
+        });
+        return scores.length ? { year: y, avg: scores.reduce((a, b) => a + b, 0) / scores.length, lo: Math.min(...scores), hi: Math.max(...scores) } : null;
+      }).filter(Boolean);
+      if (rows.length < 2) return card('Scoring Trends', '<div class="empty-note">Not enough seasons yet.</div>');
+      const W = 640, H = 200, PAD_L = 34, PAD_R = 14, PAD_T = 14, PAD_B = 22;
+      const n = rows.length;
+      const minV = Math.min(...rows.map(r => r.lo)), maxV = Math.max(...rows.map(r => r.hi));
+      const x = i => PAD_L + (i / (n - 1)) * (W - PAD_L - PAD_R);
+      const y = v => H - PAD_B - ((v - minV) / (maxV - minV)) * (H - PAD_T - PAD_B);
+      const bandTop = rows.map((r, i) => `${x(i).toFixed(1)},${y(r.hi).toFixed(1)}`).join(' ');
+      const bandBot = rows.map((r, i) => `${x(i).toFixed(1)},${y(r.lo).toFixed(1)}`).reverse().join(' ');
+      const line = rows.map((r, i) => `${x(i).toFixed(1)},${y(r.avg).toFixed(1)}`).join(' ');
+      const gridLines = [minV, (minV + maxV) / 2, maxV].map(v =>
+        `<line x1="${PAD_L}" y1="${y(v).toFixed(1)}" x2="${W - PAD_R}" y2="${y(v).toFixed(1)}" class="sc-grid-line" /><text x="2" y="${(y(v) + 3).toFixed(1)}" class="sc-axis-label">${Math.round(v)}</text>`).join('');
+      const yearLabels = rows.map((r, i) => (n <= 8 || i % 2 === 0 ? `<text x="${x(i).toFixed(1)}" y="${H - 5}" class="sc-axis-label" text-anchor="middle">${r.year}</text>` : '')).join('');
+      const medianIdx = rows.findIndex(r => r.year === 2025);
+      const annot = medianIdx >= 0 ? `<line x1="${x(medianIdx).toFixed(1)}" y1="${PAD_T}" x2="${x(medianIdx).toFixed(1)}" y2="${H - PAD_B}" class="sc-annot-line" />` +
+        `<text x="${(x(medianIdx) - 4).toFixed(1)}" y="${PAD_T + 9}" class="sc-annot-text" text-anchor="end">Median rule</text>` : '';
+      const last = rows[n - 1];
+      const svg = `<svg class="sc-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${gridLines}` +
+        `<polygon points="${bandTop} ${bandBot}" class="sc-band" />${annot}<polyline points="${line}" class="sc-line" />` +
+        `${rows.map((r, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(r.avg).toFixed(1)}" r="${i === n - 1 ? 4 : 2}" class="sc-dot" />`).join('')}` +
+        `<text x="${(x(n - 1) + 8).toFixed(1)}" y="${(y(last.avg) + 4).toFixed(1)}" class="sc-end-label">${last.avg.toFixed(1)}</text>${yearLabels}</svg>`;
+      const delta = last.avg - rows[0].avg;
+      const caption = `League average score is ${delta >= 0 ? 'up' : 'down'} <b>${delta >= 0 ? '+' : ''}${delta.toFixed(1)} pts</b> since ${rows[0].year} · shaded band is each season's low-to-high range`;
+      return card('Scoring Trends', svg + `<div class="sc-caption">${caption}</div>`);
+    }
+
     TABS = [
       { label: 'Summary', tiles },
+      { label: 'Timeline', html: timelineHtml() },
+      { label: 'Dynasty', html: dynastyHtml() },
+      { label: 'Achievements', html: achievementsHtml() },
+      { label: 'Power Index', html: powerIndexHtml() },
+      { label: 'Trends', html: scoringTrendHtml() },
       { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true }), V('Title Count', champC, { hl: true }), V('Title Games', titleGames('Champ', true), { year: true })] },
       { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, tone: 'bad' }), V('Sacko Count', sackC, { hl: true, tone: 'bad' }), V('Sacko Games', titleGames('Sacko', false), { year: true, tone: 'bad' })] },
       { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good', pick: 'max' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad', pick: 'min' }), V('Weekly High', weekly(true), { year: true, tone: 'good', pick: 'max' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad', pick: 'min' }), V('Average Median', avgMedian, { year: true, marks: true }), V('Consistency', consistencyView(), { hl: true, note: 'Standard deviation of weekly score — lower is steadier' })] },
@@ -225,6 +432,7 @@
   function render() {
     document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
     const T = TABS[tab], el = document.getElementById('overview');
+    if (T.html) { el.innerHTML = T.html; return; }
     if (T.tiles) { el.innerHTML = `<div class="hero-grid">${T.tiles.map(tileHtml).join('')}</div>`; return; }
     const vi = viewPick[tab] || 0, v = T.views[vi];
     const tg = v.tone === 'good' ? ' good' : v.tone === 'bad' ? ' bad' : '';

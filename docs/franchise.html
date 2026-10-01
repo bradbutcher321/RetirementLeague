@@ -235,7 +235,9 @@
 
 <script src="nav.js"></script>
 <script src="page-common.js"></script>
+<script src="achievements.js"></script>
 <script>
+  const { seasonState, bestChampionshipStreak, everHitPlayoffRate, EFFICIENCY_EXPERT_PCT, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
   const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toFixed(d);
   const fmtPct = n => (n === null || n === undefined) ? '—' : `${Number(n).toFixed(1)}%`;
   const fmtMoney = n => (n === null || n === undefined) ? '—' : `${n < 0 ? '-' : ''}$${Math.abs(Number(n)).toLocaleString()}`;
@@ -338,95 +340,6 @@
     target: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     dollar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.1-4.5 3 2 2.6 4.5 3 4.5 1.1 4.5 3-2 3-4.5 3-4.5-1.1-4.5-3"/></svg>',
   };
-
-  // Historical scans, not live snapshots -- so these can only ever go from
-  // locked to unlocked, never back, even when the underlying season stats
-  // that feed the rank badges keep moving (e.g. a manager can win a title
-  // *after* enduring a 5-year drought without the drought un-happening).
-  function bestChampionshipStreak(p) {
-    const years = p.season_history.filter(s => s.champion).map(s => s.year).sort((a, b) => a - b);
-    let best = 0, bestEnd = null, run = 0, prevYear = null;
-    for (const y of years) {
-      run = (prevYear !== null && y === prevYear + 1) ? run + 1 : 1;
-      prevYear = y;
-      if (run > best) { best = run; bestEnd = y; }
-    }
-    return { length: best, endYear: bestEnd };
-  }
-
-  function everHitPlayoffRate(p, minSeasons, minRate) {
-    let played = 0, made = 0;
-    for (const s of [...p.season_history].sort((a, b) => a.year - b.year)) {
-      if (seasonState(s) === 'progress') continue;
-      played++;
-      if (s.made_playoffs) made++;
-      if (played >= minSeasons && made / played >= minRate) return true;
-    }
-    return false;
-  }
-
-  const EFFICIENCY_EXPERT_PCT = 85;
-
-  const ACHIEVEMENTS = [
-    { name: 'Founding Member', icon: 'shield', desc: 'Been in the league since year one',
-      test: (p, ctx) => p.founded_year === ctx.foundingYear, sub: p => `Playing since ${p.founded_year}` },
-    { name: '5 Season Veteran', icon: 'shield', desc: 'Play 5 seasons',
-      test: p => p.seasons >= 5, sub: p => `${p.seasons} seasons played` },
-    { name: 'Decade Veteran', icon: 'shield', desc: 'Play 10 seasons',
-      test: p => p.seasons >= 10, sub: p => `${p.seasons} seasons played` },
-    { name: 'Champion', icon: 'trophy', desc: 'Win a championship',
-      test: p => p.career.standings.championships >= 1, sub: p => `${p.career.standings.championships} title${p.career.standings.championships === 1 ? '' : 's'}` },
-    { name: 'Two-Time Champion', icon: 'trophy', desc: 'Win 2 championships',
-      test: p => p.career.standings.championships >= 2, sub: p => `${p.career.standings.championships} titles` },
-    { name: 'Dynasty', icon: 'trophy', desc: 'Win 3 championships',
-      test: p => p.career.standings.championships >= 3, sub: p => `${p.career.standings.championships} titles` },
-    { name: 'Five-Time Champion', icon: 'trophy', desc: 'Win 5 championships',
-      test: p => p.career.standings.championships >= 5, sub: p => `${p.career.standings.championships} titles` },
-    { name: 'Two-Peat', icon: 'flame', desc: 'Win it back-to-back',
-      test: p => bestChampionshipStreak(p).length >= 2,
-      sub: p => { const s = bestChampionshipStreak(p); return `Back-to-back champion, ${s.endYear - 1}-${s.endYear}`; } },
-    { name: 'Three-Peat', icon: 'flame', desc: 'Win it three years running',
-      test: p => bestChampionshipStreak(p).length >= 3,
-      sub: p => { const s = bestChampionshipStreak(p); return `Three straight titles, ${s.endYear - 2}-${s.endYear}`; } },
-    { name: 'Iron Manager', icon: 'shield', desc: 'Make the playoffs in 75%+ of your seasons (min. 4)',
-      test: p => everHitPlayoffRate(p, 4, 0.75),
-      sub: p => `Playoffs in ${p.career.standings.playoff_appearances} of ${p.seasons} seasons` },
-    { name: 'The Heater', icon: 'flame', desc: 'Win 5 games in a row',
-      test: p => p.streaks.head_to_head.longest_win >= 5, sub: p => `${p.streaks.head_to_head.longest_win}-game win streak` },
-    { name: 'Unstoppable', icon: 'flame', desc: 'Win 8 games in a row',
-      test: p => p.streaks.head_to_head.longest_win >= 8, sub: p => `${p.streaks.head_to_head.longest_win}-game win streak` },
-    { name: 'Ice Cold', icon: 'snow', bad: true, desc: 'Lose 5 games in a row',
-      test: p => p.streaks.head_to_head.longest_loss >= 5, sub: p => `${p.streaks.head_to_head.longest_loss}-game losing streak` },
-    { name: 'Rock Bottom', icon: 'snow', bad: true, desc: 'Lose 8 games in a row',
-      test: p => p.streaks.head_to_head.longest_loss >= 8, sub: p => `${p.streaks.head_to_head.longest_loss}-game losing streak` },
-    { name: 'Efficiency Expert', icon: 'target', desc: `${EFFICIENCY_EXPERT_PCT}%+ lineup efficiency in a season`,
-      test: p => !!(p.efficiency && p.efficiency.by_season.some(s => s.pct >= EFFICIENCY_EXPERT_PCT)),
-      sub: p => { const s = p.efficiency.by_season.filter(s => s.pct >= EFFICIENCY_EXPERT_PCT).sort((a, b) => b.pct - a.pct)[0]; return `${fmtPct(s.pct)} efficiency in ${s.year}`; } },
-    { name: '150 Club', icon: 'target', desc: 'Score 150+ in a single game',
-      test: p => !!(p.extremes.highest_score >= 150), sub: p => `${fmt(p.extremes.highest_score, 1)} in a single game` },
-    { name: '200 Club', icon: 'target', desc: 'Score 200+ in a single game',
-      test: p => !!(p.extremes.highest_score >= 200), sub: p => `${fmt(p.extremes.highest_score, 1)} in a single game` },
-    { name: 'Snake Eyes', icon: 'snow', bad: true, desc: 'Score under 50 in a single game',
-      test: p => !!(p.extremes.lowest_score > 0 && p.extremes.lowest_score < 50), sub: p => `${fmt(p.extremes.lowest_score, 1)} in a single game` },
-    { name: 'Heartbreaker', icon: 'snow', bad: true, desc: 'Lose 5 games decided by under 5 points',
-      test: p => !!(p.extremes.close_losses >= 5), sub: p => `${p.extremes.close_losses} losses decided by under 5 points` },
-    { name: 'Blowout Artist', icon: 'flame', desc: 'Win 3 games by 50+ points',
-      test: p => !!(p.extremes.blowout_wins >= 3), sub: p => `${p.extremes.blowout_wins} wins by 50+ points` },
-    { name: 'In the Green', icon: 'dollar', desc: 'Finish with a positive career net',
-      test: p => !!(p.money && p.money.net_result > 0), sub: p => `${fmtMoney(p.money.net_result)} net career` },
-    { name: 'High Roller', icon: 'dollar', desc: '$1,000+ net career earnings',
-      test: p => !!(p.money && p.money.net_result >= 1000), sub: p => `${fmtMoney(p.money.net_result)} net career` },
-    { name: 'Wooden Spoon', icon: 'snow', bad: true, desc: 'Finish dead last at least once',
-      test: p => p.career.standings.sackos >= 1, sub: p => `${p.career.standings.sackos} season${p.career.standings.sackos === 1 ? '' : 's'} finished last` },
-    { name: 'Frequent Flyer', icon: 'snow', bad: true, desc: '5+ weekly Sackos',
-      test: p => p.weekly_sackos >= 5, sub: p => `${p.weekly_sackos} weekly Sackos` },
-    { name: 'Got Next', icon: 'flame', desc: '80%+ all-time vs. your favorite opponent',
-      test: p => !!(p.rivalries.favorite_opponent && p.rivalries.favorite_opponent.win_pct >= 80),
-      sub: p => `${fmtPct(p.rivalries.favorite_opponent.win_pct)} vs. ${p.rivalries.favorite_opponent.opponent}` },
-    { name: 'Whipping Boy', icon: 'snow', bad: true, desc: '25% or worse all-time vs. your nemesis',
-      test: p => !!(p.rivalries.nemesis && p.rivalries.nemesis.win_pct <= 25),
-      sub: p => `${fmtPct(p.rivalries.nemesis.win_pct)} vs. ${p.rivalries.nemesis.opponent}` },
-  ];
 
   function achCard(a, unlocked, ctx, p) {
     const cls = !unlocked ? 'locked' : (a.bad ? 'bad' : 'good');
@@ -657,14 +570,6 @@
   }
 
   const BADGE_LABELS = { progress: 'In Progress', champion: 'Champion', 'runner-up': 'Runner-Up', playoffs: 'Playoffs', missed: 'Missed Playoffs' };
-  function seasonState(season) {
-    const games = (season.reg_record || '0-0').split('-').reduce((a, b) => a + (parseInt(b, 10) || 0), 0);
-    if (games < 10) return 'progress';
-    if (season.champion) return 'champion';
-    if (season.final_standing === 2) return 'runner-up';
-    if (season.made_playoffs) return 'playoffs';
-    return 'missed';
-  }
   function badge(season) {
     const s = seasonState(season);
     return `<span class="badge ${s}">${BADGE_LABELS[s]}</span>`;
