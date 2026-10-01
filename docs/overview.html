@@ -23,6 +23,17 @@
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; padding:0 18px 20px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
 
+  /* ---------- Season Timeline: one small chip per fact instead of a
+     single line of plain text ---------- */
+  .yr-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .yr-chip{ display:inline-flex; align-items:baseline; gap:5px; background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:0.74rem; color:var(--text); white-space:nowrap; }
+  .yr-chip .l{ color:var(--text-dim); font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; }
+  .yr-chip .m{ font-family:var(--scoreboard); font-weight:700; font-size:0.68rem; color:var(--text-dim); }
+  .yr-chip.gold{ border-color:rgba(212,180,106,0.35); background:rgba(212,180,106,0.07); }
+  .yr-chip.gold .l{ color:var(--gold); }
+  .yr-chip.loss{ border-color:rgba(214,98,79,0.35); background:rgba(214,98,79,0.07); }
+  .yr-chip.loss .l{ color:var(--loss); }
+
   /* ---------- Streaks: ring the current W/L streak leaders ---------- */
   .qrow.streak-w{ border-color:var(--gold); box-shadow:0 0 0 1.5px var(--gold) inset; }
   .qrow.streak-l{ border-color:var(--loss); box-shadow:0 0 0 1.5px var(--loss) inset; }
@@ -88,7 +99,17 @@
   const toneCls = t => (t === 'good' || t === 'up' ? 'turf' : t === 'bad' || t === 'down' ? 'loss' : '');
   const glassCard = (title, body, note) => `<div class="glass"><div style="padding:20px 24px ${note ? '4px' : '16px'}"><div style="font-weight:700;font-size:1rem">${title}</div>${note ? `<div style="color:var(--text-dim);font-size:0.78rem;margin-top:4px">${note}</div>` : ''}</div>${body}</div>`;
 
-  function build(D, F) {
+  function build(D, F, R) {
+    // Payouts are stored as sparse "effective from this year on" snapshots
+    // (see rule-changes.json) rather than one row per season -- resolve to
+    // whichever snapshot was in force as of a given year, same as
+    // rule-changes.html does for its own settings-by-year lookups.
+    const payoutsFor = year => {
+      if (!R || !R.snapshots) return {};
+      const snap = [...R.snapshots].filter(s => s.year <= year).sort((a, b) => b.year - a.year)[0];
+      if (!snap) return {};
+      return Object.fromEntries((snap.payouts || []).map(p => [p.label, p.amount]));
+    };
     const complete = new Set(D.completeYears);
     const done = D.seasons.filter(s => complete.has(s.year));
     const draftPos = (p, y) => (D.draft_order[p] || {})[y];
@@ -253,18 +274,43 @@
 
     // ----- Season Timeline -----
     function timelineHtml() {
-      const sackoByYear = {}; sackos.forEach(s => sackoByYear[s.year] = s);
       const champGameByYear = {}; noBye.filter(g => g.type === 'Champ').forEach(g => champGameByYear[g.year] = g);
+      const sackoGameByYear = {}; noBye.filter(g => g.type === 'Sacko').forEach(g => sackoGameByYear[g.year] = g);
+      const secondByYear = {}; done.filter(s => s.final_rank === 2).forEach(s => secondByYear[s.year] = s);
+      const thirdByYear = {}; done.filter(s => s.final_rank === 3).forEach(s => thirdByYear[s.year] = s);
+      const weeklyHighByYear = {}; weekly(true).forEach(w => weeklyHighByYear[w.rank] = w);
+      const seasonHighByYear = {}; seasonPts(true).forEach(w => seasonHighByYear[w.rank] = w);
+
+      const chip = (cls, label, text, amount) =>
+        `<span class="yr-chip${cls ? ' ' + cls : ''}"><span class="l">${label}</span> ${text}${amount ? ` <span class="m">${money(amount)}</span>` : ''}</span>`;
+
       const items = D.years.slice().reverse().map(y => {
         const isDone = complete.has(y);
-        const g = champGameByYear[y], s = sackoByYear[y];
-        const line = (isDone && g)
-          ? `${esc(g.s1 >= g.s2 ? g.p1 : g.p2)} def. ${esc(g.s1 >= g.s2 ? g.p2 : g.p1)}${s ? ` · Sacko: ${esc(s.player)}` : ''}`
-          : '<span style="color:var(--text-dim)">In progress</span>';
-        return `<div class="rail-item"><div class="rail-dot"></div><div class="rail-yr">${y}</div><div class="rail-chg">${line}</div></div>`;
+        if (!isDone) {
+          return `<div class="rail-item"><div class="rail-dot"></div><div class="rail-yr">${y}</div><div class="rail-chg">In progress</div></div>`;
+        }
+        const payouts = payoutsFor(y);
+        const chips = [];
+        const cg = champGameByYear[y];
+        if (cg) {
+          const winner = cg.s1 >= cg.s2 ? cg.p1 : cg.p2, loser = cg.s1 >= cg.s2 ? cg.p2 : cg.p1;
+          chips.push(chip('gold', '\u{1F3C6}', `${esc(winner)} def. ${esc(loser)}`, payouts['1st Place']));
+        }
+        if (secondByYear[y]) chips.push(chip('', '2nd', esc(secondByYear[y].player), payouts['2nd Place']));
+        if (thirdByYear[y]) chips.push(chip('', '3rd', esc(thirdByYear[y].player), payouts['3rd Place']));
+        const sg = sackoGameByYear[y];
+        if (sg) {
+          const winner = sg.s1 >= sg.s2 ? sg.p1 : sg.p2, loser = sg.s1 >= sg.s2 ? sg.p2 : sg.p1;
+          chips.push(chip('loss', 'Sacko', `${esc(loser)} loses to ${esc(winner)}`));
+        }
+        const wh = weeklyHighByYear[y];
+        if (wh) chips.push(chip('gold', 'Wk High', `${esc(wh.name)} ${wh.val}`, payouts['Highest Points (Week)']));
+        const sh = seasonHighByYear[y];
+        if (sh) chips.push(chip('gold', 'Szn High', `${esc(sh.name)} ${sh.val}`, payouts['Highest Points (Season)']));
+        return `<div class="rail-item"><div class="rail-dot"></div><div class="rail-yr">${y}</div><div class="yr-chips">${chips.join('')}</div></div>`;
       }).join('');
       return glassCard('Season Timeline', `<div style="padding:4px 24px 20px"><div class="rail">${items}</div></div>`,
-        'Championship result and the Sacko, one line per year');
+        'Championship, runner-up, Sacko and the weekly/season high scores, one year per row');
     }
 
     // ----- Dynasty Heatmap -----
@@ -394,8 +440,12 @@
     if (s) { viewPick[tab] = Number(s.dataset.v); render(); }
   });
 
-  Promise.all([LG.load(), fetch('data/franchise.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)])
-    .then(([D, F]) => { build(D, F); render(); })
+  Promise.all([
+    LG.load(),
+    fetch('data/franchise.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+    fetch('data/rule-changes.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+  ])
+    .then(([D, F, R]) => { build(D, F, R); render(); })
     .catch(err => LG.showError('overview', err));
 </script>
 <script src="track.js?v=1" defer></script>
