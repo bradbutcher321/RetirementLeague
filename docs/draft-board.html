@@ -33,17 +33,23 @@
      top to bottom, instead of the snake-order grid ---------- */
   .simple-label{ display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
   .simple-label::after{ content: ''; flex: 1; height: 1px; background: var(--line); }
-  .simple-board{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  /* Hard-capped at 4 columns (rather than auto-fit's implicit count) so
+     wide screens don't squeeze names into a 5th column -- extra teams
+     wrap to another row instead. */
+  .simple-board{ display: grid; grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 560px){ .simple-board{ grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 820px){ .simple-board{ grid-template-columns: repeat(4, 1fr); } }
   .sb-col{ padding: 22px 24px; }
   .sb-col + .sb-col{ border-left: 1px solid var(--line); }
   .sb-name{ color: var(--gold); font-weight: 700; font-size: 1.05rem; margin-bottom: 14px; }
-  .sb-pick{ display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+  /* Fixed-width badge/pick-number columns so names line up in a straight
+     column instead of drifting with each row's badge text length. */
+  .sb-pick{ display: grid; grid-template-columns: 46px 30px 1fr; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
   .sb-pick:first-of-type{ border-top: none; padding-top: 0; }
-  .sb-badge{ flex-shrink: 0; font-family: var(--scoreboard); font-weight: 800; font-size: 0.64rem; color: #fff; padding: 3px 7px; border-radius: 5px; white-space: nowrap; }
-  .sb-overall{ flex-shrink: 0; color: var(--text-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; width: 30px; }
+  .sb-badge{ display: flex; align-items: center; justify-content: center; font-family: var(--scoreboard); font-weight: 800; font-size: 0.6rem; color: #fff; padding: 3px 4px; border-radius: 5px; white-space: nowrap; overflow: hidden; }
+  .sb-overall{ color: var(--text-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
   .sb-player{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   @media (max-width: 720px){
-    .simple-board{ grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
     .sb-col{ padding: 16px 18px; }
   }
 
