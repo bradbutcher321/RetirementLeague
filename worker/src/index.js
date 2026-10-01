@@ -38,11 +38,25 @@ const COOLDOWN_SECONDS = 120;
 // a refresh costs a single KV write (free tier: 100k reads / 1k writes a day).
 const CACHE_KEY = "dashboard:v2";
 
-function corsHeaders(env) {
+// Reflects the request's own Origin back when it's the production site or a
+// local dev server (any localhost/127.0.0.1 port -- covers whatever port a
+// static file server happens to pick for local staging), otherwise falls
+// back to the configured production origin. A static single-origin header
+// would reject every local testing setup outright.
+function isAllowedOrigin(origin, env) {
+  if (!origin) return false;
+  if (origin === env.ALLOWED_ORIGIN) return true;
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+
+function corsHeaders(env, request) {
+  const origin = request && request.headers.get("Origin");
+  const allowOrigin = isAllowedOrigin(origin, env) ? origin : (env.ALLOWED_ORIGIN || "*");
   return {
-    "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
+    "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin",
   };
 }
 
@@ -55,7 +69,7 @@ function jsonResponse(data, headers, status = 200) {
 
 export default {
   async fetch(request, env) {
-    const headers = corsHeaders(env);
+    const headers = corsHeaders(env, request);
 
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers });
