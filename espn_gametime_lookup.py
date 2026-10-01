@@ -97,6 +97,7 @@ SPORT_ESPN_PATHS = {
         "soccer/eng.2",             # English Championship -- Southampton vs Oxford Utd
         "soccer/fifa.friendly",     # International friendlies -- USA vs Ecuador
         "soccer/fifa.worldq.uefa",  # UEFA World Cup qualifiers -- Netherlands vs Poland
+        "soccer/uefa.nations",      # UEFA Nations League -- Portugal vs Denmark
     ],
 }
 
@@ -141,6 +142,34 @@ TEAM_NICKNAMES = {
     "cavs": "cavaliers",
     "tt": "texas tech",
     "rosenberg": "rosenborg",
+    # "Miss St" doesn't match any of ESPN's own fields for Mississippi
+    # State (shortDisplayName is "Mississippi St", not abbreviated this
+    # far) -- confirmed directly against a real picked game.
+    "miss st": "mississippi state",
+}
+
+# ESPN's team-search endpoint (search_player, below) has turned up stale
+# entries for retired/inactive players still tagged with a sport/team that
+# no longer reflects their current roster -- confirmed directly for "Josh
+# Allen": real hits for the Buffalo Bills QB and a Temple NCAAF player, but
+# also an "NFL" / "Maryland Terrapins" hit (not even a real NFL team name)
+# and an "NFL" / "Arizona Cardinals" hit for a player who isn't actually on
+# that roster. Those stale extras turned a cleanly-resolvable pick into a
+# falsely-ambiguous one. NFL_TEAM_IDS (the 32 real franchises -> ESPN's
+# team id) backs _on_current_nfl_roster below, which cross-checks an NFL
+# hit against that team's actual current roster before trusting it.
+NFL_TEAM_IDS = {
+    "Arizona Cardinals": 22, "Atlanta Falcons": 1, "Baltimore Ravens": 33,
+    "Buffalo Bills": 2, "Carolina Panthers": 29, "Chicago Bears": 3,
+    "Cincinnati Bengals": 4, "Cleveland Browns": 5, "Dallas Cowboys": 6,
+    "Denver Broncos": 7, "Detroit Lions": 8, "Green Bay Packers": 9,
+    "Houston Texans": 34, "Indianapolis Colts": 11, "Jacksonville Jaguars": 30,
+    "Kansas City Chiefs": 12, "Las Vegas Raiders": 13, "Los Angeles Chargers": 24,
+    "Los Angeles Rams": 14, "Miami Dolphins": 15, "Minnesota Vikings": 16,
+    "New England Patriots": 17, "New Orleans Saints": 18, "New York Giants": 19,
+    "New York Jets": 20, "Philadelphia Eagles": 21, "Pittsburgh Steelers": 23,
+    "San Francisco 49ers": 25, "Seattle Seahawks": 26, "Tampa Bay Buccaneers": 27,
+    "Tennessee Titans": 10, "Washington Commanders": 28,
 }
 
 # Player-prop bet types -> the sport(s) they could plausibly be. ESPN's
@@ -184,6 +213,7 @@ NICKNAME_TO_FORMAL = {
 _scoreboard_cache = {}
 _search_cache = {}
 _summary_cache = {}
+_roster_cache = {}
 
 # Player-prop bet type -> [(stat label, group hint), ...] to sum from a box
 # score (see find_prop_stat below). "Anytime TD" sums across every way a
@@ -414,6 +444,52 @@ def search_player(name):
     return hits
 
 
+def _fetch_nfl_roster(team_id):
+    """Every player's folded full name on team_id's current roster, or
+    None if the fetch failed -- never raises, so a network hiccup fails
+    open (the caller treats None as "can't verify, don't filter")."""
+    if team_id in _roster_cache:
+        return _roster_cache[team_id]
+    url = f"https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/teams/{team_id}/roster"
+    req = urllib.request.Request(url, headers=REQUEST_HEADERS)
+    names = None
+    for attempt in range(FETCH_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read())
+            names = {
+                _fold_name(a.get("fullName") or "")
+                for group in data.get("athletes", [])
+                for a in group.get("items", [])
+            }
+            break
+        except Exception:
+            names = None
+            if attempt < FETCH_ATTEMPTS - 1:
+                time.sleep(FETCH_RETRY_DELAYS[attempt])
+    _roster_cache[team_id] = names
+    return names
+
+
+def _on_current_nfl_roster(player_name, team_name):
+    """True if player_name is actually on team_name's current NFL roster.
+    team_name not matching any of the 32 real franchises (e.g. a search
+    hit's "team" field coming back as a college program name) is itself
+    the stale-data signal this exists to catch, so that's a confident
+    False, not a pass -- only an actual fetch failure for a *real* team
+    (a network hiccup, not a bad team name) fails open to True, since the
+    caller below only uses this to *drop* a hit and an unverifiable one
+    should be left exactly as it would have been before this check
+    existed."""
+    team_id = NFL_TEAM_IDS.get(team_name)
+    if team_id is None:
+        return False
+    names = _fetch_nfl_roster(team_id)
+    if names is None:
+        return True
+    return _fold_name(player_name) in names
+
+
 def find_player_team(player_name, bet_type=None):
     """Returns (team_name, sport), or (None, None) if the name wasn't
     found or multiple same-named people remain ambiguous even after
@@ -448,6 +524,21 @@ def find_player_team(player_name, bet_type=None):
     # Still ambiguous if more than one distinct (sport, team) remains.
     distinct = {(h["sport"], h["team"]) for h in hits if h["sport"] and h["team"]}
     if len(distinct) != 1:
+        # More than one NFL candidate is often ESPN's search index itself
+        # being stale (confirmed directly for "Josh Allen": real hits for
+        # the Buffalo Bills QB and a Temple NCAAF player, but also a
+        # supposed "NFL" hit on "Maryland Terrapins" -- not a real NFL
+        # team -- and another on a Cardinals player who isn't actually on
+        # that roster) rather than a genuine two-real-players collision.
+        # Cross-checking against each candidate's actual current roster
+        # drops those before they can cause a false "stays ambiguous."
+        nfl_candidates = [d for d in distinct if d[0] == "NFL"]
+        if len(nfl_candidates) > 1:
+            verified = {d for d in nfl_candidates if _on_current_nfl_roster(player_name, d[1])}
+            distinct = (distinct - set(nfl_candidates)) | verified
+        if len(distinct) == 1:
+            sport, team = next(iter(distinct))
+            return team, sport if sport in SPORT_ESPN_PATHS else None
         distinct_sports = {sport for sport, _ in distinct}
         if distinct_sports == {"NFL", "NCAAF"}:
             nfl_only = [d for d in distinct if d[0] == "NFL"]
