@@ -33,24 +33,33 @@
      top to bottom, instead of the snake-order grid ---------- */
   .simple-label{ display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
   .simple-label::after{ content: ''; flex: 1; height: 1px; background: var(--line); }
-  /* Hard-capped at 4 columns (rather than auto-fit's implicit count) so
-     wide screens don't squeeze names into a 5th column -- extra teams
-     wrap to another row instead. */
+  /* Hard-capped at 3 columns (rather than auto-fit's implicit count) --
+     room for the pro-team column means 4-up got too tight for names --
+     extra teams wrap to another row instead. */
   .simple-board{ display: grid; grid-template-columns: repeat(2, 1fr); }
   @media (min-width: 560px){ .simple-board{ grid-template-columns: repeat(3, 1fr); } }
-  @media (min-width: 820px){ .simple-board{ grid-template-columns: repeat(4, 1fr); } }
   .sb-col{ padding: 22px 24px; }
   .sb-col + .sb-col{ border-left: 1px solid var(--line); }
   .sb-name{ color: var(--gold); font-weight: 700; font-size: 1.05rem; margin-bottom: 14px; }
-  /* Fixed-width badge/pick-number columns so names line up in a straight
-     column instead of drifting with each row's badge text length. */
-  .sb-pick{ display: grid; grid-template-columns: 46px 30px 1fr; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+  /* Fixed-width badge/pick-number/team columns so names line up in a
+     straight column instead of drifting with each row's badge text
+     length. Player name's own left margin (on top of the grid gap) gives
+     it a little extra breathing room off the pick number specifically. */
+  .sb-pick{ display: grid; grid-template-columns: 46px 30px 1fr 34px; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
   .sb-pick:first-of-type{ border-top: none; padding-top: 0; }
   .sb-badge{ display: flex; align-items: center; justify-content: center; font-family: var(--scoreboard); font-weight: 800; font-size: 0.6rem; color: #fff; padding: 3px 4px; border-radius: 5px; white-space: nowrap; overflow: hidden; }
   .sb-overall{ color: var(--text-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
-  .sb-player{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sb-player{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 4px; }
+  .sb-team{ color: var(--text-dim); font-size: 0.68rem; font-weight: 600; text-transform: uppercase; text-align: right; white-space: nowrap; }
   @media (max-width: 720px){
     .sb-col{ padding: 16px 18px; }
+  }
+  @media (max-width: 480px){
+    /* Team column is the least essential field here -- drop it first so
+       the player name (the thing actually being scanned) keeps its room
+       instead of getting clipped to a couple of characters. */
+    .sb-pick{ grid-template-columns: 40px 28px 1fr; }
+    .sb-team{ display: none; }
   }
 
   /* Table width is intrinsic (cell size × column count) so it stays the
@@ -230,6 +239,7 @@
             <span class="sb-badge" style="background:${color}">${esc(pick.position_rank || pick.position || '')}</span>
             <span class="sb-overall">${r}.${pickInRound}</span>
             <span class="sb-player">${esc(pick.player_name)}</span>
+            <span class="sb-team">${pick.pro_team ? esc(pick.pro_team) : ''}</span>
           </div>`;
       }).join('');
       return `<div class="sb-col"><div class="sb-name">${esc(c.manager || '')}</div>${rows}</div>`;
