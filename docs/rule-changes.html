@@ -22,7 +22,7 @@
   .year-tab.is-current:hover{ border-color: var(--turf); color: var(--text); }
   .year-tab.is-current.active{ background: rgba(76,154,107,0.14); border-color: var(--turf); color: var(--turf); }
 
-  .rules-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); max-width: 640px; }
+  .rules-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); border-top: 3px solid var(--gold); max-width: 640px; overflow: hidden; }
   .rules-card.is-current{ border-top-color: var(--turf); }
   .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
   .rules-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; }
@@ -108,7 +108,7 @@
     if (prevVal === undefined || prevVal === val) {
       return `<div class="rules-line"><span class="label">${esc(label)}:</span> ${esc(val)}</div>`;
     }
-    return `<div class="rules-line line-changed"><span class="label">${esc(label)}:</span> <span class="was">${esc(prevVal)}</span>→<span class="now">${esc(val)}</span></div>`;
+    return `<div class="rules-line line-changed"><span class="label">${esc(label)}:</span> <span class="was">${esc(prevVal)}</span>→ <span class="now">${esc(val)}</span></div>`;
   }
 
   function settingsSection(rec, prev) {
@@ -133,10 +133,10 @@
     Object.keys(prevMap).forEach(p => { if (!order.includes(p)) order.push(p); });
     const lines = order.map(pos => {
       const c = currMap[pos], p = prevMap[pos];
-      if (c === undefined) return `<div class="rules-line line-dropped">${esc(pos)}: <span class="was">${p}</span>→<span class="now">0</span></div>`;
+      if (c === undefined) return `<div class="rules-line line-dropped">${esc(pos)}: <span class="was">${p}</span>→ <span class="now">0</span></div>`;
       if (p === undefined) return `<div class="rules-line line-added">+ ${c} ${esc(pos)}</div>`;
       if (p === c) return `<div class="rules-line">${c} ${esc(pos)}</div>`;
-      return `<div class="rules-line line-changed">${esc(pos)}: <span class="was">${p}</span>→<span class="now">${c}</span></div>`;
+      return `<div class="rules-line line-changed">${esc(pos)}: <span class="was">${p}</span>→ <span class="now">${c}</span></div>`;
     });
     return section('Roster Structure', lines);
   }
@@ -157,10 +157,10 @@
         const currAmt = rec.payouts.find(p => p.label === label);
         const c = currAmt ? currAmt.amount : undefined;
         const p = prevMap[label];
-        if (c === undefined) lines.push(`<div class="rules-line line-dropped"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→<span class="now">$0</span></div>`);
+        if (c === undefined) lines.push(`<div class="rules-line line-dropped"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→ <span class="now">$0</span></div>`);
         else if (p === undefined) lines.push(`<div class="rules-line line-added">+ ${esc(label)}: $${c}</div>`);
         else if (p === c) lines.push(`<div class="rules-line"><span class="label">${esc(label)}:</span> $${c}</div>`);
-        else lines.push(`<div class="rules-line line-changed"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→<span class="now">$${c}</span></div>`);
+        else lines.push(`<div class="rules-line line-changed"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→ <span class="now">$${c}</span></div>`);
       });
     }
     return section('Money', lines, footnote);
@@ -256,7 +256,7 @@
     })
     .catch(err => {
       console.error('Rule changes data error:', err);
-      document.getElementById('selected-container').innerHTML = '<div class="loading-row" style="color:#C0574B;">Error loading rule changes data.</div>';
+      document.getElementById('selected-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading rule changes data.</div>';
     });
 </script>
 <script src="track.js?v=1" defer></script>

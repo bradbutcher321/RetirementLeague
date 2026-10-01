@@ -9,18 +9,21 @@
   font-size: 0.95rem;
   font-weight: 600;
   padding: 9px 12px;
-  border-radius: 4px;
+  border-radius: 8px;
   max-width: 100%;
 }
 .lg-select:focus{ outline: 1px solid var(--gold); }
 
-.stat-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); }
-.stat-card-title{ padding: 12px 16px 4px; font-weight: 700; font-size: 0.95rem; }
-.stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 0 16px 8px; }
-.stat-card-body{ padding: 6px 10px 12px; }
+/* Night Match glass card -- gradient surface, rounded, soft elevation. Reusing the .stat-card
+   name (instead of a new class) means every page still using league-common.js's card() helper
+   picks this up automatically, no per-page JS changes needed. */
+.stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); }
+.stat-card-title{ padding: 20px 24px 4px; font-weight: 700; font-size: 1rem; }
+.stat-card-note{ color: var(--text-dim); font-size: 0.78rem; padding: 0 24px 14px; }
+.stat-card-body{ padding: 8px 16px 18px; }
 
 .podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-.pod{ background: var(--surface-raised); border: 1px solid var(--line); padding: 12px 6px; text-align: center; min-width: 0; }
+.pod{ background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
 .pod:first-child{ border-color: var(--gold); }
 .pod-rank{ font-family: var(--scoreboard); font-size: 0.85rem; color: var(--gold); font-weight: 700; }
 .pod-name{ font-weight: 700; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -32,7 +35,7 @@
 
 .row{
   display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
-  background: var(--surface-raised); border: 1px solid var(--line); padding: 9px 12px; margin-top: 6px; min-height: 58px;
+  background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-top: 6px; min-height: 58px;
 }
 .row.norank{ grid-template-columns: minmax(0,1fr) auto; }
 .row-rank{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; color: var(--text-dim); text-align: center; }

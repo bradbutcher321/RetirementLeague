@@ -9,60 +9,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
-<link rel="stylesheet" href="league.css?v=4">
+<link rel="stylesheet" href="league.css?v=5">
 <style>
-  .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-  @media (max-width:800px){ .hero-grid{ grid-template-columns:1fr 1fr; } }
-  .hero{ background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--gold); padding:14px 12px; text-align:center; min-width:0; }
-  .hero-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; min-height:2.2em; }
-  .hero-v{ font-family:var(--scoreboard); font-weight:800; font-size:2.2rem; line-height:1.1; color:var(--gold); margin:6px 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .hero-v.good{ color:var(--turf); } .hero-v.bad{ color:var(--loss); }
-  .hero-n{ font-weight:700; font-size:0.88rem; min-height:1.3em; }
-  .hero-s{ color:var(--text-dim); font-size:0.72rem; margin-top:4px; min-height:1.1em; }
-
   .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
   .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer; }
-  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(186,155,55,0.10); }
-  .seg{ display:flex; flex-wrap:wrap; border:1px solid var(--line); margin:4px 16px 8px; width:fit-content; max-width:calc(100% - 32px); }
-  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.78rem; padding:7px 14px; cursor:pointer; }
-  .seg button.on{ background:rgba(186,155,55,0.14); color:var(--gold); }
-  .seg button.on.good{ background:rgba(76,154,107,0.14); color:var(--turf); }
-  .seg button.on.bad{ background:rgba(192,87,75,0.14); color:var(--loss); }
+  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(212,180,106,0.10); }
+  .seg{ display:flex; flex-wrap:wrap; border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:4px 24px 14px; width:fit-content; max-width:calc(100% - 48px); }
+  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.78rem; padding:8px 15px; cursor:pointer; }
+  .seg button.on{ background:rgba(212,180,106,0.14); color:var(--gold); }
+  .seg button.on.good{ background:rgba(79,174,122,0.14); color:var(--turf); }
+  .seg button.on.bad{ background:rgba(214,98,79,0.14); color:var(--loss); }
 
-  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; padding:0 18px 20px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
-  .ln{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); border-left:3px solid var(--gold); padding:9px 12px; margin-top:6px; min-height:58px; }
-  .ln.yr{ grid-template-columns:46px minmax(0,1fr) auto; }
-  .ln.good{ border-left-color:var(--turf); } .ln.bad{ border-left-color:var(--loss); }
-  .ln .rk{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); text-align:center; font-size:1.2rem; }
-  .ln.yr .rk{ font-size:1.05rem; }
-  .ln .tm{ font-weight:700; font-size:0.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ln .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ln.rec{ border-color:var(--gold); background:rgba(186,155,55,0.07); }
-  .ln.rec.good{ border-color:var(--turf); background:rgba(76,154,107,0.07); }
-  .ln.rec.bad{ border-color:var(--loss); background:rgba(192,87,75,0.07); }
-  .ln.rec .rk, .ln.rec .val{ color:var(--gold); }
-  .ln.rec.good .rk, .ln.rec.good .val{ color:var(--turf); }
-  .ln.rec.bad .rk, .ln.rec.bad .val{ color:var(--loss); }
-  .ln.rec .val{ font-size:1.5rem; font-weight:800; }
-  .ln .val{ font-family:var(--scoreboard); font-weight:700; font-size:1.2rem; color:var(--text); font-variant-numeric:tabular-nums; text-align:right; min-width:50px; }
-  .ln .val.up{ color:var(--turf); } .ln .val.down{ color:var(--loss); }
-  .stats{ display:flex; gap:12px; }
-  .stats div{ text-align:center; min-width:38px; }
-  .stats b{ display:block; font-family:var(--scoreboard); font-size:1.1rem; font-weight:700; }
-  .stats b em{ font-style:normal; }
-  .stats span{ font-size:0.58rem; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; }
+
+  /* ---------- Streaks: ring the current W/L streak leaders ---------- */
+  .qrow.streak-w{ border-color:var(--gold); box-shadow:0 0 0 1.5px var(--gold) inset; }
+  .qrow.streak-l{ border-color:var(--loss); box-shadow:0 0 0 1.5px var(--loss) inset; }
 
   /* ---------- Season Timeline ---------- */
-  .tl-scroll{ overflow-x:auto; padding:4px 0 8px; }
+  .tl-scroll{ overflow-x:auto; padding:22px 24px; }
   .tl-rail{ display:flex; gap:0; min-width:max-content; position:relative; }
   .tl-rail::before{ content:''; position:absolute; left:0; right:0; top:40px; height:1px; background:var(--line); z-index:0; }
   .tl-card{ width:150px; flex-shrink:0; padding:0 8px; position:relative; z-index:1; }
-  .tl-dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); margin:36px auto 10px; }
-  .tl-card.progress .tl-dot{ background:var(--text-dim); }
+  .tl-dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); margin:36px auto 10px; box-shadow:0 0 10px rgba(212,180,106,0.6); }
+  .tl-card.progress .tl-dot{ background:var(--text-dim); box-shadow:none; }
   .tl-year{ text-align:center; font-family:var(--scoreboard); font-weight:800; font-size:1.15rem; color:var(--text-dim); margin-bottom:8px; }
-  .tl-body{ background:var(--surface-raised); border:1px solid var(--line); border-top:3px solid var(--gold); padding:9px; min-height:70px; }
-  .tl-card.progress .tl-body{ border-top-color:var(--line); border-style:dashed; }
+  .tl-body{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:10px; padding:10px; min-height:70px; }
+  .tl-card.progress .tl-body{ border-style:dashed; }
   .tl-line{ font-size:0.78rem; margin-bottom:4px; }
   .tl-line.champ{ color:var(--gold); font-weight:700; }
   .tl-line.sacko{ color:var(--loss); display:flex; align-items:center; gap:5px; }
@@ -70,17 +44,18 @@
   .tl-cap{ color:var(--text-dim); font-size:0.68rem; line-height:1.4; margin-top:6px; border-top:1px solid var(--line); padding-top:6px; }
 
   /* ---------- Dynasty Heatmap ---------- */
-  .heat-scroll{ overflow-x:auto; padding-bottom:4px; }
+  .heat-scroll{ overflow-x:auto; padding:22px 24px; }
   .heat-grid{ display:grid; width:max-content; }
   .heat-name{ position:sticky; left:0; background:var(--surface); font-weight:700; font-size:0.82rem; display:flex; align-items:center; padding-right:8px; border-right:1px solid var(--line); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .heat-yr{ text-align:center; color:var(--text-dim); font-size:0.62rem; padding:4px 0; }
-  .heat-cell{ margin:1px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:0.78rem; color:var(--text-dim); min-height:28px; border:1px solid var(--line); }
-  .heat-cell.champ{ background:rgba(186,155,55,0.22); color:var(--gold); border-color:var(--gold); }
-  .heat-legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; padding:0 2px; }
+  .heat-cell{ margin:1.5px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:0.78rem; color:var(--text-dim); min-height:28px; border:1px solid var(--line); }
+  .heat-cell.champ{ background:rgba(212,180,106,0.22); color:var(--gold); border-color:var(--gold); }
+  .heat-legend{ display:flex; flex-wrap:wrap; gap:14px; margin:0 24px 20px; }
   .heat-legend-item{ display:flex; align-items:center; gap:6px; color:var(--text-dim); font-size:0.74rem; }
-  .heat-swatch{ width:12px; height:12px; border:1px solid var(--line); flex-shrink:0; }
+  .heat-swatch{ width:12px; height:12px; border-radius:3px; border:1px solid var(--line); flex-shrink:0; }
 
   /* ---------- Scoring Trends ---------- */
+  .sc-wrap{ padding:22px 24px; }
   .sc-chart{ width:100%; height:200px; display:block; }
   .sc-grid-line{ stroke:var(--line); stroke-width:1; }
   .sc-band{ fill:var(--gold); opacity:0.1; }
@@ -123,9 +98,11 @@
 <script src="league-common.js?v=2"></script>
 <script src="achievements.js"></script>
 <script>
-  const { f1, f2, money, card, esc } = LG;
+  const { f1, f2, money, esc } = LG;
   let TABS = [], tab = 0;
   const viewPick = {};
+  const toneCls = t => (t === 'good' || t === 'up' ? 'turf' : t === 'bad' || t === 'down' ? 'loss' : '');
+  const glassCard = (title, body, note) => `<div class="glass"><div style="padding:20px 24px ${note ? '4px' : '16px'}"><div style="font-weight:700;font-size:1rem">${title}</div>${note ? `<div style="color:var(--text-dim);font-size:0.78rem;margin-top:4px">${note}</div>` : ''}</div>${body}</div>`;
 
   function build(D, F) {
     const complete = new Set(D.completeYears);
@@ -244,9 +221,20 @@
     const streakView = key => {
       if (!F) return [];
       const cur = n => (n > 0 ? `<em style="color:var(--turf)">W${n}</em>` : n < 0 ? `<em style="color:var(--loss)">L${-n}</em>` : '—');
-      return F.players.filter(p => p.streaks && p.streaks[key])
-        .sort((a, b) => b.streaks[key].current - a.streaks[key].current || b.streaks[key].longest_win - a.streaks[key].longest_win)
-        .map(p => { const s = p.streaks[key]; return { name: p.name, stats: [[s.longest_win, 'Best W'], [s.longest_loss, 'Best L'], [cur(s.current), 'Now']] }; });
+      const rows = F.players.filter(p => p.streaks && p.streaks[key] && D.active.has(p.name))
+        .sort((a, b) => b.streaks[key].current - a.streaks[key].current || b.streaks[key].longest_win - a.streaks[key].longest_win);
+      if (!rows.length) return [];
+      const maxWin = Math.max(...rows.map(p => p.streaks[key].longest_win));
+      const maxLoss = Math.max(...rows.map(p => p.streaks[key].longest_loss));
+      const curBest = Math.max(...rows.map(p => p.streaks[key].current));
+      const curWorst = Math.min(...rows.map(p => p.streaks[key].current));
+      return rows.map(p => {
+        const s = p.streaks[key];
+        const winNum = s.longest_win === maxWin ? `<span style="color:var(--turf)">${s.longest_win}</span>` : s.longest_win;
+        const lossNum = s.longest_loss === maxLoss ? `<span style="color:var(--loss)">${s.longest_loss}</span>` : s.longest_loss;
+        const ring = curBest > 0 && s.current === curBest ? 'streak-w' : (curWorst < 0 && s.current === curWorst ? 'streak-l' : '');
+        return { name: p.name, ring, stats: [[winNum, 'Best W'], [lossNum, 'Best L'], [cur(s.current), 'Now']] };
+      });
     };
 
     const V = (label, items, o = {}) => {
@@ -294,7 +282,7 @@
         return `<div class="tl-card${isDone ? '' : ' progress'}"><div class="tl-year">${y}</div><div class="tl-dot"></div>` +
           `<div class="tl-body">${body}${capText ? `<div class="tl-cap">${esc(capText)}</div>` : ''}</div></div>`;
       }).join('');
-      return card('Season Timeline', `<div class="tl-scroll"><div class="tl-rail">${cards}</div></div>`,
+      return glassCard('Season Timeline', `<div class="tl-scroll"><div class="tl-rail">${cards}</div></div>`,
         'Champion, Sacko and the season’s top single-game score, one card per year');
     }
 
@@ -325,7 +313,7 @@
         <div class="heat-legend-item"><span class="heat-swatch"></span>Mid-table</div>
         <div class="heat-legend-item"><span class="heat-swatch" style="background:rgba(192,87,75,0.4)"></span>Bottom tier</div>
         <div class="heat-legend-item"><span class="heat-swatch" style="border-color:var(--loss)"></span>Sacko</div></div>`;
-      return card('Dynasty Heatmap',
+      return glassCard('Dynasty Heatmap',
         `<div class="heat-scroll"><div class="heat-grid" style="grid-template-columns:118px repeat(${years.length},32px)">${grid}</div></div>${legend}`,
         'Final standing every season — a run of green is a dynasty, a run of red is a rut');
     }
@@ -340,7 +328,7 @@
         });
         return scores.length ? { year: y, avg: scores.reduce((a, b) => a + b, 0) / scores.length, lo: Math.min(...scores), hi: Math.max(...scores) } : null;
       }).filter(Boolean);
-      if (rows.length < 2) return card('Scoring Trends', '<div class="empty-note">Not enough seasons yet.</div>');
+      if (rows.length < 2) return glassCard('Scoring Trends', '<div class="empty-note" style="padding:22px 24px">Not enough seasons yet.</div>');
       const W = 640, H = 200, PAD_L = 34, PAD_R = 14, PAD_T = 14, PAD_B = 22;
       const n = rows.length;
       const minV = Math.min(...rows.map(r => r.lo)), maxV = Math.max(...rows.map(r => r.hi));
@@ -362,7 +350,7 @@
         `<text x="${(x(n - 1) + 8).toFixed(1)}" y="${(y(last.avg) + 4).toFixed(1)}" class="sc-end-label">${last.avg.toFixed(1)}</text>${yearLabels}</svg>`;
       const delta = last.avg - rows[0].avg;
       const caption = `League average score is ${delta >= 0 ? 'up' : 'down'} <b>${delta >= 0 ? '+' : ''}${delta.toFixed(1)} pts</b> since ${rows[0].year} · shaded band is each season's low-to-high range`;
-      return card('Scoring Trends', svg + `<div class="sc-caption">${caption}</div>`);
+      return glassCard('Scoring Trends', `<div class="sc-wrap">${svg}<div class="sc-caption">${caption}</div></div>`);
     }
 
     TABS = [
@@ -379,32 +367,43 @@
     ];
   }
 
-  const tileHtml = x => `<div class="hero"><div class="hero-t">${x.title}</div><div class="hero-v ${x.tone}">${esc(x.val)}</div><div class="hero-n">${esc(x.name)}</div><div class="hero-s">${esc(x.sub || '')}</div></div>`;
+  // One hero (the headline number, glowing) + the rest as quiet side stats and a tile strip
+  // below -- the whole point of the redesign is that not every number gets equal weight.
+  function tilesHtml(tiles) {
+    const hero = tiles[0], side = tiles.slice(1, 4), rest = tiles.slice(4);
+    const glow = hero.tone === 'bad' ? 'glow-loss' : 'glow';
+    const heroHtml = `<div class="glass hero2"><div class="hero2-main ${glow}"><div class="hero2-eyebrow">${esc(hero.title)}</div>` +
+      `<div class="hero2-v">${esc(hero.val)}</div><div class="hero2-sub">${esc(hero.name)}${hero.sub ? ' · ' + esc(hero.sub) : ''}</div></div>` +
+      `<div class="hero2-side">${side.map(x => `<div class="hs"><div class="hs-l">${esc(x.title)}</div><div class="hs-r">` +
+        `<div class="hs-v ${toneCls(x.tone)}">${esc(x.val)}</div><div class="hs-n">${esc(x.name)}</div></div></div>`).join('')}</div></div>`;
+    const tilesRow = `<div class="glass qtiles">${rest.map(x => `<div><div class="qtile-v ${toneCls(x.tone)}">${esc(x.val)}</div><div class="qtile-t">${esc(x.title)}</div>` +
+      `<div class="qtile-n">${esc(x.name)}</div>${x.sub ? `<div class="qtile-s">${esc(x.sub)}</div>` : ''}</div>`).join('')}</div>`;
+    return heroHtml + '<div class="gap"></div>' + tilesRow;
+  }
 
   function rowHtml(i, k, v) {
     const mark = v.marks[k];
-    const isRec = !!mark || (v.hl ? k === 0 : k === v.best);
+    const isLead = !!mark || (v.hl ? k === 0 : k === v.best);
     const tone = mark || v.tone;
-    const cls = ['ln', v.year ? 'yr' : '', tone === 'good' ? 'good' : tone === 'bad' ? 'bad' : '', isRec ? 'rec' : ''].filter(Boolean).join(' ');
+    const cls = ['qrow', isLead ? 'lead' : '', i.ring || ''].filter(Boolean).join(' ');
     const right = i.stats
       ? `<div class="stats">${i.stats.map(s => `<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`
-      : `<div class="val ${i.tone || ''}">${esc(i.val)}</div>`;
+      : `<div class="rec ${toneCls(i.tone || tone)}">${esc(i.val)}</div>`;
     const rank = v.year ? i.rank : (i.stats ? '' : k + 1);
     return `<div class="${cls}" ${i.stats ? 'style="grid-template-columns:minmax(0,1fr) auto"' : ''}>` + (i.stats ? '' : `<div class="rk">${rank}</div>`) +
-      `<div style="min-width:0">${i.name ? `<div class="tm">${esc(i.name)}</div>` : ''}${i.sub ? `<div class="meta">${esc(i.sub)}</div>` : ''}</div>${right}</div>`;
+      `<div style="min-width:0">${i.name ? `<div class="nm">${esc(i.name)}</div>` : ''}${i.sub ? `<div class="meta">${esc(i.sub)}</div>` : ''}</div>${right}</div>`;
   }
 
   function render() {
     document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
     const T = TABS[tab], el = document.getElementById('overview');
     if (T.html) { el.innerHTML = T.html; return; }
-    if (T.tiles) { el.innerHTML = `<div class="hero-grid">${T.tiles.map(tileHtml).join('')}</div>`; return; }
+    if (T.tiles) { el.innerHTML = tilesHtml(T.tiles); return; }
     const vi = viewPick[tab] || 0, v = T.views[vi];
-    const tg = v.tone === 'good' ? ' good' : v.tone === 'bad' ? ' bad' : '';
     const seg = `<div class="seg">${T.views.map((x, i) => `<button class="${i === vi ? 'on' + (x.tone === 'good' ? ' good' : x.tone === 'bad' ? ' bad' : '') : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
     const half = Math.ceil(v.items.length / 2);
     const cols = `<div class="cols"><div>${v.items.slice(0, half).map((i, k) => rowHtml(i, k, v)).join('')}</div><div>${v.items.slice(half).map((i, k) => rowHtml(i, k + half, v)).join('')}</div></div>`;
-    el.innerHTML = card(v.label, seg + cols, v.note);
+    el.innerHTML = glassCard(v.label, seg + cols, v.note);
   }
 
   document.addEventListener('click', e => {
