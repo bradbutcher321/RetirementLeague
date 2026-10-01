@@ -30,15 +30,22 @@
   @media (max-width: 520px){ .rules-body{ grid-template-columns: 1fr; } }
   .rules-section{ background: var(--surface); padding: 16px 20px; }
   .rules-section-title{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
-  .rules-line{ font-size: 0.9rem; padding: 3px 6px; margin: 0 -6px; color: var(--text); border-radius: 3px; }
-  .rules-line .label{ color: var(--text-dim); }
-  .rules-line.line-changed{ background: rgba(186,155,55,0.1); }
-  .rules-line.line-added{ background: rgba(76,154,107,0.1); color: var(--turf); }
-  .rules-line.line-dropped{ background: rgba(192,87,75,0.1); }
-  .rules-line.line-dropped .now{ color: var(--loss); }
-  .rules-line .was{ color: var(--text-dim); margin-right: 4px; }
-  .rules-line .now{ color: var(--gold); font-weight: 700; }
-  .rules-footnote{ color: var(--text-dim); font-size: 0.76rem; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+  /* Each setting is its own small chip (flex-wrapped) instead of a stacked
+     list of label/value rows -- the same visual language as the Season
+     Timeline's chips on Overview, applied here to settings instead of
+     results. Diff state (changed/added/dropped) still reads at a glance
+     via the chip's own tint, same logic as before, just not a full-width
+     highlighted row any more. */
+  .rules-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
+  .rules-chip{ display: inline-flex; align-items: baseline; gap: 4px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 0.84rem; color: var(--text); white-space: nowrap; }
+  .rules-chip .label{ color: var(--text-dim); }
+  .rules-chip.line-changed{ border-color: rgba(212,180,106,0.4); background: rgba(212,180,106,0.08); }
+  .rules-chip.line-added{ border-color: rgba(79,174,122,0.4); background: rgba(79,174,122,0.08); color: var(--turf); }
+  .rules-chip.line-dropped{ border-color: rgba(214,98,79,0.4); background: rgba(214,98,79,0.08); }
+  .rules-chip.line-dropped .now{ color: var(--loss); }
+  .rules-chip .was{ color: var(--text-dim); margin-right: 2px; }
+  .rules-chip .now{ color: var(--gold); font-weight: 700; }
+  .rules-footnote{ color: var(--text-dim); font-size: 0.76rem; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
   .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
 
   .manager-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
@@ -99,16 +106,16 @@
 
   function section(title, lines, footnote) {
     if (!lines.length) return '';
-    return `<div class="rules-section"><div class="rules-section-title">${esc(title)}</div>${lines.join('')}${footnote ? `<div class="rules-footnote">${footnote}</div>` : ''}</div>`;
+    return `<div class="rules-section"><div class="rules-section-title">${esc(title)}</div><div class="rules-chips">${lines.join('')}</div>${footnote ? `<div class="rules-footnote">${footnote}</div>` : ''}</div>`;
   }
 
-  // A "line" renders plain unless prevVal is given and differs from val, in
+  // A "chip" renders plain unless prevVal is given and differs from val, in
   // which case it renders as old → new, highlighted.
   function scalarLine(label, val, prevVal) {
     if (prevVal === undefined || prevVal === val) {
-      return `<div class="rules-line"><span class="label">${esc(label)}:</span> ${esc(val)}</div>`;
+      return `<span class="rules-chip"><span class="label">${esc(label)}:</span> ${esc(val)}</span>`;
     }
-    return `<div class="rules-line line-changed"><span class="label">${esc(label)}:</span> <span class="was">${esc(prevVal)}</span>→ <span class="now">${esc(val)}</span></div>`;
+    return `<span class="rules-chip line-changed"><span class="label">${esc(label)}:</span> <span class="was">${esc(prevVal)}</span>→ <span class="now">${esc(val)}</span></span>`;
   }
 
   function settingsSection(rec, prev) {
@@ -125,7 +132,7 @@
 
   function rosterSection(rec, prev) {
     if (!prev) {
-      return section('Roster Structure', rec.roster_structure.map(r => `<div class="rules-line">${r.count} ${esc(r.position)}</div>`));
+      return section('Roster Structure', rec.roster_structure.map(r => `<span class="rules-chip">${r.count} ${esc(r.position)}</span>`));
     }
     const currMap = Object.fromEntries(rec.roster_structure.map(r => [r.position, r.count]));
     const prevMap = Object.fromEntries(prev.roster_structure.map(r => [r.position, r.count]));
@@ -133,10 +140,10 @@
     Object.keys(prevMap).forEach(p => { if (!order.includes(p)) order.push(p); });
     const lines = order.map(pos => {
       const c = currMap[pos], p = prevMap[pos];
-      if (c === undefined) return `<div class="rules-line line-dropped">${esc(pos)}: <span class="was">${p}</span>→ <span class="now">0</span></div>`;
-      if (p === undefined) return `<div class="rules-line line-added">+ ${c} ${esc(pos)}</div>`;
-      if (p === c) return `<div class="rules-line">${c} ${esc(pos)}</div>`;
-      return `<div class="rules-line line-changed">${esc(pos)}: <span class="was">${p}</span>→ <span class="now">${c}</span></div>`;
+      if (c === undefined) return `<span class="rules-chip line-dropped">${esc(pos)}: <span class="was">${p}</span>→ <span class="now">0</span></span>`;
+      if (p === undefined) return `<span class="rules-chip line-added">+ ${c} ${esc(pos)}</span>`;
+      if (p === c) return `<span class="rules-chip">${c} ${esc(pos)}</span>`;
+      return `<span class="rules-chip line-changed">${esc(pos)}: <span class="was">${p}</span>→ <span class="now">${c}</span></span>`;
     });
     return section('Roster Structure', lines);
   }
@@ -148,7 +155,7 @@
       : '';
     const lines = [scalarLine('Buy-in', '$' + rec.buy_in, prev && prev.buy_in ? '$' + prev.buy_in : undefined)];
     if (!prev) {
-      rec.payouts.forEach(p => lines.push(`<div class="rules-line"><span class="label">${esc(p.label)}:</span> $${p.amount}</div>`));
+      rec.payouts.forEach(p => lines.push(`<span class="rules-chip"><span class="label">${esc(p.label)}:</span> $${p.amount}</span>`));
     } else {
       const prevMap = Object.fromEntries(prev.payouts.map(p => [p.label, p.amount]));
       const order = rec.payouts.map(p => p.label);
@@ -157,10 +164,10 @@
         const currAmt = rec.payouts.find(p => p.label === label);
         const c = currAmt ? currAmt.amount : undefined;
         const p = prevMap[label];
-        if (c === undefined) lines.push(`<div class="rules-line line-dropped"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→ <span class="now">$0</span></div>`);
-        else if (p === undefined) lines.push(`<div class="rules-line line-added">+ ${esc(label)}: $${c}</div>`);
-        else if (p === c) lines.push(`<div class="rules-line"><span class="label">${esc(label)}:</span> $${c}</div>`);
-        else lines.push(`<div class="rules-line line-changed"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→ <span class="now">$${c}</span></div>`);
+        if (c === undefined) lines.push(`<span class="rules-chip line-dropped"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→ <span class="now">$0</span></span>`);
+        else if (p === undefined) lines.push(`<span class="rules-chip line-added">+ ${esc(label)}: $${c}</span>`);
+        else if (p === c) lines.push(`<span class="rules-chip"><span class="label">${esc(label)}:</span> $${c}</span>`);
+        else lines.push(`<span class="rules-chip line-changed"><span class="label">${esc(label)}:</span> <span class="was">$${p}</span>→ <span class="now">$${c}</span></span>`);
       });
     }
     return section('Money', lines, footnote);
