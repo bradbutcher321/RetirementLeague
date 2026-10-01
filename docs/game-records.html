@@ -13,7 +13,8 @@
 <style>
   .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
   @media (max-width:800px){ .hero-grid{ grid-template-columns:1fr 1fr; } }
-  .hero{ background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--gold); padding:14px 12px; text-align:center; min-width:0; }
+  .hero{ background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--turf); padding:14px 12px; text-align:center; min-width:0; }
+  .hero.dn{ border-top-color:var(--loss); }
   .hero-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; min-height:2.2em; }
   .hero-v{ font-family:var(--scoreboard); font-weight:800; font-size:2.4rem; line-height:1.1; color:var(--turf); margin:6px 0 6px; }
   .hero-v.dn{ color:var(--loss); }
@@ -116,11 +117,11 @@
 
   function tile(c) {
     const t = c.items[0];
-    if (!t) return `<div class="hero"><div class="hero-t">${c.title}</div><div class="hero-v">—</div><div class="hero-n"></div><div class="hero-s">&nbsp;</div></div>`;
+    if (!t) return `<div class="hero${c.dn ? ' dn' : ''}"><div class="hero-t">${c.title}</div><div class="hero-v">—</div><div class="hero-n"></div><div class="hero-s">&nbsp;</div></div>`;
     const who = t.team
       ? `<span>${esc(t.team)}</span>`
       : `<span>${esc(t.m.a)} ${f2(t.m.as)}</span><span>vs ${esc(t.m.b)} ${f2(t.m.bs)}</span>`;
-    return `<div class="hero"><div class="hero-t">${c.title}</div><div class="hero-v ${c.dn ? 'dn' : ''}">${f2(t.v)}</div><div class="hero-n">${who}</div><div class="hero-s">${t.meta}</div></div>`;
+    return `<div class="hero${c.dn ? ' dn' : ''}"><div class="hero-t">${c.title}</div><div class="hero-v ${c.dn ? 'dn' : ''}">${f2(t.v)}</div><div class="hero-n">${who}</div><div class="hero-s">${t.meta}</div></div>`;
   }
 
   const seg = (w, inv) => `<div class="seg"><button class="${w === 'hi' ? 'on' + (inv ? ' dn' : '') : ''}" data-seg="hi">Highest</button><button class="${w === 'lo' ? 'on' + (inv ? '' : ' dn') : ''}" data-seg="lo">Lowest</button></div>`;
