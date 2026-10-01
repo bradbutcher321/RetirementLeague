@@ -23,6 +23,10 @@
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; padding:0 18px 20px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
 
+  /* ---------- Streaks: ring the current W/L streak leaders ---------- */
+  .qrow.streak-w{ border-color:var(--gold); box-shadow:0 0 0 1.5px var(--gold) inset; }
+  .qrow.streak-l{ border-color:var(--loss); box-shadow:0 0 0 1.5px var(--loss) inset; }
+
   /* ---------- Season Timeline ---------- */
   .tl-scroll{ overflow-x:auto; padding:22px 24px; }
   .tl-rail{ display:flex; gap:0; min-width:max-content; position:relative; }
@@ -217,9 +221,20 @@
     const streakView = key => {
       if (!F) return [];
       const cur = n => (n > 0 ? `<em style="color:var(--turf)">W${n}</em>` : n < 0 ? `<em style="color:var(--loss)">L${-n}</em>` : '—');
-      return F.players.filter(p => p.streaks && p.streaks[key])
-        .sort((a, b) => b.streaks[key].current - a.streaks[key].current || b.streaks[key].longest_win - a.streaks[key].longest_win)
-        .map(p => { const s = p.streaks[key]; return { name: p.name, stats: [[s.longest_win, 'Best W'], [s.longest_loss, 'Best L'], [cur(s.current), 'Now']] }; });
+      const rows = F.players.filter(p => p.streaks && p.streaks[key] && D.active.has(p.name))
+        .sort((a, b) => b.streaks[key].current - a.streaks[key].current || b.streaks[key].longest_win - a.streaks[key].longest_win);
+      if (!rows.length) return [];
+      const maxWin = Math.max(...rows.map(p => p.streaks[key].longest_win));
+      const maxLoss = Math.max(...rows.map(p => p.streaks[key].longest_loss));
+      const curBest = Math.max(...rows.map(p => p.streaks[key].current));
+      const curWorst = Math.min(...rows.map(p => p.streaks[key].current));
+      return rows.map(p => {
+        const s = p.streaks[key];
+        const winNum = s.longest_win === maxWin ? `<span style="color:var(--turf)">${s.longest_win}</span>` : s.longest_win;
+        const lossNum = s.longest_loss === maxLoss ? `<span style="color:var(--loss)">${s.longest_loss}</span>` : s.longest_loss;
+        const ring = curBest > 0 && s.current === curBest ? 'streak-w' : (curWorst < 0 && s.current === curWorst ? 'streak-l' : '');
+        return { name: p.name, ring, stats: [[winNum, 'Best W'], [lossNum, 'Best L'], [cur(s.current), 'Now']] };
+      });
     };
 
     const V = (label, items, o = {}) => {
@@ -370,7 +385,7 @@
     const mark = v.marks[k];
     const isLead = !!mark || (v.hl ? k === 0 : k === v.best);
     const tone = mark || v.tone;
-    const cls = ['qrow', isLead ? 'lead' : ''].filter(Boolean).join(' ');
+    const cls = ['qrow', isLead ? 'lead' : '', i.ring || ''].filter(Boolean).join(' ');
     const right = i.stats
       ? `<div class="stats">${i.stats.map(s => `<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`
       : `<div class="rec ${toneCls(i.tone || tone)}">${esc(i.val)}</div>`;
