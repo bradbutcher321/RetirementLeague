@@ -6,7 +6,7 @@
 <title>Retirement League — Overview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
 <link rel="stylesheet" href="league.css?v=4">
@@ -14,7 +14,7 @@
   /* War Room treatment: the page header/nav stay on the site's standard scoreboard
      font (consistent with every other page); everything below is data-dense and
      monospace, left-accent cards instead of top-accent, tighter rhythm. */
-  :root{ --mono:'IBM Plex Mono', monospace; }
+  :root{ --mono:'Roboto Mono', monospace; }
 
   .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
   @media (max-width:800px){ .hero-grid{ grid-template-columns:1fr 1fr; } }
@@ -114,10 +114,10 @@
   .sc-band{ fill:var(--gold); opacity:0.1; }
   .sc-line{ fill:none; stroke:var(--gold); stroke-width:2; vector-effect:non-scaling-stroke; }
   .sc-dot{ fill:var(--gold); stroke:var(--surface); stroke-width:1.5; vector-effect:non-scaling-stroke; }
-  .sc-axis-label{ fill:var(--text-dim); font-size:9px; font-family:'IBM Plex Mono',monospace; }
-  .sc-end-label{ fill:var(--text); font-weight:700; font-size:11px; font-family:'IBM Plex Mono',monospace; }
+  .sc-axis-label{ fill:var(--text-dim); font-size:9px; font-family:'Roboto Mono',monospace; }
+  .sc-end-label{ fill:var(--text); font-weight:700; font-size:11px; font-family:'Roboto Mono',monospace; }
   .sc-annot-line{ stroke:var(--text-dim); stroke-width:1; stroke-dasharray:3 3; }
-  .sc-annot-text{ fill:var(--text-dim); font-size:9px; font-family:'IBM Plex Mono',monospace; }
+  .sc-annot-text{ fill:var(--text-dim); font-size:9px; font-family:'Roboto Mono',monospace; }
   .sc-caption{ text-align:center; color:var(--text-dim); font-size:0.76rem; margin-top:6px; }
   .sc-caption b{ color:var(--text); }
 </style>
