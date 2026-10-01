@@ -655,12 +655,9 @@
   .accolade-card::before{
     content: "";
     position: absolute;
-    top: -70px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 240px;
-    height: 140px;
-    background: radial-gradient(ellipse at center, rgba(186,155,55,0.2), transparent 70%);
+    inset: -40%;
+    filter: blur(10px);
+    background: radial-gradient(circle at 50% 28%, rgba(212,180,106,0.22), transparent 60%);
     pointer-events: none;
   }
   .accolade-eyebrow{
@@ -708,21 +705,37 @@
   /* Superlatives view toggle + race rows */
   .sup-seg{ display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); margin-bottom: 14px; }
   .sup-seg button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.8rem; padding: 9px 16px; cursor: pointer; }
-  .sup-seg button.on{ background: rgba(186,155,55,0.14); color: var(--gold); }
+  .sup-seg button.on{ background: rgba(212,180,106,0.14); color: var(--gold); }
   .sup-tag{ position: relative; display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; margin-bottom: 12px; }
   .sup-tag.new{ color: var(--turf); border: 1px solid var(--turf-dim); background: rgba(76,154,107,0.12); }
   .sup-tag.hold{ color: var(--text-dim); border: 1px solid var(--line); }
   .sup-note{ position: relative; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 0.78rem; line-height: 1.5; }
-  .sup-lines{ position: relative; margin-top: 14px; text-align: left; }
-  .sup-row{ display: grid; grid-template-columns: minmax(0,1fr) auto auto auto; gap: 12px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--line); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
-  .sup-row.head{ color: var(--text-dim); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; border-top: none; padding-bottom: 3px; }
-  .sup-row .n{ font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sup-row .r{ text-align: right; min-width: 56px; }
-  .sup-row .lead{ color: var(--gold); }
+  /* ---------- Comparison rows: real position on a shared axis instead of a
+     label/value table. Each row plots one or two markers along a 0-100%
+     scale (set per-card by cmpScale) so the gap between teams, and between
+     a team and the season-high reference line, is an actual spatial
+     distance — not a proportional fill bar. ---------- */
+  .cmp-wrap{ position: relative; margin-top: 16px; text-align: left; }
+  .cmp-head{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 8px; margin-bottom: 2px; border-bottom: 1px solid var(--line); }
+  .cmp-row{ display: grid; grid-template-columns: minmax(0,72px) 1fr auto; align-items: center; gap: 10px; padding: 11px 0; }
+  .cmp-row + .cmp-row{ border-top: 1px solid var(--line); }
+  .cmp-name{ font-size: 0.78rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cmp-track{ position: relative; height: 10px; }
+  .cmp-track::before{ content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+  .cmp-link{ position: absolute; top: 50%; height: 2px; transform: translateY(-50%); background: var(--line); border-radius: 2px; }
+  .cmp-link.on{ background: rgba(212,180,106,0.45); }
+  .cmp-dot{ position: absolute; top: 50%; width: 7px; height: 7px; border-radius: 50%; transform: translate(-50%,-50%); background: var(--surface); border: 2px solid var(--text-dim); }
+  .cmp-dot.now{ background: var(--text-dim); border-color: var(--text-dim); }
+  .cmp-dot.on{ background: var(--gold); border-color: var(--gold); box-shadow: 0 0 8px rgba(212,180,106,0.55); }
+  .cmp-ref{ position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1px dashed var(--gold-dim); transform: translateX(-50%); }
+  .cmp-ref-label{ position: absolute; top: -15px; transform: translateX(-50%); font-size: 0.56rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold-dim); white-space: nowrap; }
+  .cmp-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.92rem; text-align: right; font-variant-numeric: tabular-nums; min-width: 50px; color: var(--text-dim); }
+  .cmp-val.on{ color: var(--gold); }
+  .cmp-delta{ font-size: 0.64rem; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-top: 1px; text-align: right; }
   @media (max-width: 480px){
     .sup-seg button{ padding: 8px 10px; font-size: 0.74rem; }
-    .sup-row{ gap: 8px; font-size: 0.76rem; }
-    .sup-row .r{ min-width: 46px; }
+    .cmp-row{ grid-template-columns: minmax(0,58px) 1fr auto; gap: 6px; padding: 9px 0; }
+    .cmp-name{ font-size: 0.72rem; }
   }
 
   /* Collapsible tray (Site Activity), closed until opened */
@@ -1578,16 +1591,41 @@
     else if (prevHigh) high = { score: prevHigh.score, team: prevHigh.team, manager: prevHigh.manager, meta: `Week ${prevHigh.week}`, isNew: false };
     else high = { score: bestCur.cur, team: bestCur.team, manager: bestCur.manager, meta: `Week ${week} \u00b7 live`, isNew: true };
 
+    // Shared helper for every comparison row below: maps a value to a 0-100%
+    // position on an axis spanning [lo, hi] (padded 8%), so a row's markers
+    // sit at their actual relative distance from each other and from any
+    // reference line \u2014 not a proportional fill bar.
+    const cmpScale = (lo, hi) => {
+      const pad = (hi - lo) * 0.08 || 1;
+      lo -= pad; hi += pad;
+      return v => Math.max(0, Math.min(100, ((v - lo) / (hi - lo)) * 100));
+    };
+
     let highExtra = '';
     if (m === 'through') {
       highExtra = `<div class="sup-note">Record set in Week ${prevHigh.week}. Switch to a live or projected view to see how this week's scores stack up.</div>`;
     } else {
-      const rows = [...teams].sort((a, b) => (m === 'proj' ? b.proj - a.proj : b.cur - a.cur)).slice(0, 3).map(r => {
-        const gap = Math.max(0, recordScore - (m === 'proj' ? r.proj : r.cur));
-        return `<div class="sup-row"><span class="n">${r.n}</span><span class="r ${m === 'live' ? 'lead' : ''}">${fmtScore(r.cur)}</span>` +
-          `<span class="r">${recordScore ? fmtScore(gap) + ' short' : '\u2014'}</span><span class="r ${m === 'proj' ? 'lead' : ''}">${fmtScore(r.proj)}</span></div>`;
+      const topTeams = [...teams].sort((a, b) => (m === 'proj' ? b.proj - a.proj : b.cur - a.cur)).slice(0, 3);
+      const domainVals = topTeams.flatMap(r => [r.cur, r.proj]).concat(recordScore ? [recordScore] : []);
+      const scale = cmpScale(Math.min(...domainVals), Math.max(...domainVals));
+      const refPct = recordScore ? scale(recordScore) : null;
+      const rows = topTeams.map((r, i) => {
+        const curPct = scale(r.cur), projPct = scale(r.proj);
+        const spanLo = Math.min(curPct, projPct), spanW = Math.abs(projPct - curPct);
+        const activeVal = m === 'proj' ? r.proj : r.cur;
+        const ref = refPct == null ? '' : `<div class="cmp-ref" style="left:${refPct}%"></div>${i === 0 ? `<div class="cmp-ref-label" style="left:${refPct}%">Record</div>` : ''}`;
+        return `<div class="cmp-row">
+          <div class="cmp-name">${r.n}</div>
+          <div class="cmp-track">
+            ${ref}
+            ${spanW > 0.3 ? `<div class="cmp-link ${m === 'proj' ? 'on' : ''}" style="left:${spanLo}%;width:${spanW}%"></div>` : ''}
+            <div class="cmp-dot ${m !== 'proj' ? 'now on' : 'now'}" style="left:${curPct}%"></div>
+            ${spanW > 0.3 ? `<div class="cmp-dot ${m === 'proj' ? 'on' : ''}" style="left:${projPct}%"></div>` : ''}
+          </div>
+          <div class="cmp-val on">${fmtScore(activeVal)}</div>
+        </div>`;
       }).join('');
-      highExtra = `<div class="sup-lines"><div class="sup-row head"><span>Best this week</span><span class="r">Live</span><span class="r">To record</span><span class="r">Proj</span></div>${rows}</div>`;
+      highExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>Best this week</span><span>${recordScore ? 'vs record ' + fmtScore(recordScore) : ''}</span></div>${rows}</div>`;
     }
 
     // ----- Season Points Leader -----
@@ -1597,9 +1635,27 @@
     const leader = ranked[0];
     const leaderChanged = hasPrior && m !== 'through' && leader.team !== throughLeader.team;
     const modeLabel = m === 'through' ? `Through Week ${week - 1}` : m === 'live' ? `Through Week ${week} so far` : `Projected through Week ${week}`;
-    const leadRows = ranked.slice(0, 4).map((r, i) => `<div class="sup-row"><span class="n">${r.n}</span><span class="r">${fmtScore(r.prior)}</span>` +
-      `<span class="r">${m === 'through' ? '\u2014' : '+ ' + fmtScore(m === 'live' ? r.cur : r.proj)}</span><span class="r ${i === 0 ? 'lead' : ''}">${fmtScore(total(r))}</span></div>`).join('');
-    const leadExtra = `<div class="sup-lines"><div class="sup-row head"><span>Team</span><span class="r">${week > 1 ? 'Thru Wk ' + (week - 1) : 'Before'}</span><span class="r">Week ${week}</span><span class="r">Total</span></div>${leadRows}</div>`;
+    const top4 = ranked.slice(0, 4);
+    const domainVals2 = top4.flatMap(r => [r.prior, total(r)]);
+    const scale2 = cmpScale(Math.min(...domainVals2), Math.max(...domainVals2));
+    const leadRows = top4.map((r, i) => {
+      const priorPct = scale2(r.prior), totalPct = scale2(total(r));
+      const spanLo = Math.min(priorPct, totalPct), spanW = Math.abs(totalPct - priorPct);
+      const delta = total(r) - r.prior;
+      return `<div class="cmp-row">
+        <div class="cmp-name">${r.n}</div>
+        <div class="cmp-track">
+          ${spanW > 0.3 ? `<div class="cmp-link ${i === 0 ? 'on' : ''}" style="left:${spanLo}%;width:${spanW}%"></div>` : ''}
+          ${m !== 'through' && spanW > 0.3 ? `<div class="cmp-dot" style="left:${priorPct}%"></div>` : ''}
+          <div class="cmp-dot now ${i === 0 ? 'on' : ''}" style="left:${totalPct}%"></div>
+        </div>
+        <div>
+          <div class="cmp-val ${i === 0 ? 'on' : ''}">${fmtScore(total(r))}</div>
+          ${m === 'through' ? '' : `<div class="cmp-delta">+${fmtScore(delta)}</div>`}
+        </div>
+      </div>`;
+    }).join('');
+    const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${week > 1 ? 'Thru Wk ' + (week - 1) : 'Before'} \u2192 ${modeLabel}</span></div>${leadRows}</div>`;
 
     container.innerHTML =
       card('Season High Score', high.score, high.team, high.manager, high.meta, highExtra, tag(high.isNew, 'New record')) +
