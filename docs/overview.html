@@ -33,6 +33,8 @@
   .yr-chip.gold .l{ color:var(--gold); }
   .yr-chip.loss{ border-color:rgba(214,98,79,0.35); background:rgba(214,98,79,0.07); }
   .yr-chip.loss .l{ color:var(--loss); }
+  .yr-chip.bronze{ border-color:rgba(205,127,50,0.4); background:rgba(205,127,50,0.08); }
+  .yr-chip.bronze .l{ color:#D9A066; }
 
   /* ---------- Streaks: ring the current W/L streak leaders ---------- */
   .qrow.streak-w{ border-color:var(--gold); box-shadow:0 0 0 1.5px var(--gold) inset; }
@@ -276,8 +278,8 @@
     function timelineHtml() {
       const champGameByYear = {}; noBye.filter(g => g.type === 'Champ').forEach(g => champGameByYear[g.year] = g);
       const sackoGameByYear = {}; noBye.filter(g => g.type === 'Sacko').forEach(g => sackoGameByYear[g.year] = g);
+      const thirdGameByYear = {}; noBye.filter(g => g.type === '3rd').forEach(g => thirdGameByYear[g.year] = g);
       const secondByYear = {}; done.filter(s => s.final_rank === 2).forEach(s => secondByYear[s.year] = s);
-      const thirdByYear = {}; done.filter(s => s.final_rank === 3).forEach(s => thirdByYear[s.year] = s);
       const weeklyHighByYear = {}; weekly(true).forEach(w => weeklyHighByYear[w.rank] = w);
       const seasonHighByYear = {}; seasonPts(true).forEach(w => seasonHighByYear[w.rank] = w);
 
@@ -297,7 +299,11 @@
           chips.push(chip('gold', '\u{1F3C6}', `${esc(winner)} def. ${esc(loser)}`, payouts['1st Place']));
         }
         if (secondByYear[y]) chips.push(chip('', '2nd', esc(secondByYear[y].player), payouts['2nd Place']));
-        if (thirdByYear[y]) chips.push(chip('', '3rd', esc(thirdByYear[y].player), payouts['3rd Place']));
+        const tg = thirdGameByYear[y];
+        if (tg) {
+          const winner = tg.s1 >= tg.s2 ? tg.p1 : tg.p2, loser = tg.s1 >= tg.s2 ? tg.p2 : tg.p1;
+          chips.push(chip('bronze', '3rd', `${esc(winner)} def. ${esc(loser)}`, payouts['3rd Place']));
+        }
         const sg = sackoGameByYear[y];
         if (sg) {
           const winner = sg.s1 >= sg.s2 ? sg.p1 : sg.p2, loser = sg.s1 >= sg.s2 ? sg.p2 : sg.p1;
