@@ -65,14 +65,20 @@ Also writes the score/stat a pick was actually graded from into a
 "Grade Detail" column (see DETAIL_COLUMN) -- e.g. "17-10 final" or
 "Matt Stafford: 390" -- so docs/parlay-results.html can show *why* a leg
 won or lost, not just the Win/Loss pill. Normal grading writes this
-alongside Result as it goes; --backfill instead fills it in for picks
-that already have a Result but no detail yet (everything graded before
-this column existed), without touching Result at all.
+alongside Result as it goes; every normal run also finishes with a
+backfill pass (run_backfill) that fills in Grade Detail for any pick
+that already has a Result but no detail yet -- a Win/Loss typed in by
+hand (a bet type this script can't resolve on its own, like Coin Toss,
+or just faster than waiting on the next cycle) used to need a separate
+`python auto_grade_results.py --backfill` run to get its score showing
+on the site; now that happens automatically every run, same as grading
+itself. `--backfill` alone still exists for running just that part on
+its own, without touching Result or grading anything new.
 
 Usage:
-    python auto_grade_results.py             # grade and write
-    python auto_grade_results.py --dry-run    # report only, write nothing
-    python auto_grade_results.py --backfill   # fill in Grade Detail for old graded picks
+    python auto_grade_results.py             # grade, write, then backfill any missing details
+    python auto_grade_results.py --dry-run    # report everything above, write nothing
+    python auto_grade_results.py --backfill   # only the backfill part, skip grading entirely
 """
 import argparse
 import os
@@ -222,8 +228,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="Report what would happen without writing anything")
     parser.add_argument("--backfill", action="store_true",
-                         help="Fill in Grade Detail for already-graded historical picks that don't have one yet, "
-                              "without touching Result or grading anything new")
+                         help="Only fill in Grade Detail for already-graded picks that don't have one yet, "
+                              "without touching Result or grading anything new -- a normal run already does "
+                              "this as its last step too, this flag is for doing just that part on its own")
     args = parser.parse_args()
 
     gc = authorize_write()
@@ -332,18 +339,28 @@ def main():
             print(f"  row {row_num} ({player}): {why}")
 
     if not graded:
-        print("\nNothing to write.")
-        return
-    if args.dry_run:
+        print("\nNothing new to grade.")
+    elif args.dry_run:
         print(f"\nDry run -- {len(graded)} result(s) would be written, nothing actually written.")
-        return
+    else:
+        note_stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+        for row_num, player, outcome, detail in graded:
+            ws.update([[outcome]], f"N{row_num}")
+            ws.update_note(f"N{row_num}", f"Auto-graded {note_stamp} ({detail})")
+            ws.update([[detail]], f"{DETAIL_COLUMN}{row_num}")
+        print(f"\nWrote {len(graded)} result(s).")
 
-    note_stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-    for row_num, player, outcome, detail in graded:
-        ws.update([[outcome]], f"N{row_num}")
-        ws.update_note(f"N{row_num}", f"Auto-graded {note_stamp} ({detail})")
-        ws.update([[detail]], f"{DETAIL_COLUMN}{row_num}")
-    print(f"\nWrote {len(graded)} result(s).")
+    # Also fill in Grade Detail for any pick that already has a Win/Loss --
+    # typed in by hand (e.g. a game/bet type this script can't resolve on
+    # its own, like Coin Toss) or graded before this column existed -- but
+    # no detail yet. A manually-entered result used to need a separate
+    # `--backfill` run to show its score on the site; now every normal run
+    # does this too, so that's no longer a step someone has to remember.
+    # Cheap in steady state: run_backfill only does an ESPN lookup for
+    # rows actually missing a detail, which after the first sweep is just
+    # whatever got manually graded since the last run.
+    print()
+    run_backfill(ws, rows, args.dry_run)
 
 
 def run_backfill(ws, rows, dry_run):
