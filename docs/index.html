@@ -61,11 +61,11 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    border-top: 3px solid transparent;
-    transition: border-top-color 0.4s ease;
   }
-  .side.leading{ border-top-color: var(--gold); }
-  .side.leading.final{ border-top-color: var(--turf); }
+  /* The top border accent that used to mark the live-score leader is
+     gone -- the full-bleed projected-favorite wash covers that now, and
+     having both read as two different, sometimes-disagreeing signals
+     (live lead vs. projected favorite) on the same card. */
   .side.leading .score{ text-shadow: 0 0 20px rgba(212,180,106,0.45); }
   .side.leading.final .score{ text-shadow: 0 0 20px rgba(79,174,122,0.45); }
 
