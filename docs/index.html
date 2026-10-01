@@ -25,21 +25,26 @@
        narrow phone the card stays laid out side-by-side (never stacks) and
        instead scrolls horizontally within itself — overflow-x lives on this
        same element as the background/border so the background scrolls
-       along with the content instead of leaving a gap. Leaving overflow-y
-       unset (rather than visible) lets the UA promote it to auto so the
-       rounded corners still clip the grid's own square-cornered children. */
+       along with the content instead of leaving a gap. overflow-y is
+       pinned to hidden (rather than left to auto-promote) so an
+       absolutely-positioned descendant -- namely the glow pseudo-element
+       below -- can never inflate this into a second, vertical scrollbar. */
     grid-template-columns: minmax(175px, 1fr) auto minmax(175px, 1fr);
     align-items: center;
     overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
   }
   /* A live game gets a faint warm wash across the whole card -- a glance
      down the list should pick out what's in progress before reading any
      text. Sits behind everything else (z-index 0), which is why .side /
      .vs-divider / .matchup-details / .live-indicator below all get
-     z-index 1+. */
+     z-index 1+. inset:0 (not a negative inset) -- this card scrolls on
+     the x-axis, so anything extending past its own box would inflate the
+     scrollable area and add a phantom scrollbar even on a desktop width
+     that never needed one. */
   .matchup-card::before{
-    content: ''; position: absolute; inset: -40%; filter: blur(10px);
+    content: ''; position: absolute; inset: 0; filter: blur(10px);
     background: radial-gradient(circle at 50% 10%, rgba(214,98,79,0.22), transparent 60%);
     pointer-events: none; z-index: 0; opacity: 0; transition: opacity 0.4s ease;
   }
