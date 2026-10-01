@@ -1,17 +1,20 @@
 :root{
-  /* UCF Knights black & gold. Surfaces are neutral (not warm-tinted) so
-     they read as true black against the gold — a warm/brown-leaning gray
-     here muddies the contrast into "brown and gold" instead. */
+  /* "Night Match" -- UCF Knights black & gold, refined: a warmer/softer gold,
+     translucent hairlines instead of flat gray ones (so they read correctly
+     over both flat surfaces and the glass gradient below), and two surface
+     levels for the glass-card gradient (surface-2 is the lighter top edge). */
   --bg: #050505;
-  --surface: #141414;
-  --surface-raised: #1E1E1E;
-  --line: #2E2E2E;
-  --text: #F2F2F0;
-  --text-dim: #9B9B98;
-  --gold: #BA9B37;
-  --turf: #4C9A6B;
-  --turf-dim: #2E5A3F;
-  --loss: #C0574B;
+  --surface: #111111;
+  --surface-raised: #161616;
+  --surface-2: #161616;
+  --line: rgba(255,255,255,0.08);
+  --text: #F5F5F3;
+  --text-dim: #8E8E8C;
+  --gold: #D4B46A;
+  --gold-dim: #8A7342;
+  --turf: #4FAE7A;
+  --turf-dim: #2E6B45;
+  --loss: #D6624F;
   --scoreboard: 'Big Shoulders Display', sans-serif;
   --body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
@@ -22,12 +25,93 @@ body{
   margin:0;
   background: var(--bg);
   background-image:
-    radial-gradient(ellipse 900px 500px at 20% -10%, rgba(186,155,55,0.09), transparent),
-    radial-gradient(ellipse 900px 500px at 90% 10%, rgba(186,155,55,0.05), transparent);
+    radial-gradient(ellipse 1100px 600px at 15% -15%, rgba(212,180,106,0.10), transparent 60%),
+    radial-gradient(ellipse 900px 500px at 100% 10%, rgba(79,174,122,0.05), transparent 60%);
   color: var(--text);
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
 }
+
+/* ---------- Glass surface (the base card every page builds on) ---------- */
+.glass{
+  background: linear-gradient(165deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+}
+
+/* ---------- Hero: one glowing headline number/name + quiet supporting stats ----------
+   The one-hero-per-section rule is deliberate -- previous full-site passes gave every
+   tile identical weight, which read as flat. Exactly one number per page section gets
+   this treatment; everything else uses .qrow/.qtiles below. */
+.hero2{ display:grid; grid-template-columns:1.3fr 1fr; overflow:hidden; position:relative; }
+@media (max-width:700px){ .hero2{ grid-template-columns:1fr; } }
+.hero2-main{ position:relative; padding:36px 34px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
+.hero2-main::before{ content:''; position:absolute; inset:-40%; filter:blur(10px); pointer-events:none; }
+.hero2-main.glow::before{ background:radial-gradient(circle at 30% 40%, rgba(212,180,106,0.28), transparent 60%); }
+.hero2-main.glow-turf::before{ background:radial-gradient(circle at 30% 40%, rgba(79,174,122,0.26), transparent 60%); }
+.hero2-main.glow-loss::before{ background:radial-gradient(circle at 30% 40%, rgba(214,98,79,0.24), transparent 60%); }
+.hero2-eyebrow{ position:relative; color:var(--gold); font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; }
+.hero2-v{ position:relative; font-family:var(--scoreboard); font-weight:900; font-size:clamp(2.2rem,5.5vw,3.4rem); line-height:0.95; margin:9px 0 6px; color:#fff; text-shadow:0 0 36px rgba(212,180,106,0.3); }
+.hero2-sub{ position:relative; color:var(--text-dim); font-size:0.88rem; }
+.hero2-side{ background:rgba(0,0,0,0.22); border-left:1px solid var(--line); padding:24px 28px; display:flex; flex-direction:column; gap:18px; justify-content:center; }
+@media (max-width:700px){ .hero2-side{ border-left:none; border-top:1px solid var(--line); } }
+.hs{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.hs-l{ color:var(--text-dim); font-size:0.76rem; }
+.hs-r{ text-align:right; }
+.hs-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; color:var(--text); }
+.hs-v.turf{ color:var(--turf); } .hs-v.loss{ color:var(--loss); }
+.hs-n{ color:var(--gold); font-size:0.76rem; font-weight:600; }
+
+/* ---------- Quiet row list (everything that isn't this section's hero) ---------- */
+.qrow{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:14px; padding:12px 18px; border-radius:10px; border:1px solid transparent; }
+.qrow:hover{ background:rgba(255,255,255,0.03); border-color:var(--line); }
+.qrow .rk{ color:var(--text-dim); font-family:var(--scoreboard); font-size:0.95rem; text-align:center; }
+.qrow .nm{ font-weight:600; font-size:0.9rem; }
+.qrow .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:1px; }
+.qrow .rec{ font-family:var(--scoreboard); font-weight:700; font-size:1.05rem; color:var(--text); }
+.qrow .rec.turf{ color:var(--turf); } .qrow .rec.loss{ color:var(--loss); }
+.qrow.top{ background:rgba(79,174,122,0.07); border-color:rgba(79,174,122,0.35); }
+.qrow.top .rk{ color:var(--turf); }
+.qrow.last{ background:rgba(214,98,79,0.07); border-color:rgba(214,98,79,0.35); }
+.qrow.last .rk{ color:var(--loss); }
+.qrow.po .rk{ color:var(--turf); }
+.qrow.former{ opacity:0.55; }
+
+/* ---------- Multi-stat column group (W/L/Win% etc.) ---------- */
+.stats{ display:flex; gap:12px; }
+.stats div{ text-align:center; min-width:34px; }
+.stats div:last-child{ min-width:56px; }
+.stats b{ display:block; font-family:var(--scoreboard); font-size:1.1rem; font-weight:700; font-variant-numeric:tabular-nums; }
+.stats b em{ font-style:normal; }
+.stats span{ font-size:0.58rem; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; }
+
+/* ---------- Pill badge (champion/sacko markers inline with a name) ---------- */
+.badge{ font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:2px 7px; border-radius:999px; border:1px solid; white-space:nowrap; flex:none; line-height:1.4; }
+.badge.gold{ color:var(--gold); border-color:var(--gold); }
+.badge.loss{ color:var(--loss); border-color:var(--loss); }
+
+/* ---------- Quiet tile strip ---------- */
+.qtiles{ display:flex; gap:30px; flex-wrap:wrap; padding:24px 30px; }
+@media (max-width:560px){ .qtiles{ gap:20px; padding:20px; } }
+.qtile-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; color:var(--gold); }
+.qtile-v.turf{ color:var(--turf); } .qtile-v.loss{ color:var(--loss); }
+.qtile-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; }
+
+/* ---------- Dot-rail timeline (Season Timeline, Rule Changes) ---------- */
+.rail{ position:relative; padding-left:22px; }
+.rail::before{ content:''; position:absolute; left:4px; top:4px; bottom:4px; width:1px; background:var(--line); }
+.rail-item{ position:relative; margin-bottom:14px; }
+.rail-item:last-child{ margin-bottom:0; }
+.rail-dot{ position:absolute; left:-22px; top:5px; width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 10px rgba(212,180,106,0.6); }
+.rail-yr{ font-family:var(--scoreboard); font-weight:800; font-size:1rem; color:var(--gold); margin-bottom:6px; }
+.rail-chg{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:0.82rem; margin-top:6px; }
+.rail-chg:first-of-type{ margin-top:0; }
+
+/* ---------- Live pulse (Dashboard, Parlay) ---------- */
+.pulse-dot{ width:7px; height:7px; border-radius:50%; background:var(--loss); animation:pulse 1.6s ease-in-out infinite; display:inline-block; }
+@media (prefers-reduced-motion:reduce){ .pulse-dot{ animation:none; } }
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
 
 .wrap{ max-width: 980px; margin: 0 auto; padding: 0 20px 60px; }
 
@@ -84,6 +168,10 @@ h2{
   padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
+
+.qrow.lead{ background:rgba(212,180,106,0.07); border-color:rgba(212,180,106,0.35); }
+.qrow.lead .rk, .qrow.lead .rec{ color:var(--gold); }
+.gap{ height:14px; }
 
 .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }
 footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
