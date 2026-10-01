@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Lab — Spruce-Up Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=3">
+<style>
+  /* This page is a scratch gallery, not a shipped page -- it is
+     deliberately not linked from nav.html. Each numbered section is a
+     self-contained, independently-styled take on "how could this look,"
+     all working off the same real live-data snapshot so the comparisons
+     are apples to apples. Nothing here is meant to be the final pick;
+     it's raw material to react to later. */
+  body{ padding-bottom: 80px; }
+  .lab-wrap{ max-width: 820px; margin: 0 auto; padding: 28px 20px; }
+  .lab-head{ margin-bottom: 30px; }
+  .lab-head h1{ font-family: var(--scoreboard); font-size: clamp(1.8rem,5vw,2.6rem); margin: 4px 0 6px; }
+  .lab-head p{ color: var(--text-dim); font-size: 0.88rem; max-width: 60ch; line-height: 1.5; }
+  .lab-status{ color: var(--text-dim); font-size: 0.8rem; margin-top: 10px; }
+  .lab-group{ margin: 44px 0 14px; display: flex; align-items: baseline; gap: 12px; }
+  .lab-group h2{ font-family: var(--scoreboard); font-size: 1.3rem; color: var(--gold); margin: 0; }
+  .lab-group .n{ color: var(--text-dim); font-size: 0.8rem; }
+  .lab-sec{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); padding: 20px 22px; margin-bottom: 16px; overflow: hidden; }
+  .lab-sec-h{ display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .lab-num{ font-family: var(--scoreboard); font-weight: 800; color: var(--gold); font-size: 0.95rem; }
+  .lab-title{ font-weight: 700; font-size: 1rem; }
+  .lab-desc{ color: var(--text-dim); font-size: 0.78rem; margin-bottom: 16px; line-height: 1.4; }
+  .lab-demo{ padding-top: 4px; }
+</style>
+</head>
+<body>
+  <div class="lab-wrap">
+    <div class="lab-head">
+      <div class="eyebrow" style="color:var(--gold);font-weight:600;font-size:0.8rem;">Retirement League — scratch page, not linked anywhere</div>
+      <h1>Dashboard Lab</h1>
+      <p>20+ different takes on "how could the median watch (and the rest of the dashboard) look" — all rendered from this week's real numbers so they're a fair comparison. Nothing here is a final answer; it's raw material to come back to.</p>
+      <div class="lab-status" id="status">Loading live data…</div>
+    </div>
+
+    <div class="lab-group"><h2>Median Watch — above/below concepts</h2><span class="n">1–13</span></div>
+    <div id="median-variants"></div>
+
+    <div class="lab-group"><h2>Matchup card concepts</h2><span class="n">14–19</span></div>
+    <div id="matchup-variants"></div>
+
+    <div class="lab-group"><h2>Standings concepts</h2><span class="n">20–24</span></div>
+    <div id="standings-variants"></div>
+
+    <div class="lab-group"><h2>General polish</h2><span class="n">25–27</span></div>
+    <div id="misc-variants"></div>
+  </div>
+
+<script>
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const fmt = n => (Math.round((n || 0) * 10) / 10).toFixed(1);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function sec(container, num, title, desc, html) {
+    const el = document.createElement('div');
+    el.className = 'lab-sec';
+    el.innerHTML = `<div class="lab-sec-h"><span class="lab-num">${num}</span><span class="lab-title">${esc(title)}</span></div>` +
+      `<div class="lab-desc">${esc(desc)}</div><div class="lab-demo">${html}</div>`;
+    container.appendChild(el);
+  }
+
+  // ========================================================================
+  // MEDIAN WATCH VARIANTS -- all take (teams, median) where teams is
+  // [{name, score}, ...] and median is a number. Each is a fully separate
+  // CSS/markup approach, not a palette swap of the same chart.
+  // ========================================================================
+
+  function median1_progressBars(teams, median) {
+    const max = Math.max(...teams.map(t => t.score), median) * 1.08;
+    const rows = teams.map(t => {
+      const pct = Math.min(100, (t.score / max) * 100);
+      const medPct = Math.min(100, (median / max) * 100);
+      const above = t.score >= median;
+      return `<div style="display:grid;grid-template-columns:70px 1fr 56px;align-items:center;gap:10px;margin-top:8px;">
+        <div style="font-size:0.8rem;font-weight:600;">${esc(t.name)}</div>
+        <div style="position:relative;height:10px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:visible;">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:${pct}%;background:${above ? 'var(--turf)' : 'var(--loss)'};border-radius:999px;"></div>
+          <div style="position:absolute;left:${medPct}%;top:-3px;bottom:-3px;width:2px;background:var(--gold);box-shadow:0 0 6px rgba(212,180,106,0.7);"></div>
+        </div>
+        <div style="text-align:right;font-family:var(--scoreboard);font-weight:700;font-size:0.85rem;">${fmt(t.score)}</div>
+      </div>`;
+    }).join('');
+    return `<div>${rows}</div><div style="margin-top:12px;color:var(--text-dim);font-size:0.68rem;">Gold line = median (${fmt(median)})</div>`;
+  }
+
+  function median2_diverging(teams, median) {
+    const maxDelta = Math.max(...teams.map(t => Math.abs(t.score - median)), 1) * 1.1;
+    const rows = teams.slice().sort((a, b) => b.score - a.score).map(t => {
+      const delta = t.score - median;
+      const pct = Math.min(50, (Math.abs(delta) / maxDelta) * 50);
+      const above = delta >= 0;
+      return `<div style="display:grid;grid-template-columns:64px 1fr 60px;align-items:center;gap:8px;margin-top:6px;">
+        <div style="font-size:0.76rem;font-weight:600;text-align:right;">${esc(t.name)}</div>
+        <div style="position:relative;height:16px;">
+          <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);"></div>
+          <div style="position:absolute;top:2px;bottom:2px;border-radius:3px;background:${above ? 'var(--turf)' : 'var(--loss)'};
+            ${above ? `left:50%;width:${pct}%;` : `right:50%;width:${pct}%;`}"></div>
+        </div>
+        <div style="font-family:var(--scoreboard);font-size:0.78rem;font-weight:700;color:${above ? 'var(--turf)' : 'var(--loss)'};">${above ? '+' : ''}${fmt(delta)}</div>
+      </div>`;
+    }).join('');
+    return rows;
+  }
+
+  function median3_radial(teams, median) {
+    const max = Math.max(...teams.map(t => t.score), median) * 1.05 || 1;
+    const items = teams.map(t => {
+      const frac = Math.min(1, t.score / max);
+      const angle = -90 + frac * 180;
+      const above = t.score >= median;
+      const c = 54;
+      return `<div style="display:inline-flex;flex-direction:column;align-items:center;width:92px;margin:6px 4px;">
+        <svg width="80" height="48" viewBox="0 0 80 48">
+          <path d="M 6 44 A 34 34 0 0 1 74 44" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7" stroke-linecap="round"/>
+          <path d="M 6 44 A 34 34 0 0 1 74 44" fill="none" stroke="${above ? 'var(--turf)' : 'var(--loss)'}" stroke-width="7" stroke-linecap="round"
+            stroke-dasharray="${frac * 107} 107"/>
+          <line x1="40" y1="44" x2="${40 + 26 * Math.cos(angle * Math.PI / 180)}" y2="${44 + 26 * Math.sin(angle * Math.PI / 180)}" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <div style="font-size:0.74rem;font-weight:600;margin-top:-6px;">${esc(t.name)}</div>
+        <div style="font-family:var(--scoreboard);font-size:0.8rem;font-weight:700;">${fmt(t.score)}</div>
+      </div>`;
+    }).join('');
+    return `<div style="display:flex;flex-wrap:wrap;justify-content:center;">${items}</div>`;
+  }
+
+  function median4_beeswarm(teams, median) {
+    const min = Math.min(...teams.map(t => t.score), median), max = Math.max(...teams.map(t => t.score), median);
+    const span = (max - min) * 1.15 || 1;
+    const lo = min - span * 0.08;
+    const pctOf = v => Math.min(100, Math.max(0, ((v - lo) / span) * 100));
+    const dots = teams.map(t => `<div title="${esc(t.name)} ${fmt(t.score)}" style="position:absolute;left:${pctOf(t.score)}%;top:50%;width:11px;height:11px;border-radius:50%;
+      transform:translate(-50%,-50%);background:${t.score >= median ? 'var(--turf)' : 'var(--loss)'};border:2px solid var(--surface);box-shadow:0 0 6px rgba(0,0,0,0.5);"></div>`).join('');
+    return `<div style="position:relative;height:60px;background:rgba(255,255,255,0.03);border-radius:10px;">
+      <div style="position:absolute;left:${pctOf(median)}%;top:-6px;bottom:-6px;width:2px;background:var(--gold);box-shadow:0 0 6px rgba(212,180,106,0.6);"></div>
+      ${dots}
+    </div>
+    <div style="display:flex;justify-content:space-between;color:var(--text-dim);font-size:0.68rem;margin-top:6px;"><span>${fmt(lo)}</span><span>Median ${fmt(median)}</span><span>${fmt(lo + span)}</span></div>`;
+  }
+
+  function median5_columns(teams, median) {
+    const sorted = teams.slice().sort((a, b) => b.score - a.score);
+    const max = Math.max(...sorted.map(t => t.score), median) * 1.08 || 1;
+    const medPct = (median / max) * 100;
+    const cols = sorted.map(t => {
+      const h = Math.max(2, (t.score / max) * 100);
+      return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
+        <div style="font-size:0.62rem;color:var(--text-dim);margin-bottom:4px;">${fmt(t.score)}</div>
+        <div style="width:70%;height:120px;display:flex;align-items:flex-end;">
+          <div style="width:100%;height:${h}%;background:${t.score >= median ? 'var(--turf)' : 'var(--loss)'};border-radius:4px 4px 0 0;"></div>
+        </div>
+        <div style="font-size:0.62rem;font-weight:600;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${esc(t.name)}</div>
+      </div>`;
+    }).join('');
+    return `<div style="position:relative;">
+      <div style="position:absolute;left:0;right:0;bottom:${20 + medPct * 1.2}px;height:1px;background:var(--gold);box-shadow:0 0 6px rgba(212,180,106,0.6);"></div>
+      <div style="display:flex;gap:6px;align-items:flex-end;">${cols}</div>
+    </div>`;
+  }
+
+  function median6_ticks(teams, median) {
+    const min = Math.min(...teams.map(t => t.score), median), max = Math.max(...teams.map(t => t.score), median);
+    const span = (max - min) * 1.1 || 1, lo = min - span * 0.05;
+    const pctOf = v => ((v - lo) / span) * 100;
+    const ticks = teams.map(t => `<div style="position:absolute;left:${pctOf(t.score)}%;top:0;bottom:0;width:2px;background:${t.score >= median ? 'var(--turf)' : 'var(--loss)'};"></div>`).join('');
+    return `<div style="position:relative;height:26px;border-bottom:1px solid var(--line);">${ticks}
+      <div style="position:absolute;left:${pctOf(median)}%;top:-4px;bottom:-4px;width:1px;background:var(--gold);"></div>
+    </div>
+    <div style="margin-top:8px;color:var(--text-dim);font-size:0.68rem;">Minimal axis tick row — hover for detail in a real build; median at ${fmt(median)}.</div>`;
+  }
+
+  function median7_donuts(teams, median) {
+    const max = Math.max(...teams.map(t => t.score), median) * 1.05 || 1;
+    const items = teams.map(t => {
+      const frac = Math.min(1, t.score / max);
+      const r = 26, circ = 2 * Math.PI * r;
+      const above = t.score >= median;
+      return `<div style="display:inline-flex;flex-direction:column;align-items:center;width:78px;margin:4px;">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
+          <circle cx="32" cy="32" r="${r}" fill="none" stroke="${above ? 'var(--turf)' : 'var(--loss)'}" stroke-width="6" stroke-linecap="round"
+            stroke-dasharray="${frac * circ} ${circ}" transform="rotate(-90 32 32)"/>
+          <text x="32" y="37" text-anchor="middle" font-size="12" font-weight="700" fill="${above ? '#4FAE7A' : '#D6624F'}">${Math.round(t.score)}</text>
+        </svg>
+        <div style="font-size:0.68rem;font-weight:600;">${esc(t.name)}</div>
+      </div>`;
+    }).join('');
+    return `<div style="display:flex;flex-wrap:wrap;justify-content:center;">${items}</div>`;
+  }
+
+  function median8_ledScoreboard(teams, median) {
+    const rows = teams.slice().sort((a, b) => b.score - a.score).map(t => {
+      const above = t.score >= median;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--line);">
+        <span style="font-size:0.84rem;font-weight:600;">${esc(t.name)}</span>
+        <span style="font-family:var(--scoreboard);font-size:1.3rem;font-weight:800;letter-spacing:0.02em;color:${above ? 'var(--turf)' : 'var(--loss)'};
+          text-shadow:0 0 10px ${above ? 'rgba(79,174,122,0.5)' : 'rgba(214,98,79,0.5)'};">${fmt(t.score)}</span>
+      </div>`;
+    }).join('');
+    return `<div>${rows}</div><div style="margin-top:8px;color:var(--text-dim);font-size:0.68rem;">Scoreboard-LED numerals, no axis at all — just median-relative color.</div>`;
+  }
+
+  function median9_waffle(teams, median) {
+    const max = Math.max(...teams.map(t => t.score), median) * 1.05 || 1;
+    const items = teams.map(t => {
+      const filled = Math.round((t.score / max) * 25);
+      const above = t.score >= median;
+      const cells = Array.from({ length: 25 }, (_, i) => 24 - i).map(i =>
+        `<div style="width:9px;height:9px;border-radius:2px;background:${i < filled ? (above ? 'var(--turf)' : 'var(--loss)') : 'rgba(255,255,255,0.07)'};"></div>`
+      ).join('');
+      return `<div style="display:inline-flex;flex-direction:column;align-items:center;margin:4px 8px;">
+        <div style="display:grid;grid-template-columns:repeat(5,9px);gap:2px;">${cells}</div>
+        <div style="font-size:0.68rem;font-weight:600;margin-top:6px;">${esc(t.name)} · ${fmt(t.score)}</div>
+      </div>`;
+    }).join('');
+    return `<div style="display:flex;flex-wrap:wrap;justify-content:center;">${items}</div>`;
+  }
+
+  function median10_textDelta(teams, median) {
+    const rows = teams.slice().sort((a, b) => (b.score - median) - (a.score - median)).map(t => {
+      const delta = t.score - median;
+      const above = delta >= 0;
+      return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);">
+        <span style="font-weight:600;font-size:0.88rem;">${esc(t.name)}</span>
+        <span style="font-family:var(--scoreboard);font-weight:800;font-size:1rem;color:${above ? 'var(--turf)' : 'var(--loss)'};">${above ? '+' : ''}${fmt(delta)}</span>
+      </div>`;
+    }).join('');
+    return `<div>${rows}</div><div style="margin-top:8px;color:var(--text-dim);font-size:0.68rem;">No chart at all — pure typography, sorted by distance from median.</div>`;
+  }
+
+  function median11_heatStrip(teams, median) {
+    const min = Math.min(...teams.map(t => t.score)), max = Math.max(...teams.map(t => t.score));
+    const span = (max - min) || 1;
+    const sorted = teams.slice().sort((a, b) => a.score - b.score);
+    const segs = sorted.map(t => {
+      const inten = Math.abs(t.score - median) / span;
+      const above = t.score >= median;
+      const color = above ? `rgba(79,174,122,${0.25 + inten * 0.6})` : `rgba(214,98,79,${0.25 + inten * 0.6})`;
+      return `<div style="flex:1;background:${color};display:flex;align-items:center;justify-content:center;min-width:0;" title="${esc(t.name)} ${fmt(t.score)}">
+        <span style="font-size:0.6rem;font-weight:700;writing-mode:vertical-rl;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.6);">${esc(t.name)}</span>
+      </div>`;
+    }).join('');
+    return `<div style="display:flex;height:70px;border-radius:8px;overflow:hidden;gap:1px;">${segs}</div>
+      <div style="margin-top:8px;color:var(--text-dim);font-size:0.68rem;">One continuous heat strip, intensity = distance from median.</div>`;
+  }
+
+  function median12_bracket(teams, median) {
+    const above = teams.filter(t => t.score >= median).sort((a, b) => b.score - a.score);
+    const below = teams.filter(t => t.score < median).sort((a, b) => b.score - a.score);
+    const row = (t, cls) => `<div style="display:flex;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:6px 12px;margin-top:5px;">
+      <span style="font-size:0.82rem;font-weight:600;">${esc(t.name)}</span><span style="font-family:var(--scoreboard);font-weight:700;color:var(--${cls});">${fmt(t.score)}</span></div>`;
+    return `<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;">
+      <div>${above.map(t => row(t, 'turf')).join('')}</div>
+      <div style="writing-mode:vertical-rl;color:var(--gold);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;align-self:center;">Median ${fmt(median)}</div>
+      <div>${below.map(t => row(t, 'loss')).join('')}</div>
+    </div>`;
+  }
+
+  function median13_sparkbars(teams, median) {
+    const max = Math.max(...teams.map(t => t.score), median) * 1.05 || 1;
+    const rows = teams.slice().sort((a, b) => b.score - a.score).map(t => {
+      const pct = (t.score / max) * 100;
+      return `<div style="display:grid;grid-template-columns:62px 1fr 42px;align-items:center;gap:8px;padding:3px 0;">
+        <span style="font-size:0.7rem;color:var(--text-dim);">${esc(t.name)}</span>
+        <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;"><div style="height:100%;width:${pct}%;border-radius:3px;background:${t.score >= median ? 'var(--turf-dim)' : 'rgba(214,98,79,0.5)'};"></div></div>
+        <span style="font-size:0.7rem;text-align:right;font-variant-numeric:tabular-nums;">${fmt(t.score)}</span>
+      </div>`;
+    }).join('');
+    return `<div>${rows}</div><div style="margin-top:6px;color:var(--text-dim);font-size:0.68rem;">Tufte-style sparkbars — tiny, dense, no chrome.</div>`;
+  }
+
+  // ========================================================================
+  // MATCHUP CARD VARIANTS -- take a single matchup object from data.matchups
+  // ========================================================================
+
+  function mu14_colorWash(m) {
+    const awayLead = parseFloat(m.awayScore) >= parseFloat(m.homeScore);
+    return `<div style="border-radius:14px;overflow:hidden;background:linear-gradient(90deg, ${awayLead ? 'rgba(212,180,106,0.18)' : 'rgba(255,255,255,0.03)'} 0%, transparent 48%, ${!awayLead ? 'rgba(212,180,106,0.18)' : 'rgba(255,255,255,0.03)'} 100%), var(--surface-raised);
+      border:1px solid var(--line);padding:18px 20px;display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-weight:700;">${esc(m.awayName)}</div><div style="font-family:var(--scoreboard);font-size:1.8rem;font-weight:800;">${fmt(m.awayScore)}</div></div>
+      <div style="color:var(--text-dim);font-size:0.74rem;font-weight:700;">VS</div>
+      <div style="text-align:right;"><div style="font-weight:700;">${esc(m.homeName)}</div><div style="font-family:var(--scoreboard);font-size:1.8rem;font-weight:800;">${fmt(m.homeScore)}</div></div>
+    </div>`;
+  }
+
+  function mu15_tickerRow(m) {
+    return `<div style="display:flex;align-items:center;gap:10px;background:var(--surface-raised);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-size:0.84rem;">
+      <span style="font-weight:700;flex:1;">${esc(m.awayName)}</span><span style="font-family:var(--scoreboard);font-weight:800;">${fmt(m.awayScore)}</span>
+      <span style="color:var(--text-dim);">—</span>
+      <span style="font-family:var(--scoreboard);font-weight:800;">${fmt(m.homeScore)}</span><span style="font-weight:700;flex:1;text-align:right;">${esc(m.homeName)}</span>
+    </div>`;
+  }
+
+  function mu16_leanBar(m) {
+    const a = m.awayWinProbability ?? 50, h = 100 - a;
+    return `<div style="background:var(--surface-raised);border:1px solid var(--line);border-radius:14px;overflow:hidden;">
+      <div style="display:flex;height:6px;">
+        <div style="width:${a}%;background:var(--turf);"></div><div style="width:${h}%;background:var(--loss);"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:14px 18px;">
+        <div><div style="font-weight:700;">${esc(m.awayName)}</div><div style="color:var(--text-dim);font-size:0.74rem;">${Math.round(a)}% to win</div></div>
+        <div style="text-align:right;"><div style="font-weight:700;">${esc(m.homeName)}</div><div style="color:var(--text-dim);font-size:0.74rem;">${Math.round(h)}% to win</div></div>
+      </div>
+    </div>`;
+  }
+
+  function mu17_scoreboard(m) {
+    return `<div style="background:#000;border:1px solid var(--line);border-radius:10px;padding:18px;text-align:center;font-family:var(--scoreboard);">
+      <div style="display:flex;justify-content:space-around;">
+        <div><div style="font-size:0.78rem;color:var(--text-dim);letter-spacing:0.05em;">${esc(m.awayName).toUpperCase()}</div><div style="font-size:2.4rem;font-weight:800;color:#4FAE7A;text-shadow:0 0 14px rgba(79,174,122,0.6);">${fmt(m.awayScore)}</div></div>
+        <div><div style="font-size:0.78rem;color:var(--text-dim);letter-spacing:0.05em;">${esc(m.homeName).toUpperCase()}</div><div style="font-size:2.4rem;font-weight:800;color:#D4B46A;text-shadow:0 0 14px rgba(212,180,106,0.6);">${fmt(m.homeScore)}</div></div>
+      </div>
+    </div>`;
+  }
+
+  function mu18_quarters(m) {
+    const q = ['Q1', 'Q2', 'Q3', 'Q4', 'F'];
+    return `<div style="background:var(--surface-raised);border:1px solid var(--line);border-radius:14px;padding:16px 18px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-weight:700;">${esc(m.awayName)} <span style="font-family:var(--scoreboard);">${fmt(m.awayScore)}</span></span>
+        <span style="font-weight:700;">${esc(m.homeName)} <span style="font-family:var(--scoreboard);">${fmt(m.homeScore)}</span></span>
+      </div>
+      <div style="display:flex;gap:4px;">${q.map((x, i) => `<div style="flex:1;text-align:center;padding:5px 0;border-radius:4px;background:${i < 2 ? 'rgba(79,174,122,0.18)' : 'rgba(255,255,255,0.04)'};font-size:0.64rem;color:var(--text-dim);">${x}</div>`).join('')}</div>
+    </div>`;
+  }
+
+  function mu19_posterVs(m) {
+    return `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:var(--surface-raised);border:1px solid var(--line);border-radius:14px;overflow:hidden;">
+      <div style="padding:22px;text-align:center;background:linear-gradient(165deg, rgba(212,180,106,0.12), transparent);">
+        <div style="font-family:var(--scoreboard);font-weight:800;font-size:1.1rem;">${esc(m.awayName)}</div>
+        <div style="font-size:2.2rem;font-weight:800;font-family:var(--scoreboard);margin-top:6px;">${fmt(m.awayScore)}</div>
+      </div>
+      <div style="font-family:var(--scoreboard);font-weight:900;color:var(--text-dim);font-size:1.4rem;padding:0 10px;">VS</div>
+      <div style="padding:22px;text-align:center;background:linear-gradient(195deg, rgba(79,174,122,0.12), transparent);">
+        <div style="font-family:var(--scoreboard);font-weight:800;font-size:1.1rem;">${esc(m.homeName)}</div>
+        <div style="font-size:2.2rem;font-weight:800;font-family:var(--scoreboard);margin-top:6px;">${fmt(m.homeScore)}</div>
+      </div>
+    </div>`;
+  }
+
+  // ========================================================================
+  // STANDINGS VARIANTS -- take sorted standings array [{name,pf,rank}]
+  // ========================================================================
+
+  function st20_podium(teams) {
+    const top3 = teams.slice(0, 3), rest = teams.slice(3);
+    const medal = ['🥇', '🥈', '🥉'];
+    return `<div style="display:flex;justify-content:center;gap:10px;align-items:flex-end;margin-bottom:16px;">
+      ${[1, 0, 2].filter(i => top3[i]).map(i => `<div style="text-align:center;width:90px;">
+        <div style="font-size:1.6rem;">${medal[i]}</div>
+        <div style="font-weight:700;font-size:0.8rem;">${esc(top3[i].name)}</div>
+        <div style="font-family:var(--scoreboard);font-weight:800;">${fmt(top3[i].pf)}</div>
+      </div>`).join('')}
+    </div>
+    <div>${rest.map((t, i) => `<div style="display:flex;justify-content:space-between;padding:5px 10px;border-top:1px solid var(--line);"><span style="color:var(--text-dim);">${i + 4}. ${esc(t.name)}</span><span style="font-family:var(--scoreboard);">${fmt(t.pf)}</span></div>`).join('')}</div>`;
+  }
+
+  function st21_cardGrid(teams) {
+    const cards = teams.map((t, i) => `<div style="background:var(--surface-raised);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;">
+      <div style="color:var(--text-dim);font-size:0.62rem;">#${i + 1}</div>
+      <div style="font-weight:700;font-size:0.82rem;margin:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.name)}</div>
+      <div style="font-family:var(--scoreboard);font-weight:800;color:${i < 6 ? 'var(--turf)' : 'var(--loss)'};">${fmt(t.pf)}</div>
+    </div>`).join('');
+    return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;">${cards}</div>`;
+  }
+
+  function st22_trendArrows(teams) {
+    const rows = teams.map((t, i) => {
+      const delta = Math.round((Math.sin(i * 1.7) * 3));
+      const up = delta > 0, flat = delta === 0;
+      const arrow = flat ? '—' : up ? '▲' : '▼';
+      const color = flat ? 'var(--text-dim)' : up ? 'var(--turf)' : 'var(--loss)';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 4px;border-top:1px solid var(--line);">
+        <span style="width:20px;color:var(--text-dim);">${i + 1}</span>
+        <span style="flex:1;font-weight:600;">${esc(t.name)}</span>
+        <span style="color:${color};font-size:0.72rem;width:34px;">${arrow} ${Math.abs(delta) || ''}</span>
+        <span style="font-family:var(--scoreboard);font-weight:700;">${fmt(t.pf)}</span>
+      </div>`;
+    }).join('');
+    return `<div>${rows}</div><div style="margin-top:6px;color:var(--text-dim);font-size:0.66rem;">Sample movement shown — would need last-week rank stored to be real.</div>`;
+  }
+
+  function st23_barRace(teams) {
+    const max = Math.max(...teams.map(t => t.pf)) || 1;
+    const rows = teams.map((t, i) => `<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+      <span style="width:90px;font-size:0.76rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.name)}</span>
+      <div style="flex:1;height:16px;background:rgba(255,255,255,0.05);border-radius:3px;"><div style="height:100%;width:${(t.pf / max) * 100}%;background:linear-gradient(90deg, var(--gold-dim), var(--gold));border-radius:3px;"></div></div>
+      <span style="width:50px;text-align:right;font-family:var(--scoreboard);font-size:0.76rem;">${fmt(t.pf)}</span>
+    </div>`).join('');
+    return rows;
+  }
+
+  function st24_chipCloud(teams) {
+    const max = Math.max(...teams.map(t => t.pf)), min = Math.min(...teams.map(t => t.pf));
+    const chips = teams.map(t => {
+      const scale = 0.8 + ((t.pf - min) / (max - min || 1)) * 0.7;
+      return `<span style="display:inline-block;margin:4px;padding:${6 * scale}px ${14 * scale}px;border-radius:999px;background:rgba(212,180,106,${0.08 + 0.1 * scale});border:1px solid rgba(212,180,106,${0.3 + 0.3 * scale});font-weight:700;font-size:${0.72 * scale}rem;">${esc(t.name)}</span>`;
+    }).join('');
+    return `<div style="text-align:center;">${chips}</div>`;
+  }
+
+  // ========================================================================
+  // MISC POLISH
+  // ========================================================================
+
+  function misc25_statOfDay(teams) {
+    const top = teams[0];
+    return `<div style="background:linear-gradient(135deg, rgba(212,180,106,0.14), transparent);border:1px solid var(--gold);border-radius:14px;padding:20px;text-align:center;">
+      <div style="color:var(--gold);font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">Stat of the moment</div>
+      <div style="font-family:var(--scoreboard);font-size:2.4rem;font-weight:800;margin:6px 0;">${esc(top ? top.name : '—')}</div>
+      <div style="color:var(--text-dim);">leads the league with ${fmt(top ? top.pf : 0)} points for</div>
+    </div>`;
+  }
+
+  function misc26_ledNumerals() {
+    return `<div style="font-family:var(--scoreboard);font-size:3rem;font-weight:800;letter-spacing:0.03em;text-align:center;color:#fff;text-shadow:0 0 18px rgba(212,180,106,0.5), 0 0 2px #fff;">142.68</div>
+      <div style="text-align:center;color:var(--text-dim);font-size:0.74rem;margin-top:4px;">Alternate glow treatment for every big score sitewide, not just leaders.</div>`;
+  }
+
+  function misc27_countdown() {
+    return `<div style="display:flex;align-items:center;justify-content:center;gap:14px;background:var(--surface-raised);border:1px solid var(--line);border-radius:999px;padding:12px 24px;">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--loss);animation:pulse 1.6s ease-in-out infinite;"></span>
+      <span style="font-family:var(--scoreboard);font-weight:800;font-size:1.2rem;">1d 6h 42m</span>
+      <span style="color:var(--text-dim);font-size:0.8rem;">until Thursday kickoff</span>
+    </div>`;
+  }
+
+  // ========================================================================
+  // LOAD + WIRE UP
+  // ========================================================================
+
+  fetch(WORKER_URL, { cache: 'no-store' })
+    .then(res => res.json())
+    .then(data => {
+      const rawTeams = data.teams || [];
+      if (!rawTeams.length) throw new Error('No teams in response');
+      const teams = rawTeams.map(t => ({ name: t.manager || t.name, score: Math.max(t.projected || 0, t.current || 0) }));
+      const sortedScores = teams.map(t => t.score).sort((a, b) => a - b);
+      const mid = Math.floor(sortedScores.length / 2);
+      const median = sortedScores.length % 2 ? sortedScores[mid] : (sortedScores[mid - 1] + sortedScores[mid]) / 2;
+
+      document.getElementById('status').textContent = `Live data loaded — Week ${data.week || '?'}, ${teams.length} teams, median ${fmt(median)}.`;
+
+      const mc = document.getElementById('median-variants');
+      sec(mc, 1, 'Progress bars + median tick', 'Classic horizontal fill bar per team, with a shared gold tick marking the median.', median1_progressBars(teams, median));
+      sec(mc, 2, 'Diverging tornado chart', 'Bars grow left (below) or right (above) from a shared center line at the median.', median2_diverging(teams, median));
+      sec(mc, 3, 'Radial gauges', 'Semi-circle gauge per team, needle position = score as a fraction of the league high.', median3_radial(teams, median));
+      sec(mc, 4, 'Beeswarm on one axis', 'Every team as a dot on one shared horizontal number line — real position, real distance.', median4_beeswarm(teams, median));
+      sec(mc, 5, 'Vertical bar chart', 'Classic column chart, sorted high to low, with a horizontal median line crossing all bars.', median5_columns(teams, median));
+      sec(mc, 6, 'Minimal tick row', 'As stripped-down as it gets — just colored ticks on a line, no labels until hover.', median6_ticks(teams, median));
+      sec(mc, 7, 'Progress donuts', 'A small ring gauge per team instead of a bar — reads well in a tight grid.', median7_donuts(teams, median));
+      sec(mc, 8, 'LED scoreboard list', 'No axis or chart at all — just big glowing scoreboard numerals, colored by above/below.', median8_ledScoreboard(teams, median));
+      sec(mc, 9, 'Waffle / dot-matrix', 'Score represented as a filled-square grid (25 squares = full bar) instead of a continuous fill.', median9_waffle(teams, median));
+      sec(mc, 10, 'Pure typography', 'No graphics — just the delta number itself, sorted, sized and colored to carry the hierarchy.', median10_textDelta(teams, median));
+      sec(mc, 11, 'Continuous heat strip', 'One unbroken bar, segmented by team, color intensity = distance from median.', median11_heatStrip(teams, median));
+      sec(mc, 12, 'Above / below bracket', 'Two explicit columns (above, below) with the median as a vertical divider between them.', median12_bracket(teams, median));
+      sec(mc, 13, 'Tufte sparkbars', 'Very small, dense inline bars — built for scanning many rows fast, minimal chrome.', median13_sparkbars(teams, median));
+
+      const matchups = data.matchups || [];
+      const sampleM = matchups[0] || { awayName: 'Scary Terry', homeName: 'SLIMETIME BABY', awayScore: 106.6, homeScore: 94.5, awayWinProbability: 57 };
+      const mu = document.getElementById('matchup-variants');
+      sec(mu, 14, 'Full-bleed color wash', 'Whole card tinted toward whichever side is leading, instead of a thin border accent.', mu14_colorWash(sampleM));
+      sec(mu, 15, 'Compact ticker row', 'One line per matchup instead of a full card — many more fit on screen at once.', mu15_tickerRow(sampleM));
+      sec(mu, 16, 'Win-probability lean bar', 'A thin two-color bar across the top shows the live win-probability split at a glance.', mu16_leanBar(sampleM));
+      sec(mu, 17, 'Stadium scoreboard', 'High-contrast black scoreboard panel, numerals doing all the work.', mu17_scoreboard(sampleM));
+      sec(mu, 18, 'Quarter-by-quarter strip', 'Small Q1–Q4/Final strip under the score shows how far the game has gotten.', mu18_quarters(sampleM));
+      sec(mu, 19, 'Poster-style VS', 'Each side gets its own tinted panel and a bold center VS, more "fight card" than spreadsheet.', mu19_posterVs(sampleM));
+
+      const standings = (data.teams || []).map(t => ({ name: t.manager || t.name, pf: t.pointsFor || 0 })).sort((a, b) => b.pf - a.pf);
+      const stEl = document.getElementById('standings-variants');
+      sec(stEl, 20, 'Podium + list', 'Top 3 get a medal podium treatment, everyone else is a plain ranked list below.', st20_podium(standings));
+      sec(stEl, 21, 'Card grid', 'Every team is its own small card instead of a row — scans more like a gallery.', st21_cardGrid(standings));
+      sec(stEl, 22, 'Trend arrows', 'Rank movement vs. last week shown as an arrow + delta (sample data — needs history to be real).', st22_trendArrows(standings));
+      sec(stEl, 23, 'Bar race', 'Horizontal bar length encodes points-for directly, sorted descending.', st23_barRace(standings));
+      sec(stEl, 24, 'Size-scaled chip cloud', 'A tag-cloud of team names, sized by points for — playful, not very precise.', st24_chipCloud(standings));
+
+      const miscEl = document.getElementById('misc-variants');
+      sec(miscEl, 25, '"Stat of the moment" banner', 'A single rotating hero fact at the top of the page before any cards.', misc25_statOfDay(standings));
+      sec(miscEl, 26, 'Glowing scoreboard numerals', 'Applying the leader-glow treatment to every big score sitewide, not just the top one.', misc26_ledNumerals());
+      sec(miscEl, 27, 'Countdown pill', 'A persistent pill-shaped countdown to next kickoff, usable in the header or standalone.', misc27_countdown());
+    })
+    .catch(err => {
+      document.getElementById('status').textContent = 'Could not load live data: ' + err.message;
+      console.error(err);
+    });
+</script>
+</body>
+</html>
