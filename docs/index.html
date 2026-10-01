@@ -61,8 +61,8 @@
   }
   .side.leading{ border-top-color: var(--gold); }
   .side.leading.final{ border-top-color: var(--turf); }
-  .side.leading .score{ text-shadow: 0 0 18px rgba(212,180,106,0.35); }
-  .side.leading.final .score{ text-shadow: 0 0 18px rgba(79,174,122,0.35); }
+  .side.leading .score{ text-shadow: 0 0 20px rgba(212,180,106,0.45); }
+  .side.leading.final .score{ text-shadow: 0 0 20px rgba(79,174,122,0.45); }
 
   .side.away{ text-align: left; align-items: flex-start; }
   .side.home{ text-align: right; align-items: flex-end; }
@@ -112,6 +112,10 @@
     font-size: clamp(1.6rem, 8vw, 2.4rem);
     font-variant-numeric: tabular-nums;
     line-height: 1;
+    /* Every score gets a soft ambient glow now, not just the leader's --
+       .side.leading below layers a stronger, colored glow on top of this
+       baseline rather than being the only score that glows at all. */
+    text-shadow: 0 0 14px rgba(255,255,255,0.18);
   }
   .proj{
     color: var(--text-dim);
