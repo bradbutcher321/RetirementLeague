@@ -14,6 +14,7 @@
   .matchups{ display: flex; flex-direction: column; gap: 14px; }
 
   .matchup-card{
+    position: relative;
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -32,8 +33,20 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+  /* A live game gets a faint warm wash across the whole card -- a glance
+     down the list should pick out what's in progress before reading any
+     text. Sits behind everything else (z-index 0), which is why .side /
+     .vs-divider / .matchup-details / .live-indicator below all get
+     z-index 1+. */
+  .matchup-card::before{
+    content: ''; position: absolute; inset: -40%; filter: blur(10px);
+    background: radial-gradient(circle at 50% 10%, rgba(214,98,79,0.22), transparent 60%);
+    pointer-events: none; z-index: 0; opacity: 0; transition: opacity 0.4s ease;
+  }
+  .matchup-card.live::before{ opacity: 1; }
 
   .side{
+    position: relative; z-index: 1;
     padding: 18px 16px;
     display: flex;
     flex-direction: column;
@@ -43,6 +56,8 @@
   }
   .side.leading{ border-top-color: var(--gold); }
   .side.leading.final{ border-top-color: var(--turf); }
+  .side.leading .score{ text-shadow: 0 0 18px rgba(212,180,106,0.35); }
+  .side.leading.final .score{ text-shadow: 0 0 18px rgba(79,174,122,0.35); }
 
   .side.away{ text-align: left; align-items: flex-start; }
   .side.home{ text-align: right; align-items: flex-end; }
@@ -133,6 +148,7 @@
 
   .vs-divider{
     position: relative;
+    z-index: 1;
     padding: 0 8px;
     align-self: stretch;
     display: flex;
@@ -164,13 +180,12 @@
   .matchup-card.expanded .expand-chip .label-collapsed{ display: none; }
   .matchup-card.expanded .expand-chip .label-expanded{ display: inline; }
   .live-indicator{
-    /* Anchored to the top of the divider (independent of the centered VS
-       badge below it) with an opaque background so it fully covers the
-       divider's vertical line instead of the line showing through it. */
+    /* Top-left of the whole card -- a glance down the list should catch
+       "this one's live" before anything else on it. */
     position: absolute;
     top: 14px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 16px;
+    z-index: 2;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -523,7 +538,13 @@
      No text label on it — the actual median value is already shown in
      the card header, and there's no space in this narrow a column to
      print it here without it colliding with the name rows on the line. */
-  .vplot .median-tick{ position: absolute; left: 50%; transform: translateX(-50%); height: 1px; background: var(--gold); z-index: 2; }
+  .vplot .median-tick{ position: absolute; left: 50%; transform: translateX(-50%); height: 1px; background: var(--gold); box-shadow: 0 0 8px rgba(212,180,106,0.7); z-index: 2; }
+  /* Fixed-opacity backdrop marking which half of the plot is above vs.
+     below the median -- not a per-team proportional bar, since its two
+     bands don't scale with any one team's value. */
+  .median-zone-wash{ position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none; }
+  .median-zone-wash.above{ background: linear-gradient(to top, transparent, rgba(79,174,122,0.07)); }
+  .median-zone-wash.below{ background: linear-gradient(to bottom, transparent, rgba(214,98,79,0.07)); }
   /* Background is set inline per-row (solid green/above, solid red/below,
      or a split gradient sized to how many members are on each side of the
      median for a merged row) since it varies per team composition. Width
@@ -994,7 +1015,8 @@
     const expanded = expandedMatchups.has(key);
 
     return `
-      <div class="matchup-card ${expanded ? 'expanded' : ''}" data-key="${encodeURIComponent(key)}">
+      <div class="matchup-card ${expanded ? 'expanded' : ''}${isLive ? ' live' : ''}" data-key="${encodeURIComponent(key)}">
+        ${isLive ? `<span class="live-indicator"><span class="pulse-dot"></span>Live</span>` : ''}
         <div class="side away ${sideClass(!homeLeading)}">
           <div class="team-name">${m.awayName}</div>
           ${metaRow(m.awayManager, m.awayRecord)}
@@ -1007,7 +1029,6 @@
         </div>
         <div class="vs-divider">
           <span class="vs-badge">VS</span>
-          ${isLive ? `<span class="live-indicator"><span class="pulse-dot"></span>Live</span>` : ''}
           <span class="expand-chip">
             <span class="label-collapsed">▾ Expand</span>
             <span class="label-expanded">▴ Collapse</span>
@@ -1195,6 +1216,13 @@
     const GREEN = 'rgba(76,154,107,0.28)';
 
     let html = '';
+    // Soft background wash marking "above" (toward higher scores, top of
+    // the plot) vs "below" the median -- a fixed-opacity backdrop behind
+    // everything else, not a per-team proportional bar, so it reinforces
+    // direction without claiming to encode any one team's distance from it.
+    const medianPct = toTopPct(findMedianTickPos(clusters, median, plotSize));
+    html += `<div class="median-zone-wash above" style="top:0; height:${medianPct}%;"></div>`;
+    html += `<div class="median-zone-wash below" style="top:${medianPct}%; height:${100 - medianPct}%;"></div>`;
     if (zones) {
       if (zones.up !== null) {
         const yUp = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score <= zones.up));
@@ -1206,7 +1234,6 @@
       }
     }
     html += '<div class="axis"></div>';
-    const medianPct = toTopPct(findMedianTickPos(clusters, median, plotSize));
     html += `<div class="median-tick" style="top:${medianPct}%; width:${rowWidth - 2}px;"></div>`;
 
     clusters.forEach(c => {
@@ -1233,7 +1260,11 @@
         .sort((a, b) => b.score - a.score) // highest first = rendered on top
         .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}">${m.name}</span>`)
         .join('');
-      html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor};">${slots}</div>`;
+      // A row that's locked and uniformly on one side of the median gets a
+      // matching glow -- straddling rows skip it, since there's no single
+      // direction to glow toward.
+      const glow = !c.members.some(m => m.locked) ? '' : belowCount === 0 ? 'box-shadow:0 0 14px rgba(76,154,107,0.3);' : aboveCount === 0 ? 'box-shadow:0 0 14px rgba(192,87,75,0.3);' : '';
+      html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${slots}</div>`;
     });
 
     const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
