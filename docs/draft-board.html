@@ -24,6 +24,29 @@
   .legend-chip{ display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: var(--text-dim); }
   .legend-swatch{ width: 10px; height: 10px; border-radius: 2px; }
 
+  .board-toggle{ display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+  .board-toggle button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.82rem; padding: 8px 15px; cursor: pointer; }
+  .board-toggle button:hover{ color: var(--text); }
+  .board-toggle button.on{ background: rgba(212,180,106,0.14); color: var(--gold); }
+
+  /* ---------- Simple "by team" view: one column per manager, picks listed
+     top to bottom, instead of the snake-order grid ---------- */
+  .simple-label{ display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .simple-label::after{ content: ''; flex: 1; height: 1px; background: var(--line); }
+  .simple-board{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .sb-col{ padding: 22px 24px; }
+  .sb-col + .sb-col{ border-left: 1px solid var(--line); }
+  .sb-name{ color: var(--gold); font-weight: 700; font-size: 1.05rem; margin-bottom: 14px; }
+  .sb-pick{ display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .sb-pick:first-of-type{ border-top: none; padding-top: 0; }
+  .sb-badge{ flex-shrink: 0; font-family: var(--scoreboard); font-weight: 800; font-size: 0.64rem; color: #fff; padding: 3px 7px; border-radius: 5px; white-space: nowrap; }
+  .sb-overall{ flex-shrink: 0; color: var(--text-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; width: 30px; }
+  .sb-player{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 720px){
+    .simple-board{ grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .sb-col{ padding: 16px 18px; }
+  }
+
   /* Table width is intrinsic (cell size × column count) so it stays the
      same size across years and only grows wider when a year has more
      teams — never stretched to fill the container. */
@@ -101,6 +124,10 @@
       <div class="selector-row">
         <label class="selector-label" for="year-select">Year</label>
         <select class="board-select" id="year-select" autocomplete="off"></select>
+        <div class="board-toggle" id="view-toggle">
+          <button type="button" class="on" data-view="grid">Grid</button>
+          <button type="button" data-view="simple">By Team</button>
+        </div>
       </div>
       <div class="legend" id="legend"></div>
       <div id="board-container"><div class="loading-row">Loading draft board…</div></div>
@@ -179,7 +206,35 @@
       </div>`;
   }
 
+  // One column per manager, picks listed top to bottom in draft order --
+  // an alternative to the snake-order grid for reading "what did my team
+  // draft" at a glance instead of "who was on the clock when."
+  function renderSimpleBoard(board) {
+    const teamCount = board.team_count;
+    const firstRound = board.rounds[0], lastRound = board.rounds[board.rounds.length - 1];
+    const roundLabel = firstRound === lastRound ? `Round ${firstRound}` : `Rounds ${firstRound}–${lastRound}`;
+    const cols = board.columns.map(c => {
+      const rows = board.rounds.map(r => {
+        const pick = board.grid[r] && board.grid[r][c.slot];
+        if (!pick || !pick.player_name) return '';
+        const pickInRound = pick.overall - (r - 1) * teamCount;
+        const color = POSITION_COLORS[pick.position] || '#8A8A85';
+        return `
+          <div class="sb-pick">
+            <span class="sb-badge" style="background:${color}">${esc(pick.position_rank || pick.position || '')}</span>
+            <span class="sb-overall">${r}.${pickInRound}</span>
+            <span class="sb-player">${esc(pick.player_name)}</span>
+          </div>`;
+      }).join('');
+      return `<div class="sb-col"><div class="sb-name">${esc(c.manager || '')}</div>${rows}</div>`;
+    }).join('');
+    return `<div class="simple-label">${roundLabel}</div><div class="glass simple-board">${cols}</div>`;
+  }
+
   document.getElementById('legend').innerHTML = renderLegend();
+
+  let boardView = 'grid';
+  const viewToggle = document.getElementById('view-toggle');
 
   fetch('data/draft-board.json', { cache: 'no-store' })
     .then(res => res.json())
@@ -190,13 +245,20 @@
 
       function show(year) {
         const board = data.boards[year];
-        document.getElementById('board-container').innerHTML = board
-          ? renderBoard(board)
-          : '<div class="empty-note">No draft data for this year.</div>';
+        document.getElementById('board-container').innerHTML = !board
+          ? '<div class="empty-note">No draft data for this year.</div>'
+          : boardView === 'simple' ? renderSimpleBoard(board) : renderBoard(board);
       }
       sel.value = data.years[0];
       show(sel.value);
       sel.addEventListener('change', () => show(sel.value));
+      viewToggle.addEventListener('click', e => {
+        const btn = e.target.closest('[data-view]');
+        if (!btn) return;
+        boardView = btn.dataset.view;
+        [...viewToggle.children].forEach(b => b.classList.toggle('on', b === btn));
+        show(sel.value);
+      });
     })
     .catch(err => {
       console.error('Draft board data error:', err);
