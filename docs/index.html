@@ -14,15 +14,19 @@
   .matchups{ display: flex; flex-direction: column; gap: 14px; }
 
   .matchup-card{
-    background: var(--surface);
+    background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
     display: grid;
     cursor: pointer;
     /* Each side has a 175px floor instead of shrinking freely, so on a
        narrow phone the card stays laid out side-by-side (never stacks) and
        instead scrolls horizontally within itself — overflow-x lives on this
        same element as the background/border so the background scrolls
-       along with the content instead of leaving a gap. */
+       along with the content instead of leaving a gap. Leaving overflow-y
+       unset (rather than visible) lets the UA promote it to auto so the
+       rounded corners still clip the grid's own square-cornered children. */
     grid-template-columns: minmax(175px, 1fr) auto minmax(175px, 1fr);
     align-items: center;
     overflow-x: auto;
@@ -371,9 +375,10 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: var(--surface);
+    background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
     border-left: 3px solid var(--line);
+    border-radius: 10px;
     padding: 10px 14px;
   }
   .lb-row.playoff{ border-left-color: var(--turf); }
@@ -418,9 +423,11 @@
   @media (max-width: 640px){ .median-grid{ grid-template-columns: 1fr; } }
 
   .median-card{
-    background: var(--surface);
+    background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
     border-top: 3px solid var(--gold);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
     padding: 18px 20px;
   }
   .median-card-header{
@@ -459,7 +466,7 @@
     background: var(--surface-raised);
     border: 1px solid var(--line);
     border-top: 2px solid transparent;
-    border-radius: 4px;
+    border-radius: 8px;
     padding: 7px 9px;
   }
   .mini-card.above{ border-top-color: var(--turf); }
@@ -639,6 +646,8 @@
     background: linear-gradient(165deg, var(--surface-raised), var(--surface));
     border: 1px solid var(--line);
     border-top: 3px solid var(--gold);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
     padding: 30px 22px 24px;
     text-align: center;
     overflow: hidden;
@@ -745,14 +754,14 @@
 
   /* Site activity */
   .act-tiles{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
-  .act-tile{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); padding: 16px 12px; text-align: center; }
+  .act-tile{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 10px; padding: 16px 12px; text-align: center; }
   .act-label{ color: var(--text-dim); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.05em; }
   .act-value{ font-family: var(--scoreboard); font-weight: 800; font-size: 2.4rem; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
   .act-value.live{ color: var(--turf); }
   .act-sub{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
   .act-panels{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 640px){ .act-panels{ grid-template-columns: 1fr; } }
-  .act-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); padding: 14px 16px 8px; }
+  .act-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 10px; padding: 14px 16px 8px; }
   .act-card-title{ font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
   .act-row{ display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 14px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
   .act-row.head{ border-top: none; color: var(--text-dim); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 0 4px; }
