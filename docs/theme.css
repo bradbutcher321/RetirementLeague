@@ -64,8 +64,8 @@ body{
 .hs-n{ color:var(--gold); font-size:0.76rem; font-weight:600; }
 
 /* ---------- Quiet row list (everything that isn't this section's hero) ---------- */
-.qrow{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:14px; padding:12px 18px; border-radius:10px; border:1px solid transparent; }
-.qrow:hover{ background:rgba(255,255,255,0.03); border-color:var(--line); }
+.qrow{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:14px; padding:12px 18px; border-radius:10px; background:rgba(255,255,255,0.025); border:1px solid var(--line); }
+.qrow:hover{ background:rgba(255,255,255,0.045); }
 .qrow .rk{ color:var(--text-dim); font-family:var(--scoreboard); font-size:0.95rem; text-align:center; }
 .qrow .nm{ font-weight:600; font-size:0.9rem; }
 .qrow .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:1px; }
