@@ -882,7 +882,7 @@ def _prop_stat_for_team(team, sport, gametime_iso, player_name, bet_type, requir
 
     team_abbrev = (team_c.get("team") or {}).get("abbreviation")
     team_block = next(
-        (p for p in summary["boxscore"]["players"] if (p.get("team") or {}).get("abbreviation") == team_abbrev),
+        (p for p in (summary.get("boxscore") or {}).get("players", []) if (p.get("team") or {}).get("abbreviation") == team_abbrev),
         None,
     )
     if not team_block:
