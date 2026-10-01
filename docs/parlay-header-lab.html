@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parlay Header Lab — Spruce-Up Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=3">
+<style>
+  /* Scratch gallery, not a shipped page -- not linked from nav. Each
+     numbered section is one self-contained take on the Current Parlay
+     hero card, specifically the sub-line that currently crams
+     "Year · Week N · Killed by X · Sacko: Y" into one uniform gray
+     line -- all working off the real current week's data. */
+  body{ padding-bottom: 80px; }
+  .lab-wrap{ max-width: 720px; margin: 0 auto; padding: 28px 20px; }
+  .lab-head{ margin-bottom: 30px; }
+  .lab-head h1{ font-family: var(--scoreboard); font-size: clamp(1.8rem,5vw,2.6rem); margin: 4px 0 6px; }
+  .lab-head p{ color: var(--text-dim); font-size: 0.88rem; max-width: 60ch; line-height: 1.5; }
+  .lab-status{ color: var(--text-dim); font-size: 0.8rem; margin-top: 10px; }
+  .lab-sec{ margin-bottom: 30px; }
+  .lab-sec-h{ display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .lab-num{ font-family: var(--scoreboard); font-weight: 800; color: var(--gold); font-size: 0.95rem; }
+  .lab-title{ font-weight: 700; font-size: 1rem; }
+  .lab-desc{ color: var(--text-dim); font-size: 0.78rem; margin-bottom: 14px; line-height: 1.4; }
+</style>
+</head>
+<body>
+  <div class="lab-wrap">
+    <div class="lab-head">
+      <div class="eyebrow" style="color:var(--gold);font-weight:600;font-size:0.8rem;">Retirement League — scratch page, not linked anywhere</div>
+      <h1>Parlay Header Lab</h1>
+      <p>Options for the Current Parlay hero card, specifically moving Sacko/Killed-by/Week out of one uniform gray sub-line. All built from this week's real data.</p>
+      <div class="lab-status" id="status">Loading live data…</div>
+    </div>
+    <div id="variants"></div>
+  </div>
+
+<script>
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmtOdds = o => (o == null ? '—' : (o > 0 ? '+' : '') + Math.round(o).toLocaleString());
+  const fmtMoney = n => (n == null ? '—' : '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }));
+
+  function sec(container, num, title, desc, html) {
+    const el = document.createElement('div');
+    el.className = 'lab-sec';
+    el.innerHTML = `<div class="lab-sec-h"><span class="lab-num">${num}</span><span class="lab-title">${esc(title)}</span></div>` +
+      `<div class="lab-desc">${esc(desc)}</div>${html}`;
+    container.appendChild(el);
+  }
+
+  // ========================================================================
+  // All variants take the same `w` shape: { year, week, odds, status,
+  // statusTone, wins, losses, payout, split, killedBy (array), sacko }
+  // ========================================================================
+
+  function v1_coloredInline(w) {
+    const parts = [`${w.year} · Week ${w.week}`];
+    if (w.killedBy.length) parts.push(`<span style="color:var(--loss)">Killed by ${esc(w.killedBy.join(' & '))}</span>`);
+    if (w.sacko) parts.push(`<span style="color:var(--loss)">Sacko: ${esc(w.sacko)}</span>`);
+    return card(w, `<div class="hero2-sub">${parts.join(' <span style="color:var(--text-dim)">·</span> ')}</div>`);
+  }
+
+  function v2_chips(w) {
+    const chips = [`<span class="lchip">${w.year} · Week ${w.week}</span>`];
+    if (w.killedBy.length) chips.push(`<span class="lchip loss">Killed by ${esc(w.killedBy.join(' & '))}</span>`);
+    if (w.sacko) chips.push(`<span class="lchip loss">Sacko: ${esc(w.sacko)}</span>`);
+    return card(w, `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">${chips.join('')}</div>`, true);
+  }
+
+  function v3_sidePanelRows(w) {
+    const extraRows = [];
+    if (w.killedBy.length) extraRows.push(`<div class="hs"><div class="hs-l">Killed By</div><div class="hs-r"><div class="hs-v loss">${esc(w.killedBy.join(' & '))}</div></div></div>`);
+    if (w.sacko) extraRows.push(`<div class="hs"><div class="hs-l">Sacko</div><div class="hs-r"><div class="hs-v loss">${esc(w.sacko)}</div></div></div>`);
+    return card(w, `<div class="hero2-sub">${w.year} · Week ${w.week}</div>`, false, extraRows.join(''));
+  }
+
+  function v4_badgePair(w) {
+    const badges = [];
+    if (w.killedBy.length) badges.push(`<span class="badge loss" style="margin-left:6px">Killed by ${esc(w.killedBy.join(' & '))}</span>`);
+    if (w.sacko) badges.push(`<span class="badge loss" style="margin-left:6px">Sacko: ${esc(w.sacko)}</span>`);
+    return card(w, `<div class="hero2-sub">${w.year} · Week ${w.week}</div>`, false, '', badges.join(''));
+  }
+
+  function v5_epitaph(w) {
+    const dead = w.statusTone === 'loss';
+    const body = dead
+      ? `<div style="margin-top:14px;padding:14px 16px;background:rgba(214,98,79,0.08);border:1px solid rgba(214,98,79,0.3);border-radius:10px;text-align:center;">
+          <div style="color:var(--text-dim);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;">In Memoriam</div>
+          <div style="font-family:var(--scoreboard);font-weight:800;font-size:1.1rem;color:var(--loss);margin-top:4px;">Killed by ${esc(w.killedBy.join(' & ') || 'unknown')}</div>
+          <div style="color:var(--text-dim);font-size:0.78rem;margin-top:2px;">Sacko goes to ${esc(w.sacko || 'TBD')}</div>
+        </div>`
+      : `<div class="hero2-sub">${w.year} · Week ${w.week} · still alive</div>`;
+    return card(w, body);
+  }
+
+  function v6_iconList(w) {
+    const rows = [`<div style="display:flex;align-items:center;gap:6px;color:var(--text-dim);font-size:0.82rem;">📅 ${w.year} · Week ${w.week}</div>`];
+    if (w.killedBy.length) rows.push(`<div style="display:flex;align-items:center;gap:6px;color:var(--loss);font-size:0.82rem;margin-top:4px;">🗡️ Killed by ${esc(w.killedBy.join(' & '))}</div>`);
+    if (w.sacko) rows.push(`<div style="display:flex;align-items:center;gap:6px;color:var(--loss);font-size:0.82rem;margin-top:4px;">💀 Sacko: ${esc(w.sacko)}</div>`);
+    return card(w, rows.join(''));
+  }
+
+  function v7_sackoCallout(w) {
+    const side = w.sacko ? `<div style="text-align:center;">
+        <div style="color:var(--loss);font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Sacko</div>
+        <div style="font-family:var(--scoreboard);font-weight:800;font-size:1.3rem;color:var(--loss);">${esc(w.sacko)}</div>
+      </div>` : '';
+    const html = `
+      <div class="glass" style="display:grid;grid-template-columns:1fr auto;align-items:center;overflow:hidden;">
+        <div class="hero2-main glow" style="padding:30px 28px;">
+          <div class="hero2-eyebrow">Combined Odds</div>
+          <div class="hero2-v">${fmtOdds(w.odds)}</div>
+          <div class="hero2-sub">${w.year} · Week ${w.week}${w.killedBy.length ? ` · <span style="color:var(--loss)">Killed by ${esc(w.killedBy.join(' & '))}</span>` : ''}</div>
+        </div>
+        ${side ? `<div style="padding:0 28px;border-left:1px solid var(--line);">${side}</div>` : ''}
+      </div>`;
+    return html;
+  }
+
+  function v8_narrative(w) {
+    let sentence;
+    if (w.statusTone === 'loss') {
+      sentence = `<span style="color:var(--loss)">Killed by ${esc(w.killedBy.join(' & ') || 'unknown')} in Week ${w.week}</span> — <span style="color:var(--loss)">${esc(w.sacko || 'TBD')}</span> takes the Sacko.`;
+    } else {
+      sentence = `${w.year} Week ${w.week}${w.sacko ? ` · <span style="color:var(--loss)">${esc(w.sacko)}</span> is on track for the Sacko` : ''}`;
+    }
+    return card(w, `<div class="hero2-sub" style="line-height:1.5;">${sentence}</div>`);
+  }
+
+  function v9_boldWithinGray(w) {
+    const parts = [`${w.year} · Week ${w.week}`];
+    if (w.killedBy.length) parts.push(`Killed by <b style="color:var(--text)">${esc(w.killedBy.join(' & '))}</b>`);
+    if (w.sacko) parts.push(`Sacko: <b style="color:var(--text)">${esc(w.sacko)}</b>`);
+    return card(w, `<div class="hero2-sub">${parts.join(' · ')}</div>`);
+  }
+
+  function v10_breadcrumbSplit(w) {
+    const stakes = [];
+    if (w.killedBy.length) stakes.push(`<span style="color:var(--loss);font-weight:700;">Killed by ${esc(w.killedBy.join(' & '))}</span>`);
+    if (w.sacko) stakes.push(`<span style="color:var(--loss);font-weight:700;">Sacko: ${esc(w.sacko)}</span>`);
+    const html = `
+      <div class="glass hero2">
+        <div class="hero2-main glow">
+          <div class="parlay-status">
+            <div class="hero2-eyebrow parlay-eyebrow">Combined Odds</div>
+            <span class="badge ${w.statusTone}">${w.status}</span>
+          </div>
+          <div style="color:var(--text-dim);font-size:0.68rem;margin-top:2px;">${w.year} · Week ${w.week}</div>
+          <div class="hero2-v">${fmtOdds(w.odds)}</div>
+          <div class="hero2-sub" style="font-size:0.85rem;">${stakes.join(' · ') || '&nbsp;'}</div>
+        </div>
+        ${sideHtml(w)}
+      </div>`;
+    return html;
+  }
+
+  function v11_stakesBox(w) {
+    const hasStakes = w.killedBy.length || w.sacko;
+    const box = hasStakes ? `
+      <div style="margin-top:12px;border:1px solid rgba(214,98,79,0.35);border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:14px;background:rgba(214,98,79,0.05);">
+        ${w.killedBy.length ? `<div><div style="color:var(--text-dim);font-size:0.6rem;text-transform:uppercase;">Killed By</div><div style="color:var(--loss);font-weight:700;font-size:0.84rem;">${esc(w.killedBy.join(' & '))}</div></div>` : ''}
+        ${w.sacko ? `<div><div style="color:var(--text-dim);font-size:0.6rem;text-transform:uppercase;">Sacko</div><div style="color:var(--loss);font-weight:700;font-size:0.84rem;">${esc(w.sacko)}</div></div>` : ''}
+      </div>` : '';
+    return card(w, `<div class="hero2-sub">${w.year} · Week ${w.week}</div>${box}`);
+  }
+
+  function v12_pulseDot(w) {
+    const rows = [];
+    if (w.killedBy.length) rows.push(`<div style="display:flex;align-items:center;gap:6px;margin-top:5px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--loss);flex-shrink:0;"></span><span style="color:var(--text);font-size:0.82rem;">Killed by <b>${esc(w.killedBy.join(' & '))}</b></span></div>`);
+    if (w.sacko) rows.push(`<div style="display:flex;align-items:center;gap:6px;margin-top:5px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--loss);flex-shrink:0;"></span><span style="color:var(--text);font-size:0.82rem;">Sacko goes to <b>${esc(w.sacko)}</b></span></div>`);
+    return card(w, `<div class="hero2-sub">${w.year} · Week ${w.week}</div>${rows.join('')}`);
+  }
+
+  // ---- shared card shell -------------------------------------------------
+
+  function sideHtml(w) {
+    return `<div class="hero2-side">
+      <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v turf">${w.wins}</div></div></div>
+      <div class="hs"><div class="hs-l">Legs Lost</div><div class="hs-r"><div class="hs-v loss">${w.losses}</div></div></div>
+      <div class="hs"><div class="hs-l">Payout</div><div class="hs-r"><div class="hs-v">${fmtMoney(w.payout)}</div></div></div>
+      <div class="hs"><div class="hs-l">Split</div><div class="hs-r"><div class="hs-v">${fmtMoney(w.split)}</div></div></div>
+    </div>`;
+  }
+
+  function card(w, subHtml, noStatus, extraSideRows, extraBadges) {
+    return `
+      <div class="glass hero2">
+        <div class="hero2-main glow">
+          <div class="parlay-status">
+            <div class="hero2-eyebrow parlay-eyebrow">Combined Odds</div>
+            ${noStatus ? '' : `<span class="badge ${w.statusTone}">${w.status}</span>`}
+            ${extraBadges || ''}
+          </div>
+          <div class="hero2-v">${fmtOdds(w.odds)}</div>
+          ${subHtml}
+        </div>
+        <div class="hero2-side">
+          <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v turf">${w.wins}</div></div></div>
+          <div class="hs"><div class="hs-l">Legs Lost</div><div class="hs-r"><div class="hs-v loss">${w.losses}</div></div></div>
+          ${extraSideRows || ''}
+          <div class="hs"><div class="hs-l">Payout</div><div class="hs-r"><div class="hs-v">${fmtMoney(w.payout)}</div></div></div>
+          <div class="hs"><div class="hs-l">Split</div><div class="hs-r"><div class="hs-v">${fmtMoney(w.split)}</div></div></div>
+        </div>
+      </div>`;
+  }
+
+  // Small chip used only by v2 -- same visual language as the Season
+  // Timeline chips on Overview, reused here since it already reads well.
+  const style = document.createElement('style');
+  style.textContent = `
+    .lchip{ display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.04); border:1px solid var(--line); border-radius:999px; padding:5px 11px; font-size:0.8rem; color:var(--text); }
+    .lchip.loss{ border-color:rgba(214,98,79,0.4); background:rgba(214,98,79,0.08); color:var(--loss); font-weight:600; }
+  `;
+  document.head.appendChild(style);
+
+  fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
+    .then(res => res.json())
+    .then(data => {
+      const weeks = data.weeks || [];
+      if (!weeks.length) throw new Error('No weeks in response');
+      // Prefer a week that's actually been decided (has a killer/sacko) so
+      // the variants aren't all showing blank Killed-by/Sacko fields --
+      // falls back to the current week if nothing decided exists yet.
+      const decided = [...weeks].reverse().find(wk => wk.killed_by && wk.killed_by.length);
+      const week = decided || weeks[weeks.length - 1];
+      const players = data.players || [];
+      const picks = Object.values(week.picks || {});
+      const wins = picks.filter(p => p.result === 'Win').length;
+      const losses = picks.filter(p => p.result === 'Loss').length;
+      const result = week.final.result;
+      const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Still alive';
+      const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
+
+      const w = {
+        year: week.year, week: week.week, odds: week.final.odds,
+        payout: week.final.payout, split: week.final.split,
+        wins, losses, status, statusTone,
+        killedBy: week.killed_by || [], sacko: week.sacko || '',
+      };
+
+      document.getElementById('status').textContent =
+        `Showing ${w.year} Week ${w.week} (${decided ? 'a decided week' : 'current week'}) — ` +
+        `killed by: ${w.killedBy.join(', ') || 'none'}, sacko: ${w.sacko || 'none'}.`;
+
+      const c = document.getElementById('variants');
+      sec(c, 1, 'Colored inline (minimal fix)', 'Same single sub-line, but Sacko/Killed-by are loss-red instead of the same gray as the week label.', v1_coloredInline(w));
+      sec(c, 2, 'Chips', 'Week, Killed-by and Sacko each become their own small pill instead of one run-on text line.', v2_chips(w));
+      sec(c, 3, 'Promoted into the side stats', 'Killed By and Sacko join Legs Hit/Payout as their own quiet-stat rows instead of being buried in the sub-line.', v3_sidePanelRows(w));
+      sec(c, 4, 'Badge pair next to status', 'Small badges sit right next to the Parlay-dead/alive status badge, grouping all three "what happened" facts together up top.', v4_badgePair(w));
+      sec(c, 5, '"In Memoriam" box', 'When the parlay is dead, Killed-by/Sacko get their own framed, slightly dramatic callout box instead of inline text.', v5_epitaph(w));
+      sec(c, 6, 'Icon-led list', 'Each fact gets a small leading icon (calendar/dagger/skull) and its own line.', v6_iconList(w));
+      sec(c, 7, 'Sacko as a second hero figure', 'Sacko gets promoted to its own glowing headline-sized name in a side panel, same weight class as the odds number.', v7_sackoCallout(w));
+      sec(c, 8, 'Plain-language sentence', 'Reads as one real sentence ("Killed by X in Week N — Y takes the Sacko") instead of fragments stitched with middots.', v8_narrative(w));
+      sec(c, 9, 'Bold within gray (conservative)', 'Keeps everything in the dim sub-line color, just bolds the actual names in full white for contrast -- smallest possible change.', v9_boldWithinGray(w));
+      sec(c, 10, 'Week as a tiny breadcrumb', 'Week/Year shrinks to a breadcrumb above the odds number entirely, freeing the sub-line to be just the Killed-by/Sacko stakes, bold red.', v10_breadcrumbSplit(w));
+      sec(c, 11, 'Framed "stakes" box', 'A bordered red box specifically for Killed By / Sacko, visually set apart like a penalty box, two columns side by side.', v11_stakesBox(w));
+      sec(c, 12, 'Status dot list', 'Each fact gets a small red status dot (like the live-indicator pulse dot elsewhere) instead of color alone carrying the meaning.', v12_pulseDot(w));
+    })
+    .catch(err => {
+      document.getElementById('status').textContent = 'Could not load live data: ' + err.message;
+      console.error(err);
+    });
+</script>
+</body>
+</html>
