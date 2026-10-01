@@ -23,25 +23,22 @@
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; padding:0 18px 20px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
 
+  /* ---------- Season Timeline: one small chip per fact instead of a
+     single line of plain text ---------- */
+  .yr-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .yr-chip{ display:inline-flex; align-items:baseline; gap:5px; background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:0.74rem; color:var(--text); white-space:nowrap; }
+  .yr-chip .l{ color:var(--text-dim); font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; }
+  .yr-chip .m{ font-family:var(--scoreboard); font-weight:700; font-size:0.68rem; color:var(--text-dim); }
+  .yr-chip.gold{ border-color:rgba(212,180,106,0.35); background:rgba(212,180,106,0.07); }
+  .yr-chip.gold .l{ color:var(--gold); }
+  .yr-chip.loss{ border-color:rgba(214,98,79,0.35); background:rgba(214,98,79,0.07); }
+  .yr-chip.loss .l{ color:var(--loss); }
+  .yr-chip.bronze{ border-color:rgba(205,127,50,0.4); background:rgba(205,127,50,0.08); }
+  .yr-chip.bronze .l{ color:#D9A066; }
+
   /* ---------- Streaks: ring the current W/L streak leaders ---------- */
   .qrow.streak-w{ border-color:var(--gold); box-shadow:0 0 0 1.5px var(--gold) inset; }
   .qrow.streak-l{ border-color:var(--loss); box-shadow:0 0 0 1.5px var(--loss) inset; }
-
-  /* ---------- Season Timeline ---------- */
-  .tl-scroll{ overflow-x:auto; padding:22px 24px; }
-  .tl-rail{ display:flex; gap:0; min-width:max-content; position:relative; }
-  .tl-rail::before{ content:''; position:absolute; left:0; right:0; top:40px; height:1px; background:var(--line); z-index:0; }
-  .tl-card{ width:150px; flex-shrink:0; padding:0 8px; position:relative; z-index:1; }
-  .tl-dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); margin:36px auto 10px; box-shadow:0 0 10px rgba(212,180,106,0.6); }
-  .tl-card.progress .tl-dot{ background:var(--text-dim); box-shadow:none; }
-  .tl-year{ text-align:center; font-family:var(--scoreboard); font-weight:800; font-size:1.15rem; color:var(--text-dim); margin-bottom:8px; }
-  .tl-body{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:10px; padding:10px; min-height:70px; }
-  .tl-card.progress .tl-body{ border-style:dashed; }
-  .tl-line{ font-size:0.78rem; margin-bottom:4px; }
-  .tl-line.champ{ color:var(--gold); font-weight:700; }
-  .tl-line.sacko{ color:var(--loss); display:flex; align-items:center; gap:5px; }
-  .tl-sacko-dot{ width:7px; height:7px; border:1px solid var(--loss); border-radius:50%; flex-shrink:0; }
-  .tl-cap{ color:var(--text-dim); font-size:0.68rem; line-height:1.4; margin-top:6px; border-top:1px solid var(--line); padding-top:6px; }
 
   /* ---------- Dynasty Heatmap ---------- */
   .heat-scroll{ overflow-x:auto; padding:22px 24px; }
@@ -104,7 +101,17 @@
   const toneCls = t => (t === 'good' || t === 'up' ? 'turf' : t === 'bad' || t === 'down' ? 'loss' : '');
   const glassCard = (title, body, note) => `<div class="glass"><div style="padding:20px 24px ${note ? '4px' : '16px'}"><div style="font-weight:700;font-size:1rem">${title}</div>${note ? `<div style="color:var(--text-dim);font-size:0.78rem;margin-top:4px">${note}</div>` : ''}</div>${body}</div>`;
 
-  function build(D, F) {
+  function build(D, F, R) {
+    // Payouts are stored as sparse "effective from this year on" snapshots
+    // (see rule-changes.json) rather than one row per season -- resolve to
+    // whichever snapshot was in force as of a given year, same as
+    // rule-changes.html does for its own settings-by-year lookups.
+    const payoutsFor = year => {
+      if (!R || !R.snapshots) return {};
+      const snap = [...R.snapshots].filter(s => s.year <= year).sort((a, b) => b.year - a.year)[0];
+      if (!snap) return {};
+      return Object.fromEntries((snap.payouts || []).map(p => [p.label, p.amount]));
+    };
     const complete = new Set(D.completeYears);
     const done = D.seasons.filter(s => complete.has(s.year));
     const draftPos = (p, y) => (D.draft_order[p] || {})[y];
@@ -269,21 +276,47 @@
 
     // ----- Season Timeline -----
     function timelineHtml() {
-      const champByYear = {}; champs.forEach(c => champByYear[c.year] = c);
-      const sackoByYear = {}; sackos.forEach(s => sackoByYear[s.year] = s);
-      const highByYear = {}; weekly(true).forEach(w => highByYear[w.rank] = w);
-      const cards = D.years.map(y => {
+      const champGameByYear = {}; noBye.filter(g => g.type === 'Champ').forEach(g => champGameByYear[g.year] = g);
+      const sackoGameByYear = {}; noBye.filter(g => g.type === 'Sacko').forEach(g => sackoGameByYear[g.year] = g);
+      const thirdGameByYear = {}; noBye.filter(g => g.type === '3rd').forEach(g => thirdGameByYear[g.year] = g);
+      const secondByYear = {}; done.filter(s => s.final_rank === 2).forEach(s => secondByYear[s.year] = s);
+      const weeklyHighByYear = {}; weekly(true).forEach(w => weeklyHighByYear[w.rank] = w);
+      const seasonHighByYear = {}; seasonPts(true).forEach(w => seasonHighByYear[w.rank] = w);
+
+      const chip = (cls, label, text, amount) =>
+        `<span class="yr-chip${cls ? ' ' + cls : ''}"><span class="l">${label}</span> ${text}${amount ? ` <span class="m">${money(amount)}</span>` : ''}</span>`;
+
+      const items = D.years.slice().reverse().map(y => {
         const isDone = complete.has(y);
-        const c = champByYear[y], s = sackoByYear[y], h = highByYear[y];
-        const body = (isDone && c)
-          ? `<div class="tl-line champ">${esc(c.player)}</div><div class="tl-line sacko"><span class="tl-sacko-dot"></span>${esc(s ? s.player : '—')}</div>`
-          : `<div class="tl-line" style="color:var(--text-dim)">In progress</div>`;
-        const capText = h ? `${h.name} put up ${h.val}, ${h.sub}` : '';
-        return `<div class="tl-card${isDone ? '' : ' progress'}"><div class="tl-year">${y}</div><div class="tl-dot"></div>` +
-          `<div class="tl-body">${body}${capText ? `<div class="tl-cap">${esc(capText)}</div>` : ''}</div></div>`;
+        if (!isDone) {
+          return `<div class="rail-item"><div class="rail-dot"></div><div class="rail-yr">${y}</div><div class="rail-chg">In progress</div></div>`;
+        }
+        const payouts = payoutsFor(y);
+        const chips = [];
+        const cg = champGameByYear[y];
+        if (cg) {
+          const winner = cg.s1 >= cg.s2 ? cg.p1 : cg.p2, loser = cg.s1 >= cg.s2 ? cg.p2 : cg.p1;
+          chips.push(chip('gold', '\u{1F3C6}', `${esc(winner)} def. ${esc(loser)}`, payouts['1st Place']));
+        }
+        if (secondByYear[y]) chips.push(chip('', '2nd', esc(secondByYear[y].player), payouts['2nd Place']));
+        const tg = thirdGameByYear[y];
+        if (tg) {
+          const winner = tg.s1 >= tg.s2 ? tg.p1 : tg.p2, loser = tg.s1 >= tg.s2 ? tg.p2 : tg.p1;
+          chips.push(chip('bronze', '3rd', `${esc(winner)} def. ${esc(loser)}`, payouts['3rd Place']));
+        }
+        const sg = sackoGameByYear[y];
+        if (sg) {
+          const winner = sg.s1 >= sg.s2 ? sg.p1 : sg.p2, loser = sg.s1 >= sg.s2 ? sg.p2 : sg.p1;
+          chips.push(chip('loss', 'Sacko', `${esc(loser)} loses to ${esc(winner)}`));
+        }
+        const wh = weeklyHighByYear[y];
+        if (wh) chips.push(chip('gold', 'Wk High', `${esc(wh.name)} ${wh.val}`, payouts['Highest Points (Week)']));
+        const sh = seasonHighByYear[y];
+        if (sh) chips.push(chip('gold', 'Szn High', `${esc(sh.name)} ${sh.val}`, payouts['Highest Points (Season)']));
+        return `<div class="rail-item"><div class="rail-dot"></div><div class="rail-yr">${y}</div><div class="yr-chips">${chips.join('')}</div></div>`;
       }).join('');
-      return glassCard('Season Timeline', `<div class="tl-scroll"><div class="tl-rail">${cards}</div></div>`,
-        'Champion, Sacko and the season’s top single-game score, one card per year');
+      return glassCard('Season Timeline', `<div style="padding:4px 24px 20px"><div class="rail">${items}</div></div>`,
+        'Championship, runner-up, Sacko and the weekly/season high scores, one year per row');
     }
 
     // ----- Dynasty Heatmap -----
@@ -413,8 +446,12 @@
     if (s) { viewPick[tab] = Number(s.dataset.v); render(); }
   });
 
-  Promise.all([LG.load(), fetch('data/franchise.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)])
-    .then(([D, F]) => { build(D, F); render(); })
+  Promise.all([
+    LG.load(),
+    fetch('data/franchise.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+    fetch('data/rule-changes.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+  ])
+    .then(([D, F, R]) => { build(D, F, R); render(); })
     .catch(err => LG.showError('overview', err));
 </script>
 <script src="track.js?v=1" defer></script>

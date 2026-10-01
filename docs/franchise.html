@@ -24,7 +24,7 @@
   .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
   .card-grid.three{ grid-template-columns: repeat(3, 1fr); }
   @media (max-width: 720px){ .card-grid, .card-grid.three{ grid-template-columns: 1fr; } }
-  .stat-card{ background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gold); }
+  .stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); overflow: hidden; }
   .stat-card-title{ padding: 12px 16px 4px; font-weight: 700; font-size: 0.95rem; }
   .stat-card-body{ padding: 6px 10px 12px; }
   .stack-col{ display: flex; flex-direction: column; gap: 14px; }
@@ -38,7 +38,7 @@
 
   /* ---------- Headline stat cards ---------- */
   .podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-  .pod{ background: var(--surface-raised); border: 1px solid var(--line); padding: 12px 6px; text-align: center; min-width: 0; }
+  .pod{ background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
   .pod.hl{ border-color: var(--gold); }
   .pod.tone-win{ border-color: var(--turf); }
   .pod.tone-loss{ border-color: var(--loss); }
@@ -53,7 +53,7 @@
   /* ---------- Rows ---------- */
   .row{
     display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px;
-    background: var(--surface-raised); border: 1px solid var(--line); padding: 9px 12px; margin-top: 6px; min-height: 58px;
+    background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-top: 6px; min-height: 58px;
   }
   .row-name{ font-weight: 700; font-size: 0.92rem; }
   .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; }
@@ -81,6 +81,8 @@
     position: relative;
     background: linear-gradient(165deg, var(--surface-raised), var(--surface));
     border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
     padding: 22px 20px;
     text-align: center;
   }
@@ -129,7 +131,7 @@
   }
 
   /* ---------- Season history ---------- */
-  .hist-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; align-items: center; gap: 12px; background: var(--surface-raised); border: 1px solid var(--line); border-left: 3px solid transparent; padding: 10px 12px; margin-top: 6px; min-height: 58px; }
+  .hist-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; align-items: center; gap: 12px; background: var(--surface-raised); border: 1px solid var(--line); border-left: 3px solid transparent; border-radius: 10px; padding: 10px 12px; margin-top: 6px; min-height: 58px; }
   .hist-row.champion{ border-left-color: var(--gold); }
   .hist-year{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.25rem; color: var(--text-dim); text-align: center; }
   .hist-team{ font-weight: 700; font-size: 0.95rem; }
@@ -144,7 +146,7 @@
   /* ---------- Achievement shelf ---------- */
   .shelf{ display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
   .shelf:empty{ display: none; }
-  .ach{ position: relative; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 2px; min-height: 76px; }
+  .ach{ position: relative; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; min-height: 76px; overflow: hidden; }
   .ach.flippable{ cursor: pointer; perspective: 800px; }
   .ach-face-static, .ach-face{ padding: 14px 12px; display: flex; gap: 11px; align-items: flex-start; }
   .ach-face-static{ height: 100%; }
@@ -165,7 +167,7 @@
   /* ---------- Season arc ---------- */
   .arc-scroll{ overflow-x: auto; padding-bottom: 6px; }
   .arc{ display: flex; gap: 8px; min-width: max-content; }
-  .arc-tile{ width: 64px; flex-shrink: 0; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 2px; text-align: center; padding: 10px 4px 8px; border-top-width: 3px; border-top-style: solid; }
+  .arc-tile{ width: 64px; flex-shrink: 0; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 8px; text-align: center; padding: 10px 4px 8px; border-top-width: 3px; border-top-style: solid; }
   .arc-tile.champion{ border-top-color: var(--gold); background: rgba(186,155,55,0.08); }
   .arc-tile.runner-up{ border-top-color: var(--gold); }
   .arc-tile.playoffs{ border-top-color: var(--turf); }

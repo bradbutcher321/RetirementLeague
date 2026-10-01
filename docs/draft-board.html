@@ -239,7 +239,7 @@
             <span class="sb-badge" style="background:${color}">${esc(pick.position_rank || pick.position || '')}</span>
             <span class="sb-overall">${r}.${pickInRound}</span>
             <span class="sb-player">${esc(pick.player_name)}</span>
-            <span class="sb-team">${pick.pro_team ? esc(pick.pro_team) : ''}</span>
+            <span class="sb-team">${pick.pro_team ? esc(pick.pro_team) : 'FA'}</span>
           </div>`;
       }).join('');
       return `<div class="sb-col"><div class="sb-name">${esc(c.manager || '')}</div>${rows}</div>`;
