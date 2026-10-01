@@ -97,6 +97,8 @@ body{
 .qtile-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; color:var(--gold); }
 .qtile-v.turf{ color:var(--turf); } .qtile-v.loss{ color:var(--loss); }
 .qtile-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; }
+.qtile-n{ font-weight:600; font-size:0.82rem; margin-top:6px; }
+.qtile-s{ color:var(--text-dim); font-size:0.7rem; margin-top:2px; }
 
 /* ---------- Dot-rail timeline (Season Timeline, Rule Changes) ---------- */
 .rail{ position:relative; padding-left:22px; }

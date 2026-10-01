@@ -361,7 +361,8 @@
       `<div class="hero2-v">${esc(hero.val)}</div><div class="hero2-sub">${esc(hero.name)}${hero.sub ? ' · ' + esc(hero.sub) : ''}</div></div>` +
       `<div class="hero2-side">${side.map(x => `<div class="hs"><div class="hs-l">${esc(x.title)}</div><div class="hs-r">` +
         `<div class="hs-v ${toneCls(x.tone)}">${esc(x.val)}</div><div class="hs-n">${esc(x.name)}</div></div></div>`).join('')}</div></div>`;
-    const tilesRow = `<div class="glass qtiles">${rest.map(x => `<div><div class="qtile-v ${toneCls(x.tone)}">${esc(x.val)}</div><div class="qtile-t">${esc(x.title)}</div></div>`).join('')}</div>`;
+    const tilesRow = `<div class="glass qtiles">${rest.map(x => `<div><div class="qtile-v ${toneCls(x.tone)}">${esc(x.val)}</div><div class="qtile-t">${esc(x.title)}</div>` +
+      `<div class="qtile-n">${esc(x.name)}</div>${x.sub ? `<div class="qtile-s">${esc(x.sub)}</div>` : ''}</div>`).join('')}</div>`;
     return heroHtml + '<div class="gap"></div>' + tilesRow;
   }
 

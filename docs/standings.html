@@ -147,7 +147,7 @@
       `<div class="hero2-side">${side.map(x => `<div class="hs"><div class="hs-l">${x.title}</div><div class="hs-r">` +
         `<div class="hs-v ${toneCls(x.cls)}">${esc(x.name)}</div><div class="hs-n">${esc(x.sub)}</div></div></div>`).join('')}</div></div>`;
     const tilesRow = `<div class="glass qtiles">${rest.map(x => `<div><div class="qtile-v ${toneCls(x.cls)}">${esc(x.name)}</div><div class="qtile-t">${x.title}</div>` +
-      `<div style="color:var(--text-dim);font-size:0.7rem;margin-top:3px">${esc(x.sub)}</div></div>`).join('')}</div>`;
+      `<div class="qtile-s">${esc(x.sub)}</div></div>`).join('')}</div>`;
     return heroHtml + '<div class="gap"></div>' + tilesRow;
   }
 
