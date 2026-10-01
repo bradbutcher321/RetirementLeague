@@ -6,107 +6,79 @@
 <title>Retirement League — Overview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=3">
 <link rel="stylesheet" href="nav.css?v=3">
 <link rel="stylesheet" href="league.css?v=4">
 <style>
-  /* War Room treatment: the page header/nav stay on the site's standard scoreboard
-     font (consistent with every other page); everything below is data-dense and
-     monospace, left-accent cards instead of top-accent, tighter rhythm. */
-  :root{ --mono:'Roboto Mono', monospace; }
-
-  .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); }
+  .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
   @media (max-width:800px){ .hero-grid{ grid-template-columns:1fr 1fr; } }
-  .hero{ background:var(--surface); border-left:2px solid var(--gold); padding:14px 14px; min-width:0; }
-  .hero-t{ color:var(--text-dim); font-size:0.64rem; text-transform:uppercase; letter-spacing:0.05em; min-height:2.2em; }
-  .hero-v{ font-family:var(--mono); font-weight:700; font-size:1.8rem; line-height:1.15; color:var(--gold); margin:6px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+  .hero{ background:var(--surface); border:1px solid var(--line); border-top:3px solid var(--gold); padding:14px 12px; text-align:center; min-width:0; }
+  .hero-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; min-height:2.2em; }
+  .hero-v{ font-family:var(--scoreboard); font-weight:800; font-size:2.2rem; line-height:1.1; color:var(--gold); margin:6px 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .hero-v.good{ color:var(--turf); } .hero-v.bad{ color:var(--loss); }
-  .hero-n{ font-weight:600; font-size:0.86rem; min-height:1.3em; }
-  .hero-s{ color:var(--text-dim); font-size:0.7rem; margin-top:4px; min-height:1.1em; }
+  .hero-n{ font-weight:700; font-size:0.88rem; min-height:1.3em; }
+  .hero-s{ color:var(--text-dim); font-size:0.72rem; margin-top:4px; min-height:1.1em; }
 
   .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-  .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.8rem; font-weight:600; padding:7px 13px; cursor:pointer; }
-  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(186,155,55,0.08); }
+  .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer; }
+  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(186,155,55,0.10); }
   .seg{ display:flex; flex-wrap:wrap; border:1px solid var(--line); margin:4px 16px 8px; width:fit-content; max-width:calc(100% - 32px); }
-  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.76rem; padding:7px 13px; cursor:pointer; }
-  .seg button.on{ background:rgba(186,155,55,0.12); color:var(--gold); }
-  .seg button.on.good{ background:rgba(76,154,107,0.12); color:var(--turf); }
-  .seg button.on.bad{ background:rgba(192,87,75,0.12); color:var(--loss); }
+  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.78rem; padding:7px 14px; cursor:pointer; }
+  .seg button.on{ background:rgba(186,155,55,0.14); color:var(--gold); }
+  .seg button.on.good{ background:rgba(76,154,107,0.14); color:var(--turf); }
+  .seg button.on.bad{ background:rgba(192,87,75,0.14); color:var(--loss); }
 
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
-  .ln{ display:grid; grid-template-columns:28px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); border-left:2px solid var(--gold); padding:8px 11px; margin-top:5px; min-height:50px; }
-  .ln.yr{ grid-template-columns:42px minmax(0,1fr) auto; }
+  .ln{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); border-left:3px solid var(--gold); padding:9px 12px; margin-top:6px; min-height:58px; }
+  .ln.yr{ grid-template-columns:46px minmax(0,1fr) auto; }
   .ln.good{ border-left-color:var(--turf); } .ln.bad{ border-left-color:var(--loss); }
-  .ln .rk{ font-family:var(--mono); font-weight:600; color:var(--text-dim); text-align:center; font-size:0.9rem; }
-  .ln .tm{ font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ln .meta{ color:var(--text-dim); font-size:0.7rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ln.rec{ border-color:var(--gold); background:rgba(186,155,55,0.06); }
-  .ln.rec.good{ border-color:var(--turf); background:rgba(76,154,107,0.06); }
-  .ln.rec.bad{ border-color:var(--loss); background:rgba(192,87,75,0.06); }
+  .ln .rk{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); text-align:center; font-size:1.2rem; }
+  .ln.yr .rk{ font-size:1.05rem; }
+  .ln .tm{ font-weight:700; font-size:0.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ln .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ln.rec{ border-color:var(--gold); background:rgba(186,155,55,0.07); }
+  .ln.rec.good{ border-color:var(--turf); background:rgba(76,154,107,0.07); }
+  .ln.rec.bad{ border-color:var(--loss); background:rgba(192,87,75,0.07); }
   .ln.rec .rk, .ln.rec .val{ color:var(--gold); }
   .ln.rec.good .rk, .ln.rec.good .val{ color:var(--turf); }
   .ln.rec.bad .rk, .ln.rec.bad .val{ color:var(--loss); }
-  .ln.rec .val{ font-size:1.3rem; font-weight:700; }
-  .ln .val{ font-family:var(--mono); font-weight:600; font-size:1.05rem; color:var(--text); font-variant-numeric:tabular-nums; text-align:right; min-width:46px; }
+  .ln.rec .val{ font-size:1.5rem; font-weight:800; }
+  .ln .val{ font-family:var(--scoreboard); font-weight:700; font-size:1.2rem; color:var(--text); font-variant-numeric:tabular-nums; text-align:right; min-width:50px; }
   .ln .val.up{ color:var(--turf); } .ln .val.down{ color:var(--loss); }
-  .stats{ display:flex; gap:10px; }
-  .stats div{ text-align:center; min-width:34px; }
-  .stats b{ display:block; font-family:var(--mono); font-size:0.95rem; font-weight:600; }
+  .stats{ display:flex; gap:12px; }
+  .stats div{ text-align:center; min-width:38px; }
+  .stats b{ display:block; font-family:var(--scoreboard); font-size:1.1rem; font-weight:700; }
   .stats b em{ font-style:normal; }
-  .stats span{ font-size:0.56rem; color:var(--text-dim); letter-spacing:0.03em; text-transform:uppercase; }
-
-  /* ---------- Achievement Leaderboard ---------- */
-  .ach-row{ display:grid; grid-template-columns:24px minmax(0,1fr) 170px 56px; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:0.8rem; }
-  .ach-row:last-child{ border-bottom:none; }
-  .ach-rank{ color:var(--text-dim); font-family:var(--mono); }
-  .ach-name{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ach-ticks{ display:flex; gap:1.5px; flex-wrap:wrap; align-content:center; }
-  .ach-ticks i{ width:4px; height:12px; background:var(--line); flex-shrink:0; }
-  .ach-ticks i.on{ background:var(--gold); }
-  .ach-count{ text-align:right; font-family:var(--mono); font-weight:700; }
-  .ach-count span{ color:var(--text-dim); font-weight:400; }
-  @media (max-width:640px){ .ach-row{ grid-template-columns:20px minmax(0,1fr) 44px; } .ach-ticks{ display:none; } }
-
-  /* ---------- Dynasty Heatmap ---------- */
-  .heat-scroll{ overflow-x:auto; padding-bottom:4px; }
-  .heat-grid{ display:grid; width:max-content; }
-  .heat-name{ position:sticky; left:0; background:var(--surface); font-weight:600; font-size:0.78rem; display:flex; align-items:center; padding-right:8px; border-right:1px solid var(--line); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .heat-yr{ text-align:center; color:var(--text-dim); font-size:0.6rem; padding:4px 0; font-family:var(--mono); }
-  .heat-cell{ margin:1px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:600; font-size:0.68rem; color:var(--text-dim); min-height:26px; border:1px solid var(--line); }
-  .heat-cell.champ{ background:rgba(186,155,55,0.22); color:var(--gold); border-color:var(--gold); }
-  .heat-legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; padding:0 2px; }
-  .heat-legend-item{ display:flex; align-items:center; gap:6px; color:var(--text-dim); font-size:0.72rem; }
-  .heat-swatch{ width:12px; height:12px; border:1px solid var(--line); flex-shrink:0; }
-
-  /* ---------- Power Index ---------- */
-  .pow-row{ margin-bottom:11px; }
-  .pow-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; gap:10px; }
-  .pow-name{ display:flex; align-items:baseline; gap:8px; font-weight:600; font-size:0.88rem; min-width:0; }
-  .pow-name .r{ color:var(--text-dim); font-family:var(--mono); font-size:0.78rem; }
-  .pow-score{ font-family:var(--mono); font-weight:700; font-size:0.95rem; color:var(--gold); white-space:nowrap; }
-  .pow-track{ height:10px; background:var(--surface-raised); border:1px solid var(--line); overflow:hidden; }
-  .pow-fill{ height:100%; background:var(--gold); }
-  .pow-breakdown{ display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
-  .pow-chip{ background:var(--surface-raised); border:1px solid var(--line); padding:3px 8px; font-size:0.66rem; color:var(--text-dim); font-family:var(--mono); }
-  .pow-chip b{ color:var(--text); font-weight:700; }
+  .stats span{ font-size:0.58rem; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; }
 
   /* ---------- Season Timeline ---------- */
   .tl-scroll{ overflow-x:auto; padding:4px 0 8px; }
   .tl-rail{ display:flex; gap:0; min-width:max-content; position:relative; }
   .tl-rail::before{ content:''; position:absolute; left:0; right:0; top:40px; height:1px; background:var(--line); z-index:0; }
   .tl-card{ width:150px; flex-shrink:0; padding:0 8px; position:relative; z-index:1; }
-  .tl-dot{ width:8px; height:8px; background:var(--gold); margin:36px auto 10px; }
+  .tl-dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); margin:36px auto 10px; }
   .tl-card.progress .tl-dot{ background:var(--text-dim); }
-  .tl-year{ text-align:center; font-family:var(--mono); font-weight:700; font-size:0.9rem; color:var(--text-dim); margin-bottom:8px; }
-  .tl-body{ background:var(--surface-raised); border:1px solid var(--line); border-left:2px solid var(--gold); padding:9px; min-height:70px; }
-  .tl-card.progress .tl-body{ border-left-color:var(--line); border-style:dashed; }
-  .tl-line{ font-size:0.74rem; margin-bottom:4px; }
+  .tl-year{ text-align:center; font-family:var(--scoreboard); font-weight:800; font-size:1.15rem; color:var(--text-dim); margin-bottom:8px; }
+  .tl-body{ background:var(--surface-raised); border:1px solid var(--line); border-top:3px solid var(--gold); padding:9px; min-height:70px; }
+  .tl-card.progress .tl-body{ border-top-color:var(--line); border-style:dashed; }
+  .tl-line{ font-size:0.78rem; margin-bottom:4px; }
   .tl-line.champ{ color:var(--gold); font-weight:700; }
   .tl-line.sacko{ color:var(--loss); display:flex; align-items:center; gap:5px; }
-  .tl-sacko-dot{ width:7px; height:7px; border:1px solid var(--loss); flex-shrink:0; }
-  .tl-cap{ color:var(--text-dim); font-size:0.66rem; line-height:1.4; margin-top:6px; border-top:1px solid var(--line); padding-top:6px; }
+  .tl-sacko-dot{ width:7px; height:7px; border:1px solid var(--loss); border-radius:50%; flex-shrink:0; }
+  .tl-cap{ color:var(--text-dim); font-size:0.68rem; line-height:1.4; margin-top:6px; border-top:1px solid var(--line); padding-top:6px; }
+
+  /* ---------- Dynasty Heatmap ---------- */
+  .heat-scroll{ overflow-x:auto; padding-bottom:4px; }
+  .heat-grid{ display:grid; width:max-content; }
+  .heat-name{ position:sticky; left:0; background:var(--surface); font-weight:700; font-size:0.82rem; display:flex; align-items:center; padding-right:8px; border-right:1px solid var(--line); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .heat-yr{ text-align:center; color:var(--text-dim); font-size:0.62rem; padding:4px 0; }
+  .heat-cell{ margin:1px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:0.78rem; color:var(--text-dim); min-height:28px; border:1px solid var(--line); }
+  .heat-cell.champ{ background:rgba(186,155,55,0.22); color:var(--gold); border-color:var(--gold); }
+  .heat-legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; padding:0 2px; }
+  .heat-legend-item{ display:flex; align-items:center; gap:6px; color:var(--text-dim); font-size:0.74rem; }
+  .heat-swatch{ width:12px; height:12px; border:1px solid var(--line); flex-shrink:0; }
 
   /* ---------- Scoring Trends ---------- */
   .sc-chart{ width:100%; height:200px; display:block; }
@@ -114,10 +86,10 @@
   .sc-band{ fill:var(--gold); opacity:0.1; }
   .sc-line{ fill:none; stroke:var(--gold); stroke-width:2; vector-effect:non-scaling-stroke; }
   .sc-dot{ fill:var(--gold); stroke:var(--surface); stroke-width:1.5; vector-effect:non-scaling-stroke; }
-  .sc-axis-label{ fill:var(--text-dim); font-size:9px; font-family:'Roboto Mono',monospace; }
-  .sc-end-label{ fill:var(--text); font-weight:700; font-size:11px; font-family:'Roboto Mono',monospace; }
+  .sc-axis-label{ fill:var(--text-dim); font-size:9px; font-family:'Big Shoulders Display',sans-serif; font-weight:600; }
+  .sc-end-label{ fill:var(--text); font-weight:800; font-size:13px; font-family:'Big Shoulders Display',sans-serif; }
   .sc-annot-line{ stroke:var(--text-dim); stroke-width:1; stroke-dasharray:3 3; }
-  .sc-annot-text{ fill:var(--text-dim); font-size:9px; font-family:'Roboto Mono',monospace; }
+  .sc-annot-text{ fill:var(--text-dim); font-size:9px; font-family:'Inter',sans-serif; }
   .sc-caption{ text-align:center; color:var(--text-dim); font-size:0.76rem; margin-top:6px; }
   .sc-caption b{ color:var(--text); }
 </style>
@@ -227,6 +199,48 @@
       .map(p => ({ name: p.name, sub: `Best ${p.draft.best_position} · Worst ${p.draft.worst_position}`, val: f1(p.draft.avg_position) }))
       .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
 
+    // Reuses the exact badge set the Franchise page's Achievements tab unlocks against, so the
+    // two pages never drift -- see docs/achievements.js.
+    const achievementsView = () => {
+      if (!F) return [];
+      const ctx = { foundingYear: ACHIEVEMENTS_LIB.foundingYear(F.players) };
+      const total = ACHIEVEMENTS_LIB.ACHIEVEMENTS.length;
+      return F.players.map(p => {
+        const n = ACHIEVEMENTS_LIB.unlockedCount(p, ctx);
+        return { name: p.name, sub: `${total - n} locked`, val: n, hl: true };
+      }).sort((a, b) => b.val - a.val);
+    };
+
+    // Composite all-time score blending titles/win%/scoring/efficiency/earnings. Weighted
+    // 35/25/15/15/10; a manager missing a component (e.g. no efficiency data) has it skipped
+    // and the rest reweighted rather than being zeroed out for it.
+    const powerIndexView = () => {
+      if (!F) return [];
+      const base = F.players.map(p => ({
+        name: p.name,
+        titles: p.career.standings.championships || 0,
+        win: p.career.win_rates.reg_pct ?? null,
+        ppg: p.career.points.avg_pf ?? null,
+        eff: (p.efficiency && p.efficiency.career_pct != null) ? p.efficiency.career_pct : null,
+        earn: (p.money && p.money.net_result != null) ? p.money.net_result : null,
+      }));
+      const WEIGHTS = { titles: 35, win: 25, ppg: 15, eff: 15, earn: 10 };
+      const LABELS = { titles: 'Titles', win: 'Win%', ppg: 'PPG', eff: 'Eff', earn: '$' };
+      const normFns = {};
+      Object.keys(WEIGHTS).forEach(key => {
+        const vals = base.map(r => r[key]).filter(v => v != null);
+        const lo = Math.min(...vals), hi = Math.max(...vals);
+        normFns[key] = v => (v == null ? null : (hi === lo ? 100 : (v - lo) / (hi - lo) * 100));
+      });
+      return base.map(r => {
+        const parts = Object.keys(WEIGHTS).map(key => [key, normFns[key](r[key])]).filter(([, v]) => v != null);
+        const totalW = parts.reduce((a, [key]) => a + WEIGHTS[key], 0);
+        const score = totalW ? parts.reduce((a, [key, v]) => a + v * WEIGHTS[key], 0) / totalW : 0;
+        const sub = parts.map(([key, v]) => `${LABELS[key]} ${Math.round(v * WEIGHTS[key] / 100)}`).join(' · ');
+        return { name: r.name, sub, val: score.toFixed(1), hl: true };
+      }).sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
+    };
+
     const streakView = key => {
       if (!F) return [];
       const cur = n => (n > 0 ? `<em style="color:var(--turf)">W${n}</em>` : n < 0 ? `<em style="color:var(--loss)">L${-n}</em>` : '—');
@@ -316,53 +330,6 @@
         'Final standing every season — a run of green is a dynasty, a run of red is a rut');
     }
 
-    // ----- Achievement Leaderboard -----
-    function achievementsHtml() {
-      if (!F) return card('Achievement Leaderboard', '<div class="empty-note">Franchise data not available.</div>');
-      const ctx = { foundingYear: ACHIEVEMENTS_LIB.foundingYear(F.players) };
-      const total = ACHIEVEMENTS_LIB.ACHIEVEMENTS.length;
-      const rows = F.players.map(p => ({ name: p.name, count: ACHIEVEMENTS_LIB.unlockedCount(p, ctx) }))
-        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-      const body = rows.map((r, i) => `<div class="ach-row"><div class="ach-rank">${i + 1}</div><div class="ach-name">${esc(r.name)}</div>` +
-        `<div class="ach-ticks">${Array.from({ length: total }, (_, k) => `<i class="${k < r.count ? 'on' : ''}"></i>`).join('')}</div>` +
-        `<div class="ach-count">${r.count}<span>/${total}</span></div></div>`).join('');
-      return card('Achievement Leaderboard', body, `Ranked by badges unlocked out of ${total} on the Franchise page`);
-    }
-
-    // ----- Power Index -----
-    function powerIndexHtml() {
-      if (!F) return card('Power Index', '<div class="empty-note">Franchise data not available.</div>');
-      const base = F.players.map(p => ({
-        name: p.name,
-        titles: p.career.standings.championships || 0,
-        win: p.career.win_rates.reg_pct ?? null,
-        ppg: p.career.points.avg_pf ?? null,
-        eff: (p.efficiency && p.efficiency.career_pct != null) ? p.efficiency.career_pct : null,
-        earn: (p.money && p.money.net_result != null) ? p.money.net_result : null,
-      }));
-      const WEIGHTS = { titles: 35, win: 25, ppg: 15, eff: 15, earn: 10 };
-      const LABELS = { titles: 'Titles', win: 'Win %', ppg: 'PPG', eff: 'Efficiency', earn: 'Earnings' };
-      const normFns = {};
-      Object.keys(WEIGHTS).forEach(key => {
-        const vals = base.map(r => r[key]).filter(v => v != null);
-        const lo = Math.min(...vals), hi = Math.max(...vals);
-        normFns[key] = v => (v == null ? null : (hi === lo ? 100 : (v - lo) / (hi - lo) * 100));
-      });
-      const rows = base.map(r => {
-        const parts = Object.keys(WEIGHTS).map(key => [key, normFns[key](r[key])]).filter(([, v]) => v != null);
-        const totalW = parts.reduce((a, [key]) => a + WEIGHTS[key], 0);
-        const score = totalW ? parts.reduce((a, [key, v]) => a + v * WEIGHTS[key], 0) / totalW : 0;
-        return { name: r.name, score, parts: parts.map(([key, v]) => [LABELS[key], Math.round(v * WEIGHTS[key] / 100)]) };
-      }).sort((a, b) => b.score - a.score);
-      const maxScore = Math.max(...rows.map(r => r.score));
-      const body = rows.map((r, i) => `<div class="pow-row">` +
-        `<div class="pow-top"><div class="pow-name"><span class="r">${i + 1}</span>${esc(r.name)}</div><div class="pow-score">${r.score.toFixed(1)}</div></div>` +
-        `<div class="pow-track"><div class="pow-fill" style="width:${maxScore ? r.score / maxScore * 100 : 0}%"></div></div>` +
-        `<div class="pow-breakdown">${r.parts.map(([l, v]) => `<div class="pow-chip">${l} <b>${v}</b></div>`).join('')}</div></div>`).join('');
-      return card('Power Index', body,
-        'Composite score blending titles, win%, scoring, lineup efficiency and earnings, weighted 35/25/15/15/10 — a component is skipped and the rest reweighted when a manager has no data for it');
-    }
-
     // ----- Scoring Trends -----
     function scoringTrendHtml() {
       const rows = D.years.map(y => {
@@ -402,13 +369,11 @@
       { label: 'Summary', tiles },
       { label: 'Timeline', html: timelineHtml() },
       { label: 'Dynasty', html: dynastyHtml() },
-      { label: 'Achievements', html: achievementsHtml() },
-      { label: 'Power Index', html: powerIndexHtml() },
       { label: 'Trends', html: scoringTrendHtml() },
       { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true }), V('Title Count', champC, { hl: true }), V('Title Games', titleGames('Champ', true), { year: true })] },
       { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, tone: 'bad' }), V('Sacko Count', sackC, { hl: true, tone: 'bad' }), V('Sacko Games', titleGames('Sacko', false), { year: true, tone: 'bad' })] },
       { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good', pick: 'max' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad', pick: 'min' }), V('Weekly High', weekly(true), { year: true, tone: 'good', pick: 'max' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad', pick: 'min' }), V('Average Median', avgMedian, { year: true, marks: true }), V('Consistency', consistencyView(), { hl: true, note: 'Standard deviation of weekly score — lower is steadier' })] },
-      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true }), V('Draft Position', draftPosView(), { hl: true, note: 'Average first-round draft slot' }), V('Median Luck', medianLuckView(), { hl: true, note: 'How much better or worse a manager\'s record is than their scoring vs. the weekly median alone would suggest' })] },
+      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true }), V('Draft Position', draftPosView(), { hl: true, note: 'Average first-round draft slot' }), V('Median Luck', medianLuckView(), { hl: true, note: 'How much better or worse a manager\'s record is than their scoring vs. the weekly median alone would suggest' }), V('Achievements', achievementsView(), { hl: true, note: `Ranked by badges unlocked out of ${ACHIEVEMENTS_LIB.ACHIEVEMENTS.length} on the Franchise page` }), V('Power Index', powerIndexView(), { hl: true, note: 'Composite score blending titles, win%, scoring, lineup efficiency and earnings, weighted 35/25/15/15/10 — a component is skipped and the rest reweighted when a manager has no data for it' })] },
       { label: 'Efficiency', views: [V('Career Efficiency', effView(), { hl: true, tone: 'good', note: 'Actual points scored as a share of the best possible lineup, since ' + (F ? F.efficiency_start_year : '') }), V('Points Left on Bench', benchView(), { hl: true, note: 'Average points left unstarted per game — lower is more efficient' }), V('Extra Wins Available', extraWinsView(), { hl: true, note: 'Regular season wins an optimal lineup would have added' })] },
       { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { note: 'Head-to-head games only' }), V('With Median', streakView('combined'), { note: 'Includes the weekly median game (2025 onward)' })] },
     ];
