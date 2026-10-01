@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-30T03:53:57.106018+00:00",
+  "generated_at": "2026-10-01T17:55:37.860734+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -190,9 +190,9 @@
       "median_luck": 5.9,
       "money": {
         "total_dues": 1600.0,
-        "net_result": 1350.0,
+        "net_result": 1330.0,
         "total_earnings": 2950.0,
-        "parlays_purchased": 0
+        "parlays_purchased": 20.0
       },
       "season_history": [
         {
@@ -582,8 +582,8 @@
         ]
       },
       "moves": {
-        "total": 379,
-        "avg_per_season": 31.6,
+        "total": 381,
+        "avg_per_season": 31.8,
         "busiest_season": {
           "year": 2019,
           "moves": 78
@@ -3050,8 +3050,8 @@
         ]
       },
       "moves": {
-        "total": 177,
-        "avg_per_season": 17.7,
+        "total": 179,
+        "avg_per_season": 17.9,
         "busiest_season": {
           "year": 2020,
           "moves": 31
@@ -3431,8 +3431,8 @@
         ]
       },
       "moves": {
-        "total": 220,
-        "avg_per_season": 22.0,
+        "total": 221,
+        "avg_per_season": 22.1,
         "busiest_season": {
           "year": 2018,
           "moves": 31
@@ -4456,8 +4456,8 @@
         ]
       },
       "moves": {
-        "total": 153,
-        "avg_per_season": 30.6,
+        "total": 155,
+        "avg_per_season": 31.0,
         "busiest_season": {
           "year": 2022,
           "moves": 46
