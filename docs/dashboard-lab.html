@@ -997,6 +997,13 @@
           const oldMedianValue = oldMode === 'current' ? data.currentMedian : data.projectedMedian;
           const splitValueEl = document.querySelector('#b32-split b');
           if (splitValueEl) tickNumber(splitValueEl, oldMedianValue, medianValue, 1);
+          // The chart's own low/high endcap labels (its axis's min/max, not
+          // a per-team value) -- same tick treatment as everything else.
+          const oldRows = oldMode === 'current' ? curRows : projRows;
+          const lowEl = document.querySelector('#b32-chart .endcap-score.low');
+          const highEl = document.querySelector('#b32-chart .endcap-score.high');
+          if (lowEl) tickNumber(lowEl, oldRows.all[oldRows.all.length - 1].score, rows.all[rows.all.length - 1].score, 1);
+          if (highEl) tickNumber(highEl, oldRows.all[0].score, rows.all[0].score, 1);
         }
         b32CurrentMode = mode;
       }
