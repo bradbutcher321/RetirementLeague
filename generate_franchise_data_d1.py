@@ -135,6 +135,51 @@ def compute_record_and_points(games):
     }, reg
 
 
+def compute_all_play(matchups, team_id_to_player_by_year):
+    """"Power Ranking": for every true-regular-season week (bracket_type
+    'NONE'), compares a player's score against every OTHER player who
+    played that same week -- not just who they were actually matched
+    against -- answering "if you'd played everyone, every week, how
+    would you have done." Summed across a player's whole career (every
+    year, not just MEDIAN_ERA_START_YEAR on -- unlike
+    reg_median_by_year_week below, there's no "median" concept this
+    needs to stay comparable with, so it can use full history).
+    Returns {player: {"w", "l", "t", "pct"}}, pct a normal win
+    percentage with a tie counted as half a win."""
+    by_week = {}
+    for m in matchups:
+        if m["bracket_type"] != "NONE":
+            continue
+        if m["opponent_team_id"] is not None and m["outcome"] is None:
+            continue  # real matchup ESPN hasn't decided yet
+        if m["team_score"] is None:
+            continue
+        player = team_id_to_player_by_year.get((m["year"], m["team_id"]))
+        if not player:
+            continue
+        by_week.setdefault((m["year"], m["week"]), {})[player] = m["team_score"]
+
+    record = {}
+    for wk_scores in by_week.values():
+        entries = list(wk_scores.items())
+        for player, score in entries:
+            r = record.setdefault(player, {"w": 0, "l": 0, "t": 0})
+            for other, other_score in entries:
+                if other == player:
+                    continue
+                if score > other_score:
+                    r["w"] += 1
+                elif score < other_score:
+                    r["l"] += 1
+                else:
+                    r["t"] += 1
+
+    for r in record.values():
+        total = r["w"] + r["l"] + r["t"]
+        r["pct"] = round((r["w"] + r["t"] * 0.5) / total * 100, 1) if total else None
+    return record
+
+
 def compute_median_stats(reg_games_by_year_week, player_reg_games):
     """Median-era (year >= MEDIAN_ERA_START_YEAR) regular-season median
     wins/losses, plus the reg-season win% restricted to the same years so
@@ -580,6 +625,7 @@ def main():
 
     slot_counts_by_year = roster_slot_counts_by_year(league_settings)
     team_week_efficiency = compute_team_week_efficiency(roster_entries, matchups, slot_counts_by_year)
+    all_play = compute_all_play(matchups, team_id_to_player_by_year)
 
     players_out = []
     for player in all_players:
@@ -631,6 +677,7 @@ def main():
             "money": money_block.get(player),
             "season_history": compute_season_history(teams_by_player, games),
             "efficiency": compute_efficiency(team_week_efficiency, team_id_to_player_by_year, player),
+            "all_play": all_play.get(player),
         })
 
     output = {
