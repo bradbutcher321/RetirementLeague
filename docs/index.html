@@ -584,6 +584,7 @@
     border-radius: 4px;
     border: 1px solid var(--line);
     padding: 0;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
   }
   .name-row .slot{
     font-size: 0.62rem;
@@ -594,6 +595,7 @@
     border-radius: 0;
     width: 100%;
     text-align: center;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
   /* Only the outer corners of a (possibly merged) pill are rounded, so a
      locked fill in the middle of a stack is square. */
@@ -677,6 +679,45 @@
     color: var(--text-dim);
     font-size: 0.88rem;
   }
+
+  /* ---------- Median Watch: unified Current/Projected toggle card ---------- */
+  /* Replaces the site-wide thick-top-border-only accent with a thin gold
+     outline on all 4 sides, just for this card. */
+  .median-card.gold-outline{ border: 1px solid var(--gold); }
+  .median-split-label{ text-align: center; color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; margin: 12px 0; padding: 7px 0; }
+  .median-split-label b{ font-family: var(--scoreboard); font-variant-numeric: tabular-nums; margin-left: 6px; }
+  .mw-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+  @media (max-width: 420px){
+    .mw-grid{ grid-template-columns: 1fr; }
+    .median-card:has(#median-toggle-seg) .median-card-header{ flex-wrap: wrap; gap: 8px; align-items: center; }
+  }
+  /* Each team gets its own fully self-contained chip (background/border on
+     .slot itself) instead of sharing one pill per cluster -- see the
+     chipStyle comment on renderSpreadChart. No gap/padding beyond the base
+     .slot, and the border is an inset box-shadow rather than a real
+     border+padding -- neither affects box-model height, so a chip-style row
+     and its settled merged-pill row stay pixel-identical in height and
+     settling never needs to reposition anything. */
+  .name-row.plain-wrap{ background: none; border: none; box-shadow: none; }
+  .slot.slot-chip{ display: block; border-radius: 4px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+  .slot.slot-chip.above{ background: rgba(76,154,107,0.16); box-shadow: inset 0 0 0 1px var(--turf-dim); }
+  .slot.slot-chip.below{ background: rgba(192,87,75,0.16); box-shadow: inset 0 0 0 1px rgba(192,87,75,0.45); }
+  .slot.slot-chip.locked.above{ background: var(--turf); color: #08140d; box-shadow: inset 0 0 0 1px var(--turf); }
+  .slot.slot-chip.locked.below{ background: var(--loss); color: #1a0908; box-shadow: inset 0 0 0 1px var(--loss); }
+  /* chipStyle only: the tick is correctly positioned exactly at a cluster's
+     above/below boundary, but chips sit edge-to-edge with no gap between
+     them, so the line ends up sitting exactly on a chip's own border
+     instead of floating independently. Hidden during the animation and
+     faded back in once settleMedianToMergedPills runs. */
+  .vplot .median-tick.slim{ opacity: 0; }
+  .mb-card{ background: rgba(255,255,255,0.03); border-radius: 8px; padding: 9px 10px; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); }
+  .mb-card.locked{ border-color: var(--gold); }
+  .mb-card .mw-name{ font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .mb-card .mw-score{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; line-height: 1.1; flex-shrink: 0; }
+  .mb-card .mw-stat{ font-size: 0.6rem; white-space: nowrap; display: flex; align-items: center; justify-content: flex-end; margin-top: 1px; }
+  /* Same 0.68s/bounce-adjacent duration as cards+chart sliding into their
+     new spot on toggle. */
+  ::view-transition-group(*){ animation-duration: 0.68s; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
 
   /* ---------- Superlatives ---------- */
   .accolades-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -855,7 +896,7 @@
 
     <section>
       <h2>Median Watch</h2>
-      <div class="median-grid" id="median-container">
+      <div id="median-container">
         <div class="loading-row">Loading median splits…</div>
       </div>
     </section>
@@ -1081,30 +1122,33 @@
   // Status line under each score: locked (result can't change), final (no
   // starters left), or what's still to come. Blank when the NFL game state
   // couldn't be read, so nobody is wrongly shown as finished.
-  function miniStatus(t, cls) {
-    if (!t.statusKnown) return '';
-    if (t.locked) return `<div class="stat lock ${cls}">\u2713 LOCKED ${t.lockedAbove ? 'ABOVE' : 'BELOW'}</div>`;
-    if (t.done) return '<div class="stat">FINAL</div>';
+  function miniStatusText(t) {
+    if (!t.statusKnown) return null;
+    if (t.locked) return { text: `Locked ${t.lockedAbove ? 'above' : 'below'}`, cls: 'locked' };
+    if (t.done) return { text: 'Final', cls: 'final' };
     const toPlay = t.remaining ? `${t.remaining} to play` : '';
-    if (t.inPlay) return `<div class="stat"><span class="live-dot ${cls}"></span><span class="live-txt">${t.inPlay} live</span>${toPlay ? '<span>\u00b7 ' + toPlay + '</span>' : ''}</div>`;
-    return `<div class="stat">${toPlay}</div>`;
+    if (t.inPlay) return { text: `${t.inPlay} live${toPlay ? ' \u00b7 ' + toPlay : ''}`, cls: 'live' };
+    return toPlay ? { text: toPlay, cls: '' } : null;
   }
 
-  function buildMiniGrid(list, cls) {
-    if (!list.length) return '';
-    return `<div class="mini-grid">${list.map(t => `
-      <div class="mini-card ${cls}${t.locked ? ' locked' : ''}">
-        <div class="name">${t.name}</div>
-        <div class="score">${fmtScore(t.score)}</div>
-        ${miniStatus(t, cls)}
-      </div>`).join('')}</div>`;
+  function mwCardHtml(t, tone) {
+    const st = miniStatusText(t);
+    const dot = st && st.cls === 'live' ? '<span class="live-dot" style="margin-right:4px;"></span>' : '';
+    const check = st && st.cls === 'locked' ? '✓ ' : '';
+    const statusColor = st ? (st.cls === 'locked' ? 'var(--gold)' : st.cls === 'live' ? 'var(--loss)' : 'var(--text-dim)') : 'var(--text-dim)';
+    return `<div class="mb-card${st && st.cls === 'locked' ? ' locked' : ''}" data-name="${t.name}">
+      <span class="mw-name">${t.name}</span>
+      <div style="text-align:right;flex-shrink:0;">
+        <div class="mw-score" style="color:var(--${tone});">${fmtScore(t.score)}</div>
+        ${st ? `<div class="mw-stat" style="color:${statusColor};">${dot}${check}${st.text}</div>` : ''}
+      </div>
+    </div>`;
   }
 
-  // Queued by renderMedianCard while building the (synchronous, string-based)
-  // page HTML, then drained right after that HTML is inserted into the DOM —
-  // the chart needs each .vplot's actual rendered height (for collision
-  // math), which only exists once the element is really on the page.
-  let spreadChartJobs = [];
+  function mwGridHtml(list, tone) {
+    return `<div class="mw-grid">${list.map(t => mwCardHtml(t, tone)).join('')}</div>`;
+  }
+
   // Whether the Worker could read NFL game states this refresh; without that
   // every team would look finished, so status and locks stay hidden.
   let medianStatusKnown = false;
@@ -1116,16 +1160,23 @@
   // get it wrong, briefly render one real 1-slot and one real 2-slot row
   // (invisible, off the layout flow) in the actual container and measure
   // them — height of an empty row, and how much each added slot costs.
-  function measurePillHeights(container) {
+  function measurePillHeights(container, chipStyle) {
+    // Must probe with the SAME classes renderSpreadChart actually renders
+    // with -- chipStyle's .slot-chip has its own box-shadow border but no
+    // extra padding/gap (kept exactly height-neutral vs. plain .slot on
+    // purpose), but probing with the wrong markup would still understate
+    // real pill height if that ever changes, and the median tick (placed at
+    // a cluster boundary) is computed from this same size.
     const probe = document.createElement('div');
-    probe.className = 'name-row';
+    probe.className = 'name-row' + (chipStyle ? ' plain-wrap' : '');
     probe.style.visibility = 'hidden';
     probe.style.position = 'absolute';
     probe.style.left = '-9999px';
-    probe.innerHTML = '<span class="slot">Xx</span>';
+    const slotCls = 'slot' + (chipStyle ? ' slot-chip' : '');
+    probe.innerHTML = `<span class="${slotCls}">Xx</span>`;
     container.appendChild(probe);
     const singleHeight = probe.offsetHeight;
-    probe.innerHTML = '<span class="slot">Xx</span><span class="slot">Xx</span>';
+    probe.innerHTML = `<span class="${slotCls}">Xx</span><span class="${slotCls}">Xx</span>`;
     const slotHeight = probe.offsetHeight - singleHeight;
     container.removeChild(probe);
     return { singleHeight, slotHeight };
@@ -1135,16 +1186,17 @@
   // single longest name among this week's teams — measured for real
   // rather than guessed, so there's no leftover margin around shorter
   // names once that longest one is accounted for.
-  function measureMaxRowWidth(container, names) {
+  function measureMaxRowWidth(container, names, chipStyle) {
     const probe = document.createElement('div');
-    probe.className = 'name-row';
+    probe.className = 'name-row' + (chipStyle ? ' plain-wrap' : '');
     probe.style.visibility = 'hidden';
     probe.style.position = 'absolute';
     probe.style.left = '-9999px';
     container.appendChild(probe);
+    const slotCls = 'slot' + (chipStyle ? ' slot-chip' : '');
     let max = 0;
     for (const name of names) {
-      probe.innerHTML = `<span class="slot">${name}</span>`;
+      probe.innerHTML = `<span class="${slotCls}">${name}</span>`;
       max = Math.max(max, probe.offsetWidth);
     }
     container.removeChild(probe);
@@ -1230,12 +1282,12 @@
     return (belowEdge + aboveEdge) / 2;
   }
 
-  function renderSpreadChart(elId, ascendingTeams, median, zones) {
+  function renderSpreadChart(elId, ascendingTeams, median, zones, noWash, chipStyle) {
     const el = document.getElementById(elId);
     if (!el || ascendingTeams.length < 2) return;
     const plotSize = el.clientHeight || 220;
-    const { singleHeight, slotHeight } = measurePillHeights(el);
-    const rowWidth = measureMaxRowWidth(el, ascendingTeams.map(t => t.name)) + 24;
+    const { singleHeight, slotHeight } = measurePillHeights(el, chipStyle);
+    const rowWidth = measureMaxRowWidth(el, ascendingTeams.map(t => t.name), chipStyle) + 24;
     const clusters = computeSpreadClusters(ascendingTeams, plotSize, singleHeight, slotHeight);
     // Highest score renders at the top, so a cluster's axis position (0 =
     // lowest score) maps to "100% minus its share of the plot" for `top`.
@@ -1249,8 +1301,10 @@
     // everything else, not a per-team proportional bar, so it reinforces
     // direction without claiming to encode any one team's distance from it.
     const medianPct = toTopPct(findMedianTickPos(clusters, median, plotSize));
-    html += `<div class="median-zone-wash above" style="top:0; height:${medianPct}%;"></div>`;
-    html += `<div class="median-zone-wash below" style="top:${medianPct}%; height:${100 - medianPct}%;"></div>`;
+    if (!noWash) {
+      html += `<div class="median-zone-wash above" style="top:0; height:${medianPct}%;"></div>`;
+      html += `<div class="median-zone-wash below" style="top:${medianPct}%; height:${100 - medianPct}%;"></div>`;
+    }
     if (zones) {
       if (zones.up !== null) {
         const yUp = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score <= zones.up));
@@ -1262,7 +1316,7 @@
       }
     }
     html += '<div class="axis"></div>';
-    html += `<div class="median-tick" style="top:${medianPct}%; width:${rowWidth - 2}px;"></div>`;
+    html += `<div class="median-tick${chipStyle ? ' slim' : ''}" style="top:${medianPct}%; width:${rowWidth - 2}px;"></div>`;
 
     clusters.forEach(c => {
       const belowCount = c.members.filter(m => m.score < median).length;
@@ -1298,13 +1352,15 @@
       const slots = c.members
         .slice()
         .sort((a, b) => b.score - a.score) // highest first = rendered on top
-        .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}">${m.name}</span>`)
+        .map(m => `<span class="slot${chipStyle ? ' slot-chip' : ''} ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}" data-name="${m.name}">${m.name}</span>`)
         .join('');
       // A row that's locked and uniformly on one side of the median gets a
       // matching glow -- straddling rows skip it, since there's no single
       // direction to glow toward.
       const glow = !c.members.some(m => m.locked) ? '' : belowCount === 0 ? 'box-shadow:0 0 14px rgba(76,154,107,0.3);' : aboveCount === 0 ? 'box-shadow:0 0 14px rgba(192,87,75,0.3);' : '';
-      html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${splitFill}${slots}</div>`;
+      html += chipStyle
+        ? `<div class="name-row plain-wrap" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px;">${slots}</div>`
+        : `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${splitFill}${slots}</div>`;
     });
 
     const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
@@ -1316,7 +1372,7 @@
   // Splits teams by rank (not by literal distance from the median value) so
   // it always yields an even above/below split — 6-and-6 in a 12-team
   // league — even if a couple of scores happen to tie exactly at the median.
-  function renderMedianCard(title, medianValue, teamsSorted, scoreKey, elId, opts = {}) {
+  function computeMedianRows(teamsSorted, medianValue, scoreKey) {
     const half = Math.floor(teamsSorted.length / 2);
     const known = medianStatusKnown;
     const withScore = teamsSorted.map(t => ({
@@ -1339,7 +1395,7 @@
     // The zone lines are drawn on the Current strip only, where the axis is
     // in real scores. The lower line applies to a team that has finished.
     let zones = null;
-    if (opts.locks && known) {
+    if (known) {
       const finished = withScore.filter(m => m.done).map(m => m.cur);
       const upLine = finished.length >= half ? [...finished].sort((a, b) => a - b)[half - 1] : null;
       // Also requires a finished team to exist -- with nobody done yet
@@ -1353,43 +1409,193 @@
         m.lockedBelow = m.done && downLine !== null && m.cur < downLine;
         m.locked = m.lockedAbove || m.lockedBelow;
       });
-      if (opts.zones && (upLine !== null || downLine !== null)) zones = { up: upLine, down: downLine };
+      if (upLine !== null || downLine !== null) zones = { up: upLine, down: downLine };
     }
+    const sorted = withScore.slice().sort((a, b) => b.score - a.score);
+    return { above: sorted.slice(0, half), below: sorted.slice(sorted.length - half), all: sorted, zones };
+  }
 
-    const above = withScore.slice(0, half);
-    const below = withScore.slice(withScore.length - half);
-    spreadChartJobs.push({
-      elId,
-      median: medianValue,
-      ascending: [...withScore].sort((a, b) => a.score - b.score),
-      zones,
+  // ---------- Median Watch: unified Current/Projected toggle card ----------
+  let medianViewMode = 'projected';
+  let lastMedianTeams = null, lastMedianData = null;
+  const mwSlug = name => 'mw-' + name.replace(/[^a-zA-Z0-9]/g, '-');
+
+  function tagMedianTransitionNames() {
+    document.querySelectorAll('#median-above .mb-card, #median-below .mb-card').forEach(el => {
+      el.style.viewTransitionName = 'card-' + mwSlug(el.dataset.name);
     });
-    const legend = known ? `
-        <div class="median-legend">
-          ${opts.locks ? '<span class="k"><span class="sw locked"></span>Locked</span>' : ''}
-          <span class="k"><span style="color:var(--text-dim);font-weight:700">\u2713</span>Final</span>
-          <span class="k"><span class="live-dot"></span>Live</span>
-          ${zones ? '<span class="k" style="color:var(--turf)">\u25B2 Locked Above Score</span><span class="k" style="color:var(--loss)">\u25BC Locked Below Score</span>' : ''}
-        </div>` : '';
-    return `
-      <div class="median-card">
-        <div class="median-card-header">
-          <span class="median-card-title">${title}</span>
-          <span class="median-card-value">${fmtScore(medianValue)}</span>
-        </div>
+    document.querySelectorAll('#median-chart .slot').forEach(el => {
+      el.style.viewTransitionName = 'chart-' + mwSlug(el.dataset.name);
+    });
+  }
+
+  // Re-skins each already-positioned chip-style cluster back into one
+  // shared pill (today's merged look) by reading its composition straight
+  // off the DOM -- no re-layout, nothing moves, only the per-chip borders
+  // dissolve away (see the .slot/.name-row transitions in the CSS).
+  function settleMedianToMergedPills() {
+    const RED = 'rgba(192,87,75,0.28)', GREEN = 'rgba(76,154,107,0.28)';
+    document.querySelectorAll('#median-chart .name-row.plain-wrap').forEach(row => {
+      const slots = Array.from(row.querySelectorAll('.slot'));
+      const belowCount = slots.filter(s => s.classList.contains('below')).length;
+      const aboveCount = slots.length - belowCount;
+      row.querySelectorAll(':scope > .split-fill').forEach(f => f.remove());
+      let background, borderColor;
+      if (belowCount === 0) { background = `linear-gradient(${GREEN}, ${GREEN})`; borderColor = 'var(--turf-dim)'; }
+      else if (aboveCount === 0) { background = `linear-gradient(${RED}, ${RED})`; borderColor = 'rgba(192,87,75,0.5)'; }
+      else {
+        background = 'none';
+        borderColor = 'transparent';
+        const redPct = (belowCount / slots.length) * 100;
+        const greenPct = 100 - redPct;
+        const redFill = document.createElement('div');
+        redFill.className = 'split-fill';
+        redFill.style.cssText = `position:absolute;left:0;right:0;bottom:0;height:${redPct}%;background:${RED};border:1px solid rgba(192,87,75,0.5);border-top:none;border-radius:0 0 3px 3px;`;
+        const greenFill = document.createElement('div');
+        greenFill.className = 'split-fill';
+        greenFill.style.cssText = `position:absolute;left:0;right:0;top:0;height:${greenPct}%;background:${GREEN};border:1px solid var(--turf-dim);border-bottom:none;border-radius:3px 3px 0 0;`;
+        row.prepend(greenFill);
+        row.prepend(redFill);
+      }
+      const anyLocked = slots.some(s => s.classList.contains('locked'));
+      row.style.backgroundImage = background;
+      row.style.borderColor = borderColor;
+      row.style.boxShadow = !anyLocked ? '' : belowCount === 0 ? '0 0 14px rgba(76,154,107,0.3)' : aboveCount === 0 ? '0 0 14px rgba(192,87,75,0.3)' : '';
+      row.classList.remove('plain-wrap');
+      slots.forEach(s => s.classList.remove('slot-chip'));
+    });
+    const tick = document.querySelector('#median-chart .median-tick');
+    if (tick) tick.classList.remove('slim');
+  }
+
+  function tickMwNumber(el, from, to) {
+    if (!el) return;
+    const duration = 680;
+    const fromV = Number(from), toV = Number(to);
+    el.textContent = fromV.toFixed(2);
+    const start = performance.now();
+    function frame(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = (fromV + (toV - fromV) * eased).toFixed(2);
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function medianPendingBodyHtml() {
+    return `<div class="median-pending"><div class="pending-headline" id="kickoff-countdown">\u2014</div><div class="pending-sub">Until Thursday Night Kickoff</div></div>`;
+  }
+
+  // Used for the initial load and every periodic refresh (new data, same or
+  // different mode) -- rebuilds the whole card fresh with no animation at
+  // all, straight to the normal merged-pill look. Toggling mode is the only
+  // thing that animates (see applyMedianUpdate below); a 2-minute data
+  // refresh landing mid-animation would be an awkward collision otherwise.
+  function renderMedianStatic(mode) {
+    const currentHasStarted = lastMedianTeams.some(t => t.current > 0);
+    const toggleHtml = `<div class="sup-seg" id="median-toggle-seg">
+      <button data-mode="current" class="${mode === 'current' ? 'on' : ''}">Current</button>
+      <button data-mode="projected" class="${mode === 'projected' ? 'on' : ''}">Projected</button>
+    </div>`;
+    let bodyHtml, rows = null, medianValue = null;
+    if (mode === 'current' && !currentHasStarted) {
+      bodyHtml = medianPendingBodyHtml();
+    } else {
+      medianValue = mode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
+      const label = mode === 'current' ? 'Current Median' : 'Projected Median';
+      rows = computeMedianRows(lastMedianTeams, medianValue, mode);
+      bodyHtml = `
         <div class="card-body">
           <div>
-            <div class="group-label above">Above Median</div>
-            ${buildMiniGrid(above, 'above')}
-            <div class="group-label below">Below Median</div>
-            ${buildMiniGrid(below, 'below')}
+            <div id="median-above">${mwGridHtml(rows.above, 'turf')}</div>
+            <div class="median-split-label">${label} <b>${fmtScore(medianValue)}</b></div>
+            <div id="median-below">${mwGridHtml(rows.below, 'loss')}</div>
           </div>
-          <div class="spread-col${zones ? ' zoned' : ''}">
-            <div class="vplot${zones ? ' zoned' : ''}" id="${elId}"></div>
+          <div class="spread-col${rows.zones ? ' zoned' : ''}" id="median-spreadcol">
+            <div class="vplot${rows.zones ? ' zoned' : ''}" id="median-chart"></div>
           </div>
-        </div>${legend}
+        </div>`;
+    }
+    document.getElementById('median-container').innerHTML = `
+      <div class="median-card gold-outline">
+        <div class="median-card-header">
+          <span class="median-card-title">Median Watch</span>
+          ${toggleHtml}
+        </div>
+        <div id="median-body">${bodyHtml}</div>
       </div>`;
+    if (rows) renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones);
+    updateKickoffCountdown();
   }
+
+  // Toggle-click path only -- assumes renderMedianStatic has already built
+  // the card shell at least once, and only touches the inner list/chart
+  // pieces + the toggle buttons' active state, same architecture the lab
+  // concept used.
+  function applyMedianUpdate(mode) {
+    const oldMode = medianViewMode;
+    document.querySelectorAll('#median-toggle-seg button').forEach(btn => btn.classList.toggle('on', btn.dataset.mode === mode));
+    const currentHasStarted = lastMedianTeams.some(t => t.current > 0);
+    if (mode === 'current' && !currentHasStarted) {
+      document.getElementById('median-body').innerHTML = medianPendingBodyHtml();
+      updateKickoffCountdown();
+      medianViewMode = mode;
+      return;
+    }
+    const medianValue = mode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
+    const label = mode === 'current' ? 'Current Median' : 'Projected Median';
+    const rows = computeMedianRows(lastMedianTeams, medianValue, mode);
+    document.getElementById('median-body').innerHTML = `
+      <div class="card-body">
+        <div>
+          <div id="median-above"></div>
+          <div class="median-split-label" id="median-split">${label} <b>${fmtScore(medianValue)}</b></div>
+          <div id="median-below"></div>
+        </div>
+        <div class="spread-col" id="median-spreadcol" style="width:88px;">
+          <div class="vplot" id="median-chart"></div>
+        </div>
+      </div>`;
+    document.getElementById('median-above').innerHTML = mwGridHtml(rows.above, 'turf');
+    document.getElementById('median-below').innerHTML = mwGridHtml(rows.below, 'loss');
+    document.getElementById('median-spreadcol').style.width = (rows.zones ? 118 : 88) + 'px';
+    document.getElementById('median-chart').classList.toggle('zoned', !!rows.zones);
+    renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true, true);
+    tagMedianTransitionNames();
+
+    if (oldMode && oldMode !== mode) {
+      document.querySelectorAll('#median-above .mb-card, #median-below .mb-card').forEach(card => {
+        const t = lastMedianTeams.find(x => medianTeamName(x) === card.dataset.name);
+        const scoreEl = card.querySelector('.mw-score');
+        if (t && scoreEl) tickMwNumber(scoreEl, t[oldMode], t[mode]);
+      });
+      const oldMedianValue = oldMode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
+      const splitValueEl = document.querySelector('#median-split b');
+      if (splitValueEl) tickMwNumber(splitValueEl, oldMedianValue, medianValue);
+      const oldRows = computeMedianRows(lastMedianTeams, oldMedianValue, oldMode);
+      const lowEl = document.querySelector('#median-chart .endcap-score.low');
+      const highEl = document.querySelector('#median-chart .endcap-score.high');
+      if (lowEl) tickMwNumber(lowEl, oldRows.all[oldRows.all.length - 1].score, rows.all[rows.all.length - 1].score);
+      if (highEl) tickMwNumber(highEl, oldRows.all[0].score, rows.all[0].score);
+    }
+    medianViewMode = mode;
+  }
+
+  const mwReduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function handleMedianToggle(mode) {
+    if (mode === medianViewMode || !lastMedianTeams) return;
+    if (document.startViewTransition && !mwReduceMotion) {
+      const vt = document.startViewTransition(() => applyMedianUpdate(mode));
+      vt.finished.then(settleMedianToMergedPills).catch(() => {});
+    } else {
+      applyMedianUpdate(mode);
+    }
+  }
+  document.getElementById('median-container').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-mode]');
+    if (btn) handleMedianToggle(btn.dataset.mode);
+  });
 
   // Thursday Night Football kickoff is when this week's scores actually
   // start moving off 0.00, so that's what the pending card counts down to.
@@ -1425,19 +1631,6 @@
 
   // Shown for the Current Score card before Week 1 kicks off, when every
   // team is tied at 0.00 and an above/below split would be meaningless.
-  function renderMedianPendingCard(title) {
-    return `
-      <div class="median-card">
-        <div class="median-card-header">
-          <span class="median-card-title">${title}</span>
-          <span class="median-card-value">—</span>
-        </div>
-        <div class="median-pending">
-          <div class="pending-headline" id="kickoff-countdown">—</div>
-          <div class="pending-sub">Until Thursday Night Kickoff</div>
-        </div>
-      </div>`;
-  }
 
   function fmtPct(n) {
     const num = parseFloat(n);
@@ -1822,27 +2015,14 @@
         renderStandings();
 
         // Before games kick off every team sits at 0.00 — an above/below split
-        // on current score would be meaningless then, so that card shows a
-        // "kickoff hasn't happened yet" placeholder instead of being hidden.
-        // Both cards always render so they sit side-by-side on desktop /
-        // stacked on mobile, the same as when the season is underway.
-        const currentHasStarted = teams.some(t => t.current > 0);
-        const byCurrentDesc = [...teams].sort((a, b) => b.current - a.current);
-        const byProjectedDesc = [...teams].sort((a, b) => b.projected - a.projected);
-
-        spreadChartJobs = [];
+        // on current score would be meaningless then, so Current mode shows
+        // a "kickoff hasn't happened yet" placeholder instead (handled
+        // inside renderMedianStatic/applyMedianUpdate). Projected always
+        // renders normally, pregame or not.
         medianStatusKnown = Boolean(data.medianStatusKnown) && teams.every(t => typeof t.remaining === 'number');
-        const medianHtml =
-          (currentHasStarted
-            ? renderMedianCard('Current Median', data.currentMedian, byCurrentDesc, 'current', 'spread-current', { locks: true, zones: true })
-            : renderMedianPendingCard('Current Median')) +
-          renderMedianCard('Projected Median', data.projectedMedian, byProjectedDesc, 'projected', 'spread-projected', { locks: true, zones: true });
-        document.getElementById('median-container').innerHTML = medianHtml;
-        // Needs the .vplot elements to actually be in the DOM first, so
-        // clientHeight (used for the collision math) reflects their real
-        // rendered height instead of a guessed constant.
-        spreadChartJobs.forEach(job => renderSpreadChart(job.elId, job.ascending, job.median, job.zones));
-        updateKickoffCountdown();
+        lastMedianTeams = teams;
+        lastMedianData = data;
+        renderMedianStatic(medianViewMode);
 
         superlativesData = data;
         renderSuperlatives();
