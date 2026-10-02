@@ -98,6 +98,22 @@ SPORT_ESPN_PATHS = {
         "soccer/fifa.friendly",     # International friendlies -- USA vs Ecuador
         "soccer/fifa.worldq.uefa",  # UEFA World Cup qualifiers -- Netherlands vs Poland
         "soccer/uefa.nations",      # UEFA Nations League -- Portugal vs Denmark
+        # Not tied to a specific pick like the ones above -- added
+        # proactively to cover other major/commonly-bet leagues before a
+        # real pick turns up and fails to match, the same gap the ones
+        # above were each added to close one at a time. Trim this back if
+        # a league here never actually gets picked -- every extra path
+        # tried is a real ESPN request on every gametime search.
+        "soccer/por.1",             # Primeira Liga (Portugal)
+        "soccer/ned.1",             # Eredivisie (Netherlands)
+        "soccer/sco.1",             # Scottish Premiership
+        "soccer/tur.1",             # Super Lig (Turkey)
+        "soccer/bra.1",             # Brasileirao (Brazil)
+        "soccer/arg.1",             # Liga Profesional (Argentina)
+        "soccer/mex.1",             # Liga MX (Mexico)
+        "soccer/conmebol.libertadores",  # Copa Libertadores
+        "soccer/uefa.europa.conf",  # UEFA Europa Conference League
+        "soccer/fifa.worldq.conmebol",  # CONMEBOL World Cup qualifiers
     ],
 }
 
@@ -146,6 +162,24 @@ TEAM_NICKNAMES = {
     # State (shortDisplayName is "Mississippi St", not abbreviated this
     # far) -- confirmed directly against a real picked game.
     "miss st": "mississippi state",
+    # The entries below aren't tied to a specific real pick that failed
+    # (unlike everything above) -- added proactively after the Oct 2026
+    # window-skip bug (see thursday_to_monday_window) turned out to be the
+    # real cause of a run of "unmatched" picks that looked like a coverage
+    # gap. Same reasoning as the confirmed ones though: each is a common
+    # betting-shorthand nickname that isn't a substring of any of ESPN's
+    # own name fields for that team, so without an entry here a pick typed
+    # this way would silently fail to match rather than erroring loudly.
+    "mizzou": "missouri",
+    "usf": "south florida",
+    "vols": "tennessee",
+    "dawgs": "georgia",
+    "zags": "gonzaga",
+    "jmu": "james madison",
+    "fau": "florida atlantic",
+    "fiu": "florida international",
+    "ecu": "east carolina",
+    "hoyas": "georgetown",
 }
 
 # ESPN's team-search endpoint (search_player, below) has turned up stale
@@ -254,11 +288,16 @@ def _nickname_variant(name):
 
 
 def thursday_to_monday_window(today=None):
-    """The upcoming Thursday (today, if today already is one) through the
-    following Monday -- the only days a pick entered Tue-Thu can be for."""
+    """Thursday through the following Monday for whichever of those windows
+    is currently relevant -- the one already in progress if today is Thu-Mon,
+    otherwise the upcoming one (only reachable on a Tue/Wed, the only days a
+    pick is entered before its window has started)."""
     today = today or date.today()
-    days_until_thursday = (3 - today.weekday()) % 7  # Mon=0 .. Sun=6, Thu=3
-    thursday = today + timedelta(days=days_until_thursday)
+    days_since_thursday = (today.weekday() - 3) % 7  # Mon=0 .. Sun=6, Thu=3
+    if days_since_thursday <= 4:  # Thu(0)/Fri(1)/Sat(2)/Sun(3)/Mon(4): window already started
+        thursday = today - timedelta(days=days_since_thursday)
+    else:  # Tue(5)/Wed(6): window hasn't started yet
+        thursday = today + timedelta(days=7 - days_since_thursday)
     monday = thursday + timedelta(days=4)
     days = []
     d = thursday
