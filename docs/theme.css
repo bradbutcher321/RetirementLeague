@@ -62,7 +62,7 @@ body{
 .hs-l{ color:var(--text-dim); font-size:0.76rem; }
 .hs-r{ text-align:right; }
 .hs-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; color:var(--text); }
-.hs-v.turf{ color:var(--turf); } .hs-v.loss{ color:var(--loss); }
+.hs-v.turf{ color:var(--turf); } .hs-v.loss{ color:var(--loss); } .hs-v.gold{ color:var(--gold); }
 .hs-n{ color:var(--gold); font-size:0.76rem; font-weight:600; }
 
 /* ---------- Quiet row list (everything that isn't this section's hero) ---------- */

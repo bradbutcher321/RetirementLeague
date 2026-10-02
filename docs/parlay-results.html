@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=3">
+<link rel="stylesheet" href="theme.css?v=4">
 <link rel="stylesheet" href="nav.css?v=3">
 <style>
   /* ---------- Week selector ---------- */
@@ -59,17 +59,19 @@
   .seg button:hover{ color: var(--text); }
   .seg button.on{ background: rgba(186,155,55,0.14); color: var(--gold); }
 
-  /* ---------- Parlay hero: Legs Hit/Lost as the glowing headline pair,
-     Combined Odds/Payout/Split as quiet side stats, reusing the shared
-     .glass/.hero2/.hs components instead of a row of identically-weighted
-     tiles. ---------- */
-  .parlay-status{ display: flex; align-items: center; gap: 10px; }
-  .parlay-eyebrow{ margin: 0; }
-  /* Two hero2-v's side by side instead of one -- smaller than the usual
-     single-hero size so both fit together without crowding. */
-  .legs-split{ display: flex; gap: 28px; flex-wrap: wrap; }
-  .legs-split .hero2-v{ font-size: clamp(1.8rem, 7vw, 2.6rem); margin: 4px 0 2px; }
-  .legs-split .hero2-sub{ margin: 0; }
+  /* ---------- Parlay hero: Payout as the one glowing headline number,
+     Legs Hit/Lost/Combined Odds/Split as quiet side stats, reusing the
+     shared .glass/.hero2/.hs components instead of a row of
+     identically-weighted tiles. Status is its own corner ribbon, fully
+     detached from the hero number instead of sharing a row with an
+     eyebrow label. ---------- */
+  .status-ribbon{ position: absolute; top: 18px; right: 18px; }
+  .gold-label-xl{ color: var(--gold); font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
+  /* Clears the status ribbon above -- its badge text length varies
+     ("Parlay alive" vs "Parlay dead" vs "Parlay hit"), so the first side
+     row needs guaranteed headroom rather than whatever theme.css's
+     default .hero2-side padding happens to leave. */
+  .hero2-side{ padding-top: 46px; }
 
   .hero-chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
   .hero-chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); }
@@ -306,16 +308,11 @@
     const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Parlay alive';
     const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
     const hero = `
-      <div class="glass hero2">
+      <div class="glass hero2" style="position:relative">
+        <span class="badge status-ribbon ${statusTone}">${status}</span>
         <div class="hero2-main glow">
-          <div class="parlay-status">
-            <div class="hero2-eyebrow parlay-eyebrow">Legs</div>
-            <span class="badge ${statusTone}">${status}</span>
-          </div>
-          <div class="legs-split">
-            <div><div class="hero2-v turf">${wins}</div><div class="hero2-sub">Legs Hit</div></div>
-            <div><div class="hero2-v loss">${losses}</div><div class="hero2-sub">Legs Lost</div></div>
-          </div>
+          <div class="gold-label-xl">Payout</div>
+          <div class="hero2-v">${fmtMoney(week.final.payout)}</div>
           <div class="hero-chips">
             <span class="hero-chip">${esc(week.year)} · Week ${esc(week.week)}</span>
             ${week.sacko ? `<span class="hero-chip loss">Sacko: ${esc(week.sacko)}</span>` : ''}
@@ -327,8 +324,9 @@
           </div>` : ''}
         </div>
         <div class="hero2-side">
+          <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v gold">${wins}</div></div></div>
+          <div class="hs"><div class="hs-l">Legs Lost</div><div class="hs-r"><div class="hs-v${losses > 0 ? ' loss' : ''}">${losses}</div></div></div>
           <div class="hs"><div class="hs-l">Combined Odds</div><div class="hs-r"><div class="hs-v">${fmtOdds(week.final.odds)}</div></div></div>
-          <div class="hs"><div class="hs-l">Payout</div><div class="hs-r"><div class="hs-v">${fmtMoney(week.final.payout)}</div></div></div>
           <div class="hs"><div class="hs-l">Split</div><div class="hs-r"><div class="hs-v">${fmtMoney(week.final.split)}</div></div></div>
         </div>
       </div>`;
