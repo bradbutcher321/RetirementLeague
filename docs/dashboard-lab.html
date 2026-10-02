@@ -67,8 +67,8 @@
   .median-zone-wash{ position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none; }
   .median-zone-wash.above{ background: linear-gradient(to top, transparent, rgba(79,174,122,0.07)); }
   .median-zone-wash.below{ background: linear-gradient(to bottom, transparent, rgba(214,98,79,0.07)); }
-  .name-row{ background-color: var(--surface); position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid var(--line); padding: 0; transition: border-color 0.25s ease, box-shadow 0.25s ease, gap 0.25s ease; }
-  .name-row .slot{ font-size: 0.62rem; font-weight: 700; letter-spacing: 0.01em; line-height: 1.4; border: 1px solid transparent; border-radius: 0; width: 100%; text-align: center; position: relative; transition: background-color 0.25s ease, border-color 0.25s ease, padding 0.25s ease; }
+  .name-row{ background-color: var(--surface); position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid var(--line); padding: 0; transition: border-color 0.25s ease, box-shadow 0.25s ease; }
+  .name-row .slot{ font-size: 0.62rem; font-weight: 700; letter-spacing: 0.01em; line-height: 1.4; border: 1px solid transparent; border-radius: 0; width: 100%; text-align: center; position: relative; transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; }
   .name-row .slot:first-child{ border-top-left-radius: 3px; border-top-right-radius: 3px; }
   .name-row .slot:last-child{ border-bottom-left-radius: 3px; border-bottom-right-radius: 3px; }
   .name-row .slot.live::before{ content: ''; position: absolute; left: 4px; top: 50%; margin-top: -2.5px; width: 5px; height: 5px; border-radius: 50%; background: var(--loss); --pc: 192,87,75; animation: live-pulse 1.6s infinite; }
@@ -105,15 +105,25 @@
      rules come after the base .name-row/.slot ones above so they win the
      cascade (same specificity, later wins) on the handful that collide,
      like :first-child/:last-child's corner-rounding. */
-  .name-row.plain-wrap{ background: none; border: none; box-shadow: none; gap: 3px; }
+  /* No gap, and the chip border below is an inset box-shadow rather than a
+     real border/padding -- none of those affect box-model height, so a
+     chip-style row and its settled merged-pill row occupy EXACTLY the same
+     total height. That matters beyond looks: cluster positions and the
+     median tick are computed once (while still in chip style) and never
+     recalculated at settle time (see settleChartToMergedPills -- the whole
+     point was no re-layout, nothing should visibly move). If settling
+     shrank the row (as plain padding/border/gap would), the tick's
+     already-computed position would go stale and drift off where the
+     now-shorter box's real above/below split actually is. */
+  .name-row.plain-wrap{ background: none; border: none; box-shadow: none; }
   .slot.slot-chip{
-    display: block; padding: 3px 7px; border-radius: 5px;
-    background: var(--surface); border: 1px solid var(--line);
+    display: block; border-radius: 4px;
+    background: var(--surface); box-shadow: inset 0 0 0 1px var(--line);
   }
-  .slot.slot-chip.above{ background: rgba(76,154,107,0.16); border-color: var(--turf-dim); }
-  .slot.slot-chip.below{ background: rgba(192,87,75,0.16); border-color: rgba(192,87,75,0.45); }
-  .slot.slot-chip.locked.above{ background: var(--turf); color: #08140d; border-color: var(--turf); }
-  .slot.slot-chip.locked.below{ background: var(--loss); color: #1a0908; border-color: var(--loss); }
+  .slot.slot-chip.above{ background: rgba(76,154,107,0.16); box-shadow: inset 0 0 0 1px var(--turf-dim); }
+  .slot.slot-chip.below{ background: rgba(192,87,75,0.16); box-shadow: inset 0 0 0 1px rgba(192,87,75,0.45); }
+  .slot.slot-chip.locked.above{ background: var(--turf); color: #08140d; box-shadow: inset 0 0 0 1px var(--turf); }
+  .slot.slot-chip.locked.below{ background: var(--loss); color: #1a0908; box-shadow: inset 0 0 0 1px var(--loss); }
   .b32-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
   @media (max-width: 420px){
     .b32-grid{ grid-template-columns: 1fr; }
