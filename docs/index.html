@@ -1424,7 +1424,16 @@
   }
 
   // ---------- Median Watch: unified Current/Projected toggle card ----------
+  // Remembered per-browser across real page reloads (not just the in-memory
+  // periodic refresh, which already preserves it since medianViewMode just
+  // isn't reset). Defaults to 'projected' the first time, same as before,
+  // and falls back to it if localStorage is blocked/unavailable or holds
+  // something unexpected.
   let medianViewMode = 'projected';
+  try {
+    const saved = localStorage.getItem('medianViewMode');
+    if (saved === 'current' || saved === 'projected') medianViewMode = saved;
+  } catch (e) {}
   let lastMedianTeams = null, lastMedianData = null;
   const mwSlug = name => 'mw-' + name.replace(/[^a-zA-Z0-9]/g, '-');
 
@@ -1573,6 +1582,10 @@
   // the card shell at least once, and only touches the inner list/chart
   // pieces + the toggle buttons' active state, same architecture the lab
   // concept used.
+  function setMedianViewMode(mode) {
+    medianViewMode = mode;
+    try { localStorage.setItem('medianViewMode', mode); } catch (e) {}
+  }
   function applyMedianUpdate(mode) {
     const oldMode = medianViewMode;
     document.querySelectorAll('#median-toggle-seg button').forEach(btn => btn.classList.toggle('on', btn.dataset.mode === mode));
@@ -1580,7 +1593,7 @@
     if (mode === 'current' && !currentHasStarted) {
       document.getElementById('median-body').innerHTML = medianPendingBodyHtml();
       updateKickoffCountdown();
-      medianViewMode = mode;
+      setMedianViewMode(mode);
       return;
     }
     const medianValue = mode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
@@ -1619,7 +1632,7 @@
       if (lowEl) tickMwNumber(lowEl, oldRows.all[oldRows.all.length - 1].score, rows.all[rows.all.length - 1].score);
       if (highEl) tickMwNumber(highEl, oldRows.all[0].score, rows.all[0].score);
     }
-    medianViewMode = mode;
+    setMedianViewMode(mode);
   }
 
   const mwReduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
