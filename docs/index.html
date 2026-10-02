@@ -683,7 +683,7 @@
   /* ---------- Median Watch: unified Current/Projected toggle card ---------- */
   /* Replaces the site-wide thick-top-border-only accent with a thin gold
      outline on all 4 sides, just for this card. */
-  .median-card.gold-outline{ border: 1px solid var(--gold); }
+  .median-card.neutral-border{ border: 1px solid var(--line); }
   .median-split-label{ text-align: center; color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; margin: 12px 0; padding: 7px 0; }
   .median-split-label b{ font-family: var(--scoreboard); font-variant-numeric: tabular-nums; margin-left: 6px; }
   .mw-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
@@ -895,7 +895,6 @@
     </header>
 
     <section>
-      <h2>Median Watch</h2>
       <div id="median-container">
         <div class="loading-row">Loading median splits…</div>
       </div>
@@ -1518,14 +1517,34 @@
         </div>`;
     }
     document.getElementById('median-container').innerHTML = `
-      <div class="median-card gold-outline">
+      <div class="median-card neutral-border">
         <div class="median-card-header">
           <span class="median-card-title">Median Watch</span>
           ${toggleHtml}
         </div>
         <div id="median-body">${bodyHtml}</div>
       </div>`;
-    if (rows) renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones);
+    if (rows) {
+      renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+      // The chart measures pill size/width via JS (measurePillHeights/
+      // measureMaxRowWidth), using whatever font is active at that instant
+      // -- but the page's custom fonts load async (display=swap), so a
+      // cold first load can measure against the fallback font before the
+      // real one swaps in, sizing the chart slightly wrong. The rest of the
+      // card reflows automatically when the font arrives (that's just
+      // CSS), but this chart's pill geometry is locked into whatever was
+      // measured and won't. Re-measuring once fonts are confirmed loaded
+      // fixes the mis-sized first paint -- and since that resolves well
+      // before a human can click the toggle, it also keeps the first
+      // toggle's View Transition "old" snapshot correctly sized instead of
+      // animating from the wrong geometry.
+      if (document.fonts && document.fonts.ready) {
+        const mode = medianViewMode;
+        document.fonts.ready.then(() => {
+          if (medianViewMode === mode) renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+        });
+      }
+    }
     updateKickoffCountdown();
   }
 
