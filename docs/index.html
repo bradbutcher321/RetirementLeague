@@ -1526,6 +1526,15 @@
       </div>`;
     if (rows) {
       renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+      // Every card/chart element needs a view-transition-name BEFORE a
+      // toggle starts, not just after one -- the browser's View Transition
+      // snapshots whatever names are already in the DOM at the moment
+      // startViewTransition is called, to know what to morph FROM. Without
+      // this, the very first toggle click has nothing tagged yet (this
+      // static path never used to tag anything), so nothing can slide --
+      // it just falls back to an instant swap, and only looks right from
+      // the SECOND click on, once a prior toggle has tagged things.
+      tagMedianTransitionNames();
       // The chart measures pill size/width via JS (measurePillHeights/
       // measureMaxRowWidth), using whatever font is active at that instant
       // -- but the page's custom fonts load async (display=swap), so a
@@ -1541,7 +1550,10 @@
       if (document.fonts && document.fonts.ready) {
         const mode = medianViewMode;
         document.fonts.ready.then(() => {
-          if (medianViewMode === mode) renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+          if (medianViewMode === mode) {
+            renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+            tagMedianTransitionNames();
+          }
         });
       }
     }
