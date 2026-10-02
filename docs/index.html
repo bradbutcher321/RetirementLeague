@@ -38,8 +38,8 @@
   /* Full-bleed wash toward whichever side is the projected favorite --
      layered on top of the base surface gradient (first-listed background
      paints on top), strongest at that side's edge and fading by center. */
-  .matchup-card.fav-away{ background: linear-gradient(90deg, rgba(212,180,106,0.10) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
-  .matchup-card.fav-home{ background: linear-gradient(270deg, rgba(212,180,106,0.10) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
+  .matchup-card.fav-away{ background: linear-gradient(90deg, rgba(214,98,79,0.12) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
+  .matchup-card.fav-home{ background: linear-gradient(270deg, rgba(214,98,79,0.12) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
   /* A live game gets a faint warm wash across the whole card -- a glance
      down the list should pick out what's in progress before reading any
      text. Sits behind everything else (z-index 0), which is why .side /
@@ -194,11 +194,12 @@
   .matchup-card.expanded .expand-chip .label-collapsed{ display: none; }
   .matchup-card.expanded .expand-chip .label-expanded{ display: inline; }
   .live-indicator{
-    /* Top-left of the whole card -- a glance down the list should catch
-       "this one's live" before anything else on it. */
+    /* Centered over the VS divider, not top-left -- top-left collided
+       with team names once real (often longer) names were in play. */
     position: absolute;
     top: 14px;
-    left: 16px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 2;
     display: flex;
     align-items: center;
