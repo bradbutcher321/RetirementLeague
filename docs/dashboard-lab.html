@@ -596,11 +596,11 @@
     const statusColor = st ? (st.cls === 'locked' ? 'var(--gold)' : st.cls === 'live' ? 'var(--loss)' : 'var(--text-dim)') : 'var(--text-dim)';
     const glow = st && st.cls === 'locked' ? `box-shadow:0 0 10px rgba(${tone === 'turf' ? '76,154,107' : '192,87,75'},0.25);` : '';
     return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${st && st.cls === 'locked' ? 'var(--gold)' : 'var(--line)'};border-radius:8px;padding:7px 10px;${glow}">
-      <div style="font-size:0.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.name)}</div>
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:2px;">
-        <div style="font-family:var(--scoreboard);font-weight:700;font-size:1.05rem;color:var(--${tone});">${fmt(t.score)}</div>
-        ${st ? `<div style="font-size:0.58rem;color:${statusColor};white-space:nowrap;display:flex;align-items:center;">${dot}${check}${esc(st.text)}</div>` : ''}
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+        <span style="font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.name)}</span>
+        <span style="font-family:var(--scoreboard);font-weight:700;font-size:1.05rem;color:var(--${tone});flex-shrink:0;">${fmt(t.score)}</span>
       </div>
+      ${st ? `<div style="font-size:0.6rem;color:${statusColor};white-space:nowrap;display:flex;align-items:center;margin-top:3px;">${dot}${check}${esc(st.text)}</div>` : ''}
     </div>`;
   }
 
