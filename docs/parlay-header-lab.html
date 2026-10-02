@@ -25,6 +25,13 @@
   .lab-num{ font-family: var(--scoreboard); font-weight: 800; color: var(--gold); font-size: 0.95rem; }
   .lab-title{ font-weight: 700; font-size: 1rem; }
   .lab-desc{ color: var(--text-dim); font-size: 0.78rem; margin-bottom: 14px; line-height: 1.4; }
+  .lab-group-h{ font-family: var(--scoreboard); color: var(--gold); font-size: 1.1rem; margin: 10px 0 18px; padding-top: 10px; border-top: 1px solid var(--line); }
+  /* Round 2: bigger, gold labels under the Legs Hit/Lost numbers, instead
+     of theme.css's small gray .hero2-sub. */
+  .gold-label{ color: var(--gold); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+  .gold-label-xl{ color: var(--gold); font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; margin-top: 4px; }
+  .legs-split{ display: flex; gap: 28px; flex-wrap: wrap; }
+  .legs-split .hero2-v{ font-size: clamp(1.8rem, 7vw, 2.6rem); margin: 4px 0 2px; }
 </style>
 </head>
 <body>
@@ -36,6 +43,8 @@
       <div class="lab-status" id="status">Loading live data…</div>
     </div>
     <div id="variants"></div>
+    <div class="lab-group-h">Round 2 — Legs-as-hero layout, status separated from Legs</div>
+    <div id="variants2"></div>
   </div>
 
 <script>
@@ -175,6 +184,125 @@
     return card(w, `<div class="hero2-sub">${w.year} · Week ${w.week}</div>${rows.join('')}`);
   }
 
+  // ========================================================================
+  // ROUND 2 -- the real implementation already moved Legs Hit/Lost to the
+  // big left side and Odds to the quiet side stats; feedback was that
+  // status (Parlay Dead/Still Alive) feels conflated with "Legs", the
+  // "Legs" eyebrow + "Legs Hit"/"Legs Lost" sub-labels are redundant with
+  // each other, and the labels read too small/quiet for numbers this
+  // prominent. These all take the same `w` shape as Round 1.
+  // ========================================================================
+
+  function legsPair(w, labelCls) {
+    return `<div class="legs-split">
+      <div><div class="hero2-v turf">${w.wins}</div><div class="${labelCls}">Hit</div></div>
+      <div><div class="hero2-v loss">${w.losses}</div><div class="${labelCls}">Lost</div></div>
+    </div>`;
+  }
+
+  function chipsRow(w) {
+    const chips = [`<span class="lchip">${w.year} · Week ${w.week}</span>`];
+    if (w.sacko) chips.push(`<span class="lchip loss">Sacko: ${esc(w.sacko)}</span>`);
+    return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">${chips.join('')}</div>`;
+  }
+
+  function memoriamBox(w) {
+    if (!w.killedBy.length) return '';
+    return `<div style="margin-top:12px;padding:12px 16px;background:rgba(214,98,79,0.08);border:1px solid rgba(214,98,79,0.3);border-radius:10px;text-align:center;">
+      <div style="color:var(--text-dim);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;">In Memoriam</div>
+      <div style="font-family:var(--scoreboard);font-weight:800;font-size:1rem;color:var(--loss);margin-top:4px;">Killed by ${esc(w.killedBy.join(' & '))}</div>
+    </div>`;
+  }
+
+  function r13_cornerRibbon(w) {
+    return `
+      <div class="glass hero2" style="position:relative;">
+        <span class="badge ${w.statusTone}" style="position:absolute;top:18px;right:18px;">${w.status}</span>
+        <div class="hero2-main glow">
+          ${legsPair(w, 'gold-label')}
+          ${chipsRow(w)}
+          ${memoriamBox(w)}
+        </div>
+        ${sideHtml(w)}
+      </div>`;
+  }
+
+  function r14_statusBanner(w) {
+    return `
+      <div class="glass hero2" style="overflow:hidden;">
+        <div style="grid-column:1/-1;background:${w.statusTone === 'loss' ? 'rgba(214,98,79,0.14)' : w.statusTone === 'turf' ? 'rgba(79,174,122,0.14)' : 'rgba(212,180,106,0.14)'};
+          padding:8px;text-align:center;font-family:var(--scoreboard);font-weight:800;font-size:0.82rem;letter-spacing:0.04em;text-transform:uppercase;
+          color:${w.statusTone === 'loss' ? 'var(--loss)' : w.statusTone === 'turf' ? 'var(--turf)' : 'var(--gold)'};">${w.status}</div>
+        <div class="hero2-main glow" style="padding-top:22px;">
+          ${legsPair(w, 'gold-label')}
+          ${chipsRow(w)}
+          ${memoriamBox(w)}
+        </div>
+        ${sideHtml(w)}
+      </div>`;
+  }
+
+  function r15_statusInSide(w) {
+    return `
+      <div class="glass hero2">
+        <div class="hero2-main glow">
+          ${legsPair(w, 'gold-label')}
+          ${chipsRow(w)}
+          ${memoriamBox(w)}
+        </div>
+        <div class="hero2-side">
+          <div class="hs"><div class="hs-l">Status</div><div class="hs-r"><div class="hs-v ${w.statusTone === 'gold' ? '' : w.statusTone}">${w.status}</div></div></div>
+          <div class="hs"><div class="hs-l">Combined Odds</div><div class="hs-r"><div class="hs-v">${fmtOdds(w.odds)}</div></div></div>
+          <div class="hs"><div class="hs-l">Payout</div><div class="hs-r"><div class="hs-v">${fmtMoney(w.payout)}</div></div></div>
+          <div class="hs"><div class="hs-l">Split</div><div class="hs-r"><div class="hs-v">${fmtMoney(w.split)}</div></div></div>
+        </div>
+      </div>`;
+  }
+
+  function r16_recordStyle(w) {
+    return `
+      <div class="glass hero2" style="position:relative;">
+        <span class="badge ${w.statusTone}" style="position:absolute;top:18px;right:18px;">${w.status}</span>
+        <div class="hero2-main glow">
+          <div class="hero2-v">${w.wins}<span style="color:var(--text-dim);font-size:0.6em;">-</span>${w.losses}</div>
+          <div class="gold-label">Record</div>
+          ${chipsRow(w)}
+          ${memoriamBox(w)}
+        </div>
+        ${sideHtml(w)}
+      </div>`;
+  }
+
+  function r17_numberOverBigLabel(w) {
+    return `
+      <div class="glass hero2" style="position:relative;">
+        <span class="badge ${w.statusTone}" style="position:absolute;top:18px;right:18px;">${w.status}</span>
+        <div class="hero2-main glow">
+          <div class="legs-split">
+            <div><div class="hero2-v turf">${w.wins}</div><div class="gold-label-xl">Legs Hit</div></div>
+            <div><div class="hero2-v loss">${w.losses}</div><div class="gold-label-xl">Legs Lost</div></div>
+          </div>
+          ${chipsRow(w)}
+          ${memoriamBox(w)}
+        </div>
+        ${sideHtml(w)}
+      </div>`;
+  }
+
+  function r18_statusAsHeadline(w) {
+    const color = w.statusTone === 'loss' ? 'var(--loss)' : w.statusTone === 'turf' ? 'var(--turf)' : 'var(--gold)';
+    return `
+      <div class="glass hero2">
+        <div class="hero2-main glow">
+          <div style="font-family:var(--scoreboard);font-weight:800;font-size:0.95rem;letter-spacing:0.04em;text-transform:uppercase;color:${color};">${w.status}</div>
+          <div style="margin-top:10px;">${legsPair(w, 'gold-label')}</div>
+          ${chipsRow(w)}
+          ${memoriamBox(w)}
+        </div>
+        ${sideHtml(w)}
+      </div>`;
+  }
+
   // ---- shared card shell -------------------------------------------------
 
   function sideHtml(w) {
@@ -259,6 +387,14 @@
       sec(c, 10, 'Week as a tiny breadcrumb', 'Week/Year shrinks to a breadcrumb above the odds number entirely, freeing the sub-line to be just the Killed-by/Sacko stakes, bold red.', v10_breadcrumbSplit(w));
       sec(c, 11, 'Framed "stakes" box', 'A bordered red box specifically for Killed By / Sacko, visually set apart like a penalty box, two columns side by side.', v11_stakesBox(w));
       sec(c, 12, 'Status dot list', 'Each fact gets a small red status dot (like the live-indicator pulse dot elsewhere) instead of color alone carrying the meaning.', v12_pulseDot(w));
+
+      const c2 = document.getElementById('variants2');
+      sec(c2, 13, 'Status as a corner ribbon', 'Status badge moves to the top-right corner, fully detached from Legs -- no "Legs" eyebrow at all, just bigger gold HIT/LOST labels.', r13_cornerRibbon(w));
+      sec(c2, 14, 'Status as a banner strip', 'A full-width colored bar across the very top of the card ("PARLAY DEAD"), completely separate from the Legs numbers below it.', r14_statusBanner(w));
+      sec(c2, 15, 'Status moved into the side stats', 'Status becomes the first quiet-stat row on the right, next to Combined Odds -- the left side is 100% just the two Legs numbers.', r15_statusInSide(w));
+      sec(c2, 16, 'Record style ("3-9")', 'One combined number instead of two separate ones, labeled "Record" in gold -- more compact, status fully separated to the corner.', r16_recordStyle(w));
+      sec(c2, 17, 'Bigger gold labels under the numbers', 'Same two-number layout, but "Legs Hit"/"Legs Lost" are much bigger and bolder gold text, not a small caption.', r17_numberOverBigLabel(w));
+      sec(c2, 18, 'Status as its own headline', 'The status text itself ("Parlay Dead") is the top line, colored and sized like a heading -- not a badge pill at all -- with the Legs numbers clearly below it.', r18_statusAsHeadline(w));
     })
     .catch(err => {
       document.getElementById('status').textContent = 'Could not load live data: ' + err.message;
