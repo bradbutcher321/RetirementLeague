@@ -303,6 +303,44 @@
       </div>`;
   }
 
+  function r19_oddsHero(w) {
+    return `
+      <div class="glass hero2" style="position:relative;">
+        <span class="badge ${w.statusTone}" style="position:absolute;top:18px;right:18px;">${w.status}</span>
+        <div class="hero2-main glow">
+          <div class="hero2-v">${fmtOdds(w.odds)}</div>
+          <div class="gold-label-xl">Combined Odds</div>
+          ${chipsRow(w)}
+          ${memoriamBox(w)}
+        </div>
+        <div class="hero2-side">
+          <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v turf">${w.wins}</div></div></div>
+          <div class="hs"><div class="hs-l">Legs Lost</div><div class="hs-r"><div class="hs-v loss">${w.losses}</div></div></div>
+          <div class="hs"><div class="hs-l">Payout</div><div class="hs-r"><div class="hs-v">${fmtMoney(w.payout)}</div></div></div>
+          <div class="hs"><div class="hs-l">Split</div><div class="hs-r"><div class="hs-v">${fmtMoney(w.split)}</div></div></div>
+        </div>
+      </div>`;
+  }
+
+  function r20_payoutHero(w) {
+    return `
+      <div class="glass hero2" style="position:relative;">
+        <span class="badge ${w.statusTone}" style="position:absolute;top:18px;right:18px;">${w.status}</span>
+        <div class="hero2-main glow">
+          <div class="hero2-v">${fmtMoney(w.payout)}</div>
+          <div class="gold-label-xl">Payout</div>
+          ${chipsRow(w)}
+          ${memoriamBox(w)}
+        </div>
+        <div class="hero2-side">
+          <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v turf">${w.wins}</div></div></div>
+          <div class="hs"><div class="hs-l">Legs Lost</div><div class="hs-r"><div class="hs-v loss">${w.losses}</div></div></div>
+          <div class="hs"><div class="hs-l">Combined Odds</div><div class="hs-r"><div class="hs-v">${fmtOdds(w.odds)}</div></div></div>
+          <div class="hs"><div class="hs-l">Split</div><div class="hs-r"><div class="hs-v">${fmtMoney(w.split)}</div></div></div>
+        </div>
+      </div>`;
+  }
+
   // ---- shared card shell -------------------------------------------------
 
   function sideHtml(w) {
@@ -360,7 +398,7 @@
       const wins = picks.filter(p => p.result === 'Win').length;
       const losses = picks.filter(p => p.result === 'Loss').length;
       const result = week.final.result;
-      const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Still alive';
+      const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Parlay alive';
       const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
 
       const w = {
@@ -395,6 +433,8 @@
       sec(c2, 16, 'Record style ("3-9")', 'One combined number instead of two separate ones, labeled "Record" in gold -- more compact, status fully separated to the corner.', r16_recordStyle(w));
       sec(c2, 17, 'Bigger gold labels under the numbers', 'Same two-number layout, but "Legs Hit"/"Legs Lost" are much bigger and bolder gold text, not a small caption.', r17_numberOverBigLabel(w));
       sec(c2, 18, 'Status as its own headline', 'The status text itself ("Parlay Dead") is the top line, colored and sized like a heading -- not a badge pill at all -- with the Legs numbers clearly below it.', r18_statusAsHeadline(w));
+      sec(c2, 19, 'Combined Odds as the main stat', 'Back to one single hero number -- Combined Odds -- with its own big gold label. Legs Hit, Legs Lost, Payout and Split all move to the side stats.', r19_oddsHero(w));
+      sec(c2, 20, 'Payout as the main stat', 'Same single-hero layout as #19, but Payout is the headline number instead -- Legs Hit, Legs Lost, Combined Odds and Split move to the side.', r20_payoutHero(w));
     })
     .catch(err => {
       document.getElementById('status').textContent = 'Could not load live data: ' + err.message;

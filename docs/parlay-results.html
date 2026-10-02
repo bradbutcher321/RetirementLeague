@@ -303,7 +303,7 @@
     const losses = legs.filter(([, p]) => p.result === 'Loss').length;
     const missing = players.filter(p => !week.picks[p]);
     const result = week.final.result;
-    const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Still alive';
+    const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Parlay alive';
     const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
     const hero = `
       <div class="glass hero2">
