@@ -595,20 +595,24 @@
     const check = st && st.cls === 'locked' ? '✓ ' : '';
     const statusColor = st ? (st.cls === 'locked' ? 'var(--gold)' : st.cls === 'live' ? 'var(--loss)' : 'var(--text-dim)') : 'var(--text-dim)';
     const glow = st && st.cls === 'locked' ? `box-shadow:0 0 10px rgba(${tone === 'turf' ? '76,154,107' : '192,87,75'},0.25);` : '';
-    return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${st && st.cls === 'locked' ? 'var(--gold)' : 'var(--line)'};border-radius:8px;padding:7px 10px;${glow}">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
-        <span style="font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.name)}</span>
-        <span style="font-family:var(--scoreboard);font-weight:700;font-size:1.05rem;color:var(--${tone});flex-shrink:0;">${fmt(t.score)}</span>
+    return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${st && st.cls === 'locked' ? 'var(--gold)' : 'var(--line)'};border-radius:8px;padding:7px 10px;min-width:0;${glow}">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
+        <span style="font-size:0.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${esc(t.name)}</span>
+        <span style="font-family:var(--scoreboard);font-weight:700;font-size:0.84rem;color:var(--${tone});flex-shrink:0;">${fmt(t.score)}</span>
       </div>
-      ${st ? `<div style="font-size:0.6rem;color:${statusColor};white-space:nowrap;display:flex;align-items:center;margin-top:3px;">${dot}${check}${esc(st.text)}</div>` : ''}
+      ${st ? `<div style="font-size:0.6rem;color:${statusColor};white-space:nowrap;display:flex;align-items:center;justify-content:center;text-align:center;margin-top:3px;">${dot}${check}${esc(st.text)}</div>` : ''}
     </div>`;
   }
 
   function bracketRows2ColListHtml(rows) {
+    // minmax(0,1fr), not bare 1fr -- a plain `1fr` track's implicit minimum
+    // is its content's min-content width, so a column holding a longer name
+    // (e.g. "Flanders") renders wider than its sibling instead of the two
+    // staying equal; minmax(0, ...) overrides that min and forces them even.
     return `<div class="group-label above">Above Median</div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:14px;">${rows.above.map(t => medianBlendRowGrid(t, 'turf')).join('')}</div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:14px;">${rows.above.map(t => medianBlendRowGrid(t, 'turf')).join('')}</div>
       <div class="group-label below">Below Median</div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;">${rows.below.map(t => medianBlendRowGrid(t, 'loss')).join('')}</div>`;
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;">${rows.below.map(t => medianBlendRowGrid(t, 'loss')).join('')}</div>`;
   }
 
   // ========================================================================
@@ -802,13 +806,18 @@
       const curRows = computeMedianRows(rawTeams, data.currentMedian, 'current', statusKnown);
       const projRows = computeMedianRows(rawTeams, data.projectedMedian, 'projected', statusKnown);
       const spreadJobs = [];
-      function pairCardsHtml(listBuilder, idPrefix) {
+      function pairCardsHtml(listBuilder, idPrefix, compact) {
+        // compact trims the reserved space around the spread chart (narrower
+        // spread-col, tighter card-body gap) to give the list more room --
+        // scoped to an inline style override per-call rather than editing the
+        // shared .spread-col/.card-body rules, so it doesn't also shrink
+        // concept 28's reference reproduction of today's live spacing.
         const card = (title, medianValue, rows, elId, listHtml) => `
           <div class="median-card">
             <div class="median-card-header"><span class="median-card-title">${esc(title)}</span><span class="median-card-value">${fmt(medianValue)}</span></div>
-            <div class="card-body">
+            <div class="card-body"${compact ? ' style="gap:10px"' : ''}>
               <div>${listHtml}</div>
-              <div class="spread-col${rows.zones ? ' zoned' : ''}"><div class="vplot${rows.zones ? ' zoned' : ''}" id="${elId}"></div></div>
+              <div class="spread-col${rows.zones ? ' zoned' : ''}"${compact ? ` style="width:${rows.zones ? 118 : 88}px"` : ''}><div class="vplot${rows.zones ? ' zoned' : ''}" id="${elId}"></div></div>
             </div>
           </div>`;
         const html = `<div class="median-grid">
@@ -823,7 +832,7 @@
       sec(bEl, 28, 'Current design (for reference)', 'Exactly what\'s live today — the two-column mini-card grid next to the real spread chart. Shown first so the options below are a direct side-by-side comparison, not a guess from memory.', pairCardsHtml(prodMiniGridListHtml, 'ref'));
       sec(bEl, 29, 'Bracket rows + the real spread chart', 'The chart is completely untouched — same real spread-chart code as production, not an approximation. Only the list beside it changes, from the two-column mini-card grid to the above/below bracket\'s clean full-width rows, still carrying Locked/Final/Live status inline.', pairCardsHtml(bracketRowsListHtml, 'b29'));
       sec(bEl, 30, 'Minimal edge-accent rows + the real spread chart', 'Same real chart again, untouched. The list goes denser still — status collapses to a left-edge color bar and a single icon (✓ locked, ● live) instead of a text badge, so more teams fit without scrolling.', pairCardsHtml(minimalRowsListHtml, 'b30'));
-      sec(bEl, 31, 'Modernized 2-column cards + the real spread chart', '#29\'s rounded-card look (gold border + glow when locked, red pulsing dot when live, status line under the score) kept but laid out 2-up like today\'s grid, instead of #29\'s single full-width column — a more direct "modernize the existing cards" take. Same untouched real chart alongside it.', pairCardsHtml(bracketRows2ColListHtml, 'b31'));
+      sec(bEl, 31, 'Modernized 2-column cards + the real spread chart', '#29\'s rounded-card look (gold border + glow when locked, red pulsing dot when live, status line under the score) kept but laid out 2-up like today\'s grid, instead of #29\'s single full-width column — a more direct "modernize the existing cards" take. Same untouched real chart alongside it, given a little less reserved width so the cards have more room.', pairCardsHtml(bracketRows2ColListHtml, 'b31', true));
       spreadJobs.forEach(job => renderSpreadChart(job.elId, job.ascending, job.median, job.zones));
 
       const matchups = data.matchups || [];
