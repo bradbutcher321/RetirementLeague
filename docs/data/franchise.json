@@ -1,11 +1,12 @@
 {
-  "generated_at": "2026-10-02T04:01:12.301626+00:00",
+  "generated_at": "2026-10-02T04:06:28.129546+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
     {
       "name": "Brad",
       "current_team_name": "Ye for Prez",
+      "current_team_logo": "https://g.espncdn.com/lm-static/logo-packs/core/Sneakerhead-ESPN/sneakerhead-06.svg",
       "previous_team_names": [
         "Poppin Bortles",
         "Fuck the Committee"
@@ -428,6 +429,7 @@
     {
       "name": "Flanders",
       "current_team_name": "Flanders And The Funky Bunch",
+      "current_team_logo": "https://i.imgur.com/4iHWfoC.png",
       "previous_team_names": [
         "Ray Rice Fan Club",
         "Brads Bachelor  Party",
@@ -884,6 +886,7 @@
     {
       "name": "Jared",
       "current_team_name": "Your Local Donnie's",
+      "current_team_logo": "https://g.espncdn.com/lm-static/logo-packs/core/StadiumFoods-ESPN/stadium-foods_french-fries.svg",
       "previous_team_names": [
         "U Watt M8"
       ],
@@ -1307,6 +1310,7 @@
     {
       "name": "Joe G",
       "current_team_name": "The Cubicle Warrior",
+      "current_team_logo": "https://mystique-api.fantasy.espn.com/apis/v1/domains/lm/images/f97da550-9759-11f0-90f7-112fa0f42e74",
       "previous_team_names": [
         "Jupiter's  Cock",
         "Trump University ",
@@ -1745,6 +1749,7 @@
     {
       "name": "Joe K",
       "current_team_name": "Kirk'n Hard",
+      "current_team_logo": "https://g.espncdn.com/lm-static/logo-packs/core/BobsBurgers/Bob_Shocked.svg",
       "previous_team_names": [
         "The Vegan  Titans",
         "Bo Peeps Bears",
@@ -2202,6 +2207,7 @@
     {
       "name": "Chad",
       "current_team_name": "BIG BALL(er)S",
+      "current_team_logo": "https://mystique-api.fantasy.espn.com/apis/v1/domains/lm/images/f7ec9a10-b095-11f1-97e3-f1a49aa893a9",
       "previous_team_names": [
         "Southeast Door and Trim",
         "Ball Fondlers",
@@ -2655,6 +2661,7 @@
     {
       "name": "Jeff",
       "current_team_name": "Oviedo Ballknowers",
+      "current_team_logo": "https://g.espncdn.com/lm-static/logo-packs/ffl/AtTheStadium-RobbHarskamp/At_The_Stadium_05.svg",
       "previous_team_names": [
         "Football Maniel",
         "Run EZE \u00f0\u009f\u00a4\u0091",
@@ -3107,6 +3114,7 @@
     {
       "name": "Ben",
       "current_team_name": "Bart Harley Jarvis Fan Club",
+      "current_team_logo": "https://mystique-api.fantasy.espn.com/apis/v1/domains/lm/images/f1124cc0-9733-11f0-afb5-e14f006a2a34",
       "previous_team_names": [
         "Derek, 22, from Masaga ",
         "Yeet Squad",
@@ -3506,6 +3514,7 @@
     {
       "name": "Kris",
       "current_team_name": "SLIMETIME BABY",
+      "current_team_logo": "https://www.thecoldwire.com/wp-content/uploads/2023/06/Deion-Sanders-Colorado-1536x1024.jpg",
       "previous_team_names": [
         "RIP August Ames",
         "RIP My Season",
@@ -3915,6 +3924,7 @@
     {
       "name": "Collin",
       "current_team_name": "On Tuaside Watch",
+      "current_team_logo": "https://gcdn.thunderstore.io/live/repository/icons/MarshMan-DeezNuts-1.0.0.png.256x256_q95.jpg",
       "previous_team_names": [
         "Rookie by 1000",
         "Sack oooooo",
@@ -4306,6 +4316,7 @@
     {
       "name": "Jon",
       "current_team_name": "The Commish",
+      "current_team_logo": "https://i.kym-cdn.com/entries/icons/facebook/000/016/212/manning.jpg",
       "previous_team_names": [
         "Christian Medical Center"
       ],
@@ -4619,6 +4630,7 @@
     {
       "name": "TJ",
       "current_team_name": "Scary  Terry ",
+      "current_team_logo": "https://g.espncdn.com/lm-static/logo-packs/ffl/1stStringAllStars-SportsManias-WR/smithnjigba-01.svg",
       "previous_team_names": [],
       "previous_team_logos": {},
       "founded_year": 2022,
@@ -4925,6 +4937,7 @@
     {
       "name": "Chappy",
       "current_team_name": "juice ^2",
+      "current_team_logo": "https://i.ytimg.com/vi/-C34Gc9KQP8/maxresdefault.jpg",
       "previous_team_names": [
         "PV = nRT"
       ],
@@ -5112,6 +5125,7 @@
     {
       "name": "Corey",
       "current_team_name": "#Not MyCommish",
+      "current_team_logo": "http://g.espncdn.com/s/ffllm/logos/SmackTalk-LeoEspinosa/u_mad_bro-09.svg",
       "previous_team_names": [
         "Stairway To Evans"
       ],
