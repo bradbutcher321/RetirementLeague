@@ -26,6 +26,7 @@ Usage: python parlay_gui.py
 import os
 import re
 import sys
+import threading
 import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox
@@ -233,9 +234,137 @@ class SheetClient:
             self.ws.update([row_values], f"E{row_num}:O{row_num}")
 
 
+def _add_clipboard_support(widget):
+    """Right-click menu and Ctrl+C/X/V/A for a CTkEntry, implemented by
+    reading/writing the system clipboard directly rather than relying on
+    Tk's native <<Copy>>/<<Paste>> virtual events -- confirmed directly
+    those don't actually reach the clipboard for a CTkEntry in this
+    environment (a real text selection existed, <<Copy>> fired, the
+    clipboard was never updated), and CTkEntry gives no working right-click
+    menu at all out of the box. No-ops (via "break", suppressing Tk's own
+    broken handling of the same keystroke) if there's nothing to do."""
+    def copy(_e=None):
+        text = widget.selection_get() if widget.select_present() else widget.get()
+        if text:
+            widget.clipboard_clear()
+            widget.clipboard_append(text)
+        return "break"
+
+    def cut(_e=None):
+        if widget.select_present():
+            copy()
+            widget.delete("sel.first", "sel.last")
+        return "break"
+
+    def paste(_e=None):
+        try:
+            text = widget.clipboard_get()
+        except tk.TclError:
+            return "break"
+        if widget.select_present():
+            widget.delete("sel.first", "sel.last")
+        widget.insert("insert", text)
+        return "break"
+
+    def select_all(_e=None):
+        widget.select_range(0, "end")
+        widget.icursor("end")
+        return "break"
+
+    def show_menu(e):
+        menu = tk.Menu(widget, tearoff=0)
+        menu.add_command(label="Cut", command=cut)
+        menu.add_command(label="Copy", command=copy)
+        menu.add_command(label="Paste", command=paste)
+        menu.add_separator()
+        menu.add_command(label="Select All", command=select_all)
+        try:
+            menu.tk_popup(e.x_root, e.y_root)
+        finally:
+            menu.grab_release()
+
+    widget.bind("<Control-c>", copy)
+    widget.bind("<Control-x>", cut)
+    widget.bind("<Control-v>", paste)
+    widget.bind("<Control-a>", select_all)
+    widget.bind("<Button-3>", show_menu)
+    # CTkEntry.bind() (above) only reaches its real, focusable inner Entry
+    # (widget._entry) -- but that inner widget is inset from the field's
+    # visible edges by padding sized off the corner radius (see CTkEntry's
+    # own _create_grid), with CTkEntry's decorative background canvas
+    # showing through that border strip. A right-click landing on that
+    # border -- easy to do, it runs around every edge of every field --
+    # hits the canvas, which had no binding at all, so the menu silently
+    # never appeared. Binding the same handler there too covers the whole
+    # visible field, not just its text area.
+    if hasattr(widget, "_canvas"):
+        widget._canvas.bind("<Button-3>", show_menu)
+    return widget
+
+
+def _add_textbox_clipboard_support(widget):
+    """Same right-click/Ctrl+C/X/V/A fix as _add_clipboard_support, for a
+    CTkTextbox instead of a CTkEntry -- it wraps a real tkinter.Text, not
+    an Entry, so selection/cut/paste go through Text's own API (a "sel" tag
+    range, not select_present()/selection_get()) even though the
+    underlying bug (no working right-click menu, decorative canvas
+    covering the border the same way CTkEntry's does) is identical."""
+    def has_selection():
+        return bool(widget.tag_ranges("sel"))
+
+    def copy(_e=None):
+        text = widget.get("sel.first", "sel.last") if has_selection() else widget.get("1.0", "end-1c")
+        if text:
+            widget.clipboard_clear()
+            widget.clipboard_append(text)
+        return "break"
+
+    def cut(_e=None):
+        if has_selection():
+            copy()
+            widget.delete("sel.first", "sel.last")
+        return "break"
+
+    def paste(_e=None):
+        try:
+            text = widget.clipboard_get()
+        except tk.TclError:
+            return "break"
+        if has_selection():
+            widget.delete("sel.first", "sel.last")
+        widget.insert("insert", text)
+        return "break"
+
+    def select_all(_e=None):
+        widget.tag_add("sel", "1.0", "end-1c")
+        widget.mark_set("insert", "end-1c")
+        return "break"
+
+    def show_menu(e):
+        menu = tk.Menu(widget, tearoff=0)
+        menu.add_command(label="Cut", command=cut)
+        menu.add_command(label="Copy", command=copy)
+        menu.add_command(label="Paste", command=paste)
+        menu.add_separator()
+        menu.add_command(label="Select All", command=select_all)
+        try:
+            menu.tk_popup(e.x_root, e.y_root)
+        finally:
+            menu.grab_release()
+
+    widget.bind("<Control-c>", copy)
+    widget.bind("<Control-x>", cut)
+    widget.bind("<Control-v>", paste)
+    widget.bind("<Control-a>", select_all)
+    widget.bind("<Button-3>", show_menu)
+    if hasattr(widget, "_canvas"):
+        widget._canvas.bind("<Button-3>", show_menu)
+    return widget
+
+
 def _entry(parent, var, width=120):
-    return ctk.CTkEntry(parent, textvariable=var, width=width, height=26,
-                         fg_color=FIELD_WHITE, text_color=FIELD_TEXT, border_width=1)
+    return _add_clipboard_support(ctk.CTkEntry(parent, textvariable=var, width=width, height=26,
+                                                fg_color=FIELD_WHITE, text_color=FIELD_TEXT, border_width=1))
 
 
 def _combo(parent, var, values, width=110):
@@ -297,8 +426,16 @@ class WeekGrid(ctk.CTkFrame):
         grid = ctk.CTkFrame(self, fg_color="transparent")
         grid.pack(fill="both", expand=True)
         for c, h in enumerate(headers):
-            ctk.CTkLabel(grid, text=h, text_color=GOLD, font=("Segoe UI", 10, "bold")).grid(
-                row=0, column=c, padx=3, pady=(0, 4))
+            # Column 0's header defaults to CTkLabel's own natural width
+            # (wider than the row labels below it, which are pinned to
+            # width=80/anchor="w"/sticky="w"), so without matching those
+            # here too the header centers across the full, wider column
+            # while the player names only occupy its left edge -- confirmed
+            # directly this is what was making "Player" look misaligned
+            # from the names under it.
+            kwargs = {"width": 80, "anchor": "w"} if c == 0 else {}
+            ctk.CTkLabel(grid, text=h, text_color=GOLD, font=("Segoe UI", 10, "bold"), **kwargs).grid(
+                row=0, column=c, padx=3, pady=(0, 4), sticky="w" if c == 0 else None)
 
         for r, player in enumerate(self.players, start=1):
             ctk.CTkLabel(grid, text=player, width=80, anchor="w",
@@ -468,10 +605,17 @@ class BrowseTab:
         self.status.configure(text="Loaded." if block else "That week has no rows yet.")
 
     def save(self):
-        if not self.start_row:
-            messagebox.showerror("Nothing loaded", "Load a week first.")
+        try:
+            year, week = int(self.year_var.get()), int(self.week_var.get())
+        except ValueError:
+            messagebox.showerror("Invalid input", "Year and Week must be numbers.")
             return
-        year, week = int(self.year_var.get()), int(self.week_var.get())
+        if not self.start_row:
+            # Same reasoning as NewWeekTab.save(): find/allocate the row
+            # directly rather than calling self.load(), which clears the
+            # grid first and would wipe out whatever's been typed in.
+            start_row, _block = self.client.find_week(year, week)
+            self.start_row = start_row or self.client.next_new_week_row()
         g = self.grid_widget
         self.client.save_week(
             self.start_row, year, week, g.sacko_var.get(),
@@ -501,12 +645,14 @@ class NewWeekTab:
 
         ctk.CTkLabel(master, text="Paste the shared note's raw text, then Parse",
                      text_color=GOLD, font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=6, pady=(4, 2))
-        self.paste_box = ctk.CTkTextbox(master, height=110, fg_color=FIELD_WHITE, text_color=FIELD_TEXT,
-                                         wrap="word", border_width=1, border_color=GOLD)
+        self.paste_box = _add_textbox_clipboard_support(
+            ctk.CTkTextbox(master, height=110, fg_color=FIELD_WHITE, text_color=FIELD_TEXT,
+                           wrap="word", border_width=1, border_color=GOLD))
         self.paste_box.pack(fill="x", padx=6, pady=(0, 4))
         btn_row = ctk.CTkFrame(master, fg_color="transparent")
         btn_row.pack(fill="x", padx=6, pady=(0, 6))
         _button(btn_row, "Parse", self.parse_note, width=90).pack(side="left")
+        _button(btn_row, "Paste", self.paste_into_box, width=90).pack(side="left", padx=(8, 0))
         self.parse_status = ctk.CTkLabel(btn_row, text="", text_color=TEXT_LIGHT)
         self.parse_status.pack(side="left", padx=8)
 
@@ -538,6 +684,19 @@ class NewWeekTab:
         else:
             self.status.configure(text=f"Enter a week number above, then Load. Next free block starts at row {self.start_row}.")
 
+    def paste_into_box(self):
+        """Second way in to the same paste_box a right-click/Ctrl+V now
+        also reaches -- a dedicated button for whichever still feels more
+        reliable, since both land on the same clipboard-reading code
+        path."""
+        try:
+            text = self.master.clipboard_get()
+        except tk.TclError:
+            messagebox.showinfo("Clipboard empty", "Nothing to paste -- the clipboard doesn't have text in it.")
+            return
+        self.paste_box.delete("1.0", "end")
+        self.paste_box.insert("1.0", text)
+
     def parse_note(self):
         text = self.paste_box.get("1.0", "end")
         picks, final, unmatched = parse_note_text(text, self.client.players)
@@ -564,6 +723,38 @@ class NewWeekTab:
         self.parse_status.configure(text=msg + " Looking up game times...")
         self.master.update_idletasks()
         window = thursday_to_monday_window()
+
+        # The ESPN lookups below are the slow part (a whole week's worth of
+        # scoreboard/search requests per pick, network-bound) -- run them on
+        # a background thread so the window stays responsive instead of
+        # freezing for the whole parse, same as any other long-running
+        # Tkinter operation has to. Tkinter itself isn't thread-safe, so
+        # the worker only does the pure network/lookup calls and hands its
+        # results back to _apply_gametime_results via self.master.after,
+        # which runs on the main thread like any other UI update.
+        def lookup_worker():
+            results = {}
+            for player, data in picks.items():
+                attempted = bool(data.get("team") and data.get("opponent")) or bool(data.get("player_prop"))
+                gametime = matched_sport = resolved_team = resolved_opp = None
+                if attempted:
+                    if data.get("team") and data.get("opponent"):
+                        gametime, matched_sport, resolved_team, resolved_opp = find_gametime(
+                            data["team"], data["opponent"], days=window)
+                    else:
+                        team, sport = find_player_team(data["player_prop"], data.get("bet_type"))
+                        if team:
+                            matched_sport = sport
+                            gametime = find_gametime_for_team(team, sport, days=window)
+                results[player] = (attempted, gametime, matched_sport, resolved_team, resolved_opp)
+            self.master.after(0, lambda: self._apply_gametime_results(picks, msg, results))
+
+        threading.Thread(target=lookup_worker, daemon=True).start()
+
+    def _apply_gametime_results(self, picks, msg, results):
+        """Main-thread half of parse_note's gametime lookup -- applies
+        whatever lookup_worker found to the grid's widgets, which (unlike
+        the lookups themselves) have to happen on the main thread."""
         found, tried = 0, 0
         needs_by_player = {}
         for player, data in picks.items():
@@ -574,22 +765,13 @@ class NewWeekTab:
                 if data.get("odds") is None:
                     needs.add("odds")
 
-            attempted = bool(data.get("team") and data.get("opponent")) or bool(data.get("player_prop"))
-            gametime = matched_sport = None
+            attempted, gametime, matched_sport, resolved_team, resolved_opp = results[player]
             if attempted:
                 tried += 1
-                if data.get("team") and data.get("opponent"):
-                    gametime, matched_sport, resolved_team, resolved_opp = find_gametime(
-                        data["team"], data["opponent"], days=window)
-                    if resolved_team:
-                        self.grid_widget.row_vars[player]["team"].set(resolved_team)
-                    if resolved_opp:
-                        self.grid_widget.row_vars[player]["opponent"].set(resolved_opp)
-                else:
-                    team, sport = find_player_team(data["player_prop"], data.get("bet_type"))
-                    if team:
-                        matched_sport = sport
-                        gametime = find_gametime_for_team(team, sport, days=window)
+            if resolved_team:
+                self.grid_widget.row_vars[player]["team"].set(resolved_team)
+            if resolved_opp:
+                self.grid_widget.row_vars[player]["opponent"].set(resolved_opp)
             if gametime:
                 self.grid_widget.row_vars[player]["gametime"].set(_gametime_to_display(gametime))
                 self.grid_widget.row_vars[player]["sport"].set(matched_sport)
@@ -606,14 +788,24 @@ class NewWeekTab:
         self.parse_status.configure(text=msg)
 
     def save(self):
-        if not self.start_row:
-            messagebox.showerror("Nothing loaded", "Load / Start a week first.")
-            return
         try:
             year, week = int(self.year_var.get()), int(self.week_var.get())
         except ValueError:
             messagebox.showerror("Invalid input", "Year and Week must be numbers.")
             return
+        auto_started = False
+        if not self.start_row:
+            # Paste -> Parse -> Save with no explicit Load in between used
+            # to just fail here ("Load / Start a week first") even though
+            # Parse had already filled the grid in -- Year/Week come from
+            # the note itself (see parse_note), so there's always enough
+            # here to find/allocate the right row ourselves. Deliberately
+            # not just calling self.load(): that always clears the grid
+            # first (see WeekGrid.load), which would wipe out the picks
+            # Parse just filled in before Save ever got to write them.
+            start_row, _block = self.client.find_week(year, week)
+            self.start_row = start_row or self.client.next_new_week_row()
+            auto_started = True
         g = self.grid_widget
         self.client.save_week(
             self.start_row, year, week, g.sacko_var.get(),
@@ -621,7 +813,8 @@ class NewWeekTab:
             parse_money(g.final_payout_var.get()) if g.final_payout_var.get() else None,
             g.player_rows(),
         )
-        self.status.configure(text=f"Saved to row {self.start_row}.")
+        prefix = f"Started week {week} at row {self.start_row} and saved" if auto_started else "Saved"
+        self.status.configure(text=f"{prefix} to row {self.start_row}.")
 
 
 def main():
@@ -629,7 +822,7 @@ def main():
 
     root = ctk.CTk()
     root.title("Retirement League Parlay Entry")
-    root.geometry("1350x620")
+    root.geometry("1500x760")
     root.configure(fg_color=BG_DARK)
 
     status_label = ctk.CTkLabel(root, text="Connecting to Google Sheets...", text_color=TEXT_LIGHT)
