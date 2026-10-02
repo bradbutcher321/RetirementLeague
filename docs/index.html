@@ -416,7 +416,6 @@
     border-radius: 10px;
     padding: 10px 14px;
   }
-  .lb-row.playoff{ border-left-color: var(--turf); }
   .lb-rank{
     font-family: var(--scoreboard);
     font-weight: 800;
@@ -728,6 +727,22 @@
      and untouched the whole time. */
   ::view-transition-old(root), ::view-transition-new(root){ animation: none; mix-blend-mode: normal; }
 
+  /* ---------- Stat of the Moment: single rotating-feeling hero fact
+     directly under Median Watch. Same thin-outline-not-thick-top-border
+     treatment as .median-card.neutral-border above, not the heavier
+     accent bar the rest of the page used to use. ---------- */
+  .stat-moment{
+    margin-top: 14px;
+    background: linear-gradient(135deg, rgba(212,180,106,0.14), transparent);
+    border: 1px solid var(--gold-dim);
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-align: center;
+  }
+  .stat-moment-eyebrow{ color: var(--gold); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .stat-moment-value{ font-family: var(--scoreboard); font-size: 2.2rem; font-weight: 800; margin: 6px 0; font-variant-numeric: tabular-nums; }
+  .stat-moment-sub{ color: var(--text-dim); font-size: 0.88rem; }
+
   /* ---------- Superlatives ---------- */
   .accolades-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 640px){ .accolades-grid{ grid-template-columns: 1fr; } }
@@ -736,7 +751,6 @@
     position: relative;
     background: linear-gradient(165deg, var(--surface-raised), var(--surface));
     border: 1px solid var(--line);
-    border-top: 3px solid var(--gold);
     border-radius: 14px;
     box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
     padding: 30px 22px 24px;
@@ -907,6 +921,7 @@
       <div id="median-container">
         <div class="loading-row">Loading median splits…</div>
       </div>
+      <div id="stat-of-moment-container"></div>
     </section>
 
     <section>
@@ -1578,6 +1593,25 @@
     updateKickoffCountdown();
   }
 
+  // ---------- Stat of the Moment ----------
+  // A single always-on hero fact under Median Watch -- currently just the
+  // league's points-for leader, which is deliberately not the same team
+  // Current Standings highlights up top (that's ranked by W-L first), so
+  // this doesn't just restate the #1 row in different words.
+  function renderStatOfMoment() {
+    const container = document.getElementById('stat-of-moment-container');
+    if (!container) return;
+    const teams = (standingsData && standingsData.teams) || [];
+    if (!teams.length) { container.innerHTML = ''; return; }
+    const top = teams.reduce((a, b) => (b.pointsFor || 0) > (a.pointsFor || 0) ? b : a);
+    container.innerHTML = `
+      <div class="stat-moment">
+        <div class="stat-moment-eyebrow">Stat of the moment</div>
+        <div class="stat-moment-value">${top.name}</div>
+        <div class="stat-moment-sub">leads the league with ${fmtScore(top.pointsFor)} points for</div>
+      </div>`;
+  }
+
   // Toggle-click path only -- assumes renderMedianStatic has already built
   // the card shell at least once, and only touches the inner list/chart
   // pieces + the toggle buttons' active state, same architecture the lab
@@ -2076,6 +2110,7 @@
         lastMedianTeams = teams;
         lastMedianData = data;
         renderMedianStatic(medianViewMode);
+        renderStatOfMoment();
 
         superlativesData = data;
         renderSuperlatives();
