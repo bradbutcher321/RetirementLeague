@@ -36,22 +36,18 @@
   .rank-badge{ background: rgba(212,180,106,0.14); border: 1px solid var(--gold); color: var(--gold); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
   .rank-badge.bad{ background: rgba(214,98,79,0.14); border-color: var(--loss); color: var(--loss); }
 
-  /* ---------- Past team logos: two options shown side by side to pick
-     between (see franchise-logo-lab.html's #3 and #6) -- logo_url comes
-     straight from ESPN, which never validates or hosts it, so a good chunk
-     of historical ones are genuinely dead links. Every <img> below has an
-     onerror fallback to a colored initials avatar for that case, not just
-     the ones that happen to still load. ---------- */
+  /* ---------- Team logos -- current team gets one next to its headline
+     name, past teams get the framed hover-tile list below (see
+     franchise-logo-lab.html's #6 -- #3, the polaroid grid, was tried and
+     dropped). logo_url comes straight from ESPN, which never validates or
+     hosts it, so a good chunk of historical ones are genuinely dead
+     links. Every <img> below has an onerror fallback to a colored
+     initials avatar for that case, not just the ones that happen to
+     still load. ---------- */
   .logo-ph{ display: none; align-items: center; justify-content: center; font-family: var(--scoreboard); font-weight: 800; color: #fff; }
+  .current-logo-avatar{ position: relative; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid var(--gold); box-shadow: 0 0 14px rgba(212,180,106,0.35); }
+  .current-logo-avatar img{ width: 100%; height: 100%; object-fit: cover; display: block; }
   .past-logos-label{ position: relative; color: var(--text-dim); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; }
-  .past-logos-label:first-of-type{ margin-top: 16px; }
-
-  .polaroid-grid{ position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 14px; }
-  .polaroid{ background: #fff; padding: 6px 6px 14px; border-radius: 3px; box-shadow: 0 6px 14px rgba(0,0,0,0.4); }
-  .polaroid-photo{ position: relative; width: 100%; aspect-ratio: 1; background: #111; overflow: hidden; }
-  .polaroid-photo img{ width: 100%; height: 100%; object-fit: cover; display: block; }
-  .polaroid-cap{ color: #222; font-family: var(--scoreboard); font-weight: 700; font-size: 0.6rem; text-align: center; margin-top: 6px; }
-  .polaroid-name{ color: #666; font-size: 0.52rem; text-align: center; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px; }
 
   .aka-logo-tile{ position: relative; display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px 4px 4px; cursor: default; }
   .aka-logo-avatar{ position: relative; width: 22px; height: 22px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
@@ -447,16 +443,6 @@
     const names = p.previous_team_names || [];
     if (!names.length) return '';
     const logos = p.previous_team_logos || {};
-    const polaroids = names.map(n => {
-      const meta = logos[n] || {};
-      const url = esc(meta.logo_url || '');
-      return `
-        <div class="polaroid">
-          <div class="polaroid-photo"><img src="${url}" onerror="onImgError(this)">${logoPh(n, '1rem')}</div>
-          <div class="polaroid-cap">${meta.year || ''}</div>
-          <div class="polaroid-name">${esc(n)}</div>
-        </div>`;
-    }).join('');
     const tiles = names.map(n => {
       const meta = logos[n] || {};
       const url = esc(meta.logo_url || '');
@@ -468,9 +454,7 @@
         </span>`;
     }).join('');
     return `
-      <div class="past-logos-label">Past Teams — Option 3: Polaroid grid</div>
-      <div class="polaroid-grid">${polaroids}</div>
-      <div class="past-logos-label">Past Teams — Option 6: Framed tile (hover for a bigger photo)</div>
+      <div class="past-logos-label">Past Teams (hover for a bigger photo)</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">${tiles}</div>`;
   }
 
@@ -480,11 +464,18 @@
     const pct = w + l ? w / (w + l) * 100 : null;
     const ranks = leagueRankBadges(p, data.players).map(b => `<span class="rank-badge${b.bad ? ' bad' : ''}">${esc(b.label)}</span>`).join('');
     const tenure = p.founded_year ? `Founded ${p.founded_year} · ${p.seasons} season${p.seasons === 1 ? '' : 's'}` : '';
+    const currentName = p.current_team_name || p.name;
+    const currentLogoUrl = esc(p.current_team_logo || '');
     return `
       <div class="glass">
         <div class="hero2-main glow" style="padding:30px 32px 26px">
           <div class="hero2-eyebrow">Franchise</div>
-          <div class="hero2-v" style="font-size:clamp(2rem,5vw,2.8rem)">${esc(p.current_team_name || p.name)}</div>
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div class="hero2-v" style="font-size:clamp(2rem,5vw,2.8rem); margin:9px 0 6px;">${esc(currentName)}</div>
+            <span class="current-logo-avatar">
+              <img src="${currentLogoUrl}" onerror="onImgError(this)">${logoPh(currentName, '1.3rem')}
+            </span>
+          </div>
           <div class="hero2-sub">${esc(p.name)} · ${tenure}</div>
           ${ranks ? `<div class="hero-pills" style="position:relative">${ranks}</div>` : ''}
           ${pastLogosHtml(p)}

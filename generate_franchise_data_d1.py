@@ -82,9 +82,10 @@ def compute_identity(teams_by_player):
     team_row_by_year = {t["year"]: t for t in teams_by_player}
     ordered_years = sorted(team_row_by_year)
     if not ordered_years:
-        return {"current_team_name": None, "previous_team_names": [], "previous_team_logos": {}}
+        return {"current_team_name": None, "current_team_logo": None, "previous_team_names": [], "previous_team_logos": {}}
     names_in_order = [team_row_by_year[y]["team_name"] for y in ordered_years]
     current = names_in_order[-1]
+    current_logo = team_row_by_year[ordered_years[-1]].get("logo_url") or None
     seen = []
     # One representative logo_url per distinct past name -- whichever year
     # that name was first used, matching the order `seen` already builds
@@ -98,7 +99,7 @@ def compute_identity(teams_by_player):
         if name != current and name not in seen:
             seen.append(name)
             logos[name] = {"year": y, "logo_url": team_row_by_year[y].get("logo_url") or None}
-    return {"current_team_name": current, "previous_team_names": seen, "previous_team_logos": logos}
+    return {"current_team_name": current, "current_team_logo": current_logo, "previous_team_names": seen, "previous_team_logos": logos}
 
 
 def win_pct(w, l, t=0):
