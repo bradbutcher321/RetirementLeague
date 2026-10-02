@@ -59,11 +59,25 @@
   .seg button:hover{ color: var(--text); }
   .seg button.on{ background: rgba(186,155,55,0.14); color: var(--gold); }
 
-  /* ---------- Parlay hero: one glowing number (combined odds) + quiet
-     side stats, reusing the shared .glass/.hero2/.hs components instead of
-     a row of identically-weighted tiles. ---------- */
+  /* ---------- Parlay hero: Legs Hit/Lost as the glowing headline pair,
+     Combined Odds/Payout/Split as quiet side stats, reusing the shared
+     .glass/.hero2/.hs components instead of a row of identically-weighted
+     tiles. ---------- */
   .parlay-status{ display: flex; align-items: center; gap: 10px; }
   .parlay-eyebrow{ margin: 0; }
+  /* Two hero2-v's side by side instead of one -- smaller than the usual
+     single-hero size so both fit together without crowding. */
+  .legs-split{ display: flex; gap: 28px; flex-wrap: wrap; }
+  .legs-split .hero2-v{ font-size: clamp(1.8rem, 7vw, 2.6rem); margin: 4px 0 2px; }
+  .legs-split .hero2-sub{ margin: 0; }
+
+  .hero-chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
+  .hero-chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); }
+  .hero-chip.loss{ border-color: rgba(214,98,79,0.4); background: rgba(214,98,79,0.08); color: var(--loss); font-weight: 600; }
+
+  .memoriam{ position: relative; margin-top: 12px; padding: 12px 16px; background: rgba(214,98,79,0.08); border: 1px solid rgba(214,98,79,0.3); border-radius: 10px; text-align: center; }
+  .memoriam-label{ color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .memoriam-killer{ font-family: var(--scoreboard); font-weight: 800; font-size: 1rem; color: var(--loss); margin-top: 4px; }
 
   /* ---------- Legs: each its own small card, not rows in a table ---------- */
   .legs-label{ display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 22px 0 10px; }
@@ -291,22 +305,29 @@
     const result = week.final.result;
     const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Still alive';
     const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
-    const killers = week.killed_by.length ? `Killed by ${week.killed_by.join(' & ')}` : '';
-    const subParts = [`${week.year} · Week ${week.week}`, killers, week.sacko ? `Sacko: ${week.sacko}` : ''].filter(Boolean);
-
     const hero = `
       <div class="glass hero2">
         <div class="hero2-main glow">
           <div class="parlay-status">
-            <div class="hero2-eyebrow parlay-eyebrow">Combined Odds</div>
+            <div class="hero2-eyebrow parlay-eyebrow">Legs</div>
             <span class="badge ${statusTone}">${status}</span>
           </div>
-          <div class="hero2-v">${fmtOdds(week.final.odds)}</div>
-          <div class="hero2-sub">${esc(subParts.join(' · '))}</div>
+          <div class="legs-split">
+            <div><div class="hero2-v turf">${wins}</div><div class="hero2-sub">Legs Hit</div></div>
+            <div><div class="hero2-v loss">${losses}</div><div class="hero2-sub">Legs Lost</div></div>
+          </div>
+          <div class="hero-chips">
+            <span class="hero-chip">${esc(week.year)} · Week ${esc(week.week)}</span>
+            ${week.sacko ? `<span class="hero-chip loss">Sacko: ${esc(week.sacko)}</span>` : ''}
+          </div>
+          ${week.killed_by.length ? `
+          <div class="memoriam">
+            <div class="memoriam-label">In Memoriam</div>
+            <div class="memoriam-killer">Killed by ${esc(week.killed_by.join(' & '))}</div>
+          </div>` : ''}
         </div>
         <div class="hero2-side">
-          <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v turf">${wins}</div></div></div>
-          <div class="hs"><div class="hs-l">Legs Lost</div><div class="hs-r"><div class="hs-v loss">${losses}</div></div></div>
+          <div class="hs"><div class="hs-l">Combined Odds</div><div class="hs-r"><div class="hs-v">${fmtOdds(week.final.odds)}</div></div></div>
           <div class="hs"><div class="hs-l">Payout</div><div class="hs-r"><div class="hs-v">${fmtMoney(week.final.payout)}</div></div></div>
           <div class="hs"><div class="hs-l">Split</div><div class="hs-r"><div class="hs-v">${fmtMoney(week.final.split)}</div></div></div>
         </div>
