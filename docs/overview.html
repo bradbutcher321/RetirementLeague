@@ -199,7 +199,7 @@
     // all-play record (see compute_all_play in generate_franchise_data_d1.py),
     // not the Power Index below (a blended composite of several different
     // stats) -- this is purely schedule-independent scoring strength.
-    const powerRankingView = () => !F ? [] : F.players.filter(p => p.all_play && p.all_play.pct != null)
+    const powerRankingView = () => !F ? [] : F.players.filter(p => p.all_play && p.all_play.pct != null && D.active.has(p.name))
       .map(p => ({
         name: p.name, hl: true, val: f1(p.all_play.pct) + '%',
         sub: `${p.all_play.w}-${p.all_play.l}${p.all_play.t ? '-' + p.all_play.t : ''} all-play`,
@@ -212,7 +212,7 @@
     const clutchDeltaView = () => !F ? [] : F.players
       .map(p => {
         const r = p.career.record, wr = p.career.win_rates;
-        if ((r.playoff_w || 0) + (r.playoff_l || 0) === 0 || wr.reg_pct == null || wr.playoff_pct == null) return null;
+        if (!D.active.has(p.name) || (r.playoff_w || 0) + (r.playoff_l || 0) === 0 || wr.reg_pct == null || wr.playoff_pct == null) return null;
         const delta = wr.playoff_pct - wr.reg_pct;
         return { name: p.name, hl: true, tone: delta > 0 ? 'up' : delta < 0 ? 'down' : '', val: (delta > 0 ? '+' : '') + f1(delta) + '%', sub: 'Playoff vs. Reg win %' };
       })
