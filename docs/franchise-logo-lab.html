@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Franchise Logo Lab — Spruce-Up Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=4">
+<style>
+  /* Scratch gallery, not a shipped page -- not linked from nav. Each
+     numbered section is one take on adding past team logos to the
+     Franchise hero card's "aka" pills. All images are Flanders' real
+     logo_url pulled straight from ESPN's API for every year 2015-2026
+     (see leagueTeam.logo_url) -- including several that are genuinely
+     dead links today (mugshot sites and an expired Facebook CDN URL
+     blocked these with a real 403, confirmed directly via curl, not
+     guessed), which is realistic: most managers will have at least a
+     few broken historical URLs, so every variant here has to handle
+     that gracefully, not just show the ones that happen to still load. */
+  body{ padding-bottom: 80px; }
+  .lab-wrap{ max-width: 760px; margin: 0 auto; padding: 28px 20px; }
+  .lab-head{ margin-bottom: 30px; }
+  .lab-head h1{ font-family: var(--scoreboard); font-size: clamp(1.8rem,5vw,2.6rem); margin: 4px 0 6px; }
+  .lab-head p{ color: var(--text-dim); font-size: 0.88rem; max-width: 64ch; line-height: 1.5; }
+  .lab-sec{ margin-bottom: 30px; }
+  .lab-sec-h{ display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .lab-num{ font-family: var(--scoreboard); font-weight: 800; color: var(--gold); font-size: 0.95rem; }
+  .lab-title{ font-weight: 700; font-size: 1rem; }
+  .lab-desc{ color: var(--text-dim); font-size: 0.78rem; margin-bottom: 14px; line-height: 1.4; }
+  .mock-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); padding: 24px 26px; overflow: hidden; }
+
+  /* Shared broken-image fallback: a plain initials avatar that only
+     shows once the real <img> fails to load (onerror below toggles
+     this in). Color is just a deterministic hash of the name so it's
+     at least visually distinct card to card, not a design claim. */
+  .logo-ph{ display: none; align-items: center; justify-content: center; font-family: var(--scoreboard); font-weight: 800; color: #fff; }
+</style>
+</head>
+<body>
+  <div class="lab-wrap">
+    <div class="lab-head">
+      <div class="eyebrow" style="color:var(--gold);font-weight:600;font-size:0.8rem;">Retirement League — scratch page, not linked anywhere</div>
+      <h1>Franchise Logo Lab</h1>
+      <p>Options for working Flanders' real past team logos (pulled from ESPN for every year 2015-2026) into the Franchise hero card's "aka" pills. Several of his real logo_urls are dead links today (mugshot sites, an expired Facebook CDN link) — every variant below handles that for real, not just with the ones that happen to still load.</p>
+    </div>
+    <div id="variants"></div>
+  </div>
+
+<script>
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // Flanders' real year -> team name -> logo_url, pulled directly from
+  // ESPN's API (espn_api Team.logo_url) for every season he's played.
+  const HISTORY = [
+    { year: 2015, name: 'Ray Rice Fan Club', logo: 'http://florida.arrests.org/mugs/Seminole/2015/201500007221.jpg' },
+    { year: 2016, name: 'Brads Bachelor Party', logo: 'http://previews.123rf.com/images/chrisdorney/chrisdorney1402/chrisdorney140200023/26101261-ABSENT-red-Rubber-Stamp-over-a-white-background--Stock-Photo.jpg' },
+    { year: 2017, name: 'Shit hurts K', logo: 'https://scontent-mia3-1.xx.fbcdn.net/v/t1.0-9/301640_273668145984897_1666541388_n.jpg?oh=b61c344cf8ab46dfe16db1c6747990d8&oe=5A1782B0' },
+    { year: 2018, name: 'Hit N Run', logo: 'https://cdn.arrests.org/Florida/Orange/mugshots/2018/18007150.jpg' },
+    { year: 2019, name: 'Collins Transcripts', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1200px-Adobe_Photoshop_CC_icon.svg.png' },
+    { year: 2020, name: 'Late Night DMer', logo: 'https://imgur.com/YIdmBOH.png' },
+    { year: 2021, name: 'Upset after 2 beers with Rik', logo: 'https://i.imgur.com/m1eRtV1.png' },
+    { year: 2022, name: 'THE 2x CHAMPION', logo: 'https://i.imgur.com/m1eRtV1.png' },
+    { year: 2023, name: 'Flanders and The Funky Bunch', logo: 'https://i.imgur.com/m1eRtV1.png' },
+    { year: 2024, name: 'CHAMP CHAMP CHAMP', logo: 'https://i.imgur.com/4iHWfoC.png' },
+    { year: 2025, name: 'Flanders And The Funky Bunch', logo: 'https://i.imgur.com/4iHWfoC.png' },
+    { year: 2026, name: 'Flanders And The Funky Bunch', logo: 'https://i.imgur.com/4iHWfoC.png' },
+  ];
+  // "aka" pills only ever show *previous* names, not the current one --
+  // matching franchise.html's own previous_team_names (every entry here
+  // except the live 2026 name).
+  const PAST = HISTORY.filter(h => h.year < 2026);
+
+  const initials = name => name.replace(/[^A-Za-z ]/g, '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
+  const hashColor = name => {
+    let h = 0;
+    for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return `hsl(${h % 360}, 45%, 32%)`;
+  };
+  // Shared onerror handler: hide the broken <img>, reveal its sibling
+  // initials-avatar placeholder. Passed the element directly so it works
+  // no matter how deep the <img> is nested in a given variant's markup.
+  function onImgError(img) {
+    img.style.display = 'none';
+    const ph = img.nextElementSibling;
+    if (ph) ph.style.display = 'flex';
+  }
+
+  function sec(container, num, title, desc, html) {
+    const el = document.createElement('div');
+    el.className = 'lab-sec';
+    el.innerHTML = `<div class="lab-sec-h"><span class="lab-num">${num}</span><span class="lab-title">${esc(title)}</span></div>` +
+      `<div class="lab-desc">${esc(desc)}</div>${html}`;
+    container.appendChild(el);
+  }
+
+  // ========================================================================
+  // 1. Small circular avatar prefixed to each existing "aka" pill
+  // ========================================================================
+  function v1_avatarPill() {
+    const pills = PAST.map(h => `
+      <span class="aka" style="display:inline-flex;align-items:center;gap:7px;padding-left:4px;">
+        <span style="position:relative;width:20px;height:20px;border-radius:50%;overflow:hidden;flex-shrink:0;">
+          <img src="${h.logo}" onerror="onImgError(this)" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <span class="logo-ph" style="position:absolute;inset:0;font-size:0.5rem;background:${hashColor(h.name)};">${initials(h.name)}</span>
+        </span>
+        aka ${esc(h.name)}
+      </span>`).join('');
+    return `<div class="mock-card"><div style="display:flex;flex-wrap:wrap;gap:8px;">${pills}</div></div>`;
+  }
+
+  // ========================================================================
+  // 2. Rogues-gallery strip: circular avatars in a row, name below
+  // ========================================================================
+  function v2_rogues() {
+    const items = PAST.map(h => `
+      <div style="display:flex;flex-direction:column;align-items:center;width:74px;flex-shrink:0;text-align:center;">
+        <span style="position:relative;width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid var(--line);flex-shrink:0;">
+          <img src="${h.logo}" onerror="onImgError(this)" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <span class="logo-ph" style="position:absolute;inset:0;font-size:1rem;background:${hashColor(h.name)};">${initials(h.name)}</span>
+        </span>
+        <div style="font-size:0.62rem;color:var(--gold);font-weight:700;margin-top:5px;">${h.year}</div>
+        <div style="font-size:0.6rem;color:var(--text-dim);line-height:1.2;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${esc(h.name)}</div>
+      </div>`).join('');
+    return `<div class="mock-card"><div style="display:flex;gap:14px;overflow-x:auto;padding-bottom:4px;">${items}</div></div>`;
+  }
+
+  // ========================================================================
+  // 3. Polaroid card grid -- a little "history book" flavor
+  // ========================================================================
+  function v3_polaroid() {
+    const cards = PAST.map(h => `
+      <div style="background:#fff;padding:7px 7px 18px;border-radius:3px;box-shadow:0 6px 14px rgba(0,0,0,0.4);transform:rotate(${((h.year * 37) % 7) - 3}deg);">
+        <div style="position:relative;width:100%;aspect-ratio:1;background:#111;overflow:hidden;">
+          <img src="${h.logo}" onerror="onImgError(this)" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <span class="logo-ph" style="position:absolute;inset:0;font-size:1.3rem;background:${hashColor(h.name)};">${initials(h.name)}</span>
+        </div>
+        <div style="color:#222;font-family:var(--scoreboard);font-weight:700;font-size:0.68rem;text-align:center;margin-top:8px;">${h.year}</div>
+      </div>`).join('');
+    return `<div class="mock-card"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:16px;">${cards}</div></div>`;
+  }
+
+  // ========================================================================
+  // 4. Hover-to-reveal -- pills stay exactly as they are today, a small
+  //    photo only appears on hover/focus (keyboard-accessible via :focus)
+  // ========================================================================
+  function v4_hoverReveal() {
+    const pills = PAST.map((h, i) => `
+      <span class="aka hover-logo" tabindex="0" style="position:relative;cursor:default;">
+        aka ${esc(h.name)}
+        <span style="position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+          width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--line);
+          box-shadow:0 10px 24px rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:opacity 0.15s;z-index:5;">
+          <img src="${h.logo}" onerror="onImgError(this)" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <span class="logo-ph" style="position:absolute;inset:0;font-size:1.1rem;background:${hashColor(h.name)};">${initials(h.name)}</span>
+        </span>
+      </span>`).join('');
+    return `<div class="mock-card">
+      <style>.hover-logo:hover > span:last-child, .hover-logo:focus > span:last-child{ opacity:1 !important; }</style>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">${pills}</div>
+      <div style="color:var(--text-dim);font-size:0.68rem;margin-top:10px;">Hover or tab to a pill above to preview.</div>
+    </div>`;
+  }
+
+  // ========================================================================
+  // 5. Dedicated "Team History" strip below the pills -- pills stay
+  //    text-only, logos get their own clearly-labeled row underneath
+  // ========================================================================
+  function v5_separateStrip() {
+    const pills = PAST.map(h => `<span class="aka">aka ${esc(h.name)}</span>`).join('');
+    const thumbs = PAST.map(h => `
+      <div style="flex-shrink:0;text-align:center;">
+        <span style="position:relative;display:block;width:40px;height:40px;border-radius:9px;overflow:hidden;border:1px solid var(--line);">
+          <img src="${h.logo}" onerror="onImgError(this)" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <span class="logo-ph" style="position:absolute;inset:0;font-size:0.72rem;background:${hashColor(h.name)};">${initials(h.name)}</span>
+        </span>
+        <div style="font-size:0.56rem;color:var(--text-dim);margin-top:3px;">'${String(h.year).slice(2)}</div>
+      </div>`).join('');
+    return `<div class="mock-card">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">${pills}</div>
+      <div style="color:var(--text-dim);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.06em;margin:16px 0 8px;">Team History</div>
+      <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;">${thumbs}</div>
+    </div>`;
+  }
+
+  // ========================================================================
+  // 6. Framed name card -- logo and name combined into one small bordered
+  //    tile (replaces the plain pill entirely, not an addition to it)
+  // ========================================================================
+  function v6_framedTile() {
+    const tiles = PAST.map(h => `
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;">
+        <span style="position:relative;width:22px;height:22px;border-radius:50%;overflow:hidden;flex-shrink:0;">
+          <img src="${h.logo}" onerror="onImgError(this)" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <span class="logo-ph" style="position:absolute;inset:0;font-size:0.52rem;background:${hashColor(h.name)};">${initials(h.name)}</span>
+        </span>
+        <span style="font-size:0.74rem;color:var(--text-dim);">${esc(h.name)} <span style="color:var(--text-dim);opacity:0.6;">· ${h.year}</span></span>
+      </div>`).join('');
+    return `<div class="mock-card"><div style="display:flex;flex-wrap:wrap;gap:8px;">${tiles}</div></div>`;
+  }
+
+  // ========================================================================
+  // 7. Honest "what actually loads" control -- no fallback at all, so
+  //    you can see exactly how many of 11 past years are genuinely dead
+  //    links today, unstyled
+  // ========================================================================
+  function v7_rawControl() {
+    const items = PAST.map(h => `
+      <div style="text-align:center;width:64px;">
+        <img src="${h.logo}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;background:#1a1a1a;">
+        <div style="font-size:0.58rem;color:var(--text-dim);margin-top:4px;">${h.year}</div>
+      </div>`).join('');
+    return `<div class="mock-card"><div style="display:flex;flex-wrap:wrap;gap:12px;">${items}</div>
+      <div style="color:var(--text-dim);font-size:0.68rem;margin-top:10px;">No fallback here on purpose -- a browser's own broken-image icon is whatever's actually behind each real logo_url.</div></div>`;
+  }
+
+  const c = document.getElementById('variants');
+  sec(c, 1, 'Small avatar on each pill', 'Lowest-footprint option -- a 20px circular photo prefixed to the existing "aka" pill text, same row, same size as today.', v1_avatarPill());
+  sec(c, 2, 'Rogues-gallery strip', 'Pills are replaced by a horizontal row of larger circular avatars with year + name underneath each -- reads as a cast list across the franchise\'s history.', v2_rogues());
+  sec(c, 3, 'Polaroid grid', 'Each past season gets its own tilted polaroid-style photo card in a wrapping grid -- more "history book," most visual weight of any option here.', v3_polaroid());
+  sec(c, 4, 'Hover/focus reveal', 'Pills stay exactly as they look today -- a small photo only pops up above a pill on hover or keyboard focus, so nothing changes for anyone just skimming.', v4_hoverReveal());
+  sec(c, 5, 'Separate "Team History" strip', 'Pills stay text-only and untouched; a new labeled row of small square thumbnails sits underneath them instead of touching the pills at all.', v5_separateStrip());
+  sec(c, 6, 'Framed name+logo tile', 'Replaces the plain pill entirely with a rounded tile combining a small avatar, the name, and the year in one unit.', v6_framedTile());
+  sec(c, 7, 'Raw control (no fallback)', 'Same real logo_urls with zero error handling -- shows exactly how often a historical URL is actually dead (most of them, for Flanders) when nothing papers over it.', v7_rawControl());
+</script>
+</body>
+</html>
