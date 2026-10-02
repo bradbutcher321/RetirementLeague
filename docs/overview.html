@@ -237,8 +237,8 @@
       const curWorst = Math.min(...rows.map(p => p.streaks[key].current));
       return rows.map(p => {
         const s = p.streaks[key];
-        const winNum = s.longest_win === maxWin ? `<span style="color:var(--turf)">${s.longest_win}</span>` : s.longest_win;
-        const lossNum = s.longest_loss === maxLoss ? `<span style="color:var(--loss)">${s.longest_loss}</span>` : s.longest_loss;
+        const winNum = s.longest_win === maxWin ? `<em style="color:var(--turf)">${s.longest_win}</em>` : s.longest_win;
+        const lossNum = s.longest_loss === maxLoss ? `<em style="color:var(--loss)">${s.longest_loss}</em>` : s.longest_loss;
         const ring = curBest > 0 && s.current === curBest ? 'streak-w' : (curWorst < 0 && s.current === curWorst ? 'streak-l' : '');
         return { name: p.name, ring, stats: [[winNum, 'Best W'], [lossNum, 'Best L'], [cur(s.current), 'Now']] };
       });
