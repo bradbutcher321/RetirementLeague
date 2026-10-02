@@ -67,8 +67,8 @@
   .median-zone-wash{ position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none; }
   .median-zone-wash.above{ background: linear-gradient(to top, transparent, rgba(79,174,122,0.07)); }
   .median-zone-wash.below{ background: linear-gradient(to bottom, transparent, rgba(214,98,79,0.07)); }
-  .name-row{ background-color: var(--surface); position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid var(--line); padding: 0; }
-  .name-row .slot{ font-size: 0.62rem; font-weight: 700; letter-spacing: 0.01em; line-height: 1.4; border: 1px solid transparent; border-radius: 0; width: 100%; text-align: center; position: relative; }
+  .name-row{ background-color: var(--surface); position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 4px; border: 1px solid var(--line); padding: 0; transition: border-color 0.25s ease, box-shadow 0.25s ease, gap 0.25s ease; }
+  .name-row .slot{ font-size: 0.62rem; font-weight: 700; letter-spacing: 0.01em; line-height: 1.4; border: 1px solid transparent; border-radius: 0; width: 100%; text-align: center; position: relative; transition: background-color 0.25s ease, border-color 0.25s ease, padding 0.25s ease; }
   .name-row .slot:first-child{ border-top-left-radius: 3px; border-top-right-radius: 3px; }
   .name-row .slot:last-child{ border-bottom-left-radius: 3px; border-bottom-right-radius: 3px; }
   .name-row .slot.live::before{ content: ''; position: absolute; left: 4px; top: 50%; margin-top: -2.5px; width: 5px; height: 5px; border-radius: 50%; background: var(--loss); --pc: 192,87,75; animation: live-pulse 1.6s infinite; }
@@ -385,31 +385,40 @@
 
   const SPREAD_MIN_GAP = 3;
 
-  function measurePillHeights(container) {
+  function measurePillHeights(container, chipStyle) {
+    // Must probe with the SAME classes renderSpreadChart actually renders
+    // with -- chipStyle's .slot-chip adds its own padding/border that a
+    // plain .slot doesn't have, so measuring with the wrong one understates
+    // real pill height. computeSpreadClusters then spaces clusters (and the
+    // median tick, which is placed at a cluster boundary) using that
+    // understated size, so the real, taller chips end up overlapping the
+    // gaps it left for them -- including the median line itself.
     const probe = document.createElement('div');
-    probe.className = 'name-row';
+    probe.className = 'name-row' + (chipStyle ? ' plain-wrap' : '');
     probe.style.visibility = 'hidden';
     probe.style.position = 'absolute';
     probe.style.left = '-9999px';
-    probe.innerHTML = '<span class="slot">Xx</span>';
+    const slotCls = 'slot' + (chipStyle ? ' slot-chip' : '');
+    probe.innerHTML = `<span class="${slotCls}">Xx</span>`;
     container.appendChild(probe);
     const singleHeight = probe.offsetHeight;
-    probe.innerHTML = '<span class="slot">Xx</span><span class="slot">Xx</span>';
+    probe.innerHTML = `<span class="${slotCls}">Xx</span><span class="${slotCls}">Xx</span>`;
     const slotHeight = probe.offsetHeight - singleHeight;
     container.removeChild(probe);
     return { singleHeight, slotHeight };
   }
 
-  function measureMaxRowWidth(container, names) {
+  function measureMaxRowWidth(container, names, chipStyle) {
     const probe = document.createElement('div');
-    probe.className = 'name-row';
+    probe.className = 'name-row' + (chipStyle ? ' plain-wrap' : '');
     probe.style.visibility = 'hidden';
     probe.style.position = 'absolute';
     probe.style.left = '-9999px';
     container.appendChild(probe);
+    const slotCls = 'slot' + (chipStyle ? ' slot-chip' : '');
     let max = 0;
     for (const name of names) {
-      probe.innerHTML = `<span class="slot">${name}</span>`;
+      probe.innerHTML = `<span class="${slotCls}">${name}</span>`;
       max = Math.max(max, probe.offsetWidth);
     }
     container.removeChild(probe);
@@ -472,8 +481,8 @@
     const el = document.getElementById(elId);
     if (!el || ascendingTeams.length < 2) return;
     const plotSize = el.clientHeight || 220;
-    const { singleHeight, slotHeight } = measurePillHeights(el);
-    const rowWidth = measureMaxRowWidth(el, ascendingTeams.map(t => t.name)) + 24;
+    const { singleHeight, slotHeight } = measurePillHeights(el, chipStyle);
+    const rowWidth = measureMaxRowWidth(el, ascendingTeams.map(t => t.name), chipStyle) + 24;
     const clusters = computeSpreadClusters(ascendingTeams, plotSize, singleHeight, slotHeight);
     const toTopPct = pos => 100 - (pos / plotSize) * 100;
     const RED = 'rgba(192,87,75,0.28)';
@@ -929,6 +938,33 @@
         renderSpreadChart('b32-chart', rows.all.slice().reverse(), medianValue, rows.zones, true, true);
         tagTransitionNames();
       }
+      // chipStyle exists purely to make the chart animatable (every team
+      // needs its own reliably-matchable element -- see tagTransitionNames).
+      // Once the animation actually lands, there's no reason to keep paying
+      // for it visually: this re-skins each already-in-place cluster back
+      // into one shared pill (today's real production look) by reading each
+      // row's composition straight off the DOM and reapplying the exact
+      // same background/border logic renderSpreadChart uses -- no re-layout,
+      // no repositioning, so nothing jumps. Only the per-element chip
+      // borders dissolve away (see the .slot/.name-row transition in CSS).
+      function settleChartToMergedPills() {
+        const RED = 'rgba(192,87,75,0.28)', GREEN = 'rgba(76,154,107,0.28)';
+        document.querySelectorAll('#b32-chart .name-row.plain-wrap').forEach(row => {
+          const slots = Array.from(row.querySelectorAll('.slot'));
+          const belowCount = slots.filter(s => s.classList.contains('below')).length;
+          const aboveCount = slots.length - belowCount;
+          let background, borderColor;
+          if (belowCount === 0) { background = `linear-gradient(${GREEN}, ${GREEN})`; borderColor = 'var(--turf-dim)'; }
+          else if (aboveCount === 0) { background = `linear-gradient(${RED}, ${RED})`; borderColor = 'rgba(192,87,75,0.5)'; }
+          else { const splitPct = (belowCount / slots.length) * 100; background = `linear-gradient(to top, ${RED} ${splitPct}%, ${GREEN} ${splitPct}%)`; borderColor = 'var(--line)'; }
+          const anyLocked = slots.some(s => s.classList.contains('locked'));
+          row.style.backgroundImage = background;
+          row.style.borderColor = borderColor;
+          row.style.boxShadow = !anyLocked ? '' : belowCount === 0 ? '0 0 14px rgba(76,154,107,0.3)' : aboveCount === 0 ? '0 0 14px rgba(192,87,75,0.3)' : '';
+          row.classList.remove('plain-wrap');
+          slots.forEach(s => s.classList.remove('slot-chip'));
+        });
+      }
       // Chrome/Edge/Safari support document.startViewTransition; Firefox
       // doesn't yet, so this degrades to the plain instant swap there (the
       // same behavior this page had before), not a broken page. Also skips
@@ -936,9 +972,11 @@
       const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       function renderUnifiedMedianCard(mode) {
         if (document.startViewTransition && !reduceMotion) {
-          document.startViewTransition(() => applyUnifiedMedianUpdate(mode));
+          const vt = document.startViewTransition(() => applyUnifiedMedianUpdate(mode));
+          vt.finished.then(settleChartToMergedPills).catch(() => {});
         } else {
           applyUnifiedMedianUpdate(mode);
+          settleChartToMergedPills();
         }
       }
       const unifiedShell = `
