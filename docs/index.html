@@ -718,6 +718,15 @@
   /* Same 0.68s/bounce-adjacent duration as cards+chart sliding into their
      new spot on toggle. */
   ::view-transition-group(*){ animation-duration: 0.68s; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+  /* By default a View Transition also cross-fades "root" -- a flat
+     before/after screenshot of everything NOT individually named, i.e.
+     the whole rest of the page -- at the UA's own default duration (0.25s,
+     shorter than the 0.68s above), which reads as a quick whole-page flash
+     at the start of every toggle even though nothing outside the card
+     actually changed. Disabling root's animation scopes the transition to
+     just the explicitly named cards/chips; everything else stays static
+     and untouched the whole time. */
+  ::view-transition-old(root), ::view-transition-new(root){ animation: none; mix-blend-mode: normal; }
 
   /* ---------- Superlatives ---------- */
   .accolades-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
