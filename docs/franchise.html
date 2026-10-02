@@ -308,6 +308,7 @@
     add(rank(x => x.career.points.avg_pf), true, 'Average Points', false);
     add(rank(x => x.money && x.money.net_result), !!(p.money && p.money.net_result > 0), 'Net Money Won', false);
     add(rank(x => clutchDelta(x)), clutchDelta(p) > 0, 'Clutch Factor', false);
+    add(rank(x => x.all_play && x.all_play.pct), !!(p.all_play && p.all_play.pct != null), 'Power Ranking', false);
 
     // Bad (red) -- same stats, ranked from the other end, plus a few that are only ever bad
     add(rank(x => x.money && x.money.net_result, false), !!(p.money && p.money.net_result < 0), 'Net Money Lost', true);
@@ -428,9 +429,20 @@
 
   function renderPerformance(p) {
     const r = p.career.record, s = p.career.standings, wr = p.career.win_rates;
+    const regRows = [['Finish', [[fmt(s.best_regular_finish), 'Best'], [fmt(s.worst_regular_finish), 'Worst']]], ['Sackos', [[fmt(s.sackos), 'Total']]]];
+    const ap = p.all_play;
+    if (ap && ap.pct != null) {
+      // "If you'd played every team, every week, instead of just your
+      // actual schedule" -- a Reg-season-only all-play record, so it
+      // lives in this card rather than a separate one.
+      const activePool = data.players.filter(x => isActivePlayer(x, leagueCurrentYear(data.players)));
+      const powerRank = computeRank(ap.pct, activePool, x => x.all_play && x.all_play.pct, true);
+      const stat = [`${fmt(ap.pct, 1)}%`, `${ap.w}-${ap.l}${ap.t ? '-' + ap.t : ''} all-play`, rateTone(ap.pct).tone];
+      regRows.push(['Power Ranking', powerRank ? [stat, [fmtOrdinal(powerRank), `of ${activePool.length}`]] : [stat]]);
+    }
     const reg = card('Regular Season',
       pods([['Win Rate', fmtPct(wr.reg_pct), rateTone(wr.reg_pct)], ['Record', `${fmt(r.reg_w)}-${fmt(r.reg_l)}${r.reg_t ? '-' + r.reg_t : ''}`], ['Reg Szn Champ', fmt(s.reg_season_champs)]]) +
-      rows([['Finish', [[fmt(s.best_regular_finish), 'Best'], [fmt(s.worst_regular_finish), 'Worst']]], ['Sackos', [[fmt(s.sackos), 'Total']]]]));
+      rows(regRows));
 
     const extraRows = [];
     const delta = clutchDelta(p);
