@@ -104,6 +104,10 @@
     .b32-grid{ grid-template-columns: 1fr; }
     .median-card:has(#b32-seg) .median-card-header{ flex-wrap: wrap; gap: 8px; align-items: center; }
   }
+  /* Concept 32's Current/Projected toggle: each card and chart pill gets a
+     stable view-transition-name (see tagTransitionNames in the script), so
+     switching modes morphs them to their new spot/size instead of flashing. */
+  ::view-transition-group(*){ animation-duration: 0.42s; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
 </style>
 </head>
 <body>
@@ -495,7 +499,7 @@
       const slots = c.members
         .slice()
         .sort((a, b) => b.score - a.score)
-        .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}">${esc(m.name)}</span>`)
+        .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}" data-name="${esc(m.name)}">${esc(m.name)}</span>`)
         .join('');
       const glow = !c.members.some(m => m.locked) ? '' : belowCount === 0 ? 'box-shadow:0 0 14px rgba(76,154,107,0.3);' : aboveCount === 0 ? 'box-shadow:0 0 14px rgba(192,87,75,0.3);' : '';
       html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${slots}</div>`;
@@ -611,7 +615,7 @@
     const check = st && st.cls === 'locked' ? '✓ ' : '';
     const statusColor = st ? (st.cls === 'locked' ? 'var(--gold)' : st.cls === 'live' ? 'var(--loss)' : 'var(--text-dim)') : 'var(--text-dim)';
     const glow = st && st.cls === 'locked' ? `box-shadow:0 0 10px rgba(${tone === 'turf' ? '76,154,107' : '192,87,75'},0.25);` : '';
-    return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${st && st.cls === 'locked' ? 'var(--gold)' : 'var(--line)'};border-radius:8px;padding:9px 10px;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;${glow}">
+    return `<div class="mb-card" data-name="${esc(t.name)}" style="background:rgba(255,255,255,0.03);border:1px solid ${st && st.cls === 'locked' ? 'var(--gold)' : 'var(--line)'};border-radius:8px;padding:9px 10px;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;${glow}">
       <span style="font-size:1rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${esc(t.name)}</span>
       <div style="text-align:right;flex-shrink:0;">
         <div style="font-family:var(--scoreboard);font-weight:700;font-size:1.3rem;color:var(--${tone});line-height:1.1;">${fmt(t.score)}</div>
@@ -863,7 +867,20 @@
       function unifiedGridHtml(list, tone) {
         return `<div class="b32-grid">${list.map(t => medianBlendRowGrid(t, tone)).join('')}</div>`;
       }
-      function renderUnifiedMedianCard(mode) {
+      // Stable per-team key so the browser's View Transition can match each
+      // card and each chart pill to its own counterpart in the next frame --
+      // without this it has nothing to morph between and just cross-fades
+      // the whole region as one blob.
+      const b32Slug = name => 'b32-' + name.replace(/[^a-zA-Z0-9]/g, '-');
+      function tagTransitionNames() {
+        document.querySelectorAll('#b32-above .mb-card, #b32-below .mb-card').forEach(el => {
+          el.style.viewTransitionName = 'card-' + b32Slug(el.dataset.name);
+        });
+        document.querySelectorAll('#b32-chart .slot').forEach(el => {
+          el.style.viewTransitionName = 'chart-' + b32Slug(el.dataset.name);
+        });
+      }
+      function applyUnifiedMedianUpdate(mode) {
         const rows = mode === 'current' ? curRows : projRows;
         const medianValue = mode === 'current' ? data.currentMedian : data.projectedMedian;
         const label = mode === 'current' ? 'Current Median' : 'Projected Median';
@@ -874,6 +891,19 @@
         document.getElementById('b32-spreadcol').style.width = (rows.zones ? 118 : 88) + 'px';
         document.getElementById('b32-chart').classList.toggle('zoned', !!rows.zones);
         renderSpreadChart('b32-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+        tagTransitionNames();
+      }
+      // Chrome/Edge/Safari support document.startViewTransition; Firefox
+      // doesn't yet, so this degrades to the plain instant swap there (the
+      // same behavior this page had before), not a broken page. Also skips
+      // the animation outright for anyone with reduced-motion set.
+      const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function renderUnifiedMedianCard(mode) {
+        if (document.startViewTransition && !reduceMotion) {
+          document.startViewTransition(() => applyUnifiedMedianUpdate(mode));
+        } else {
+          applyUnifiedMedianUpdate(mode);
+        }
       }
       const unifiedShell = `
         <div class="median-card">
