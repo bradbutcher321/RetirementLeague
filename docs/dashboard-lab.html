@@ -44,6 +44,9 @@
     <div class="lab-group"><h2>Median Watch — above/below concepts</h2><span class="n">1–13</span></div>
     <div id="median-variants"></div>
 
+    <div class="lab-group"><h2>Median Watch — bracket layout blended with the live card's depth</h2><span class="n">28–31</span></div>
+    <div id="blend-variants"></div>
+
     <div class="lab-group"><h2>Matchup card concepts</h2><span class="n">14–19</span></div>
     <div id="matchup-variants"></div>
 
@@ -277,6 +280,141 @@
   }
 
   // ========================================================================
+  // MEDIAN BLEND CONCEPTS -- concept 12's clean full-width bracket rows,
+  // carrying the real production card's functional depth (Locked/Final/Live
+  // states, "X to play", current vs. projected) instead of concept 12's bare
+  // name+score. Takes raw per-team objects (with current/projected/remaining/
+  // inPlay, straight off the Worker) rather than the flattened {name, score}
+  // shape the other median1-13 concepts use, since that status line is the
+  // whole point here. Same lock math as renderMedianCard in index.html, so
+  // a team shown "Locked Above" here would be locked there too.
+  // ========================================================================
+
+  function computeMedianRows(rawTeams, medianValue, scoreKey, statusKnown) {
+    const withScore = rawTeams.map(t => ({
+      name: t.manager || t.name,
+      score: t[scoreKey] || 0,
+      cur: t.current || 0,
+      remaining: t.remaining || 0,
+      inPlay: t.inPlay || 0,
+      statusKnown,
+      done: statusKnown && !(t.remaining || 0) && !(t.inPlay || 0),
+    }));
+    const half = Math.floor(withScore.length / 2);
+    if (statusKnown) {
+      const finished = withScore.filter(m => m.done).map(m => m.cur);
+      const upLine = finished.length >= half ? [...finished].sort((a, b) => a - b)[half - 1] : null;
+      const downLine = finished.length > 0 && withScore.length > half
+        ? withScore.map(m => m.cur).sort((a, b) => b - a)[half - 1] : null;
+      withScore.forEach(m => {
+        m.lockedAbove = upLine !== null && m.cur > upLine;
+        m.lockedBelow = m.done && downLine !== null && m.cur < downLine;
+        m.locked = m.lockedAbove || m.lockedBelow;
+      });
+    }
+    const sorted = withScore.slice().sort((a, b) => b.score - a.score);
+    return { above: sorted.slice(0, half), below: sorted.slice(sorted.length - half), all: sorted };
+  }
+
+  function miniStatusText(t) {
+    if (!t.statusKnown) return null;
+    if (t.locked) return { text: `Locked ${t.lockedAbove ? 'above' : 'below'}`, cls: 'locked' };
+    if (t.done) return { text: 'Final', cls: 'final' };
+    const toPlay = t.remaining ? `${t.remaining} to play` : '';
+    if (t.inPlay) return { text: `${t.inPlay} live${toPlay ? ' · ' + toPlay : ''}`, cls: 'live' };
+    return toPlay ? { text: toPlay, cls: '' } : null;
+  }
+
+  function medianBlendRow(t, tone) {
+    const st = miniStatusText(t);
+    const dot = st && st.cls === 'live' ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--loss);margin-right:4px;animation:pulse 1.6s ease-in-out infinite;"></span>` : '';
+    const check = st && st.cls === 'locked' ? '✓ ' : '';
+    const statusColor = st ? (st.cls === 'locked' ? 'var(--gold)' : st.cls === 'live' ? 'var(--loss)' : 'var(--text-dim)') : 'var(--text-dim)';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);border:1px solid ${st && st.cls === 'locked' ? 'var(--gold)' : 'var(--line)'};border-radius:8px;padding:7px 12px;margin-top:6px;">
+      <span style="font-size:0.82rem;font-weight:600;">${esc(t.name)}</span>
+      <div style="text-align:right;">
+        <div style="font-family:var(--scoreboard);font-weight:700;color:var(--${tone});">${fmt(t.score)}</div>
+        ${st ? `<div style="font-size:0.6rem;color:${statusColor};margin-top:1px;white-space:nowrap;">${dot}${check}${esc(st.text)}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function medianB1_bracketStatus(rows, medianValue) {
+    return `<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;">
+      <div>${rows.above.map(t => medianBlendRow(t, 'turf')).join('')}</div>
+      <div style="writing-mode:vertical-rl;color:var(--gold);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;align-self:center;">Median ${fmt(medianValue)}</div>
+      <div>${rows.below.map(t => medianBlendRow(t, 'loss')).join('')}</div>
+    </div>`;
+  }
+
+  function groupTies(list) {
+    const groups = [];
+    list.forEach(t => {
+      const last = groups[groups.length - 1];
+      if (last && Math.abs(last.score - t.score) < 0.005) last.items.push(t);
+      else groups.push({ score: t.score, items: [t] });
+    });
+    return groups;
+  }
+
+  function medianB2_groupedTies(rows, medianValue) {
+    const groupRow = (g, tone) => {
+      const st = g.items.length === 1 ? miniStatusText(g.items[0]) : null;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:7px 12px;margin-top:6px;">
+        <span style="font-size:0.82rem;font-weight:600;">${g.items.map(t => esc(t.name)).join(' & ')}</span>
+        <div style="text-align:right;">
+          <div style="font-family:var(--scoreboard);font-weight:700;color:var(--${tone});">${fmt(g.score)}</div>
+          ${st ? `<div style="font-size:0.6rem;color:var(--text-dim);margin-top:1px;">${esc(st.text)}</div>` : ''}
+        </div>
+      </div>`;
+    };
+    return `<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;">
+      <div>${groupTies(rows.above).map(g => groupRow(g, 'turf')).join('')}</div>
+      <div style="writing-mode:vertical-rl;color:var(--gold);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;align-self:center;">Median ${fmt(medianValue)}</div>
+      <div>${groupTies(rows.below).map(g => groupRow(g, 'loss')).join('')}</div>
+    </div>
+    <div style="margin-top:10px;color:var(--text-dim);font-size:0.68rem;">Ties merge into one row, like the real card's ladder already groups them — right now that's every team still at 0.0 pregame.</div>`;
+  }
+
+  function medianB3_bracketLadder(rows, medianValue) {
+    const scores = rows.all.map(t => t.score).concat([medianValue]);
+    const lo = Math.min(...scores), hi = Math.max(...scores);
+    const span = (hi - lo) * 1.12 || 1;
+    const base = lo - span * 0.06;
+    const pctOf = v => Math.min(100, Math.max(0, ((v - base) / span) * 100));
+    const ticks = rows.all.map(t => `<div style="position:absolute;left:50%;top:${100 - pctOf(t.score)}%;width:${t.score >= medianValue ? '16px' : '-16px'};height:2px;transform:translate(${t.score >= medianValue ? '0' : '-100%'},-50%);background:var(--${t.score >= medianValue ? 'turf' : 'loss'});"></div>`).join('');
+    return `<div style="display:grid;grid-template-columns:1fr 46px 1fr;gap:10px;align-items:start;">
+      <div>${rows.above.map(t => medianBlendRow(t, 'turf')).join('')}</div>
+      <div style="position:relative;min-height:240px;align-self:stretch;">
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);transform:translateX(-50%);"></div>
+        ${ticks}
+        <div style="position:absolute;left:50%;top:${100 - pctOf(medianValue)}%;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px rgba(212,180,106,0.7);"></div>
+      </div>
+      <div>${rows.below.map(t => medianBlendRow(t, 'loss')).join('')}</div>
+    </div>`;
+  }
+
+  function medianBlendRowMinimal(t, tone) {
+    const st = miniStatusText(t);
+    const icon = st && st.cls === 'locked' ? '✓' : st && st.cls === 'live' ? '●' : '';
+    const iconColor = st && st.cls === 'locked' ? 'var(--gold)' : st && st.cls === 'live' ? 'var(--loss)' : 'transparent';
+    return `<div style="display:flex;align-items:center;gap:8px;border-left:3px solid var(--${tone});background:rgba(255,255,255,0.03);border-radius:0 8px 8px 0;padding:6px 12px;margin-top:5px;">
+      <span style="width:12px;text-align:center;color:${iconColor};font-size:0.65rem;">${icon}</span>
+      <span style="flex:1;font-size:0.8rem;font-weight:600;">${esc(t.name)}</span>
+      <span style="font-family:var(--scoreboard);font-weight:700;font-size:0.85rem;color:var(--${tone});">${fmt(t.score)}</span>
+      <span style="font-size:0.6rem;color:var(--text-dim);min-width:72px;text-align:right;">${st ? esc(st.text) : ''}</span>
+    </div>`;
+  }
+
+  function medianB4_minimalEdge(rows, medianValue) {
+    return `<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;">
+      <div>${rows.above.map(t => medianBlendRowMinimal(t, 'turf')).join('')}</div>
+      <div style="writing-mode:vertical-rl;color:var(--gold);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;align-self:center;">Median ${fmt(medianValue)}</div>
+      <div>${rows.below.map(t => medianBlendRowMinimal(t, 'loss')).join('')}</div>
+    </div>`;
+  }
+
+  // ========================================================================
   // MATCHUP CARD VARIANTS -- take a single matchup object from data.matchups
   // ========================================================================
 
@@ -462,6 +600,14 @@
       sec(mc, 11, 'Continuous heat strip', 'One unbroken bar, segmented by team, color intensity = distance from median.', median11_heatStrip(teams, median));
       sec(mc, 12, 'Above / below bracket', 'Two explicit columns (above, below) with the median as a vertical divider between them.', median12_bracket(teams, median));
       sec(mc, 13, 'Tufte sparkbars', 'Very small, dense inline bars — built for scanning many rows fast, minimal chrome.', median13_sparkbars(teams, median));
+
+      const statusKnown = Boolean(data.medianStatusKnown) && rawTeams.every(t => typeof t.remaining === 'number');
+      const curRows = computeMedianRows(rawTeams, data.currentMedian, 'current', statusKnown);
+      const bEl = document.getElementById('blend-variants');
+      sec(bEl, 28, 'Bracket rows + live status', 'Concept 12\'s clean full-width rows, now carrying the real card\'s Locked/Final/Live states and "to play" counts inline under each score. Shown for Current Median — Projected Median gets identical treatment alongside it in production.', medianB1_bracketStatus(curRows, data.currentMedian));
+      sec(bEl, 29, 'Bracket rows, ties grouped', 'Same as #28, but teams tied on exact score merge into one row — matching how the real card\'s ladder already groups ties, instead of listing them as separate identical rows. Pregame right now, so the whole below-median side is one 6-way tie at 0.0.', medianB2_groupedTies(curRows, data.currentMedian));
+      sec(bEl, 30, 'Bracket rows + compact ladder', 'Keeps the real card\'s number-line, but slimmed into a narrow center column between two clean bracket lists instead of its own wide side panel.', medianB3_bracketLadder(curRows, data.currentMedian));
+      sec(bEl, 31, 'Minimal edge-accent rows', 'Highest-density option — status collapses to a left-edge color bar and a single icon (✓ locked, ● live) instead of a text badge, so more teams fit without scrolling.', medianB4_minimalEdge(curRows, data.currentMedian));
 
       const matchups = data.matchups || [];
       const sampleM = matchups[0] || { awayName: 'Scary Terry', homeName: 'SLIMETIME BABY', awayScore: 106.6, homeScore: 94.5, awayWinProbability: 57 };
