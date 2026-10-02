@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=3">
+<link rel="stylesheet" href="theme.css?v=4">
 <link rel="stylesheet" href="nav.css?v=3">
 <style>
   /* ---------- Week selector ---------- */
@@ -59,11 +59,27 @@
   .seg button:hover{ color: var(--text); }
   .seg button.on{ background: rgba(186,155,55,0.14); color: var(--gold); }
 
-  /* ---------- Parlay hero: one glowing number (combined odds) + quiet
-     side stats, reusing the shared .glass/.hero2/.hs components instead of
-     a row of identically-weighted tiles. ---------- */
-  .parlay-status{ display: flex; align-items: center; gap: 10px; }
-  .parlay-eyebrow{ margin: 0; }
+  /* ---------- Parlay hero: Payout as the one glowing headline number,
+     Legs Hit/Lost/Combined Odds/Split as quiet side stats, reusing the
+     shared .glass/.hero2/.hs components instead of a row of
+     identically-weighted tiles. Status is its own corner ribbon, fully
+     detached from the hero number instead of sharing a row with an
+     eyebrow label. ---------- */
+  .status-ribbon{ position: absolute; top: 18px; right: 18px; }
+  .gold-label-xl{ color: var(--gold); font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
+  /* Clears the status ribbon above -- its badge text length varies
+     ("Parlay alive" vs "Parlay dead" vs "Parlay hit"), so the first side
+     row needs guaranteed headroom rather than whatever theme.css's
+     default .hero2-side padding happens to leave. */
+  .hero2-side{ padding-top: 46px; }
+
+  .hero-chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
+  .hero-chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); }
+  .hero-chip.loss{ border-color: rgba(214,98,79,0.4); background: rgba(214,98,79,0.08); color: var(--loss); font-weight: 600; }
+
+  .memoriam{ position: relative; margin-top: 12px; padding: 12px 16px; background: rgba(214,98,79,0.08); border: 1px solid rgba(214,98,79,0.3); border-radius: 10px; text-align: center; }
+  .memoriam-label{ color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .memoriam-killer{ font-family: var(--scoreboard); font-weight: 800; font-size: 1rem; color: var(--loss); margin-top: 4px; }
 
   /* ---------- Legs: each its own small card, not rows in a table ---------- */
   .legs-label{ display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 22px 0 10px; }
@@ -289,25 +305,28 @@
     const losses = legs.filter(([, p]) => p.result === 'Loss').length;
     const missing = players.filter(p => !week.picks[p]);
     const result = week.final.result;
-    const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Still alive';
+    const status = result === 'Loss' ? 'Parlay dead' : result === 'Win' ? 'Parlay hit' : 'Parlay alive';
     const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
-    const killers = week.killed_by.length ? `Killed by ${week.killed_by.join(' & ')}` : '';
-    const subParts = [`${week.year} · Week ${week.week}`, killers, week.sacko ? `Sacko: ${week.sacko}` : ''].filter(Boolean);
-
     const hero = `
-      <div class="glass hero2">
+      <div class="glass hero2" style="position:relative">
+        <span class="badge status-ribbon ${statusTone}">${status}</span>
         <div class="hero2-main glow">
-          <div class="parlay-status">
-            <div class="hero2-eyebrow parlay-eyebrow">Combined Odds</div>
-            <span class="badge ${statusTone}">${status}</span>
+          <div class="gold-label-xl">Payout</div>
+          <div class="hero2-v">${fmtMoney(week.final.payout)}</div>
+          <div class="hero-chips">
+            <span class="hero-chip">${esc(week.year)} · Week ${esc(week.week)}</span>
+            ${week.sacko ? `<span class="hero-chip loss">Sacko: ${esc(week.sacko)}</span>` : ''}
           </div>
-          <div class="hero2-v">${fmtOdds(week.final.odds)}</div>
-          <div class="hero2-sub">${esc(subParts.join(' · '))}</div>
+          ${week.killed_by.length ? `
+          <div class="memoriam">
+            <div class="memoriam-label">In Memoriam</div>
+            <div class="memoriam-killer">Killed by ${esc(week.killed_by.join(' & '))}</div>
+          </div>` : ''}
         </div>
         <div class="hero2-side">
-          <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v turf">${wins}</div></div></div>
-          <div class="hs"><div class="hs-l">Legs Lost</div><div class="hs-r"><div class="hs-v loss">${losses}</div></div></div>
-          <div class="hs"><div class="hs-l">Payout</div><div class="hs-r"><div class="hs-v">${fmtMoney(week.final.payout)}</div></div></div>
+          <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v gold">${wins}</div></div></div>
+          <div class="hs"><div class="hs-l">Legs Lost</div><div class="hs-r"><div class="hs-v${losses > 0 ? ' loss' : ''}">${losses}</div></div></div>
+          <div class="hs"><div class="hs-l">Combined Odds</div><div class="hs-r"><div class="hs-v">${fmtOdds(week.final.odds)}</div></div></div>
           <div class="hs"><div class="hs-l">Split</div><div class="hs-r"><div class="hs-v">${fmtMoney(week.final.split)}</div></div></div>
         </div>
       </div>`;
