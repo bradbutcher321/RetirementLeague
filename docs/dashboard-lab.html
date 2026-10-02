@@ -99,6 +99,21 @@
   .sup-seg button.on{ background: rgba(212,180,106,0.14); color: var(--gold); }
   .median-split-label{ text-align: center; color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; margin: 12px 0; padding: 7px 0; }
   .median-split-label b{ font-family: var(--scoreboard); font-variant-numeric: tabular-nums; margin-left: 6px; }
+  /* Chart chip mode (renderSpreadChart's chipStyle param): the row becomes
+     a bare flex wrapper and each team gets its own small bubble instead of
+     sharing one pill per cluster -- see the comment at its call site. These
+     rules come after the base .name-row/.slot ones above so they win the
+     cascade (same specificity, later wins) on the handful that collide,
+     like :first-child/:last-child's corner-rounding. */
+  .name-row.plain-wrap{ background: none; border: none; box-shadow: none; gap: 3px; }
+  .slot.slot-chip{
+    display: block; padding: 3px 7px; border-radius: 5px;
+    background: var(--surface); border: 1px solid var(--line);
+  }
+  .slot.slot-chip.above{ background: rgba(76,154,107,0.16); border-color: var(--turf-dim); }
+  .slot.slot-chip.below{ background: rgba(192,87,75,0.16); border-color: rgba(192,87,75,0.45); }
+  .slot.slot-chip.locked.above{ background: var(--turf); color: #08140d; border-color: var(--turf); }
+  .slot.slot-chip.locked.below{ background: var(--loss); color: #1a0908; border-color: var(--loss); }
   .b32-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
   @media (max-width: 420px){
     .b32-grid{ grid-template-columns: 1fr; }
@@ -453,7 +468,7 @@
     return (belowEdge + aboveEdge) / 2;
   }
 
-  function renderSpreadChart(elId, ascendingTeams, median, zones, noWash) {
+  function renderSpreadChart(elId, ascendingTeams, median, zones, noWash, chipStyle) {
     const el = document.getElementById(elId);
     if (!el || ascendingTeams.length < 2) return;
     const plotSize = el.clientHeight || 220;
@@ -499,10 +514,20 @@
       const slots = c.members
         .slice()
         .sort((a, b) => b.score - a.score)
-        .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}" data-name="${esc(m.name)}">${esc(m.name)}</span>`)
+        .map(m => `<span class="slot${chipStyle ? ' slot-chip' : ''} ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}" data-name="${esc(m.name)}">${esc(m.name)}</span>`)
         .join('');
       const glow = !c.members.some(m => m.locked) ? '' : belowCount === 0 ? 'box-shadow:0 0 14px rgba(76,154,107,0.3);' : aboveCount === 0 ? 'box-shadow:0 0 14px rgba(192,87,75,0.3);' : '';
-      html += `<div class="name-row" data-members="${esc(c.members.map(m => m.name).slice().sort().join('|'))}" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${slots}</div>`;
+      // chipStyle: each team gets its own fully self-contained visual chip
+      // (background/border live on .slot itself, below) instead of one
+      // shared pill per cluster -- the row here is just a bare positioning
+      // wrapper. Only .slot ever gets a view-transition-name (see
+      // tagTransitionNames), so this makes that named element ALSO be the
+      // thing carrying the visible bubble color/shape -- the two can no
+      // longer drift apart the way bubble (row) and label (slot) did when
+      // they were different elements with different match reliability.
+      html += chipStyle
+        ? `<div class="name-row plain-wrap" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px;">${slots}</div>`
+        : `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${slots}</div>`;
     });
     const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
     html += `<div class="endcap-score low">${fmt(lowest.score)}</div>`;
@@ -876,18 +901,17 @@
         document.querySelectorAll('#b32-above .mb-card, #b32-below .mb-card').forEach(el => {
           el.style.viewTransitionName = 'card-' + b32Slug(el.dataset.name);
         });
-        // The pill's own background/border (the "bubble") wasn't tracked at
-        // all before -- only the text label inside it was -- so the bubble
-        // just popped into its new spot while the text floated on its own.
-        // Keying by the pill's full (sorted) membership means a cluster that
-        // merges or splits between toggles gets a brand-new key (no old pill
-        // to morph from, so it fades in/out instead -- there's no single
-        // View Transition name that can represent two bubbles becoming one
-        // or one becoming two), but a cluster whose membership is unchanged
-        // keeps the same key and genuinely slides/resizes as one shape.
-        document.querySelectorAll('#b32-chart .name-row').forEach(el => {
-          el.style.viewTransitionName = 'row-' + b32Slug(el.dataset.members);
-        });
+        // Naming the shared cluster pill (.name-row) as its own element,
+        // keyed by cluster membership, didn't work: membership is different
+        // almost every toggle (different scores cluster teams differently),
+        // so that name almost never matched between old/new and the pill
+        // just popped -- exactly the bug reported, plus the pill and its
+        // separately-named label (.slot) drifting apart and fighting over
+        // z-order since they were two independently-animating groups.
+        // renderSpreadChart's chipStyle now makes each .slot carry its own
+        // background/border (see CSS) instead of relying on the shared row
+        // for color -- so naming .slot alone, keyed by team (always a
+        // reliable 1:1 match), moves the whole visible bubble as one piece.
         document.querySelectorAll('#b32-chart .slot').forEach(el => {
           el.style.viewTransitionName = 'chart-' + b32Slug(el.dataset.name);
         });
@@ -902,7 +926,7 @@
         document.querySelectorAll('#b32-seg button').forEach(btn => btn.classList.toggle('on', btn.dataset.mode === mode));
         document.getElementById('b32-spreadcol').style.width = (rows.zones ? 118 : 88) + 'px';
         document.getElementById('b32-chart').classList.toggle('zoned', !!rows.zones);
-        renderSpreadChart('b32-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+        renderSpreadChart('b32-chart', rows.all.slice().reverse(), medianValue, rows.zones, true, true);
         tagTransitionNames();
       }
       // Chrome/Edge/Safari support document.startViewTransition; Firefox
