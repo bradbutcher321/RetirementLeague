@@ -90,6 +90,20 @@
   .zone-label{ position: absolute; right: 0; z-index: 4; font-size: 0.58rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .zone-label.up{ color: var(--turf); transform: translateY(-105%); }
   .zone-label.dn{ color: var(--loss); transform: translateY(5%); }
+
+  /* ---------- Concept 32: unified Current/Projected toggle card ---------- */
+  /* Ported from index.html's existing Superlatives view-toggle component,
+     reused here instead of inventing a new toggle style. */
+  .sup-seg{ display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .sup-seg button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.8rem; padding: 7px 14px; cursor: pointer; }
+  .sup-seg button.on{ background: rgba(212,180,106,0.14); color: var(--gold); }
+  .median-split-label{ text-align: center; color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; margin: 12px 0; padding: 7px 0; border-top: 1px solid rgba(212,180,106,0.25); border-bottom: 1px solid rgba(212,180,106,0.25); }
+  .median-split-label b{ font-family: var(--scoreboard); font-variant-numeric: tabular-nums; margin-left: 6px; }
+  .b32-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
+  @media (max-width: 420px){
+    .b32-grid{ grid-template-columns: 1fr; }
+    .median-card:has(#b32-seg) .median-card-header{ flex-wrap: wrap; gap: 8px; align-items: center; }
+  }
 </style>
 </head>
 <body>
@@ -104,7 +118,7 @@
     <div class="lab-group"><h2>Median Watch — above/below concepts</h2><span class="n">1–13</span></div>
     <div id="median-variants"></div>
 
-    <div class="lab-group"><h2>Median Watch — bracket layout blended with the live card's depth</h2><span class="n">28–31</span></div>
+    <div class="lab-group"><h2>Median Watch — bracket layout blended with the live card's depth</h2><span class="n">28–32</span></div>
     <div id="blend-variants"></div>
 
     <div class="lab-group"><h2>Matchup card concepts</h2><span class="n">14–19</span></div>
@@ -435,7 +449,7 @@
     return (belowEdge + aboveEdge) / 2;
   }
 
-  function renderSpreadChart(elId, ascendingTeams, median, zones) {
+  function renderSpreadChart(elId, ascendingTeams, median, zones, noWash) {
     const el = document.getElementById(elId);
     if (!el || ascendingTeams.length < 2) return;
     const plotSize = el.clientHeight || 220;
@@ -447,8 +461,10 @@
     const GREEN = 'rgba(76,154,107,0.28)';
     let html = '';
     const medianPct = toTopPct(findMedianTickPos(clusters, median, plotSize));
-    html += `<div class="median-zone-wash above" style="top:0; height:${medianPct}%;"></div>`;
-    html += `<div class="median-zone-wash below" style="top:${medianPct}%; height:${100 - medianPct}%;"></div>`;
+    if (!noWash) {
+      html += `<div class="median-zone-wash above" style="top:0; height:${medianPct}%;"></div>`;
+      html += `<div class="median-zone-wash below" style="top:${medianPct}%; height:${100 - medianPct}%;"></div>`;
+    }
     if (zones) {
       if (zones.up !== null) {
         const yUp = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score <= zones.up));
@@ -824,8 +840,9 @@
           ${card('Current Median', data.currentMedian, curRows, idPrefix + '-cur', listBuilder(curRows))}
           ${card('Projected Median', data.projectedMedian, projRows, idPrefix + '-proj', listBuilder(projRows))}
         </div>`;
-        spreadJobs.push({ elId: idPrefix + '-cur', ascending: curRows.all.slice().reverse(), median: data.currentMedian, zones: curRows.zones });
-        spreadJobs.push({ elId: idPrefix + '-proj', ascending: projRows.all.slice().reverse(), median: data.projectedMedian, zones: projRows.zones });
+        const noWash = idPrefix !== 'ref';
+        spreadJobs.push({ elId: idPrefix + '-cur', ascending: curRows.all.slice().reverse(), median: data.currentMedian, zones: curRows.zones, noWash });
+        spreadJobs.push({ elId: idPrefix + '-proj', ascending: projRows.all.slice().reverse(), median: data.projectedMedian, zones: projRows.zones, noWash });
         return html;
       }
       const bEl = document.getElementById('blend-variants');
@@ -833,7 +850,55 @@
       sec(bEl, 29, 'Bracket rows + the real spread chart', 'The chart is completely untouched — same real spread-chart code as production, not an approximation. Only the list beside it changes, from the two-column mini-card grid to the above/below bracket\'s clean full-width rows, still carrying Locked/Final/Live status inline.', pairCardsHtml(bracketRowsListHtml, 'b29'));
       sec(bEl, 30, 'Minimal edge-accent rows + the real spread chart', 'Same real chart again, untouched. The list goes denser still — status collapses to a left-edge color bar and a single icon (✓ locked, ● live) instead of a text badge, so more teams fit without scrolling.', pairCardsHtml(minimalRowsListHtml, 'b30'));
       sec(bEl, 31, 'Modernized 2-column cards + the real spread chart', '#29\'s rounded-card look (gold border + glow when locked, red pulsing dot when live, status line under the score) kept but laid out 2-up like today\'s grid, instead of #29\'s single full-width column — a more direct "modernize the existing cards" take. Same untouched real chart alongside it, given a little less reserved width so the cards have more room.', pairCardsHtml(bracketRows2ColListHtml, 'b31', true));
-      spreadJobs.forEach(job => renderSpreadChart(job.elId, job.ascending, job.median, job.zones));
+      spreadJobs.forEach(job => renderSpreadChart(job.elId, job.ascending, job.median, job.zones, job.noWash));
+
+      // Concept 32: ONE card instead of two side-by-side, with a toggle to
+      // switch which median it shows (defaulting to Projected per request).
+      // "Above/Below Median" text labels are gone; the median value itself
+      // becomes the divider between the two halves instead, in gold. Still
+      // 2 columns -- with 12 teams split 6/6 that's 3 rows per half, so the
+      // real chart (which stretches to match the list's own height via
+      // .vplot's height:100%) stays short automatically rather than
+      // growing tall to match a dozen stacked single-column rows.
+      function unifiedGridHtml(list, tone) {
+        return `<div class="b32-grid">${list.map(t => medianBlendRowGrid(t, tone)).join('')}</div>`;
+      }
+      function renderUnifiedMedianCard(mode) {
+        const rows = mode === 'current' ? curRows : projRows;
+        const medianValue = mode === 'current' ? data.currentMedian : data.projectedMedian;
+        const label = mode === 'current' ? 'Current Median' : 'Projected Median';
+        document.getElementById('b32-above').innerHTML = unifiedGridHtml(rows.above, 'turf');
+        document.getElementById('b32-below').innerHTML = unifiedGridHtml(rows.below, 'loss');
+        document.getElementById('b32-split').innerHTML = `${esc(label)} <b>${fmt(medianValue)}</b>`;
+        document.querySelectorAll('#b32-seg button').forEach(btn => btn.classList.toggle('on', btn.dataset.mode === mode));
+        document.getElementById('b32-spreadcol').style.width = (rows.zones ? 118 : 88) + 'px';
+        document.getElementById('b32-chart').classList.toggle('zoned', !!rows.zones);
+        renderSpreadChart('b32-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+      }
+      const unifiedShell = `
+        <div class="median-card">
+          <div class="median-card-header">
+            <span class="median-card-title">Median Watch</span>
+            <div class="sup-seg" id="b32-seg">
+              <button data-mode="current">Current</button>
+              <button data-mode="projected" class="on">Projected</button>
+            </div>
+          </div>
+          <div class="card-body" style="gap:10px;">
+            <div>
+              <div id="b32-above"></div>
+              <div class="median-split-label" id="b32-split"></div>
+              <div id="b32-below"></div>
+            </div>
+            <div class="spread-col" id="b32-spreadcol" style="width:88px;"><div class="vplot" id="b32-chart"></div></div>
+          </div>
+        </div>`;
+      sec(bEl, 32, 'Unified card: Current/Projected toggle', 'One card instead of two — a Current/Projected toggle (defaulting to Projected, per request) swaps the list and the real chart together instead of showing both at once. The "Above/Below Median" labels are gone; the median value itself sits in gold between the two halves instead. Still 2 columns, so the chart stays this short instead of stretching to match a dozen stacked single-column rows. No background wash behind the chart either, per feedback on #31. Resize the window — it needs to hold up narrow (mobile) as well as wide.', unifiedShell);
+      document.getElementById('b32-seg').addEventListener('click', e => {
+        const btn = e.target.closest('button[data-mode]');
+        if (btn) renderUnifiedMedianCard(btn.dataset.mode);
+      });
+      renderUnifiedMedianCard('projected');
 
       const matchups = data.matchups || [];
       const sampleM = matchups[0] || { awayName: 'Scary Terry', homeName: 'SLIMETIME BABY', awayScore: 106.6, homeScore: 94.5, awayWinProbability: 57 };
