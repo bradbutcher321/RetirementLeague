@@ -114,46 +114,6 @@ def load_games(spreadsheet):
     return games
 
 
-def compute_all_play(games):
-    """"Power Ranking": for every regular-season week, compares a player's
-    score against every OTHER player who played that same week -- not
-    just the one opponent they were actually matched against -- answering
-    "if you'd played everyone, every week, how would you have done."
-    Scoped to Reg season only (excludes playoffs, same as the median-era
-    comparisons elsewhere), since a playoff week has fewer teams in it,
-    which would otherwise shrink the comparison pool inconsistently from
-    week to week. Returns {player: {"w", "l", "t", "pct"}}, pct a normal
-    win percentage with a tie counted as half a win."""
-    by_week = {}
-    for g in games:
-        if g["type"] != "Reg" or g["s1"] is None:
-            continue
-        wk = by_week.setdefault((g["year"], g["week"]), {})
-        wk[g["p1"]] = g["s1"]
-        if g["p2"] and g["s2"] is not None:
-            wk[g["p2"]] = g["s2"]
-
-    record = {}
-    for wk_scores in by_week.values():
-        entries = list(wk_scores.items())
-        for player, score in entries:
-            r = record.setdefault(player, {"w": 0, "l": 0, "t": 0})
-            for other, other_score in entries:
-                if other == player:
-                    continue
-                if score > other_score:
-                    r["w"] += 1
-                elif score < other_score:
-                    r["l"] += 1
-                else:
-                    r["t"] += 1
-
-    for r in record.values():
-        total = r["w"] + r["l"] + r["t"]
-        r["pct"] = round((r["w"] + r["t"] * 0.5) / total * 100, 1) if total else None
-    return record
-
-
 def player_perspectives(games):
     """Long-format: one entry per player per game they played in (so a
     normal game contributes two entries, a bye contributes one), each
@@ -637,7 +597,6 @@ def main():
     print("Loading Money Tracker...")
     money_block = load_money(spreadsheet)
 
-    all_play = compute_all_play(games)
     all_perspectives = player_perspectives(games)
     perspectives_by_player = {}
     for p in all_perspectives:
@@ -689,7 +648,6 @@ def main():
             "draft": compute_draft(draft_block, player),
             "weekly_sackos": weekly_sacko_counts.get(player, 0),
             "median_luck": median_luck,
-            "all_play": all_play.get(player),
             "money": money_block.get(player),
             "season_history": compute_season_history(ps_header, year_rows),
         })
