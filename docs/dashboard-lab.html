@@ -97,7 +97,7 @@
   .sup-seg{ display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
   .sup-seg button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.8rem; padding: 7px 14px; cursor: pointer; }
   .sup-seg button.on{ background: rgba(212,180,106,0.14); color: var(--gold); }
-  .median-split-label{ text-align: center; color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; margin: 12px 0; padding: 7px 0; border-top: 1px solid rgba(212,180,106,0.25); border-bottom: 1px solid rgba(212,180,106,0.25); }
+  .median-split-label{ text-align: center; color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; margin: 12px 0; padding: 7px 0; }
   .median-split-label b{ font-family: var(--scoreboard); font-variant-numeric: tabular-nums; margin-left: 6px; }
   .b32-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
   @media (max-width: 420px){
@@ -613,8 +613,8 @@
     const glow = st && st.cls === 'locked' ? `box-shadow:0 0 10px rgba(${tone === 'turf' ? '76,154,107' : '192,87,75'},0.25);` : '';
     return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${st && st.cls === 'locked' ? 'var(--gold)' : 'var(--line)'};border-radius:8px;padding:7px 10px;min-width:0;${glow}">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
-        <span style="font-size:0.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${esc(t.name)}</span>
-        <span style="font-family:var(--scoreboard);font-weight:700;font-size:0.84rem;color:var(--${tone});flex-shrink:0;">${fmt(t.score)}</span>
+        <span style="font-size:0.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${esc(t.name)}</span>
+        <span style="font-family:var(--scoreboard);font-weight:700;font-size:1.3rem;color:var(--${tone});flex-shrink:0;">${fmt(t.score)}</span>
       </div>
       ${st ? `<div style="font-size:0.6rem;color:${statusColor};white-space:nowrap;display:flex;align-items:center;justify-content:center;text-align:center;margin-top:3px;">${dot}${check}${esc(st.text)}</div>` : ''}
     </div>`;
