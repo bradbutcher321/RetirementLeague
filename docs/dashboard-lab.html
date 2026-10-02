@@ -63,7 +63,18 @@
   .spread-col{ width: 108px; flex-shrink: 0; padding: 15px 0; }
   .vplot{ position: relative; height: 100%; min-height: 200px; }
   .vplot .axis{ position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--line); }
-  .vplot .median-tick{ position: absolute; left: 50%; transform: translateX(-50%); height: 1px; background: var(--gold); box-shadow: 0 0 8px rgba(212,180,106,0.7); z-index: 2; }
+  .vplot .median-tick{ position: absolute; left: 50%; transform: translateX(-50%); height: 1px; background: var(--gold); box-shadow: 0 0 8px rgba(212,180,106,0.7); z-index: 2; transition: opacity 0.2s ease; }
+  /* chipStyle only: the tick is correctly positioned exactly at a cluster's
+     above/below boundary, and chips now sit edge-to-edge with no gap
+     between them (needed to keep chip/merged heights matching -- see the
+     .slot-chip comment above) -- so the line ends up sitting exactly on a
+     chip's own top border, reading as a gold cap on that chip rather than
+     an independent divider floating between two separate boxes. Hidden
+     during the animation itself and faded back in once settled (see
+     settleChartToMergedPills), since color already conveys above/below
+     during the brief chip-style window regardless. Scoped to chipStyle via
+     this modifier so #28's unmodified production reference is untouched. */
+  .vplot .median-tick.slim{ opacity: 0; }
   .median-zone-wash{ position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none; }
   .median-zone-wash.above{ background: linear-gradient(to top, transparent, rgba(79,174,122,0.07)); }
   .median-zone-wash.below{ background: linear-gradient(to bottom, transparent, rgba(214,98,79,0.07)); }
@@ -514,7 +525,7 @@
       }
     }
     html += '<div class="axis"></div>';
-    html += `<div class="median-tick" style="top:${medianPct}%; width:${rowWidth - 2}px;"></div>`;
+    html += `<div class="median-tick${chipStyle ? ' slim' : ''}" style="top:${medianPct}%; width:${rowWidth - 2}px;"></div>`;
     clusters.forEach(c => {
       const belowCount = c.members.filter(m => m.score < median).length;
       const aboveCount = c.members.length - belowCount;
@@ -662,7 +673,7 @@
     return `<div class="mb-card" data-name="${esc(t.name)}" style="background:rgba(255,255,255,0.03);border:1px solid ${st && st.cls === 'locked' ? 'var(--gold)' : 'var(--line)'};border-radius:8px;padding:9px 10px;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;${glow}">
       <span style="font-size:1rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">${esc(t.name)}</span>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-family:var(--scoreboard);font-weight:700;font-size:1.3rem;color:var(--${tone});line-height:1.1;">${fmt(t.score)}</div>
+        <div class="mb-score" style="font-family:var(--scoreboard);font-weight:700;font-size:1.3rem;color:var(--${tone});line-height:1.1;">${fmt(t.score)}</div>
         ${st ? `<div style="font-size:0.6rem;color:${statusColor};white-space:nowrap;display:flex;align-items:center;justify-content:flex-end;margin-top:1px;">${dot}${check}${esc(st.text)}</div>` : ''}
       </div>
     </div>`;
@@ -869,6 +880,30 @@
       const statusKnown = Boolean(data.medianStatusKnown) && rawTeams.every(t => typeof t.remaining === 'number');
       const curRows = computeMedianRows(rawTeams, data.currentMedian, 'current', statusKnown);
       const projRows = computeMedianRows(rawTeams, data.projectedMedian, 'projected', statusKnown);
+      // Current vs. Projected score for every team, keyed by name -- lets the
+      // toggle tick each card's number from its old-mode value to its new-mode
+      // one instead of just swapping the text (see tickNumber/concept 32's
+      // toggle handler below).
+      const scoreByName = {};
+      rawTeams.forEach(t => { scoreByName[t.manager || t.name] = { current: t.current || 0, projected: t.projected || 0 }; });
+      // Same 0.68s/bounce-adjacent duration as ::view-transition-group(*) so
+      // the ticking numbers finish in step with the cards/chart sliding --
+      // eased with a plain cubic ease-out rather than the position groups'
+      // overshoot bounce, since an overshooting NUMBER (18.6 -> 19.2 ->
+      // settles back to 18.9) reads as wrong, not springy.
+      function tickNumber(el, from, to, decimals) {
+        const duration = 680;
+        const fromV = Number(from), toV = Number(to);
+        el.textContent = fromV.toFixed(decimals);
+        const start = performance.now();
+        function frame(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = (fromV + (toV - fromV) * eased).toFixed(decimals);
+          if (t < 1) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      }
       const spreadJobs = [];
       function pairCardsHtml(listBuilder, idPrefix, compact) {
         // compact trims the reserved space around the spread chart (narrower
@@ -935,7 +970,9 @@
           el.style.viewTransitionName = 'chart-' + b32Slug(el.dataset.name);
         });
       }
+      let b32CurrentMode = null;
       function applyUnifiedMedianUpdate(mode) {
+        const oldMode = b32CurrentMode;
         const rows = mode === 'current' ? curRows : projRows;
         const medianValue = mode === 'current' ? data.currentMedian : data.projectedMedian;
         const label = mode === 'current' ? 'Current Median' : 'Projected Median';
@@ -947,6 +984,21 @@
         document.getElementById('b32-chart').classList.toggle('zoned', !!rows.zones);
         renderSpreadChart('b32-chart', rows.all.slice().reverse(), medianValue, rows.zones, true, true);
         tagTransitionNames();
+        // Tick every card's score, and the median divider's own number, from
+        // their old-mode value to their new-mode value instead of just
+        // swapping text -- skipped on the very first render (nothing to tick
+        // FROM yet).
+        if (oldMode && oldMode !== mode) {
+          document.querySelectorAll('#b32-above .mb-card, #b32-below .mb-card').forEach(card => {
+            const info = scoreByName[card.dataset.name];
+            const scoreEl = card.querySelector('.mb-score');
+            if (info && scoreEl) tickNumber(scoreEl, info[oldMode], info[mode], 1);
+          });
+          const oldMedianValue = oldMode === 'current' ? data.currentMedian : data.projectedMedian;
+          const splitValueEl = document.querySelector('#b32-split b');
+          if (splitValueEl) tickNumber(splitValueEl, oldMedianValue, medianValue, 1);
+        }
+        b32CurrentMode = mode;
       }
       // chipStyle exists purely to make the chart animatable (every team
       // needs its own reliably-matchable element -- see tagTransitionNames).
@@ -974,6 +1026,8 @@
           row.classList.remove('plain-wrap');
           slots.forEach(s => s.classList.remove('slot-chip'));
         });
+        const tick = document.querySelector('#b32-chart .median-tick');
+        if (tick) tick.classList.remove('slim');
       }
       // Chrome/Edge/Safari support document.startViewTransition; Firefox
       // doesn't yet, so this degrades to the plain instant swap there (the
