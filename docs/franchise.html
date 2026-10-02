@@ -45,8 +45,16 @@
      initials avatar for that case, not just the ones that happen to
      still load. ---------- */
   .logo-ph{ display: none; align-items: center; justify-content: center; font-family: var(--scoreboard); font-weight: 800; color: #fff; }
+  .current-logo-tile{ position: relative; display: inline-flex; }
   .current-logo-avatar{ position: relative; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid var(--gold); box-shadow: 0 0 14px rgba(212,180,106,0.35); }
   .current-logo-avatar img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+  .current-logo-preview{
+    position: absolute; top: calc(100% + 8px); left: 0;
+    width: 140px; height: 140px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.55); opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 6;
+  }
+  .current-logo-preview img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+  .current-logo-tile:hover .current-logo-preview, .current-logo-tile:focus .current-logo-preview{ opacity: 1; }
   .past-logos-label{ position: relative; color: var(--text-dim); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; }
 
   .aka-logo-tile{ position: relative; display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px 4px 4px; cursor: default; }
@@ -454,7 +462,7 @@
         </span>`;
     }).join('');
     return `
-      <div class="past-logos-label">Past Teams (hover for a bigger photo)</div>
+      <div class="past-logos-label">Past Teams</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">${tiles}</div>`;
   }
 
@@ -472,8 +480,11 @@
           <div class="hero2-eyebrow">Franchise</div>
           <div style="display:flex; align-items:center; gap:16px;">
             <div class="hero2-v" style="font-size:clamp(2rem,5vw,2.8rem); margin:9px 0 6px;">${esc(currentName)}</div>
-            <span class="current-logo-avatar">
-              <img src="${currentLogoUrl}" onerror="onImgError(this)">${logoPh(currentName, '1.3rem')}
+            <span class="current-logo-tile" tabindex="0">
+              <span class="current-logo-avatar">
+                <img src="${currentLogoUrl}" onerror="onImgError(this)">${logoPh(currentName, '1.3rem')}
+              </span>
+              <span class="current-logo-preview"><img src="${currentLogoUrl}" onerror="onImgError(this)">${logoPh(currentName, '2.5rem')}</span>
             </span>
           </div>
           <div class="hero2-sub">${esc(p.name)} · ${tenure}</div>
@@ -498,13 +509,19 @@
   function renderPerformance(p) {
     const r = p.career.record, s = p.career.standings, wr = p.career.win_rates;
     const regRows = [['Finish', [[fmt(s.best_regular_finish), 'Best'], [fmt(s.worst_regular_finish), 'Worst']]], ['Sackos', [[fmt(s.sackos), 'Total']]]];
+    // Both ranks below are only meaningful against the active-manager pool,
+    // and only for a player who's themselves active -- a retired manager
+    // isn't IN that pool, so ranking them against it produces nonsense
+    // like "13th of 12".
+    const currentYear = leagueCurrentYear(data.players);
+    const isActive = isActivePlayer(p, currentYear);
+    const activePool = data.players.filter(x => isActivePlayer(x, currentYear));
     const ap = p.all_play;
     if (ap && ap.pct != null) {
       // "If you'd played every team, every week, instead of just your
       // actual schedule" -- a Reg-season-only all-play record, so it
       // lives in this card rather than a separate one.
-      const activePool = data.players.filter(x => isActivePlayer(x, leagueCurrentYear(data.players)));
-      const powerRank = computeRank(ap.pct, activePool, x => x.all_play && x.all_play.pct, true);
+      const powerRank = isActive ? computeRank(ap.pct, activePool, x => x.all_play && x.all_play.pct, true) : null;
       const stat = [`${fmt(ap.pct, 1)}%`, `${ap.w}-${ap.l}${ap.t ? '-' + ap.t : ''} all-play`, rateTone(ap.pct).tone];
       regRows.push(['Power Ranking', powerRank ? [stat, [fmtOrdinal(powerRank), `of ${activePool.length}`]] : [stat]]);
     }
@@ -519,8 +536,7 @@
       // Ranked against active managers only, same pool leagueRankBadges
       // uses -- so this number and a "#1 in Clutch Factor" hero badge
       // (if this manager has one) always agree with each other.
-      const activePool = data.players.filter(x => isActivePlayer(x, leagueCurrentYear(data.players)));
-      const clutchRank = computeRank(delta, activePool, x => clutchDelta(x), true);
+      const clutchRank = isActive ? computeRank(delta, activePool, x => clutchDelta(x), true) : null;
       const stats = clutchRank ? [stat, [fmtOrdinal(clutchRank), `of ${activePool.length}`]] : [stat];
       extraRows.push(['Clutch Factor', stats]);
     }
