@@ -1355,7 +1355,7 @@
         borderColor = 'transparent';
         const redPct = (belowCount / c.members.length) * 100;
         const greenPct = 100 - redPct;
-        splitFill = `<div style="position:absolute;left:0;right:0;bottom:0;height:${redPct}%;background:${RED};border:1px solid rgba(192,87,75,0.5);border-top:none;border-radius:0 0 3px 3px;"></div><div style="position:absolute;left:0;right:0;top:0;height:${greenPct}%;background:${GREEN};border:1px solid var(--turf-dim);border-bottom:none;border-radius:3px 3px 0 0;"></div>`;
+        splitFill = `<div style="position:absolute;left:0;right:0;bottom:0;height:${redPct}%;background:${RED};border:1px solid rgba(192,87,75,0.5);border-top:none;border-radius:0 0 4px 4px;"></div><div style="position:absolute;left:0;right:0;top:0;height:${greenPct}%;background:${GREEN};border:1px solid var(--turf-dim);border-bottom:none;border-radius:4px 4px 0 0;"></div>`;
       }
       const slots = c.members
         .slice()
@@ -1467,10 +1467,10 @@
         const greenPct = 100 - redPct;
         const redFill = document.createElement('div');
         redFill.className = 'split-fill';
-        redFill.style.cssText = `position:absolute;left:0;right:0;bottom:0;height:${redPct}%;background:${RED};border:1px solid rgba(192,87,75,0.5);border-top:none;border-radius:0 0 3px 3px;`;
+        redFill.style.cssText = `position:absolute;left:0;right:0;bottom:0;height:${redPct}%;background:${RED};border:1px solid rgba(192,87,75,0.5);border-top:none;border-radius:0 0 4px 4px;`;
         const greenFill = document.createElement('div');
         greenFill.className = 'split-fill';
-        greenFill.style.cssText = `position:absolute;left:0;right:0;top:0;height:${greenPct}%;background:${GREEN};border:1px solid var(--turf-dim);border-bottom:none;border-radius:3px 3px 0 0;`;
+        greenFill.style.cssText = `position:absolute;left:0;right:0;top:0;height:${greenPct}%;background:${GREEN};border:1px solid var(--turf-dim);border-bottom:none;border-radius:4px 4px 0 0;`;
         row.prepend(greenFill);
         row.prepend(redFill);
       }
@@ -1529,7 +1529,7 @@
             <div class="median-split-label">${label} <b>${fmtScore(medianValue)}</b></div>
             <div id="median-below">${mwGridHtml(rows.below, 'loss')}</div>
           </div>
-          <div class="spread-col${rows.zones ? ' zoned' : ''}" id="median-spreadcol">
+          <div class="spread-col${rows.zones ? ' zoned' : ''}" id="median-spreadcol" style="width:${rows.zones ? 118 : 88}px;">
             <div class="vplot${rows.zones ? ' zoned' : ''}" id="median-chart"></div>
           </div>
         </div>`;
