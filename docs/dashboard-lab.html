@@ -107,7 +107,7 @@
   /* Concept 32's Current/Projected toggle: each card and chart pill gets a
      stable view-transition-name (see tagTransitionNames in the script), so
      switching modes morphs them to their new spot/size instead of flashing. */
-  ::view-transition-group(*){ animation-duration: 0.42s; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  ::view-transition-group(*){ animation-duration: 0.68s; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
 </style>
 </head>
 <body>
@@ -502,7 +502,7 @@
         .map(m => `<span class="slot ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}" data-name="${esc(m.name)}">${esc(m.name)}</span>`)
         .join('');
       const glow = !c.members.some(m => m.locked) ? '' : belowCount === 0 ? 'box-shadow:0 0 14px rgba(76,154,107,0.3);' : aboveCount === 0 ? 'box-shadow:0 0 14px rgba(192,87,75,0.3);' : '';
-      html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${slots}</div>`;
+      html += `<div class="name-row" data-members="${esc(c.members.map(m => m.name).slice().sort().join('|'))}" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${slots}</div>`;
     });
     const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
     html += `<div class="endcap-score low">${fmt(lowest.score)}</div>`;
@@ -875,6 +875,18 @@
       function tagTransitionNames() {
         document.querySelectorAll('#b32-above .mb-card, #b32-below .mb-card').forEach(el => {
           el.style.viewTransitionName = 'card-' + b32Slug(el.dataset.name);
+        });
+        // The pill's own background/border (the "bubble") wasn't tracked at
+        // all before -- only the text label inside it was -- so the bubble
+        // just popped into its new spot while the text floated on its own.
+        // Keying by the pill's full (sorted) membership means a cluster that
+        // merges or splits between toggles gets a brand-new key (no old pill
+        // to morph from, so it fades in/out instead -- there's no single
+        // View Transition name that can represent two bubbles becoming one
+        // or one becoming two), but a cluster whose membership is unchanged
+        // keeps the same key and genuinely slides/resizes as one shape.
+        document.querySelectorAll('#b32-chart .name-row').forEach(el => {
+          el.style.viewTransitionName = 'row-' + b32Slug(el.dataset.members);
         });
         document.querySelectorAll('#b32-chart .slot').forEach(el => {
           el.style.viewTransitionName = 'chart-' + b32Slug(el.dataset.name);
