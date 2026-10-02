@@ -135,6 +135,9 @@
   .slot.slot-chip.below{ background: rgba(192,87,75,0.16); box-shadow: inset 0 0 0 1px rgba(192,87,75,0.45); }
   .slot.slot-chip.locked.above{ background: var(--turf); color: #08140d; box-shadow: inset 0 0 0 1px var(--turf); }
   .slot.slot-chip.locked.below{ background: var(--loss); color: #1a0908; box-shadow: inset 0 0 0 1px var(--loss); }
+  /* Replaces the site-wide thick-top-border-only accent with a thin gold
+     outline on all 4 sides, just for the unified card. */
+  .median-card.gold-outline{ border: 1px solid var(--gold); }
   .b32-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
   @media (max-width: 420px){
     .b32-grid{ grid-template-columns: 1fr; }
@@ -154,9 +157,6 @@
       <p>20+ different takes on "how could the median watch (and the rest of the dashboard) look" — all rendered from this week's real numbers so they're a fair comparison. Nothing here is a final answer; it's raw material to come back to.</p>
       <div class="lab-status" id="status">Loading live data…</div>
     </div>
-
-    <div class="lab-group"><h2>Median Watch — above/below concepts</h2><span class="n">1–13</span></div>
-    <div id="median-variants"></div>
 
     <div class="lab-group"><h2>Median Watch — bracket layout blended with the live card's depth</h2><span class="n">28–32</span></div>
     <div id="blend-variants"></div>
@@ -184,214 +184,6 @@
     container.appendChild(el);
   }
 
-  // ========================================================================
-  // MEDIAN WATCH VARIANTS -- all take (teams, median) where teams is
-  // [{name, score}, ...] and median is a number. Each is a fully separate
-  // CSS/markup approach, not a palette swap of the same chart.
-  // ========================================================================
-
-  function median1_progressBars(teams, median) {
-    const max = Math.max(...teams.map(t => t.score), median) * 1.08;
-    const rows = teams.map(t => {
-      const pct = Math.min(100, (t.score / max) * 100);
-      const medPct = Math.min(100, (median / max) * 100);
-      const above = t.score >= median;
-      return `<div style="display:grid;grid-template-columns:70px 1fr 56px;align-items:center;gap:10px;margin-top:8px;">
-        <div style="font-size:0.8rem;font-weight:600;">${esc(t.name)}</div>
-        <div style="position:relative;height:10px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:visible;">
-          <div style="position:absolute;left:0;top:0;bottom:0;width:${pct}%;background:${above ? 'var(--turf)' : 'var(--loss)'};border-radius:999px;"></div>
-          <div style="position:absolute;left:${medPct}%;top:-3px;bottom:-3px;width:2px;background:var(--gold);box-shadow:0 0 6px rgba(212,180,106,0.7);"></div>
-        </div>
-        <div style="text-align:right;font-family:var(--scoreboard);font-weight:700;font-size:0.85rem;">${fmt(t.score)}</div>
-      </div>`;
-    }).join('');
-    return `<div>${rows}</div><div style="margin-top:12px;color:var(--text-dim);font-size:0.68rem;">Gold line = median (${fmt(median)})</div>`;
-  }
-
-  function median2_diverging(teams, median) {
-    const maxDelta = Math.max(...teams.map(t => Math.abs(t.score - median)), 1) * 1.1;
-    const rows = teams.slice().sort((a, b) => b.score - a.score).map(t => {
-      const delta = t.score - median;
-      const pct = Math.min(50, (Math.abs(delta) / maxDelta) * 50);
-      const above = delta >= 0;
-      return `<div style="display:grid;grid-template-columns:64px 1fr 60px;align-items:center;gap:8px;margin-top:6px;">
-        <div style="font-size:0.76rem;font-weight:600;text-align:right;">${esc(t.name)}</div>
-        <div style="position:relative;height:16px;">
-          <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line);"></div>
-          <div style="position:absolute;top:2px;bottom:2px;border-radius:3px;background:${above ? 'var(--turf)' : 'var(--loss)'};
-            ${above ? `left:50%;width:${pct}%;` : `right:50%;width:${pct}%;`}"></div>
-        </div>
-        <div style="font-family:var(--scoreboard);font-size:0.78rem;font-weight:700;color:${above ? 'var(--turf)' : 'var(--loss)'};">${above ? '+' : ''}${fmt(delta)}</div>
-      </div>`;
-    }).join('');
-    return rows;
-  }
-
-  function median3_radial(teams, median) {
-    const max = Math.max(...teams.map(t => t.score), median) * 1.05 || 1;
-    const items = teams.map(t => {
-      const frac = Math.min(1, t.score / max);
-      const angle = -90 + frac * 180;
-      const above = t.score >= median;
-      const c = 54;
-      return `<div style="display:inline-flex;flex-direction:column;align-items:center;width:92px;margin:6px 4px;">
-        <svg width="80" height="48" viewBox="0 0 80 48">
-          <path d="M 6 44 A 34 34 0 0 1 74 44" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7" stroke-linecap="round"/>
-          <path d="M 6 44 A 34 34 0 0 1 74 44" fill="none" stroke="${above ? 'var(--turf)' : 'var(--loss)'}" stroke-width="7" stroke-linecap="round"
-            stroke-dasharray="${frac * 107} 107"/>
-          <line x1="40" y1="44" x2="${40 + 26 * Math.cos(angle * Math.PI / 180)}" y2="${44 + 26 * Math.sin(angle * Math.PI / 180)}" stroke="#fff" stroke-width="2"/>
-        </svg>
-        <div style="font-size:0.74rem;font-weight:600;margin-top:-6px;">${esc(t.name)}</div>
-        <div style="font-family:var(--scoreboard);font-size:0.8rem;font-weight:700;">${fmt(t.score)}</div>
-      </div>`;
-    }).join('');
-    return `<div style="display:flex;flex-wrap:wrap;justify-content:center;">${items}</div>`;
-  }
-
-  function median4_beeswarm(teams, median) {
-    const min = Math.min(...teams.map(t => t.score), median), max = Math.max(...teams.map(t => t.score), median);
-    const span = (max - min) * 1.15 || 1;
-    const lo = min - span * 0.08;
-    const pctOf = v => Math.min(100, Math.max(0, ((v - lo) / span) * 100));
-    const dots = teams.map(t => `<div title="${esc(t.name)} ${fmt(t.score)}" style="position:absolute;left:${pctOf(t.score)}%;top:50%;width:11px;height:11px;border-radius:50%;
-      transform:translate(-50%,-50%);background:${t.score >= median ? 'var(--turf)' : 'var(--loss)'};border:2px solid var(--surface);box-shadow:0 0 6px rgba(0,0,0,0.5);"></div>`).join('');
-    return `<div style="position:relative;height:60px;background:rgba(255,255,255,0.03);border-radius:10px;">
-      <div style="position:absolute;left:${pctOf(median)}%;top:-6px;bottom:-6px;width:2px;background:var(--gold);box-shadow:0 0 6px rgba(212,180,106,0.6);"></div>
-      ${dots}
-    </div>
-    <div style="display:flex;justify-content:space-between;color:var(--text-dim);font-size:0.68rem;margin-top:6px;"><span>${fmt(lo)}</span><span>Median ${fmt(median)}</span><span>${fmt(lo + span)}</span></div>`;
-  }
-
-  function median5_columns(teams, median) {
-    const sorted = teams.slice().sort((a, b) => b.score - a.score);
-    const max = Math.max(...sorted.map(t => t.score), median) * 1.08 || 1;
-    const medPct = (median / max) * 100;
-    const cols = sorted.map(t => {
-      const h = Math.max(2, (t.score / max) * 100);
-      return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
-        <div style="font-size:0.62rem;color:var(--text-dim);margin-bottom:4px;">${fmt(t.score)}</div>
-        <div style="width:70%;height:120px;display:flex;align-items:flex-end;">
-          <div style="width:100%;height:${h}%;background:${t.score >= median ? 'var(--turf)' : 'var(--loss)'};border-radius:4px 4px 0 0;"></div>
-        </div>
-        <div style="font-size:0.62rem;font-weight:600;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${esc(t.name)}</div>
-      </div>`;
-    }).join('');
-    return `<div style="position:relative;">
-      <div style="position:absolute;left:0;right:0;bottom:${20 + medPct * 1.2}px;height:1px;background:var(--gold);box-shadow:0 0 6px rgba(212,180,106,0.6);"></div>
-      <div style="display:flex;gap:6px;align-items:flex-end;">${cols}</div>
-    </div>`;
-  }
-
-  function median6_ticks(teams, median) {
-    const min = Math.min(...teams.map(t => t.score), median), max = Math.max(...teams.map(t => t.score), median);
-    const span = (max - min) * 1.1 || 1, lo = min - span * 0.05;
-    const pctOf = v => ((v - lo) / span) * 100;
-    const ticks = teams.map(t => `<div style="position:absolute;left:${pctOf(t.score)}%;top:0;bottom:0;width:2px;background:${t.score >= median ? 'var(--turf)' : 'var(--loss)'};"></div>`).join('');
-    return `<div style="position:relative;height:26px;border-bottom:1px solid var(--line);">${ticks}
-      <div style="position:absolute;left:${pctOf(median)}%;top:-4px;bottom:-4px;width:1px;background:var(--gold);"></div>
-    </div>
-    <div style="margin-top:8px;color:var(--text-dim);font-size:0.68rem;">Minimal axis tick row — hover for detail in a real build; median at ${fmt(median)}.</div>`;
-  }
-
-  function median7_donuts(teams, median) {
-    const max = Math.max(...teams.map(t => t.score), median) * 1.05 || 1;
-    const items = teams.map(t => {
-      const frac = Math.min(1, t.score / max);
-      const r = 26, circ = 2 * Math.PI * r;
-      const above = t.score >= median;
-      return `<div style="display:inline-flex;flex-direction:column;align-items:center;width:78px;margin:4px;">
-        <svg width="64" height="64" viewBox="0 0 64 64">
-          <circle cx="32" cy="32" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="6"/>
-          <circle cx="32" cy="32" r="${r}" fill="none" stroke="${above ? 'var(--turf)' : 'var(--loss)'}" stroke-width="6" stroke-linecap="round"
-            stroke-dasharray="${frac * circ} ${circ}" transform="rotate(-90 32 32)"/>
-          <text x="32" y="37" text-anchor="middle" font-size="12" font-weight="700" fill="${above ? '#4FAE7A' : '#D6624F'}">${Math.round(t.score)}</text>
-        </svg>
-        <div style="font-size:0.68rem;font-weight:600;">${esc(t.name)}</div>
-      </div>`;
-    }).join('');
-    return `<div style="display:flex;flex-wrap:wrap;justify-content:center;">${items}</div>`;
-  }
-
-  function median8_ledScoreboard(teams, median) {
-    const rows = teams.slice().sort((a, b) => b.score - a.score).map(t => {
-      const above = t.score >= median;
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--line);">
-        <span style="font-size:0.84rem;font-weight:600;">${esc(t.name)}</span>
-        <span style="font-family:var(--scoreboard);font-size:1.3rem;font-weight:800;letter-spacing:0.02em;color:${above ? 'var(--turf)' : 'var(--loss)'};
-          text-shadow:0 0 10px ${above ? 'rgba(79,174,122,0.5)' : 'rgba(214,98,79,0.5)'};">${fmt(t.score)}</span>
-      </div>`;
-    }).join('');
-    return `<div>${rows}</div><div style="margin-top:8px;color:var(--text-dim);font-size:0.68rem;">Scoreboard-LED numerals, no axis at all — just median-relative color.</div>`;
-  }
-
-  function median9_waffle(teams, median) {
-    const max = Math.max(...teams.map(t => t.score), median) * 1.05 || 1;
-    const items = teams.map(t => {
-      const filled = Math.round((t.score / max) * 25);
-      const above = t.score >= median;
-      const cells = Array.from({ length: 25 }, (_, i) => 24 - i).map(i =>
-        `<div style="width:9px;height:9px;border-radius:2px;background:${i < filled ? (above ? 'var(--turf)' : 'var(--loss)') : 'rgba(255,255,255,0.07)'};"></div>`
-      ).join('');
-      return `<div style="display:inline-flex;flex-direction:column;align-items:center;margin:4px 8px;">
-        <div style="display:grid;grid-template-columns:repeat(5,9px);gap:2px;">${cells}</div>
-        <div style="font-size:0.68rem;font-weight:600;margin-top:6px;">${esc(t.name)} · ${fmt(t.score)}</div>
-      </div>`;
-    }).join('');
-    return `<div style="display:flex;flex-wrap:wrap;justify-content:center;">${items}</div>`;
-  }
-
-  function median10_textDelta(teams, median) {
-    const rows = teams.slice().sort((a, b) => (b.score - median) - (a.score - median)).map(t => {
-      const delta = t.score - median;
-      const above = delta >= 0;
-      return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);">
-        <span style="font-weight:600;font-size:0.88rem;">${esc(t.name)}</span>
-        <span style="font-family:var(--scoreboard);font-weight:800;font-size:1rem;color:${above ? 'var(--turf)' : 'var(--loss)'};">${above ? '+' : ''}${fmt(delta)}</span>
-      </div>`;
-    }).join('');
-    return `<div>${rows}</div><div style="margin-top:8px;color:var(--text-dim);font-size:0.68rem;">No chart at all — pure typography, sorted by distance from median.</div>`;
-  }
-
-  function median11_heatStrip(teams, median) {
-    const min = Math.min(...teams.map(t => t.score)), max = Math.max(...teams.map(t => t.score));
-    const span = (max - min) || 1;
-    const sorted = teams.slice().sort((a, b) => a.score - b.score);
-    const segs = sorted.map(t => {
-      const inten = Math.abs(t.score - median) / span;
-      const above = t.score >= median;
-      const color = above ? `rgba(79,174,122,${0.25 + inten * 0.6})` : `rgba(214,98,79,${0.25 + inten * 0.6})`;
-      return `<div style="flex:1;background:${color};display:flex;align-items:center;justify-content:center;min-width:0;" title="${esc(t.name)} ${fmt(t.score)}">
-        <span style="font-size:0.6rem;font-weight:700;writing-mode:vertical-rl;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.6);">${esc(t.name)}</span>
-      </div>`;
-    }).join('');
-    return `<div style="display:flex;height:70px;border-radius:8px;overflow:hidden;gap:1px;">${segs}</div>
-      <div style="margin-top:8px;color:var(--text-dim);font-size:0.68rem;">One continuous heat strip, intensity = distance from median.</div>`;
-  }
-
-  function median12_bracket(teams, median) {
-    const above = teams.filter(t => t.score >= median).sort((a, b) => b.score - a.score);
-    const below = teams.filter(t => t.score < median).sort((a, b) => b.score - a.score);
-    const row = (t, cls) => `<div style="display:flex;justify-content:space-between;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:6px 12px;margin-top:5px;">
-      <span style="font-size:0.82rem;font-weight:600;">${esc(t.name)}</span><span style="font-family:var(--scoreboard);font-weight:700;color:var(--${cls});">${fmt(t.score)}</span></div>`;
-    return `<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;">
-      <div>${above.map(t => row(t, 'turf')).join('')}</div>
-      <div style="writing-mode:vertical-rl;color:var(--gold);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;align-self:center;">Median ${fmt(median)}</div>
-      <div>${below.map(t => row(t, 'loss')).join('')}</div>
-    </div>`;
-  }
-
-  function median13_sparkbars(teams, median) {
-    const max = Math.max(...teams.map(t => t.score), median) * 1.05 || 1;
-    const rows = teams.slice().sort((a, b) => b.score - a.score).map(t => {
-      const pct = (t.score / max) * 100;
-      return `<div style="display:grid;grid-template-columns:62px 1fr 42px;align-items:center;gap:8px;padding:3px 0;">
-        <span style="font-size:0.7rem;color:var(--text-dim);">${esc(t.name)}</span>
-        <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;"><div style="height:100%;width:${pct}%;border-radius:3px;background:${t.score >= median ? 'var(--turf-dim)' : 'rgba(214,98,79,0.5)'};"></div></div>
-        <span style="font-size:0.7rem;text-align:right;font-variant-numeric:tabular-nums;">${fmt(t.score)}</span>
-      </div>`;
-    }).join('');
-    return `<div>${rows}</div><div style="margin-top:6px;color:var(--text-dim);font-size:0.68rem;">Tufte-style sparkbars — tiny, dense, no chrome.</div>`;
-  }
 
   // ========================================================================
   // MEDIAN BLEND CONCEPTS -- the real production median card's actual
@@ -529,7 +321,7 @@
     clusters.forEach(c => {
       const belowCount = c.members.filter(m => m.score < median).length;
       const aboveCount = c.members.length - belowCount;
-      let background, borderColor;
+      let background, borderColor, splitFill = '';
       if (belowCount === 0) {
         background = `linear-gradient(${GREEN}, ${GREEN})`;
         borderColor = 'var(--turf-dim)';
@@ -537,9 +329,23 @@
         background = `linear-gradient(${RED}, ${RED})`;
         borderColor = 'rgba(192,87,75,0.5)';
       } else {
-        const splitPct = (belowCount / c.members.length) * 100;
-        background = `linear-gradient(to top, ${RED} ${splitPct}%, ${GREEN} ${splitPct}%)`;
-        borderColor = 'var(--line)';
+        // Two solid-color layers, each with only ITS OWN touching corners
+        // rounded, instead of one hard-stop linear-gradient clipped by the
+        // row's border-radius. The gradient approach shows a thin sliver of
+        // the WRONG color right at the row's outer top/bottom edges (far
+        // from the actual split line) -- confirmed by swapping in a plain
+        // solid color, which eliminates it -- so it's a rendering quirk
+        // with gradients + border-radius clipping, not a logic bug; this
+        // sidesteps it rather than working around it. Each layer also
+        // carries its OWN colored border on its 3 outer sides (not the
+        // shared edge where they meet, which the gold median tick already
+        // marks) instead of the row having one flat neutral border, so the
+        // outline itself is split green/red too, not just the fill.
+        background = 'none';
+        borderColor = 'transparent';
+        const redPct = (belowCount / c.members.length) * 100;
+        const greenPct = 100 - redPct;
+        splitFill = `<div style="position:absolute;left:0;right:0;bottom:0;height:${redPct}%;background:${RED};border:1px solid rgba(192,87,75,0.5);border-top:none;border-radius:0 0 3px 3px;"></div><div style="position:absolute;left:0;right:0;top:0;height:${greenPct}%;background:${GREEN};border:1px solid var(--turf-dim);border-bottom:none;border-radius:3px 3px 0 0;"></div>`;
       }
       const slots = c.members
         .slice()
@@ -557,7 +363,7 @@
       // they were different elements with different match reliability.
       html += chipStyle
         ? `<div class="name-row plain-wrap" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px;">${slots}</div>`
-        : `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${slots}</div>`;
+        : `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${splitFill}${slots}</div>`;
     });
     const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
     html += `<div class="endcap-score low">${fmt(lowest.score)}</div>`;
@@ -862,21 +668,6 @@
 
       document.getElementById('status').textContent = `Live data loaded — Week ${data.week || '?'}, ${teams.length} teams, median ${fmt(median)}.`;
 
-      const mc = document.getElementById('median-variants');
-      sec(mc, 1, 'Progress bars + median tick', 'Classic horizontal fill bar per team, with a shared gold tick marking the median.', median1_progressBars(teams, median));
-      sec(mc, 2, 'Diverging tornado chart', 'Bars grow left (below) or right (above) from a shared center line at the median.', median2_diverging(teams, median));
-      sec(mc, 3, 'Radial gauges', 'Semi-circle gauge per team, needle position = score as a fraction of the league high.', median3_radial(teams, median));
-      sec(mc, 4, 'Beeswarm on one axis', 'Every team as a dot on one shared horizontal number line — real position, real distance.', median4_beeswarm(teams, median));
-      sec(mc, 5, 'Vertical bar chart', 'Classic column chart, sorted high to low, with a horizontal median line crossing all bars.', median5_columns(teams, median));
-      sec(mc, 6, 'Minimal tick row', 'As stripped-down as it gets — just colored ticks on a line, no labels until hover.', median6_ticks(teams, median));
-      sec(mc, 7, 'Progress donuts', 'A small ring gauge per team instead of a bar — reads well in a tight grid.', median7_donuts(teams, median));
-      sec(mc, 8, 'LED scoreboard list', 'No axis or chart at all — just big glowing scoreboard numerals, colored by above/below.', median8_ledScoreboard(teams, median));
-      sec(mc, 9, 'Waffle / dot-matrix', 'Score represented as a filled-square grid (25 squares = full bar) instead of a continuous fill.', median9_waffle(teams, median));
-      sec(mc, 10, 'Pure typography', 'No graphics — just the delta number itself, sorted, sized and colored to carry the hierarchy.', median10_textDelta(teams, median));
-      sec(mc, 11, 'Continuous heat strip', 'One unbroken bar, segmented by team, color intensity = distance from median.', median11_heatStrip(teams, median));
-      sec(mc, 12, 'Above / below bracket', 'Two explicit columns (above, below) with the median as a vertical divider between them.', median12_bracket(teams, median));
-      sec(mc, 13, 'Tufte sparkbars', 'Very small, dense inline bars — built for scanning many rows fast, minimal chrome.', median13_sparkbars(teams, median));
-
       const statusKnown = Boolean(data.medianStatusKnown) && rawTeams.every(t => typeof t.remaining === 'number');
       const curRows = computeMedianRows(rawTeams, data.currentMedian, 'current', statusKnown);
       const projRows = computeMedianRows(rawTeams, data.projectedMedian, 'projected', statusKnown);
@@ -1023,9 +814,31 @@
           const belowCount = slots.filter(s => s.classList.contains('below')).length;
           const aboveCount = slots.length - belowCount;
           let background, borderColor;
+          // Clear out any split-fill divs from a previous settle before
+          // possibly adding new ones below.
+          row.querySelectorAll(':scope > .split-fill').forEach(f => f.remove());
           if (belowCount === 0) { background = `linear-gradient(${GREEN}, ${GREEN})`; borderColor = 'var(--turf-dim)'; }
           else if (aboveCount === 0) { background = `linear-gradient(${RED}, ${RED})`; borderColor = 'rgba(192,87,75,0.5)'; }
-          else { const splitPct = (belowCount / slots.length) * 100; background = `linear-gradient(to top, ${RED} ${splitPct}%, ${GREEN} ${splitPct}%)`; borderColor = 'var(--line)'; }
+          else {
+            // Same two-solid-layer approach as renderSpreadChart, and for
+            // the same reason: a hard-stop linear-gradient clipped by this
+            // row's border-radius shows a thin sliver of the wrong color
+            // right at the outer top/bottom edges (confirmed by swapping in
+            // a plain solid color, which eliminates it) -- a gradient/
+            // border-radius rendering quirk, not a logic bug.
+            background = 'none';
+            borderColor = 'transparent';
+            const redPct = (belowCount / slots.length) * 100;
+            const greenPct = 100 - redPct;
+            const redFill = document.createElement('div');
+            redFill.className = 'split-fill';
+            redFill.style.cssText = `position:absolute;left:0;right:0;bottom:0;height:${redPct}%;background:${RED};border:1px solid rgba(192,87,75,0.5);border-top:none;border-radius:0 0 3px 3px;`;
+            const greenFill = document.createElement('div');
+            greenFill.className = 'split-fill';
+            greenFill.style.cssText = `position:absolute;left:0;right:0;top:0;height:${greenPct}%;background:${GREEN};border:1px solid var(--turf-dim);border-bottom:none;border-radius:3px 3px 0 0;`;
+            row.prepend(greenFill);
+            row.prepend(redFill);
+          }
           const anyLocked = slots.some(s => s.classList.contains('locked'));
           row.style.backgroundImage = background;
           row.style.borderColor = borderColor;
@@ -1051,7 +864,7 @@
         }
       }
       const unifiedShell = `
-        <div class="median-card">
+        <div class="median-card gold-outline">
           <div class="median-card-header">
             <span class="median-card-title">Median Watch</span>
             <div class="sup-seg" id="b32-seg">

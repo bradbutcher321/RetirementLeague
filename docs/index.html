@@ -1267,7 +1267,7 @@
     clusters.forEach(c => {
       const belowCount = c.members.filter(m => m.score < median).length;
       const aboveCount = c.members.length - belowCount;
-      let background, borderColor;
+      let background, borderColor, splitFill = '';
       if (belowCount === 0) {
         background = `linear-gradient(${GREEN}, ${GREEN})`;
         borderColor = 'var(--turf-dim)';
@@ -1277,11 +1277,23 @@
       } else {
         // Straddles the median — split proportional to how many members
         // are on each side (1 below + 1 above = an even half/half row).
-        // "to top" so the below/red share sits at the bottom, matching
-        // low-scores-at-the-bottom.
-        const splitPct = (belowCount / c.members.length) * 100;
-        background = `linear-gradient(to top, ${RED} ${splitPct}%, ${GREEN} ${splitPct}%)`;
-        borderColor = 'var(--line)';
+        // Two solid-color layers, each with only its OWN touching corners
+        // rounded, rather than one hard-stop linear-gradient relying on the
+        // row's border-radius to clip it -- that showed a thin sliver of
+        // the wrong color right at the row's outer top/bottom edges, far
+        // from the actual split line (confirmed by swapping in a plain
+        // solid color, which eliminated it -- a gradient/border-radius
+        // rendering quirk, not a logic bug). "Bottom" so the below/red
+        // share sits at the bottom, matching low-scores-at-the-bottom. Each
+        // layer also carries its own colored border on its 3 outer sides
+        // (not the shared edge, which the gold median tick already marks),
+        // so the outline is split green/red too instead of one flat neutral
+        // border around the whole row.
+        background = 'none';
+        borderColor = 'transparent';
+        const redPct = (belowCount / c.members.length) * 100;
+        const greenPct = 100 - redPct;
+        splitFill = `<div style="position:absolute;left:0;right:0;bottom:0;height:${redPct}%;background:${RED};border:1px solid rgba(192,87,75,0.5);border-top:none;border-radius:0 0 3px 3px;"></div><div style="position:absolute;left:0;right:0;top:0;height:${greenPct}%;background:${GREEN};border:1px solid var(--turf-dim);border-bottom:none;border-radius:3px 3px 0 0;"></div>`;
       }
       const slots = c.members
         .slice()
@@ -1292,7 +1304,7 @@
       // matching glow -- straddling rows skip it, since there's no single
       // direction to glow toward.
       const glow = !c.members.some(m => m.locked) ? '' : belowCount === 0 ? 'box-shadow:0 0 14px rgba(76,154,107,0.3);' : aboveCount === 0 ? 'box-shadow:0 0 14px rgba(192,87,75,0.3);' : '';
-      html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${slots}</div>`;
+      html += `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${splitFill}${slots}</div>`;
     });
 
     const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
