@@ -435,7 +435,14 @@
     const extraRows = [];
     const delta = clutchDelta(p);
     if (delta !== null) {
-      extraRows.push(['Clutch Factor', [[`${delta > 0 ? '+' : ''}${fmt(delta, 1)}%`, 'Playoff vs Reg %', delta > 0 ? 'win' : delta < 0 ? 'loss' : '']]]);
+      const stat = [`${delta > 0 ? '+' : ''}${fmt(delta, 1)}%`, 'Playoff vs Reg %', delta > 0 ? 'win' : delta < 0 ? 'loss' : ''];
+      // Ranked against active managers only, same pool leagueRankBadges
+      // uses -- so this number and a "#1 in Clutch Factor" hero badge
+      // (if this manager has one) always agree with each other.
+      const activePool = data.players.filter(x => isActivePlayer(x, leagueCurrentYear(data.players)));
+      const clutchRank = computeRank(delta, activePool, x => clutchDelta(x), true);
+      const stats = clutchRank ? [stat, [fmtOrdinal(clutchRank), `of ${activePool.length}`]] : [stat];
+      extraRows.push(['Clutch Factor', stats]);
     }
     if (s.champ_appearances > 0) {
       extraRows.push(['Title Games', [[`${fmt(s.championships)}-${fmt(s.champ_appearances - s.championships)}`, 'Record']]]);
