@@ -56,7 +56,7 @@ FLEX_ELIGIBLE_POSITIONS = ("RB", "WR", "TE")
 def load_d1():
     teams = hl.d1_query(
         "SELECT year, team_id, team_name, owner_espn_id, regular_season_standing, "
-        "final_standing, acquisitions FROM teams"
+        "final_standing, acquisitions, logo_url FROM teams"
     )
     matchups = hl.d1_query(
         "SELECT year, week, team_id, opponent_team_id, team_score, opponent_score, "
@@ -82,14 +82,23 @@ def compute_identity(teams_by_player):
     team_row_by_year = {t["year"]: t for t in teams_by_player}
     ordered_years = sorted(team_row_by_year)
     if not ordered_years:
-        return {"current_team_name": None, "previous_team_names": []}
+        return {"current_team_name": None, "previous_team_names": [], "previous_team_logos": {}}
     names_in_order = [team_row_by_year[y]["team_name"] for y in ordered_years]
     current = names_in_order[-1]
     seen = []
-    for name in names_in_order[:-1]:
+    # One representative logo_url per distinct past name -- whichever year
+    # that name was first used, matching the order `seen` already builds
+    # previous_team_names in. A name can map to a dead/expired URL (ESPN
+    # stores whatever a manager pasted in at the time, no validation or
+    # hosting of its own) -- that's left for the frontend to handle
+    # gracefully, not filtered out here.
+    logos = {}
+    for y in ordered_years[:-1]:
+        name = team_row_by_year[y]["team_name"]
         if name != current and name not in seen:
             seen.append(name)
-    return {"current_team_name": current, "previous_team_names": seen}
+            logos[name] = {"year": y, "logo_url": team_row_by_year[y].get("logo_url") or None}
+    return {"current_team_name": current, "previous_team_names": seen, "previous_team_logos": logos}
 
 
 def win_pct(w, l, t=0):

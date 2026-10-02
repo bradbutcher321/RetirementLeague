@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-02T03:38:04.804539+00:00",
+  "generated_at": "2026-10-02T04:01:12.301626+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -10,6 +10,16 @@
         "Poppin Bortles",
         "Fuck the Committee"
       ],
+      "previous_team_logos": {
+        "Poppin Bortles": {
+          "year": 2015,
+          "logo_url": "http://g.espncdn.com/s/ffllm/logos/TeamKinny-MartinLaksman/TeamKinny-23.svg"
+        },
+        "Fuck the Committee": {
+          "year": 2017,
+          "logo_url": "http://g.espncdn.com/s/ffllm/logos/CoachGruden-ChipWass/gruden-15.svg"
+        }
+      },
       "founded_year": 2015,
       "seasons": 12,
       "career": {
@@ -430,6 +440,48 @@
         "Flanders and The Funky Bunch",
         "CHAMP CHAMP CHAMP"
       ],
+      "previous_team_logos": {
+        "Ray Rice Fan Club": {
+          "year": 2015,
+          "logo_url": "http://florida.arrests.org/mugs/Seminole/2015/201500007221.jpg"
+        },
+        "Brads Bachelor  Party": {
+          "year": 2016,
+          "logo_url": "http://previews.123rf.com/images/chrisdorney/chrisdorney1402/chrisdorney140200023/26101261-ABSENT-red-Rubber-Stamp-over-a-white-background--Stock-Photo.jpg"
+        },
+        "Shit hurts K": {
+          "year": 2017,
+          "logo_url": "https://scontent-mia3-1.xx.fbcdn.net/v/t1.0-9/301640_273668145984897_1666541388_n.jpg?oh=b61c344cf8ab46dfe16db1c6747990d8&oe=5A1782B0"
+        },
+        "Hit N  Run": {
+          "year": 2018,
+          "logo_url": "https://cdn.arrests.org/Florida/Orange/mugshots/2018/18007150.jpg"
+        },
+        "Collins  Transcripts ": {
+          "year": 2019,
+          "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Adobe_Photoshop_CC_icon.svg/1200px-Adobe_Photoshop_CC_icon.svg.png"
+        },
+        "Late Night DMer": {
+          "year": 2020,
+          "logo_url": "https://imgur.com/YIdmBOH.png"
+        },
+        "Upset after 2  beers with Rik": {
+          "year": 2021,
+          "logo_url": "https://i.imgur.com/m1eRtV1.png"
+        },
+        "THE 2x CHAMPION": {
+          "year": 2022,
+          "logo_url": "https://i.imgur.com/m1eRtV1.png"
+        },
+        "Flanders and The Funky Bunch": {
+          "year": 2023,
+          "logo_url": "https://i.imgur.com/m1eRtV1.png"
+        },
+        "CHAMP CHAMP CHAMP": {
+          "year": 2024,
+          "logo_url": "https://i.imgur.com/4iHWfoC.png"
+        }
+      },
       "founded_year": 2015,
       "seasons": 12,
       "career": {
@@ -835,6 +887,12 @@
       "previous_team_names": [
         "U Watt M8"
       ],
+      "previous_team_logos": {
+        "U Watt M8": {
+          "year": 2015,
+          "logo_url": "http://go.okstate.edu/sites/go.okstate.edu/themes/responsive_osu_main_page/images/logo.png"
+        }
+      },
       "founded_year": 2015,
       "seasons": 12,
       "career": {
@@ -1255,6 +1313,24 @@
         "The Purple Helmets ",
         "The Cubicle  Warrior"
       ],
+      "previous_team_logos": {
+        "Jupiter's  Cock": {
+          "year": 2015,
+          "logo_url": "http://t.qkme.me/3sds7e.jpg"
+        },
+        "Trump University ": {
+          "year": 2017,
+          "logo_url": "https://pbs.twimg.com/media/DLvcXaGX0AAfbly?format=jpg&name=large"
+        },
+        "The Purple Helmets ": {
+          "year": 2018,
+          "logo_url": "http://g.espncdn.com/lm-static/logo-packs/ffl/CrazyHelmets-ToddDetwiler/Helmets_07.svg"
+        },
+        "The Cubicle  Warrior": {
+          "year": 2019,
+          "logo_url": "https://i.imgur.com/vpnRA65_d.jpg?maxwidth=640&shape=thumb&fidelity=medium.jpg"
+        }
+      },
       "founded_year": 2015,
       "seasons": 12,
       "career": {
@@ -1680,6 +1756,44 @@
         "Lizzo's Backup Dancers",
         "Couch F#ckers"
       ],
+      "previous_team_logos": {
+        "The Vegan  Titans": {
+          "year": 2015,
+          "logo_url": "http://farm4.staticflickr.com/3482/3306337063_a521e95943.jpg"
+        },
+        "Bo Peeps Bears": {
+          "year": 2016,
+          "logo_url": "http://cdn.appshopper.com/icons/550/678994_larger.png"
+        },
+        "Odin's Hammer": {
+          "year": 2017,
+          "logo_url": "https://media.gq.com/photos/5582f62909f0bee56440aa52/master/w_800/life-2014-penis-everything-you-wanted-to-know-about-your-penis-gq-magazine-february-2014-male-08.jpg"
+        },
+        "Not SACKO": {
+          "year": 2019,
+          "logo_url": "https://g.espncdn.com/lm-static/logo-packs/ffl/SmackTalk-LeoEspinosa/playoffs-03.svg"
+        },
+        "President Commissioner": {
+          "year": 2020,
+          "logo_url": "https://www.joebidenbuttons.com/wp-content/uploads/2019/07/BIDEN-SE-005-600x608__Blue-JOE-logo.jpg"
+        },
+        "Make The League Great Again": {
+          "year": 2021,
+          "logo_url": "https://www.joebidenbuttons.com/wp-content/uploads/2019/07/BIDEN-SE-005-600x608__Blue-JOE-logo.jpg"
+        },
+        "Mikey King": {
+          "year": 2022,
+          "logo_url": "https://s3media.247sports.com/Uploads/Assets/989/997/8997989.jpg"
+        },
+        "Lizzo's Backup Dancers": {
+          "year": 2023,
+          "logo_url": "https://m.economictimes.com/thumb/msid-81599262,width-1200,height-900,resizemode-4,imgsize-821236/lizzooobiggrrrl.jpg"
+        },
+        "Couch F#ckers": {
+          "year": 2024,
+          "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Backroom_Casting_Couch%2C_Original%2C_Scottsdale%2C_AZ.jpg/1200px-Backroom_Casting_Couch%2C_Original%2C_Scottsdale%2C_AZ.jpg"
+        }
+      },
       "founded_year": 2015,
       "seasons": 12,
       "career": {
@@ -2097,6 +2211,36 @@
         "The  Commisioner ",
         "Double  Donut "
       ],
+      "previous_team_logos": {
+        "Southeast Door and Trim": {
+          "year": 2015,
+          "logo_url": "http://cdn.totalfratmove.com/wp-content/uploads/2015/02/b38e1167437cf8dfdf503b2361127d3c.png?_ga=1.83635733.2047534071.1443055102"
+        },
+        "Ball Fondlers": {
+          "year": 2017,
+          "logo_url": "http://cdn.totalfratmove.com/wp-content/uploads/2015/02/b38e1167437cf8dfdf503b2361127d3c.png?_ga=1.83635733.2047534071.1443055102"
+        },
+        "KIRK IS STILL A CUCK ": {
+          "year": 2018,
+          "logo_url": "http://cdn.totalfratmove.com/wp-content/uploads/2015/02/b38e1167437cf8dfdf503b2361127d3c.png?_ga=1.83635733.2047534071.1443055102"
+        },
+        "DOG ASS": {
+          "year": 2019,
+          "logo_url": "http://cdn.totalfratmove.com/wp-content/uploads/2015/02/b38e1167437cf8dfdf503b2361127d3c.png?_ga=1.83635733.2047534071.1443055102"
+        },
+        "The  Covidiots ": {
+          "year": 2020,
+          "logo_url": "http://cdn.totalfratmove.com/wp-content/uploads/2015/02/b38e1167437cf8dfdf503b2361127d3c.png?_ga=1.83635733.2047534071.1443055102"
+        },
+        "The  Commisioner ": {
+          "year": 2021,
+          "logo_url": "http://cdn.totalfratmove.com/wp-content/uploads/2015/02/b38e1167437cf8dfdf503b2361127d3c.png?_ga=1.83635733.2047534071.1443055102"
+        },
+        "Double  Donut ": {
+          "year": 2022,
+          "logo_url": "http://cdn.totalfratmove.com/wp-content/uploads/2015/02/b38e1167437cf8dfdf503b2361127d3c.png?_ga=1.83635733.2047534071.1443055102"
+        }
+      },
       "founded_year": 2015,
       "seasons": 12,
       "career": {
@@ -2521,6 +2665,40 @@
         "Oviedo Bootycheeks",
         "RIP Johnny Hockey"
       ],
+      "previous_team_logos": {
+        "Football Maniel": {
+          "year": 2015,
+          "logo_url": "http://i.kinja-img.com/gawker-media/image/upload/s--mMdgxK2I--/1523069400061118024.jpg"
+        },
+        "Run EZE \u00f0\u009f\u00a4\u0091": {
+          "year": 2016,
+          "logo_url": "http://i.giphy.com/l3vRfNKgv3LkGIoM0.gif"
+        },
+        "Chappy's Asset Management": {
+          "year": 2017,
+          "logo_url": "http://www.landlordstation.com/images/ar123687839404984.jpg"
+        },
+        "Lock Up Corrupt Commish": {
+          "year": 2020,
+          "logo_url": "https://g.espncdn.com/lm-static/logo-packs/core/Sneakerhead-ESPN/sneakerhead-01.svg"
+        },
+        "RIP Zyzz": {
+          "year": 2021,
+          "logo_url": "https://g.espncdn.com/lm-static/logo-packs/ffl/SmackTalk-LeoEspinosa/u_mad_bro-09.svg"
+        },
+        "RIP Takeoff/Pele": {
+          "year": 2022,
+          "logo_url": "https://g.espncdn.com/lm-static/logo-packs/ffl/AtTheStadium-RobbHarskamp/At_The_Stadium_05.svg"
+        },
+        "Oviedo Bootycheeks": {
+          "year": 2023,
+          "logo_url": "https://g.espncdn.com/lm-static/logo-packs/ffl/AtTheStadium-RobbHarskamp/At_The_Stadium_05.svg"
+        },
+        "RIP Johnny Hockey": {
+          "year": 2024,
+          "logo_url": "https://g.espncdn.com/lm-static/logo-packs/ffl/AtTheStadium-RobbHarskamp/At_The_Stadium_05.svg"
+        }
+      },
       "founded_year": 2015,
       "seasons": 12,
       "career": {
@@ -2934,6 +3112,20 @@
         "Yeet Squad",
         "Hail  Murray"
       ],
+      "previous_team_logos": {
+        "Derek, 22, from Masaga ": {
+          "year": 2017,
+          "logo_url": null
+        },
+        "Yeet Squad": {
+          "year": 2019,
+          "logo_url": "https://g.espncdn.com/lm-static/ffl/images/default_logos/6.svg"
+        },
+        "Hail  Murray": {
+          "year": 2020,
+          "logo_url": "https://g.espncdn.com/lm-static/ffl/images/default_logos/6.svg"
+        }
+      },
       "founded_year": 2017,
       "seasons": 10,
       "career": {
@@ -3321,6 +3513,28 @@
         "RIP Virgil",
         "The Super Gremlins"
       ],
+      "previous_team_logos": {
+        "RIP August Ames": {
+          "year": 2017,
+          "logo_url": null
+        },
+        "RIP My Season": {
+          "year": 2019,
+          "logo_url": "https://g.espncdn.com/lm-static/ffl/images/default_logos/19.svg"
+        },
+        "RIP Pop Smoke": {
+          "year": 2020,
+          "logo_url": "https://g.espncdn.com/lm-static/logo-packs/core/Sneakerhead-ESPN/sneakerhead-08.svg"
+        },
+        "RIP Virgil": {
+          "year": 2021,
+          "logo_url": "https://g.espncdn.com/lm-static/logo-packs/core/Sneakerhead-ESPN/sneakerhead-08.svg"
+        },
+        "The Super Gremlins": {
+          "year": 2022,
+          "logo_url": "https://townsquare.media/site/812/files/2017/06/Kodak-Black-Grill-Diamond.jpg"
+        }
+      },
       "founded_year": 2017,
       "seasons": 10,
       "career": {
@@ -3710,6 +3924,36 @@
         "C-boi and the gang",
         "Njibas in Paris"
       ],
+      "previous_team_logos": {
+        "Rookie by 1000": {
+          "year": 2019,
+          "logo_url": "https://g.espncdn.com/lm-static/logo-packs/ffl/SmackTalk-LeoEspinosa/u_mad_bro-09.svg"
+        },
+        "Sack oooooo": {
+          "year": 2020,
+          "logo_url": "https://i.kym-cdn.com/entries/icons/original/000/021/521/DumpsterFire2.jpg"
+        },
+        "Bull down": {
+          "year": 2021,
+          "logo_url": "https://ih1.redbubble.net/image.1871853388.8768/st,small,507x507-pad,600x600,f8f8f8.jpg"
+        },
+        "I'm the Commish Bish": {
+          "year": 2022,
+          "logo_url": "https://www.unumfund.org/wp-content/uploads/2020/12/adam_silver.png"
+        },
+        "Sell the Team": {
+          "year": 2023,
+          "logo_url": "https://ghostsofdc.org/wp-content/uploads/sites/7/2012/04/lusitania-sinking-color-1200x900.jpg"
+        },
+        "C-boi and the gang": {
+          "year": 2024,
+          "logo_url": "https://gcdn.thunderstore.io/live/repository/icons/MarshMan-DeezNuts-1.0.0.png.256x256_q95.jpg"
+        },
+        "Njibas in Paris": {
+          "year": 2025,
+          "logo_url": "https://gcdn.thunderstore.io/live/repository/icons/MarshMan-DeezNuts-1.0.0.png.256x256_q95.jpg"
+        }
+      },
       "founded_year": 2019,
       "seasons": 8,
       "career": {
@@ -4065,6 +4309,12 @@
       "previous_team_names": [
         "Christian Medical Center"
       ],
+      "previous_team_logos": {
+        "Christian Medical Center": {
+          "year": 2022,
+          "logo_url": "https://previews.123rf.com/images/branche/branche1303/branche130300307/18349269-golden-cross.jpg"
+        }
+      },
       "founded_year": 2022,
       "seasons": 5,
       "career": {
@@ -4370,6 +4620,7 @@
       "name": "TJ",
       "current_team_name": "Scary  Terry ",
       "previous_team_names": [],
+      "previous_team_logos": {},
       "founded_year": 2022,
       "seasons": 5,
       "career": {
@@ -4677,6 +4928,12 @@
       "previous_team_names": [
         "PV = nRT"
       ],
+      "previous_team_logos": {
+        "PV = nRT": {
+          "year": 2015,
+          "logo_url": "http://northendwaterfront.com/wp-content/uploads/2015/06/061415rings005.jpg"
+        }
+      },
       "founded_year": 2015,
       "seasons": 2,
       "career": {
@@ -4858,6 +5115,12 @@
       "previous_team_names": [
         "Stairway To Evans"
       ],
+      "previous_team_logos": {
+        "Stairway To Evans": {
+          "year": 2017,
+          "logo_url": "http://g.espncdn.com/s/ffllm/logos/SmackTalk-LeoEspinosa/u_mad_bro-09.svg"
+        }
+      },
       "founded_year": 2017,
       "seasons": 2,
       "career": {
