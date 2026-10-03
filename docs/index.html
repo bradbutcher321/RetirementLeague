@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>html{background:#050505}</style>
 <title>Retirement League — Live Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1625,7 +1626,18 @@
   let franchiseData = null;
   fetch('data/franchise.json', { cache: 'no-store' })
     .then(res => res.json())
-    .then(d => { franchiseData = d; renderStatOfMoment(); })
+    .then(d => {
+      franchiseData = d;
+      // Only render here if the main dashboard data has already arrived
+      // and rendered once (loadDashboard calls this itself too, every
+      // cycle) -- franchise.json is a small static file that often
+      // resolves well before the live Worker fetch, so without this
+      // guard the League Lore card could appear and pick its first fact
+      // before the rest of the page (matchups, standings) has loaded,
+      // drawing attention to itself mid-load instead of appearing in
+      // step with everything else.
+      if (standingsData) renderStatOfMoment();
+    })
     .catch(() => {});
 
   function currentYearFacts(data) {
