@@ -742,6 +742,7 @@
   .stat-moment-eyebrow{ color: var(--gold); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
   .stat-moment-text{ font-size: 1.15rem; font-weight: 600; line-height: 1.4; margin-top: 8px; }
   .stat-moment-text b{ font-family: var(--scoreboard); color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat-moment-fine{ display: block; font-size: 0.62rem; font-weight: 400; color: var(--text-dim); margin-top: 4px; }
   @media (max-width: 480px){ .stat-moment-text{ font-size: 1rem; } }
 
   /* ---------- Superlatives ---------- */
@@ -1868,7 +1869,13 @@
   // Rolled separately at a flat 5% rather than being mixed into the same
   // pool as the real stats -- with 70+ real facts, an easter egg sitting
   // in that same pool would show up far less than 5% of the time.
-  const EASTER_EGG_FACTS = ['Shit hurts k', "Don't do it", 'Do my eyebrows look good', 'Whatever happened to our rent money anyway?'];
+  const EASTER_EGG_FACTS = [
+    'Shit hurts k',
+    "Don't do it",
+    'Do my eyebrows look good',
+    'Whatever happened to our rent money anyway?',
+    `Flanders has <b>3*</b> championships.<span class="stat-moment-fine">*the third doesn't count, it was the product of a lame stat correction</span>`,
+  ];
   const EASTER_EGG_CHANCE = 0.05;
 
   function renderStatOfMoment() {
