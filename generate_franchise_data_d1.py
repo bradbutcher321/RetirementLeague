@@ -107,7 +107,7 @@ def win_pct(w, l, t=0):
     return round((w + 0.5 * t) / total * 100, 1) if total else None
 
 
-def compute_record_and_points(games):
+def compute_record_and_points(games, reg_median_by_year_week):
     # bracket_type == 'NONE' is the true regular season; is_playoff is true
     # only for the real championship bracket. Consolation-ladder games
     # (bracket_type is WINNERS_/LOSERS_CONSOLATION_LADDER) are neither --
@@ -127,6 +127,23 @@ def compute_record_and_points(games):
         return w, l, t
 
     reg_w, reg_l, reg_t = wlt(reg)
+    # Median era (year >= MEDIAN_ERA_START_YEAR): the league's real regular-
+    # season record includes the weekly median game as a second result
+    # alongside the real head-to-head matchup -- same rule compute_streaks'
+    # "combined" series and generate_league_data_d1.py's standings record
+    # already apply. This career-level reg_w/reg_l (and the reg_pct it
+    # feeds below) only ever counted the head-to-head half, same gap
+    # compute_season_history had per-year.
+    for g in reg:
+        if g["year"] < MEDIAN_ERA_START_YEAR:
+            continue
+        median_score = reg_median_by_year_week.get((g["year"], g["week"]))
+        if median_score is None or g["team_score"] is None:
+            continue
+        if g["team_score"] > median_score:
+            reg_w += 1
+        elif g["team_score"] < median_score:
+            reg_l += 1
     playoff_w, playoff_l, _ = wlt(playoff)
     consolation_w, consolation_l, _ = wlt(consolation)
 
@@ -680,7 +697,7 @@ def main():
         games.sort(key=lambda g: (g["year"], g["week"]))
         reg_games = [g for g in games if g["bracket_type"] == "NONE"]
 
-        career, _ = compute_record_and_points(games)
+        career, _ = compute_record_and_points(games, reg_median_by_year_week)
         median, median_luck = compute_median_stats(reg_median_by_year_week, reg_games)
         career["median"] = median
         career["win_rates"]["median_pct"] = median["pct"]
