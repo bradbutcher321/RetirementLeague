@@ -21,34 +21,41 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=4">
-<link rel="stylesheet" href="nav.css?v=3">
+<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="nav.css?v=4">
 <style>
-  /* ---------- Week selector ---------- */
-  .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-  /* .parlay-select styling lives in theme.css. */
-  .back-link{
+  /* ---------- Week selector ----------
+     .selector-row and .parlay-select styling both live in theme.css. */
+  /* ---------- Gold outline button ----------
+     The page's two buttons ("Back to current" and the legs' Expand/Collapse
+     all) are the same control at two sizes, so they share one definition.
+     Pill-shaped like every other control on the site, and the hover tint is
+     the current gold (212,180,106) rather than the retired #BA9B37 it used
+     to be mixed from -- at 10% the two are close enough to miss side by
+     side, and far enough apart to read as slightly off next to a real gold
+     border. */
+  .back-link, .leg-expand-toggle{
     background: none;
     border: 1px solid var(--gold);
     color: var(--gold);
     font-family: var(--body);
-    font-size: 0.8rem;
     font-weight: 600;
-    padding: 8px 12px;
-    border-radius: 4px;
+    border-radius: 999px;
     cursor: pointer;
   }
-  .back-link:hover{ background: rgba(186,155,55,0.1); }
+  .back-link:hover, .leg-expand-toggle:hover{ background: rgba(212,180,106,0.1); }
+  .back-link:focus-visible, .leg-expand-toggle:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .back-link{ font-size: 0.8rem; padding: 8px 14px; }
   .back-link:disabled{ opacity: 0.5; cursor: default; }
   .back-link:disabled:hover{ background: none; }
   .back-link[hidden]{ display: none; }
 
-  /* Season/scope selector: solid-filled toggle, the most prominent of the
-     three levels so it doesn't read as just another row of tabs. */
-  /* Selector styling lives in theme.css -- only this page's spacing here. */
+  /* Scope (year) sits above the category tabs and filters them, so theme.css
+     gives it an outlined gold chip where the tabs get a solid gold pill --
+     otherwise the two stacked rows read as one duplicated control. Only the
+     spacing between them is this page's business. */
   .scope-row{ margin-bottom: 18px; }
 
-  .tabs{ margin-bottom: 14px; }
   .seg{ margin: 4px 0 18px; }
 
   /* ---------- Parlay hero: Payout as the one glowing headline number,
@@ -117,20 +124,12 @@
      changes -- a width that merely fit "Expand all" would grow on every
      toggle. */
   .leg-expand-toggle{
-    background: none;
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    font-family: var(--body);
     font-size: 0.78rem;
-    font-weight: 600;
     padding: 7px 0;
-    border-radius: 999px;
     width: 104px;
     text-align: center;
-    cursor: pointer;
     flex-shrink: 0;
   }
-  .leg-expand-toggle:hover{ background: rgba(212,180,106,0.1); }
   @media (prefers-reduced-motion: reduce){ .leg-chev{ transition: none; } }
   /* Grey and a size down from the name -- this is supporting text under a
      bold headline, not a second headline. */
@@ -175,18 +174,11 @@
   @keyframes leg-live-pulse{ 0%, 100%{ opacity: 1; } 50%{ opacity: 0.25; } }
   @media (prefers-reduced-motion: reduce){ .leg-stats .live-wrap .dot{ animation: none; } }
 
-  /* ---------- Stat cards ---------- */
-  .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-  @media (max-width: 720px){ .card-grid{ grid-template-columns: 1fr; } }
-  .stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); overflow: hidden; }
-  .stat-card-title{ padding: 16px 18px 0; font-weight: 700; font-size: 0.95rem; }
-  .stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 3px 18px 0; }
-  .stat-card-body{ padding: 12px 14px 14px; }
-
-  .pill{ font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .pill.up{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.10); }
+  /* ---------- Stat cards ----------
+     .card-grid, the .stat-card family and .pill all live in theme.css; what
+     stays here is this page's two departures from them. */
+  .stat-card{ overflow: hidden; }
   .pill.flat{ color: var(--text-dim); border-color: var(--line); }
-  .pill.down{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.10); }
 
   /* Ranked rows: Game Records' .cols/.ln pattern -- a plain two-column list,
      the record holder picked out with the shared outline accent. */
@@ -208,10 +200,8 @@
   :root[data-accent="outline"] .ln.rec.down{ background: var(--item); }
   .row-stats{ display: flex; gap: 14px; }
   .row-stat{ text-align: center; min-width: 34px; }
-  .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
   .row-stat b.up{ color: var(--turf); }
   .row-stat b.down{ color: var(--loss); }
-  .row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
   .ln-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
   /* ---------- Histograms ---------- */
@@ -226,24 +216,10 @@
   .hist-count{ text-align: right; font-weight: 600; }
   .hist-count.zero{ color: var(--text-dim); font-weight: 400; }
 
-  .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
+  /* The collapsible tray Jon's Table sits in is styled in theme.css. */
 
-  /* ---------- Collapsible tray (Jon's Table), closed until opened ---------- */
-  .tray > summary{
-    list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 12px;
-    padding-bottom: 10px; border-bottom: 1px solid var(--line); color: var(--text-dim); font-size: 1rem; font-weight: 600;
-  }
-  .tray > summary::-webkit-details-marker{ display: none; }
-  .tray > summary:hover .tray-title{ color: var(--text); }
-  .tray-summary{ flex: 1; text-align: right; font-size: 0.78rem; font-weight: 500; }
-  .tray-chevron{
-    width: 8px; height: 8px; border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
-    transform: rotate(45deg) translateY(-2px); transition: transform 0.2s ease; align-self: center;
-  }
-  .tray[open] > summary .tray-chevron{ transform: rotate(-135deg) translateY(-2px); }
-  .tray-body{ margin-top: 16px; }
-
-  .jt-toolbar{ display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 10px; }
+  /* Always a .controls-row child now, so the row owns the bottom margin. */
+  .jt-toolbar{ display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; }
   .jt-status{ color: var(--text-dim); font-size: 0.78rem; }
   .table-wrap{ overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
   .jt-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
@@ -271,12 +247,19 @@
     </header>
 
     <section>
-      <h2 id="parlay-heading">Current Parlay</h2>
+      <!-- No section heading: the Year/Week controls below already say which
+           parlay is on screen, and the card itself carries a "2026 · Week 4"
+           ribbon, so a "Current Parlay" / "Past Parlay" line said it a third
+           time. "Back to current" is what still marks the past case. -->
       <div class="selector-row">
-        <label class="selector-label" for="year-select">Year</label>
-        <select class="parlay-select" id="year-select" autocomplete="off"></select>
-        <label class="selector-label" for="week-select">Week</label>
-        <select class="parlay-select" id="week-select" autocomplete="off"></select>
+        <div class="selector-group">
+          <label class="selector-label" for="year-select">Year</label>
+          <select class="parlay-select" id="year-select" autocomplete="off"></select>
+        </div>
+        <div class="selector-group">
+          <label class="selector-label" for="week-select">Week</label>
+          <select class="parlay-select" id="week-select" autocomplete="off"></select>
+        </div>
         <button type="button" class="back-link" id="back-to-current" hidden>Back to current</button>
       </div>
       <div id="current-container"><div class="loading-row">Loading parlay…</div></div>
@@ -298,11 +281,16 @@
           <span class="tray-chevron" aria-hidden="true"></span>
         </summary>
         <div class="tray-body">
-          <div class="scope-row" id="jt-scope-row"></div>
-          <div class="jt-toolbar">
-            <span class="jt-status" id="jt-refresh-status"></span>
-            <button type="button" class="back-link" id="jt-refresh-btn">Refresh Data</button>
-            <button type="button" class="back-link" id="jt-copy-btn">Copy All</button>
+          <!-- Scope on the left, actions on the right, one row -- the two
+               used to stack, which left the buttons marooned on a line of
+               their own with the whole left half empty. -->
+          <div class="controls-row">
+            <div class="scope-row" id="jt-scope-row"></div>
+            <div class="jt-toolbar">
+              <span class="jt-status" id="jt-refresh-status"></span>
+              <button type="button" class="back-link" id="jt-refresh-btn">Refresh Data</button>
+              <button type="button" class="back-link" id="jt-copy-btn">Copy All</button>
+            </div>
           </div>
           <div class="table-wrap">
             <table class="jt-table">
@@ -319,8 +307,8 @@
     <footer id="footer">Full refresh every 10 minutes · Data from the league sheet</footer>
   </div>
 
-<script src="nav.js"></script>
-<script src="page-common.js"></script>
+<script src="nav.js?v=2"></script>
+<script src="page-common.js?v=2"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -699,7 +687,6 @@
       const yearSel = document.getElementById('year-select');
       const weekSel = document.getElementById('week-select');
       const backBtn = document.getElementById('back-to-current');
-      const heading = document.getElementById('parlay-heading');
       const container = document.getElementById('current-container');
       yearSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
 
@@ -712,7 +699,6 @@
         const w = weeks.find(x => x.year === Number(yearSel.value) && x.week === Number(weekSel.value));
         if (!w) return;
         const isCurrent = w === current;
-        heading.textContent = isCurrent ? 'Current Parlay' : 'Past Parlay';
         backBtn.hidden = isCurrent;
         container.innerHTML = renderParlay(w, players, live);
       }

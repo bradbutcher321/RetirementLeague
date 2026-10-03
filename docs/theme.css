@@ -121,14 +121,23 @@ body{
    This is the ONLY thing that gets the gradient + shadow. Everything inside
    a panel is flat (see .item). Panels never carry a colored top bar: a
    container isn't a state, and spending the brand color on the edge of a box
-   is what made the pages read as different sites. */
-.glass{
+   is what made the pages read as different sites.
+
+   The extra names are the per-page card classes that were each carrying
+   their own byte-identical copy of these four properties (.stat-card in
+   league.css plus Franchise and Parlay, .rules-card on Rule Changes,
+   .rivalry-card on Franchise, .median-card on the Dashboard). They share the
+   surface here and keep only what actually differs -- their own padding, and
+   whether they clip their overflow -- next to the markup that uses them.
+   overflow:hidden stays on .glass alone, since the others deliberately
+   differ: .rivalry-card and .median-card let content out. */
+.glass, .stat-card, .rules-card, .rivalry-card, .median-card{
   background: linear-gradient(165deg, var(--surface-2), var(--surface));
   border: 1px solid var(--line);
   border-radius: 14px;
-  overflow: hidden;
   box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
 }
+.glass{ overflow: hidden; }
 
 /* Panel title/body, so every page labels a panel the same way. Flex row
    (rather than a plain block) so a panel can put a right-aligned action
@@ -136,8 +145,23 @@ body{
    it flush left exactly as before, so this doesn't change any existing
    panel that hasn't opted in. */
 .panel-title{ padding: 18px 22px 0; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.panel-note{ color: var(--text-dim); font-size: 0.78rem; padding: 4px 22px 0; }
 .panel-body{ padding: 14px 18px 18px; }
+
+/* The .stat-card wrapper's own title/note/body, matching the tighter
+   padding Franchise and Parlay use. league.css widens all three for the
+   pages that read data/league.json -- that override is the one real
+   divergence, so it stays there rather than being duplicated here. */
+.stat-card-title{ padding: 16px 18px 0; font-weight: 700; font-size: 0.95rem; }
+.stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 3px 18px 0; }
+.stat-card-body{ padding: 12px 14px 14px; }
+/* Two stat cards side by side, stacking on a narrow screen. align-items:
+   start, not stretch: a three-row card next to a five-row one shouldn't
+   grow a block of dead space to match its neighbour's height. */
+.card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+@media (max-width: 720px){ .card-grid{ grid-template-columns: 1fr; } }
+
+/* "Nothing to show here" filler inside a card. */
+.empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
 
 /* ---------- The one item surface ----------
    Every row, pod and tile that lives inside a panel uses this. */
@@ -151,7 +175,14 @@ body{
    Outline + tint by default. data-accent="outline" on <html> drops the tint
    and keeps only the colored outline, so the two readings can be compared on
    the real pages -- append ?accent=outline to any URL (see nav.js). Written
-   so the default needs no attribute and therefore never flashes. */
+   so the default needs no attribute and therefore never flashes.
+
+   These three are the generic primitive for a NEW component: mark won/lost/
+   leading with one of them and it picks up whatever the site-wide reading
+   is. Existing components predate it and spell the same thing with their own
+   state class (.qrow.top, .row.hl, .leg.Win, .pod.tone-win, ...), each
+   pointing at the same --win/--loss/--lead tokens -- so the colors already
+   move together even though the class names don't. */
 .is-win{ border-color: var(--win-line); background: var(--win-tint); }
 .is-loss{ border-color: var(--loss-line); background: var(--loss-tint); }
 .is-lead{ border-color: var(--lead-line); background: var(--lead-tint); }
@@ -174,7 +205,6 @@ body{
 .hero2-main{ position:relative; padding:36px 34px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
 .hero2-main::before{ content:''; position:absolute; inset:-40%; filter:blur(10px); pointer-events:none; }
 .hero2-main.glow::before{ background:radial-gradient(circle at 30% 40%, rgba(212,180,106,0.28), transparent 60%); }
-.hero2-main.glow-turf::before{ background:radial-gradient(circle at 30% 40%, rgba(79,174,122,0.26), transparent 60%); }
 .hero2-main.glow-loss::before{ background:radial-gradient(circle at 30% 40%, rgba(214,98,79,0.24), transparent 60%); }
 .hero2-eyebrow{ position:relative; color:var(--gold); font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; }
 .hero2-v{ position:relative; font-family:var(--scoreboard); font-weight:900; font-size:clamp(2.2rem,5.5vw,3.4rem); line-height:0.95; margin:9px 0 6px; color:#fff; text-shadow:0 0 36px rgba(212,180,106,0.3); }
@@ -283,6 +313,33 @@ body{
   width: fit-content;
   max-width: 100%;
 }
+/* The one piece of spacing that was identical on all four pages carrying a
+   top-level tab row (Franchise, Parlay, Overview, Game Records). The other
+   tracks' margins genuinely differ per page and stay with their markup. */
+.tabs{ margin-bottom: 14px; }
+
+/* A selector and its caption on one line above the content they filter.
+   .right pushes the whole row to the far edge instead of the near one. */
+.selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.selector-row.right{ justify-content: flex-end; }
+
+/* A caption plus the one control it names, as a single unwrappable unit.
+   Without it a wrapping row can split the pair: the caption still fits on
+   the current line while its control doesn't, leaving a stranded "Year"
+   above a dropdown on its own row. */
+.selector-group{ display: flex; align-items: center; gap: 12px; }
+
+/* A tab track and a lone control sharing one row -- track left, control
+   pushed to the far right -- instead of the control taking a whole row of its
+   own above the tabs. Each child keeps its own internal layout; this only
+   decides where the two sit relative to each other, and takes over the
+   bottom margin from whichever of them would otherwise have set it. When
+   there isn't width for both, the control wraps below the track rather than
+   squeezing it. */
+.controls-row{ display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.controls-row > .tabs, .controls-row > .tab-row, .controls-row > .seg,
+.controls-row > .sup-seg, .controls-row > .scope-row, .controls-row > .board-toggle,
+.controls-row > .selector-row, .controls-row > .selector-group{ margin-bottom: 0; }
 
 .tabs .tab,
 .tab-row .year-tab,
@@ -335,6 +392,24 @@ body{
 .seg button.on.good{ background: var(--turf); color: #04120A; }
 .seg button.on.bad,
 .seg button.on.dn{ background: var(--loss); color: #1C0703; }
+
+/* The scope row stacks directly on top of a tab row (Parlay's year scope
+   above its category tabs, and again inside Jon's Table). With the same
+   solid-gold selected pill, the two read as one duplicated control rather
+   than an outer filter and the view it filters. It keeps the shared track
+   and geometry -- this is a hierarchy, not a different widget -- and marks
+   its selection as an outlined gold chip instead of a solid gold block, so
+   the solid fill stays the one strongest mark in the stack.
+
+   The outline is an inset box-shadow, not a border: a real 1px border adds
+   2px of height to a control sized by --ctl-h, which would push the pill
+   past the track's own rounded edge. */
+.scope-row .scope-btn.on{
+  background: rgba(212,180,106,0.12);
+  box-shadow: inset 0 0 0 1px var(--gold);
+  color: var(--gold);
+}
+.scope-row .scope-btn.on:hover{ background: rgba(212,180,106,0.2); }
 
 .tabs .tab:focus-visible,
 .tab-row .year-tab:focus-visible,
@@ -512,11 +587,54 @@ body{
 .stats b em{ font-style:normal; }
 .stats span{ font-size:0.58rem; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; }
 
-/* ---------- Pill badge (champion/sacko markers inline with a name) ---------- */
+/* ---------- Pill badge (champion/sacko markers inline with a name) ----------
+   Heads up: .badge is deliberately re-sized per context, and the three
+   definitions are NOT interchangeable. This one is the smallest, for a badge
+   tucked beside a name inside a .qrow (and Parlay's hero ribbons). league.css
+   steps it up for the league.json pages' .row names, and franchise.html steps
+   it up again for the full-size season-history labels. Change one and check
+   the other two -- there is no single value that suits all three. */
 .badge{ font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:2px 7px; border-radius:999px; border:1px solid; white-space:nowrap; flex:none; line-height:1.4; }
 .badge.gold{ color:var(--gold); border-color:var(--gold); }
 .badge.turf{ color:var(--turf); border-color:var(--turf); }
 .badge.loss{ color:var(--loss); border-color:var(--loss); }
+
+/* ---------- Delta pill (a trend/margin figure, tinted by direction) ---------- */
+.pill{ font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pill.up{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.10); }
+.pill.down{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.10); }
+
+/* ---------- Podium (top three, side by side above a ranked list) ---------- */
+.podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+.pod{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
+/* A value too long for the headline size (a record, a date) drops a step
+   rather than wrapping or overflowing its pod. */
+.pod-val.long{ font-size: 1.25rem; }
+
+/* ---------- Stat column inside a row (W / L / PCT etc.) ----------
+   The container's gap and each column's floor width differ by page (how many
+   columns, how wide the widest value is), so only the numeral and its
+   caption -- identical everywhere -- live here. */
+.row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* ---------- Collapsible tray (Site Activity, Jon's Table) ----------
+   A <details> whose summary reads as a section heading with a chevron, so an
+   aside can sit on the page closed without competing with the real content. */
+.tray > summary{
+  list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 12px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--line); color: var(--text-dim); font-size: 1rem; font-weight: 600;
+}
+.tray > summary::-webkit-details-marker{ display: none; }
+.tray > summary:hover .tray-title{ color: var(--text); }
+.tray-summary{ flex: 1; text-align: right; font-size: 0.78rem; font-weight: 500; }
+.tray-chevron{
+  width: 8px; height: 8px; border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
+  transform: rotate(45deg) translateY(-2px); transition: transform 0.2s ease; align-self: center;
+}
+.tray[open] > summary .tray-chevron{ transform: rotate(-135deg) translateY(-2px); }
+.tray-body{ margin-top: 16px; }
+@media (prefers-reduced-motion: reduce){ .tray-chevron{ transition: none; } }
 
 /* ---------- Quiet tile strip ---------- */
 .qtiles{ display:flex; gap:30px; flex-wrap:wrap; padding:24px 30px; }

@@ -21,8 +21,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=4">
-<link rel="stylesheet" href="nav.css?v=3">
+<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* ---------- Matchup cards ---------- */
   .matchups{ display: flex; flex-direction: column; gap: 14px; }
@@ -337,8 +337,8 @@
     background: rgba(214, 214, 208, 0.10);
   }
   .player-cell.state-possession{
-    --state-bar-color: rgba(186,155,55, 0.6);
-    background: rgba(186,155,55, 0.10);
+    --state-bar-color: rgba(212,180,106, 0.6);
+    background: rgba(212,180,106, 0.10);
   }
   /* Previously 'final' and 'not started' rendered identically, so the only
      clue a starter had already played was a number showing up in the score
@@ -744,8 +744,16 @@
   .mb-card{ background: rgba(255,255,255,0.03); border-radius: 8px; padding: 9px 10px; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); }
   .mb-card.locked{ border-color: var(--gold); }
   .mb-card .mw-name{ font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  /* The score and everything said about it stack in one right-hand column,
+     so a second status line pushes the card taller rather than sideways. */
+  .mb-card .mw-right{ text-align: right; flex-shrink: 0; }
   .mb-card .mw-score{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; line-height: 1.1; flex-shrink: 0; }
-  .mb-card .mw-stat{ font-size: 0.6rem; white-space: nowrap; display: flex; align-items: center; justify-content: flex-end; margin-top: 1px; }
+  /* One line per fact (see miniStatusLines): how many players are live/left,
+     and separately whether the result is locked or final. Colored by class
+     rather than inline, since the three readings are fixed. */
+  .mb-card .mw-stat{ font-size: 0.64rem; white-space: nowrap; display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; color: var(--text-dim); }
+  .mb-card .mw-stat.live{ color: var(--loss); }
+  .mb-card .mw-stat.locked{ color: var(--gold); }
   /* Same 0.68s/bounce-adjacent duration as cards+chart sliding into their
      new spot on toggle. */
   ::view-transition-group(*){ animation-duration: 0.68s; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -1012,7 +1020,7 @@
     <footer>Auto-refreshes every two minutes · Data via ESPN Fantasy</footer>
   </div>
 
-<script src="nav.js"></script>
+<script src="nav.js?v=2"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -1203,28 +1211,42 @@
 
   function medianTeamName(t) { return t.manager || t.name; }
 
-  // Status line under each score: locked (result can't change), final (no
-  // starters left), or what's still to come. Blank when the NFL game state
-  // couldn't be read, so nobody is wrongly shown as finished.
-  function miniStatusText(t) {
-    if (!t.statusKnown) return null;
-    if (t.locked) return { text: `Locked ${t.lockedAbove ? 'above' : 'below'}`, cls: 'locked' };
-    if (t.done) return { text: 'Final', cls: 'final' };
-    const toPlay = t.remaining ? `${t.remaining} to play` : '';
-    if (t.inPlay) return { text: `${t.inPlay} live${toPlay ? ' \u00b7 ' + toPlay : ''}`, cls: 'live' };
-    return toPlay ? { text: toPlay, cls: '' } : null;
+  // The lines under each score, as separate facts rather than one slot that
+  // can only hold one of them:
+  //   - how many of this team's starters are in play right now and how many
+  //     haven't kicked off yet;
+  //   - whether the result is already locked (can't change) or the team is
+  //     done for the week.
+  // These used to share a single line, with locked/final taking priority, so
+  // a locked team stopped reporting its remaining players entirely -- and got
+  // them back as soon as the lock lifted (the lock line rises as more teams
+  // finish, so a team can come back out of it on any refresh). That read as
+  // the count randomly disappearing and reappearing between refreshes. They
+  // are independent facts, so they get independent lines: a team locked above
+  // with five still to play is both of those things at once.
+  // Everything stays blank when the NFL game state couldn't be read, so
+  // nobody is wrongly shown as finished.
+  function miniStatusLines(t) {
+    if (!t.statusKnown) return [];
+    const lines = [];
+    const players = [];
+    if (t.inPlay) players.push(`${t.inPlay} live`);
+    if (t.remaining) players.push(`${t.remaining} to play`);
+    if (players.length) lines.push({ text: players.join(' \u00b7 '), cls: t.inPlay ? 'live' : '' });
+    // A done team has no players line (nothing left to count), so "Final"
+    // lands on the first line and that card doesn't grow a second one.
+    if (t.locked) lines.push({ text: `Locked ${t.lockedAbove ? 'above' : 'below'}`, cls: 'locked' });
+    else if (t.done) lines.push({ text: 'Final', cls: 'final' });
+    return lines;
   }
 
   function mwCardHtml(t, tone) {
-    const st = miniStatusText(t);
-    const dot = st && st.cls === 'live' ? '<span class="live-dot" style="margin-right:4px;"></span>' : '';
-    const check = st && st.cls === 'locked' ? '✓ ' : '';
-    const statusColor = st ? (st.cls === 'locked' ? 'var(--gold)' : st.cls === 'live' ? 'var(--loss)' : 'var(--text-dim)') : 'var(--text-dim)';
-    return `<div class="mb-card${st && st.cls === 'locked' ? ' locked' : ''}" data-name="${t.name}">
+    const lines = miniStatusLines(t);
+    return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' : ''}" data-name="${t.name}">
       <span class="mw-name">${t.name}</span>
-      <div style="text-align:right;flex-shrink:0;">
+      <div class="mw-right">
         <div class="mw-score" style="color:var(--${tone});">${fmtScore(t.score)}</div>
-        ${st ? `<div class="mw-stat" style="color:${statusColor};">${dot}${check}${st.text}</div>` : ''}
+        ${lines.map(l => `<div class="mw-stat ${l.cls}">${l.cls === 'live' ? '<span class="live-dot"></span>' : ''}${l.cls === 'locked' ? '\u2713 ' : ''}${l.text}</div>`).join('')}
       </div>
     </div>`;
   }
@@ -2474,7 +2496,7 @@
   });
 
   // ---------- Site activity (unique visitors / page views from the Worker's own counter) ----------
-  const PAGE_LABELS = { dashboard: 'Live Dashboard', franchise: 'Franchise', 'parlay-results': 'Parlay Results', standings: 'Standings', 'head-to-head': 'Head to Head', overview: 'Overview', 'game-records': 'Game Records', 'draft-board': 'Draft Board', 'rule-changes': 'Rule Changes' };
+  const PAGE_LABELS = { dashboard: 'Live Dashboard', franchise: 'Franchise', 'parlay-results': 'Parlay Results', standings: 'Standings', 'head-to-head': 'Head to Head', overview: 'League History', 'game-records': 'Game Records', 'draft-board': 'Draft Board', 'rule-changes': 'Rule Changes' };
 
   function dayLabel(iso, today) {
     if (iso === today) return 'Today';

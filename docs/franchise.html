@@ -21,25 +21,22 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=4">
-<link rel="stylesheet" href="nav.css?v=3">
+<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="nav.css?v=4">
 <style>
-  .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 26px; }
-  /* Selector styling lives in theme.css -- only this page's spacing here. */
-  .tabs{ margin-bottom: 14px; }
+  /* Selector and stat-card styling live in theme.css -- only this page's own
+     spacing and variants here. */
+  .selector-row{ margin-bottom: 26px; }
   #tab-content > * + *{ margin-top: 14px; }
 
   /* ---------- Cards ---------- */
-  /* start, not stretch: Regular Season has three rows against Playoffs'
-     five, and matching their heights just left a block of dead space under
-     the shorter one. */
-  .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  /* A third column for the sections that have three cards, and the same
+     stack-on-narrow fallback theme.css gives the two-column default. */
   .card-grid.three{ grid-template-columns: repeat(3, 1fr); }
-  @media (max-width: 720px){ .card-grid, .card-grid.three{ grid-template-columns: 1fr; } }
-  .stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); overflow: hidden; }
-  .stat-card-title{ padding: 16px 18px 0; font-weight: 700; font-size: 0.95rem; }
-  .stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 3px 18px 0; }
-  .stat-card-body{ padding: 12px 14px 14px; }
+  @media (max-width: 720px){ .card-grid.three{ grid-template-columns: 1fr; } }
+  /* Clipped, unlike the shared default, so a card's rounded corners cut its
+     own content (the rivalry bars run edge to edge). */
+  .stat-card{ overflow: hidden; }
 
   /* ---------- Hero ----------
      The column split is theme.css's shared content-sized rule now; this
@@ -49,7 +46,8 @@
      can't bleed into the stats column. That also clipped the logo hover
      previews, which are absolutely positioned and deliberately overhang
      the tile. Moving the clip onto the glow itself keeps the bleed
-     contained while letting the previews out. */
+     contained while letting the previews out.
+
      The glow's box is inset:-40%, so it measures 180% of the main area on
      each axis. Trimming 40/180 = 22.23% off every edge lands it exactly on
      the main area's bounds -- the same rectangle overflow:hidden gave us.
@@ -63,9 +61,9 @@
   .rank-badge.bad{ background: rgba(214,98,79,0.14); border-color: var(--loss); color: var(--loss); }
 
   /* ---------- Team logos -- current team gets one next to its headline
-     name, past teams get the framed hover-tile list below (see
-     franchise-logo-lab.html's #6 -- #3, the polaroid grid, was tried and
-     dropped). logo_url comes straight from ESPN, which never validates or
+     name, past teams get the framed hover-tile list below (a polaroid grid
+     was tried alongside it and dropped; the scratch page the two were
+     prototyped on is long gone). logo_url comes straight from ESPN, which never validates or
      hosts it, so a good chunk of historical ones are genuinely dead
      links. Every <img> below has an onerror fallback to a colored
      initials avatar for that case, not just the ones that happen to
@@ -122,9 +120,7 @@
     }
   }
 
-  /* ---------- Headline stat cards ---------- */
-  .podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-  .pod{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
+  /* ---------- Headline stat cards (.podium/.pod live in theme.css) ---------- */
   .pod.hl{ border-color: var(--lead-line); background: var(--lead-tint); }
   .pod.tone-win{ border-color: var(--win-line); background: var(--win-tint); }
   .pod.tone-loss{ border-color: var(--loss-line); background: var(--loss-tint); }
@@ -136,7 +132,6 @@
   .pod.hl .pod-val{ color: var(--gold); }
   .pod-val.win{ color: var(--turf); }
   .pod-val.loss{ color: var(--loss); }
-  .pod-val.long{ font-size: 1.25rem; }
   .pod-sub{ color: var(--text-dim); font-size: 0.7rem; min-height: 1em; margin-top: 2px; }
 
   /* ---------- Rows ---------- */
@@ -148,33 +143,19 @@
   .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; }
   .row-stats{ display: flex; gap: 16px; }
   .row-stat{ text-align: center; min-width: 52px; }
-  .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
   .row-stat b.win{ color: var(--turf); }
   .row-stat b.loss{ color: var(--loss); }
 
-  .pill{ font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .pill.up{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.10); }
-  .pill.down{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.10); }
-
   /* ---------- Rivalry / luck ---------- */
   .feature{ text-align: center; padding: 16px 8px 8px; }
-  .feature-name{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.7rem; }
   .feature-sub{ color: var(--text-dim); font-size: 0.85rem; margin-top: 4px; }
   .luck-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 2rem; }
   .luck-val.lucky{ color: var(--turf); }
   .luck-val.unlucky{ color: var(--loss); }
 
   /* ---------- Rivalries ---------- */
-  .rivalry-card{
-    position: relative;
-    background: linear-gradient(165deg, var(--surface-2), var(--surface));
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
-    padding: 22px 20px;
-    text-align: center;
-  }
+  /* The card surface itself comes from theme.css's shared rule. */
+  .rivalry-card{ position: relative; padding: 22px 20px; text-align: center; }
   /* Nemesis/favorite IS a state, so it keeps an accent -- but as the shared
      outline treatment, not a top bar. */
   .rivalry-card.nemesis{ border-color: var(--loss-line); }
@@ -228,12 +209,11 @@
   .hist-year{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.25rem; color: var(--text-dim); text-align: center; }
   .hist-team{ font-weight: 700; font-size: 0.95rem; }
   .badge{ font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 5px 10px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line); color: var(--text-dim); }
-  .badge.champion{ background: rgba(186,155,55,0.14); color: var(--gold); border-color: var(--gold); }
+  .badge.champion{ background: rgba(212,180,106,0.14); color: var(--gold); border-color: var(--gold); }
   .badge.runner-up{ color: var(--gold); border-color: var(--gold); }
   .badge.playoffs{ background: rgba(76,154,107,0.12); color: var(--turf); border-color: var(--turf-dim); }
   .badge.progress{ border-style: dashed; }
   .badge.missed{ background: rgba(192,87,75,0.12); color: var(--loss); border-color: var(--loss); }
-  .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
 
   /* ---------- Achievement shelf ---------- */
   .shelf{ display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
@@ -248,7 +228,7 @@
   .ach-back{ transform: rotateY(180deg); }
   .ach-icon{ flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   .ach-icon svg{ width: 18px; height: 18px; }
-  .ach.good .ach-icon{ background: rgba(186,155,55,0.14); color: var(--gold); }
+  .ach.good .ach-icon{ background: rgba(212,180,106,0.14); color: var(--gold); }
   .ach.bad .ach-icon{ background: rgba(192,87,75,0.14); color: var(--loss); }
   .ach.locked .ach-icon{ background: rgba(255,255,255,0.03); color: var(--text-dim); }
   .ach-name{ font-weight: 700; font-size: 0.9rem; }
@@ -327,8 +307,8 @@
     <footer>Data via ESPN Fantasy (Money Tracker from the league sheet) · Updates Tuesday &amp; Thursday mornings</footer>
   </div>
 
-<script src="nav.js"></script>
-<script src="page-common.js"></script>
+<script src="nav.js?v=2"></script>
+<script src="page-common.js?v=2"></script>
 <script src="achievements.js"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, EFFICIENCY_EXPERT_PCT, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
@@ -508,9 +488,9 @@
     if (ph) ph.style.display = 'flex';
   }
 
-  // Two options shown together so they're easy to compare on the real
-  // page instead of just the lab -- see franchise-logo-lab.html's #3
-  // (polaroid grid) and #6 (framed tile, hover for a bigger preview).
+  // Framed tile per past team, hover (or focus) for a bigger preview --
+  // the shape picked over a polaroid grid when the two were compared on
+  // the real page rather than in isolation.
   function pastLogosHtml(p) {
     const names = p.previous_team_names || [];
     if (!names.length) return '';

@@ -21,13 +21,15 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=4">
-<link rel="stylesheet" href="nav.css?v=3">
+<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* Selector styling lives in theme.css -- only this page's spacing here. */
   .tab-row{ margin-bottom: 18px; }
 
-  .rules-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); overflow: hidden; }
+  /* The card surface itself comes from theme.css's shared rule; clipped here
+     so the quadrant hairlines stop at the card's rounded corners. */
+  .rules-card{ overflow: hidden; }
   /* The season currently being played is the one state this card has. */
   .rules-card.is-current{ border-color: var(--lead-line); }
   .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
@@ -80,7 +82,6 @@
   .rules-chip .was{ color: var(--text-dim); margin-right: 2px; }
   .rules-chip .now{ color: var(--gold); font-weight: 700; }
   .rules-footnote{ color: var(--text-dim); font-size: 0.76rem; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
-  .empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
 
   .manager-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
   .manager-chip{
@@ -144,8 +145,8 @@
     <footer>Rules and manager history from ESPN Fantasy · Money from the league sheet</footer>
   </div>
 
-<script src="nav.js"></script>
-<script src="page-common.js"></script>
+<script src="nav.js?v=2"></script>
+<script src="page-common.js?v=2"></script>
 <script>
 
   function section(title, lines, footnote) {

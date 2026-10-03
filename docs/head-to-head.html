@@ -21,9 +21,9 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=4">
-<link rel="stylesheet" href="nav.css?v=3">
-<link rel="stylesheet" href="league.css?v=5">
+<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="nav.css?v=4">
+<link rel="stylesheet" href="league.css?v=6">
 <style>
   .banner{ display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:center; padding:18px 16px 16px; border-bottom:1px solid var(--line); }
   .side .nm{ font-family:var(--scoreboard); font-weight:800; font-size:2.2rem; line-height:1; margin-bottom:10px; overflow:hidden; text-overflow:ellipsis; }
@@ -93,8 +93,7 @@
   .sp-v.win{ color:var(--turf); }
   .sp-v.lose{ color:var(--text-dim); }
   .sp-dot{ width:5px; height:5px; border-radius:50%; background:var(--text-dim); flex-shrink:0; }
-  .gap{ height:14px; }
-
+  
   .game{ display:grid; grid-template-columns:86px minmax(0,1fr); gap:12px; align-items:center; background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:9px 12px; margin-top:6px; }
   .game.up{ border-color:var(--win-line); background:var(--win-tint); }
   .game.down{ border-color:var(--loss-line); background:var(--loss-tint); }
@@ -141,7 +140,9 @@
     </header>
 
     <section>
-      <h2>Compare Two Teams</h2>
+      <!-- No section heading: the page is titled Head to Head and the row
+           below reads "<team> vs. <team>", which says the same thing while
+           also being the control. -->
       <div class="selector-row">
         <select class="lg-select" id="p1" autocomplete="off" aria-label="Team 1"></select>
         <span class="selector-label">vs.</span>
@@ -158,8 +159,8 @@
     <footer>Data via ESPN Fantasy</footer>
   </div>
 
-<script src="nav.js"></script>
-<script src="league-common.js?v=2"></script>
+<script src="nav.js?v=2"></script>
+<script src="league-common.js?v=3"></script>
 <script>
   let DATA;
   const $ = id => document.getElementById(id);

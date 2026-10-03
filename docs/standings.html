@@ -21,18 +21,13 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=4">
-<link rel="stylesheet" href="nav.css?v=3">
-<link rel="stylesheet" href="league.css?v=5">
+<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="nav.css?v=4">
+<link rel="stylesheet" href="league.css?v=6">
 <style>
-  .top-row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:14px; }
-  /* Label and its select wrapped as one flex item -- otherwise .top-row's
-     own wrap could split them: the label fits on the tabs' row but the
-     select doesn't, leaving "Season" stranded alone with the dropdown
-     falling to its own row underneath. */
-  .season-picker{ display:flex; align-items:center; gap:8px; }
-  /* Selector styling lives in theme.css. */
-  .top-row .sp{ flex:1; }
+  /* Selector styling, the tabs-plus-Year row (.controls-row) and the
+     label+control pairing that stops the two splitting across a wrap
+     (.selector-group) all live in theme.css. */
   .legend{ display:flex; gap:16px; flex-wrap:wrap; color:var(--text-dim); font-size:0.74rem; padding:14px 24px 0; }
   .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
 
@@ -97,12 +92,13 @@
     </header>
 
     <section>
-      <h2 id="standings-heading">Standings</h2>
-      <div class="top-row">
+      <!-- No section heading: the page title says "Standings", and the tab
+           row and Year control below say which ones -- a line reading
+           "All-Time Final Standings" only repeated all three. -->
+      <div class="controls-row">
         <div class="tabs" id="tabs"></div>
-        <div class="sp"></div>
-        <div class="season-picker">
-          <label class="selector-label" for="year-select">Season</label>
+        <div class="selector-group">
+          <label class="selector-label" for="year-select">Year</label>
           <select class="lg-select" id="year-select" autocomplete="off"></select>
         </div>
       </div>
@@ -112,8 +108,8 @@
     <footer>Data via ESPN Fantasy</footer>
   </div>
 
-<script src="nav.js"></script>
-<script src="league-common.js?v=2"></script>
+<script src="nav.js?v=2"></script>
+<script src="league-common.js?v=3"></script>
 <script>
   const { f1, esc, pct } = LG;
   const TABS = [['reg', 'Regular Season'], ['final', 'Final Standings']];
@@ -198,7 +194,6 @@
     const year = sel === 'all' ? 'all' : Number(sel);
     const complete = year !== 'all' && D.completeYears.includes(year);
     $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
-    $('standings-heading').textContent = `${year === 'all' ? 'All-Time' : year} ${tab === 'reg' ? 'Regular Season' : 'Final'} Standings`;
     const rows = build(year, tab);
     formerCount = rows.filter(r => r.former).length;
     const legend = tab === 'reg' && complete

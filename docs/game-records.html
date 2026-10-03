@@ -21,9 +21,9 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=4">
-<link rel="stylesheet" href="nav.css?v=3">
-<link rel="stylesheet" href="league.css?v=5">
+<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="nav.css?v=4">
+<link rel="stylesheet" href="league.css?v=6">
 <style>
   .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
   @media (max-width:800px){ .hero-grid{ grid-template-columns:1fr 1fr; } }
@@ -38,8 +38,8 @@
   .hero-n span{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .hero-s{ color:var(--text-dim); font-size:0.72rem; margin-top:4px; }
 
-  /* Selector styling lives in theme.css -- only this page's spacing here. */
-  .tabs{ margin-bottom:14px; }
+  /* Selector styling (including .tabs' own bottom margin) lives in theme.css
+     -- only this page's spacing here. */
   .seg{ margin:4px 16px 8px; }
   .seg button.on{ background:var(--turf); color:#04120A; }
 
@@ -76,20 +76,24 @@
     </header>
 
     <section>
-      <h2 id="rec-heading">All-Time Records</h2>
-      <div class="selector-row">
-        <label class="selector-label" for="year-select">Season</label>
-        <select class="lg-select" id="year-select" autocomplete="off"></select>
+      <!-- No section heading: the page title already says "Game Records" and
+           the Year control on the right says which year, so a second line
+           reading "2025 Records" only repeated both. -->
+      <div class="controls-row">
+        <div class="tabs" id="tabs"></div>
+        <div class="selector-row">
+          <label class="selector-label" for="year-select">Year</label>
+          <select class="lg-select" id="year-select" autocomplete="off"></select>
+        </div>
       </div>
-      <div class="tabs" id="tabs"></div>
       <div id="records"><div class="loading-row">Loading records…</div></div>
     </section>
 
     <footer>Data via ESPN Fantasy</footer>
   </div>
 
-<script src="nav.js"></script>
-<script src="league-common.js?v=2"></script>
+<script src="nav.js?v=2"></script>
+<script src="league-common.js?v=3"></script>
 <script>
   const { f2, card, esc } = LG;
   let D, tab = 0;
@@ -154,7 +158,6 @@
 
   function render() {
     const sel = document.getElementById('year-select').value;
-    document.getElementById('rec-heading').textContent = sel === 'all' ? 'All-Time Records' : `${sel} Records`;
     document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t}</button>`).join('');
     const C = categories(sel);
     const el = document.getElementById('records');

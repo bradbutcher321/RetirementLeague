@@ -101,6 +101,6 @@
 .nav-link.active{
   color: var(--gold);
   border-left-color: var(--gold);
-  background: rgba(186,155,55,0.1);
+  background: rgba(212,180,106,0.1);
   font-weight: 700;
 }

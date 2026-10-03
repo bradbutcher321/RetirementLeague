@@ -20,7 +20,7 @@
     { href: 'index.html', label: 'Live Dashboard' },
     { href: 'franchise.html', label: 'Franchise' },
     { href: 'head-to-head.html', label: 'Head to Head' },
-    { href: 'overview.html', label: 'Overview' },
+    { href: 'overview.html', label: 'League History' },
     { href: 'game-records.html', label: 'Game Records' },
     { href: 'standings.html', label: 'Standings' },
     { href: 'parlay-results.html', label: 'Parlay Results' },

@@ -1,25 +1,24 @@
-/* Shared styles for Standings, Head to Head, Overview and Game Records. */
-.selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-/* .selector-label styling lives in theme.css, alongside the other selectors. */
-/* .lg-select styling lives in theme.css, alongside the other selectors. */
+/* Shared styles for Standings, Head to Head, League History and Game Records --
+   the four pages that read data/league.json.
 
-/* Night Match glass card -- gradient surface, rounded, soft elevation. Reusing the .stat-card
-   name (instead of a new class) means every page still using league-common.js's card() helper
-   picks this up automatically, no per-page JS changes needed. */
-.stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); }
-.stat-card-title{ padding: 18px 22px 0; font-weight: 700; font-size: 1rem; }
-.stat-card-note{ color: var(--text-dim); font-size: 0.78rem; padding: 4px 22px 0; }
+   Anything these pages have in common with the rest of the site lives in
+   theme.css instead (the glass card surface itself, .selector-row,
+   .selector-group, .controls-row, .podium/.pod, .row-stat's numeral and
+   caption, .empty-note). What's left here is either specific to these four
+   pages or a deliberate override of a theme default. */
+
+/* Wider title/note/body padding than theme.css's default, which is tuned to
+   Franchise and Parlay's denser cards. Reusing the .stat-card name (rather
+   than a new class) means every page still calling league-common.js's card()
+   helper picks this up with no per-page JS change. */
+.stat-card-title{ padding: 18px 22px 0; font-size: 1rem; }
+.stat-card-note{ font-size: 0.78rem; padding: 4px 22px 0; }
 .stat-card-body{ padding: 14px 18px 18px; }
 
-.podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-.pod{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
 /* First pod is the leader -- a state, so it takes the shared lead accent. */
 .pod:first-child{ border-color: var(--lead-line); background: var(--lead-tint); }
 :root[data-accent="outline"] .pod:first-child{ background: var(--item); }
-.pod-rank{ font-family: var(--scoreboard); font-size: 0.85rem; color: var(--gold); font-weight: 700; }
-.pod-name{ font-weight: 700; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; color: var(--gold); font-variant-numeric: tabular-nums; height: 2rem; line-height: 2rem; }
-.pod-val.long{ font-size: 1.25rem; }
 .pod-val.up{ color: var(--turf); }
 .pod-val.down{ color: var(--loss); }
 .pod-sub{ color: var(--text-dim); font-size: 0.7rem; min-height: 1em; }
@@ -29,23 +28,18 @@
   background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 9px 12px; margin-top: 6px; min-height: 58px;
 }
 .row.norank{ grid-template-columns: minmax(0,1fr) auto; }
-.row-rank{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; color: var(--text-dim); text-align: center; }
 .row-name{ font-weight: 700; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.25rem; font-variant-numeric: tabular-nums; text-align: right; }
-.row-val.gold{ color: var(--gold); }
-.row-val.up{ color: var(--turf); }
-.row-val.down{ color: var(--loss); }
 .row-stats{ display: flex; gap: 14px; }
 .row-stat{ text-align: center; min-width: 34px; }
 .row-stat:last-child{ min-width: 58px; }
-.row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
 .row.hl{ border-color: var(--lead-line); background: var(--lead-tint); }
 :root[data-accent="outline"] .row.hl{ background: var(--item); }
 
+/* Bigger than theme.css's .badge, which is sized for a badge tucked beside a
+   name inside a .qrow. Here a badge sits beside a .row-name at nearly body
+   size, and the small version read as a typo next to it. See the note on
+   .badge in theme.css -- the three sizes are not interchangeable. */
 .badge{ font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); margin-left: 6px; vertical-align: middle; white-space: nowrap; }
 .badge.gold{ color: var(--gold); border-color: var(--gold); }
 .badge.loss{ color: var(--loss); border-color: var(--loss); }
-
-.empty-note{ padding: 22px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }

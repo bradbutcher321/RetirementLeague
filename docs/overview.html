@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>html{background:#050505}</style>
-<title>Retirement League — Overview</title>
+<title>Retirement League — League History</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The two font-family's woff2 files Google serves for the latin subset
@@ -21,13 +21,13 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=4">
-<link rel="stylesheet" href="nav.css?v=3">
-<link rel="stylesheet" href="league.css?v=5">
+<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="nav.css?v=4">
+<link rel="stylesheet" href="league.css?v=6">
 <style>
-  /* Selector styling lives in theme.css -- only this page's spacing here.
-     The seg sits inside a card, so its side margins match that padding. */
-  .tabs{ margin-bottom:14px; }
+  /* Selector styling (including .tabs' own bottom margin) lives in theme.css
+     -- only this page's spacing here. The seg sits inside a card, so its side
+     margins match that padding. */
   .seg{ margin:4px 24px 14px; max-width:calc(100% - 48px); }
 
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; padding:0 18px 20px; }
@@ -83,7 +83,7 @@
       <div class="header-row">
         <div>
           <div class="eyebrow">Retirement League</div>
-          <h1>Overview</h1>
+          <h1>League History</h1>
         </div>
         <div class="updated-block">
           <div class="updated-label">Updated</div>
@@ -93,7 +93,8 @@
     </header>
 
     <section>
-      <h2>League History</h2>
+      <!-- No section heading: the page is titled League History now, so a
+           second line repeating it said nothing the tabs below don't. -->
       <div class="tabs" id="tabs"></div>
       <div id="overview"><div class="loading-row">Loading league history…</div></div>
     </section>
@@ -101,8 +102,8 @@
     <footer>Data via ESPN Fantasy (Earnings from the league sheet)</footer>
   </div>
 
-<script src="nav.js"></script>
-<script src="league-common.js?v=2"></script>
+<script src="nav.js?v=2"></script>
+<script src="league-common.js?v=3"></script>
 <script src="achievements.js"></script>
 <script>
   const { f1, f2, money, esc } = LG;
