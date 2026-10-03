@@ -106,12 +106,16 @@ html{ user-select: none; }
   *{ scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.22) transparent; }
 }
 
+/* Flat, not a positioned glow. An earlier version washed gold/green radial
+   gradients near the top of the document (fixed-size ellipses, so the glow
+   faded out within the first ~700px and never reached the rest of a tall
+   page) -- which meant the exact same gold on two identical selected
+   pills read as two different golds purely because one control sat higher
+   on the page than the other. A flat fill can't do that to anything on
+   any page, so no future component can hit this same bug either. */
 body{
   margin:0;
   background: var(--bg);
-  background-image:
-    radial-gradient(ellipse 1100px 600px at 15% -15%, rgba(212,180,106,0.10), transparent 60%),
-    radial-gradient(ellipse 900px 500px at 100% 10%, rgba(79,174,122,0.05), transparent 60%);
   color: var(--text);
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
