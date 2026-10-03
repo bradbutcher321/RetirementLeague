@@ -1600,131 +1600,194 @@
   // reload, so this "cycles" along with it rather than needing its own
   // timer). Always shows the manager, not the team name, per request.
   //
-  // Rather than 100 hand-written one-off strings, this is ~25 fact
-  // *templates* mined from every field the dashboard already has (season
-  // PF/PA/record/odds, this week's live/projected scores, per-team
-  // streaks, per-matchup win probability) -- several of which produce one
-  // fact per qualifying team or matchup instead of just a single league
-  // winner. Across a normal 10-14 team league and a full season of
-  // different standings/streaks/matchups, that combinatorial space is
-  // easily 100+ distinct facts that could show up here, even though only
-  // whichever ones are actually true right now are in the pool on any
-  // given refresh. A few are deliberately played for laughs ("Paper
-  // Champion", "Human Victory Cigar", upset/choke watch) rather than
-  // straight stats, per request.
+  // Deliberately never comments on an in-progress matchup (closest
+  // game/blowout/upset watch used to, and reading "up by 2.5 right now"
+  // next to "but was given only a 30% chance to win" read as flatly
+  // contradictory mid-game, since win probability here is closer to a
+  // pregame number than a true live-updating one) -- every fact here is
+  // either season-to-date (current year, from the live Worker data,
+  // through completed weeks only) or full career history (all time, from
+  // docs/data/franchise.json, fetched once below). Neither source can
+  // produce a claim that's still in flux.
+  //
+  // ~20 current-year templates + ~20 all-time templates, several of which
+  // produce one fact per qualifying manager (every active streak, every
+  // manager's nemesis/favorite rivalry, every worst bench mistake) rather
+  // than a single league winner -- across a 14-manager franchise that's
+  // comfortably 100+ distinct facts that could appear here, even though
+  // only whichever are true right now are in the pool on a given refresh.
+  // Several are deliberately played for laughs (Paper Champion, Human
+  // Victory Cigar, rivalry nemesis, worst bench mistake) per request.
   function who(t) { return (t && (t.manager || t.name)) || 'Someone'; }
   function hi(x) { return `<b>${x}</b>`; }
 
-  function statOfMomentFacts(data) {
+  let franchiseData = null;
+  fetch('data/franchise.json', { cache: 'no-store' })
+    .then(res => res.json())
+    .then(d => { franchiseData = d; renderStatOfMoment(); })
+    .catch(() => {});
+
+  function currentYearFacts(data) {
     const teams = data.teams || [];
-    const matchups = data.matchups || [];
     if (!teams.length) return [];
     const facts = [];
     const add = (cond, text) => { if (cond) facts.push(text); };
 
-    // ----- Season-long leaders/trailers (teams[] already arrives ranked
-    // best-record-first, same assumption Current Standings relies on). -----
+    // teams[] already arrives ranked best-record-first, same assumption
+    // Current Standings relies on.
     const byPF = [...teams].sort((a, b) => (b.pointsFor || 0) - (a.pointsFor || 0));
     const byPA = [...teams].sort((a, b) => (b.pointsAgainst || 0) - (a.pointsAgainst || 0));
     const byDiff = [...teams].sort((a, b) =>
       ((b.pointsFor || 0) - (b.pointsAgainst || 0)) - ((a.pointsFor || 0) - (a.pointsAgainst || 0)));
     const byOdds = teams.filter(t => typeof t.playoffPct === 'number').sort((a, b) => (b.playoffPct || 0) - (a.playoffPct || 0));
 
-    add(byPF[0], `${who(byPF[0])} leads the league with ${hi(fmtScore(byPF[0] && byPF[0].pointsFor))} points for.`);
-    add(byPF.length > 1, `${who(byPF[byPF.length - 1])} has the league's fewest points for, just ${hi(fmtScore(byPF[byPF.length - 1] && byPF[byPF.length - 1].pointsFor))}.`);
-    add(byPA[0], `${who(byPA[0])} has allowed more points than anyone, ${hi(fmtScore(byPA[0] && byPA[0].pointsAgainst))} against.`);
-    add(byPA.length > 1, `${who(byPA[byPA.length - 1])} has the league's stingiest schedule, allowing just ${hi(fmtScore(byPA[byPA.length - 1] && byPA[byPA.length - 1].pointsAgainst))}.`);
-    add(teams[0], `${who(teams[0])} owns the league's best record at ${hi(teams[0] && teams[0].record)}.`);
-    add(teams.length > 1, `${who(teams[teams.length - 1])} is holding down the league cellar at ${hi(teams[teams.length - 1] && teams[teams.length - 1].record)}.`);
-    add(byDiff[0], `${who(byDiff[0])} has the league's best point differential at ${hi('+' + fmtScore((byDiff[0].pointsFor || 0) - (byDiff[0].pointsAgainst || 0)))}.`);
-    add(byDiff.length > 1, `${who(byDiff[byDiff.length - 1])} has the league's worst point differential at ${hi(fmtScore((byDiff[byDiff.length - 1].pointsFor || 0) - (byDiff[byDiff.length - 1].pointsAgainst || 0)))}.`);
-    add(byOdds[0], `${who(byOdds[0])} has the best playoff odds in the league at ${hi(fmtPct(byOdds[0] && byOdds[0].playoffPct))}.`);
-    add(byOdds.length > 1, `${who(byOdds[byOdds.length - 1])} has the longest playoff odds in the league, just ${hi(fmtPct(byOdds[byOdds.length - 1] && byOdds[byOdds.length - 1].playoffPct))}.`);
+    add(byPF[0], `${who(byPF[0])} leads the league with ${hi(fmtScore(byPF[0] && byPF[0].pointsFor))} points for this year.`);
+    add(byPF.length > 1, `${who(byPF[byPF.length - 1])} has the league's fewest points for this year, just ${hi(fmtScore(byPF[byPF.length - 1] && byPF[byPF.length - 1].pointsFor))}.`);
+    add(byPA[0], `${who(byPA[0])} has allowed more points than anyone this year, ${hi(fmtScore(byPA[0] && byPA[0].pointsAgainst))} against.`);
+    add(byPA.length > 1, `${who(byPA[byPA.length - 1])} has the league's stingiest schedule this year, allowing just ${hi(fmtScore(byPA[byPA.length - 1] && byPA[byPA.length - 1].pointsAgainst))}.`);
+    add(teams[0], `${who(teams[0])} owns the league's best record this year at ${hi(teams[0] && teams[0].record)}.`);
+    add(teams.length > 1, `${who(teams[teams.length - 1])} is holding down the league cellar this year at ${hi(teams[teams.length - 1] && teams[teams.length - 1].record)}.`);
+    add(byDiff[0], `${who(byDiff[0])} has the league's best point differential this year at ${hi('+' + fmtScore((byDiff[0].pointsFor || 0) - (byDiff[0].pointsAgainst || 0)))}.`);
+    add(byDiff.length > 1, `${who(byDiff[byDiff.length - 1])} has the league's worst point differential this year at ${hi(fmtScore((byDiff[byDiff.length - 1].pointsFor || 0) - (byDiff[byDiff.length - 1].pointsAgainst || 0)))}.`);
+    add(byOdds[0], `${who(byOdds[0])} has the best playoff odds in the league right now at ${hi(fmtPct(byOdds[0] && byOdds[0].playoffPct))}.`);
+    add(byOdds.length > 1, `${who(byOdds[byOdds.length - 1])} has the longest playoff odds in the league right now, just ${hi(fmtPct(byOdds[byOdds.length - 1] && byOdds[byOdds.length - 1].playoffPct))}.`);
 
-    // ----- Bubble watch -----
     const ptc = data.playoffTeamCount || 0;
     add(ptc > 0 && teams[ptc - 1], `${who(teams[ptc - 1])} is clinging to the final playoff spot, at #${ptc}.`);
     add(ptc > 0 && teams[ptc], `${who(teams[ptc])} is first team out of the playoff picture right now.`);
 
-    // ----- Funny: record vs. scoring mismatches -----
     const pfRank = new Map(byPF.map((t, i) => [t.name, i]));
     add(teams[0] && pfRank.get(teams[0].name) >= 3,
-      `${who(teams[0])} has the league's best record without even cracking the points-for top 3 -- a certified Paper Champion.`);
+      `${who(teams[0])} has the league's best record this year without even cracking the points-for top 3 -- a certified Paper Champion.`);
     const unlucky = teams.slice(Math.ceil(teams.length / 2)).find(t => pfRank.get(t.name) < 3);
     add(unlucky, `${who(unlucky)} is stuck in the bottom half of the standings despite a top-3 points-for total -- snake-bitten doesn't begin to cover it.`);
     add(byPF.length, `${who(byPF[byPF.length - 1])} has quietly put up the league's fewest points all year -- the Human Victory Cigar.`);
 
-    // ----- Season high -----
     const h = data.priorSeasonHigh;
-    add(h && h.score, `${(h && (h.manager || h.team)) || ''} set the season-high score to beat, ${hi(fmtScore(h && h.score))} in Week ${h && h.week}.`);
-
-    // ----- This week: live/projected extremes -----
-    const started = teams.some(t => (t.current || 0) > 0);
-    if (started) {
-      const byCur = teams.filter(t => (t.current || 0) > 0).sort((a, b) => (b.current || 0) - (a.current || 0));
-      add(byCur[0], `${who(byCur[0])} is torching the league this week with ${hi(fmtScore(byCur[0] && byCur[0].current))} points and counting.`);
-      add(byCur.length > 1, `${who(byCur[byCur.length - 1])} is off to a quiet start this week, just ${hi(fmtScore(byCur[byCur.length - 1] && byCur[byCur.length - 1].current))} points on the board.`);
-      const byRemaining = teams.filter(t => (t.remaining || 0) > 0).sort((a, b) => (b.remaining || 0) - (a.remaining || 0));
-      add(byRemaining[0], `${who(byRemaining[0])} still has the most players left to play this week, ${hi(byRemaining[0] && byRemaining[0].remaining)} on the clock.`);
-    }
-    const byProj = [...teams].sort((a, b) => (b.projected || 0) - (a.projected || 0));
-    add(byProj[0], `${who(byProj[0])} is projected for the week's top score, ${hi(fmtScore(byProj[0] && byProj[0].projected))}.`);
-    add(byProj.length > 1, `${who(byProj[byProj.length - 1])} has the week's lowest projection, just ${hi(fmtScore(byProj[byProj.length - 1] && byProj[byProj.length - 1].projected))}.`);
-
-    // ----- Streaks (one fact per team currently on one, win or lose) -----
-    const seen = new Set();
-    matchups.forEach(m => {
-      [[m.homeManager || m.homeName, m.homeStreak], [m.awayManager || m.awayName, m.awayStreak]].forEach(([name, streak]) => {
-        if (!name || !streak || seen.has(name)) return;
-        const n = parseInt(streak.slice(1), 10);
-        if (!n || n < 2) return;
-        seen.add(name);
-        add(true, streak[0] === 'W'
-          ? `${name} is riding a ${hi(n + '-game')} winning streak.`
-          : `${name} is mired in a ${hi(n + '-game')} losing streak.`);
-      });
-    });
-
-    // ----- This week's matchups: closest game, biggest blowout -----
-    const live = matchups.filter(m => (m.homeScore || 0) + (m.awayScore || 0) > 0);
-    if (live.length) {
-      const margins = live.map(m => ({ m, margin: Math.abs((m.homeScore || 0) - (m.awayScore || 0)) }));
-      const closest = margins.reduce((a, b) => (b.margin < a.margin ? b : a));
-      add(true, `${closest.m.homeManager || closest.m.homeName} and ${closest.m.awayManager || closest.m.awayName} are separated by just ${hi(fmtScore(closest.margin))} points.`);
-      const biggest = margins.reduce((a, b) => (b.margin > a.margin ? b : a));
-      if (biggest.margin > 0) {
-        const homeAhead = biggest.m.homeScore >= biggest.m.awayScore;
-        const leader = homeAhead ? (biggest.m.homeManager || biggest.m.homeName) : (biggest.m.awayManager || biggest.m.awayName);
-        const trailer = homeAhead ? (biggest.m.awayManager || biggest.m.awayName) : (biggest.m.homeManager || biggest.m.homeName);
-        add(true, `${leader} is putting a beating on ${trailer} this week, up by ${hi(fmtScore(biggest.margin))}.`);
-      }
-
-      // ----- Funny: upset watch / choke watch, per matchup -----
-      live.forEach(m => {
-        const hs = m.homeScore || 0, as = m.awayScore || 0;
-        if (hs === as) return;
-        const homeWinning = hs > as;
-        const homeWP = typeof m.homeWinProbability === 'number' ? m.homeWinProbability : null;
-        const awayWP = typeof m.awayWinProbability === 'number' ? m.awayWinProbability : (homeWP !== null ? 100 - homeWP : null);
-        if (homeWP === null || awayWP === null) return;
-        const winnerWP = homeWinning ? homeWP : awayWP;
-        const loserWP = homeWinning ? awayWP : homeWP;
-        const winner = homeWinning ? (m.homeManager || m.homeName) : (m.awayManager || m.awayName);
-        const loser = homeWinning ? (m.awayManager || m.awayName) : (m.homeManager || m.homeName);
-        add(winnerWP < 40, `${winner} is pulling off an upset, currently beating ${loser} despite being given just ${hi(fmtPct(winnerWP))} to win.`);
-        add(loserWP > 60, `${loser} was favored at ${hi(fmtPct(loserWP))} to win but is currently losing to ${winner}.`);
-      });
-    }
+    add(h && h.score, `${(h && (h.manager || h.team)) || ''} set this year's high score to beat, ${hi(fmtScore(h && h.score))} in Week ${h && h.week}.`);
 
     return facts;
   }
+
+  function allTimeFacts(franchise) {
+    const players = (franchise && franchise.players) || [];
+    if (!players.length) return [];
+    const facts = [];
+    const add = (cond, text) => { if (cond) facts.push(text); };
+    const maxBy = (arr, f) => arr.reduce((a, b) => (a === null || f(b) > f(a) ? b : a), null);
+    const minBy = (arr, f) => arr.reduce((a, b) => (a === null || f(b) < f(a) ? b : a), null);
+    const has = (p, f) => typeof f(p) === 'number';
+
+    const withChamps = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.championships));
+    const topChamp = maxBy(withChamps, p => p.career.standings.championships);
+    add(topChamp && topChamp.career.standings.championships > 0,
+      `${topChamp && topChamp.name} has the most championships in league history with ${hi(topChamp && topChamp.career.standings.championships)}.`);
+
+    const withWinPct = players.filter(p => has(p, p => p.career && p.career.win_rates && p.career.win_rates.reg_pct));
+    const bestWinPct = maxBy(withWinPct, p => p.career.win_rates.reg_pct);
+    const worstWinPct = minBy(withWinPct, p => p.career.win_rates.reg_pct);
+    add(bestWinPct, `${bestWinPct && bestWinPct.name} has the best all-time regular season win rate at ${hi(fmtPct(bestWinPct && bestWinPct.career.win_rates.reg_pct))}.`);
+    add(worstWinPct, `${worstWinPct && worstWinPct.name} has the worst all-time regular season win rate at ${hi(fmtPct(worstWinPct && worstWinPct.career.win_rates.reg_pct))}.`);
+
+    const withTotalPF = players.filter(p => has(p, p => p.career && p.career.points && p.career.points.total_pf));
+    const topTotalPF = maxBy(withTotalPF, p => p.career.points.total_pf);
+    add(topTotalPF, `${topTotalPF && topTotalPF.name} has scored more career points than anyone in league history, ${hi(fmtScore(topTotalPF && topTotalPF.career.points.total_pf))}.`);
+
+    const withHigh = players.filter(p => has(p, p => p.extremes && p.extremes.highest_score));
+    const topHigh = maxBy(withHigh, p => p.extremes.highest_score);
+    add(topHigh, `${topHigh && topHigh.name} owns the single-week scoring record in league history, ${hi(fmtScore(topHigh && topHigh.extremes.highest_score))}.`);
+    const withLow = players.filter(p => has(p, p => p.extremes && typeof p.extremes.lowest_score === 'number'));
+    const lowLow = minBy(withLow, p => p.extremes.lowest_score);
+    add(lowLow, `${lowLow && lowLow.name} is responsible for the lowest single-week score in league history, just ${hi(fmtScore(lowLow && lowLow.extremes.lowest_score))}.`);
+
+    const withWinMargin = players.filter(p => has(p, p => p.extremes && p.extremes.biggest_win_margin));
+    const topWinMargin = maxBy(withWinMargin, p => p.extremes.biggest_win_margin);
+    add(topWinMargin, `${topWinMargin && topWinMargin.name} is behind the biggest single-game blowout in league history, a ${hi(fmtScore(topWinMargin && topWinMargin.extremes.biggest_win_margin))}-point win.`);
+    const withLossMargin = players.filter(p => has(p, p => p.extremes && p.extremes.biggest_loss_margin));
+    const topLossMargin = maxBy(withLossMargin, p => p.extremes.biggest_loss_margin);
+    add(topLossMargin, `${topLossMargin && topLossMargin.name} is on the wrong end of the worst beatdown in league history, a ${hi(fmtScore(topLossMargin && topLossMargin.extremes.biggest_loss_margin))}-point loss.`);
+
+    const withStreakW = players.filter(p => has(p, p => p.streaks && p.streaks.combined && p.streaks.combined.longest_win));
+    const topStreakW = maxBy(withStreakW, p => p.streaks.combined.longest_win);
+    add(topStreakW, `${topStreakW && topStreakW.name} holds the league's longest winning streak ever at ${hi(topStreakW && topStreakW.streaks.combined.longest_win)} games.`);
+    const withStreakL = players.filter(p => has(p, p => p.streaks && p.streaks.combined && p.streaks.combined.longest_loss));
+    const topStreakL = maxBy(withStreakL, p => p.streaks.combined.longest_loss);
+    add(topStreakL, `${topStreakL && topStreakL.name} holds the league's longest losing streak ever at ${hi(topStreakL && topStreakL.streaks.combined.longest_loss)} games.`);
+
+    const withSackos = players.filter(p => has(p, p => p.weekly_sackos));
+    const topSackos = maxBy(withSackos, p => p.weekly_sackos);
+    add(topSackos && topSackos.weekly_sackos > 0, `${topSackos && topSackos.name} has taken home the most weekly Sacko awards in league history, ${hi(topSackos && topSackos.weekly_sackos)}.`);
+    const withSeasonSackos = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.sackos));
+    const topSeasonSackos = maxBy(withSeasonSackos, p => p.career.standings.sackos);
+    add(topSeasonSackos && topSeasonSackos.career.standings.sackos > 0, `${topSeasonSackos && topSeasonSackos.name} has finished the full season as Sacko ${hi(topSeasonSackos && topSeasonSackos.career.standings.sackos)} time(s), more than anyone.`);
+
+    const withMoney = players.filter(p => has(p, p => p.money && typeof p.money.net_result === 'number'));
+    const topMoney = maxBy(withMoney, p => p.money.net_result);
+    const bottomMoney = minBy(withMoney, p => p.money.net_result);
+    add(topMoney, `${topMoney && topMoney.name} is up the most money in league history, ${hi('$' + fmtScore(topMoney && topMoney.money.net_result))}.`);
+    add(bottomMoney, `${bottomMoney && bottomMoney.name} is down the most money in league history, ${hi('$' + fmtScore(bottomMoney && bottomMoney.money.net_result))}.`);
+
+    const withEff = players.filter(p => has(p, p => p.efficiency && p.efficiency.career_pct));
+    const topEff = maxBy(withEff, p => p.efficiency.career_pct);
+    add(topEff, `${topEff && topEff.name} sets the best lineups in the league, starting their optimal roster ${hi(fmtPct(topEff && topEff.efficiency.career_pct))} of the time.`);
+    const withBenchLoss = players.filter(p => has(p, p => p.efficiency && p.efficiency.points_left_on_bench));
+    const topBenchLoss = maxBy(withBenchLoss, p => p.efficiency.points_left_on_bench);
+    add(topBenchLoss, `${topBenchLoss && topBenchLoss.name} has left more points on the bench than anyone in league history, ${hi(fmtScore(topBenchLoss && topBenchLoss.efficiency.points_left_on_bench))}.`);
+
+    const withAllPlay = players.filter(p => has(p, p => p.all_play && p.all_play.pct));
+    const topAllPlay = maxBy(withAllPlay, p => p.all_play.pct);
+    add(topAllPlay, `${topAllPlay && topAllPlay.name} would have the league's best record if everyone played everyone every week, at ${hi(fmtPct(topAllPlay && topAllPlay.all_play.pct))}.`);
+
+    const withLuck = players.filter(p => has(p, p => p.median_luck));
+    const unluckiest = maxBy(withLuck, p => p.median_luck);
+    const luckiest = minBy(withLuck, p => p.median_luck);
+    add(unluckiest && unluckiest.median_luck > 0, `${unluckiest && unluckiest.name} has been the league's unluckiest manager, scoring well enough for a ${hi(fmtPct(unluckiest && unluckiest.median_luck))} better record than they actually have.`);
+    add(luckiest && luckiest.median_luck < 0, `${luckiest && luckiest.name} has been the league's luckiest manager, outperforming what their actual scoring deserved by ${hi(fmtPct(Math.abs((luckiest && luckiest.median_luck) || 0)))}.`);
+
+    // ----- Per-manager: active streak (career-spanning, from completed
+    // games only -- not tied to anything still in progress). -----
+    players.forEach(p => {
+      const cur = p.streaks && p.streaks.combined && p.streaks.combined.current;
+      if (typeof cur !== 'number' || Math.abs(cur) < 3) return;
+      add(true, cur > 0
+        ? `${p.name} is riding a ${hi(cur + '-game')} winning streak.`
+        : `${p.name} is mired in a ${hi(Math.abs(cur) + '-game')} losing streak.`);
+    });
+
+    // ----- Per-manager: rivalries (the funny "who owns who" ones). -----
+    players.forEach(p => {
+      const nem = p.rivalries && p.rivalries.nemesis;
+      if (nem && nem.opponent && (nem.wins + nem.losses) >= 4) {
+        add(true, `${nem.opponent} is ${p.name}'s all-time rivalry nemesis, leading their head-to-head series ${hi(`${nem.wins}-${nem.losses}`)} (${fmtPct(nem.win_pct)}).`);
+      }
+      const fav = p.rivalries && p.rivalries.favorite_opponent;
+      if (fav && fav.opponent && (fav.wins + fav.losses) >= 4) {
+        add(true, `${p.name} has ${fav.opponent}'s number, up ${hi(`${fav.wins}-${fav.losses}`)} (${fmtPct(fav.win_pct)}) in their head-to-head series.`);
+      }
+    });
+
+    // ----- Per-manager: worst bench mistake ever. -----
+    players.forEach(p => {
+      const miss = p.efficiency && p.efficiency.worst_bench_miss;
+      if (!miss || !miss.player_name) return;
+      add(true, `In ${miss.year} Week ${miss.week}, ${p.name} left ${miss.player_name} on the bench for ${hi(fmtScore(miss.points))} points they didn't need.`);
+    });
+
+    return facts;
+  }
+
+  // A couple of flat, data-free inside jokes in the rotation, per request.
+  const EASTER_EGG_FACTS = ['Shit hurts k', "Don't do it"];
 
   function renderStatOfMoment() {
     const container = document.getElementById('stat-of-moment-container');
     if (!container) return;
     const data = standingsData;
-    if (!data || !(data.teams || []).length) { container.innerHTML = ''; return; }
-    const facts = statOfMomentFacts(data);
+    const facts = [
+      ...(data ? currentYearFacts(data) : []),
+      ...allTimeFacts(franchiseData),
+      ...EASTER_EGG_FACTS,
+    ];
     if (!facts.length) { container.innerHTML = ''; return; }
     const text = facts[Math.floor(Math.random() * facts.length)];
     container.innerHTML = `
