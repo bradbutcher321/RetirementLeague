@@ -24,17 +24,14 @@
   .legend{ display:flex; gap:16px; flex-wrap:wrap; color:var(--text-dim); font-size:0.74rem; padding:14px 24px 0; }
   .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
 
-  .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; min-width:0; }
-  .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
-  /* Two badges together (All-Time view, a manager with both titles and
-     sackos) are wide enough to squeeze the name out of .tm on a narrow
-     row -- row() only puts a single badge there; two or more go here
-     instead, stacked above the W/L/Win% stats on the row's own right side. */
-  .qrow .stats-col{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
-  .qrow .badge-stack{ display:flex; flex-direction:row; flex-wrap:wrap; justify-content:flex-end; gap:4px; }
-  /* Right column (badges + W/L/Win%) always stays beside the name/meta
-     column -- never drop it to a row of its own, no matter how narrow.
-     That's a separate concern from how .meta wraps internally, below. */
+  /* Badges stay right next to the name whenever there's room (even two at
+     once, e.g. "3x Title" + "2x Sacko" in the All-Time view) -- flex-wrap
+     lets them drop to their own line directly under the name, within this
+     same left column, only once name+badges genuinely can't fit on one
+     line (.nm's own min-width is what decides that threshold). They never
+     relocate to the row's right side regardless of width. */
+  .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
+  .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:60px; flex:1 1 auto; }
   .qrow-main{ min-width:0; }
   /* "PF x · PA y" is one nowrap unit so it can't split mid-pair, and
      always forced onto its own line after "N seasons" (at every width,
@@ -45,7 +42,7 @@
   .qrow .meta-sep{ display:none; }
 
   #standings-container{ margin-top:14px; }
-  .glass-title-hint{ cursor:help; border-bottom:1px dotted var(--text-dim); }
+  .glass-title-hint{ cursor:help; }
 </style>
 </head>
 <body>
@@ -196,20 +193,13 @@
       if (r.s.champ) badges.push('<span class="badge gold">Champion</span>');
       else if (r.s.sacko) badges.push('<span class="badge loss">Sacko</span>');
     }
-    // One badge reads fine right next to the name at any width (confirmed
-    // directly). Two at once (only possible in the All-Time view, a
-    // manager with both titles and sackos) are wide enough together to
-    // squeeze the name out on a narrow row, so those go to the right,
-    // stacked above the W/L/Win% instead.
-    const inlineBadge = badges.length === 1 ? badges[0] : '';
-    const stackedBadges = badges.length >= 2 ? `<div class="badge-stack">${badges.join('')}</div>` : '';
     const metaParts = [];
     if (year === 'all') metaParts.push(`${r.seasons} seasons`);
     metaParts.push(`PF ${f1(r.pf)} · PA ${f1(r.pa)}`);
     const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
-    return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${inlineBadge}</div>` +
+    return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${badges.join('')}</div>` +
       `<div class="meta">${metaHtml}</div></div>` +
-      `<div class="stats-col">${stackedBadges}<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div></div>`;
+      `<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div>`;
   }
 
   function render() {
