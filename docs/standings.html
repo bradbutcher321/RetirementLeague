@@ -26,6 +26,13 @@
 
   .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; min-width:0; }
   .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  /* On a narrow row, .nm (the only flexible item) gets squeezed toward
+     zero width by the badges next to it (flex:none, never shrink) --
+     worst with two badges at once (e.g. "3x Title" + "2x Sacko" in the
+     All-Time view), where the name could disappear entirely behind them.
+     Stacking the badges under the name instead of beside it gives the
+     name its full line, same fix either way regardless of badge count. */
+  @media (max-width:640px){ .qrow .tm{ flex-direction:column; align-items:flex-start; gap:4px; } }
 
   #standings-container{ margin-top:14px; }
 </style>
