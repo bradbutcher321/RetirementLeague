@@ -31,8 +31,19 @@
      line (.nm's own min-width is what decides that threshold). They never
      relocate to the row's right side regardless of width. */
   .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
-  .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:60px; flex:1 1 auto; }
+  .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:60px; flex:0 1 auto; }
   .qrow-main{ min-width:0; }
+  /* At a genuine ~375px width the W/L/Win% column (.stats, shared with
+     other pages) was claiming ~148px of a ~294px row on its own, leaving
+     only ~50-60px for name+badges -- less than even a single badge pill's
+     own width, so a wrapped badge had nowhere to go but overflow past its
+     column into .stats' space (confirmed directly: "3x Title" visually
+     overlapping the W/L numbers). Tightening .stats and the badges
+     specifically within this page's rows claws back enough room that a
+     wrapped badge actually fits. */
+  .qrow .stats{ gap:8px; }
+  .qrow .stats div{ min-width:26px; }
+  .qrow .badge{ font-size:0.52rem; padding:1px 5px; }
   /* "PF x · PA y" is one nowrap unit so it can't split mid-pair, and
      always forced onto its own line after "N seasons" (at every width,
      not just mobile) -- exactly two lines, seasons alone then PF/PA
