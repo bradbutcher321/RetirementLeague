@@ -385,7 +385,7 @@ def compute_standings(teams_by_player, games, sacko_years):
     }
 
 
-def compute_season_history(teams_by_player, games):
+def compute_season_history(teams_by_player, games, reg_median_by_year_week):
     games_by_year = {}
     for g in games:
         games_by_year.setdefault(g["year"], []).append(g)
@@ -398,6 +398,22 @@ def compute_season_history(teams_by_player, games):
         playoff = [g for g in year_games if g["is_playoff"]]
         reg_w = sum(1 for g in reg if g["outcome"] == "W")
         reg_l = sum(1 for g in reg if g["outcome"] == "L")
+        # Median era (year >= MEDIAN_ERA_START_YEAR): the league's actual
+        # regular-season record includes the weekly median game as a second
+        # result alongside the real head-to-head matchup -- same rule
+        # compute_median_stats/generate_league_data_d1.py's standings record
+        # already apply. reg_w/reg_l above only ever counted the
+        # head-to-head half, which read as a stale pre-median record right
+        # next to the (already median-inclusive) standing shown beside it.
+        if year >= MEDIAN_ERA_START_YEAR:
+            for g in reg:
+                median_score = reg_median_by_year_week.get((g["year"], g["week"]))
+                if median_score is None or g["team_score"] is None:
+                    continue
+                if g["team_score"] > median_score:
+                    reg_w += 1
+                elif g["team_score"] < median_score:
+                    reg_l += 1
         playoff_w = sum(1 for g in playoff if g["outcome"] == "W")
         playoff_l = sum(1 for g in playoff if g["outcome"] == "L")
         made_playoffs = len(playoff) > 0
@@ -685,7 +701,7 @@ def main():
             "weekly_sackos": weekly_sacko_counts.get(player, 0),
             "median_luck": median_luck,
             "money": money_block.get(player),
-            "season_history": compute_season_history(teams_by_player, games),
+            "season_history": compute_season_history(teams_by_player, games, reg_median_by_year_week),
             "efficiency": compute_efficiency(team_week_efficiency, team_id_to_player_by_year, player),
             "all_play": all_play.get(player),
         })
