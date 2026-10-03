@@ -1873,12 +1873,65 @@
     });
     facts.push(...sampleUpTo(rivalryFacts, 6));
 
-    // ----- Per-manager: worst bench mistake ever. -----
-    players.forEach(p => {
-      const miss = p.efficiency && p.efficiency.worst_bench_miss;
-      if (!miss || !miss.player_name) return;
-      add(true, `In ${miss.year} Week ${miss.week}, ${p.name} left ${miss.player_name} on the bench for ${hi(fmtScore(miss.points))} points they didn't need.`);
+    // ----- Power Index: same composite overview.html computes (titles
+    // 35% / win% 25% / PPG 15% / efficiency 15% / net earnings 10%, each
+    // normalized 0-100 across the roster; a manager missing a component
+    // has it skipped and the rest reweighted rather than zeroed). -----
+    const PI_WEIGHTS = { titles: 35, win: 25, ppg: 15, eff: 15, earn: 10 };
+    const piBase = players.map(p => ({
+      name: p.name,
+      titles: (p.career && p.career.standings && p.career.standings.championships) || 0,
+      win: (p.career && p.career.win_rates && p.career.win_rates.reg_pct) ?? null,
+      ppg: (p.career && p.career.points && p.career.points.avg_pf) ?? null,
+      eff: (p.efficiency && p.efficiency.career_pct) ?? null,
+      earn: (p.money && p.money.net_result) ?? null,
+    }));
+    const piNorm = {};
+    Object.keys(PI_WEIGHTS).forEach(key => {
+      const vals = piBase.map(r => r[key]).filter(v => v != null);
+      const lo = Math.min(...vals), hi = Math.max(...vals);
+      piNorm[key] = v => (v == null ? null : (hi === lo ? 100 : (v - lo) / (hi - lo) * 100));
     });
+    const piScores = piBase.map(r => {
+      const parts = Object.keys(PI_WEIGHTS).map(key => [key, piNorm[key](r[key])]).filter(([, v]) => v != null);
+      const totalW = parts.reduce((a, [key]) => a + PI_WEIGHTS[key], 0);
+      const score = totalW ? parts.reduce((a, [key, v]) => a + v * PI_WEIGHTS[key], 0) / totalW : 0;
+      return { name: r.name, score };
+    }).sort((a, b) => b.score - a.score);
+    add(piScores[0], `${piScores[0] && piScores[0].name} has the league's best all-time Power Index, a composite of titles, win rate, scoring, efficiency, and earnings, at ${hi(fmtScore(piScores[0] && piScores[0].score))}.`);
+
+    // ----- Clutch Factor: playoff win% minus regular-season win%, same
+    // formula as overview.html/franchise.html, only for managers with at
+    // least one playoff game. -----
+    const clutch = players.map(p => {
+      const r = p.career && p.career.record, wr = p.career && p.career.win_rates;
+      if (!r || !wr || (r.playoff_w || 0) + (r.playoff_l || 0) === 0 || wr.reg_pct == null || wr.playoff_pct == null) return null;
+      return { name: p.name, delta: wr.playoff_pct - wr.reg_pct };
+    }).filter(Boolean);
+    const mostClutch = maxBy(clutch, c => c.delta);
+    const leastClutch = minBy(clutch, c => c.delta);
+    add(mostClutch && mostClutch.delta > 0, `${mostClutch && mostClutch.name} turns it up in the playoffs, with a win rate ${hi('+' + fmtScore(mostClutch && mostClutch.delta) + '%')} higher than in the regular season.`);
+    add(leastClutch && leastClutch.delta < 0, `${leastClutch && leastClutch.name} folds in the playoffs, with a win rate ${hi(fmtScore(leastClutch && leastClutch.delta) + '%')} lower than in the regular season.`);
+
+    // ----- Average regular-season finish, across every season played. -----
+    const avgFinish = players.map(p => {
+      const seasons = (p.season_history || []).filter(s => typeof s.reg_standing === 'number');
+      if (!seasons.length) return null;
+      return { name: p.name, avg: seasons.reduce((a, s) => a + s.reg_standing, 0) / seasons.length };
+    }).filter(Boolean);
+    const bestAvgFinish = minBy(avgFinish, a => a.avg);
+    const worstAvgFinish = maxBy(avgFinish, a => a.avg);
+    add(bestAvgFinish, `${bestAvgFinish && bestAvgFinish.name} has the league's best average regular-season finish, ${hi('#' + fmtScore(bestAvgFinish && bestAvgFinish.avg))}.`);
+    add(worstAvgFinish, `${worstAvgFinish && worstAvgFinish.name} has the league's worst average regular-season finish, ${hi('#' + fmtScore(worstAvgFinish && worstAvgFinish.avg))}.`);
+
+    // ----- More money: gross earnings and parlay volume (net_result,
+    // above, already covers up/down -- these are different cuts of it). -----
+    const withEarnings = players.filter(p => has(p, p => p.money && p.money.total_earnings));
+    const topEarnings = maxBy(withEarnings, p => p.money.total_earnings);
+    add(topEarnings, `${topEarnings && topEarnings.name} has won more money than anyone in league history, ${hi('$' + fmtScore(topEarnings && topEarnings.money.total_earnings))}, before dues.`);
+    const withParlays = players.filter(p => has(p, p => p.money && p.money.parlays_purchased));
+    const topParlays = maxBy(withParlays, p => p.money.parlays_purchased);
+    add(topParlays && topParlays.money.parlays_purchased > 0, `${topParlays && topParlays.name} has purchased more parlays than anyone in league history, ${hi(topParlays && topParlays.money.parlays_purchased)}.`);
 
     return facts;
   }
