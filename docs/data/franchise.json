@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-02T04:06:28.129546+00:00",
+  "generated_at": "2026-10-03T04:08:42.327003+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -25,8 +25,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 85,
-          "reg_l": 68,
+          "reg_w": 93,
+          "reg_l": 77,
           "reg_t": 0,
           "playoff_w": 13,
           "playoff_l": 10,
@@ -34,7 +34,7 @@
           "consolation_l": 2
         },
         "win_rates": {
-          "reg_pct": 55.6,
+          "reg_pct": 54.7,
           "playoff_pct": 56.5,
           "median_pct": 47.1
         },
@@ -197,7 +197,7 @@
         "best_position": 1,
         "worst_position": 12
       },
-      "weekly_sackos": 1,
+      "weekly_sackos": 2,
       "median_luck": 5.9,
       "money": {
         "total_dues": 1600.0,
@@ -319,7 +319,7 @@
         {
           "year": 2025,
           "team_name": "Ye for Prez",
-          "reg_record": "6-8",
+          "reg_record": "13-15",
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
@@ -330,7 +330,7 @@
         {
           "year": 2026,
           "team_name": "Ye for Prez",
-          "reg_record": "1-2",
+          "reg_record": "2-4",
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
@@ -488,8 +488,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 85,
-          "reg_l": 68,
+          "reg_w": 93,
+          "reg_l": 77,
           "reg_t": 0,
           "playoff_w": 13,
           "playoff_l": 4,
@@ -497,7 +497,7 @@
           "consolation_l": 5
         },
         "win_rates": {
-          "reg_pct": 55.6,
+          "reg_pct": 54.7,
           "playoff_pct": 76.5,
           "median_pct": 47.1
         },
@@ -654,7 +654,7 @@
         "best_position": 1,
         "worst_position": 10
       },
-      "weekly_sackos": 2,
+      "weekly_sackos": 1,
       "median_luck": -5.8,
       "money": {
         "total_dues": 1600.0,
@@ -776,7 +776,7 @@
         {
           "year": 2025,
           "team_name": "Flanders And The Funky Bunch",
-          "reg_record": "8-6",
+          "reg_record": "16-12",
           "reg_standing": 4,
           "made_playoffs": true,
           "playoff_record": "2-1",
@@ -787,7 +787,7 @@
         {
           "year": 2026,
           "team_name": "Flanders And The Funky Bunch",
-          "reg_record": "1-2",
+          "reg_record": "1-5",
           "reg_standing": 11,
           "made_playoffs": false,
           "playoff_record": null,
@@ -900,8 +900,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 69,
-          "reg_l": 84,
+          "reg_w": 74,
+          "reg_l": 96,
           "reg_t": 0,
           "playoff_w": 2,
           "playoff_l": 4,
@@ -909,7 +909,7 @@
           "consolation_l": 14
         },
         "win_rates": {
-          "reg_pct": 45.1,
+          "reg_pct": 43.5,
           "playoff_pct": 33.3,
           "median_pct": 29.4
         },
@@ -1200,7 +1200,7 @@
         {
           "year": 2025,
           "team_name": "Your Local Donnie's",
-          "reg_record": "3-11",
+          "reg_record": "7-21",
           "reg_standing": 11,
           "made_playoffs": false,
           "playoff_record": null,
@@ -1211,7 +1211,7 @@
         {
           "year": 2026,
           "team_name": "Your Local Donnie's",
-          "reg_record": "1-2",
+          "reg_record": "2-4",
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
@@ -1339,8 +1339,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 82,
-          "reg_l": 71,
+          "reg_w": 95,
+          "reg_l": 75,
           "reg_t": 0,
           "playoff_w": 10,
           "playoff_l": 12,
@@ -1348,7 +1348,7 @@
           "consolation_l": 4
         },
         "win_rates": {
-          "reg_pct": 53.6,
+          "reg_pct": 55.9,
           "playoff_pct": 45.5,
           "median_pct": 76.5
         },
@@ -1639,7 +1639,7 @@
         {
           "year": 2025,
           "team_name": "The Cubicle Warrior",
-          "reg_record": "9-5",
+          "reg_record": "20-8",
           "reg_standing": 2,
           "made_playoffs": true,
           "playoff_record": "1-1",
@@ -1650,7 +1650,7 @@
         {
           "year": 2026,
           "team_name": "The Cubicle Warrior",
-          "reg_record": "2-1",
+          "reg_record": "4-2",
           "reg_standing": 5,
           "made_playoffs": false,
           "playoff_record": null,
@@ -1803,8 +1803,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 72,
-          "reg_l": 81,
+          "reg_w": 78,
+          "reg_l": 92,
           "reg_t": 0,
           "playoff_w": 7,
           "playoff_l": 7,
@@ -1812,7 +1812,7 @@
           "consolation_l": 7
         },
         "win_rates": {
-          "reg_pct": 47.1,
+          "reg_pct": 45.9,
           "playoff_pct": 50.0,
           "median_pct": 35.3
         },
@@ -2097,7 +2097,7 @@
         {
           "year": 2025,
           "team_name": "Couch F#ckers",
-          "reg_record": "6-8",
+          "reg_record": "11-17",
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
@@ -2108,7 +2108,7 @@
         {
           "year": 2026,
           "team_name": "Kirk'n Hard",
-          "reg_record": "0-3",
+          "reg_record": "1-5",
           "reg_standing": 12,
           "made_playoffs": false,
           "playoff_record": null,
@@ -2251,8 +2251,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 73,
-          "reg_l": 80,
+          "reg_w": 85,
+          "reg_l": 85,
           "reg_t": 0,
           "playoff_w": 9,
           "playoff_l": 6,
@@ -2260,7 +2260,7 @@
           "consolation_l": 6
         },
         "win_rates": {
-          "reg_pct": 47.7,
+          "reg_pct": 50.0,
           "playoff_pct": 60.0,
           "median_pct": 70.6
         },
@@ -2551,7 +2551,7 @@
         {
           "year": 2025,
           "team_name": "BIG BALL(er)S",
-          "reg_record": "7-7",
+          "reg_record": "16-12",
           "reg_standing": 5,
           "made_playoffs": true,
           "playoff_record": "3-0",
@@ -2562,7 +2562,7 @@
         {
           "year": 2026,
           "team_name": "BIG BALL(er)S",
-          "reg_record": "2-1",
+          "reg_record": "5-1",
           "reg_standing": 1,
           "made_playoffs": false,
           "playoff_record": null,
@@ -2710,8 +2710,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 60,
-          "reg_l": 93,
+          "reg_w": 64,
+          "reg_l": 106,
           "reg_t": 0,
           "playoff_w": 4,
           "playoff_l": 4,
@@ -2719,7 +2719,7 @@
           "consolation_l": 13
         },
         "win_rates": {
-          "reg_pct": 39.2,
+          "reg_pct": 37.6,
           "playoff_pct": 50.0,
           "median_pct": 23.5
         },
@@ -3004,7 +3004,7 @@
         {
           "year": 2025,
           "team_name": "Oviedo Ballknowers",
-          "reg_record": "3-11",
+          "reg_record": "6-22",
           "reg_standing": 12,
           "made_playoffs": false,
           "playoff_record": null,
@@ -3015,7 +3015,7 @@
         {
           "year": 2026,
           "team_name": "Oviedo Ballknowers",
-          "reg_record": "2-1",
+          "reg_record": "3-3",
           "reg_standing": 6,
           "made_playoffs": false,
           "playoff_record": null,
@@ -3138,8 +3138,8 @@
       "seasons": 10,
       "career": {
         "record": {
-          "reg_w": 67,
-          "reg_l": 58,
+          "reg_w": 71,
+          "reg_l": 71,
           "reg_t": 0,
           "playoff_w": 7,
           "playoff_l": 5,
@@ -3147,7 +3147,7 @@
           "consolation_l": 7
         },
         "win_rates": {
-          "reg_pct": 53.6,
+          "reg_pct": 50.0,
           "playoff_pct": 58.3,
           "median_pct": 23.5
         },
@@ -3292,8 +3292,8 @@
         ]
       },
       "moves": {
-        "total": 179,
-        "avg_per_season": 17.9,
+        "total": 180,
+        "avg_per_season": 18.0,
         "busiest_season": {
           "year": 2020,
           "moves": 31
@@ -3404,7 +3404,7 @@
         {
           "year": 2025,
           "team_name": "Bart Harley Jarvis Fan Club",
-          "reg_record": "8-6",
+          "reg_record": "11-17",
           "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
@@ -3415,7 +3415,7 @@
         {
           "year": 2026,
           "team_name": "Bart Harley Jarvis Fan Club",
-          "reg_record": "1-2",
+          "reg_record": "2-4",
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
@@ -3548,8 +3548,8 @@
       "seasons": 10,
       "career": {
         "record": {
-          "reg_w": 61,
-          "reg_l": 64,
+          "reg_w": 73,
+          "reg_l": 69,
           "reg_t": 0,
           "playoff_w": 5,
           "playoff_l": 8,
@@ -3557,7 +3557,7 @@
           "consolation_l": 4
         },
         "win_rates": {
-          "reg_pct": 48.8,
+          "reg_pct": 51.4,
           "playoff_pct": 38.5,
           "median_pct": 70.6
         },
@@ -3814,7 +3814,7 @@
         {
           "year": 2025,
           "team_name": "SLIMETIME BABY",
-          "reg_record": "10-4",
+          "reg_record": "20-8",
           "reg_standing": 1,
           "made_playoffs": true,
           "playoff_record": "1-1",
@@ -3825,7 +3825,7 @@
         {
           "year": 2026,
           "team_name": "SLIMETIME BABY",
-          "reg_record": "3-0",
+          "reg_record": "5-1",
           "reg_standing": 3,
           "made_playoffs": false,
           "playoff_record": null,
@@ -3968,8 +3968,8 @@
       "seasons": 8,
       "career": {
         "record": {
-          "reg_w": 55,
-          "reg_l": 44,
+          "reg_w": 66,
+          "reg_l": 50,
           "reg_t": 0,
           "playoff_w": 3,
           "playoff_l": 8,
@@ -3977,7 +3977,7 @@
           "consolation_l": 5
         },
         "win_rates": {
-          "reg_pct": 55.6,
+          "reg_pct": 56.9,
           "playoff_pct": 27.3,
           "median_pct": 64.7
         },
@@ -4206,7 +4206,7 @@
         {
           "year": 2025,
           "team_name": "Njibas in Paris",
-          "reg_record": "10-4",
+          "reg_record": "20-8",
           "reg_standing": 3,
           "made_playoffs": true,
           "playoff_record": "0-3",
@@ -4217,7 +4217,7 @@
         {
           "year": 2026,
           "team_name": "On Tuaside Watch",
-          "reg_record": "1-2",
+          "reg_record": "2-4",
           "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
@@ -4330,8 +4330,8 @@
       "seasons": 5,
       "career": {
         "record": {
-          "reg_w": 30,
-          "reg_l": 29,
+          "reg_w": 39,
+          "reg_l": 37,
           "reg_t": 0,
           "playoff_w": 3,
           "playoff_l": 3,
@@ -4339,7 +4339,7 @@
           "consolation_l": 2
         },
         "win_rates": {
-          "reg_pct": 50.8,
+          "reg_pct": 51.3,
           "playoff_pct": 50.0,
           "median_pct": 52.9
         },
@@ -4535,7 +4535,7 @@
         {
           "year": 2025,
           "team_name": "The Commish",
-          "reg_record": "6-8",
+          "reg_record": "12-16",
           "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
@@ -4546,7 +4546,7 @@
         {
           "year": 2026,
           "team_name": "The Commish",
-          "reg_record": "2-1",
+          "reg_record": "5-1",
           "reg_standing": 2,
           "made_playoffs": false,
           "playoff_record": null,
@@ -4637,8 +4637,8 @@
       "seasons": 5,
       "career": {
         "record": {
-          "reg_w": 30,
-          "reg_l": 29,
+          "reg_w": 40,
+          "reg_l": 36,
           "reg_t": 0,
           "playoff_w": 2,
           "playoff_l": 4,
@@ -4646,7 +4646,7 @@
           "consolation_l": 3
         },
         "win_rates": {
-          "reg_pct": 50.8,
+          "reg_pct": 52.6,
           "playoff_pct": 33.3,
           "median_pct": 58.8
         },
@@ -4842,7 +4842,7 @@
         {
           "year": 2025,
           "team_name": "Scary  Terry ",
-          "reg_record": "8-6",
+          "reg_record": "16-12",
           "reg_standing": 6,
           "made_playoffs": true,
           "playoff_record": "1-2",
@@ -4853,7 +4853,7 @@
         {
           "year": 2026,
           "team_name": "Scary  Terry ",
-          "reg_record": "2-1",
+          "reg_record": "4-2",
           "reg_standing": 4,
           "made_playoffs": false,
           "playoff_record": null,
@@ -5156,7 +5156,7 @@
           "total_pf": 2650.82,
           "total_pa": 3061.28,
           "avg_pf": 82.84,
-          "avg_pa": 95.67
+          "avg_pa": 95.66
         },
         "median": {
           "wins": 0,
