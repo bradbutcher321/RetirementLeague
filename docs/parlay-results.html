@@ -113,7 +113,30 @@
   .leg-head{ padding: 12px 14px 11px; }
   .leg-top{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .leg-name{ font-weight: 700; }
-  .leg-result-group{ display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+  .leg-result-group{ display: flex; align-items: center; gap: 7px; flex-shrink: 1; min-width: 0; }
+  /* ---------- The graded result, beside the verdict ----------
+     Filled rather than outlined, matching .hero-chip at the top of this page,
+     so it's a shape the page already owns. Deliberately NOT tinted win/loss:
+     the word next to it already carries that, and a third green thing on a
+     winning row was too much. Nothing renders here until a leg is decided. */
+  .fin{
+    font-family: var(--scoreboard); font-variant-numeric: tabular-nums;
+    font-size: 0.78rem; font-weight: 700; line-height: 1; color: var(--text);
+    background: rgba(255,255,255,0.06); border-radius: 999px; padding: 4px 10px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  /* Not every graded detail is a score -- a prop reads "Passing Yards: 390"
+     and a bout "Pereira · Round 1". The condensed scoreboard face is built
+     for numerals and turns to mush on words, so those take the body face a
+     size down, and they're the thing that shrinks on a narrow screen so the
+     verdict can never be pushed off the row. */
+  .fin.is-text{
+    font-family: var(--body); font-weight: 600; font-size: 0.7rem; letter-spacing: 0;
+    min-width: 0; flex-shrink: 1; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* The name gives way before the chip does -- it's repeated down the column,
+     while the chip's content is unique to this row. */
+  .leg-name{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .leg-result{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); white-space: nowrap; }
   .leg-result.turf{ color: var(--turf); }
   .leg-result.loss{ color: var(--loss); }
@@ -346,17 +369,22 @@
       .sort((a, b) => (a[1].gametime || '9999').localeCompare(b[1].gametime || '9999'));
   }
 
+  // reconstruct_pick_text (generate_parlay_data.py) writes every pick as
+  // "{bet type}: {details}", for bet types it knows and for ones it doesn't,
+  // and a pick with no bet type is never published -- so the prefix is always
+  // there to read.
+  const betTypeOf = p => String(p.pick || '').split(':')[0].trim();
   // An over/under on a game's combined score. Mirrors parlay_note_parser.py's
   // TOTAL_VS. A UFC "Total Rounds" bet is in that set but has no two scores to
   // add -- the round a fight ended in is the one number there, and its graded
   // detail reads "<winner> won (round 3)" -- so it simply never matches the
   // two-score shape the sum below looks for.
   const TOTAL_BET_TYPES = new Set(['Total Points', 'Total Goals', 'Total Rounds']);
-  // reconstruct_pick_text (generate_parlay_data.py) writes every pick as
-  // "{bet type}: {details}", for bet types it knows and for ones it doesn't,
-  // and a pick with no bet type is never published -- so the prefix is always
-  // there to read.
-  const isTotalBet = p => TOTAL_BET_TYPES.has(String(p.pick || '').split(':')[0].trim());
+  // The bets that grade off one player's stat line rather than a game's score
+  // -- parlay_note_parser.py's PLAYER_OU plus PLAYER_ONLY.
+  const PLAYER_BET_TYPES = new Set(['Receiving Yards', 'Passing TD', 'Home Runs', 'Player Points',
+    'Interceptions', 'Total Yards', 'Receptions', 'Passing Yards', 'Anytime TD', 'Coin Toss']);
+  const isTotalBet = p => TOTAL_BET_TYPES.has(betTypeOf(p));
 
   // entry: {kind: 'team', team_score, opponent_score, period, clock, tone} or
   // {kind: 'prop', stat, tone} -- see publish_parlay_stats.py's build_live_scores.
@@ -370,43 +398,78 @@
     return `${isTotal ? a + b : `${a}-${b}`}${clock}`;
   }
 
-  // Same idea for a graded leg, where the score is free text out of the
-  // sheet's Grade Detail column ("17-27"). Anything that isn't a plain
-  // two-score string is left exactly as written.
-  function combineFinalScore(detail) {
-    return detail.replace(/^(\d+)\s*-\s*(\d+)\b/, (_m, a, b) => String(Number(a) + Number(b)));
+  // Rewrites the graded detail -- free text out of the sheet's Grade Detail
+  // column, written by auto_grade_results.py -- into what the chip shows.
+  // The sheet keeps the original wording as the audit trail; this is purely
+  // how it reads on the page, which is also why every past leg picks these
+  // up with no backfill.
+  function finalChipText(p, detail) {
+    const bet = betTypeOf(p);
+
+    // A totals bet is about the combined number, so "17-27" becomes 44.
+    if (TOTAL_BET_TYPES.has(bet)) {
+      detail = detail.replace(/^(\d+)\s*-\s*(\d+)\b/, (_m, a, b) => String(Number(a) + Number(b)));
+    }
+
+    // A player prop grades to "<player>: <stat>". The player's name is
+    // already on the bet line directly above, while what the number measures
+    // isn't -- so the bet type takes the label's place: "Passing Yards: 390".
+    if (PLAYER_BET_TYPES.has(bet)) {
+      detail = detail.replace(/^.+?:\s*(-?\d+(?:\.\d+)?)$/, (_m, n) => `${bet}: ${n}`);
+    }
+
+    // A UFC bout grades to "Pereira won (round 1)" -- tightened to
+    // "Pereira · Round 1", the same middot separator the rest of the site
+    // uses between a fact and its qualifier. A decision with no round
+    // recorded keeps its plain "<winner> won".
+    detail = detail.replace(/^(.+?)\s+won\s*\(round\s*(\d+(?:\.\d+)?)\)$/i,
+      (_m, who, round) => `${who} · Round ${round}`);
+
+    return detail;
   }
 
   // The third stat slot is whichever of these is actually useful right now:
   // the kickoff time before the game starts, the running score once it's
   // live, or the graded final once it's decided -- never more than one of
   // the three at once, which is what keeps a leg card to a single stat row.
+  // The chip beside the verdict: what the leg was graded from. Empty string
+  // until the leg is actually decided, so a pending or live leg shows nothing
+  // there -- its number is still moving and isn't a result yet, so it stays
+  // in the detail row below instead.
+  function finalChipHtml(p) {
+    if (p.result !== 'Win' && p.result !== 'Loss') return '';
+    // auto_grade_results.py writes a score-graded detail as "17-10 final";
+    // the chip is already in the verdict's own slot, so a trailing "final"
+    // in the value would be saying it twice. Other shapes (a prop's
+    // "Player: 2", a 1st-half score, a UFC result) never end in that word.
+    const raw = (p.detail || '').replace(/\s*\bfinal\b\s*$/i, '').trim();
+    if (!raw) return '';
+    const text = finalChipText(p, raw);
+    // Digits get the condensed scoreboard face; anything with words in it
+    // takes the body face a size down, and may shrink before the verdict
+    // does -- see .fin.is-text.
+    const cls = /^[\d\s.–—-]+$/.test(text) ? 'fin' : 'fin is-text';
+    return `<span class="${cls}" title="${esc(text)}">${esc(text)}</span>`;
+  }
+
+  // The third stat slot, for a leg that hasn't been decided yet: the kickoff
+  // time before the game starts, or the running score once it's live. A
+  // graded leg has nothing here any more -- its score sits in the chip
+  // beside the verdict, and showing it in both places said it twice.
   function thirdStat(p, entry) {
-    const isTotal = isTotalBet(p);
-    // tone 'up' means the leg is covering as things stand; 'down' and no
-    // tone at all (a prop that hasn't reached its line yet, but still could)
-    // both stay red, same as before.
-    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap${entry.tone === 'up' ? ' up' : ''}"><span class="dot"></span>${esc(liveText(entry, isTotal))}</span>`];
+    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap${entry.tone === 'up' ? ' up' : ''}"><span class="dot"></span>${esc(liveText(entry, isTotalBet(p)))}</span>`];
     if (p.result === 'Pending') return ['Kickoff', esc(fmtTime(p.gametime))];
-    // auto_grade_results.py writes score-graded detail as "17-10 final" --
-    // the label above already says "Final", so a trailing "final" in the
-    // value itself is dropped rather than shown twice. Other detail shapes
-    // (a prop's "Player: 2", a 1st-half score's "...1st half", an
-    // individual-sport "X won") never end in that word, so they pass
-    // through untouched.
-    let detail = (p.detail || fmtTime(p.gametime)).replace(/\s*\bfinal\b\s*$/i, '').trim();
-    if (isTotal) detail = combineFinalScore(detail);
-    return ['Final', esc(detail || p.detail || fmtTime(p.gametime))];
+    return null;
   }
 
   function legStatsHtml(p, entry) {
-    const [label3, value3] = thirdStat(p, entry);
+    const third = thirdStat(p, entry);
     // label,value,label,value,label,value -- see the .leg-stats comment in
     // the stylesheet for why this order (not all labels then all values)
     // is load-bearing for grid-auto-flow:column.
     return `<span class="l">Sport</span><span class="v">${p.sport ? esc(p.sport) : '—'}</span>` +
       `<span class="l">Odds</span><span class="v">${esc(fmtOdds(p.odds))}</span>` +
-      `<span class="l">${label3}</span><span class="v">${value3}</span>`;
+      (third ? `<span class="l">${third[0]}</span><span class="v">${third[1]}</span>` : '');
   }
 
   // Keyed like the live-score map (year:week:name) so expanding a leg
@@ -456,6 +519,7 @@
           <div class="leg-top">
             <div class="leg-name">${esc(name)}</div>
             <div class="leg-result-group">
+              ${finalChipHtml(p)}
               <span class="leg-result ${resultTone}">${resultLabel}</span>
               <span class="leg-chev">▶</span>
             </div>
