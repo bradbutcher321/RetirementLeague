@@ -715,11 +715,10 @@
     display: flex;
     flex-direction: column;
   }
-  /* Same size/weight as Current Parlay's own title, left-aligned the same
-     way -- the two cards sit side by side, so their headers should read as
-     a matched pair. Still gold, same as every other card title on this
-     page that doubles as the thing the card is naming. */
-  .stat-moment-eyebrow{ color: var(--gold); font-weight: 700; font-size: 0.92rem; margin-bottom: 12px; }
+  /* Same size/weight/color as Current Parlay's own title (.ph-title),
+     left-aligned the same way -- the two cards sit side by side, so their
+     headers should read as a matched pair, not one gold and one white. */
+  .stat-moment-eyebrow{ color: var(--text); font-weight: 700; font-size: 0.92rem; margin-bottom: 12px; }
   /* The fact itself lives in a bordered item box, same treatment -- and
      same content-hugging height -- as the featured leg in the Current
      Parlay card beside it. It does NOT grow to fill the card: any extra
