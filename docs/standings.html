@@ -26,13 +26,21 @@
 
   .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; min-width:0; }
   .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
-  /* On a narrow row, .nm (the only flexible item) gets squeezed toward
-     zero width by the badges next to it (flex:none, never shrink) --
-     worst with two badges at once (e.g. "3x Title" + "2x Sacko" in the
-     All-Time view), where the name could disappear entirely behind them.
-     Stacking the badges under the name instead of beside it gives the
-     name its full line, same fix either way regardless of badge count. */
-  @media (max-width:640px){ .qrow .tm{ flex-direction:column; align-items:flex-start; gap:4px; } }
+  /* Two badges together (All-Time view, a manager with both titles and
+     sackos) are wide enough to squeeze the name out of .tm on a narrow
+     row -- row() only puts a single badge there; two or more go here
+     instead, stacked above the W/L/Win% stats on the row's own right side. */
+  .qrow .stats-col{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .qrow .badge-stack{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  /* .meta's "N seasons · PF x · PA y" otherwise wraps wherever the text
+     happens to run out of room -- usually splitting right before "PA",
+     leaving it stranded alone while "seasons"/"PF" share a line. Forcing
+     every segment onto its own line on mobile reads better than relying
+     on wherever the browser happens to break it. */
+  @media (max-width:640px){
+    .qrow .meta-seg{ display:block; }
+    .qrow .meta-sep{ display:none; }
+  }
 
   #standings-container{ margin-top:14px; }
 </style>
@@ -171,19 +179,31 @@
     if (r.former) cls.push('former');
     else if (r.rank === 1) cls.push('top'); else if (r.rank === n - (year === 'all' ? formerCount : 0)) cls.push('last');
     else if (type === 'reg' && complete && r.s.playoff > 0) cls.push('po');
-    let badge = '';
+    const badges = [];
     if (year === 'all') {
       if (type === 'final') {
-        if (r.s.champ) badge += `<span class="badge gold">${r.s.champ}× Title</span>`;
-        if (r.s.sacko) badge += `<span class="badge loss">${r.s.sacko}× Sacko</span>`;
+        if (r.s.champ) badges.push(`<span class="badge gold">${r.s.champ}× Title</span>`);
+        if (r.s.sacko) badges.push(`<span class="badge loss">${r.s.sacko}× Sacko</span>`);
       }
     } else if (complete && type === 'final') {
-      if (r.s.champ) badge = '<span class="badge gold">Champion</span>';
-      else if (r.s.sacko) badge = '<span class="badge loss">Sacko</span>';
+      if (r.s.champ) badges.push('<span class="badge gold">Champion</span>');
+      else if (r.s.sacko) badges.push('<span class="badge loss">Sacko</span>');
     }
-    return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div style="min-width:0"><div class="tm"><span class="nm">${esc(r.player)}</span>${badge}</div>` +
-      `<div class="meta">${year === 'all' ? r.seasons + ' seasons · ' : ''}PF ${f1(r.pf)} · PA ${f1(r.pa)}</div></div>` +
-      `<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div>`;
+    // One badge reads fine right next to the name at any width (confirmed
+    // directly). Two at once (only possible in the All-Time view, a
+    // manager with both titles and sackos) are wide enough together to
+    // squeeze the name out on a narrow row, so those go to the right,
+    // stacked above the W/L/Win% instead.
+    const inlineBadge = badges.length === 1 ? badges[0] : '';
+    const stackedBadges = badges.length >= 2 ? `<div class="badge-stack">${badges.join('')}</div>` : '';
+    const metaParts = [];
+    if (year === 'all') metaParts.push(`${r.seasons} seasons`);
+    metaParts.push(`PF ${f1(r.pf)}`);
+    metaParts.push(`PA ${f1(r.pa)}`);
+    const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
+    return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div style="min-width:0"><div class="tm"><span class="nm">${esc(r.player)}</span>${inlineBadge}</div>` +
+      `<div class="meta">${metaHtml}</div></div>` +
+      `<div class="stats-col">${stackedBadges}<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div></div>`;
   }
 
   function render() {
