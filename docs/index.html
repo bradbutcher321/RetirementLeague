@@ -711,20 +711,25 @@
     border: 1px solid var(--line);
     border-radius: 14px;
     box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
-    padding: 18px 20px;
-    text-align: center;
+    padding: 16px 18px 18px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
   }
-  .stat-moment-eyebrow{ color: var(--gold); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-  .stat-moment-text{ font-size: 1.15rem; font-weight: 600; line-height: 1.4; margin-top: 8px; }
+  /* Same size/weight as Current Parlay's own title, left-aligned the same
+     way -- the two cards sit side by side, so their headers should read as
+     a matched pair. Still gold, same as every other card title on this
+     page that doubles as the thing the card is naming. */
+  .stat-moment-eyebrow{ color: var(--gold); font-weight: 700; font-size: 0.92rem; margin-bottom: 12px; }
+  /* The fact itself lives in a bordered item box, same treatment as the
+     featured leg in the Current Parlay card beside it -- so growing to fill
+     whatever extra height that card's stats row adds no longer leaves this
+     card's text awkwardly floating with dead space below it; the box grows
+     instead and keeps the text vertically centered inside itself. */
+  .stat-moment-box{ flex: 1; display: flex; align-items: center; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 14px; }
+  .stat-moment-text{ font-size: 1rem; font-weight: 600; line-height: 1.4; text-align: left; }
   .stat-moment-text b{ font-family: var(--scoreboard); color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
   .stat-moment-fine{ display: block; font-size: 0.62rem; font-weight: 400; color: var(--text-dim); margin-top: 4px; }
-  /* Attribution under a quoted line. Centered like everything else in this
-     card, and quieter than the quote so the words stay the thing you read. */
   .stat-moment-attrib{ display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-dim); margin-top: 10px; }
-  @media (max-width: 480px){ .stat-moment-text{ font-size: 1rem; } }
 
   /* ---------- Current Parlay highlight ----------
      Sits left of League Lore, in the row this shares with it. Reuses the
@@ -780,7 +785,7 @@
      edge -- once .parlay-highlight is stretched to match League Lore's
      height, the gap opens up above the stats instead of leaving them
      stranded mid-card with dead space underneath. */
-  .ph-stats{ display: flex; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .ph-stats{ display: flex; justify-content: space-between; gap: 10px; margin: auto 54px 0; padding-top: 12px; border-top: 1px solid var(--line); flex-wrap: wrap; }
   .ph-stat{ text-align: center; }
   .ph-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--gold); }
   .ph-stat b.loss{ color: var(--loss); }
@@ -2130,7 +2135,7 @@
     add(topEarnings, `${topEarnings && topEarnings.name} has won more money than anyone in league history, ${hi('$' + fmtScore(topEarnings && topEarnings.money.total_earnings))}, before dues.`);
     const withParlays = players.filter(p => has(p, p => p.money && p.money.parlays_purchased));
     const topParlays = maxBy(withParlays, p => p.money.parlays_purchased);
-    add(topParlays && topParlays.money.parlays_purchased > 0, `${topParlays && topParlays.name} has purchased more parlays than anyone in league history, ${hi(topParlays && topParlays.money.parlays_purchased)}.`);
+    add(topParlays && topParlays.money.parlays_purchased > 0, `${topParlays && topParlays.name} has spent more on parlays than anyone in league history, ${hi('$' + fmtScore(topParlays && topParlays.money.parlays_purchased))}.`);
 
     return facts;
   }
@@ -2191,7 +2196,7 @@
     container.innerHTML = `
       <div class="stat-moment">
         <div class="stat-moment-eyebrow">${heading}</div>
-        <div class="stat-moment-text">${text}</div>
+        <div class="stat-moment-box"><div class="stat-moment-text">${text}</div></div>
       </div>`;
   }
 
