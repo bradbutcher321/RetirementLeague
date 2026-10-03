@@ -1779,11 +1779,6 @@
     add(neverWonFounders.length > 0,
       `Look at all these founding members that have never won a ship: ${hi(neverWonFounders.map(p => p.name).join(', '))}.`);
 
-    // ----- Per-manager: never won a championship. -----
-    players.filter(p => champsOf(p) === 0).forEach(p => {
-      add(true, `Will ${p.name} ever win a ship? Find out next time on Dragon Ball Z.`);
-    });
-
     const withBestFinish = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.best_regular_finish));
     const topBestFinish = minBy(withBestFinish, p => p.career.standings.best_regular_finish);
     add(topBestFinish, `${topBestFinish && topBestFinish.name}'s best-ever regular season finish is ${hi('#' + topBestFinish.career.standings.best_regular_finish)}.`);
@@ -1904,14 +1899,31 @@
     'Every member without a J in their name has managed to win a championship except Kris...',
   ];
   const EASTER_EGG_CHANCE = 0.05;
+  // Rolled separately from EASTER_EGG_FACTS, at its own flat 5%, same
+  // reasoning -- this fills in a random manager dynamically (any current
+  // manager with zero championships), so it can't live as a static string
+  // in that array, but mixing its ~6 generated instances into the ~75-ish
+  // main stat pool made it show up closer to 8% than the intended 5%.
+  const DBZ_CHANCE = 0.05;
+  function dbzFact(franchise) {
+    const players = ((franchise && franchise.players) || []).filter(p => !PAST_MEMBERS.has(p.name));
+    const neverWon = players.filter(p => !(p.career && p.career.standings && p.career.standings.championships > 0));
+    if (!neverWon.length) return null;
+    const p = neverWon[Math.floor(Math.random() * neverWon.length)];
+    return `Will ${p.name} ever win a ship? Find out next time on Dragon Ball Z.`;
+  }
 
   function renderStatOfMoment() {
     const container = document.getElementById('stat-of-moment-container');
     if (!container) return;
     const data = standingsData;
     let text;
-    if (Math.random() < EASTER_EGG_CHANCE) {
+    const roll = Math.random();
+    const dbz = roll >= EASTER_EGG_CHANCE && roll < EASTER_EGG_CHANCE + DBZ_CHANCE ? dbzFact(franchiseData) : null;
+    if (roll < EASTER_EGG_CHANCE) {
       text = EASTER_EGG_FACTS[Math.floor(Math.random() * EASTER_EGG_FACTS.length)];
+    } else if (dbz) {
+      text = dbz;
     } else {
       const facts = [
         ...(data ? currentYearFacts(data) : []),
