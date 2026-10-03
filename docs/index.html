@@ -973,6 +973,11 @@
     if (n === null || n === undefined) return '—';
     return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
   }
+  function fmtOdds(o) {
+    if (o === null || o === undefined) return '—';
+    const n = Math.round(o);
+    return (n > 0 ? '+' : '') + n.toLocaleString();
+  }
   const PARLAY_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   function fmtKickoff(iso) {
     if (!iso) return 'TBD';
@@ -1761,7 +1766,7 @@
         <div class="ph-stats">
           <div class="ph-stat"><b>${wins}</b><span>Hit</span></div>
           <div class="ph-stat"><b class="loss">${losses}</b><span>Lost</span></div>
-          <div class="ph-stat"><b>${pending.length}</b><span>Remaining</span></div>
+          <div class="ph-stat"><b>${fmtOdds(week.final && week.final.odds)}</b><span>Combined Odds</span></div>
           <div class="ph-stat"><b>${fmtMoney(week.final && week.final.payout)}</b><span>Payout</span></div>
         </div>
       </div>`;

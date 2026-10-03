@@ -203,7 +203,11 @@ body{
    as wide as the widest label+value pair needs, and the headline takes
    everything else. .hs's gap below is what "a little wider than needed"
    actually means -- it sets the breathing room between the two halves. */
-.hero2{ display:grid; grid-template-columns:minmax(0,1fr) auto; overflow:hidden; position:relative; }
+/* The mask is for iOS Safari: the glow below is blurred, which promotes it
+   to its own layer, and Safari doesn't clip a layered child to its parent's
+   rounded overflow -- the glow squared off the card's top-left corner. A
+   mask forces the clip to follow the radius. */
+.hero2{ display:grid; grid-template-columns:minmax(0,1fr) auto; overflow:hidden; position:relative; -webkit-mask-image:-webkit-radial-gradient(white, black); }
 @media (max-width:700px){ .hero2{ grid-template-columns:1fr; } }
 .hero2-main{ position:relative; padding:36px 34px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
 .hero2-main::before{ content:''; position:absolute; inset:-40%; filter:blur(10px); pointer-events:none; }
