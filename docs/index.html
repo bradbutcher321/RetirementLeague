@@ -1733,9 +1733,13 @@
   // raw score; a prop shows its tracked stat instead.
   function parlayLiveText(entry, isTotal) {
     if (entry.kind !== 'team') return `${entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1)} so far`;
-    const clock = entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '';
+    // entry.detail is ESPN's own phrase for where the game stands right now
+    // ("Top 1st" for baseball, "4:32 - 2nd Quarter" for football), already
+    // correct per sport -- falls back to the old quarter/clock guess only
+    // if ESPN didn't supply one.
+    const state = entry.detail ? ` · ${entry.detail}` : (entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '');
     const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
-    return `${isTotal ? a + b : `${a}-${b}`}${clock}`;
+    return `${isTotal ? a + b : `${a}-${b}`}${state}`;
   }
 
   function renderParlayHighlight() {

@@ -386,16 +386,21 @@
     'Interceptions', 'Total Yards', 'Receptions', 'Passing Yards', 'Anytime TD', 'Coin Toss']);
   const isTotalBet = p => TOTAL_BET_TYPES.has(betTypeOf(p));
 
-  // entry: {kind: 'team', team_score, opponent_score, period, clock, tone} or
-  // {kind: 'prop', stat, tone} -- see publish_parlay_stats.py's build_live_scores.
-  // A totals bet shows the two scores added up, since the combined number IS
-  // the thing being bet on -- "17-27" makes you do the arithmetic yourself to
-  // see where it stands against the line.
+  // entry: {kind: 'team', team_score, opponent_score, period, clock, detail,
+  // tone} or {kind: 'prop', stat, tone} -- see publish_parlay_stats.py's
+  // build_live_scores. A totals bet shows the two scores added up, since
+  // the combined number IS the thing being bet on -- "17-27" makes you do
+  // the arithmetic yourself to see where it stands against the line.
   function liveText(entry, isTotal) {
     if (entry.kind !== 'team') return `${entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1)} so far`;
-    const clock = entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '';
+    // entry.detail is ESPN's own phrase for where the game stands --
+    // "Top 1st" for baseball, "4:32 - 2nd Quarter" for football -- which is
+    // already correct per sport. Falls back to the old quarter/clock guess
+    // only if ESPN didn't supply one (or for data cached before this field
+    // existed), which was never right for a sport without quarters anyway.
+    const state = entry.detail ? ` · ${entry.detail}` : (entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '');
     const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
-    return `${isTotal ? a + b : `${a}-${b}`}${clock}`;
+    return `${isTotal ? a + b : `${a}-${b}`}${state}`;
   }
 
   // Rewrites the graded detail -- free text out of the sheet's Grade Detail

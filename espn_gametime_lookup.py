@@ -885,6 +885,14 @@ def find_live_score(team, opponent, sport, gametime_iso):
         "completed": bool(type_.get("completed")),
         "period": status.get("period"),
         "clock": status.get("displayClock"),
+        # ESPN's own ready-made "where things stand" phrase -- "Top 1st" for
+        # baseball, "4:32 - 2nd Quarter" for football, "12:34 - 1st Period"
+        # for hockey, etc. Sport-specific formatting (innings have no clock
+        # and a top/bottom half; quarters do have a clock) already lives in
+        # this string on ESPN's side, which beats reconstructing it from
+        # period/clock and getting it wrong for every sport that isn't
+        # quarters-and-a-clock.
+        "detail": type_.get("shortDetail") or type_.get("detail"),
         "team_score": to_num(team_c.get("score")),
         "opponent_score": to_num(opp_c.get("score")),
     }

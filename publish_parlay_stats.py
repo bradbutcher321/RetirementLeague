@@ -121,7 +121,7 @@ def build_live_scores(spreadsheet):
             tone = "up" if outcome == "Win" else "down" if outcome == "Loss" else None
         live[key] = {
             "kind": "team", "team_score": state["team_score"], "opponent_score": state["opponent_score"],
-            "period": state["period"], "clock": state["clock"], "tone": tone,
+            "period": state["period"], "clock": state["clock"], "detail": state["detail"], "tone": tone,
         }
 
     return live
