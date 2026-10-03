@@ -17,9 +17,94 @@
   --loss: #D6624F;
   --scoreboard: 'Big Shoulders Display', sans-serif;
   --body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* ---------- Items inside a panel ----------
+     Translucent, never a flat color. A flat --surface-raised (#161616) fill
+     sits on .glass's #161616 -> #111111 gradient, so the same row reads as
+     "blended" near the panel's top and "a lighter grey box" near its bottom
+     -- which is exactly why Head to Head's Postseason pods and its Every
+     Game rows looked like two different surfaces. A translucent fill keeps
+     the same relationship to whatever is behind it at any height. */
+  --item: rgba(255,255,255,0.025);
+  --item-hover: rgba(255,255,255,0.05);
+  --item-line: var(--line);
+
+  /* ---------- State accents ----------
+     A card that is merely a card gets no accent at all. These apply only
+     where something actually won, lost or leads -- see .is-win/.is-loss/
+     .is-lead below. Tints stay low so a column of them doesn't glow. */
+  --win-line: rgba(79,174,122,0.45);
+  --win-tint: rgba(79,174,122,0.08);
+  --loss-line: rgba(214,98,79,0.45);
+  --loss-tint: rgba(214,98,79,0.08);
+  --lead-line: rgba(212,180,106,0.45);
+  --lead-tint: rgba(212,180,106,0.08);
+
+  /* ---------- Control geometry ----------
+     The track's radius is DERIVED, never typed. Nested radii only look
+     right when the outer curve equals the inner curve plus the gap between
+     them; a literal 999px on the track clamps to half its *height*, so the
+     moment a row of tabs wraps the track's corner grows past the pills and
+     they sit proud of it. Keep --track-r as a calc of the other two. */
+  --ctl-h: 32px;
+  --ctl-r: 16px;
+  --track-pad: 4px;
+  --track-r: calc(var(--ctl-r) + var(--track-pad));
+  /* A track's full outer height: its pill, its padding both sides, its
+     border both sides. A lone control (a dropdown) has to match this to sit
+     level with a track on the same row -- otherwise it's 8px short. */
+  --track-h: calc(var(--ctl-h) + 2 * var(--track-pad) + 2px);
+  /* 10%, not the 5% the mockup used. The mockup's tracks sat inside a card
+     (a #161616 -> #111111 gradient), where 5% white resolves to ~#1F1F1F.
+     On the real site most tracks sit straight on the #050505 page, where
+     the same 5% resolves to ~#121212 -- same CSS, much darker ground. This
+     is the alpha that lands on the mockup's apparent grey out here. */
+  --track-bg: rgba(255,255,255,0.10);
+  --track-line: rgba(255,255,255,0.13);
+  --ctl-bg: rgba(255,255,255,0.10);
+  /* Opaque twin of --ctl-bg, for controls that can't take a translucent
+     fill. rgba(255,255,255,0.10) over the #050505 page resolves to this. */
+  --ctl-bg-solid: #1F1F1F;
+  --ctl-line: rgba(255,255,255,0.13);
+  --ctl-on-ink: #0A0A08;
 }
 
 * { box-sizing: border-box; }
+
+/* ---------- Text selection ----------
+   Off site-wide, tried first on the dashboard's Median Watch section and
+   confirmed before rolling out further. This is a stats site with no
+   editable fields and nothing meant to be read start-to-finish, so the
+   browser's click-and-drag text highlight (and the I-beam cursor that
+   comes with it -- see the standings row where it showed up mid-number)
+   was never signaling anything useful. user-select has no effect on click
+   handlers, hover states or <select>'s own dropdown, so every
+   button/tab/toggle/select on the site keeps working exactly as before --
+   this only turns off drag-selecting the text itself. */
+html{ user-select: none; }
+
+/* ---------- Scrollbars ----------
+   The OS default is a light, arrow-buttoned bar that reads as a Windows
+   widget parked on a black page -- most obvious on Draft Board's horizontal
+   board scroller. Chrome and Safari take the ::-webkit- rules below; Firefox
+   understands only the standard properties, which go in a @supports
+   fallback, because setting scrollbar-color in Chrome switches it to the
+   standard rendering path and throws away the rounding. */
+::-webkit-scrollbar{ width: 11px; height: 11px; }
+::-webkit-scrollbar-track{ background: transparent; }
+::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.18);
+  border-radius: 999px;
+  /* Transparent border + content-box clip insets the thumb inside the
+     gutter, so it reads as a floating pill rather than a filled channel. */
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,0.3); background-clip: content-box; }
+::-webkit-scrollbar-corner{ background: transparent; }
+@supports not selector(::-webkit-scrollbar){
+  *{ scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.22) transparent; }
+}
 
 body{
   margin:0;
@@ -32,7 +117,11 @@ body{
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- Glass surface (the base card every page builds on) ---------- */
+/* ---------- Glass surface (the base card every page builds on) ----------
+   This is the ONLY thing that gets the gradient + shadow. Everything inside
+   a panel is flat (see .item). Panels never carry a colored top bar: a
+   container isn't a state, and spending the brand color on the edge of a box
+   is what made the pages read as different sites. */
 .glass{
   background: linear-gradient(165deg, var(--surface-2), var(--surface));
   border: 1px solid var(--line);
@@ -41,11 +130,46 @@ body{
   box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
 }
 
+/* Panel title/body, so every page labels a panel the same way. Flex row
+   (rather than a plain block) so a panel can put a right-aligned action
+   next to its own title -- with a single text child, space-between leaves
+   it flush left exactly as before, so this doesn't change any existing
+   panel that hasn't opted in. */
+.panel-title{ padding: 18px 22px 0; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.panel-note{ color: var(--text-dim); font-size: 0.78rem; padding: 4px 22px 0; }
+.panel-body{ padding: 14px 18px 18px; }
+
+/* ---------- The one item surface ----------
+   Every row, pod and tile that lives inside a panel uses this. */
+.item{
+  background: var(--item);
+  border: 1px solid var(--item-line);
+  border-radius: 10px;
+}
+
+/* ---------- State accents ----------
+   Outline + tint by default. data-accent="outline" on <html> drops the tint
+   and keeps only the colored outline, so the two readings can be compared on
+   the real pages -- append ?accent=outline to any URL (see nav.js). Written
+   so the default needs no attribute and therefore never flashes. */
+.is-win{ border-color: var(--win-line); background: var(--win-tint); }
+.is-loss{ border-color: var(--loss-line); background: var(--loss-tint); }
+.is-lead{ border-color: var(--lead-line); background: var(--lead-tint); }
+:root[data-accent="outline"] .is-win,
+:root[data-accent="outline"] .is-loss,
+:root[data-accent="outline"] .is-lead{ background: var(--item); }
+
 /* ---------- Hero: one glowing headline number/name + quiet supporting stats ----------
    The one-hero-per-section rule is deliberate -- previous full-site passes gave every
    tile identical weight, which read as flat. Exactly one number per page section gets
    this treatment; everything else uses .qrow/.qtiles below. */
-.hero2{ display:grid; grid-template-columns:1.3fr 1fr; overflow:hidden; position:relative; }
+/* The side column is sized by its own content (auto), not by a fixed share
+   of the card. A ratio gave it whatever was left over, so its labels sat
+   marooned from their values on a wide screen; auto makes the column only
+   as wide as the widest label+value pair needs, and the headline takes
+   everything else. .hs's gap below is what "a little wider than needed"
+   actually means -- it sets the breathing room between the two halves. */
+.hero2{ display:grid; grid-template-columns:minmax(0,1fr) auto; overflow:hidden; position:relative; }
 @media (max-width:700px){ .hero2{ grid-template-columns:1fr; } }
 .hero2-main{ position:relative; padding:36px 34px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
 .hero2-main::before{ content:''; position:absolute; inset:-40%; filter:blur(10px); pointer-events:none; }
@@ -58,26 +182,325 @@ body{
 .hero2-v.loss{ color:var(--loss); text-shadow:0 0 36px rgba(214,98,79,0.3); }
 .hero2-sub{ position:relative; color:var(--text-dim); font-size:0.88rem; }
 .hero2-side{ background:rgba(0,0,0,0.22); border-left:1px solid var(--line); padding:24px 28px; display:flex; flex-direction:column; gap:18px; justify-content:center; }
-@media (max-width:700px){ .hero2-side{ border-left:none; border-top:1px solid var(--line); } }
-.hs{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+/* center, not baseline: the label is 0.76rem body text and the value is a
+   1.2rem scoreboard numeral, so sitting them on a shared baseline left the
+   small label looking dropped against the big one. Centering the two halves
+   against each other is what reads as level. */
+.hs{ display:flex; justify-content:space-between; align-items:center; gap:26px; }
 .hs-l{ color:var(--text-dim); font-size:0.76rem; }
 .hs-r{ text-align:right; }
-.hs-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; color:var(--text); }
+/* Gold is the default for a hero's side values -- these are the figures the
+   card exists to show. A tone class is the exception, for a value whose
+   meaning is bad (a lost leg), not the rule. */
+/* nowrap so a value never breaks across lines -- a shrinking tile split
+   "106-87" into "106-" / "87". The label is what gives when space is tight;
+   the number isn't. It also sets each tile's floor width, which keeps the
+   strip from collapsing unevenly. */
+.hs-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; color:var(--gold); white-space:nowrap; }
 .hs-v.turf{ color:var(--turf); } .hs-v.loss{ color:var(--loss); } .hs-v.gold{ color:var(--gold); }
-.hs-n{ color:var(--gold); font-size:0.76rem; font-weight:600; }
+.hs-n{ color:var(--text); font-size:0.76rem; font-weight:600; }
+
+/* Once the hero stacks, the side column stops being a column. A row of
+   label-left/value-right lines reads fine beside the headline, but under it
+   the full-width rows leave a gulf between each label and its number. So at
+   this width the rows turn into a horizontal strip of value-over-label
+   tiles -- the shape the old .qtiles strip had, which is what this layout
+   should have become all along. */
+@media (max-width:700px){
+  .hero2-side{
+    border-left:none;
+    border-top:1px solid var(--line);
+    flex-direction:row;
+    /* Never wrap. A strip that breaks leaves one orphan tile on a second
+       row, which reads as a mistake rather than a layout. Each tile takes
+       an equal share of the width instead (flex:1 1 0) and the type scales
+       down with the viewport, so five tiles stay on one line. */
+    flex-wrap:nowrap;
+    align-items:flex-start;
+    /* Spread across the full width rather than packed left. Because every
+       tile hugs its own content (no slack), the leftover is split evenly
+       between them, so the space you see between one stat and the next is
+       the same everywhere. The gap is the floor for when the row is tight
+       and there is no leftover to share. */
+    justify-content:space-between;
+    gap:clamp(12px, 3vw, 24px);
+    padding:20px 22px;
+  }
+  /* Content-sized and packed from the left, NOT an equal share each
+     (flex:1 1 0). Equal shares centre a one-character value like "3" in a
+     cell as wide as "106-81"'s, so the gaps between the numbers you
+     actually see come out uneven even though the cells are identical.
+
+     width:min-content makes a tile hug its longest word for the whole
+     stacked range, so a multi-word label always wraps and the tile is never
+     wider than the text inside it. Doing this only below some pixel width
+     was the wrong shape of fix: flexbox stops shrinking a tile as soon as
+     the row fits, so between the point where labels start wrapping and the
+     point where the rule kicked in there was a band with visible slack.
+     No threshold, no band. min-width stays at its auto default so a tile
+     can't be squeezed below this.
+
+     It is scoped away from tiles carrying a .hs-n name line (Overview's
+     "Jared · Jeff · Flanders"), because min-content applies to EVERY child:
+     on those it forced the names onto one word per line while half the row
+     sat empty. Those tiles size to their names, which is real content
+     rather than slack, so they need no hugging. */
+  .hs{ flex:0 1 auto; }
+  .hs:not(:has(.hs-n)){ width:min-content; }
+  /* display:contents on .hs-r dissolves it so the value and its sub-line
+     become siblings of the label, which is the only way to get all three
+     into one order: value, then label, then sub. Reordering .hs-r as a unit
+     would strand the sub between the value and the label. */
+  .hs{ display:grid; justify-items:center; gap:2px; text-align:center; }
+  .hs-r{ display:contents; }
+  /* Scale with the viewport between a floor and the sizes used beside the
+     headline, so the row holds its shape instead of breaking. A label too
+     long for its share wraps inside its own tile, which keeps the strip
+     intact. */
+  .hs-v{ order:1; font-size:clamp(1rem, 5vw, 1.5rem); }
+  .hs-l{ order:2; font-size:clamp(0.5rem, 2.4vw, 0.66rem); text-transform:uppercase; letter-spacing:0.04em; line-height:1.25; }
+  .hs-n{ order:3; font-size:clamp(0.58rem, 2.4vw, 0.74rem); line-height:1.3; }
+}
+
+/* ---------- Selectors: tab rows, segmented controls, dropdowns ----------
+   One definition for every selector on the site. These used to be
+   copy-pasted per page -- the pill tab existed in six files (two of them
+   still on the retired #BA9B37 gold), the segmented control in four (one
+   with no corner radius at all), and the season dropdown in four with the
+   radius drifting between 4px and 8px. The group names below are the ones
+   already in the markup, so no page's JS had to change.
+
+   The group is a grey track; the selected item is solid gold. Pages keep
+   only their own margins. */
+.tabs, .tab-row, .seg, .sup-seg, .scope-row, .board-toggle{
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--track-pad);
+  padding: var(--track-pad);
+  background: var(--track-bg);
+  border: 1px solid var(--track-line);
+  border-radius: var(--track-r);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.tabs .tab,
+.tab-row .year-tab,
+.seg button,
+.sup-seg button,
+.scope-row .scope-btn,
+.board-toggle button{
+  display: inline-flex;
+  align-items: center;
+  height: var(--ctl-h);
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--ctl-r);
+  background: none;
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+@media (prefers-reduced-motion: reduce){
+  .tabs .tab, .tab-row .year-tab, .seg button, .sup-seg button, .scope-row .scope-btn, .board-toggle button{ transition: none; }
+}
+
+.tabs .tab:hover:not(.on),
+.tab-row .year-tab:hover:not(.active),
+.seg button:hover:not(.on),
+.sup-seg button:hover:not(.on),
+.scope-row .scope-btn:hover:not(.on),
+.board-toggle button:hover:not(.on){
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+}
+
+.tabs .tab.on,
+.tab-row .year-tab.active,
+.seg button.on,
+.sup-seg button.on,
+.scope-row .scope-btn.on,
+.board-toggle button.on{
+  background: var(--gold);
+  color: var(--ctl-on-ink);
+  font-weight: 700;
+}
+/* Overview's and Game Records' segments carry a tone with the selection
+   (best vs worst), so those go solid in that tone instead of gold. */
+.seg button.on.good{ background: var(--turf); color: #04120A; }
+.seg button.on.bad,
+.seg button.on.dn{ background: var(--loss); color: #1C0703; }
+
+.tabs .tab:focus-visible,
+.tab-row .year-tab:focus-visible,
+.seg button:focus-visible,
+.sup-seg button:focus-visible,
+.scope-row .scope-btn:focus-visible,
+.board-toggle button:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* The caption beside a dropdown. Deliberately NOT gold: it's static UI
+   furniture, and the page already spends gold on the eyebrow, the hero
+   figure, the rank badges and the selected tab. A fifth claim on it would
+   leave none of them meaning anything. Small uppercase and dim is the
+   site's existing caption voice (.qtile-t, .past-logos-label, .act-label). */
+.selector-label{
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* A dropdown is a lone control rather than one of a set, so it wears the
+   pill body itself instead of sitting in a track.
+
+   Two things here are load-bearing and must not be "simplified" back:
+   1. The fill is OPAQUE. A native <select> hands its background-color to
+      the popup list, and a translucent one composites over the browser's
+      own white popup surface -- which turns the open list white while the
+      option text stays near-white, i.e. unreadable.
+   2. color-scheme: dark tells the browser to render the parts it owns --
+      the popup list and the dropdown arrow -- in dark chrome rather than
+      its default light. The explicit option colors below back that up for
+      engines that don't take the hint. */
+.lg-select, .parlay-select, .franchise-select, .board-select{
+  color-scheme: dark;
+  /* Matches a track's outer height, not a pill's, so a dropdown and a
+     segmented control on the same row line up top and bottom. */
+  height: var(--track-h);
+  padding: 0 14px;
+  border-radius: calc(var(--track-h) / 2);
+  border: 1px solid var(--ctl-line);
+  background: var(--ctl-bg-solid);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  max-width: 100%;
+  cursor: pointer;
+  /* A classic <select> sizes itself to its WIDEST option, so the control
+     keeps one footprint whatever is chosen. base-select sizes to the
+     SELECTED option instead, so without a floor the box visibly resized
+     every time you picked a different name. This holds every current
+     option list (names, years, weeks -- all well under it) at one width. */
+  min-width: 140px;
+}
+.lg-select option, .parlay-select option, .franchise-select option, .board-select option{
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ---------- The open dropdown ----------
+   Everything above only reaches the closed control. The popup itself is
+   drawn by the OS, which is why it comes out square-cornered with the
+   system-accent blue on the highlighted row -- neither is reachable from
+   CSS on a classic <select>.
+
+   appearance: base-select moves the popup out of the OS and into the page
+   (it renders in the top layer), which makes the radius, the padding and
+   the highlight ours. Chrome and Edge support it; Safari and Firefox
+   ignore the whole block and keep the native popup, which is the right
+   fallback -- on iOS especially, the system wheel beats anything we'd
+   build. Guarded by @supports so no engine sees a half-applied version. */
+@supports (appearance: base-select){
+  .lg-select, .parlay-select, .franchise-select, .board-select{
+    appearance: base-select;
+    /* base-select hands back layout of the control's own contents, and its
+       default does not vertically centre them -- the label sat high in the
+       pill with the slack below it. Centre them explicitly, and push the
+       chevron to the far edge so it doesn't crowd a short label. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    line-height: 1;
+  }
+  .lg-select::picker(select),
+  .parlay-select::picker(select),
+  .franchise-select::picker(select),
+  .board-select::picker(select){
+    appearance: base-select;
+    background: var(--surface-2);
+    border: 1px solid var(--track-line);
+    border-radius: 12px;
+    padding: 5px;
+    margin-top: 5px;
+    box-shadow: 0 24px 60px -16px rgba(0,0,0,0.85);
+  }
+  .lg-select option, .parlay-select option, .franchise-select option, .board-select option{
+    background: none;
+    border-radius: 8px;
+    padding: 7px 11px;
+    min-height: 0;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+  /* Deliberately NOT the track's solid gold. A tab track is a persistent
+     state that has to read from across the page; this popup is open for a
+     second while you choose, and in it the strongest mark belongs on the
+     row the pointer is over -- what you are about to pick -- not on the row
+     you already have. So the chosen row is gold TEXT only (quiet "you are
+     here", still obvious against the dim rows), and the fill is reserved
+     for the pointer, which always wins. */
+  .lg-select option:checked, .parlay-select option:checked,
+  .franchise-select option:checked, .board-select option:checked{
+    background: none;
+    color: var(--gold);
+  }
+  .lg-select option:hover, .parlay-select option:hover,
+  .franchise-select option:hover, .board-select option:hover{
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+  }
+  .lg-select option:checked:hover, .parlay-select option:checked:hover,
+  .franchise-select option:checked:hover, .board-select option:checked:hover{
+    background: rgba(255,255,255,0.08);
+    color: var(--gold);
+  }
+  /* The UA's tick in the selected row -- the gold text already says it. */
+  .lg-select option::checkmark, .parlay-select option::checkmark,
+  .franchise-select option::checkmark, .board-select option::checkmark{ display: none; }
+  .lg-select::picker-icon, .parlay-select::picker-icon,
+  .franchise-select::picker-icon, .board-select::picker-icon{
+    color: var(--text-dim);
+    transition: transform 0.15s;
+  }
+  .lg-select:open::picker-icon, .parlay-select:open::picker-icon,
+  .franchise-select:open::picker-icon, .board-select:open::picker-icon{ transform: rotate(180deg); }
+  @media (prefers-reduced-motion: reduce){
+    .lg-select::picker-icon, .parlay-select::picker-icon,
+    .franchise-select::picker-icon, .board-select::picker-icon{ transition: none; }
+  }
+}
+.lg-select:focus, .parlay-select:focus, .franchise-select:focus, .board-select:focus{
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 
 /* ---------- Quiet row list (everything that isn't this section's hero) ---------- */
-.qrow{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:14px; padding:12px 18px; margin-top:6px; border-radius:10px; background:rgba(255,255,255,0.025); border:1px solid var(--line); }
-.qrow:hover{ background:rgba(255,255,255,0.045); }
+.qrow{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:14px; padding:12px 18px; margin-top:6px; border-radius:10px; background:var(--item); border:1px solid var(--item-line); }
+.qrow:hover{ background:var(--item-hover); }
 .qrow .rk{ color:var(--text-dim); font-family:var(--scoreboard); font-size:0.95rem; text-align:center; }
 .qrow .nm{ font-weight:600; font-size:0.9rem; }
-.qrow .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:1px; }
+/* 1px was measured against plain text only -- a champ/sacko badge pill is
+   taller than the name's own line box (padding + border push past it), so
+   at 1px the badge's bottom edge actually overlapped this line by a
+   fraction of a pixel instead of clearing it. */
+.qrow .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:5px; }
 .qrow .rec{ font-family:var(--scoreboard); font-weight:700; font-size:1.05rem; color:var(--text); }
 .qrow .rec.turf{ color:var(--turf); } .qrow .rec.loss{ color:var(--loss); }
-.qrow.top{ background:rgba(79,174,122,0.07); border-color:rgba(79,174,122,0.35); }
+.qrow.top{ border-color:var(--win-line); background:var(--win-tint); }
 .qrow.top .rk{ color:var(--turf); }
-.qrow.last{ background:rgba(214,98,79,0.07); border-color:rgba(214,98,79,0.35); }
+.qrow.last{ border-color:var(--loss-line); background:var(--loss-tint); }
 .qrow.last .rk{ color:var(--loss); }
+:root[data-accent="outline"] .qrow.top,
+:root[data-accent="outline"] .qrow.last{ background:var(--item); }
 .qrow.po .rk{ color:var(--turf); }
 .qrow.former{ opacity:0.55; }
 
@@ -177,8 +600,9 @@ h2{
   border-bottom: 1px solid var(--line);
 }
 
-.qrow.lead{ background:rgba(212,180,106,0.07); border-color:rgba(212,180,106,0.35); }
+.qrow.lead{ border-color:var(--lead-line); background:var(--lead-tint); }
 .qrow.lead .rk, .qrow.lead .rec{ color:var(--gold); }
+:root[data-accent="outline"] .qrow.lead{ background:var(--item); }
 .gap{ height:14px; }
 
 .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }

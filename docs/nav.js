@@ -3,6 +3,19 @@
 // new page to the site means adding one entry to PAGES rather than editing
 // a nav block copy-pasted across every HTML file.
 (function () {
+  // Dev switch for comparing the two state-accent readings on the real
+  // pages: ?accent=outline keeps only the colored outline on a won/lost/
+  // leading item, anything else keeps the default outline + tint. The
+  // choice sticks across navigation so you can click through the whole
+  // site in one mode. Remove this block (and the [data-accent] rules in
+  // theme.css) once the call is made.
+  try {
+    const q = new URLSearchParams(window.location.search).get('accent');
+    if (q) sessionStorage.setItem('rl-accent', q);
+    const mode = q || sessionStorage.getItem('rl-accent');
+    if (mode === 'outline') document.documentElement.setAttribute('data-accent', 'outline');
+  } catch (e) { /* private mode / blocked storage -- fall through to the default */ }
+
   const PAGES = [
     { href: 'index.html', label: 'Live Dashboard' },
     { href: 'franchise.html', label: 'Franchise' },

@@ -323,23 +323,39 @@
   .player-cell.home .player-info{ order: 2; text-align: right; }
   .player-cell.home .player-score{ order: 1; text-align: left; }
 
-  /* Only the two states actually worth looking at right now get an
-     accent: in progress, and in progress with the ball (gold — the one
-     moment that should really pop). Not-started and final both stay
-     neutral, full-bleed to the card's own edge — left for away, right for
-     home — with no rounding and no surrounding gap, so consecutive rows
-     (and the row against the card above it) read as one continuous strip
-     rather than a series of separate floating boxes. */
+  /* Three readings, loudest to quietest: in progress with the ball (gold —
+     the one moment that should really pop, and now the only state that
+     still gets an edge bar), in progress (a pale wash), and finished (a
+     recessed dark wash — that player is settled and nothing about their
+     number will change again). Not-started stays plain. Cells are
+     full-bleed to the card's own edge — left for away, right for home —
+     with no rounding and no surrounding gap, so consecutive rows read as
+     one continuous strip rather than separate floating boxes. */
   .player-cell.away{ border-left: 4px solid var(--state-bar-color, transparent); padding-left: 10px; }
   .player-cell.home{ border-right: 4px solid var(--state-bar-color, transparent); padding-right: 10px; }
   .player-cell.state-live{
-    --state-bar-color: rgba(214, 214, 208, 0.5);
     background: rgba(214, 214, 208, 0.10);
   }
   .player-cell.state-possession{
     --state-bar-color: rgba(186,155,55, 0.6);
     background: rgba(186,155,55, 0.10);
   }
+  /* Previously 'final' and 'not started' rendered identically, so the only
+     clue a starter had already played was a number showing up in the score
+     column. Now the cell recedes and the projection line turns into how far
+     over or under that projection they actually landed. */
+  .player-cell.state-final{ background: rgba(0,0,0,0.32); }
+  .player-cell.state-final .player-game-line{ color: var(--text-dim); opacity: 0.8; }
+  .player-score .delta{
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+    white-space: nowrap;
+  }
+  .player-score .delta.up{ color: var(--turf); }
+  .player-score .delta.down{ color: var(--loss); }
+  .player-score .delta.even{ color: var(--text-dim); }
 
   /* Info (name/game-status/stats) top-aligns so the top two lines always
      land in the same place regardless of how many stat lines (0-2) either
@@ -424,9 +440,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: linear-gradient(165deg, var(--surface-2), var(--surface));
-    border: 1px solid var(--line);
-    border-left: 3px solid var(--line);
+    background: var(--item);
+    border: 1px solid var(--item-line);
     border-radius: 10px;
     padding: 10px 14px;
   }
@@ -466,6 +481,7 @@
   .lb-playoff-chip.high{ border-color: var(--turf-dim); color: var(--turf); }
   .lb-playoff-chip.low{ border-color: rgba(192,87,75,0.4); color: var(--loss); }
 
+
   /* ---------- Median Watch ---------- */
   .median-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 640px){ .median-grid{ grid-template-columns: 1fr; } }
@@ -473,7 +489,6 @@
   .median-card{
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
-    border-top: 3px solid var(--gold);
     border-radius: 14px;
     box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
     padding: 18px 20px;
@@ -511,16 +526,19 @@
   .mini-grid{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin-bottom: 14px; }
   .mini-grid:last-of-type{ margin-bottom: 0; }
   .mini-card{
-    background: var(--surface-raised);
-    border: 1px solid var(--line);
-    border-top: 2px solid transparent;
+    background: var(--item);
+    border: 1px solid var(--item-line);
     border-radius: 8px;
     padding: 7px 9px;
   }
-  .mini-card.above{ border-top-color: var(--turf); }
-  .mini-card.below{ border-top-color: var(--loss); }
-  .mini-card.locked.above{ background: rgba(76,154,107,0.14); border-color: var(--turf-dim); border-top-color: var(--turf); }
-  .mini-card.locked.below{ background: rgba(192,87,75,0.14); border-color: rgba(192,87,75,0.45); border-top-color: var(--loss); }
+  /* Above/below the median is a live projection; locked means the week's
+     games are done and that side is settled, so it reads stronger. */
+  .mini-card.above{ border-color: var(--win-line); background: var(--win-tint); }
+  .mini-card.below{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .mini-card.locked.above{ background: rgba(79,174,122,0.16); border-color: var(--turf); }
+  .mini-card.locked.below{ background: rgba(214,98,79,0.16); border-color: var(--loss); }
+  :root[data-accent="outline"] .mini-card.above,
+  :root[data-accent="outline"] .mini-card.below{ background: var(--item); }
   .mini-card .stat{
     font-size: 0.62rem;
     margin-top: 2px;
@@ -745,11 +763,21 @@
      directly under Median Watch. Same thin-outline-not-thick-top-border
      treatment as .median-card.neutral-border above, not the heavier
      accent bar the rest of the page used to use. ---------- */
+  /* --item is a translucent fill tuned to sit on top of a .glass/.median-
+     card gradient -- that's what made .mini-card's grey look right. But
+     .stat-moment is a SIBLING of #median-container, not nested inside it
+     (see the two containers in the markup below), so it sits directly on
+     the page's #050505 background instead, where that same translucent
+     rule resolves to a visibly darker grey. Same CSS, different backdrop
+     behind it -- it needs the OPAQUE top-level card treatment every other
+     standalone card on this page uses (.median-card itself included), not
+     the translucent item fill meant for something nested inside one. */
   .stat-moment{
     margin-top: 14px;
-    background: linear-gradient(135deg, rgba(212,180,106,0.14), transparent);
-    border: 1px solid var(--gold-dim);
+    background: linear-gradient(165deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--line);
     border-radius: 14px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
     padding: 18px 20px;
     text-align: center;
   }
@@ -824,9 +852,8 @@
   }
 
   /* Superlatives view toggle + race rows */
-  .sup-seg{ display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); margin-bottom: 14px; }
-  .sup-seg button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.8rem; padding: 9px 16px; cursor: pointer; }
-  .sup-seg button.on{ background: rgba(212,180,106,0.14); color: var(--gold); }
+  /* Selector styling lives in theme.css -- only this page's spacing here. */
+  .sup-seg{ margin-bottom: 14px; }
   .sup-tag{ position: relative; display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; margin-bottom: 12px; }
   .sup-tag.new{ color: var(--turf); border: 1px solid var(--turf-dim); background: rgba(76,154,107,0.12); }
   .sup-tag.hold{ color: var(--text-dim); border: 1px solid var(--line); }
@@ -854,7 +881,9 @@
   .cmp-val.on{ color: var(--gold); }
   .cmp-delta{ font-size: 0.64rem; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-top: 1px; text-align: right; }
   @media (max-width: 480px){
-    .sup-seg button{ padding: 8px 10px; font-size: 0.74rem; }
+    /* Padding only -- the height comes from --ctl-h, so a shorthand here
+       would fight the track's derived radius. */
+    .sup-seg button{ padding: 0 10px; font-size: 0.74rem; }
     .cmp-row{ grid-template-columns: minmax(0,58px) 1fr auto; gap: 6px; padding: 9px 0; }
     .cmp-name{ font-size: 0.72rem; }
   }
@@ -888,14 +917,14 @@
 
   /* Site activity */
   .act-tiles{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
-  .act-tile{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 10px; padding: 16px 12px; text-align: center; }
+  .act-tile{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 10px; padding: 16px 12px; text-align: center; }
   .act-label{ color: var(--text-dim); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.05em; }
   .act-value{ font-family: var(--scoreboard); font-weight: 800; font-size: 2.4rem; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
   .act-value.live{ color: var(--turf); }
   .act-sub{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
   .act-panels{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 640px){ .act-panels{ grid-template-columns: 1fr; } }
-  .act-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 10px; padding: 14px 16px 8px; }
+  .act-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 8px; }
   .act-card-title{ font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
   .act-row{ display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 14px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
   .act-row.head{ border-top: none; color: var(--text-dim); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 0 4px; }
@@ -958,8 +987,14 @@
     <section>
       <h2>Current Standings</h2>
       <div id="standings-toggle"></div>
-      <div class="leaderboard" id="leaderboard-container">
-        <div class="loading-row">Loading standings…</div>
+      <!-- Rows sit inside one glass panel rather than straight on the page
+           background, so they have an edge to line up against -- same
+           treatment the Standings page uses. The heading above and the mode
+           toggle already label the list, so the panel takes no title. -->
+      <div class="glass">
+        <div class="panel-body leaderboard" id="leaderboard-container">
+          <div class="loading-row">Loading standings…</div>
+        </div>
       </div>
     </section>
 
@@ -1026,6 +1061,16 @@
       }
     }
     const teamTag = p.game && p.game.team ? `<span class="team-tag">${p.game.team}</span>` : '';
+    // Once the game is over the pre-game projection stops being the useful
+    // number — how far the player beat or missed it is. ESPN keeps serving
+    // the original projection after the final whistle, so this delta stays
+    // meaningful rather than collapsing to zero.
+    const delta = state === 'final' && hasLiveScore && p.projectedPoints !== null && p.projectedPoints !== undefined
+      ? p.livePoints - p.projectedPoints
+      : null;
+    const scoreSub = delta === null
+      ? `<div class="projected">${fmtScore(p.projectedPoints)}</div>`
+      : `<div class="delta ${delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'even'}" title="Projected ${fmtScore(p.projectedPoints)}">${delta >= 0 ? '▲' : '▼'} ${fmtScore(Math.abs(delta))}</div>`;
     return `
       <div class="player-cell ${side} ${state ? 'state-' + state : ''}">
         <div class="player-info">
@@ -1035,7 +1080,7 @@
         </div>
         <div class="player-score">
           <div class="current">${hasLiveScore ? fmtScore(p.livePoints) : '-'}</div>
-          <div class="projected">${fmtScore(p.projectedPoints)}</div>
+          ${scoreSub}
         </div>
       </div>`;
   }
@@ -2215,13 +2260,13 @@
       return;
     }
 
-    // Before kickoff every team's live score is 0, so "+ live" would just
-    // duplicate "through" -- skip it until someone's actually on the board.
-    // Projections are available pre-kickoff too, so "+ projected" stays.
+    // Before kickoff every team's live score is 0, so a "live" option would
+    // just duplicate "through" -- skip it until someone's actually on the
+    // board. Projections are available pre-kickoff too, so that one stays.
     const modes = [
       ['through', `Through Week ${week - 1}`],
-      ...(started ? [['live', `+ Week ${week} live`]] : []),
-      ['proj', `+ Week ${week} projected`],
+      ...(started ? [['live', `Week ${week} live`]] : []),
+      ['proj', `Week ${week} projected`],
     ];
     if (!modes.some(([k]) => k === standingsMode)) standingsMode = 'through';
     const m = standingsMode;
@@ -2315,7 +2360,7 @@
     }
 
     const modes = hasPrior
-      ? [['through', `Through Week ${week - 1}`], ['live', `+ Week ${week} live`], ['proj', `+ Week ${week} projected`]]
+      ? [['through', `Through Week ${week - 1}`], ['live', `Week ${week} live`], ['proj', `Week ${week} projected`]]
       : [['live', `Week ${week} live`], ['proj', `Week ${week} projected`]];
     if (!modes.some(([k]) => k === superlativesMode)) superlativesMode = 'live';
     const m = superlativesMode;

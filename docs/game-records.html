@@ -27,8 +27,10 @@
 <style>
   .hero-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
   @media (max-width:800px){ .hero-grid{ grid-template-columns:1fr 1fr; } }
-  .hero{ background:var(--surface); border:1px solid var(--line); border-radius:10px; border-top:3px solid var(--turf); padding:14px 12px; text-align:center; min-width:0; }
-  .hero.dn{ border-top-color:var(--loss); }
+  .hero{ background:var(--win-tint); border:1px solid var(--win-line); border-radius:10px; padding:14px 12px; text-align:center; min-width:0; }
+  .hero.dn{ border-color:var(--loss-line); background:var(--loss-tint); }
+  :root[data-accent="outline"] .hero,
+  :root[data-accent="outline"] .hero.dn{ background:var(--item); }
   .hero-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; min-height:2.2em; }
   .hero-v{ font-family:var(--scoreboard); font-weight:800; font-size:2.4rem; line-height:1.1; color:var(--turf); margin:6px 0 6px; }
   .hero-v.dn{ color:var(--loss); }
@@ -36,23 +38,21 @@
   .hero-n span{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .hero-s{ color:var(--text-dim); font-size:0.72rem; margin-top:4px; }
 
-  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-  .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer; }
-  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(186,155,55,0.10); }
-  .seg{ display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:4px 16px 8px; }
-  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.78rem; padding:7px 16px; cursor:pointer; }
-  .seg button.on{ background:rgba(76,154,107,0.14); color:var(--turf); }
-  .seg button.on.dn{ background:rgba(192,87,75,0.14); color:var(--loss); }
+  /* Selector styling lives in theme.css -- only this page's spacing here. */
+  .tabs{ margin-bottom:14px; }
+  .seg{ margin:4px 16px 8px; }
+  .seg button.on{ background:var(--turf); color:#04120A; }
 
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
-  .ln{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--surface-raised); border:1px solid var(--line); border-radius:10px; border-left:3px solid var(--turf); padding:9px 12px; margin-top:6px; min-height:58px; }
-  .ln.dn{ border-left-color:var(--loss); }
+  .ln{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:9px 12px; margin-top:6px; min-height:58px; }
   .ln .rk{ font-family:var(--scoreboard); font-weight:700; color:var(--text-dim); text-align:center; font-size:1.2rem; }
   .ln .tm{ font-weight:700; font-size:0.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .ln .meta{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
-  .ln.rec{ border-color:var(--turf); background:rgba(76,154,107,0.07); }
-  .ln.rec.dn{ border-color:var(--loss); background:rgba(192,87,75,0.07); }
+  .ln.rec{ border-color:var(--win-line); background:var(--win-tint); }
+  .ln.rec.dn{ border-color:var(--loss-line); background:var(--loss-tint); }
+  :root[data-accent="outline"] .ln.rec,
+  :root[data-accent="outline"] .ln.rec.dn{ background:var(--item); }
   .ln.rec .rk, .ln.rec .val{ color:var(--turf); }
   .ln.rec.dn .rk, .ln.rec.dn .val{ color:var(--loss); }
   .ln.rec .val{ font-size:1.5rem; font-weight:800; }

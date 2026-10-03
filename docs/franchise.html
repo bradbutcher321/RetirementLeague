@@ -25,28 +25,40 @@
 <link rel="stylesheet" href="nav.css?v=3">
 <style>
   .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 26px; }
-  .selector-label{ color: var(--text-dim); font-size: 0.82rem; }
-  .franchise-select{ width: 190px; background: var(--surface); border: 1px solid var(--line); color: var(--text); font-family: var(--body); font-size: 1rem; font-weight: 600; padding: 10px 14px; border-radius: 4px; }
-  .franchise-select:focus{ outline: 1px solid var(--gold); }
-
-  .tabs{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-  .tab{ background: none; border: 1px solid var(--line); color: var(--text-dim); font-family: var(--body); font-size: 0.82rem; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
-  .tab.on{ border-color: var(--gold); color: var(--gold); background: rgba(186,155,55,0.10); }
+  /* Selector styling lives in theme.css -- only this page's spacing here. */
+  .tabs{ margin-bottom: 14px; }
   #tab-content > * + *{ margin-top: 14px; }
 
   /* ---------- Cards ---------- */
-  .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
+  /* start, not stretch: Regular Season has three rows against Playoffs'
+     five, and matching their heights just left a block of dead space under
+     the shorter one. */
+  .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   .card-grid.three{ grid-template-columns: repeat(3, 1fr); }
   @media (max-width: 720px){ .card-grid, .card-grid.three{ grid-template-columns: 1fr; } }
-  .stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); overflow: hidden; }
-  .stat-card-title{ padding: 12px 16px 4px; font-weight: 700; font-size: 0.95rem; }
-  .stat-card-body{ padding: 6px 10px 12px; }
-  .stack-col{ display: flex; flex-direction: column; gap: 14px; }
-  .stack-col .stat-card{ flex: 1; }
+  .stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); overflow: hidden; }
+  .stat-card-title{ padding: 16px 18px 0; font-weight: 700; font-size: 0.95rem; }
+  .stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 3px 18px 0; }
+  .stat-card-body{ padding: 12px 14px 14px; }
 
-  /* ---------- Hero ---------- */
+  /* ---------- Hero ----------
+     The column split is theme.css's shared content-sized rule now; this
+     page used to override it and no longer needs to.
+
+     theme.css clips .hero2-main so the blurred glow behind the headline
+     can't bleed into the stats column. That also clipped the logo hover
+     previews, which are absolutely positioned and deliberately overhang
+     the tile. Moving the clip onto the glow itself keeps the bleed
+     contained while letting the previews out. */
+     The glow's box is inset:-40%, so it measures 180% of the main area on
+     each axis. Trimming 40/180 = 22.23% off every edge lands it exactly on
+     the main area's bounds -- the same rectangle overflow:hidden gave us.
+     clip-path applies after filter, so the blur is clipped too. */
+  .hero2-main{ overflow: visible; }
+  .hero2-main::before{ clip-path: inset(22.23%); }
+
   .hero-pills{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  .aka{ background: var(--surface-raised); border: 1px solid var(--line); color: var(--text-dim); font-size: 0.74rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .aka{ background: var(--item); border: 1px solid var(--item-line); color: var(--text-dim); font-size: 0.74rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
   .rank-badge{ background: rgba(212,180,106,0.14); border: 1px solid var(--gold); color: var(--gold); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
   .rank-badge.bad{ background: rgba(214,98,79,0.14); border-color: var(--loss); color: var(--loss); }
 
@@ -84,12 +96,41 @@
   .aka-logo-preview img{ width: 100%; height: 100%; object-fit: cover; display: block; }
   .aka-logo-tile:hover .aka-logo-preview, .aka-logo-tile:focus .aka-logo-preview{ opacity: 1; }
 
+  /* ---------- Letting the previews out of the card ----------
+     Absolutely-positioned previews are clipped by every ancestor that hides
+     its overflow, and there are three: .hero2-main (the glow), .hero2 and
+     .glass (the card's rounded corners). Un-hiding all of them would let the
+     glow bleed and square off the card, so instead the previews switch to
+     position: fixed, which no ancestor's overflow can clip, and CSS anchor
+     positioning pins them back to their own tile. position-try-fallbacks
+     flips a preview above its tile when there's no room below, which is what
+     the past-team rows near the card's bottom edge need.
+
+     Each element's position-anchor is set inline where it's rendered, since
+     the names have to be unique per tile. Browsers without anchor support
+     skip this block and keep the absolute version. */
+  @supports (anchor-name: --x){
+    .current-logo-tile{ anchor-name: --logo-current; }
+    .current-logo-preview, .aka-logo-preview{
+      position: fixed;
+      inset: auto;
+      transform: none;
+      top: calc(anchor(bottom) + 8px);
+      justify-self: anchor-center;
+      position-try-fallbacks: flip-block;
+      z-index: 50;
+    }
+  }
+
   /* ---------- Headline stat cards ---------- */
   .podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-  .pod{ background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
-  .pod.hl{ border-color: var(--gold); }
-  .pod.tone-win{ border-color: var(--turf); }
-  .pod.tone-loss{ border-color: var(--loss); }
+  .pod{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
+  .pod.hl{ border-color: var(--lead-line); background: var(--lead-tint); }
+  .pod.tone-win{ border-color: var(--win-line); background: var(--win-tint); }
+  .pod.tone-loss{ border-color: var(--loss-line); background: var(--loss-tint); }
+  :root[data-accent="outline"] .pod.hl,
+  :root[data-accent="outline"] .pod.tone-win,
+  :root[data-accent="outline"] .pod.tone-loss{ background: var(--item); }
   .pod-label{ color: var(--text-dim); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
   .pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; height: 2rem; line-height: 2rem; margin-top: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .pod.hl .pod-val{ color: var(--gold); }
@@ -101,7 +142,7 @@
   /* ---------- Rows ---------- */
   .row{
     display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px;
-    background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-top: 6px; min-height: 58px;
+    background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 9px 12px; margin-top: 6px; min-height: 58px;
   }
   .row-name{ font-weight: 700; font-size: 0.92rem; }
   .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; }
@@ -127,15 +168,17 @@
   /* ---------- Rivalries ---------- */
   .rivalry-card{
     position: relative;
-    background: linear-gradient(165deg, var(--surface-raised), var(--surface));
+    background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
     border-radius: 14px;
     box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
     padding: 22px 20px;
     text-align: center;
   }
-  .rivalry-card.nemesis{ border-top: 3px solid var(--loss); }
-  .rivalry-card.favorite{ border-top: 3px solid var(--turf); }
+  /* Nemesis/favorite IS a state, so it keeps an accent -- but as the shared
+     outline treatment, not a top bar. */
+  .rivalry-card.nemesis{ border-color: var(--loss-line); }
+  .rivalry-card.favorite{ border-color: var(--win-line); }
   .rivalry-eyebrow{
     font-size: 0.72rem;
     font-weight: 700;
@@ -179,8 +222,9 @@
   }
 
   /* ---------- Season history ---------- */
-  .hist-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; align-items: center; gap: 12px; background: var(--surface-raised); border: 1px solid var(--line); border-left: 3px solid transparent; border-radius: 10px; padding: 10px 12px; margin-top: 6px; min-height: 58px; }
-  .hist-row.champion{ border-left-color: var(--gold); }
+  .hist-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; align-items: center; gap: 12px; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 10px 12px; margin-top: 6px; min-height: 58px; }
+  .hist-row.champion{ border-color: var(--lead-line); background: var(--lead-tint); }
+  :root[data-accent="outline"] .hist-row.champion{ background: var(--item); }
   .hist-year{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.25rem; color: var(--text-dim); text-align: center; }
   .hist-team{ font-weight: 700; font-size: 0.95rem; }
   .badge{ font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 5px 10px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line); color: var(--text-dim); }
@@ -194,7 +238,7 @@
   /* ---------- Achievement shelf ---------- */
   .shelf{ display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
   .shelf:empty{ display: none; }
-  .ach{ position: relative; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; min-height: 76px; overflow: hidden; }
+  .ach{ position: relative; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; min-height: 76px; overflow: hidden; }
   .ach.flippable{ cursor: pointer; perspective: 800px; }
   .ach-face-static, .ach-face{ padding: 14px 12px; display: flex; gap: 11px; align-items: flex-start; }
   .ach-face-static{ height: 100%; }
@@ -215,12 +259,16 @@
   /* ---------- Season arc ---------- */
   .arc-scroll{ overflow-x: auto; padding-bottom: 6px; }
   .arc{ display: flex; gap: 8px; min-width: max-content; }
-  .arc-tile{ width: 64px; flex-shrink: 0; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 8px; text-align: center; padding: 10px 4px 8px; border-top-width: 3px; border-top-style: solid; }
-  .arc-tile.champion{ border-top-color: var(--gold); background: rgba(186,155,55,0.08); }
-  .arc-tile.runner-up{ border-top-color: var(--gold); }
-  .arc-tile.playoffs{ border-top-color: var(--turf); }
-  .arc-tile.missed{ border-top-color: var(--loss); }
-  .arc-tile.progress{ border-top-color: var(--line); border-top-style: dashed; }
+  .arc-tile{ width: 64px; flex-shrink: 0; background: var(--item); border: 1px solid var(--item-line); border-radius: 8px; text-align: center; padding: 10px 4px 8px; }
+  .arc-tile.champion{ border-color: var(--gold); background: var(--lead-tint); }
+  .arc-tile.runner-up{ border-color: var(--lead-line); background: var(--lead-tint); }
+  .arc-tile.playoffs{ border-color: var(--win-line); background: var(--win-tint); }
+  .arc-tile.missed{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .arc-tile.progress{ border-style: dashed; }
+  :root[data-accent="outline"] .arc-tile.champion,
+  :root[data-accent="outline"] .arc-tile.runner-up,
+  :root[data-accent="outline"] .arc-tile.playoffs,
+  :root[data-accent="outline"] .arc-tile.missed{ background: var(--item); }
   .arc-year{ color: var(--text-dim); font-size: 0.62rem; letter-spacing: 0.03em; }
   .arc-standing{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.25rem; margin: 3px 0 1px; }
   .arc-tile.champion .arc-standing, .arc-tile.runner-up .arc-standing{ color: var(--gold); }
@@ -263,7 +311,10 @@
     </header>
 
     <div class="selector-row">
-      <label class="selector-label" for="franchise-select">Franchise Selection:</label>
+      <!-- "Franchise", not "Franchise Selection:" -- every other page labels
+           its dropdown with a single word and no colon (Season, Year, Week),
+           and this page is already titled Franchise. -->
+      <label class="selector-label" for="franchise-select">Franchise</label>
       <select class="franchise-select" id="franchise-select"></select>
     </div>
 
@@ -307,8 +358,7 @@
 
   const rateTone = v => v === null || v === undefined ? { hl: true } : { tone: v >= 50 ? 'win' : 'loss' };
   const signTone = v => v > 0 ? { tone: 'win' } : v < 0 ? { tone: 'loss' } : { hl: true };
-  const card = (title, body, cls) => `<div class="stat-card${cls ? ' ' + cls : ''}">${title ? `<div class="stat-card-title">${title}</div>` : ''}<div class="stat-card-body">${body}</div></div>`;
-  const tile = (label, value) => `<div><div class="qtile-v">${value}</div><div class="qtile-t">${label}</div></div>`;
+  const card = (title, body, cls, note) => `<div class="stat-card${cls ? ' ' + cls : ''}">${title ? `<div class="stat-card-title">${title}</div>` : ''}${note ? `<div class="stat-card-note">${note}</div>` : ''}<div class="stat-card-body">${body}</div></div>`;
 
   function clutchDelta(x) {
     const r = x.career.record, wr = x.career.win_rates;
@@ -465,14 +515,18 @@
     const names = p.previous_team_names || [];
     if (!names.length) return '';
     const logos = p.previous_team_logos || {};
-    const tiles = names.map(n => {
+    // Each tile gets its own anchor name so its preview can be positioned
+    // against it from outside the card (see the anchor-positioning block in
+    // the stylesheet). Anchor names have to be unique -- share one across
+    // the list and every preview would latch onto the last tile.
+    const tiles = names.map((n, i) => {
       const meta = logos[n] || {};
       const url = esc(meta.logo_url || '');
       return `
-        <span class="aka-logo-tile" tabindex="0">
+        <span class="aka-logo-tile" tabindex="0" style="anchor-name:--logo-past-${i}">
           <span class="aka-logo-avatar"><img src="${url}" onerror="onImgError(this)">${logoPh(n, '0.58rem')}</span>
           <span class="aka-logo-text">${esc(n)} <span class="yr">· ${meta.year || ''}</span></span>
-          <span class="aka-logo-preview"><img src="${url}" onerror="onImgError(this)">${logoPh(n, '2rem')}</span>
+          <span class="aka-logo-preview" style="position-anchor:--logo-past-${i}"><img src="${url}" onerror="onImgError(this)">${logoPh(n, '2rem')}</span>
         </span>`;
     }).join('');
     return `
@@ -488,8 +542,24 @@
     const tenure = p.founded_year ? `Founded ${p.founded_year} · ${p.seasons} season${p.seasons === 1 ? '' : 's'}` : '';
     const currentName = p.current_team_name || p.name;
     const currentLogoUrl = esc(p.current_team_logo || '');
+    // Career stats sit in the hero's right-hand well above 700px (same
+    // .hero2 split Overview and Parlay already use) instead of a full-width
+    // strip under the name, which left the right half of a desktop screen
+    // empty and made the card ~70px taller than it needed to be.
+    // All gold, no per-stat tones: these are this franchise's headline
+    // career figures, and colouring some of them good/bad made the column
+    // read as a scorecard rather than a summary.
+    const side = [
+      ['Record', `${w}-${l}`],
+      ['Win %', fmtPct(pct)],
+      ['Ships', fmt(p.career.standings.championships)],
+      ['Playoff Apps.', fmt(p.career.standings.playoff_appearances)],
+      ['Weekly Sackos', fmt(p.weekly_sackos)],
+    ].map(([l2, v]) =>
+      `<div class="hs"><div class="hs-l">${l2}</div><div class="hs-r"><div class="hs-v">${v}</div></div></div>`
+    ).join('');
     return `
-      <div class="glass">
+      <div class="glass hero2">
         <div class="hero2-main glow" style="padding:30px 32px 26px">
           <div class="hero2-eyebrow">Franchise</div>
           <div style="display:flex; align-items:center; gap:16px;">
@@ -498,17 +568,14 @@
               <span class="current-logo-avatar">
                 <img src="${currentLogoUrl}" onerror="onImgError(this)">${logoPh(currentName, '1.3rem')}
               </span>
-              <span class="current-logo-preview"><img src="${currentLogoUrl}" onerror="onImgError(this)">${logoPh(currentName, '2.5rem')}</span>
+              <span class="current-logo-preview" style="position-anchor:--logo-current"><img src="${currentLogoUrl}" onerror="onImgError(this)">${logoPh(currentName, '2.5rem')}</span>
             </span>
           </div>
           <div class="hero2-sub">${esc(p.name)} · ${tenure}</div>
           ${ranks ? `<div class="hero-pills" style="position:relative">${ranks}</div>` : ''}
           ${pastLogosHtml(p)}
         </div>
-        <div class="qtiles" style="border-top:1px solid var(--line); padding:20px 32px;">
-          ${tile('Record', `${w}-${l}`)}${tile('Win %', fmtPct(pct))}${tile('Ships', fmt(p.career.standings.championships))}
-          ${tile('Playoff Apps.', fmt(p.career.standings.playoff_appearances))}${tile('Weekly Sackos', fmt(p.weekly_sackos))}
-        </div>
+        <div class="hero2-side">${side}</div>
       </div>`;
   }
 
@@ -566,24 +633,40 @@
     return reg + po;
   }
 
+  // Scoring is now strictly about points put up: how many, and how they
+  // were distributed. Margin-shaped stats (what the points added up to)
+  // split into their own card, Median moved to Performance next to the
+  // Versus Median streak it explains, and Money got its own tab -- dues
+  // and earnings were never a scoring stat.
   function renderScoring(p) {
-    const pts = p.career.points, ex = p.extremes, med = p.career.median || {};
+    const pts = p.career.points, ex = p.extremes;
     const scoring = card('Scoring', rows([
       ['Total Points', [[fmt(pts.total_pf, 2), 'For'], [fmt(pts.total_pa, 2), 'Against']]],
       ['Average', [[fmt(pts.avg_pf, 2), 'For'], [fmt(pts.avg_pa, 2), 'Against']]],
       ['Single Game', [[fmt(ex.highest_score, 2), 'High'], [fmt(ex.lowest_score, 2), 'Low']]],
+      ['Consistency', [[fmt(ex.score_stdev, 2), 'Std Dev']], 'Lower means steadier week-to-week scoring'],
+    ]));
+    const margins = card('Margins', rows([
       ['Win Margin', [[fmt(ex.biggest_win_margin, 2), 'Largest'], [fmt(ex.lowest_win_margin, 2), 'Smallest']]],
       ['Loss Margin', [[fmt(ex.biggest_loss_margin, 2), 'Largest'], [fmt(ex.lowest_loss_margin, 2), 'Smallest']]],
-      ['Consistency', [[fmt(ex.score_stdev, 2), 'Std Dev']], 'Lower means steadier week-to-week scoring'],
       ['Close Games', [[fmt(ex.close_wins), 'Wins'], [fmt(ex.close_losses), 'Losses']], 'Decided by under 5 points'],
       ['Blowouts', [[fmt(ex.blowout_wins), 'Wins'], [fmt(ex.blowout_losses), 'Losses']], 'Decided by 50+ points'],
-    ]));
-    const median = card('Median', pods([['Win Rate', fmtPct(med.pct), rateTone(med.pct)], ['Wins', fmt(med.wins)], ['Losses', fmt(med.losses)]]));
-    const money = p.money
-      ? card('Money', pods([['Net Result', fmtMoney(p.money.net_result), signTone(p.money.net_result)], ['Dues', fmtMoney(p.money.total_dues)], ['Earnings', fmtMoney(p.money.total_earnings)]]) +
-          rows([['Parlays Purchased', [[fmtMoney(p.money.parlays_purchased), 'Total']]]]))
-      : card('Money', '<div class="empty-note">Not tracked for this franchise.</div>');
-    return scoring + `<div class="stack-col">${median}${money}</div>`;
+    ]), null, 'How those points landed against the week’s opponent');
+    return scoring + margins;
+  }
+
+  function renderMedian(p) {
+    const med = p.career.median || {};
+    // Titled "Median Record" rather than "Versus Median" so it doesn't
+    // collide with the Versus Median streak card sitting above it.
+    return card('Median Record', pods([['Win Rate', fmtPct(med.pct), rateTone(med.pct)], ['Wins', fmt(med.wins)], ['Losses', fmt(med.losses)]]),
+      null, 'The second win or loss each week, scored against the league median');
+  }
+
+  function renderMoney(p) {
+    if (!p.money) return card('Money', '<div class="empty-note">Not tracked for this franchise.</div>');
+    return card('Money', pods([['Net Result', fmtMoney(p.money.net_result), signTone(p.money.net_result)], ['Dues', fmtMoney(p.money.total_dues)], ['Earnings', fmtMoney(p.money.total_earnings)]]) +
+      rows([['Parlays Purchased', [[fmtMoney(p.money.parlays_purchased), 'Total']]]]));
   }
 
   const RIVALRY_LABELS = { nemesis: "Who's Your Daddy", favorite: "Who's Your Bitch" };
@@ -626,11 +709,13 @@
     return rivalryCard('nemesis', p.rivalries.nemesis) + rivalryCard('favorite', p.rivalries.favorite_opponent);
   }
 
+  // Lives next to Versus Median on Performance, not on Rivalries -- it's a
+  // read on this franchise's own schedule luck, not on any opponent.
   function renderLuck(p) {
-    if (p.median_luck === null || p.median_luck === undefined) return card('', '<div class="empty-note">Not enough median-era data yet.</div>');
+    if (p.median_luck === null || p.median_luck === undefined) return card('Schedule Luck', '<div class="empty-note">Not enough median-era data yet.</div>');
     const cls = p.median_luck === 0 ? '' : p.median_luck > 0 ? 'lucky' : 'unlucky';
     const word = p.median_luck === 0 ? 'dead even' : p.median_luck > 0 ? 'luckier' : 'unluckier';
-    return card('', `<div class="feature"><div class="luck-val ${cls}">${p.median_luck > 0 ? '+' : ''}${fmt(p.median_luck, 1)}%</div>
+    return card('Schedule Luck', `<div class="feature"><div class="luck-val ${cls}">${p.median_luck > 0 ? '+' : ''}${fmt(p.median_luck, 1)}%</div>
       <div class="feature-sub">${word} than your scoring against the median alone would suggest, compared to your actual win rate.</div></div>`);
   }
 
@@ -699,10 +784,11 @@
   }
 
   const TABS = [
-    { label: 'Performance', render: p => `<div class="card-grid three">${renderStreaks(p)}</div><div class="card-grid">${renderPerformance(p)}</div>` },
+    { label: 'Performance', render: p => `<div class="card-grid three">${renderStreaks(p)}</div><div class="card-grid">${renderPerformance(p)}</div><div class="card-grid">${renderMedian(p)}${renderLuck(p)}</div>` },
     { label: 'Scoring', render: p => `<div class="card-grid">${renderScoring(p)}</div>` },
+    { label: 'Money', render: p => renderMoney(p) },
     { label: 'Efficiency', render: p => renderEfficiency(p) },
-    { label: 'Rivalries', render: p => `<div class="card-grid three">${renderRivalries(p)}${renderLuck(p)}</div>${renderRivalGrid(p)}` },
+    { label: 'Rivalries', render: p => `<div class="card-grid">${renderRivalries(p)}</div>${renderRivalGrid(p)}` },
     { label: 'Draft & Roster', render: p => `<div class="card-grid">${renderDraft(p)}</div>` },
     { label: 'History', render: p => `${renderSeasonArc(p)}${renderHistory(p)}` },
     { label: 'Achievements', render: p => renderAchievements(p, CTX) },

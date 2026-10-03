@@ -25,14 +25,10 @@
 <link rel="stylesheet" href="nav.css?v=3">
 <link rel="stylesheet" href="league.css?v=5">
 <style>
-  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-  .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer; }
-  .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(212,180,106,0.10); }
-  .seg{ display:flex; flex-wrap:wrap; border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:4px 24px 14px; width:fit-content; max-width:calc(100% - 48px); }
-  .seg button{ background:none; border:none; color:var(--text-dim); font-family:var(--body); font-weight:600; font-size:0.78rem; padding:8px 15px; cursor:pointer; }
-  .seg button.on{ background:rgba(212,180,106,0.14); color:var(--gold); }
-  .seg button.on.good{ background:rgba(79,174,122,0.14); color:var(--turf); }
-  .seg button.on.bad{ background:rgba(214,98,79,0.14); color:var(--loss); }
+  /* Selector styling lives in theme.css -- only this page's spacing here.
+     The seg sits inside a card, so its side margins match that padding. */
+  .tabs{ margin-bottom:14px; }
+  .seg{ margin:4px 24px 14px; max-width:calc(100% - 48px); }
 
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; padding:0 18px 20px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
@@ -302,8 +298,11 @@
     const topPts = seasonPts(true).sort((a, b) => parseFloat(b.val) - parseFloat(a.val))[0];
     const bestWin = winSeasons(true)[0];
     const tiles = [
-      t('Reigning Champion', champs[0], champs[0].year, '', `${rec(champs[0])} record`, champs[0].player),
-      t('Reigning Sacko', sackos[0], sackos[0].year, 'bad', `${regRec(sackos[0])} record`, sackos[0].player),
+      // The person is the headline, not the year -- "who is the reigning
+      // champion" is the question these two answer, so the name takes the
+      // big slot and the season drops to the supporting line.
+      t('Reigning Champion', champs[0], champs[0].player, '', `${champs[0].year} · ${rec(champs[0])} record`, ''),
+      t('Reigning Sacko', sackos[0], sackos[0].player, 'bad', `${regRec(sackos[0])} record`, String(sackos[0].year)),
       t('Most Titles', champC[0], champC[0].val, '', champC[0].sub, champC.filter(c => c.val === champC[0].val).map(c => c.name).join(' · ')),
       t('Most Sackos', sackC[0], sackC[0].val, 'bad', sackC[0].sub, sackC.filter(c => c.val === sackC[0].val).slice(0, 3).map(c => c.name).join(' · ')),
       t('Best Season Points', topPts, topPts.val, 'good', `${topPts.rank}`, topPts.name),
@@ -444,9 +443,13 @@
     const hero = tiles[0], side = tiles.slice(1, 4), rest = tiles.slice(4);
     const glow = hero.tone === 'bad' ? 'glow-loss' : 'glow';
     const heroHtml = `<div class="glass hero2"><div class="hero2-main ${glow}"><div class="hero2-eyebrow">${esc(hero.title)}</div>` +
-      `<div class="hero2-v">${esc(hero.val)}</div><div class="hero2-sub">${esc(hero.name)}${hero.sub ? ' · ' + esc(hero.sub) : ''}</div></div>` +
+      // filter(Boolean) so a tile with no supporting name doesn't render a
+      // leading separator.
+      `<div class="hero2-v">${esc(hero.val)}</div><div class="hero2-sub">${[hero.name, hero.sub].filter(Boolean).map(esc).join(' · ')}</div></div>` +
+      // No tone class on the side values: all three are the figures this
+      // card exists to show, so they all take the shared gold.
       `<div class="hero2-side">${side.map(x => `<div class="hs"><div class="hs-l">${esc(x.title)}</div><div class="hs-r">` +
-        `<div class="hs-v ${toneCls(x.tone)}">${esc(x.val)}</div><div class="hs-n">${esc(x.name)}</div></div></div>`).join('')}</div></div>`;
+        `<div class="hs-v">${esc(x.val)}</div><div class="hs-n">${esc(x.name)}</div></div></div>`).join('')}</div></div>`;
     const tilesRow = `<div class="glass qtiles">${rest.map(x => `<div><div class="qtile-v ${toneCls(x.tone)}">${esc(x.val)}</div><div class="qtile-t">${esc(x.title)}</div>` +
       `<div class="qtile-n">${esc(x.name)}</div>${x.sub ? `<div class="qtile-s">${esc(x.sub)}</div>` : ''}</div>`).join('')}</div>`;
     return heroHtml + '<div class="gap"></div>' + tilesRow;

@@ -24,25 +24,39 @@
 <link rel="stylesheet" href="theme.css?v=4">
 <link rel="stylesheet" href="nav.css?v=3">
 <style>
-  .tab-row{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
-  .year-tab{
-    background: var(--surface); border: 1px solid var(--line); color: var(--text-dim);
-    font-family: var(--body); font-size: 0.86rem; font-weight: 600; padding: 9px 16px;
-    border-radius: 999px; cursor: pointer;
-  }
-  .year-tab:hover{ border-color: var(--gold); color: var(--text); }
-  .year-tab.active{ background: rgba(186,155,55,0.12); border-color: var(--gold); color: var(--gold); }
-  .year-tab.is-current{ border-color: var(--turf-dim); }
-  .year-tab.is-current:hover{ border-color: var(--turf); color: var(--text); }
-  .year-tab.is-current.active{ background: rgba(76,154,107,0.14); border-color: var(--turf); color: var(--turf); }
+  /* Selector styling lives in theme.css -- only this page's spacing here. */
+  .tab-row{ margin-bottom: 18px; }
 
-  .rules-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); border-top: 3px solid var(--gold); max-width: 640px; overflow: hidden; }
-  .rules-card.is-current{ border-top-color: var(--turf); }
+  .rules-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); overflow: hidden; }
+  /* The season currently being played is the one state this card has. */
+  .rules-card.is-current{ border-color: var(--lead-line); }
   .rules-head{ padding: 16px 20px 12px; border-bottom: 1px solid var(--line); }
   .rules-title{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; }
-  .rules-body{ display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); }
-  @media (max-width: 520px){ .rules-body{ grid-template-columns: 1fr; } }
-  .rules-section{ background: var(--surface); padding: 16px 20px; }
+  /* The four quadrants used to be painted a flat --surface (#111111) and
+     separated by a 1px grid gap showing --line through from the parent.
+     That flat fill covered the card's own #161616 -> #111111 gradient
+     entirely, which is why this card read darker and deader than every
+     other panel on the site. The cells are transparent now and the
+     hairlines are drawn as pseudo-elements instead, so the gradient shows
+     through exactly like it does elsewhere. */
+  .rules-body{ display: grid; grid-template-columns: 1fr 1fr; }
+  .rules-section{ padding: 16px 20px; position: relative; }
+  /* Vertical rule between the two columns, only when there's a cell beside
+     it -- an odd final section shouldn't trail a hairline into dead space. */
+  .rules-section:nth-child(odd):has(+ .rules-section)::after{
+    content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 1px; background: var(--line);
+  }
+  /* Horizontal rule above every row after the first. */
+  .rules-section:nth-child(n+3)::before{
+    content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--line);
+  }
+  @media (max-width: 520px){
+    .rules-body{ grid-template-columns: 1fr; }
+    .rules-section:nth-child(odd):has(+ .rules-section)::after{ display: none; }
+    .rules-section:nth-child(n+2)::before{
+      content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--line);
+    }
+  }
   .rules-section-title{ color: var(--gold); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
   /* Each setting is its own small chip (flex-wrapped) instead of a stacked
      list of label/value rows -- the same visual language as the Season
@@ -51,11 +65,17 @@
      via the chip's own tint, same logic as before, just not a full-width
      highlighted row any more. */
   .rules-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
-  .rules-chip{ display: inline-flex; align-items: baseline; gap: 4px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 0.84rem; color: var(--text); white-space: nowrap; }
+  .rules-chip{ display: inline-flex; align-items: baseline; gap: 4px; background: var(--item); border: 1px solid var(--item-line); border-radius: 999px; padding: 5px 12px; font-size: 0.84rem; color: var(--text); white-space: nowrap; }
   .rules-chip .label{ color: var(--text-dim); }
-  .rules-chip.line-changed{ border-color: rgba(212,180,106,0.4); background: rgba(212,180,106,0.08); }
-  .rules-chip.line-added{ border-color: rgba(79,174,122,0.4); background: rgba(79,174,122,0.08); color: var(--turf); }
-  .rules-chip.line-dropped{ border-color: rgba(214,98,79,0.4); background: rgba(214,98,79,0.08); }
+  .rules-chip.line-changed{ border-color: var(--lead-line); background: var(--lead-tint); }
+  /* Added and changed share the gold accent; what separates them is the
+     chip's own shape -- an added setting reads "+ 1 FLEX", a changed one
+     reads "old -> new". */
+  .rules-chip.line-added{ border-color: var(--lead-line); background: var(--lead-tint); color: var(--gold); }
+  .rules-chip.line-dropped{ border-color: var(--loss-line); background: var(--loss-tint); }
+  :root[data-accent="outline"] .rules-chip.line-changed,
+  :root[data-accent="outline"] .rules-chip.line-added,
+  :root[data-accent="outline"] .rules-chip.line-dropped{ background: var(--item); }
   .rules-chip.line-dropped .now{ color: var(--loss); }
   .rules-chip .was{ color: var(--text-dim); margin-right: 2px; }
   .rules-chip .now{ color: var(--gold); font-weight: 700; }
@@ -64,25 +84,35 @@
 
   .manager-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
   .manager-chip{
-    background: var(--surface-raised); border: 1px solid var(--line); color: var(--text);
+    background: var(--item); border: 1px solid var(--item-line); color: var(--text);
     font-size: 0.82rem; font-weight: 600; padding: 4px 11px; border-radius: 999px;
   }
-  .manager-chip.added{ background: rgba(76,154,107,0.14); border-color: var(--turf-dim); color: var(--turf); }
-  .manager-chip.removed{ background: rgba(192,87,75,0.14); border-color: var(--loss); color: var(--loss); }
+  .manager-chip.added{ background: var(--win-tint); border-color: var(--win-line); color: var(--turf); }
+  .manager-chip.removed{ background: var(--loss-tint); border-color: var(--loss-line); color: var(--loss); }
+  :root[data-accent="outline"] .manager-chip.added,
+  :root[data-accent="outline"] .manager-chip.removed{ background: var(--item); }
 
-  /* ---------- Timeline ---------- */
-  .timeline{ position: relative; padding-left: 30px; }
-  .timeline::before{ content: ''; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 2px; background: var(--line); }
-  .timeline-item{ position: relative; padding-bottom: 24px; }
-  .timeline-item:last-child{ padding-bottom: 0; }
-  .timeline-dot{ position: absolute; left: -26px; top: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); }
-  .timeline-year{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.15rem; color: var(--gold); margin-bottom: 8px; }
-  .change-list{ display: flex; flex-direction: column; gap: 6px; }
-  .change-chip{ background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold); padding: 8px 12px; font-size: 0.88rem; border-radius: 4px; }
+  /* ---------- Timeline ----------
+     Each year is its own glass panel sitting beside its dot on the rail,
+     rather than bare chips floating on the page background -- same panel
+     treatment every other page uses, with the rail kept so the run of
+     years still reads as a chronology. */
+  .timeline{ position: relative; padding-left: 30px; display: flex; flex-direction: column; gap: 14px; }
+  .timeline::before{ content: ''; position: absolute; left: 8px; top: 14px; bottom: 14px; width: 2px; background: var(--line); }
+  .timeline-item{ position: relative; }
+  /* Sits level with the year title inside the panel, not the panel's edge. */
+  .timeline-dot{ position: absolute; left: -26px; top: 22px; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px rgba(212,180,106,0.5); }
+  .timeline-year{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.15rem; color: var(--gold); padding: 14px 18px 0; }
+  .change-list{ display: flex; flex-direction: column; gap: 6px; padding: 10px 18px 16px; }
+  /* The panel already groups these under their year, so each change needs
+     no accent bar of its own. */
+  .change-chip{ background: var(--item); border: 1px solid var(--item-line); padding: 8px 12px; font-size: 0.88rem; border-radius: 8px; }
   .change-chip-label{ color: var(--text-dim); margin-right: 4px; }
   .manager-delta{ display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; margin: 2px 3px 2px 0; }
-  .manager-delta.in{ background: rgba(76,154,107,0.15); color: var(--turf); border: 1px solid var(--turf-dim); }
-  .manager-delta.out{ background: rgba(192,87,75,0.15); color: var(--loss); border: 1px solid var(--loss); }
+  .manager-delta.in{ background: var(--win-tint); color: var(--turf); border: 1px solid var(--win-line); }
+  .manager-delta.out{ background: var(--loss-tint); color: var(--loss); border: 1px solid var(--loss-line); }
+  :root[data-accent="outline"] .manager-delta.in,
+  :root[data-accent="outline"] .manager-delta.out{ background: none; }
 </style>
 </head>
 <body>
@@ -230,8 +260,10 @@
     return `
       <div class="timeline-item">
         <div class="timeline-dot"></div>
-        <div class="timeline-year">${entry.year}</div>
-        <div class="change-list">${entry.changes.map(changeChip).join('')}</div>
+        <div class="glass">
+          <div class="timeline-year">${entry.year}</div>
+          <div class="change-list">${entry.changes.map(changeChip).join('')}</div>
+        </div>
       </div>`;
   }
 

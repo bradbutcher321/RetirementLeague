@@ -27,21 +27,13 @@
   .wrap.wide{ max-width: 1180px; }
 
   .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-  .selector-label{ color: var(--text-dim); font-size: 0.82rem; }
-  .board-select{
-    background: var(--surface); border: 1px solid var(--line); color: var(--text);
-    font-family: var(--body); font-size: 0.95rem; font-weight: 600; padding: 9px 12px; border-radius: 4px;
-  }
-  .board-select:focus{ outline: 1px solid var(--gold); }
+  /* .board-select styling lives in theme.css. */
 
   .legend{ display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
   .legend-chip{ display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: var(--text-dim); }
   .legend-swatch{ width: 10px; height: 10px; border-radius: 2px; }
 
-  .board-toggle{ display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  .board-toggle button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.82rem; padding: 8px 15px; cursor: pointer; }
-  .board-toggle button:hover{ color: var(--text); }
-  .board-toggle button.on{ background: rgba(212,180,106,0.14); color: var(--gold); }
+  /* .board-toggle styling lives in theme.css with the other selectors. */
 
   /* ---------- Simple "by team" view: one column per manager, picks listed
      top to bottom, instead of the snake-order grid ---------- */
@@ -153,6 +145,10 @@
       <div class="selector-row">
         <label class="selector-label" for="year-select">Year</label>
         <select class="board-select" id="year-select" autocomplete="off"></select>
+        <!-- Labelled because it shares a row with the labelled Year
+             dropdown; an unlabelled control next to a labelled one reads as
+             part of it. -->
+        <span class="selector-label">View</span>
         <div class="board-toggle" id="view-toggle">
           <button type="button" class="on" data-view="grid">Grid</button>
           <button type="button" data-view="simple">By Team</button>
@@ -173,10 +169,28 @@
   };
   const posClass = pos => pos ? 'pos-' + pos.replace('/', '') : 'pos-none';
 
-  function renderLegend() {
-    return Object.entries(POSITION_COLORS).map(([pos, color]) =>
-      `<div class="legend-chip"><span class="legend-swatch" style="background:${color}"></span>${pos}</div>`
-    ).join('');
+  // Only the positions this year's draft actually contains. Kickers left the
+  // roster after 2019 and D/ST after 2022 (see Rule Changes), so a fixed
+  // six-chip legend promised two colors that never appear on a modern board.
+  // Order follows POSITION_COLORS, not order of appearance, so the legend
+  // doesn't reshuffle as you move between years.
+  // grid is {round: {slot: pick}} -- both levels are objects keyed by number
+  // as a string, not arrays, so both need Object.values.
+  function positionsIn(board) {
+    const seen = new Set();
+    Object.values(board.grid || {}).forEach(round =>
+      Object.values(round || {}).forEach(pick => { if (pick && pick.position) seen.add(pick.position); })
+    );
+    return seen;
+  }
+
+  function renderLegend(board) {
+    const seen = board ? positionsIn(board) : new Set(Object.keys(POSITION_COLORS));
+    return Object.entries(POSITION_COLORS)
+      .filter(([pos]) => seen.has(pos))
+      .map(([pos, color]) =>
+        `<div class="legend-chip"><span class="legend-swatch" style="background:${color}"></span>${pos}</div>`
+      ).join('');
   }
 
   function splitName(name) {
@@ -261,8 +275,6 @@
     return `<div class="simple-label">${roundLabel}</div><div class="glass simple-board">${cols}</div>`;
   }
 
-  document.getElementById('legend').innerHTML = renderLegend();
-
   let boardView = 'grid';
   const viewToggle = document.getElementById('view-toggle');
 
@@ -275,6 +287,9 @@
 
       function show(year) {
         const board = data.boards[year];
+        // Legend is redrawn per year, not once at load -- which positions
+        // exist changes with the era's roster rules.
+        document.getElementById('legend').innerHTML = renderLegend(board);
         document.getElementById('board-container').innerHTML = !board
           ? '<div class="empty-note">No draft data for this year.</div>'
           : boardView === 'simple' ? renderSimpleBoard(board) : renderBoard(board);

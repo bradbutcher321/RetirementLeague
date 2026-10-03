@@ -1,30 +1,21 @@
 /* Shared styles for Standings, Head to Head, Overview and Game Records. */
 .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-.selector-label{ color: var(--text-dim); font-size: 0.82rem; }
-.lg-select{
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--text);
-  font-family: var(--body);
-  font-size: 0.95rem;
-  font-weight: 600;
-  padding: 9px 12px;
-  border-radius: 8px;
-  max-width: 100%;
-}
-.lg-select:focus{ outline: 1px solid var(--gold); }
+/* .selector-label styling lives in theme.css, alongside the other selectors. */
+/* .lg-select styling lives in theme.css, alongside the other selectors. */
 
 /* Night Match glass card -- gradient surface, rounded, soft elevation. Reusing the .stat-card
    name (instead of a new class) means every page still using league-common.js's card() helper
    picks this up automatically, no per-page JS changes needed. */
 .stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); }
-.stat-card-title{ padding: 20px 24px 4px; font-weight: 700; font-size: 1rem; }
-.stat-card-note{ color: var(--text-dim); font-size: 0.78rem; padding: 0 24px 14px; }
-.stat-card-body{ padding: 8px 16px 18px; }
+.stat-card-title{ padding: 18px 22px 0; font-weight: 700; font-size: 1rem; }
+.stat-card-note{ color: var(--text-dim); font-size: 0.78rem; padding: 4px 22px 0; }
+.stat-card-body{ padding: 14px 18px 18px; }
 
 .podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-.pod{ background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
-.pod:first-child{ border-color: var(--gold); }
+.pod{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
+/* First pod is the leader -- a state, so it takes the shared lead accent. */
+.pod:first-child{ border-color: var(--lead-line); background: var(--lead-tint); }
+:root[data-accent="outline"] .pod:first-child{ background: var(--item); }
 .pod-rank{ font-family: var(--scoreboard); font-size: 0.85rem; color: var(--gold); font-weight: 700; }
 .pod-name{ font-weight: 700; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; color: var(--gold); font-variant-numeric: tabular-nums; height: 2rem; line-height: 2rem; }
@@ -35,7 +26,7 @@
 
 .row{
   display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
-  background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; margin-top: 6px; min-height: 58px;
+  background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 9px 12px; margin-top: 6px; min-height: 58px;
 }
 .row.norank{ grid-template-columns: minmax(0,1fr) auto; }
 .row-rank{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; color: var(--text-dim); text-align: center; }
@@ -50,7 +41,8 @@
 .row-stat:last-child{ min-width: 58px; }
 .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
-.row.hl{ border-color: var(--gold); }
+.row.hl{ border-color: var(--lead-line); background: var(--lead-tint); }
+:root[data-accent="outline"] .row.hl{ background: var(--item); }
 
 .badge{ font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); margin-left: 6px; vertical-align: middle; white-space: nowrap; }
 .badge.gold{ color: var(--gold); border-color: var(--gold); }

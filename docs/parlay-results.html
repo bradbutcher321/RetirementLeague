@@ -26,18 +26,7 @@
 <style>
   /* ---------- Week selector ---------- */
   .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-  .selector-label{ color: var(--text-dim); font-size: 0.82rem; }
-  .parlay-select{
-    background: var(--surface);
-    border: 1px solid var(--line);
-    color: var(--text);
-    font-family: var(--body);
-    font-size: 0.95rem;
-    font-weight: 600;
-    padding: 9px 12px;
-    border-radius: 4px;
-  }
-  .parlay-select:focus{ outline: 1px solid var(--gold); }
+  /* .parlay-select styling lives in theme.css. */
   .back-link{
     background: none;
     border: 1px solid var(--gold);
@@ -56,22 +45,11 @@
 
   /* Season/scope selector: solid-filled toggle, the most prominent of the
      three levels so it doesn't read as just another row of tabs. */
-  .scope-row{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-  .scope-btn{ background: var(--surface-raised); border: 1px solid var(--line); color: var(--text-dim); font-family: var(--body); font-weight: 700; font-size: 0.85rem; padding: 8px 16px; border-radius: 5px; cursor: pointer; }
-  .scope-btn:hover:not(.on){ color: var(--text); }
-  .scope-btn.on{ background: var(--gold); border-color: var(--gold); color: #050505; }
+  /* Selector styling lives in theme.css -- only this page's spacing here. */
+  .scope-row{ margin-bottom: 18px; }
 
-  /* Category tabs: outline pills. */
-  .tabs{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-  .tab{ background: none; border: 1px solid var(--line); color: var(--text-dim); font-family: var(--body); font-size: 0.86rem; font-weight: 600; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
-  .tab:hover{ border-color: var(--gold); color: var(--text); }
-  .tab.on{ border-color: var(--gold); color: var(--gold); background: rgba(186,155,55,0.10); }
-
-  /* Subsections within a category: bordered segmented bar. */
-  .seg{ display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 4px 0 18px; }
-  .seg button{ background: none; border: none; color: var(--text-dim); font-family: var(--body); font-weight: 600; font-size: 0.82rem; padding: 8px 15px; cursor: pointer; }
-  .seg button:hover{ color: var(--text); }
-  .seg button.on{ background: rgba(186,155,55,0.14); color: var(--gold); }
+  .tabs{ margin-bottom: 14px; }
+  .seg{ margin: 4px 0 18px; }
 
   /* ---------- Parlay hero: Payout as the one glowing headline number,
      Legs Hit/Lost/Combined Odds/Split as quiet side stats, reusing the
@@ -79,7 +57,13 @@
      identically-weighted tiles. Status is its own corner ribbon, fully
      detached from the hero number instead of sharing a row with an
      eyebrow label. ---------- */
+  /* Which week this is, and how it ended, as a matched pair in the card's
+     two top corners. Both use .badge so they carry the same weight -- the
+     week read heavier than the status when it was a full-size .hero-chip. */
   .status-ribbon{ position: absolute; top: 18px; right: 18px; }
+  .week-ribbon{ position: absolute; top: 18px; left: 18px; color: var(--text); border-color: var(--line); }
+  /* Clears the week ribbon, the same way .hero2-side clears the status one. */
+  .hero2-main{ padding-top: 52px; }
   .gold-label-xl{ color: var(--gold); font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
   /* Clears the status ribbon above -- its badge text length varies
      ("Parlay alive" vs "Parlay dead" vs "Parlay hit"), so the first side
@@ -91,50 +75,113 @@
   .hero-chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); }
   .hero-chip.loss{ border-color: rgba(214,98,79,0.4); background: rgba(214,98,79,0.08); color: var(--loss); font-weight: 600; }
 
-  .memoriam{ position: relative; margin-top: 12px; padding: 12px 16px; background: rgba(214,98,79,0.08); border: 1px solid rgba(214,98,79,0.3); border-radius: 10px; text-align: center; }
-  .memoriam-label{ color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; }
-  .memoriam-killer{ font-family: var(--scoreboard); font-weight: 800; font-size: 1rem; color: var(--loss); margin-top: 4px; }
+  /* The old .memoriam block was a full-width bordered panel for one name;
+     it's a chip alongside Sacko now, same weight as the fact it carries. */
 
-  /* ---------- Legs: each its own small card, not rows in a table ---------- */
-  .legs-label{ display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 22px 0 10px; }
-  .legs-label::after{ content: ''; flex: 1; height: 1px; background: var(--line); }
+  /* ---------- Legs ----------
+     Collapsed to two lines: name + result share the top line, the bet gets
+     its own full line underneath with no truncation -- even the longest bet
+     on the board reads in full without a click. Sport/odds/kickoff move into
+     a detail panel that opens on click, the same pattern the dashboard's
+     matchup cards use (see index.html's .matchup-card / expandedMatchups). */
   .leg{
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 18px;
-    margin-top: 10px;
-    background: rgba(255,255,255,0.025);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    border-left: 3px solid transparent;
+    background: var(--item);
+    border: 1px solid var(--item-line);
+    border-radius: 10px;
+    margin-top: 8px;
+    cursor: pointer;
+    overflow: hidden;
   }
   .leg:first-child{ margin-top: 0; }
-  .leg.Win{ border-left-color: var(--turf); }
-  .leg.Loss{ border-left-color: var(--loss); }
-  .leg.live-up{ background: rgba(76,154,107,0.08); border-left-color: var(--turf-dim); }
-  .leg.live-down{ background: rgba(192,87,75,0.08); border-left-color: var(--loss); }
+  .leg.Win{ border-color: var(--win-line); background: var(--win-tint); }
+  .leg.Loss{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .leg.live-up{ border-color: var(--win-line); background: var(--win-tint); }
+  .leg.live-down{ border-color: var(--loss-line); background: var(--loss-tint); }
+  :root[data-accent="outline"] .leg.Win,
+  :root[data-accent="outline"] .leg.Loss,
+  :root[data-accent="outline"] .leg.live-up,
+  :root[data-accent="outline"] .leg.live-down{ background: var(--item); }
+  .leg.missing{ cursor: default; }
+
+  .leg-head{ padding: 12px 14px 11px; }
+  .leg-top{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .leg-name{ font-weight: 700; }
-  .leg-bet{ font-size: 0.92rem; margin-top: 2px; }
-  .leg-meta{ color: var(--text-dim); font-size: 0.78rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .leg-result{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.92rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); white-space: nowrap; }
+  .leg-result-group{ display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+  .leg-result{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); white-space: nowrap; }
   .leg-result.turf{ color: var(--turf); }
   .leg-result.loss{ color: var(--loss); }
-  .leg-live{ display: flex; align-items: center; gap: 6px; color: var(--text-dim); font-size: 0.78rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .leg-live .dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: leg-live-pulse 1.5s ease-in-out infinite; }
-  @keyframes leg-live-pulse{ 0%, 100%{ opacity: 1; } 50%{ opacity: 0.25; } }
-  @media (max-width: 480px){
-    .leg{ padding: 12px 14px; }
+  .leg-chev{ color: var(--text-dim); font-size: 0.65rem; transition: transform 0.15s; }
+  .leg.open .leg-chev{ transform: rotate(90deg); }
+  /* Fixed width (measured against "Collapse all", the longer of the two
+     labels, at this font) so the pill doesn't resize when the label
+     changes -- a width that merely fit "Expand all" would grow on every
+     toggle. */
+  .leg-expand-toggle{
+    background: none;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: var(--body);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 7px 0;
+    border-radius: 999px;
+    width: 104px;
+    text-align: center;
+    cursor: pointer;
+    flex-shrink: 0;
   }
+  .leg-expand-toggle:hover{ background: rgba(212,180,106,0.1); }
+  @media (prefers-reduced-motion: reduce){ .leg-chev{ transition: none; } }
+  /* Grey and a size down from the name -- this is supporting text under a
+     bold headline, not a second headline. */
+  .leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 4px; line-height: 1.35; }
+
+  .leg-detail{ max-height: 0; overflow: hidden; transition: max-height 0.22s ease; }
+  .leg.open .leg-detail{ max-height: 80px; }
+  @media (prefers-reduced-motion: reduce){ .leg-detail{ transition: none; } }
+  /* The rule and its padding live on this full-width wrapper, not on
+     .leg-stats itself -- .leg-stats is only as wide as its own content
+     (width: max-content, for the grid below), so a border on it would stop
+     wherever the content stopped instead of running to the card's edge. */
+  .leg-detail-in{ border-top: 1px solid var(--line); margin: 0 14px; padding: 10px 0 12px; }
+
+  /* Sport / Odds / Kickoff-or-Live-or-Final as a 2-row grid: label row,
+     value row. grid-auto-flow:column fills one column at a time, so the
+     children have to be written label,value,label,value,... in that order
+     -- grouping all three labels before all three values would pair each
+     label with the wrong value. This is what pins "SPORT/ODDS/LIVE" to one
+     shared row and "NFL/-110/<score>" to the row below regardless of
+     content width, rather than relying on three independent blocks
+     happening to line up. */
+  .leg-stats{
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: auto auto;
+    column-gap: 22px;
+    row-gap: 4px;
+    width: max-content;
+    max-width: 100%;
+  }
+  /* display:block + text-align:center, rather than relying on the grid's
+     own justify-items, so each label centers over ITS OWN column's value
+     even when the label and the value are different widths (e.g. "LIVE" is
+     narrower than its live score). */
+  .leg-stats .l{ display: block; text-align: center; color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .leg-stats .v{ display: block; text-align: center; font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  /* inline-flex so the dot sits beside the score as one inline unit that
+     the parent's text-align:center can still center as a whole. */
+  .leg-stats .live-wrap{ display: inline-flex; align-items: center; gap: 5px; color: var(--loss); }
+  .leg-stats .live-wrap .dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: leg-live-pulse 1.5s ease-in-out infinite; }
+  @keyframes leg-live-pulse{ 0%, 100%{ opacity: 1; } 50%{ opacity: 0.25; } }
+  @media (prefers-reduced-motion: reduce){ .leg-stats .live-wrap .dot{ animation: none; } }
 
   /* ---------- Stat cards ---------- */
   .card-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   @media (max-width: 720px){ .card-grid{ grid-template-columns: 1fr; } }
-  .stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); border-top: 3px solid var(--gold); overflow: hidden; }
-  .stat-card-title{ padding: 12px 16px 4px; font-weight: 700; font-size: 0.95rem; }
-  .stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 0 16px 8px; }
-  .stat-card-body{ padding: 6px 10px 12px; }
+  .stat-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); overflow: hidden; }
+  .stat-card-title{ padding: 16px 18px 0; font-weight: 700; font-size: 0.95rem; }
+  .stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 3px 18px 0; }
+  .stat-card-body{ padding: 12px 14px 14px; }
 
   .pill{ font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .pill.up{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.10); }
@@ -142,21 +189,23 @@
   .pill.down{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.10); }
 
   /* Ranked rows: Game Records' .cols/.ln pattern -- a plain two-column list,
-     rank 1 picked out with a colored left border instead of a podium tile. */
+     the record holder picked out with the shared outline accent. */
   .cols{ display: flex; flex-direction: column; }
   .ln{
     display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
-    background: var(--surface-raised); border: 1px solid var(--line); border-radius: 10px; border-left: 3px solid var(--turf);
+    background: var(--item); border: 1px solid var(--item-line); border-radius: 10px;
     padding: 9px 12px; margin-top: 6px; min-height: 58px;
   }
   .ln.norank{ grid-template-columns: minmax(0,1fr) auto; }
   .ln .rk{ font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); text-align: center; font-size: 1.2rem; }
   .ln .tm{ font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ln .meta{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ln.rec.up{ border-color: var(--turf); background: rgba(76,154,107,0.07); }
+  .ln.rec.up{ border-color: var(--win-line); background: var(--win-tint); }
   .ln.rec.up .rk{ color: var(--turf); }
-  .ln.rec.down{ border-color: var(--loss); background: rgba(192,87,75,0.07); }
+  .ln.rec.down{ border-color: var(--loss-line); background: var(--loss-tint); }
   .ln.rec.down .rk{ color: var(--loss); }
+  :root[data-accent="outline"] .ln.rec.up,
+  :root[data-accent="outline"] .ln.rec.down{ background: var(--item); }
   .row-stats{ display: flex; gap: 14px; }
   .row-stat{ text-align: center; min-width: 34px; }
   .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -304,14 +353,45 @@
 
   // entry: {kind: 'team', team_score, opponent_score, period, clock, tone} or
   // {kind: 'prop', stat, tone} -- see publish_parlay_stats.py's build_live_scores.
-  function liveLine(entry) {
-    if (!entry) return '';
+  function liveText(entry) {
     const clock = entry.kind === 'team' && entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '';
-    const text = entry.kind === 'team'
+    return entry.kind === 'team'
       ? `${Math.round(entry.team_score)}-${Math.round(entry.opponent_score)}${clock}`
       : `${entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1)} so far`;
-    return `<div class="leg-live"><span class="dot"></span>${esc(text)}</div>`;
   }
+
+  // The third stat slot is whichever of these is actually useful right now:
+  // the kickoff time before the game starts, the running score once it's
+  // live, or the graded final once it's decided -- never more than one of
+  // the three at once, which is what keeps a leg card to a single stat row.
+  function thirdStat(p, entry) {
+    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap"><span class="dot"></span>${esc(liveText(entry))}</span>`];
+    if (p.result === 'Pending') return ['Kickoff', esc(fmtTime(p.gametime))];
+    // auto_grade_results.py writes score-graded detail as "17-10 final" --
+    // the label above already says "Final", so a trailing "final" in the
+    // value itself is dropped rather than shown twice. Other detail shapes
+    // (a prop's "Player: 2", a 1st-half score's "...1st half", an
+    // individual-sport "X won") never end in that word, so they pass
+    // through untouched.
+    const detail = (p.detail || fmtTime(p.gametime)).replace(/\s*\bfinal\b\s*$/i, '').trim();
+    return ['Final', esc(detail || p.detail || fmtTime(p.gametime))];
+  }
+
+  function legStatsHtml(p, entry) {
+    const [label3, value3] = thirdStat(p, entry);
+    // label,value,label,value,label,value -- see the .leg-stats comment in
+    // the stylesheet for why this order (not all labels then all values)
+    // is load-bearing for grid-auto-flow:column.
+    return `<span class="l">Sport</span><span class="v">${p.sport ? esc(p.sport) : '—'}</span>` +
+      `<span class="l">Odds</span><span class="v">${esc(fmtOdds(p.odds))}</span>` +
+      `<span class="l">${label3}</span><span class="v">${value3}</span>`;
+  }
+
+  // Keyed like the live-score map (year:week:name) so expanding a leg
+  // survives the 2-minute live-score poll's re-render without carrying the
+  // state into a different week -- same pattern as index.html's
+  // expandedMatchups for the dashboard's matchup cards.
+  const expandedLegs = new Set();
 
   function renderParlay(week, players, live) {
     const legs = legsSorted(week, players);
@@ -323,19 +403,15 @@
     const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
     const hero = `
       <div class="glass hero2" style="position:relative">
+        <span class="badge week-ribbon">${esc(week.year)} · Week ${esc(week.week)}</span>
         <span class="badge status-ribbon ${statusTone}">${status}</span>
         <div class="hero2-main glow">
           <div class="gold-label-xl">Payout</div>
           <div class="hero2-v">${fmtMoney(week.final.payout)}</div>
           <div class="hero-chips">
-            <span class="hero-chip">${esc(week.year)} · Week ${esc(week.week)}</span>
             ${week.sacko ? `<span class="hero-chip loss">Sacko: ${esc(week.sacko)}</span>` : ''}
+            ${week.killed_by.length ? `<span class="hero-chip loss">Killed by: ${esc(week.killed_by.join(' & '))}</span>` : ''}
           </div>
-          ${week.killed_by.length ? `
-          <div class="memoriam">
-            <div class="memoriam-label">In Memoriam</div>
-            <div class="memoriam-killer">Killed by ${esc(week.killed_by.join(' & '))}</div>
-          </div>` : ''}
         </div>
         <div class="hero2-side">
           <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v gold">${wins}</div></div></div>
@@ -346,38 +422,56 @@
       </div>`;
 
     const rows = legs.map(([name, p]) => {
-      const entry = p.result === 'Pending' ? (live || {})[`${week.year}:${week.week}:${name}`] : null;
+      const key = `${week.year}:${week.week}:${name}`;
+      const entry = p.result === 'Pending' ? (live || {})[key] : null;
       const tone = entry && entry.tone ? ` live-${entry.tone}` : '';
-      // detail: the score/stat the pick was actually graded from (see
-      // auto_grade_results.py's Grade Detail column) -- shown once a leg
-      // is decided, so "why" is visible next to the result, not just
-      // while the game's still live.
-      const detail = p.result !== 'Pending' && p.detail
-        ? `<div class="leg-meta">${esc(p.detail)}</div>` : '';
+      const open = expandedLegs.has(key) ? ' open' : '';
       const resultTone = p.result === 'Win' ? 'turf' : p.result === 'Loss' ? 'loss' : '';
       const resultLabel = p.result === 'Pending' ? '—' : p.result;
       return `
-      <div class="leg ${p.result}${tone}">
-        <div style="min-width:0">
-          <div class="leg-name">${esc(name)}</div>
+      <div class="leg ${p.result}${tone}${open}" data-leg-key="${esc(key)}">
+        <div class="leg-head">
+          <div class="leg-top">
+            <div class="leg-name">${esc(name)}</div>
+            <div class="leg-result-group">
+              <span class="leg-result ${resultTone}">${resultLabel}</span>
+              <span class="leg-chev">▶</span>
+            </div>
+          </div>
           <div class="leg-bet">${esc(p.pick)}</div>
-          <div class="leg-meta">${p.sport ? esc(p.sport) + ' · ' : ''}${fmtOdds(p.odds)} · ${fmtTime(p.gametime)}</div>
-          ${detail}
-          ${liveLine(entry)}
         </div>
-        <div class="leg-result ${resultTone}">${resultLabel}</div>
+        <div class="leg-detail"><div class="leg-detail-in"><div class="leg-stats">${legStatsHtml(p, entry)}</div></div></div>
       </div>`;
     }).join('') +
+      // No pick, nothing to expand -- a flat row, not clickable.
       missing.map(name => `
-      <div class="leg">
-        <div style="min-width:0">
-          <div class="leg-name">${esc(name)}</div>
-          <div class="leg-meta">No pick yet</div>
+      <div class="leg missing">
+        <div class="leg-head">
+          <div class="leg-top">
+            <div class="leg-name">${esc(name)}</div>
+            <span class="leg-result">—</span>
+          </div>
+          <div class="leg-bet">No pick yet</div>
         </div>
-        <div class="leg-result">—</div>
       </div>`).join('');
 
-    return `${hero}<div class="legs-label">Legs</div>${rows}`;
+    // Hit/lost/live already live in the hero's Legs Hit/Legs Lost stats --
+    // repeating them here was the same count twice on one screen.
+    //
+    // The all-toggle's label is computed from the same expandedLegs Set the
+    // per-row "open" class reads, so it's correct on first paint (e.g. after
+    // the 2-minute live-score poll re-renders while some legs are already
+    // expanded) rather than always starting at "Expand all".
+    const legKeys = legs.map(([name]) => `${week.year}:${week.week}:${name}`);
+    const allOpen = legKeys.length > 0 && legKeys.every(k => expandedLegs.has(k));
+    const toggleAll = legKeys.length
+      ? `<button type="button" class="leg-expand-toggle" id="leg-expand-toggle">${allOpen ? 'Collapse all' : 'Expand all'}</button>`
+      : '';
+    return `${hero}
+      <div class="glass" style="margin-top:14px">
+        <div class="panel-title">Legs${toggleAll}</div>
+        <div class="panel-body">${rows}</div>
+      </div>`;
   }
 
   // ---------- Stat cards ----------
@@ -622,6 +716,38 @@
         backBtn.hidden = isCurrent;
         container.innerHTML = renderParlay(w, players, live);
       }
+      // Keeps the all-toggle's label matching the actual state after a
+      // per-row click, instead of waiting for the next full re-render.
+      function syncExpandAllLabel() {
+        const btn = container.querySelector('#leg-expand-toggle');
+        if (!btn) return;
+        const rows = [...container.querySelectorAll('.leg:not(.missing)')];
+        const allOpen = rows.length > 0 && rows.every(r => r.classList.contains('open'));
+        btn.textContent = allOpen ? 'Collapse all' : 'Expand all';
+      }
+      // Delegated once on the container rather than per-leg, since
+      // showSelected() rebuilds the legs' markup wholesale on every
+      // selection change and every 2-minute live-score poll.
+      container.addEventListener('click', e => {
+        const toggleAll = e.target.closest('#leg-expand-toggle');
+        if (toggleAll) {
+          const rows = [...container.querySelectorAll('.leg:not(.missing)')];
+          const allOpen = rows.length > 0 && rows.every(r => r.classList.contains('open'));
+          rows.forEach(r => {
+            const key = r.dataset.legKey;
+            r.classList.toggle('open', !allOpen);
+            if (allOpen) expandedLegs.delete(key); else expandedLegs.add(key);
+          });
+          toggleAll.textContent = allOpen ? 'Expand all' : 'Collapse all';
+          return;
+        }
+        const leg = e.target.closest('.leg:not(.missing)');
+        if (!leg) return;
+        const key = leg.dataset.legKey;
+        if (expandedLegs.has(key)) expandedLegs.delete(key); else expandedLegs.add(key);
+        leg.classList.toggle('open');
+        syncExpandAllLabel();
+      });
       function selectCurrent() {
         yearSel.value = current.year;
         fillWeeks(current.week);
