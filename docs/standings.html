@@ -34,14 +34,15 @@
   .qrow .badge-stack{ display:flex; flex-direction:row; flex-wrap:wrap; justify-content:flex-end; gap:4px; }
   /* Right column (badges + W/L/Win%) always stays beside the name/meta
      column -- never drop it to a row of its own, no matter how narrow.
-     Each meta-seg (e.g. "PF 19259.2") stays nowrap so it can't split
-     mid-pair, but nothing forces a break *between* segments -- plain
-     text wrap takes care of that only once there's truly no room left,
-     which in practice means "PA" is the one that drops below "PF" (it's
-     last), not seasons/PF getting stranded with it like the plain-text
-     version before this used segments at all. */
+     That's a separate concern from how .meta wraps internally, below. */
   .qrow-main{ min-width:0; }
-  .qrow .meta-seg{ white-space:nowrap; }
+  /* "PF x · PA y" is one nowrap unit so it can't split mid-pair, and
+     always forced onto its own line after "N seasons" (at every width,
+     not just mobile) -- exactly two lines, seasons alone then PF/PA
+     together, instead of "seasons · PF" sharing a line while "PA" gets
+     stranded below. */
+  .qrow .meta-seg{ white-space:nowrap; display:block; }
+  .qrow .meta-sep{ display:none; }
 
   #standings-container{ margin-top:14px; }
   .glass-title-hint{ cursor:help; border-bottom:1px dotted var(--text-dim); }
@@ -204,7 +205,7 @@
     const stackedBadges = badges.length >= 2 ? `<div class="badge-stack">${badges.join('')}</div>` : '';
     const metaParts = [];
     if (year === 'all') metaParts.push(`${r.seasons} seasons`);
-    metaParts.push(`PF ${f1(r.pf)}`, `PA ${f1(r.pa)}`);
+    metaParts.push(`PF ${f1(r.pf)} · PA ${f1(r.pa)}`);
     const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
     return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${inlineBadge}</div>` +
       `<div class="meta">${metaHtml}</div></div>` +
