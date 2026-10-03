@@ -12,6 +12,11 @@
 <link rel="stylesheet" href="league.css?v=5">
 <style>
   .top-row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:14px; }
+  /* Label and its select wrapped as one flex item -- otherwise .top-row's
+     own wrap could split them: the label fits on the tabs' row but the
+     select doesn't, leaving "Season" stranded alone with the dropdown
+     falling to its own row underneath. */
+  .season-picker{ display:flex; align-items:center; gap:8px; }
   .tabs{ display:flex; gap:8px; flex-wrap:wrap; }
   .tab{ background:none; border:1px solid var(--line); color:var(--text-dim); font-family:var(--body); font-size:0.82rem; font-weight:600; padding:8px 14px; border-radius:999px; cursor:pointer; }
   .tab.on{ border-color:var(--gold); color:var(--gold); background:rgba(212,180,106,0.10); }
@@ -46,8 +51,10 @@
       <div class="top-row">
         <div class="tabs" id="tabs"></div>
         <div class="sp"></div>
-        <label class="selector-label" for="year-select">Season</label>
-        <select class="lg-select" id="year-select" autocomplete="off"></select>
+        <div class="season-picker">
+          <label class="selector-label" for="year-select">Season</label>
+          <select class="lg-select" id="year-select" autocomplete="off"></select>
+        </div>
       </div>
       <div id="tiles"></div>
       <div id="standings-container"><div class="loading-row">Loading standings…</div></div>
