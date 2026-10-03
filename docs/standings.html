@@ -143,19 +143,19 @@
     ];
   }
 
-  // Hero (biggest/leader stat, glowing) + two quiet side stats + a two-tile strip below --
-  // not every number on this page deserves equal weight, so the leader gets to stand out.
+  // Hero (biggest/leader stat, glowing) + the other four as quiet side
+  // stats -- not every number on this page deserves equal weight, so the
+  // leader gets to stand out. Used to split the other four into two side
+  // stats plus a separate two-tile strip below the card; that read as an
+  // arbitrary split (4 and 2 belong together), so all four sit together now.
   function renderTiles(list) {
     const toneCls = c => (c === 'good' ? 'turf' : c === 'bad' ? 'loss' : '');
-    const hero = list[0], side = list.slice(1, 3), rest = list.slice(3);
+    const hero = list[0], side = list.slice(1);
     const glow = hero.cls === 'bad' ? 'glow-loss' : 'glow-turf';
-    const heroHtml = `<div class="glass hero2"><div class="hero2-main ${glow}"><div class="hero2-eyebrow">${hero.title}</div>` +
+    return `<div class="glass hero2"><div class="hero2-main ${glow}"><div class="hero2-eyebrow">${hero.title}</div>` +
       `<div class="hero2-v">${esc(hero.name)}</div><div class="hero2-sub">${esc(hero.sub)}</div></div>` +
       `<div class="hero2-side">${side.map(x => `<div class="hs"><div class="hs-l">${x.title}</div><div class="hs-r">` +
         `<div class="hs-v ${toneCls(x.cls)}">${esc(x.name)}</div><div class="hs-n">${esc(x.sub)}</div></div></div>`).join('')}</div></div>`;
-    const tilesRow = `<div class="glass qtiles">${rest.map(x => `<div><div class="qtile-v ${toneCls(x.cls)}">${esc(x.name)}</div><div class="qtile-t">${x.title}</div>` +
-      `<div class="qtile-s">${esc(x.sub)}</div></div>`).join('')}</div>`;
-    return heroHtml + '<div class="gap"></div>' + tilesRow;
   }
 
   let formerCount = 0;
