@@ -343,11 +343,19 @@ def main():
     elif args.dry_run:
         print(f"\nDry run -- {len(graded)} result(s) would be written, nothing actually written.")
     else:
+        # Three batched calls rather than three per pick. A full week is 12
+        # picks, so the per-pick version spent up to 36 Sheets API calls (and
+        # 36 round trips) writing what two value batches and one note batch
+        # cover -- worth avoiding on a job that runs every 10 minutes against
+        # a 60-writes-per-minute quota. Same batching the backfill pass below
+        # already used.
         note_stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        for row_num, player, outcome, detail in graded:
-            ws.update([[outcome]], f"N{row_num}")
-            ws.update_note(f"N{row_num}", f"Auto-graded {note_stamp} ({detail})")
-            ws.update([[detail]], f"{DETAIL_COLUMN}{row_num}")
+        ws.batch_update(
+            [{"range": f"N{row_num}", "values": [[outcome]]} for row_num, _p, outcome, _d in graded]
+            + [{"range": f"{DETAIL_COLUMN}{row_num}", "values": [[detail]]} for row_num, _p, _o, detail in graded]
+        )
+        ws.update_notes({f"N{row_num}": f"Auto-graded {note_stamp} ({detail})"
+                         for row_num, _p, _o, detail in graded})
         print(f"\nWrote {len(graded)} result(s).")
 
     # Also fill in Grade Detail for any pick that already has a Win/Loss --
