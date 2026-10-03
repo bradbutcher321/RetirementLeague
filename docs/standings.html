@@ -32,26 +32,16 @@
      instead, stacked above the W/L/Win% stats on the row's own right side. */
   .qrow .stats-col{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
   .qrow .badge-stack{ display:flex; flex-direction:row; flex-wrap:wrap; justify-content:flex-end; gap:4px; }
-  /* .meta's "N seasons · PF x · PA y" otherwise wraps wherever the text
-     happens to run out of room -- usually splitting right before "PA",
-     leaving it stranded alone while "seasons" and "PF" share a line.
-     Grouping "PF x · PA y" as one unit (row() below) and forcing a break
-     before it on mobile keeps those two together on their own line
-     instead of splitting mid-pair. */
+  /* Right column (badges + W/L/Win%) always stays beside the name/meta
+     column -- never drop it to a row of its own, no matter how narrow.
+     Each meta-seg (e.g. "PF 19259.2") stays nowrap so it can't split
+     mid-pair, but nothing forces a break *between* segments -- plain
+     text wrap takes care of that only once there's truly no room left,
+     which in practice means "PA" is the one that drops below "PF" (it's
+     last), not seasons/PF getting stranded with it like the plain-text
+     version before this used segments at all. */
   .qrow-main{ min-width:0; }
-  @media (max-width:640px){
-    .qrow .meta-seg{ display:block; }
-    .qrow .meta-sep{ display:none; }
-    /* At a genuine ~375px width, squeezing name+meta into a shrunk column
-     next to the badges/record column (confirmed directly: measured zero
-     page-level overflow, but the "PF x · PA y" pair was still wrapping
-     internally since its own column only had ~70-90px left) doesn't
-     leave enough room for "PF x · PA y" to stay on one line. Dropping to
-     two full-width rows -- name+meta on top, badges+record below -- gives
-     both the whole row's width instead of a third of it. */
-    .qrow{ grid-template-columns:30px 1fr; row-gap:8px; }
-    .qrow .stats-col{ grid-column:2; }
-  }
+  .qrow .meta-seg{ white-space:nowrap; }
 
   #standings-container{ margin-top:14px; }
   .glass-title-hint{ cursor:help; border-bottom:1px dotted var(--text-dim); }
@@ -182,7 +172,7 @@
   function renderTiles(list) {
     const toneCls = c => (c === 'good' ? 'turf' : c === 'bad' ? 'loss' : '');
     const hero = list[0], side = list.slice(1);
-    const glow = hero.cls === 'bad' ? 'glow-loss' : 'glow-turf';
+    const glow = hero.cls === 'bad' ? 'glow-loss' : 'glow';
     return `<div class="glass hero2"><div class="hero2-main ${glow}"><div class="hero2-eyebrow">${hero.title}</div>` +
       `<div class="hero2-v">${esc(hero.name)}</div><div class="hero2-sub">${esc(hero.sub)}</div></div>` +
       `<div class="hero2-side">${side.map(x => `<div class="hs"><div class="hs-l">${x.title}</div><div class="hs-r">` +
@@ -214,7 +204,7 @@
     const stackedBadges = badges.length >= 2 ? `<div class="badge-stack">${badges.join('')}</div>` : '';
     const metaParts = [];
     if (year === 'all') metaParts.push(`${r.seasons} seasons`);
-    metaParts.push(`PF ${f1(r.pf)} · PA ${f1(r.pa)}`);
+    metaParts.push(`PF ${f1(r.pf)}`, `PA ${f1(r.pa)}`);
     const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
     return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${inlineBadge}</div>` +
       `<div class="meta">${metaHtml}</div></div>` +
