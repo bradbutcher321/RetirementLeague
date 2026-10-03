@@ -720,12 +720,12 @@
      a matched pair. Still gold, same as every other card title on this
      page that doubles as the thing the card is naming. */
   .stat-moment-eyebrow{ color: var(--gold); font-weight: 700; font-size: 0.92rem; margin-bottom: 12px; }
-  /* The fact itself lives in a bordered item box, same treatment as the
-     featured leg in the Current Parlay card beside it -- so growing to fill
-     whatever extra height that card's stats row adds no longer leaves this
-     card's text awkwardly floating with dead space below it; the box grows
-     instead and keeps the text vertically centered inside itself. */
-  .stat-moment-box{ flex: 1; display: flex; align-items: center; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 14px; }
+  /* The fact itself lives in a bordered item box, same treatment -- and
+     same content-hugging height -- as the featured leg in the Current
+     Parlay card beside it. It does NOT grow to fill the card: any extra
+     height from that card's stats row just leaves quiet space below the
+     box rather than stretching the box itself to match. */
+  .stat-moment-box{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 14px 11px; }
   .stat-moment-text{ font-size: 1rem; font-weight: 600; line-height: 1.4; text-align: left; }
   .stat-moment-text b{ font-family: var(--scoreboard); color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
   .stat-moment-fine{ display: block; font-size: 0.62rem; font-weight: 400; color: var(--text-dim); margin-top: 4px; }
