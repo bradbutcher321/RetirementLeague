@@ -387,11 +387,12 @@ body{
   color: var(--ctl-on-ink);
   font-weight: 700;
 }
-/* Overview's and Game Records' segments carry a tone with the selection
-   (best vs worst), so those go solid in that tone instead of gold. */
-.seg button.on.good{ background: var(--turf); color: #04120A; }
-.seg button.on.bad,
-.seg button.on.dn{ background: var(--loss); color: #1C0703; }
+/* A selected control is ALWAYS gold -- there is no good/bad variant. Some
+   segments pick between a "best" and a "worst" view, and those used to fill
+   the pill green or red to match. That made the selector itself look like a
+   result: green "Career Efficiency" reads as a score, not as the tab you are
+   on. Tone belongs on the numbers the selection reveals, which already carry
+   it; the control just says where you are. */
 
 /* The scope row stacks directly on top of a tab row (Parlay's year scope
    above its category tabs, and again inside Jon's Table). With the same

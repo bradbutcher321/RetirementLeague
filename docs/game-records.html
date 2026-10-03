@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="theme.css?v=6">
 <link rel="stylesheet" href="nav.css?v=4">
 <link rel="stylesheet" href="league.css?v=6">
 <style>
@@ -41,7 +41,6 @@
   /* Selector styling (including .tabs' own bottom margin) lives in theme.css
      -- only this page's spacing here. */
   .seg{ margin:4px 16px 8px; }
-  .seg button.on{ background:var(--turf); color:#04120A; }
 
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
@@ -148,13 +147,15 @@
     return `<div class="hero${c.dn ? ' dn' : ''}"><div class="hero-t">${c.title}</div><div class="hero-v ${c.dn ? 'dn' : ''}">${f2(t.v)}</div><div class="hero-n">${who}</div><div class="hero-s">${t.meta}</div></div>`;
   }
 
-  const seg = (w, hiDn, loDn) => `<div class="seg"><button class="${w === 'hi' ? 'on' + (hiDn ? ' dn' : '') : ''}" data-seg="hi">Highest</button><button class="${w === 'lo' ? 'on' + (loDn ? ' dn' : '') : ''}" data-seg="lo">Lowest</button></div>`;
+  // No tone on the buttons: a selected control is gold site-wide. The
+  // highest/lowest distinction is carried by the rows it reveals.
+  const seg = w => `<div class="seg"><button class="${w === 'hi' ? 'on' : ''}" data-seg="hi">Highest</button><button class="${w === 'lo' ? 'on' : ''}" data-seg="lo">Lowest</button></div>`;
   const row = (i, rank, dn) => `<div class="ln ${dn ? 'dn' : ''}${rank === 1 ? ' rec' : ''}"><div class="rk">${rank}</div><div style="min-width:0"><div class="tm">${esc(nameOf(i))}</div><div class="meta">${i.meta}</div></div><div class="val">${f2(i.v)}</div></div>`;
 
   function listCard(hi, lo, which) {
     const c = which === 'lo' ? lo : hi;
-    if (!c.items.length) return card(c.title, seg(which, hi.dn, lo.dn) + '<div class="empty-note">No games yet for this season.</div>');
-    return card(c.title, seg(which, hi.dn, lo.dn) +
+    if (!c.items.length) return card(c.title, seg(which) + '<div class="empty-note">No games yet for this season.</div>');
+    return card(c.title, seg(which) +
       `<div class="cols"><div>${c.items.slice(0, 5).map((i, k) => row(i, k + 1, c.dn)).join('')}</div><div>${c.items.slice(5).map((i, k) => row(i, k + 6, c.dn)).join('')}</div></div>`);
   }
 

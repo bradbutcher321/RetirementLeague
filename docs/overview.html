@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=5">
+<link rel="stylesheet" href="theme.css?v=6">
 <link rel="stylesheet" href="nav.css?v=4">
 <link rel="stylesheet" href="league.css?v=6">
 <style>
@@ -490,7 +490,10 @@
     if (T.html) { el.innerHTML = T.html; return; }
     if (T.tiles) { el.innerHTML = tilesHtml(T.tiles); return; }
     const vi = viewPick[tab] || 0, v = T.views[vi];
-    const seg = `<div class="seg">${T.views.map((x, i) => `<button class="${i === vi ? 'on' + (x.tone === 'good' ? ' good' : x.tone === 'bad' ? ' bad' : '') : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
+    // No tone on the buttons: a selected control is gold site-wide. A view's
+    // own tone still colours the rows it renders, which is where it means
+    // something.
+    const seg = `<div class="seg">${T.views.map((x, i) => `<button class="${i === vi ? 'on' : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
     const half = Math.ceil(v.items.length / 2);
     const cols = `<div class="cols"><div>${v.items.slice(0, half).map((i, k) => rowHtml(i, k, v)).join('')}</div><div>${v.items.slice(half).map((i, k) => rowHtml(i, k + half, v)).join('')}</div></div>`;
     el.innerHTML = glassCard(v.label, seg + cols, v.note);
