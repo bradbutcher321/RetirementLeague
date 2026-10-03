@@ -1779,6 +1779,11 @@
     add(neverWonFounders.length > 0,
       `Look at all these founding members that have never won a ship: ${hi(neverWonFounders.map(p => p.name).join(', '))}.`);
 
+    // ----- Per-manager: never won a championship. -----
+    players.filter(p => champsOf(p) === 0).forEach(p => {
+      add(true, `Will ${p.name} ever win a ship? Find out next time on Dragon Ball Z.`);
+    });
+
     const withBestFinish = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.best_regular_finish));
     const topBestFinish = minBy(withBestFinish, p => p.career.standings.best_regular_finish);
     add(topBestFinish, `${topBestFinish && topBestFinish.name}'s best-ever regular season finish is ${hi('#' + topBestFinish.career.standings.best_regular_finish)}.`);
