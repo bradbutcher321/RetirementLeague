@@ -30,7 +30,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from generate_franchise_data import SHEET_ID, CREDS_PATH
+from sheets_lib import SHEET_ID, CREDS_PATH
 import generate_parlay_data as gp
 
 TARGET_TAB = "Auto Parlay Tracker"

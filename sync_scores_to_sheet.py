@@ -49,7 +49,7 @@ from google.oauth2.service_account import Credentials
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
-from generate_franchise_data import SHEET_ID, CREDS_PATH, to_int
+from sheets_lib import SHEET_ID, CREDS_PATH, to_int
 
 TARGET_TAB = "Game Tracker"
 # Sheet type -> D1 bracket_type(s) a blank row of that type can be inferred from.

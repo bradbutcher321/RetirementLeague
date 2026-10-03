@@ -1,6 +1,9 @@
 /**
- * Ported from update_page_and_sheets.py's MANAGER_NICKNAMES / raw_manager_name
- * / build_manager_names — keep both in sync if the naming rule ever changes.
+ * How a team's owner is named on the Live Dashboard. The Python side has its
+ * own copy of the same idea -- database/history_lib.py's manager_name() plus
+ * SHEET_NAME_TO_ESPN_IDS, which maps the same people to the display names the
+ * rest of the site uses -- so a naming change has to land in both or the
+ * Dashboard will disagree with every other page about what to call someone.
  *
  * Default: first name only, matching the Franchise page. When two managers
  * share a first name, the last initial (no period) is appended to

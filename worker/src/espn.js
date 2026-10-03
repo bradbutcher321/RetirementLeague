@@ -2,9 +2,8 @@
  * Raw ESPN Fantasy Football API calls, mirroring exactly what the vendored
  * espn_api Python library (espn_api/requests/espn_requests.py,
  * espn_api/base_league.py) does — same endpoints, same query params, same
- * response field paths — so this Worker's output matches what
- * update_page_and_sheets.py has always produced, without needing Python or
- * that library at all.
+ * response field paths — so this Worker produces what the Python pipeline it
+ * replaced always did, without needing Python or that library at all.
  */
 
 const FANTASY_BASE = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl";

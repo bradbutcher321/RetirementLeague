@@ -1,14 +1,14 @@
 /**
- * Builds the full Live Dashboard payload directly from ESPN — the Worker
- * equivalent of update_page_and_sheets.py's main(), minus the Google Sheets
- * step entirely. Two deliberate simplifications from the Python version,
- * both narrow edge cases:
+ * Builds the full Live Dashboard payload directly from ESPN. This replaced a
+ * Python script that did the same work and then wrote it into a Google Sheet;
+ * two deliberate simplifications carried over from it, both narrow edge
+ * cases:
  *
  *   1. A roster player's pro team is read from the top-level `proTeamId`
- *      only, not cross-checked against that week's stats entries. The
- *      Python code does that extra check to handle a player traded
- *      *during* a past week being looked up later — irrelevant here since
- *      this only ever looks at the current, live week.
+ *      only, not cross-checked against that week's stats entries. That extra
+ *      check exists to handle a player traded *during* a past week being
+ *      looked up later — irrelevant here since this only ever looks at the
+ *      current, live week.
  *   2. If ESPN hasn't started returning live projected scores yet for a
  *      matchup (pre-kickoff), projected is reported as 0 instead of being
  *      recomputed by summing each starter's individual projection. That
@@ -190,22 +190,28 @@ function parseTeam(data) {
   };
 }
 
-/** One team's actual score per week, in week order, straight from the
- * league-wide schedule array (mMatchup view) — same source
- * Team._fetch_schedule reads in the Python library. */
-function teamScoresByWeek(schedule, teamId) {
-  const scores = [];
+/** teamId -> that team's actual score per week, in week order, straight from
+ * the league-wide schedule array (mMatchup view) — same source
+ * Team._fetch_schedule reads in the vendored Python library.
+ *
+ * Built once for every team rather than scanned per team on demand: the
+ * weekly high, the prior-week high and each team's prior points all want the
+ * same lists, which was three dozen full passes over the schedule for the
+ * same answer. */
+function scoresByTeam(schedule) {
+  const byTeam = new Map();
+  const push = (teamId, score) => {
+    if (teamId === undefined) return;
+    if (!byTeam.has(teamId)) byTeam.set(teamId, []);
+    byTeam.get(teamId).push(typeof score === "number" ? score : null);
+  };
   for (const matchup of schedule) {
     const home = matchup.home || {};
     const away = matchup.away || {};
-    const homeId = home.teamId ?? -1;
-    const awayId = away.teamId ?? -1;
-    if (teamId === homeId || teamId === awayId) {
-      const side = teamId === homeId ? home : away;
-      scores.push(typeof side.totalPoints === "number" ? side.totalPoints : null);
-    }
+    push(home.teamId, home.totalPoints);
+    push(away.teamId, away.totalPoints);
   }
-  return scores;
+  return byTeam;
 }
 
 /** Each team's record and points through weeks before `currentWeek`, rebuilt
@@ -255,13 +261,13 @@ function priorStandings(schedule, currentWeek) {
   return out;
 }
 
-function findWeeklyHigh(teamsRaw, schedule, currentWeek) {
+/** Highest single-week score anywhere in the league, through `upToWeek`. */
+function findWeeklyHigh(weekScores, upToWeek) {
   let best = { teamId: null, week: null, score: -1 };
-  for (const t of teamsRaw) {
-    const scores = teamScoresByWeek(schedule, t.teamId).slice(0, currentWeek);
-    scores.forEach((score, idx) => {
+  for (const [teamId, scores] of weekScores) {
+    scores.slice(0, upToWeek).forEach((score, idx) => {
       if (score !== null && score > best.score) {
-        best = { teamId: t.teamId, week: idx + 1, score };
+        best = { teamId, week: idx + 1, score };
       }
     });
   }
@@ -318,7 +324,9 @@ export async function buildDashboard(env) {
     return parsed;
   });
   const teamsById = new Map(teamsRaw.map((t) => [t.teamId, t]));
-  const priorByTeam = priorStandings(league.schedule || [], currentWeek);
+  const schedule = league.schedule || [];
+  const priorByTeam = priorStandings(schedule, currentWeek);
+  const weekScores = scoresByTeam(schedule);
   const managerNames = buildManagerNames(teamsRaw);
 
   let nflScoreboardError = null;
@@ -347,24 +355,21 @@ export async function buildDashboard(env) {
     const away = parseBoxSide(boxMatchup.away);
     if (!home && !away) continue;
 
-    if (home) {
-      teamStatusById.set(home.teamId, countGameStatus(home.entries, gameStateByProTeam));
-      currentScores.push(home.score);
-      projectedScores.push(home.projected);
-      teamCurrentById.set(home.teamId, { current: home.score, projected: home.projected });
-    }
-    if (away) {
-      teamStatusById.set(away.teamId, countGameStatus(away.entries, gameStateByProTeam));
-      currentScores.push(away.score);
-      projectedScores.push(away.projected);
-      teamCurrentById.set(away.teamId, { current: away.score, projected: away.projected });
+    for (const side of [home, away]) {
+      if (!side) continue;
+      teamStatusById.set(side.teamId, countGameStatus(side.entries, gameStateByProTeam));
+      currentScores.push(side.score);
+      projectedScores.push(side.projected);
+      teamCurrentById.set(side.teamId, { current: side.score, projected: side.projected });
     }
     if (!home || !away) continue; // bye week — no matchup card to show
 
     const homeTeam = teamsById.get(home.teamId);
     const awayTeam = teamsById.get(away.teamId);
-    const awayStatus = countGameStatus(away.entries, gameStateByProTeam);
-    const homeStatus = countGameStatus(home.entries, gameStateByProTeam);
+    // Already counted into teamStatusById just above — no need to walk both
+    // rosters a second time for the same numbers.
+    const awayStatus = teamStatusById.get(away.teamId);
+    const homeStatus = teamStatusById.get(home.teamId);
     matchups.push({
       awayName: awayTeam?.name || "",
       awayManager: managerNames.get(away.teamId) || "",
@@ -397,7 +402,7 @@ export async function buildDashboard(env) {
       // the dashboard can add this week on top without double counting once ESPN
       // rolls a finished week into pointsFor.
       const priorPoints = round2(
-        teamScoresByWeek(league.schedule || [], t.teamId)
+        (weekScores.get(t.teamId) || [])
           .slice(0, Math.max(currentWeek - 1, 0))
           .reduce((sum, v) => sum + (v || 0), 0)
       );
@@ -425,8 +430,8 @@ export async function buildDashboard(env) {
   const currentMedian = currentScores.length ? round2(median(currentScores)) : 0;
   const projectedMedian = projectedScores.length ? round2(median(projectedScores)) : 0;
 
-  const weeklyHigh = findWeeklyHigh(teamsRaw, league.schedule || [], currentWeek);
-  const priorHigh = findWeeklyHigh(teamsRaw, league.schedule || [], Math.max(currentWeek - 1, 0));
+  const weeklyHigh = findWeeklyHigh(weekScores, currentWeek);
+  const priorHigh = findWeeklyHigh(weekScores, Math.max(currentWeek - 1, 0));
   const seasonLeaderTeam = teamsRaw.reduce((best, t) => (t.pointsFor > (best?.pointsFor ?? -1) ? t : best), null);
 
   const seasonStarted = weeklyHigh.score > 0;

@@ -91,7 +91,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from generate_franchise_data import SHEET_ID, CREDS_PATH
+from sheets_lib import SHEET_ID, CREDS_PATH
 from parlay_note_parser import VS_ONLY, TOTAL_VS, TEAM_LINE_VS, PLAYER_OU, parse_signed_number
 from espn_gametime_lookup import find_final_score, find_half_score, find_prop_stat, find_individual_result, INDIVIDUAL_SPORTS
 

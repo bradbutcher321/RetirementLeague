@@ -45,13 +45,21 @@ career stats in sync with the league's Google Sheet.
   for any year.
 - **Head to Head** (`docs/head-to-head.html`) — pick two teams to compare
   their all-time and postseason results, with every game listed.
-- **Overview** (`docs/overview.html`) — champions, sackos, title games,
-  season and weekly scoring records, rankings, earnings, and streaks.
+- **League History** (`docs/overview.html`) — champions, sackos, title
+  games, season and weekly scoring records, rankings, earnings, and streaks.
+  The filename stays `overview.html` (it was titled "Overview" first) so old
+  links and the analytics `page` key both keep working.
 - **Game Records** (`docs/game-records.html`) — top-10 single-game records,
   all-time or for a single season.
 
-Standings, Head to Head, Overview, and Game Records all read
+Standings, Head to Head, League History, and Game Records all read
 `docs/data/league.json` and share `league.css` / `league-common.js`.
+Every page loads `theme.css` (the whole design system: surfaces, state
+accents, heroes, tab rows, segmented controls, dropdowns, badges, trays) plus
+`nav.css` / `nav.js`, and `page-common.js` for `esc()` / `formatUpdated()`.
+A page's own `<style>` block should hold only what genuinely differs from
+theme.css — if a rule would be identical on a second page, it belongs in
+theme.css instead.
 
 ## How it updates
 
@@ -72,12 +80,15 @@ Standings, Head to Head, Overview, and Game Records all read
   the last 7 days, and top pages. Set `localStorage.setItem('rl-notrack', '1')`
   in a browser to stop counting your own visits.
 - **`generate_franchise_data_d1.py`** — reads career stats from D1 (the
-  same history the Worker and Standings/Overview pages use) plus the
+  same history the Worker and Standings/League History pages use) plus the
   sheet's `Money Tracker` tab, and writes `docs/data/franchise.json`. It
-  reuses `authorize`, `load_money`, and `SHEET_ID` from the older
-  **`generate_franchise_data.py`** (the pre-D1, sheet-only version, kept
-  around as a shared module rather than a second pipeline) instead of
-  duplicating them. Also computes lineup-efficiency stats (career/season
+  takes `authorize`, `load_money`, and `SHEET_ID` from
+  **`sheets_lib.py`**, the shared Google Sheets module every
+  sheet-reading script here uses, rather than duplicating them. (That file
+  used to be `generate_franchise_data.py`, the pre-D1 sheet-only pipeline
+  this script replaced; its compute logic was all reimplemented here, so only
+  the Sheets access survived and the file is named for that now.) Also
+  computes lineup-efficiency stats (career/season
   starters-vs-optimal percentage, points left on the bench, the single
   worst bench miss, and an "optimal record" recomputing regular-season
   W/L with each week's best possible lineup instead of what was actually
@@ -200,7 +211,7 @@ Standings, Head to Head, Overview, and Game Records all read
 - **Final standings**: both scripts above override ESPN's own
   `final_standing` with the league's actual rule
   (`database/history_lib.compute_final_standings`, one shared function so
-  Franchise and Standings/Overview can never disagree) — a team that made
+  Franchise and Standings/League History can never disagree) — a team that made
   the real playoff bracket keeps ESPN's result; every other team just keeps
   its regular-season standing, since the "loser's bracket" placement games
   don't mean anything to this league; and from 2025 on, the two worst
@@ -255,11 +266,12 @@ Each has a full docstring; short version:
 ```
 docs/                   GitHub Pages site (HTML/CSS/JS + franchise.json, league.json, draft-board.json, rule-changes.json)
 worker/                 Cloudflare Worker powering the live Dashboard and parlay stats (KV-served, no committed JSON)
-espn_api/               Vendored ESPN Fantasy API client library (Python, used by generate_franchise_data.py)
-generate_franchise_data_d1.py  Franchise page data pipeline (D1-backed; shares helpers with generate_franchise_data.py)
+espn_api/               Vendored ESPN Fantasy API client library (Python, football only -- the library's other sports were never imported here and are not vendored). Used by the database/ scripts
+sheets_lib.py                 Shared Google Sheets access: credentials, number parsing, Game Tracker + Money Tracker readers
+generate_franchise_data_d1.py  Franchise page data pipeline (D1-backed)
 generate_draft_board_data.py  Draft Board page data pipeline
 generate_parlay_data.py       Parlay stats logic, shared by publish_parlay_stats.py (live) and its own local-preview main()
-generate_league_data_d1.py    Standings / Head to Head / Overview / Game Records data pipeline (D1-backed)
+generate_league_data_d1.py    Standings / Head to Head / League History / Game Records data pipeline (D1-backed)
 generate_rule_changes_data.py Rule Changes page data pipeline
 database/history_lib.py       Shared D1 row-building + final-standings + wrangler-CLI logic, used by every D1-writing script above
 database/update_history_d1.py Daily D1 sync from ESPN -- the foundation every *_d1.py script above reads from

@@ -33,7 +33,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
-import generate_franchise_data as gf  # sheet-only pieces: games, money, auth
+import sheets_lib as sheets  # sheet-only pieces: games, money, auth
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data", "league.json")
 MEDIAN_ERA_START_YEAR = 2025
@@ -182,9 +182,9 @@ def main():
         draft_order.setdefault(player, {})[d["year"]] = d["round_pick"]
 
     print("Loading Google Sheet (Game Tracker + Money Tracker)...")
-    spreadsheet = gf.authorize().open_by_key(gf.SHEET_ID)
-    games = gf.load_games(spreadsheet)
-    money = gf.load_money(spreadsheet)
+    spreadsheet = sheets.authorize().open_by_key(sheets.SHEET_ID)
+    games = sheets.load_games(spreadsheet)
+    money = sheets.load_money(spreadsheet)
 
     payload = {
         "generated_at": None,

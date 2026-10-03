@@ -264,7 +264,10 @@
 
     const streakView = key => {
       if (!F) return [];
-      const cur = n => (n > 0 ? `<em style="color:var(--turf)">W${n}</em>` : n < 0 ? `<em style="color:var(--loss)">L${-n}</em>` : '—');
+      // The league-leading current win streak goes gold, matching the gold
+      // ring .streak-w already puts on that same row; every other live win
+      // streak stays green.
+      const cur = (n, top) => (n > 0 ? `<em style="color:var(--${top ? 'gold' : 'turf'})">W${n}</em>` : n < 0 ? `<em style="color:var(--loss)">L${-n}</em>` : '—');
       const rows = F.players.filter(p => p.streaks && p.streaks[key] && D.active.has(p.name))
         .sort((a, b) => b.streaks[key].current - a.streaks[key].current || b.streaks[key].longest_win - a.streaks[key].longest_win);
       if (!rows.length) return [];
@@ -276,8 +279,9 @@
         const s = p.streaks[key];
         const winNum = s.longest_win === maxWin ? `<em style="color:var(--turf)">${s.longest_win}</em>` : s.longest_win;
         const lossNum = s.longest_loss === maxLoss ? `<em style="color:var(--loss)">${s.longest_loss}</em>` : s.longest_loss;
-        const ring = curBest > 0 && s.current === curBest ? 'streak-w' : (curWorst < 0 && s.current === curWorst ? 'streak-l' : '');
-        return { name: p.name, ring, stats: [[winNum, 'Best W'], [lossNum, 'Best L'], [cur(s.current), 'Now']] };
+        const topWin = curBest > 0 && s.current === curBest;
+        const ring = topWin ? 'streak-w' : (curWorst < 0 && s.current === curWorst ? 'streak-l' : '');
+        return { name: p.name, ring, stats: [[winNum, 'Best W'], [lossNum, 'Best L'], [cur(s.current, topWin), 'Now']] };
       });
     };
 
@@ -345,17 +349,19 @@
         const tg = thirdGameByYear[y];
         if (tg) {
           const winner = tg.s1 >= tg.s2 ? tg.p1 : tg.p2, loser = tg.s1 >= tg.s2 ? tg.p2 : tg.p1;
-          chips.push(chip('bronze', '3rd', `${esc(winner)} def. ${esc(loser)}`, payouts['3rd Place']));
+          chips.push(chip('bronze', '3rd', `${esc(winner)} v. ${esc(loser)}`, payouts['3rd Place']));
         }
         const sg = sackoGameByYear[y];
         if (sg) {
           const winner = sg.s1 >= sg.s2 ? sg.p1 : sg.p2, loser = sg.s1 >= sg.s2 ? sg.p2 : sg.p1;
-          chips.push(chip('loss', 'Sacko', `${esc(loser)} loses to ${esc(winner)}`));
+          // Sacko first, then who sent them there -- the chip is about the
+          // Sacko, so that name leads even though they lost the game.
+          chips.push(chip('loss', 'Sacko', `${esc(loser)} vs. ${esc(winner)}`));
         }
         const wh = weeklyHighByYear[y];
-        if (wh) chips.push(chip('gold', 'Wk High', `${esc(wh.name)} ${wh.val}`, payouts['Highest Points (Week)']));
+        if (wh) chips.push(chip('gold', 'Week', `${esc(wh.name)} ${wh.val}`, payouts['Highest Points (Week)']));
         const sh = seasonHighByYear[y];
-        if (sh) chips.push(chip('gold', 'Szn High', `${esc(sh.name)} ${sh.val}`, payouts['Highest Points (Season)']));
+        if (sh) chips.push(chip('gold', 'Szn', `${esc(sh.name)} ${sh.val}`, payouts['Highest Points (Season)']));
         return `<div class="rail-item"><div class="rail-dot"></div><div class="rail-yr">${y}</div><div class="yr-chips">${chips.join('')}</div></div>`;
       }).join('');
       return glassCard('Season Timeline', `<div style="padding:4px 24px 20px"><div class="rail">${items}</div></div>`,
@@ -456,7 +462,11 @@
       // card exists to show, so they all take the shared gold.
       `<div class="hero2-side">${side.map(x => `<div class="hs"><div class="hs-l">${esc(x.title)}</div><div class="hs-r">` +
         `<div class="hs-v">${esc(x.val)}</div><div class="hs-n">${esc(x.name)}</div></div></div>`).join('')}</div></div>`;
-    const tilesRow = `<div class="glass qtiles">${rest.map(x => `<div><div class="qtile-v ${toneCls(x.tone)}">${esc(x.val)}</div><div class="qtile-t">${esc(x.title)}</div>` +
+    // Same rule as the hero's side values above: gold is the default,
+    // because every tile in this strip is a "best X" and colouring them all
+    // green says nothing the label doesn't. A tone is the exception, kept for
+    // a value whose meaning is actually bad.
+    const tilesRow = `<div class="glass qtiles">${rest.map(x => `<div><div class="qtile-v ${x.tone === 'bad' || x.tone === 'down' ? 'loss' : ''}">${esc(x.val)}</div><div class="qtile-t">${esc(x.title)}</div>` +
       `<div class="qtile-n">${esc(x.name)}</div>${x.sub ? `<div class="qtile-s">${esc(x.sub)}</div>` : ''}</div>`).join('')}</div>`;
     return heroHtml + '<div class="gap"></div>' + tilesRow;
   }

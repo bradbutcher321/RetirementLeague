@@ -1,6 +1,8 @@
 """
 Builds docs/data/franchise.json from the D1 league-history database instead
-of the Google Sheet -- the D1-backed replacement for generate_franchise_data.py.
+of the Google Sheet. This replaced an earlier sheet-only pipeline, whose one
+surviving part -- the shared Sheets access it still uses for Money Tracker --
+is sheets_lib.py now.
 
 Everything ESPN itself knows about (records, streaks, rivalries, score
 extremes, standings, draft position, roster moves, season-by-season history,
@@ -18,7 +20,7 @@ from that week's full roster -- see optimal_lineup_points) only covers
 EFFICIENCY_START_YEAR on, since that's as far back as ESPN's API retains
 per-week bench rosters (see database/schema.sql).
 
-The output JSON shape is identical to generate_franchise_data.py's, so
+The output JSON shape is unchanged from that earlier pipeline's, so
 docs/franchise.html needs no changes at all.
 
 Usage: python generate_franchise_data_d1.py
@@ -31,7 +33,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
-from generate_franchise_data import authorize, load_money, SHEET_ID, longest_and_current_streak
+from sheets_lib import authorize, load_money, SHEET_ID, longest_and_current_streak
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data", "franchise.json")
 MEDIAN_ERA_START_YEAR = 2025

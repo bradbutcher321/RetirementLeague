@@ -36,7 +36,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from generate_franchise_data import SHEET_ID, CREDS_PATH
+from sheets_lib import SHEET_ID, CREDS_PATH
 from parlay_note_parser import (
     parse_note_text, parse_signed_number, parse_money,
     TEAM_LINE_VS, VS_ONLY, TOTAL_VS, PLAYER_OU, PLAYER_ONLY,
@@ -63,12 +63,6 @@ RESULTS = ["", "Pending", "Win", "Loss"]
 # order matching migrate_parlay_tracker.py's HEADER for columns E..O.
 VISIBLE_ROW_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "odds", "gametime", "result"]
 ROW_FIELDS = VISIBLE_ROW_FIELDS + ["raw_pick"]
-COL_LETTERS = {  # field -> its column in Auto Parlay Tracker
-    "sacko": "C", "sport": "E", "bet_type": "F", "team": "G", "opponent": "H",
-    "player_prop": "I", "line": "J", "side": "K", "odds": "L", "gametime": "M",
-    "result": "N", "raw_pick": "O", "final_odds": "P", "final_payout": "Q", "final_split": "R",
-}
-
 # Which of the free-text fields actually apply to a given Bet Type -- same
 # breakdown as format_parlay_sheet.py's HEADER_NOTES, reused here to grey
 # out (disable) the ones that don't, e.g. Player Prop/Side for a Spread

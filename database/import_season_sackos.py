@@ -18,7 +18,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import history_lib as hl
-from generate_franchise_data import authorize, to_int, to_float, SHEET_ID
+from sheets_lib import authorize, to_int, to_float, SHEET_ID
 
 
 def load_sacko_games(spreadsheet):
