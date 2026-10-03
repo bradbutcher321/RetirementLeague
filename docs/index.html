@@ -1669,14 +1669,25 @@
     return facts;
   }
 
+  // Past members no longer in the league -- individual career stats about
+  // them personally are stale/irrelevant trivia at this point, but a
+  // *current* manager's good head-to-head record against one of them is
+  // still fair game (that's the current manager's stat, not theirs), per
+  // request.
+  const PAST_MEMBERS = new Set(['Chappy', 'Corey']);
+
   function allTimeFacts(franchise) {
-    const players = (franchise && franchise.players) || [];
-    if (!players.length) return [];
+    const allPlayers = (franchise && franchise.players) || [];
+    if (!allPlayers.length) return [];
+    const players = allPlayers.filter(p => !PAST_MEMBERS.has(p.name));
     const facts = [];
     const add = (cond, text) => { if (cond) facts.push(text); };
     const maxBy = (arr, f) => arr.reduce((a, b) => (a === null || f(b) > f(a) ? b : a), null);
     const minBy = (arr, f) => arr.reduce((a, b) => (a === null || f(b) < f(a) ? b : a), null);
     const has = (p, f) => typeof f(p) === 'number';
+    // Fisher-Yates-ish: good enough for "pick a handful at random" on a
+    // list this small, not used anywhere order-sensitive.
+    const sampleUpTo = (arr, n) => arr.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).slice(0, n).map(([, x]) => x);
 
     const withChamps = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.championships));
     const topChamp = maxBy(withChamps, p => p.career.standings.championships);
@@ -1744,6 +1755,73 @@
     add(unluckiest && unluckiest.median_luck > 0, `${unluckiest && unluckiest.name} has been the league's unluckiest manager, scoring well enough for a ${hi(fmtPct(unluckiest && unluckiest.median_luck))} better record than they actually have.`);
     add(luckiest && luckiest.median_luck < 0, `${luckiest && luckiest.name} has been the league's luckiest manager, outperforming what their actual scoring deserved by ${hi(fmtPct(Math.abs((luckiest && luckiest.median_luck) || 0)))}.`);
 
+    // ----- More single-league-record facts, to keep the rivalry facts
+    // below from dominating the pool just by sheer per-manager volume. -----
+    const withPlayoffApps = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.playoff_appearances));
+    const topPlayoffApps = maxBy(withPlayoffApps, p => p.career.standings.playoff_appearances);
+    add(topPlayoffApps, `${topPlayoffApps && topPlayoffApps.name} has made the playoffs more times than anyone in league history, ${hi(topPlayoffApps && topPlayoffApps.career.standings.playoff_appearances)} times.`);
+
+    const withChampApps = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.champ_appearances));
+    const topChampApps = maxBy(withChampApps, p => p.career.standings.champ_appearances);
+    const champsOf = p => (p.career && p.career.standings && p.career.standings.championships) || 0;
+    add(topChampApps && topChampApps.career.standings.champ_appearances > champsOf(topChampApps),
+      `${topChampApps && topChampApps.name} has made the championship game ${hi(topChampApps && topChampApps.career.standings.champ_appearances)} times but only won it ${hi(champsOf(topChampApps))} -- the league's resident bridesmaid.`);
+
+    const withBestFinish = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.best_regular_finish));
+    const topBestFinish = minBy(withBestFinish, p => p.career.standings.best_regular_finish);
+    add(topBestFinish, `${topBestFinish && topBestFinish.name}'s best-ever regular season finish is ${hi('#' + topBestFinish.career.standings.best_regular_finish)}.`);
+    const withWorstFinish = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.worst_regular_finish));
+    const topWorstFinish = maxBy(withWorstFinish, p => p.career.standings.worst_regular_finish);
+    add(topWorstFinish, `${topWorstFinish && topWorstFinish.name} has finished dead last in the regular season, ${hi('#' + topWorstFinish.career.standings.worst_regular_finish)}, worse than anyone else ever has.`);
+
+    const withByes = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.byes));
+    const topByes = maxBy(withByes, p => p.career.standings.byes);
+    add(topByes && topByes.career.standings.byes > 0, `${topByes && topByes.name} has earned more first-round playoff byes than anyone, ${hi(topByes && topByes.career.standings.byes)}.`);
+
+    const withBlowoutWins = players.filter(p => has(p, p => p.extremes && p.extremes.blowout_wins));
+    const topBlowoutWins = maxBy(withBlowoutWins, p => p.extremes.blowout_wins);
+    add(topBlowoutWins, `${topBlowoutWins && topBlowoutWins.name} has racked up more blowout wins than anyone in league history, ${hi(topBlowoutWins && topBlowoutWins.extremes.blowout_wins)}.`);
+    const withBlowoutLosses = players.filter(p => has(p, p => p.extremes && p.extremes.blowout_losses));
+    const topBlowoutLosses = maxBy(withBlowoutLosses, p => p.extremes.blowout_losses);
+    add(topBlowoutLosses, `${topBlowoutLosses && topBlowoutLosses.name} has been blown out more than anyone in league history, ${hi(topBlowoutLosses && topBlowoutLosses.extremes.blowout_losses)} times.`);
+    const withCloseWins = players.filter(p => has(p, p => p.extremes && p.extremes.close_wins));
+    const topCloseWins = maxBy(withCloseWins, p => p.extremes.close_wins);
+    add(topCloseWins, `${topCloseWins && topCloseWins.name} has won more nail-biters than anyone in league history, ${hi(topCloseWins && topCloseWins.extremes.close_wins)} close wins.`);
+    const withCloseLosses = players.filter(p => has(p, p => p.extremes && p.extremes.close_losses));
+    const topCloseLosses = maxBy(withCloseLosses, p => p.extremes.close_losses);
+    add(topCloseLosses, `${topCloseLosses && topCloseLosses.name} has lost more heartbreakers than anyone in league history, ${hi(topCloseLosses && topCloseLosses.extremes.close_losses)} close losses.`);
+    const withLowMargin = players.filter(p => has(p, p => p.extremes && typeof p.extremes.lowest_win_margin === 'number'));
+    const topLowMargin = minBy(withLowMargin, p => p.extremes.lowest_win_margin);
+    add(topLowMargin, `${topLowMargin && topLowMargin.name} is responsible for the closest win margin in league history, just ${hi(fmtScore(topLowMargin && topLowMargin.extremes.lowest_win_margin))} points.`);
+
+    const withStdevHigh = players.filter(p => has(p, p => p.extremes && p.extremes.score_stdev));
+    const mostInconsistent = maxBy(withStdevHigh, p => p.extremes.score_stdev);
+    add(mostInconsistent, `${mostInconsistent && mostInconsistent.name} is the league's most unpredictable scorer, with a week-to-week swing of ${hi(fmtScore(mostInconsistent && mostInconsistent.extremes.score_stdev))} points.`);
+    const mostConsistent = minBy(withStdevHigh, p => p.extremes.score_stdev);
+    add(mostConsistent, `${mostConsistent && mostConsistent.name} is the league's most consistent scorer, with a week-to-week swing of just ${hi(fmtScore(mostConsistent && mostConsistent.extremes.score_stdev))} points.`);
+
+    const withPerfect = players.filter(p => has(p, p => p.efficiency && p.efficiency.perfect_lineups));
+    const topPerfect = maxBy(withPerfect, p => p.efficiency.perfect_lineups);
+    add(topPerfect && topPerfect.efficiency.perfect_lineups > 0, `${topPerfect && topPerfect.name} has started the perfect optimal lineup ${hi(topPerfect && topPerfect.efficiency.perfect_lineups)} times, more than anyone.`);
+    const withWorstGame = players.filter(p => has(p, p => p.efficiency && p.efficiency.worst_game && typeof p.efficiency.worst_game.diff === 'number'));
+    const topWorstGame = maxBy(withWorstGame, p => p.efficiency.worst_game.diff);
+    if (topWorstGame) {
+      const wg = topWorstGame.efficiency.worst_game;
+      add(true, `In ${wg.year} Week ${wg.week}, ${topWorstGame.name} scored ${hi(fmtScore(wg.actual))} with an optimal lineup of ${fmtScore(wg.optimal)} on the bench -- the worst lineup-setting week in league history.`);
+    }
+
+    const withMoves = players.filter(p => has(p, p => p.moves && p.moves.total));
+    const topMoves = maxBy(withMoves, p => p.moves.total);
+    add(topMoves, `${topMoves && topMoves.name} has made more roster moves than anyone in league history, ${hi(topMoves && topMoves.moves.total)}.`);
+    const fewestMoves = minBy(withMoves, p => p.moves.total);
+    add(fewestMoves, `${fewestMoves && fewestMoves.name} has set the roster and mostly left it alone, just ${hi(fewestMoves && fewestMoves.moves.total)} moves in league history.`);
+
+    const withDraftPos = players.filter(p => has(p, p => p.draft && p.draft.avg_position));
+    const worstDraftPos = maxBy(withDraftPos, p => p.draft.avg_position);
+    add(worstDraftPos, `${worstDraftPos && worstDraftPos.name} has the league's worst average draft position, ${hi(fmtScore(worstDraftPos && worstDraftPos.draft.avg_position))}.`);
+    const bestDraftPos = minBy(withDraftPos, p => p.draft.avg_position);
+    add(bestDraftPos, `${bestDraftPos && bestDraftPos.name} has the league's best average draft position, ${hi(fmtScore(bestDraftPos && bestDraftPos.draft.avg_position))}.`);
+
     // ----- Per-manager: active streak (career-spanning, from completed
     // games only -- not tied to anything still in progress). -----
     players.forEach(p => {
@@ -1754,17 +1832,27 @@
         : `${p.name} is mired in a ${hi(Math.abs(cur) + '-game')} losing streak.`);
     });
 
-    // ----- Per-manager: rivalries (the funny "who owns who" ones). -----
+    // ----- Per-manager: rivalries (the funny "who owns who" ones). Capped
+    // to a random handful rather than every qualifying pair -- with 12+
+    // managers these were crowding out everything else in the pool.
+    // Nemesis (an opponent beating this manager) is skipped when that
+    // opponent is a past member -- that direction makes the past member
+    // look good, the one case request explicitly didn't want. Favorite
+    // opponent (this manager dominating someone) is kept either way,
+    // since the subject is always a current manager and a past-member
+    // opponent there just means "made them look bad", which was fine. -----
+    const rivalryFacts = [];
     players.forEach(p => {
       const nem = p.rivalries && p.rivalries.nemesis;
-      if (nem && nem.opponent && (nem.wins + nem.losses) >= 4) {
-        add(true, `${nem.opponent} is ${p.name}'s all-time rivalry nemesis, leading their head-to-head series ${hi(`${nem.wins}-${nem.losses}`)} (${fmtPct(nem.win_pct)}).`);
+      if (nem && nem.opponent && !PAST_MEMBERS.has(nem.opponent) && (nem.wins + nem.losses) >= 4) {
+        rivalryFacts.push(`${nem.opponent} is ${p.name}'s all-time rivalry nemesis, leading their head-to-head series ${hi(`${nem.wins}-${nem.losses}`)} (${fmtPct(nem.win_pct)}).`);
       }
       const fav = p.rivalries && p.rivalries.favorite_opponent;
       if (fav && fav.opponent && (fav.wins + fav.losses) >= 4) {
-        add(true, `${p.name} has ${fav.opponent}'s number, up ${hi(`${fav.wins}-${fav.losses}`)} (${fmtPct(fav.win_pct)}) in their head-to-head series.`);
+        rivalryFacts.push(`${p.name} has ${fav.opponent}'s number, up ${hi(`${fav.wins}-${fav.losses}`)} (${fmtPct(fav.win_pct)}) in their head-to-head series.`);
       }
     });
+    facts.push(...sampleUpTo(rivalryFacts, 6));
 
     // ----- Per-manager: worst bench mistake ever. -----
     players.forEach(p => {
@@ -1777,19 +1865,27 @@
   }
 
   // A couple of flat, data-free inside jokes in the rotation, per request.
+  // Rolled separately at a flat 5% rather than being mixed into the same
+  // pool as the real stats -- with 70+ real facts, an easter egg sitting
+  // in that same pool would show up far less than 5% of the time.
   const EASTER_EGG_FACTS = ['Shit hurts k', "Don't do it", 'Do my eyebrows look good', 'Whatever happened to our rent money anyway?'];
+  const EASTER_EGG_CHANCE = 0.05;
 
   function renderStatOfMoment() {
     const container = document.getElementById('stat-of-moment-container');
     if (!container) return;
     const data = standingsData;
-    const facts = [
-      ...(data ? currentYearFacts(data) : []),
-      ...allTimeFacts(franchiseData),
-      ...EASTER_EGG_FACTS,
-    ];
-    if (!facts.length) { container.innerHTML = ''; return; }
-    const text = facts[Math.floor(Math.random() * facts.length)];
+    let text;
+    if (Math.random() < EASTER_EGG_CHANCE) {
+      text = EASTER_EGG_FACTS[Math.floor(Math.random() * EASTER_EGG_FACTS.length)];
+    } else {
+      const facts = [
+        ...(data ? currentYearFacts(data) : []),
+        ...allTimeFacts(franchiseData),
+      ];
+      if (!facts.length) { container.innerHTML = ''; return; }
+      text = facts[Math.floor(Math.random() * facts.length)];
+    }
     container.innerHTML = `
       <div class="stat-moment">
         <div class="stat-moment-eyebrow">Stat of the moment</div>
