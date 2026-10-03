@@ -24,26 +24,38 @@
   .legend{ display:flex; gap:16px; flex-wrap:wrap; color:var(--text-dim); font-size:0.74rem; padding:14px 24px 0; }
   .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
 
-  /* Badges stay right next to the name whenever there's room (even two at
-     once, e.g. "3x Title" + "2x Sacko" in the All-Time view) -- flex-wrap
-     lets them drop to their own line directly under the name, within this
-     same left column, only once name+badges genuinely can't fit on one
-     line (.nm's own min-width is what decides that threshold). They never
-     relocate to the row's right side regardless of width. */
-  .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-width:0; }
-  .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:60px; flex:0 1 auto; }
+  .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; min-width:0; }
+  .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
   .qrow-main{ min-width:0; }
-  /* At a genuine ~375px width the W/L/Win% column (.stats, shared with
-     other pages) was claiming ~148px of a ~294px row on its own, leaving
-     only ~50-60px for name+badges -- less than even a single badge pill's
-     own width, so a wrapped badge had nowhere to go but overflow past its
-     column into .stats' space (confirmed directly: "3x Title" visually
-     overlapping the W/L numbers). Tightening .stats and the badges
-     specifically within this page's rows claws back enough room that a
-     wrapped badge actually fits. */
-  .qrow .stats{ gap:8px; }
-  .qrow .stats div{ min-width:26px; }
-  .qrow .badge{ font-size:0.52rem; padding:1px 5px; }
+  /* Two badges at once (All-Time view) sit next to the name whenever
+     there's room, same as a single badge always does -- only moving to
+     the row's right side, above W/L/Win%, once they genuinely don't fit
+     (breakpoint tuned to where "Flanders" + both badges stops fitting,
+     confirmed directly, not guessed). CSS can't move one element based
+     on available space, so both copies render and this toggles which is
+     visible. */
+  /* .qrow centers every column vertically by default, fine when they're
+     all one line tall -- but the name/meta column can run 2-3 lines
+     (seasons + PF/PA) while stats-col is only 1-2, and centering each
+     independently let the shorter one drift into the taller one's space
+     (confirmed directly: real visual overlap between the meta line and
+     the W/L/Win% numbers). Top-aligning stats-col keeps it level with
+     the name at the top of the row regardless of how tall either gets. */
+  .qrow .stats-col{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; align-self:start; }
+  .qrow .badge-side{ display:none; flex-direction:row; flex-wrap:wrap; justify-content:flex-end; gap:4px; }
+  @media (max-width:580px){
+    .qrow .badges-inline.multi{ display:none; }
+    .qrow .badge-side{ display:flex; }
+    /* At a genuine ~320-375px width there's not enough room for
+       full-size badges + W/L/Win% + any sliver of name all at once
+       (confirmed directly: real text overlap between the meta line and
+       the stats numbers). Shrinking badges specifically in this narrow
+       fallback -- never in the normal inline case above the breakpoint,
+       which stays full-size -- claws back enough room to actually fit. */
+    .qrow .badge-side .badge{ font-size:0.52rem; padding:1px 5px; }
+    .qrow .stats{ gap:8px; }
+    .qrow .stats div{ min-width:26px; }
+  }
   /* "PF x · PA y" is one nowrap unit so it can't split mid-pair, and
      always forced onto its own line after "N seasons" (at every width,
      not just mobile) -- exactly two lines, seasons alone then PF/PA
@@ -94,7 +106,7 @@
 <script>
   const { f1, esc, pct } = LG;
   const TABS = [['reg', 'Regular Season'], ['final', 'Final Standings']];
-  let D, tab = 'reg';
+  let D, tab = 'final';
   const $ = id => document.getElementById(id);
   // note used to always render as its own paragraph under the title --
   // moved to a native hover tooltip on the title instead (dotted
@@ -208,9 +220,20 @@
     if (year === 'all') metaParts.push(`${r.seasons} seasons`);
     metaParts.push(`PF ${f1(r.pf)} · PA ${f1(r.pa)}`);
     const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
-    return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${badges.join('')}</div>` +
+    // One badge reads fine next to the name at any width. Two at once
+    // (All-Time view, a manager with both titles and sackos) are wide
+    // enough together to squeeze the name out on a narrow row -- but
+    // should still sit next to the name whenever there's room, only
+    // moving to the row's right side (above W/L/Win%) once they
+    // genuinely don't fit. CSS can't reposition one element based on
+    // available space, so both copies render and a media query (tuned to
+    // where "Flanders" + both badges actually stops fitting, confirmed
+    // directly) shows exactly one.
+    const isMulti = badges.length >= 2;
+    const sideBadges = isMulti ? `<div class="badge-side">${badges.join('')}</div>` : '';
+    return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span><span class="badges-inline${isMulti ? ' multi' : ''}">${badges.join('')}</span></div>` +
       `<div class="meta">${metaHtml}</div></div>` +
-      `<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div>`;
+      `<div class="stats-col">${sideBadges}<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div></div>`;
   }
 
   function render() {
@@ -238,7 +261,7 @@
   LG.load().then(data => {
     D = data;
     $('year-select').innerHTML = '<option value="all">All-Time</option>' + data.years.slice().reverse().map(y => `<option value="${y}">${y}</option>`).join('');
-    $('year-select').value = data.completeYears[data.completeYears.length - 1];
+    $('year-select').value = 'all';
     $('year-select').addEventListener('change', render);
     render();
   }).catch(err => LG.showError('standings-container', err));
