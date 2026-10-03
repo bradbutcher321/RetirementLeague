@@ -7,6 +7,19 @@
 <title>Retirement League — Standings</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The two font-family's woff2 files Google serves for the latin subset
+     at the weights this site uses -- one variable-font file per family
+     covers every weight declared, confirmed directly by fetching the
+     stylesheet below and comparing each @font-face block's url(). Starts
+     the actual font downloads immediately, in parallel with that
+     stylesheet fetch, instead of waiting to discover these same URLs
+     only after the stylesheet loads and is parsed -- avoids the
+     fallback-to-webfont swap (FOUT) that otherwise shows on a slow or
+     uncached load. If Google ever changes these hashed URLs, this just
+     degrades to a wasted (unused) preload, not a correctness issue -- the
+     stylesheet's own @font-face still fetches whatever the new URL is. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=4">
 <link rel="stylesheet" href="nav.css?v=3">
