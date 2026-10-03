@@ -1906,9 +1906,12 @@
       if (!facts.length) { container.innerHTML = ''; return; }
       text = facts[Math.floor(Math.random() * facts.length)];
     }
+    // Independent roll from the body text above -- "Lore me daddy" can
+    // land on any stat/joke, not just its own slot.
+    const heading = Math.random() < EASTER_EGG_CHANCE ? 'Lore me daddy' : 'League Lore';
     container.innerHTML = `
       <div class="stat-moment">
-        <div class="stat-moment-eyebrow">Stat of the moment</div>
+        <div class="stat-moment-eyebrow">${heading}</div>
         <div class="stat-moment-text">${text}</div>
       </div>`;
   }
