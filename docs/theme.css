@@ -136,16 +136,9 @@ body{
    overflow:hidden stays on .glass alone, since the others deliberately
    differ: .rivalry-card and .median-card let content out. */
 .glass, .stat-card, .rules-card, .rivalry-card, .median-card{
-  /* On a display scaled to a fractional factor (125%, 150%...), Chromium
-     can rasterize a rounded corner's clip and its own box-shadow in two
-     slightly misaligned passes, leaving a jagged, differently-colored seam
-     right at the border -- this forces the element onto its own
-     compositing layer so both are rasterized together at the same scale. */
-  transform: translateZ(0);
   background: linear-gradient(165deg, var(--surface-2), var(--surface));
   border: 1px solid var(--line);
   border-radius: 14px;
-  box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
 }
 .glass{ overflow: hidden; }
 
