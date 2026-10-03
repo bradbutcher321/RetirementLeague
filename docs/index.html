@@ -1853,15 +1853,22 @@
     // opponent (this manager dominating someone) is kept either way,
     // since the subject is always a current manager and a past-member
     // opponent there just means "made them look bad", which was fine. -----
+    // Matches the franchise page's own "Who's Your Daddy"/"Who's Your
+    // Bitch" rivalry framing -- nem.wins/losses are p's own (losing)
+    // record against nem.opponent, so p is the one who's getting owned
+    // here; fav.wins/losses are p's own (winning) record against
+    // fav.opponent, so p is the daddy there. Previous wording attributed
+    // the record to the wrong side of the matchup (said the opponent was
+    // "leading" a score that was actually p's own losing record).
     const rivalryFacts = [];
     players.forEach(p => {
       const nem = p.rivalries && p.rivalries.nemesis;
       if (nem && nem.opponent && !PAST_MEMBERS.has(nem.opponent) && (nem.wins + nem.losses) >= 4) {
-        rivalryFacts.push(`${nem.opponent} is ${p.name}'s all-time rivalry nemesis, leading their head-to-head series ${hi(`${nem.wins}-${nem.losses}`)} (${fmtPct(nem.win_pct)}).`);
+        rivalryFacts.push(`${p.name} is ${nem.opponent}'s bitch, losing their head-to-head series ${hi(`${nem.wins}-${nem.losses}`)} (${fmtPct(nem.win_pct)}).`);
       }
       const fav = p.rivalries && p.rivalries.favorite_opponent;
       if (fav && fav.opponent && (fav.wins + fav.losses) >= 4) {
-        rivalryFacts.push(`${p.name} has ${fav.opponent}'s number, up ${hi(`${fav.wins}-${fav.losses}`)} (${fmtPct(fav.win_pct)}) in their head-to-head series.`);
+        rivalryFacts.push(`${p.name} is ${fav.opponent}'s Daddy, leading their head-to-head series ${hi(`${fav.wins}-${fav.losses}`)} (${fmtPct(fav.win_pct)}).`);
       }
     });
     facts.push(...sampleUpTo(rivalryFacts, 6));
