@@ -93,9 +93,11 @@
   </div>
 
 <script src="nav.js?v=2"></script>
+<script src="page-common.js?v=2"></script>
 <script src="league-common.js?v=3"></script>
 <script>
-  const { f2, card, esc } = LG;
+  // esc() is a global from page-common.js, not part of LG.
+  const { f2, card } = LG;
   let D, tab = 0;
   const pickState = {};
   const TABS = ['Records', 'Scores', 'Margins', 'Combined', 'Loss & Win'];

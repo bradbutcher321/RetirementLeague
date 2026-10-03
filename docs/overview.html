@@ -103,10 +103,12 @@
   </div>
 
 <script src="nav.js?v=2"></script>
+<script src="page-common.js?v=2"></script>
 <script src="league-common.js?v=3"></script>
 <script src="achievements.js"></script>
 <script>
-  const { f1, f2, money, esc } = LG;
+  // esc() is a global from page-common.js, not part of LG.
+  const { f1, f2, money } = LG;
   let TABS = [], tab = 0;
   const viewPick = {};
   const toneCls = t => (t === 'good' || t === 'up' ? 'turf' : t === 'bad' || t === 'down' ? 'loss' : '');
@@ -333,8 +335,11 @@
         const chips = [];
         const cg = champGameByYear[y];
         if (cg) {
-          const winner = cg.s1 >= cg.s2 ? cg.p1 : cg.p2, loser = cg.s1 >= cg.s2 ? cg.p2 : cg.p1;
-          chips.push(chip('gold', '\u{1F3C6}', `${esc(winner)} def. ${esc(loser)}`, payouts['1st Place']));
+          // Champion only -- who they beat is the 2nd-place chip sitting
+          // immediately after this one, so naming them here said it twice.
+          // The 3rd-place and Sacko chips below do still name both sides:
+          // nothing else in the row reports who came 4th or 11th.
+          chips.push(chip('gold', '\u{1F3C6}', esc(cg.s1 >= cg.s2 ? cg.p1 : cg.p2), payouts['1st Place']));
         }
         if (secondByYear[y]) chips.push(chip('', '2nd', esc(secondByYear[y].player), payouts['2nd Place']));
         const tg = thirdGameByYear[y];

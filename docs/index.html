@@ -482,17 +482,9 @@
   .lb-playoff-chip.low{ border-color: rgba(192,87,75,0.4); color: var(--loss); }
 
 
-  /* ---------- Median Watch ---------- */
-  .median-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 640px){ .median-grid{ grid-template-columns: 1fr; } }
-
-  .median-card{
-    background: linear-gradient(165deg, var(--surface-2), var(--surface));
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
-    padding: 18px 20px;
-  }
+  /* ---------- Median Watch ----------
+     The card surface itself comes from theme.css's shared card rule. */
+  .median-card{ padding: 18px 20px; }
   .median-card-header{
     display: flex;
     justify-content: space-between;
@@ -502,76 +494,17 @@
     border-bottom: 1px solid var(--line);
   }
   .median-card-title{ font-weight: 700; font-size: 0.95rem; color: var(--text); }
-  .median-card-value{
-    font-family: var(--scoreboard);
-    font-weight: 700;
-    font-size: 1.3rem;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .group-label{
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 8px;
-    font-weight: 600;
-  }
-  .group-label.above{ color: var(--turf); }
-  .group-label.below{ color: var(--loss); }
 
   /* The card splits into the Above/Below grids (left) and the vertical
      spread strip (right, fixed width) side by side, so the grids run 2
      columns x 3 rows instead of 3 x 2 to leave room for it. */
   .card-body{ display: grid; grid-template-columns: 1fr auto; gap: 16px; }
-  .mini-grid{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin-bottom: 14px; }
-  .mini-grid:last-of-type{ margin-bottom: 0; }
-  .mini-card{
-    background: var(--item);
-    border: 1px solid var(--item-line);
-    border-radius: 8px;
-    padding: 7px 9px;
-  }
-  /* Above/below the median is a live projection; locked means the week's
-     games are done and that side is settled, so it reads stronger. */
-  .mini-card.above{ border-color: var(--win-line); background: var(--win-tint); }
-  .mini-card.below{ border-color: var(--loss-line); background: var(--loss-tint); }
-  .mini-card.locked.above{ background: rgba(79,174,122,0.16); border-color: var(--turf); }
-  .mini-card.locked.below{ background: rgba(214,98,79,0.16); border-color: var(--loss); }
-  :root[data-accent="outline"] .mini-card.above,
-  :root[data-accent="outline"] .mini-card.below{ background: var(--item); }
-  .mini-card .stat{
-    font-size: 0.62rem;
-    margin-top: 2px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--text-dim);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .mini-card .stat.lock.above{ color: var(--turf); }
-  .mini-card .stat.lock.below{ color: var(--loss); }
-  .mini-card .stat .live-txt{ color: var(--loss); }
   .live-dot{ display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--loss); --pc: 192,87,75; animation: live-pulse 1.6s infinite; }
   @keyframes live-pulse{
     0%{ box-shadow: 0 0 0 0 rgba(var(--pc), 0.6); }
     70%{ box-shadow: 0 0 0 6px rgba(var(--pc), 0); }
     100%{ box-shadow: 0 0 0 0 rgba(var(--pc), 0); }
   }
-  .mini-card .name{
-    font-size: 0.74rem;
-    color: var(--text-dim);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .mini-card .score{
-    font-family: var(--scoreboard);
-    font-weight: 700;
-    font-size: 1.05rem;
-    font-variant-numeric: tabular-nums;
-  }
-
   /* A single-axis plot positioned by each team's actual score, not rank —
      distance on the page is real distance in points. Runs top (highest)
      to bottom (lowest); adjacent teams close enough to visually collide
@@ -686,10 +619,6 @@
   .zone-label{ position: absolute; right: 0; z-index: 4; font-size: 0.58rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .zone-label.up{ color: var(--turf); transform: translateY(-105%); }
   .zone-label.dn{ color: var(--loss); transform: translateY(5%); }
-  .median-legend{ display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 0.68rem; }
-  .median-legend .k{ display: inline-flex; align-items: center; gap: 6px; }
-  .median-legend .sw{ display: inline-block; width: 14px; height: 9px; border-radius: 2px; border: 1px solid var(--text-dim); }
-  .median-legend .sw.locked{ background: linear-gradient(135deg, var(--turf) 50%, var(--loss) 50%); border-color: var(--line); }
   .endcap-score.low{ bottom: -15px; }
   .endcap-score.high{ top: -15px; }
 
@@ -712,9 +641,6 @@
   }
 
   /* ---------- Median Watch: unified Current/Projected toggle card ---------- */
-  /* Replaces the site-wide thick-top-border-only accent with a thin gold
-     outline on all 4 sides, just for this card. */
-  .median-card.neutral-border{ border: 1px solid var(--line); }
   .median-split-label{ text-align: center; color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; margin: 12px 0; padding: 7px 0; }
   .median-split-label b{ font-family: var(--scoreboard); font-variant-numeric: tabular-nums; margin-left: 6px; }
   .mw-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
@@ -768,11 +694,9 @@
   ::view-transition-old(root), ::view-transition-new(root){ animation: none; mix-blend-mode: normal; }
 
   /* ---------- Stat of the Moment: single rotating-feeling hero fact
-     directly under Median Watch. Same thin-outline-not-thick-top-border
-     treatment as .median-card.neutral-border above, not the heavier
-     accent bar the rest of the page used to use. ---------- */
+     directly under Median Watch, wearing the same plain card outline. ------ */
   /* --item is a translucent fill tuned to sit on top of a .glass/.median-
-     card gradient -- that's what made .mini-card's grey look right. But
+     card gradient, which is what makes a nested row's grey read right. But
      .stat-moment is a SIBLING of #median-container, not nested inside it
      (see the two containers in the markup below), so it sits directly on
      the page's #050505 background instead, where that same translucent
@@ -896,31 +820,11 @@
     .cmp-name{ font-size: 0.72rem; }
   }
 
-  /* Collapsible tray (Site Activity), closed until opened */
-  .tray > summary{
-    list-style: none;
-    cursor: pointer;
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--line);
-    color: var(--text-dim);
-    font-size: 1rem;
-    font-weight: 600;
-  }
-  .tray > summary::-webkit-details-marker{ display: none; }
-  .tray > summary:hover .tray-title{ color: var(--text); }
-  .tray-summary{ flex: 1; text-align: right; font-size: 0.78rem; font-weight: 500; font-variant-numeric: tabular-nums; }
-  .tray-chevron{
-    width: 8px; height: 8px;
-    border-right: 2px solid var(--gold);
-    border-bottom: 2px solid var(--gold);
-    transform: rotate(45deg) translateY(-2px);
-    transition: transform 0.2s ease;
-    align-self: center;
-  }
-  .tray[open] > summary .tray-chevron{ transform: rotate(-135deg) translateY(-2px); }
+  /* Collapsible tray (Site Activity), closed until opened. The tray itself is
+     styled in theme.css, shared with Parlay Results' Jon's Table -- only the
+     tabular figures this one puts in its summary line, and its own body
+     spacing, are page-specific. */
+  .tray-summary{ font-variant-numeric: tabular-nums; }
   .tray > #activity-container{ margin-top: 16px; }
 
   /* Site activity */
@@ -1633,7 +1537,7 @@
         </div>`;
     }
     document.getElementById('median-container').innerHTML = `
-      <div class="median-card neutral-border">
+      <div class="median-card">
         <div class="median-card-header">
           <span class="median-card-title">Median Watch</span>
           ${toggleHtml}
@@ -2548,10 +2452,10 @@
         // either side) sink to the bottom, but only ever move there once —
         // live and not-yet-started matchups keep their original relative
         // order instead of continuously reshuffling every poll.
+        // Set before the matchups are sorted below: matchupDecided reads it.
         medianStatusKnown = Boolean(data.medianStatusKnown) && teams.every(t => typeof t.remaining === 'number');
-        const isMatchupFinal = matchupDecided;
         const matchups = (data.matchups || [])
-          .map((m, i) => ({ m, i, final: isMatchupFinal(m) }))
+          .map((m, i) => ({ m, i, final: matchupDecided(m) }))
           .sort((a, b) => (a.final === b.final ? a.i - b.i : a.final ? 1 : -1))
           .map(({ m }) => m);
 
@@ -2581,7 +2485,6 @@
         // a "kickoff hasn't happened yet" placeholder instead (handled
         // inside renderMedianStatic/applyMedianUpdate). Projected always
         // renders normally, pregame or not.
-        medianStatusKnown = Boolean(data.medianStatusKnown) && teams.every(t => typeof t.remaining === 'number');
         lastMedianTeams = teams;
         lastMedianData = data;
         renderMedianStatic(medianViewMode);

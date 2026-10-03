@@ -160,6 +160,7 @@
   </div>
 
 <script src="nav.js?v=2"></script>
+<script src="page-common.js?v=2"></script>
 <script src="league-common.js?v=3"></script>
 <script>
   let DATA;
@@ -204,7 +205,7 @@
   // centered number instead of the usual "X • X" -- showing the same value twice read as a display bug.
   const statPodSingle = (label, v, fmt) => `<div class="stat-pod"><div class="sp-t">${label}</div><div class="sp-row"><span class="sp-v">${fmt(v)}</span></div></div>`;
   const statGroup = t => `<div class="cmp-group">${t}</div>`;
-  const cmpLegend = (a, b) => `<div class="cmp-legend"><span>${LG.esc(a)}</span><span>${LG.esc(b)}</span></div>`;
+  const cmpLegend = (a, b) => `<div class="cmp-legend"><span>${esc(a)}</span><span>${esc(b)}</span></div>`;
   const ABBR = { Ben: 'Ben', Brad: 'Brd', Chad: 'Chd', Collin: 'Cln', Flanders: 'Fla', Jared: 'Jar', Jeff: 'Jef', 'Joe G': 'JoG', 'Joe K': 'JoK', Jon: 'Jon', Kris: 'Krs', TJ: 'TJ', Chappy: 'Chp', Corey: 'Cor' };
   const abbr = n => ABBR[n] || n.slice(0, 3);
   const tone = (x, y) => (x > y ? 'up' : x < y ? 'down' : 'flat');
@@ -240,8 +241,8 @@
     const peak = diffs.reduce((m, d) => (Math.abs(d) > Math.abs(m) ? d : m), 0);
     const caption = final === 0
       ? 'Dead even across the all-time series'
-      : `${LG.esc(final > 0 ? a : b)} leads the all-time cumulative count by ${Math.abs(final)}` +
-        (peak !== final ? ` · peaked at a ${Math.abs(peak)}-win lead for ${LG.esc(peak > 0 ? a : b)}` : '');
+      : `${esc(final > 0 ? a : b)} leads the all-time cumulative count by ${Math.abs(final)}` +
+        (peak !== final ? ` · peaked at a ${Math.abs(peak)}-win lead for ${esc(peak > 0 ? a : b)}` : '');
     return `<div class="momentum-wrap"><svg class="momentum" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">` +
       `<line x1="${PAD}" y1="${H / 2}" x2="${W - PAD}" y2="${H / 2}" class="mo-base" />` +
       `<polygon points="${posArea}" class="mo-fill up" /><polygon points="${negArea}" class="mo-fill down" />` +
@@ -256,7 +257,7 @@
     const tiles = years.map(y => {
       const gs = byYear[y], aw = gs.filter(g => g.winner === a).length, bw = gs.filter(g => g.winner === b).length;
       const cls = aw > bw ? 'a' : bw > aw ? 'b' : '';
-      const who = aw === bw ? 'Split' : LG.esc(abbr(aw > bw ? a : b));
+      const who = aw === bw ? 'Split' : esc(abbr(aw > bw ? a : b));
       return `<div class="arc-tile ${cls}"><div class="arc-year">${y}</div><div class="arc-rec">${aw}-${bw}</div><div class="arc-who">${who}</div></div>`;
     }).join('');
     return `<div class="arc-wrap"><div class="arc-scroll"><div class="arc">${tiles}</div></div></div>`;
@@ -272,7 +273,7 @@
     }
     const all = pairGames(a, b);
     if (!all.length) {
-      $('compare').innerHTML = `<div class="loading-row">${LG.esc(a)} and ${LG.esc(b)} have never played each other.</div>`;
+      $('compare').innerHTML = `<div class="loading-row">${esc(a)} and ${esc(b)} have never played each other.</div>`;
       $('games-section').hidden = true;
       return;
     }
@@ -280,7 +281,7 @@
     const A = summarize(all, a), B = summarize(all, b);
     const PA = summarize(post, a), PB = summarize(post, b);
     const int = v => String(v), dec = v => LG.f1(v), pc = v => LG.pct(v), plus = v => (v > 0 ? '+' : '') + LG.f1(v);
-    const ea = LG.esc(a), eb = LG.esc(b);
+    const ea = esc(a), eb = esc(b);
 
     const banner = `<div class="banner"><div class="side"><div class="nm">${ea}</div><span class="pill ${tone(A.pct, B.pct)}">${LG.pct(A.pct)}</span></div>` +
       `<div class="rec"><b>${A.wins}–${B.wins}</b><span>${all.length} meetings</span></div>` +
@@ -288,7 +289,7 @@
 
     const last = all.slice(-10);
     const form = `<div class="form-wrap"><div class="form-title">Last ${last.length} meetings</div><div class="form-scroll"><div class="form">` +
-      last.map(g => `<div class="chip ${g.winner === a ? 'up' : 'down'}" title="${g.year} week ${g.week}">${LG.esc(g.winner)}</div>`).join('') + '</div></div></div>';
+      last.map(g => `<div class="chip ${g.winner === a ? 'up' : 'down'}" title="${g.year} week ${g.week}">${esc(g.winner)}</div>`).join('') + '</div></div></div>';
 
     const closest = all.reduce((m, g) => (margin(g) < margin(m) ? g : m));
     const blowout = all.reduce((m, g) => (margin(g) > margin(m) ? g : m));
@@ -298,11 +299,11 @@
     const stakes = all.filter(g => g.type === 'Champ' || g.type === 'Sacko');
     const stakesA = stakes.filter(g => g.winner === a).length, stakesB = stakes.length - stakesA;
     const callouts = `<div class="callouts${stakes.length ? ' five' : ''}">` +
-      callout('Current streak', curN + (curN === 1 ? ' win' : ' in a row'), curTeam === a ? 'up' : 'down', `${LG.esc(curTeam)} won the last ${curN === 1 ? 'meeting' : curN}`) +
-      callout('Best streak', Math.max(A.best, B.best), bestTeam === a ? 'up' : 'down', `${LG.esc(bestTeam)} · longest run`) +
-      callout('Biggest blowout', LG.f1(margin(blowout)), blowout.winner === a ? 'up' : 'down', `${LG.esc(blowout.winner)} · ${blowout.year}`) +
-      callout('Closest game', LG.f2(margin(closest)), closest.winner === a ? 'up' : 'down', `${LG.esc(closest.winner)} · ${closest.year}`) +
-      (stakes.length ? callout('Title/Sacko clashes', stakes.length, tone(stakesA, stakesB), `${LG.esc(a)} ${stakesA}-${stakesB} ${LG.esc(b)}`) : '') + '</div>';
+      callout('Current streak', curN + (curN === 1 ? ' win' : ' in a row'), curTeam === a ? 'up' : 'down', `${esc(curTeam)} won the last ${curN === 1 ? 'meeting' : curN}`) +
+      callout('Best streak', Math.max(A.best, B.best), bestTeam === a ? 'up' : 'down', `${esc(bestTeam)} · longest run`) +
+      callout('Biggest blowout', LG.f1(margin(blowout)), blowout.winner === a ? 'up' : 'down', `${esc(blowout.winner)} · ${blowout.year}`) +
+      callout('Closest game', LG.f2(margin(closest)), closest.winner === a ? 'up' : 'down', `${esc(closest.winner)} · ${closest.year}`) +
+      (stakes.length ? callout('Title/Sacko clashes', stakes.length, tone(stakesA, stakesB), `${esc(a)} ${stakesA}-${stakesB} ${esc(b)}`) : '') + '</div>';
 
     const allStats = '<div class="cmp">' + cmpLegend(a, b) +
       statGroup('Series Record') + '<div class="stat-pods">' +
@@ -343,8 +344,8 @@
     const names = [...new Set(data.games.flatMap(g => [g.p1, g.p2]).filter(Boolean))].sort();
     const active = names.filter(n => data.active.has(n));
     const former = names.filter(n => !data.active.has(n));
-    const opts = `<optgroup label="Current teams">${active.map(n => `<option>${LG.esc(n)}</option>`).join('')}</optgroup>` +
-      (former.length ? `<optgroup label="Former teams">${former.map(n => `<option>${LG.esc(n)}</option>`).join('')}</optgroup>` : '');
+    const opts = `<optgroup label="Current teams">${active.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` +
+      (former.length ? `<optgroup label="Former teams">${former.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` : '');
     $('p1').innerHTML = opts;
     $('p2').innerHTML = opts;
     let saved = null;

@@ -1,18 +1,13 @@
 // Shared helpers for the pages that read data/league.json.
+//
+// Requires page-common.js to have loaded first: esc() and formatUpdated()
+// come from there rather than being defined again here, since the two copies
+// were identical and nothing good comes of maintaining both.
 const LG = (() => {
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const f1 = n => (n === null || n === undefined ? '—' : Number(n).toFixed(1));
   const f2 = n => (n === null || n === undefined ? '—' : Number(n).toFixed(2));
   const pct = n => (n === null || n === undefined || Number.isNaN(n) ? '—' : (n * 100).toFixed(1) + '%');
   const money = n => (n < 0 ? '−$' : '$') + Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
-
-  function formatUpdated(iso) {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '—';
-    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    if (d.toDateString() === new Date().toDateString()) return time;
-    return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
-  }
 
   async function load() {
     const res = await fetch('data/league.json', { cache: 'no-store' });
@@ -41,5 +36,5 @@ const LG = (() => {
     if (el) el.innerHTML = `<div class="loading-row">Couldn't load league data (${esc(err.message)}).</div>`;
   }
 
-  return { esc, f1, f2, pct, money, load, card, showError };
+  return { f1, f2, pct, money, load, card, showError };
 })();

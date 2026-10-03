@@ -1,10 +1,15 @@
-// Tiny formatting helpers shared by pages that don't read data/league.json
-// (so don't pull in league-common.js's LG object): Franchise, Parlay
-// Results, Rule Changes, Draft Board. Previously each page defined its own
-// copy of esc()/formatUpdated() -- identical in every copy -- which drifted
-// out of one place to maintain for no reason.
+// Tiny formatting helpers every page needs, whatever data it reads.
+//
+// Loaded directly by the pages that don't read data/league.json (Franchise,
+// Parlay Results, Rule Changes, Draft Board), and loaded ahead of
+// league-common.js by the four that do -- LG re-exports esc/formatUpdated
+// from here rather than keeping a second copy, which is what it used to do.
+// Every page defined its own identical copy before that.
+// `?? ''` so a missing value renders as nothing rather than the literal
+// strings "null"/"undefined" -- the league.json pages relied on that in
+// their own copy, and it's the right behaviour for the others too.
 function esc(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 function formatUpdated(iso) {
   const d = new Date(iso);
