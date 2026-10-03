@@ -791,78 +791,43 @@
   .accolades-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 640px){ .accolades-grid{ grid-template-columns: 1fr; } }
 
+  /* Matches Current Parlay / League Lore's own composition: title top-left
+     (white, same weight/size as their titles) with a status chip top-right,
+     then a bordered item box standing in for their featured-leg box --
+     manager + score on one line, team + the week/qualifier on the next. No
+     ambient wash; gold is spent in exactly one place, the score itself. */
   .accolade-card{
-    position: relative;
     background: linear-gradient(165deg, var(--surface-raised), var(--surface));
     border: 1px solid var(--line);
     border-radius: 14px;
-    padding: 30px 22px 24px;
-    text-align: center;
-    overflow: hidden;
-  }
-  .accolade-card::before{
-    content: "";
-    position: absolute;
-    inset: -40%;
-    filter: blur(10px);
-    background: radial-gradient(circle at 50% 28%, rgba(212,180,106,0.22), transparent 60%);
-    pointer-events: none;
-  }
-  .accolade-eyebrow{
-    position: relative;
-    color: var(--gold);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    margin-bottom: 16px;
-  }
-  .accolade-score{
-    position: relative;
-    font-family: var(--scoreboard);
-    font-weight: 800;
-    font-size: 3rem;
-    line-height: 1;
-    margin-bottom: 10px;
-    font-variant-numeric: tabular-nums;
-    color: var(--gold);
-  }
-  .accolade-team{
-    position: relative;
-    font-weight: 700;
-    font-size: 1.1rem;
-  }
-  .accolade-meta{
-    position: relative;
+    padding: 16px 18px 18px;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin-top: 6px;
-    color: var(--text-dim);
-    font-size: 0.82rem;
+    flex-direction: column;
+    gap: 14px;
+    height: 100%;
   }
-  .accolade-dot{ color: var(--line); }
-  .accolade-placeholder{
-    position: relative;
-    color: var(--text-dim);
-    font-size: 0.85rem;
-    padding: 22px 4px 6px;
-  }
+  .acc-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .acc-title{ font-weight: 700; font-size: 0.92rem; }
+  .acc-box{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 14px 11px; }
+  .acc-box-row{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .acc-box-row + .acc-box-row{ margin-top: 4px; }
+  .acc-manager{ font-weight: 700; font-size: 0.92rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .acc-score{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.4rem; color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .acc-team{ font-weight: 600; font-size: 0.86rem; color: var(--text-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .acc-qualifier{ font-size: 0.86rem; color: var(--text-dim); text-align: right; white-space: nowrap; }
+  .acc-placeholder{ color: var(--text-dim); font-size: 0.85rem; }
+  .badge.dim{ color: var(--text-dim); border-color: var(--line); }
 
   /* Superlatives view toggle + race rows */
   /* Selector styling lives in theme.css -- only this page's spacing here. */
   .sup-seg{ margin-bottom: 14px; }
-  .sup-tag{ position: relative; display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; margin-bottom: 12px; }
-  .sup-tag.new{ color: var(--turf); border: 1px solid var(--turf-dim); background: rgba(76,154,107,0.12); }
-  .sup-tag.hold{ color: var(--text-dim); border: 1px solid var(--line); }
-  .sup-note{ position: relative; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 0.78rem; line-height: 1.5; }
+  .sup-note{ position: relative; padding-top: 12px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 0.78rem; line-height: 1.5; }
   /* ---------- Comparison rows: real position on a shared axis instead of a
      label/value table. Each row plots one or two markers along a 0-100%
      scale (set per-card by cmpScale) so the gap between teams, and between
      a team and the season-high reference line, is an actual spatial
      distance — not a proportional fill bar. ---------- */
-  .cmp-wrap{ position: relative; margin-top: 16px; text-align: left; }
+  .cmp-wrap{ position: relative; text-align: left; }
   .cmp-head{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: 8px; margin-bottom: 2px; border-bottom: 1px solid var(--line); }
   .cmp-row{ display: grid; grid-template-columns: minmax(0,72px) 1fr auto; align-items: center; gap: 10px; padding: 11px 0; }
   .cmp-row + .cmp-row{ border-top: 1px solid var(--line); }
@@ -919,8 +884,6 @@
     .lb-stat{ width: 34px; }
     .lb-stat .v{ font-size: 0.82rem; }
     .lb-stat .l{ font-size: 0.52rem; }
-    .accolade-card{ padding: 24px 16px 20px; }
-    .accolade-score{ font-size: 2.5rem; }
   }
 </style>
 </head>
@@ -2441,24 +2404,14 @@
     renderStandings();
   });
 
-  function renderAccoladeCard(eyebrow, team, manager, meta, score) {
-    if (!team) {
-      return `
-        <div class="accolade-card">
-          <div class="accolade-eyebrow">${eyebrow}</div>
-          <div class="accolade-placeholder">Stats will appear once games get underway.</div>
-        </div>`;
-    }
+  // Only ever called before any games have been scored this season --
+  // renderSuperlatives below builds the real card itself once there's
+  // data, via its own card() helper.
+  function renderAccoladeCard(eyebrow) {
     return `
       <div class="accolade-card">
-        <div class="accolade-eyebrow">${eyebrow}</div>
-        <div class="accolade-score">${fmtScore(score)}</div>
-        <div class="accolade-team">${team}</div>
-        <div class="accolade-meta">
-          ${manager ? `<span>${manager}</span>` : ''}
-          ${manager && meta ? `<span class="accolade-dot">•</span>` : ''}
-          ${meta ? `<span>${meta}</span>` : ''}
-        </div>
+        <div class="acc-head"><div class="acc-title">${eyebrow}</div></div>
+        <div class="acc-placeholder">Stats will appear once games get underway.</div>
       </div>`;
   }
 
@@ -2487,8 +2440,8 @@
     if (!hasPrior && !teams.some(t => t.cur > 0)) {
       toggle.innerHTML = '';
       container.innerHTML =
-        renderAccoladeCard('Season High Score', null, '', '', 0) +
-        renderAccoladeCard('Season Points Leader', null, '', '', 0);
+        renderAccoladeCard('Season High Score') +
+        renderAccoladeCard('Season Points Leader');
       return;
     }
 
@@ -2500,17 +2453,22 @@
     toggle.innerHTML = `<div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-sup="${k}" class="${k === m ? 'on' : ''}">${l}</button>`).join('')}</div>`;
 
     const tag = (isNew, label) => !hasPrior || m === 'through' ? ''
-      : (isNew ? `<div class="sup-tag new">${label}</div>` : '<div class="sup-tag hold">Holding</div>');
+      : (isNew ? `<span class="badge turf">${label}</span>` : '<span class="badge dim">Holding</span>');
     const card = (eyebrow, score, team, manager, meta, extra, tagHtml) => `
       <div class="accolade-card">
-        <div class="accolade-eyebrow">${eyebrow}</div>
-        ${tagHtml || ''}
-        <div class="accolade-score">${fmtScore(score)}</div>
-        <div class="accolade-team">${team}</div>
-        <div class="accolade-meta">
-          ${manager ? `<span>${manager}</span>` : ''}
-          ${manager && meta ? '<span class="accolade-dot">\u2022</span>' : ''}
-          ${meta ? `<span>${meta}</span>` : ''}
+        <div class="acc-head">
+          <div class="acc-title">${eyebrow}</div>
+          ${tagHtml || ''}
+        </div>
+        <div class="acc-box">
+          <div class="acc-box-row">
+            <div class="acc-manager">${manager}</div>
+            <div class="acc-score">${fmtScore(score)}</div>
+          </div>
+          <div class="acc-box-row">
+            <div class="acc-team">${team}</div>
+            <div class="acc-qualifier">${meta}</div>
+          </div>
         </div>
         ${extra || ''}
       </div>`;
