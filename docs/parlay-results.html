@@ -168,8 +168,15 @@
   .leg-stats .l{ display: block; text-align: center; color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; }
   .leg-stats .v{ display: block; text-align: center; font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
   /* inline-flex so the dot sits beside the score as one inline unit that
-     the parent's text-align:center can still center as a whole. */
+     the parent's text-align:center can still center as a whole.
+     The score itself says whether the leg is covering right now, matching
+     the tint on the whole leg card: green while it's winning, red otherwise.
+     The dot is deliberately NOT part of that -- it's a "this game is in
+     progress" marker, not a result, so it stays red whatever the score is
+     doing. It sets `background` rather than `color`, so it doesn't inherit
+     the green either. */
   .leg-stats .live-wrap{ display: inline-flex; align-items: center; gap: 5px; color: var(--loss); }
+  .leg-stats .live-wrap.up{ color: var(--turf); }
   .leg-stats .live-wrap .dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: leg-live-pulse 1.5s ease-in-out infinite; }
   @keyframes leg-live-pulse{ 0%, 100%{ opacity: 1; } 50%{ opacity: 0.25; } }
   @media (prefers-reduced-motion: reduce){ .leg-stats .live-wrap .dot{ animation: none; } }
@@ -353,7 +360,10 @@
   // live, or the graded final once it's decided -- never more than one of
   // the three at once, which is what keeps a leg card to a single stat row.
   function thirdStat(p, entry) {
-    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap"><span class="dot"></span>${esc(liveText(entry))}</span>`];
+    // tone 'up' means the leg is covering as things stand; 'down' and no
+    // tone at all (a prop that hasn't reached its line yet, but still could)
+    // both stay red, same as before.
+    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap${entry.tone === 'up' ? ' up' : ''}"><span class="dot"></span>${esc(liveText(entry))}</span>`];
     if (p.result === 'Pending') return ['Kickoff', esc(fmtTime(p.gametime))];
     // auto_grade_results.py writes score-graded detail as "17-10 final" --
     // the label above already says "Final", so a trailing "final" in the
