@@ -346,13 +346,35 @@
       .sort((a, b) => (a[1].gametime || '9999').localeCompare(b[1].gametime || '9999'));
   }
 
+  // An over/under on a game's combined score. Mirrors parlay_note_parser.py's
+  // TOTAL_VS. A UFC "Total Rounds" bet is in that set but has no two scores to
+  // add -- the round a fight ended in is the one number there, and its graded
+  // detail reads "<winner> won (round 3)" -- so it simply never matches the
+  // two-score shape the sum below looks for.
+  const TOTAL_BET_TYPES = new Set(['Total Points', 'Total Goals', 'Total Rounds']);
+  // reconstruct_pick_text (generate_parlay_data.py) writes every pick as
+  // "{bet type}: {details}", for bet types it knows and for ones it doesn't,
+  // and a pick with no bet type is never published -- so the prefix is always
+  // there to read.
+  const isTotalBet = p => TOTAL_BET_TYPES.has(String(p.pick || '').split(':')[0].trim());
+
   // entry: {kind: 'team', team_score, opponent_score, period, clock, tone} or
   // {kind: 'prop', stat, tone} -- see publish_parlay_stats.py's build_live_scores.
-  function liveText(entry) {
-    const clock = entry.kind === 'team' && entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '';
-    return entry.kind === 'team'
-      ? `${Math.round(entry.team_score)}-${Math.round(entry.opponent_score)}${clock}`
-      : `${entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1)} so far`;
+  // A totals bet shows the two scores added up, since the combined number IS
+  // the thing being bet on -- "17-27" makes you do the arithmetic yourself to
+  // see where it stands against the line.
+  function liveText(entry, isTotal) {
+    if (entry.kind !== 'team') return `${entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1)} so far`;
+    const clock = entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '';
+    const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
+    return `${isTotal ? a + b : `${a}-${b}`}${clock}`;
+  }
+
+  // Same idea for a graded leg, where the score is free text out of the
+  // sheet's Grade Detail column ("17-27"). Anything that isn't a plain
+  // two-score string is left exactly as written.
+  function combineFinalScore(detail) {
+    return detail.replace(/^(\d+)\s*-\s*(\d+)\b/, (_m, a, b) => String(Number(a) + Number(b)));
   }
 
   // The third stat slot is whichever of these is actually useful right now:
@@ -360,10 +382,11 @@
   // live, or the graded final once it's decided -- never more than one of
   // the three at once, which is what keeps a leg card to a single stat row.
   function thirdStat(p, entry) {
+    const isTotal = isTotalBet(p);
     // tone 'up' means the leg is covering as things stand; 'down' and no
     // tone at all (a prop that hasn't reached its line yet, but still could)
     // both stay red, same as before.
-    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap${entry.tone === 'up' ? ' up' : ''}"><span class="dot"></span>${esc(liveText(entry))}</span>`];
+    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap${entry.tone === 'up' ? ' up' : ''}"><span class="dot"></span>${esc(liveText(entry, isTotal))}</span>`];
     if (p.result === 'Pending') return ['Kickoff', esc(fmtTime(p.gametime))];
     // auto_grade_results.py writes score-graded detail as "17-10 final" --
     // the label above already says "Final", so a trailing "final" in the
@@ -371,7 +394,8 @@
     // (a prop's "Player: 2", a 1st-half score's "...1st half", an
     // individual-sport "X won") never end in that word, so they pass
     // through untouched.
-    const detail = (p.detail || fmtTime(p.gametime)).replace(/\s*\bfinal\b\s*$/i, '').trim();
+    let detail = (p.detail || fmtTime(p.gametime)).replace(/\s*\bfinal\b\s*$/i, '').trim();
+    if (isTotal) detail = combineFinalScore(detail);
     return ['Final', esc(detail || p.detail || fmtTime(p.gametime))];
   }
 
