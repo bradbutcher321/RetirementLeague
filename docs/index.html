@@ -705,7 +705,7 @@
      standalone card on this page uses (.median-card itself included), not
      the translucent item fill meant for something nested inside one. */
   .stat-moment{
-    margin-top: 14px;
+    margin-top: 0;
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -721,6 +721,58 @@
      card, and quieter than the quote so the words stay the thing you read. */
   .stat-moment-attrib{ display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-dim); margin-top: 10px; }
   @media (max-width: 480px){ .stat-moment-text{ font-size: 1rem; } }
+
+  /* ---------- Current Parlay highlight ----------
+     Sits left of League Lore, in the row this shares with it. Reuses the
+     parlay page's own visual language (the leg card, the live dot) at a
+     condensed, non-interactive size -- so clicking through to the full
+     parlay page reads as a zoom-in, not a jump to a different design. */
+  .lore-row{ margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
+  @media (max-width: 700px){ .lore-row{ grid-template-columns: 1fr; } }
+  /* No current-week parlay data (off-season, nothing picked yet) collapses
+     back to one column instead of stranding League Lore next to a gap. */
+  .lore-row:has(#parlay-highlight-container:empty){ grid-template-columns: 1fr; }
+  #parlay-highlight-container:empty{ display: none; }
+
+  .parlay-highlight{
+    background: linear-gradient(165deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+    padding: 16px 18px 18px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .parlay-highlight:hover{ border-color: rgba(255,255,255,0.18); }
+  .ph-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .ph-title{ font-weight: 700; font-size: 0.92rem; }
+
+  .ph-leg{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 14px 11px; }
+  /* A live leg's current trend tints it the same win/outline-tint way a
+     decided one does on the parlay page itself (.leg.live-up/.live-down) --
+     it's reporting where the leg stands right now, not a final result. */
+  .ph-leg.trend-up{ border-color: var(--win-line); background: var(--win-tint); }
+  .ph-leg.trend-down{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .ph-leg-top{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .ph-leg-name{ font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ph-leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 4px; line-height: 1.35; }
+  .ph-leg-result{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); white-space: nowrap; flex-shrink: 0; }
+  .ph-leg-result.turf{ color: var(--turf); }
+  .ph-leg-result.loss{ color: var(--loss); }
+  .ph-kickoff{ color: var(--text-dim); font-size: 0.78rem; white-space: nowrap; flex-shrink: 0; }
+
+  /* The live dot is always red -- same as the parlay page's own
+     .leg-stats .live-wrap. It marks "in progress", a separate signal from
+     who's currently ahead, so it doesn't turn green just because the leg
+     reads as a win right now. Only the text beside it takes that tone. */
+  .ph-live{ display: inline-flex; align-items: center; gap: 5px; font-family: var(--scoreboard); font-weight: 700; font-size: 0.86rem; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--loss); flex-shrink: 0; }
+  .ph-live.turf{ color: var(--turf); }
+  .ph-live .dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: pulse 1.5s ease-in-out infinite; }
+
+  .ph-stats{ display: flex; gap: 18px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .ph-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--gold); }
+  .ph-stat b.loss{ color: var(--loss); }
+  .ph-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
 
   /* ---------- Superlatives ---------- */
   .accolades-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -881,7 +933,10 @@
       <div id="median-container">
         <div class="loading-row">Loading median splits…</div>
       </div>
-      <div id="stat-of-moment-container"></div>
+      <div class="lore-row">
+        <div id="parlay-highlight-container"></div>
+        <div id="stat-of-moment-container"></div>
+      </div>
     </section>
 
     <section>
@@ -939,6 +994,18 @@
   function fmtScore(n) {
     const num = parseFloat(n);
     return isNaN(num) ? n : num.toFixed(2);
+  }
+  function fmtMoney(n) {
+    if (n === null || n === undefined) return '—';
+    return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+  const PARLAY_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function fmtKickoff(iso) {
+    if (!iso) return 'TBD';
+    const d = new Date(iso);
+    const h = d.getHours();
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${PARLAY_DAYS[d.getDay()]} ${h % 12 || 12}:${mins}${h < 12 ? 'AM' : 'PM'}`;
   }
 
   // Which matchups are currently expanded, keyed by team-name pair rather
@@ -1627,6 +1694,127 @@
     })
     .catch(() => {});
 
+  // ---------- Current Parlay highlight ----------
+  // Same Worker, same /parlay-stats endpoint parlay-results.html itself
+  // reads -- see that page's own fetch for the full shape (players, weeks,
+  // live). Polled on its own 2-minute cycle, independent of the main
+  // dashboard fetch above, matching how parlay-results.html keeps its own
+  // live scores fresh.
+  let parlayData = null;
+  function loadParlayHighlight() {
+    fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(d => {
+        parlayData = d;
+        renderParlayHighlight();
+        if (standingsData) renderStatOfMoment();
+      })
+      .catch(() => {});
+  }
+  loadParlayHighlight();
+  setInterval(loadParlayHighlight, 120000);
+
+  const PARLAY_TOTAL_BET_TYPES = new Set(['Total Points', 'Total Goals', 'Total Rounds']);
+  function parlayBetType(p) { return String(p.pick || '').split(':')[0].trim(); }
+  function parlayIsTotalBet(p) { return PARLAY_TOTAL_BET_TYPES.has(parlayBetType(p)); }
+  // Mirrors parlay-results.html's own liveText -- a totals bet shows the
+  // combined score (the thing actually being bet on), everything else the
+  // raw score; a prop shows its tracked stat instead.
+  function parlayLiveText(entry, isTotal) {
+    if (entry.kind !== 'team') return `${entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1)} so far`;
+    const clock = entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '';
+    const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
+    return `${isTotal ? a + b : `${a}-${b}`}${clock}`;
+  }
+
+  function renderParlayHighlight() {
+    const container = document.getElementById('parlay-highlight-container');
+    if (!container || !parlayData) return;
+    const weeks = parlayData.weeks || [];
+    if (!weeks.length) { container.innerHTML = ''; return; }
+    const week = weeks[weeks.length - 1];
+    const players = parlayData.players || [];
+    const legs = players.filter(p => week.picks[p]).map(p => [p, week.picks[p]])
+      .sort((a, b) => (a[1].gametime || '9999').localeCompare(b[1].gametime || '9999'));
+    if (!legs.length) { container.innerHTML = ''; return; }
+
+    const wins = legs.filter(([, p]) => p.result === 'Win').length;
+    const losses = legs.filter(([, p]) => p.result === 'Loss').length;
+    const pending = legs.filter(([, p]) => p.result === 'Pending');
+    const live = parlayData.live || {};
+    const liveKey = name => `${week.year}:${week.week}:${name}`;
+    const liveLeg = pending.find(([name]) => live[liveKey(name)]);
+    // Whichever leg is most worth featuring: the live one if any, otherwise
+    // whichever pending leg kicks off soonest (legs are sorted by gametime
+    // already). If the whole week is graded, fall back to the last leg to
+    // kick off as a recap rather than showing nothing.
+    const [name, p] = liveLeg || pending[0] || legs[legs.length - 1];
+    const entry = live[liveKey(name)];
+
+    const result = week.final && week.final.result;
+    const status = result === 'Loss' ? 'Dead' : result === 'Win' ? 'Hit' : 'Alive';
+    const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
+
+    let legClass = '', rightHtml;
+    if (entry) {
+      const textTone = entry.tone === 'up' ? ' turf' : '';
+      legClass = entry.tone === 'up' ? ' trend-up' : entry.tone === 'down' ? ' trend-down' : '';
+      rightHtml = `<span class="ph-live${textTone}"><span class="dot"></span>${parlayLiveText(entry, parlayIsTotalBet(p))}</span>`;
+    } else if (p.result === 'Pending') {
+      rightHtml = `<span class="ph-kickoff">Kickoff ${fmtKickoff(p.gametime)}</span>`;
+    } else {
+      const tone = p.result === 'Win' ? ' turf' : p.result === 'Loss' ? ' loss' : '';
+      rightHtml = `<span class="ph-leg-result${tone}">${p.result}</span>`;
+    }
+
+    container.innerHTML = `
+      <div class="parlay-highlight">
+        <div class="ph-head">
+          <div class="ph-title">Current Parlay</div>
+          <span class="badge ${statusTone}">${status}</span>
+        </div>
+        <div class="ph-leg${legClass}">
+          <div class="ph-leg-top">
+            <div class="ph-leg-name">${name}</div>
+            ${rightHtml}
+          </div>
+          <div class="ph-leg-bet">${p.pick}</div>
+        </div>
+        <div class="ph-stats">
+          <div class="ph-stat"><b>${wins}</b><span>Hit</span></div>
+          <div class="ph-stat"><b class="loss">${losses}</b><span>Lost</span></div>
+          <div class="ph-stat"><b>${pending.length}</b><span>Remaining</span></div>
+          <div class="ph-stat"><b>${fmtMoney(week.final && week.final.payout)}</b><span>Payout</span></div>
+        </div>
+      </div>`;
+    container.querySelector('.parlay-highlight').addEventListener('click', () => {
+      window.location.href = 'parlay-results.html';
+    });
+  }
+
+  // Facts League Lore can pull from the same current-week parlay data the
+  // highlight card above renders -- a different voice (a passing aside, not
+  // a live status readout), so it's kept out of the pool the highlight card
+  // itself would duplicate (nothing here just restates which leg is live).
+  function currentParlayFacts(data) {
+    const weeks = data.weeks || [];
+    if (!weeks.length) return [];
+    const week = weeks[weeks.length - 1];
+    const picks = Object.keys(week.picks || {});
+    if (!picks.length) return [];
+    const remaining = picks.filter(name => week.picks[name].result === 'Pending').length;
+    const result = week.final && week.final.result;
+    const facts = [];
+    const add = (cond, text) => { if (cond) facts.push(text); };
+
+    add(result === 'Loss' && week.killed_by && week.killed_by.length,
+      `${hi(week.killed_by.join(' & '))} killed this week's parlay, what a dick.`);
+    add(result === 'Win', `This week's parlay hit for ${hi(fmtMoney(week.final.payout))}.`);
+    add(result !== 'Win' && result !== 'Loss' && remaining > 0,
+      `The current parlay is still alive with ${hi(remaining)} leg${remaining === 1 ? '' : 's'} remaining.`);
+    return facts;
+  }
+
   function currentYearFacts(data) {
     const teams = data.teams || [];
     if (!teams.length) return [];
@@ -1943,7 +2131,7 @@
     'Shit hurts k',
     `&ldquo;Don't do it&rdquo;<span class="stat-moment-attrib">&mdash; Jon</span>`,
     'Do my eyebrows look good',
-    'Whatever happened to our rent money anyway?',
+    'Whatever happened to that rent money anyway?',
     `Flanders has <b>3*</b> championships.<span class="stat-moment-fine">*We all know one of them doesn't count</span>`,
     'Brad and Claude are the real league MVPs',
     "Don't forget to check out Flanders's franchise page. Might find something better than a Flanders's dog.",
@@ -1980,6 +2168,7 @@
       const facts = [
         ...(data ? currentYearFacts(data) : []),
         ...allTimeFacts(franchiseData),
+        ...(parlayData ? currentParlayFacts(parlayData) : []),
       ];
       if (!facts.length) { container.innerHTML = ''; return; }
       text = facts[Math.floor(Math.random() * facts.length)];
