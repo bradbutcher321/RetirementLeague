@@ -1904,7 +1904,7 @@
   // manager with zero championships), so it can't live as a static string
   // in that array, but mixing its ~6 generated instances into the ~75-ish
   // main stat pool made it show up closer to 8% than the intended 5%.
-  const DBZ_CHANCE = 0.05;
+  const DBZ_CHANCE = 0.01;
   function dbzFact(franchise) {
     const players = ((franchise && franchise.players) || []).filter(p => !PAST_MEMBERS.has(p.name));
     const neverWon = players.filter(p => !(p.career && p.career.standings && p.career.standings.championships > 0));
