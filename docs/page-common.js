@@ -29,3 +29,11 @@ const MONOGRAMS = {
 function monogram(name) {
   return MONOGRAMS[name] || String(name ?? '').slice(0, 2).toUpperCase();
 }
+
+// Centre a scrolling selector track (.scroll, see theme.css) on its selected
+// item, so after a re-render the choice you just made isn't off-screen.
+function keepSelectedInView(track) {
+  if (!track || track.scrollWidth <= track.clientWidth) return;
+  const on = track.querySelector('.on, .active');
+  if (on) track.scrollLeft = on.offsetLeft - track.offsetLeft - (track.clientWidth - on.offsetWidth) / 2;
+}

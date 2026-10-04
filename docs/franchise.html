@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=7">
+<link rel="stylesheet" href="theme.css?v=8">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
@@ -147,15 +147,7 @@
   @media (min-width:721px){ .pair{ grid-template-columns:1fr 1fr; } }
   .stat-card{ overflow:hidden; }
 
-  /* ---------- Tabs ----------
-     Eight sections don't fit one row on a phone, and wrapping them made a
-     three-row block of buttons. On a phone the track scrolls sideways
-     instead, with the selected tab kept in view. */
-  @media (max-width:720px){
-    .tabs.scroll{ flex-wrap:nowrap; overflow-x:auto; width:100%; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
-    .tabs.scroll::-webkit-scrollbar{ display:none; }
-    .tabs.scroll .tab{ flex:none; }
-  }
+  /* Tabs scroll sideways on a phone via theme.css's shared .scroll. */
   section.fr-hero{ margin-bottom:14px; }
 
   /* ---------- Tiles: a label, one number, an optional sub-line ---------- */
@@ -370,7 +362,7 @@
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=3"></script>
+<script src="page-common.js?v=4"></script>
 <script src="achievements.js"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, EFFICIENCY_EXPERT_PCT, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
@@ -951,11 +943,7 @@
     const tabsEl = document.getElementById('tabs');
     tabsEl.innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
     document.getElementById('tab-content').innerHTML = TABS[tab].render(p);
-    // Keep the selected tab in view when the track scrolls (phone).
-    const on = tabsEl.querySelector('.tab.on');
-    if (on && tabsEl.scrollWidth > tabsEl.clientWidth) {
-      tabsEl.scrollLeft = on.offsetLeft - (tabsEl.clientWidth - on.offsetWidth) / 2;
-    }
+    keepSelectedInView(tabsEl);
   }
 
   document.addEventListener('click', e => {

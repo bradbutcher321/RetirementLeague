@@ -328,6 +328,16 @@ body{
    tracks' margins genuinely differ per page and stay with their markup. */
 .tabs{ margin-bottom: 14px; }
 
+/* .scroll: on a phone the track stays one row and scrolls sideways instead
+   of wrapping into a block of buttons several rows deep. Desktop still
+   wraps -- with a mouse, a sideways scroller hides options. Pair it with
+   keepSelectedInView() from page-common.js so the chosen item is visible. */
+@media (max-width: 720px){
+  .scroll{ flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .scroll::-webkit-scrollbar{ display: none; }
+  .scroll > *{ flex: none; }
+}
+
 /* A selector and its caption on one line above the content they filter.
    .right pushes the whole row to the far edge instead of the near one. */
 .selector-row{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }

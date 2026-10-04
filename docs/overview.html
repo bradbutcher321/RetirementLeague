@@ -21,14 +21,14 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=7">
+<link rel="stylesheet" href="theme.css?v=8">
 <link rel="stylesheet" href="nav.css?v=4">
 <link rel="stylesheet" href="league.css?v=6">
 <style>
   /* Selector styling (including .tabs' own bottom margin) lives in theme.css
      -- only this page's spacing here. The seg sits inside a card, so its side
      margins match that padding. */
-  .seg{ margin:4px 24px 14px; max-width:calc(100% - 48px); }
+  .seg{ margin:20px 24px 14px; max-width:calc(100% - 48px); }
 
   .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; padding:0 18px 20px; }
   @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
@@ -82,7 +82,7 @@
     <section>
       <!-- No section heading: the page is titled League History now, so a
            second line repeating it said nothing the tabs below don't. -->
-      <div class="tabs" id="tabs"></div>
+      <div class="tabs scroll" id="tabs"></div>
       <div id="overview"><div class="loading-row">Loading league history…</div></div>
     </section>
 
@@ -90,7 +90,7 @@
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=2"></script>
+<script src="page-common.js?v=4"></script>
 <script src="league-common.js?v=3"></script>
 <script src="achievements.js"></script>
 <script>
@@ -99,7 +99,7 @@
   let TABS = [], tab = 0;
   const viewPick = {};
   const toneCls = t => (t === 'good' || t === 'up' ? 'turf' : t === 'bad' || t === 'down' ? 'loss' : '');
-  const glassCard = (title, body, note) => `<div class="glass"><div style="padding:20px 24px ${note ? '4px' : '16px'}"><div style="font-weight:700;font-size:1rem">${title}</div>${note ? `<div style="color:var(--text-dim);font-size:0.78rem;margin-top:4px">${note}</div>` : ''}</div>${body}</div>`;
+  const glassCard = (title, body) => `<div class="glass">${title ? `<div style="padding:20px 24px 16px"><div style="font-weight:700;font-size:1rem">${title}</div></div>` : ''}${body}</div>`;
 
   function build(D, F, R) {
     // Payouts are stored as sparse "effective from this year on" snapshots
@@ -440,16 +440,19 @@
   function render() {
     document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
     const T = TABS[tab], el = document.getElementById('overview');
-    if (T.html) { el.innerHTML = T.html; return; }
-    if (T.tiles) { el.innerHTML = tilesHtml(T.tiles); return; }
+    if (T.html) { el.innerHTML = T.html; keepSelectedInView(document.getElementById('tabs')); return; }
+    if (T.tiles) { el.innerHTML = tilesHtml(T.tiles); keepSelectedInView(document.getElementById('tabs')); return; }
     const vi = viewPick[tab] || 0, v = T.views[vi];
     // No tone on the buttons: a selected control is gold site-wide. A view's
     // own tone still colours the rows it renders, which is where it means
     // something.
-    const seg = `<div class="seg">${T.views.map((x, i) => `<button class="${i === vi ? 'on' : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
+    const seg = `<div class="seg scroll">${T.views.map((x, i) => `<button class="${i === vi ? 'on' : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
     const half = Math.ceil(v.items.length / 2);
     const cols = `<div class="cols"><div>${v.items.slice(0, half).map((i, k) => rowHtml(i, k, v)).join('')}</div><div>${v.items.slice(half).map((i, k) => rowHtml(i, k + half, v)).join('')}</div></div>`;
-    el.innerHTML = glassCard(v.label, seg + cols);
+    // No card title: the selected view's own pill already names it.
+    el.innerHTML = glassCard('', seg + cols);
+    keepSelectedInView(document.getElementById('tabs'));
+    keepSelectedInView(el.querySelector('.seg'));
   }
 
   document.addEventListener('click', e => {

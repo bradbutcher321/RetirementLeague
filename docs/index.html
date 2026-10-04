@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=7">
+<link rel="stylesheet" href="theme.css?v=8">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* ---------- Matchup cards ----------
@@ -685,7 +685,11 @@
       </div>
     </section>
 
-    <section>
+    <!-- hidden until loadDashboard's first render, same as Current Parlay and
+         League Lore: without it the standings card and accolade
+         placeholders drew on their own while the rest of the page was still
+         loading, instead of appearing in step with it. -->
+    <section id="season-section" hidden>
       <!-- Superlatives and standings answer the same question ("where does
            the season stand, counting this week as of X?"), so they share one
            heading and one Through / live / projected toggle. There are no
@@ -2490,6 +2494,7 @@
 
         superlativesData = data;
         renderSuperlatives();
+        document.getElementById('season-section').hidden = false;
       })
       .catch(err => {
         console.error('Dashboard error:', err);
