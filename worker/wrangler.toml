@@ -29,9 +29,15 @@ compatibility_date = "2024-09-23"
 # harmless (just extra runs where both match), and the union of the two
 # reproduces the intended per-window cadence almost exactly, at the cost of
 # a few windows starting ~1 hour early/late (noted below) rather than on
-# the exact boundary. Also note: Cloudflare's day-of-week field wants
-# Sunday as `7`, not the usual cron `0` -- `0` was rejected outright as an
-# "invalid cron string" [code: 10100].
+# the exact boundary.
+#
+# Days are written as names, never numbers. Cloudflare numbers the
+# day-of-week field 1-7 starting from SUNDAY (1=Sun ... 7=Sat), not the
+# usual cron 0-6/7=Sun -- `0` is rejected outright as an "invalid cron
+# string" [code: 10100]. This file once read 7 as Sunday, which shifted
+# every window a day early: the game-day 10-minute cadence ran Fri/Sat
+# and Sunday NFL only got the hourly baseline (confirmed from the
+# workflow's run history, 2026-10-04).
 #
 #   A) every 10 min, Mon/Tue/Fri/Sun 12am-4:59am UTC -- tail end of a
 #      Sunday-night or Thursday-night game (or MNF) that ran past midnight.
@@ -48,11 +54,11 @@ compatibility_date = "2024-09-23"
 # Wednesday nor early Thursday appears in any entry below.
 [triggers]
 crons = [
-  "*/10 0-4 * * 1,2,5,7", # A
-  "*/10 23 * * 1,4",      # B
-  "*/10 16-23 * * 6,7",   # C
-  "0 12-23 * * 4",        # D
-  "0 * * * 1,5,6,7",      # E
+  "*/10 0-4 * * MON,TUE,FRI,SUN", # A
+  "*/10 23 * * MON,THU",          # B
+  "*/10 16-23 * * SAT,SUN",       # C
+  "0 12-23 * * THU",              # D
+  "0 * * * MON,FRI,SAT,SUN",      # E
 ]
 
 # Plain-text config (safe to commit — these are not secrets)
