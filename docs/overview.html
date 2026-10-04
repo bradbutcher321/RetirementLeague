@@ -23,44 +23,121 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=8">
 <link rel="stylesheet" href="nav.css?v=4">
-<link rel="stylesheet" href="league.css?v=6">
 <style>
-  /* Selector styling (including .tabs' own bottom margin) lives in theme.css
-     -- only this page's spacing here. The seg sits inside a card, so its side
-     margins match that padding. */
-  .seg{ margin:20px 24px 14px; max-width:calc(100% - 48px); }
+  /* ---------- League History ----------
+     Same building blocks as Franchise and Game Records: one panel per
+     section (white title top-left, chip top-right), record rows with a gold
+     monogram and a gold value, and lists as divided rows inside one box.
+     A row only gets an outline + tint when it means something (the leader,
+     a Sacko). Colours come from theme.css's tokens, never one-off rgba. */
+  #overview{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+  .panel{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius:14px; min-width:0; }
+  .p-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 16px 0; }
+  .p-title{ font-weight:700; font-size:0.95rem; }
+  .p-body{ padding:12px; }
+  .chip{ font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--text-dim); white-space:nowrap; }
 
-  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:0 14px; padding:0 18px 20px; }
-  @media (max-width:720px){ .cols{ grid-template-columns:1fr; } }
+  /* View selector inside a list panel. */
+  .seg{ margin:12px 12px 0; max-width:calc(100% - 24px); }
 
-  /* ---------- Season Timeline: one small chip per fact instead of a
-     single line of plain text ---------- */
-  .yr-chips{ display:flex; flex-wrap:wrap; gap:6px; }
-  .yr-chip{ display:inline-flex; align-items:baseline; gap:5px; background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:0.74rem; color:var(--text); white-space:nowrap; }
-  .yr-chip .l{ color:var(--text-dim); font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; }
-  .yr-chip .m{ font-family:var(--scoreboard); font-weight:700; font-size:0.68rem; color:var(--text-dim); }
-  .yr-chip.gold{ border-color:rgba(212,180,106,0.35); background:rgba(212,180,106,0.07); }
-  .yr-chip.gold .l{ color:var(--gold); }
-  .yr-chip.loss{ border-color:rgba(214,98,79,0.35); background:rgba(214,98,79,0.07); }
-  .yr-chip.loss .l{ color:var(--loss); }
-  .yr-chip.bronze{ border-color:rgba(205,127,50,0.4); background:rgba(205,127,50,0.08); }
-  .yr-chip.bronze .l{ color:#D9A066; }
+  /* ---------- Monogram ---------- */
+  .mono{ width:34px; height:34px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; border:1px solid var(--lead-line); background:var(--lead-tint); color:var(--gold); font-family:var(--scoreboard); font-weight:800; font-size:0.9rem; letter-spacing:0.02em; }
+  .mono.many{ font-family:var(--body); font-size:0.64rem; font-weight:700; }
+  .mono.loss{ border-color:var(--loss-line); background:var(--loss-tint); color:var(--loss); }
 
-  /* ---------- Streaks: ring the current W/L streak leaders ---------- */
-  .qrow.streak-w{ border-color:var(--gold); box-shadow:0 0 0 1.5px var(--gold) inset; }
-  .qrow.streak-l{ border-color:var(--loss); box-shadow:0 0 0 1.5px var(--loss) inset; }
+  /* ---------- Summary ---------- */
+  .reign{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .reign-c{ border:1px solid; border-radius:10px; padding:14px 10px 12px; text-align:center; min-width:0; }
+  .reign-c.champ{ border-color:var(--lead-line); background:var(--lead-tint); }
+  .reign-c.sacko{ border-color:var(--loss-line); background:var(--loss-tint); }
+  .reign-l{ font-size:0.62rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
+  .reign-c.champ .reign-l{ color:var(--gold); } .reign-c.sacko .reign-l{ color:var(--loss); }
+  .reign-n{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.7rem, 8vw, 2.3rem); line-height:1.05; margin-top:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .reign-s{ color:var(--text-dim); font-size:0.74rem; margin-top:3px; }
 
-  /* ---------- Dynasty Heatmap ---------- */
-  .heat-scroll{ overflow-x:auto; padding:22px 24px; }
-  .heat-grid{ display:grid; width:max-content; }
-  .heat-name{ position:sticky; left:0; background:var(--surface); font-weight:700; font-size:0.82rem; display:flex; align-items:center; padding-right:8px; border-right:1px solid var(--line); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .heat-yr{ text-align:center; color:var(--text-dim); font-size:0.62rem; padding:4px 0; }
-  .heat-cell{ margin:1.5px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:0.78rem; color:var(--text-dim); min-height:28px; border:1px solid var(--line); }
-  .heat-cell.champ{ background:rgba(212,180,106,0.22); color:var(--gold); border-color:var(--gold); }
-  .heat-legend{ display:flex; flex-wrap:wrap; gap:14px; margin:0 24px 20px; }
-  .heat-legend-item{ display:flex; align-items:center; gap:6px; color:var(--text-dim); font-size:0.74rem; }
-  .heat-swatch{ width:12px; height:12px; border-radius:3px; border:1px solid var(--line); flex-shrink:0; }
+  .tiles{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+  @media (min-width:721px){ .tiles{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
+  .tile{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:10px 6px 9px; text-align:center; min-width:0; }
+  .tile-l{ color:var(--text-dim); font-size:0.6rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  .tile-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; line-height:1.15; margin-top:3px; }
+  .tile-s{ color:var(--text-dim); font-size:0.66rem; margin-top:1px; }
 
+  /* Record rows: Game Records' shape -- monogram, caption, holder, value. */
+  .recs{ display:grid; grid-template-columns:1fr; }
+  @media (min-width:721px){ .recs{ grid-template-columns:1fr 1fr; column-gap:24px; } }
+  .rec-row{ display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 6px; border-top:1px solid var(--line); }
+  .rec-row:first-child{ border-top:none; }
+  @media (min-width:721px){ .rec-row:nth-child(2){ border-top:none; } }
+  .cap{ display:block; color:var(--text-dim); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+  .holder{ display:block; font-weight:600; font-size:0.88rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ctx{ display:block; color:var(--text-dim); font-size:0.7rem; margin-top:1px; }
+  .rec-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.4rem; color:var(--gold); font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+  /* ---------- Timeline: one card per season ---------- */
+  .seasons{ display:grid; grid-template-columns:1fr; gap:8px; }
+  @media (min-width:721px){ .seasons{ grid-template-columns:1fr 1fr; } }
+  .yr{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:10px 10px 8px; min-width:0; }
+  .yr.live{ border-style:dashed; }
+  .yr-h{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:0 2px 8px; border-bottom:1px solid var(--line); }
+  .yr-y{ font-family:var(--scoreboard); font-weight:800; font-size:1.25rem; }
+  .yr-champ{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .yr-champ .holder{ margin:0; color:var(--gold); font-weight:700; }
+  .yr-champ .mono{ width:28px; height:28px; font-size:0.74rem; }
+  .yr-amt{ color:var(--text-dim); font-size:0.7rem; font-variant-numeric:tabular-nums; }
+  .yr-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px 10px; padding:8px 2px 2px; }
+  .yc{ min-width:0; }
+  .yc .cap.loss{ color:var(--loss); }
+  .yc-n{ font-weight:600; font-size:0.8rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .yc-d{ color:var(--text-dim); font-size:0.66rem; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .yr-live{ color:var(--text-dim); font-size:0.8rem; padding:8px 2px 4px; }
+
+  /* ---------- Dynasty heatmap ----------
+     Current members only, sorted by average finish. Columns share the
+     width, so all the seasons fit a phone without scrolling. States are
+     the same ones the Franchise page uses for a season. */
+  .heat{ display:grid; gap:3px; align-items:center; }
+  .heat-n{ font-weight:600; font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:4px; }
+  .heat-y{ text-align:center; color:var(--text-dim); font-size:0.58rem; }
+  .heat-c{ height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:0.78rem; color:var(--text-dim); background:var(--item); border:1px solid var(--item-line); min-width:0; }
+  .heat-c.none{ background:none; border-color:transparent; color:rgba(255,255,255,0.15); }
+  .heat-c.champion{ border-color:var(--gold); background:var(--lead-tint); color:var(--gold); }
+  .heat-c.runner-up{ border-color:var(--lead-line); color:var(--gold); }
+  .heat-c.playoffs{ border-color:var(--win-line); background:var(--win-tint); color:var(--turf); }
+  .heat-c.sacko{ border-color:var(--loss-line); background:var(--loss-tint); color:var(--loss); }
+  :root[data-accent="outline"] .heat-c{ background:var(--item); }
+  .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; color:var(--text-dim); font-size:0.68rem; padding:12px 2px 0; }
+  .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; border:1px solid var(--item-line); background:var(--item); }
+  .legend .champion{ border-color:var(--gold); background:var(--lead-tint); }
+  .legend .runner-up{ border-color:var(--lead-line); background:none; }
+  .legend .playoffs{ border-color:var(--win-line); background:var(--win-tint); }
+  .legend .sacko{ border-color:var(--loss-line); background:var(--loss-tint); }
+
+  /* ---------- List views: divided rows in one box ----------
+     The leader (or, on a "worst" list, the bottom) gets the outline + tint;
+     every other row is plain. Signed figures keep green/red by sign. */
+  .list{ display:grid; grid-template-columns:1fr; }
+  @media (min-width:721px){ .list{ grid-template-columns:1fr 1fr; column-gap:24px; } }
+  .lr{ display:grid; grid-template-columns:38px minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px 8px; border-top:1px solid var(--line); }
+  .lr:first-child{ border-top-color:transparent; }
+  @media (min-width:721px){ .lr:nth-child(2){ border-top-color:transparent; } }
+  .lr.lead, .lr.low{ border-radius:8px; border-top-color:transparent; }
+  .lr.lead + .lr, .lr.low + .lr{ border-top-color:transparent; }
+  .lr.lead{ background:var(--lead-tint); box-shadow:inset 0 0 0 1px var(--lead-line); }
+  .lr.low{ background:var(--loss-tint); box-shadow:inset 0 0 0 1px var(--loss-line); }
+  .lr-rk{ font-family:var(--scoreboard); font-weight:700; font-size:0.98rem; color:var(--text-dim); text-align:center; }
+  .lr.lead .lr-rk{ color:var(--gold); } .lr.low .lr-rk{ color:var(--loss); }
+  .lr-nm{ font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lr-sub{ color:var(--text-dim); font-size:0.7rem; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lr-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; font-variant-numeric:tabular-nums; white-space:nowrap; text-align:right; }
+  .lr.lead .lr-v{ color:var(--gold); } .lr.low .lr-v{ color:var(--loss); }
+  .lr .lr-v.up{ color:var(--turf); } .lr .lr-v.down{ color:var(--loss); }
+  .lr.nr{ grid-template-columns:minmax(0,1fr) auto; }
+  .lr-stats{ display:flex; gap:14px; }
+  .lr-stats div{ text-align:center; min-width:34px; }
+  .lr-stats b{ display:block; font-family:var(--scoreboard); font-weight:700; font-size:1.1rem; font-variant-numeric:tabular-nums; }
+  .lr-stats div > span{ display:block; color:var(--text-dim); font-size:0.56rem; letter-spacing:0.05em; text-transform:uppercase; }
+  .lr-stats em{ font-style:normal; }
+  .gold{ color:var(--gold); } .turf{ color:var(--turf); } .loss{ color:var(--loss); }
 </style>
 </head>
 <body>
@@ -94,12 +171,15 @@
 <script src="league-common.js?v=3"></script>
 <script src="achievements.js"></script>
 <script>
-  // esc() is a global from page-common.js, not part of LG.
+  // esc() and monogram() are globals from page-common.js, not part of LG.
   const { f1, f2, money } = LG;
   let TABS = [], tab = 0;
   const viewPick = {};
-  const toneCls = t => (t === 'good' || t === 'up' ? 'turf' : t === 'bad' || t === 'down' ? 'loss' : '');
-  const glassCard = (title, body) => `<div class="glass">${title ? `<div style="padding:20px 24px 16px"><div style="font-weight:700;font-size:1rem">${title}</div></div>` : ''}${body}</div>`;
+  const panel = (title, body, chip) => `<div class="panel">${title ? `<div class="p-head"><div class="p-title">${title}</div>${chip ? `<span class="chip">${chip}</span>` : ''}</div>` : ''}<div class="p-body">${body}</div></div>`;
+  const nameList = names => names.length < 3 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+  const monoFor = (names, cls) => names.length > 1
+    ? `<span class="mono many${cls ? ' ' + cls : ''}">${names.length}&times;</span>`
+    : `<span class="mono${cls ? ' ' + cls : ''}">${esc(monogram(names[0]))}</span>`;
 
   function build(D, F, R) {
     // Payouts are stored as sparse "effective from this year on" snapshots
@@ -121,18 +201,23 @@
     const sackos = done.filter(s => s.sacko > 0).sort((a, b) => b.year - a.year);
     const rec = s => `${s.tot_w + s.med_w}-${s.tot_l + s.med_l}`;
     const regRec = s => `${s.reg_w + s.med_w}-${s.reg_l + s.med_l}`;
+    const players = [...D.active];
 
-    const byYear = (list, recFn) => list.map(s => ({ rank: s.year, name: s.player, sub: `Draft position ${draftPos(s.player, s.year) ?? '—'}`, val: recFn(s) }));
+    const byYear = (list, recFn) => list.map(s => ({ rank: s.year, name: s.player, sub: `Draft slot ${draftPos(s.player, s.year) ?? '—'}`, val: recFn(s) }));
     const counts = (list, key, label) => {
       const by = {};
-      list.filter(s => s[key] > 0).forEach(s => { const e = by[s.player] || (by[s.player] = { n: 0, last: 0 }); e.n++; e.last = Math.max(e.last, s.year); });
-      return Object.entries(by).sort((a, b) => b[1].n - a[1].n || b[1].last - a[1].last).map(([name, e]) => ({ name, sub: `${label} ${e.last}`, val: e.n, hl: true }));
+      list.filter(s => s[key] > 0).forEach(s => { const e = by[s.player] || (by[s.player] = { n: 0, years: [] }); e.n++; e.years.push(s.year); });
+      return Object.entries(by).sort((a, b) => b[1].n - a[1].n || Math.max(...b[1].years) - Math.max(...a[1].years))
+        .map(([name, e]) => ({ name, sub: e.years.sort((x, y) => y - x).map(y => `'${String(y).slice(2)}`).join(', '), val: e.n }));
     };
+    // Title and Sacko games: who it was about first (the champion, or the
+    // manager who took the Sacko), then the score, then the margin.
     const titleGames = (type, winnerFirst) => yearsDesc.map(y => {
       const g = noBye.find(x => x.year === y && x.type === type); if (!g) return null;
-      const hi = g.s1 >= g.s2 ? [g.p1, g.s1, g.p2, g.s2] : [g.p2, g.s2, g.p1, g.s1];
-      const f = winnerFirst ? hi : [hi[2], hi[3], hi[0], hi[1]];
-      return { rank: y, name: `${f[0]} ${f2(f[1])} vs ${f[2]} ${f2(f[3])}`, sub: 'Margin of victory', val: f2(Math.abs(g.s1 - g.s2)) };
+      const [w, ws, l, ls] = g.s1 >= g.s2 ? [g.p1, g.s1, g.p2, g.s2] : [g.p2, g.s2, g.p1, g.s1];
+      return winnerFirst
+        ? { rank: y, name: `${w} def. ${l}`, sub: `${f2(ws)} – ${f2(ls)}`, val: '+' + f1(ws - ls) }
+        : { rank: y, name: `${l} lost to ${w}`, sub: `${f2(ls)} – ${f2(ws)}`, val: '−' + f1(ws - ls) };
     }).filter(Boolean);
 
     const seasonPts = max => yearsDesc.map(y => {
@@ -150,27 +235,29 @@
     }).filter(Boolean);
     const avgMedian = D.years.slice().reverse().map(y => {
       const m = D.games.filter(g => g.year === y && g.type === 'Reg' && g.median !== null).map(g => g.median);
-      return m.length && { rank: y, val: f2(m.reduce((a, b) => a + b, 0) / m.length) };
+      return m.length && { rank: y, val: f2(m.reduce((a, b) => a + b, 0) / m.length), sub: `${m.length} weeks` };
     }).filter(Boolean);
 
     const winSeasons = high => done.slice().sort((a, b) => (high ? b.reg_w - a.reg_w : a.reg_w - b.reg_w) || a.year - b.year).slice(0, 12)
-      .map(s => ({ rank: s.year, name: s.player, sub: 'Regular season', val: `${s.reg_w}-${s.reg_l}` }));
-    const players = [...D.active];
+      .map(s => ({ rank: s.year, name: s.player, sub: `Finished ${s.final_rank || '—'}${s.champ ? ' · Champion' : s.sacko ? ' · Sacko' : ''}`, val: `${s.reg_w}-${s.reg_l}` }));
     const doneOf = p => done.filter(s => s.player === p);
     const rate = players.map(p => { const ss = doneOf(p), made = ss.filter(s => s.playoff > 0).length; return { name: p, r: ss.length ? made / ss.length : 0, sub: `${made} of ${ss.length} seasons` }; })
-      .sort((a, b) => b.r - a.r).map(x => ({ name: x.name, sub: x.sub, val: Math.round(x.r * 100) + '%', hl: true }));
+      .sort((a, b) => b.r - a.r).map(x => ({ name: x.name, sub: x.sub, val: Math.round(x.r * 100) + '%' }));
     const finish = players.map(p => { const ss = doneOf(p).filter(s => s.final_rank); return { name: p, avg: ss.length ? ss.reduce((a, s) => a + s.final_rank, 0) / ss.length : 99, n: ss.length }; })
-      .sort((a, b) => a.avg - b.avg).map(x => ({ name: x.name, sub: `${x.n} seasons`, val: x.avg.toFixed(1), hl: true }));
-    const earn = Object.entries(D.earnings).filter(([, v]) => v != null).sort((a, b) => b[1] - a[1])
-      .map(([name, v]) => ({ name, sub: 'Net after dues and parlays', val: money(v), tone: v > 0 ? 'up' : v < 0 ? 'down' : '', hl: true }));
+      .sort((a, b) => a.avg - b.avg).map(x => ({ name: x.name, sub: `${x.n} seasons`, val: x.avg.toFixed(1), avg: x.avg }));
+    const earn = Object.entries(D.earnings).filter(([n, v]) => v != null && D.active.has(n)).sort((a, b) => b[1] - a[1])
+      .map(([name, v]) => ({ name, sub: 'After dues and parlays', val: money(v), tone: v > 0 ? 'up' : v < 0 ? 'down' : '', raw: v }));
 
-    const effView = () => !F ? [] : F.players.filter(p => p.efficiency && p.efficiency.career_pct != null)
-      .map(p => ({ name: p.name, sub: `${p.efficiency.games_analyzed} games analyzed`, val: f1(p.efficiency.career_pct) + '%' }))
+    // Every ranked list covers current members only -- a manager who left
+    // years ago can't hold or lose a spot anyone still playing competes for.
+    const activeF = () => !F ? [] : F.players.filter(p => D.active.has(p.name));
+    const effView = () => activeF().filter(p => p.efficiency && p.efficiency.career_pct != null)
+      .map(p => ({ name: p.name, sub: `${p.efficiency.games_analyzed} games`, val: f1(p.efficiency.career_pct) + '%' }))
       .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
-    const benchView = () => !F ? [] : F.players.filter(p => p.efficiency && p.efficiency.avg_points_left != null)
-      .map(p => ({ name: p.name, sub: `${f1(p.efficiency.points_left_on_bench)} total over ${p.efficiency.games_analyzed} games`, val: f2(p.efficiency.avg_points_left) }))
+    const benchView = () => activeF().filter(p => p.efficiency && p.efficiency.avg_points_left != null)
+      .map(p => ({ name: p.name, sub: `${f1(p.efficiency.points_left_on_bench)} total`, val: f2(p.efficiency.avg_points_left) }))
       .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
-    const extraWinsView = () => !F ? [] : F.players.filter(p => p.efficiency && p.efficiency.optimal_record)
+    const extraWinsView = () => activeF().filter(p => p.efficiency && p.efficiency.optimal_record)
       .map(p => ({ name: p.name, sub: `${p.efficiency.optimal_record.games} regular season games`, val: (p.efficiency.optimal_record.extra_wins > 0 ? '+' : '') + p.efficiency.optimal_record.extra_wins }))
       .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
     // Schedule luck: actual regular-season win rate minus all-play win rate
@@ -179,11 +266,11 @@
     // Franchise page shows.
     const scheduleLuck = p => (p.all_play && p.all_play.pct != null && p.career && p.career.win_rates.reg_pct != null)
       ? Math.round((p.career.win_rates.reg_pct - p.all_play.pct) * 10) / 10 : null;
-    const medianLuckView = () => !F ? [] : F.players.filter(p => scheduleLuck(p) !== null)
+    const medianLuckView = () => activeF().filter(p => scheduleLuck(p) !== null)
       .map(p => { const l = scheduleLuck(p); return { name: p.name, sub: `Won ${f1(p.career.win_rates.reg_pct)}% · all-play ${f1(p.all_play.pct)}%`, val: (l > 0 ? '+' : '') + f1(l) + '%', tone: l > 0 ? 'up' : l < 0 ? 'down' : '' }; })
       .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
-    const draftPosView = () => !F ? [] : F.players.filter(p => p.draft && p.draft.avg_position != null)
-      .map(p => ({ name: p.name, sub: `Best ${p.draft.best_position} · Worst ${p.draft.worst_position}`, val: f1(p.draft.avg_position) }))
+    const draftPosView = () => activeF().filter(p => p.draft && p.draft.avg_position != null)
+      .map(p => ({ name: p.name, sub: `Earliest ${p.draft.best_position} · latest ${p.draft.worst_position}`, val: f1(p.draft.avg_position) }))
       .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
 
     // Reuses the exact badge set the Franchise page's Achievements tab unlocks against, so the
@@ -192,9 +279,9 @@
       if (!F) return [];
       const ctx = { foundingYear: ACHIEVEMENTS_LIB.foundingYear(F.players) };
       const total = ACHIEVEMENTS_LIB.ACHIEVEMENTS.length;
-      return F.players.map(p => {
+      return activeF().map(p => {
         const n = ACHIEVEMENTS_LIB.unlockedCount(p, ctx);
-        return { name: p.name, sub: `${total - n} locked`, val: n, hl: true };
+        return { name: p.name, sub: `of ${total}`, val: n };
       }).sort((a, b) => b.val - a.val);
     };
 
@@ -203,10 +290,7 @@
     // not the Power Index below (a blended composite of several different
     // stats) -- this is purely schedule-independent scoring strength.
     const powerRankingView = () => !F ? [] : F.players.filter(p => p.all_play && p.all_play.pct != null && D.active.has(p.name))
-      .map(p => ({
-        name: p.name, hl: true, val: f1(p.all_play.pct) + '%',
-        sub: `${p.all_play.w}-${p.all_play.l}${p.all_play.t ? '-' + p.all_play.t : ''} all-play`,
-      }))
+      .map(p => ({ name: p.name, val: f1(p.all_play.pct) + '%', sub: `${p.all_play.w}-${p.all_play.l}${p.all_play.t ? '-' + p.all_play.t : ''} all-play` }))
       .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
 
     // Same formula as franchise.html's clutchDelta: playoff win% minus
@@ -217,7 +301,7 @@
         const r = p.career.record, wr = p.career.win_rates;
         if (!D.active.has(p.name) || (r.playoff_w || 0) + (r.playoff_l || 0) === 0 || wr.reg_pct == null || wr.playoff_pct == null) return null;
         const delta = wr.playoff_pct - wr.reg_pct;
-        return { name: p.name, hl: true, tone: delta > 0 ? 'up' : delta < 0 ? 'down' : '', val: (delta > 0 ? '+' : '') + f1(delta) + '%', sub: 'Playoff vs. Reg win %' };
+        return { name: p.name, tone: delta > 0 ? 'up' : delta < 0 ? 'down' : '', val: (delta > 0 ? '+' : '') + f1(delta) + '%', sub: `Playoffs ${f1(wr.playoff_pct)}% · reg ${f1(wr.reg_pct)}%` };
       })
       .filter(Boolean)
       .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
@@ -227,7 +311,7 @@
     // and the rest reweighted rather than being zeroed out for it.
     const powerIndexView = () => {
       if (!F) return [];
-      const base = F.players.map(p => ({
+      const base = activeF().map(p => ({
         name: p.name,
         titles: p.career.standings.championships || 0,
         win: p.career.win_rates.reg_pct ?? null,
@@ -248,16 +332,16 @@
         const totalW = parts.reduce((a, [key]) => a + WEIGHTS[key], 0);
         const score = totalW ? parts.reduce((a, [key, v]) => a + v * WEIGHTS[key], 0) / totalW : 0;
         const sub = parts.map(([key, v]) => `${LABELS[key]} ${Math.round(v * WEIGHTS[key] / 100)}`).join(' · ');
-        return { name: r.name, sub, val: score.toFixed(1), hl: true };
+        return { name: r.name, sub, val: score.toFixed(1) };
       }).sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
     };
 
+    // Streak rows: best win run (gold where it's the league record), worst
+    // losing run (red where it's the league record), and the live streak.
+    // The league's longest live win streak takes the gold row tint and the
+    // longest live losing streak the red one.
     const streakView = key => {
       if (!F) return [];
-      // The league-leading current win streak goes gold, matching the gold
-      // ring .streak-w already puts on that same row; every other live win
-      // streak stays green.
-      const cur = (n, top) => (n > 0 ? `<em style="color:var(--${top ? 'gold' : 'turf'})">W${n}</em>` : n < 0 ? `<em style="color:var(--loss)">L${-n}</em>` : '—');
       const rows = F.players.filter(p => p.streaks && p.streaks[key] && D.active.has(p.name))
         .sort((a, b) => b.streaks[key].current - a.streaks[key].current || b.streaks[key].longest_win - a.streaks[key].longest_win);
       if (!rows.length) return [];
@@ -267,190 +351,172 @@
       const curWorst = Math.min(...rows.map(p => p.streaks[key].current));
       return rows.map(p => {
         const s = p.streaks[key];
-        const winNum = s.longest_win === maxWin ? `<em style="color:var(--turf)">${s.longest_win}</em>` : s.longest_win;
-        const lossNum = s.longest_loss === maxLoss ? `<em style="color:var(--loss)">${s.longest_loss}</em>` : s.longest_loss;
-        const topWin = curBest > 0 && s.current === curBest;
-        const ring = topWin ? 'streak-w' : (curWorst < 0 && s.current === curWorst ? 'streak-l' : '');
-        return { name: p.name, ring, stats: [[winNum, 'Best W'], [lossNum, 'Best L'], [cur(s.current, topWin), 'Now']] };
+        const now = s.current > 0 ? `<em class="turf">W${s.current}</em>` : s.current < 0 ? `<em class="loss">L${-s.current}</em>` : '—';
+        const state = curBest > 0 && s.current === curBest ? 'lead' : curWorst < 0 && s.current === curWorst ? 'low' : '';
+        return { name: p.name, state, stats: [
+          [s.longest_win === maxWin ? `<em class="gold">${s.longest_win}</em>` : s.longest_win, 'Best W'],
+          [s.longest_loss === maxLoss ? `<em class="loss">${s.longest_loss}</em>` : s.longest_loss, 'Worst L'],
+          [now, 'Now']] };
       });
     };
 
+    // o.year: the left column is a year, not a rank. o.lead: which row takes
+    // the gold outline ('first', 'max', 'min'; default first). o.low: which
+    // row (if any) takes the red one. o.bad: a list of bad things (Sackos,
+    // lows), where the leader is marked red instead of gold.
     const V = (label, items, o = {}) => {
-      let best = -1;
-      if (o.pick === 'first') best = 0;
-      else if (o.pick) items.forEach((it, i) => { const n = parseFloat(it.val); if (best < 0 || (o.pick === 'max' ? n > parseFloat(items[best].val) : n < parseFloat(items[best].val))) best = i; });
-      const marks = {};
-      if (o.marks) {
-        const nums = items.map(it => parseFloat(it.val));
-        marks[nums.indexOf(Math.max(...nums))] = 'good';
-        marks[nums.indexOf(Math.min(...nums))] = 'bad';
-      }
-      return { label, items, tone: o.tone || 'neutral', year: o.year, hl: o.hl, best, marks };
+      const nums = items.map(it => parseFloat(String(it.val).replace(/[^0-9.\-]/g, '')));
+      const idx = how => how === 'max' ? nums.indexOf(Math.max(...nums)) : how === 'min' ? nums.indexOf(Math.min(...nums)) : how === 'first' ? 0 : -1;
+      const li = items.length ? idx(o.lead || 'first') : -1;
+      // Everyone tied with the leader shares the mark.
+      const leads = new Set(li < 0 ? [] : nums.map((n, i) => (n === nums[li] ? i : -1)).filter(i => i >= 0));
+      return { label, items, year: o.year, leads, low: idx(o.low), bad: o.bad };
     };
-    const first = (a, fallback = '—') => a[0] || { name: fallback, sub: '', val: '—' };
 
-    // ----- summary tiles -----
-    const t = (title, item, val, tone, sub, name) => ({ title, val: val ?? item.val, tone, name: name ?? item.name, sub: sub ?? item.sub });
-    const champC = counts(done, 'champ', 'Last won'), sackC = counts(done, 'sacko', 'Last received');
-    const topPts = seasonPts(true).sort((a, b) => parseFloat(b.val) - parseFloat(a.val))[0];
-    const bestWin = winSeasons(true)[0];
-    const tiles = [
-      // The person is the headline, not the year -- "who is the reigning
-      // champion" is the question these two answer, so the name takes the
-      // big slot and the season drops to the supporting line.
-      t('Reigning Champion', champs[0], champs[0].player, '', `${champs[0].year} · ${rec(champs[0])} record`, ''),
-      t('Reigning Sacko', sackos[0], sackos[0].player, 'bad', `${regRec(sackos[0])} record`, String(sackos[0].year)),
-      t('Most Titles', champC[0], champC[0].val, '', champC[0].sub, champC.filter(c => c.val === champC[0].val).map(c => c.name).join(' · ')),
-      t('Most Sackos', sackC[0], sackC[0].val, 'bad', sackC[0].sub, sackC.filter(c => c.val === sackC[0].val).slice(0, 3).map(c => c.name).join(' · ')),
-      t('Best Season Points', topPts, topPts.val, 'good', `${topPts.rank}`, topPts.name),
-      t('Best Regular Season', bestWin, bestWin.val, 'good', `${bestWin.rank}`, bestWin.name),
-      t('Top Earner', earn[0], earn[0].val, 'good', 'Net all-time', earn[0].name),
-      t('Best Average Finish', finish[0], finish[0].val, 'good', finish[0].sub, finish[0].name),
-    ];
+    // ----- Summary -----
+    const topTied = (list, get, dir = 1) => {
+      const vals = list.map(get).filter(v => v != null);
+      if (!vals.length) return { value: null, items: [] };
+      const value = dir > 0 ? Math.max(...vals) : Math.min(...vals);
+      return { value, items: list.filter(x => get(x) === value) };
+    };
+    const champC = counts(done, 'champ'), sackC = counts(done, 'sacko');
+
+    function summaryHtml() {
+      const c = champs[0], sk = sackos[0];
+      const reign = `<div class="reign">
+        <div class="reign-c champ"><div class="reign-l">Reigning Champion</div><div class="reign-n">${esc(c.player)}</div><div class="reign-s">${c.year} · ${rec(c)}</div></div>
+        <div class="reign-c sacko"><div class="reign-l">Reigning Sacko</div><div class="reign-n">${esc(sk.player)}</div><div class="reign-s">${sk.year} · ${regRec(sk)}</div></div>
+      </div>`;
+
+      const managers = new Set(D.seasons.map(s => s.player));
+      const distinctChamps = new Set(champs.map(s => s.player));
+      const glance = `<div class="tiles">
+        <div class="tile"><div class="tile-l">Seasons</div><div class="tile-v">${D.years.length}</div><div class="tile-s">Since ${D.years[0]}</div></div>
+        <div class="tile"><div class="tile-l">Managers</div><div class="tile-v">${managers.size}</div><div class="tile-s">${D.active.size} active</div></div>
+        <div class="tile"><div class="tile-l">Games</div><div class="tile-v">${noBye.length.toLocaleString()}</div><div class="tile-s">${noBye.filter(g => g.type !== 'Reg').length} postseason</div></div>
+        <div class="tile"><div class="tile-l">Champions</div><div class="tile-v">${distinctChamps.size}</div><div class="tile-s">in ${champs.length} seasons</div></div>
+      </div>`;
+
+      // Every record names everyone tied at the top.
+      const row = (cap, names, ctx, value, cls) => `<div class="rec-row">${monoFor(names, cls)}<div style="min-width:0"><span class="cap">${cap}</span><span class="holder">${esc(nameList(names))}</span>${ctx ? `<span class="ctx">${ctx}</span>` : ''}</div><span class="rec-v${cls ? ' ' + cls : ''}">${value}</span></div>`;
+      const yrs = list => list.map(s => s.year).sort((a, b) => b - a).map(y => `'${String(y).slice(2)}`).join(', ');
+      const rows = [];
+      { const t = topTied(champC, x => x.val); rows.push(row('Most titles', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', t.value)); }
+      { const t = topTied(sackC, x => x.val); rows.push(row('Most Sackos', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', t.value, 'loss')); }
+      { const t = topTied(done, s => s.tot_pf); rows.push(row('Best season, points', t.items.map(s => s.player), yrs(t.items), f2(t.value))); }
+      { const t = topTied(done, s => s.reg_w); const tt = topTied(t.items, s => -s.reg_l); rows.push(row('Best regular season', tt.items.map(s => s.player), yrs(tt.items), `${tt.items[0].reg_w}-${tt.items[0].reg_l}`)); }
+      { let best = null; noBye.forEach(g => [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => { if (!best || s > best.s) best = { p, s, g }; }));
+        rows.push(row('Highest single week', [best.p], `${best.g.year} · Week ${best.g.week}`, f2(best.s))); }
+      if (F) { const act = F.players.filter(p => D.active.has(p.name)); const t = topTied(act, p => p.streaks.head_to_head.longest_win); rows.push(row('Longest win streak', t.items.map(p => p.name), '', `${t.value} straight`)); }
+      { const t = topTied(players.map(p => ({ p, n: doneOf(p).filter(s => s.playoff > 0).length })), x => x.n); rows.push(row('Most playoff trips', t.items.map(x => x.p), '', t.value)); }
+      { const t = topTied(finish, x => x.avg, -1); rows.push(row('Best average finish', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', f1(t.value))); }
+      { const t = topTied(earn, x => x.raw); rows.push(row('Most money won', t.items.map(x => x.name), 'After dues and parlays', money(t.value))); }
+
+      return panel('', reign) + panel('All-Time Records', `<div class="recs">${rows.join('')}</div>`) + panel('The League', glance);
+    }
 
     // ----- Season Timeline -----
     function timelineHtml() {
-      const champGameByYear = {}; noBye.filter(g => g.type === 'Champ').forEach(g => champGameByYear[g.year] = g);
-      const sackoGameByYear = {}; noBye.filter(g => g.type === 'Sacko').forEach(g => sackoGameByYear[g.year] = g);
-      const thirdGameByYear = {}; noBye.filter(g => g.type === '3rd').forEach(g => thirdGameByYear[g.year] = g);
+      const gameBy = type => { const o = {}; noBye.filter(g => g.type === type).forEach(g => o[g.year] = g); return o; };
+      const champG = gameBy('Champ'), sackoG = gameBy('Sacko'), thirdG = gameBy('3rd');
       const secondByYear = {}; done.filter(s => s.final_rank === 2).forEach(s => secondByYear[s.year] = s);
       const weeklyHighByYear = {}; weekly(true).forEach(w => weeklyHighByYear[w.rank] = w);
       const seasonHighByYear = {}; seasonPts(true).forEach(w => seasonHighByYear[w.rank] = w);
+      const amt = n => n ? money(n) : '';
+      const cell = (label, name, detail, cls) => `<div class="yc"><span class="cap${cls ? ' ' + cls : ''}">${label}</span><div class="yc-n">${name ? esc(name) : '—'}</div><div class="yc-d">${detail || '&nbsp;'}</div></div>`;
+      const wl = g => g.s1 >= g.s2 ? [g.p1, g.p2] : [g.p2, g.p1];
 
-      const chip = (cls, label, text, amount) =>
-        `<span class="yr-chip${cls ? ' ' + cls : ''}"><span class="l">${label}</span> ${text}${amount ? ` <span class="m">${money(amount)}</span>` : ''}</span>`;
-
-      const items = D.years.slice().reverse().map(y => {
-        const isDone = complete.has(y);
-        if (!isDone) {
-          return `<div class="rail-item"><div class="rail-dot"></div><div class="rail-yr">${y}</div><div class="rail-chg">In progress</div></div>`;
+      const cards = D.years.slice().reverse().map(y => {
+        if (!complete.has(y)) {
+          return `<div class="yr live"><div class="yr-h"><div class="yr-y">${y}</div><span class="chip">In progress</span></div><div class="yr-live">Season under way.</div></div>`;
         }
-        const payouts = payoutsFor(y);
-        const chips = [];
-        const cg = champGameByYear[y];
-        if (cg) {
-          // Champion only -- who they beat is the 2nd-place chip sitting
-          // immediately after this one, so naming them here said it twice.
-          // The 3rd-place and Sacko chips below do still name both sides:
-          // nothing else in the row reports who came 4th or 11th.
-          chips.push(chip('gold', '\u{1F3C6}', esc(cg.s1 >= cg.s2 ? cg.p1 : cg.p2), payouts['1st Place']));
-        }
-        if (secondByYear[y]) chips.push(chip('', '2nd', esc(secondByYear[y].player), payouts['2nd Place']));
-        const tg = thirdGameByYear[y];
-        if (tg) {
-          const winner = tg.s1 >= tg.s2 ? tg.p1 : tg.p2, loser = tg.s1 >= tg.s2 ? tg.p2 : tg.p1;
-          chips.push(chip('bronze', '3rd', `${esc(winner)} v. ${esc(loser)}`, payouts['3rd Place']));
-        }
-        const sg = sackoGameByYear[y];
-        if (sg) {
-          const winner = sg.s1 >= sg.s2 ? sg.p1 : sg.p2, loser = sg.s1 >= sg.s2 ? sg.p2 : sg.p1;
-          // Sacko first, then who sent them there -- the chip is about the
-          // Sacko, so that name leads even though they lost the game.
-          chips.push(chip('loss', 'Sacko', `${esc(loser)} vs. ${esc(winner)}`));
-        }
-        const wh = weeklyHighByYear[y];
-        if (wh) chips.push(chip('gold', 'Week', `${esc(wh.name)} ${wh.val}`, payouts['Highest Points (Week)']));
-        const sh = seasonHighByYear[y];
-        if (sh) chips.push(chip('gold', 'Szn', `${esc(sh.name)} ${sh.val}`, payouts['Highest Points (Season)']));
-        return `<div class="rail-item"><div class="rail-dot"></div><div class="rail-yr">${y}</div><div class="yr-chips">${chips.join('')}</div></div>`;
+        const pay = payoutsFor(y);
+        const cg = champG[y], champ = cg ? wl(cg)[0] : null;
+        const tg = thirdG[y], sg = sackoG[y], wh = weeklyHighByYear[y], sh = seasonHighByYear[y];
+        const join = (...xs) => xs.filter(Boolean).join(' · ');
+        return `<div class="yr">
+          <div class="yr-h"><div class="yr-y">${y}</div>${champ ? `<div class="yr-champ"><span class="holder">🏆 ${esc(champ)}</span>${pay['1st Place'] ? `<span class="yr-amt">${amt(pay['1st Place'])}</span>` : ''}</div>` : ''}</div>
+          <div class="yr-grid">
+            ${cell('Runner-up', secondByYear[y] && secondByYear[y].player, amt(pay['2nd Place']))}
+            ${cell('3rd', tg && wl(tg)[0], join(tg && `def. ${esc(wl(tg)[1])}`, amt(pay['3rd Place'])))}
+            ${cell('Sacko', sg && wl(sg)[1], sg && `lost to ${esc(wl(sg)[0])}`, 'loss')}
+            ${cell('Top week', wh && wh.name, join(wh && wh.val, amt(pay['Highest Points (Week)'])))}
+            ${cell('Top season', sh && sh.name, join(sh && f1(parseFloat(sh.val)), amt(pay['Highest Points (Season)'])))}
+            ${cell('Best record', (() => { const r = done.filter(s => s.year === y).sort((a, b) => b.reg_w - a.reg_w || a.reg_rank - b.reg_rank)[0]; return r && r.player; })(),
+                (() => { const r = done.filter(s => s.year === y).sort((a, b) => b.reg_w - a.reg_w || a.reg_rank - b.reg_rank)[0]; return r ? regRec(r) : ''; })())}
+          </div>
+        </div>`;
       }).join('');
-      return glassCard('Season Timeline', `<div style="padding:4px 24px 20px"><div class="rail">${items}</div></div>`);
+      return panel('Season Timeline', `<div class="seasons">${cards}</div>`, `${D.years.length} seasons`);
     }
 
     // ----- Dynasty Heatmap -----
+    // Current members only (former members had no say in the current
+    // dynasty picture and padded the grid with empty columns), best average
+    // finish first.
     function dynastyHtml() {
-      const teamsByYear = {};
-      done.forEach(s => { teamsByYear[s.year] = (teamsByYear[s.year] || 0) + 1; });
-      const byPlayer = {};
-      done.forEach(s => { (byPlayer[s.player] || (byPlayer[s.player] = [])).push(s); });
-      const playerList = Object.keys(byPlayer).sort((a, b) => byPlayer[b].length - byPlayer[a].length || a.localeCompare(b));
       const years = D.completeYears;
-      const cell = s => {
-        if (!s || s.final_rank == null) return `<div class="heat-cell">—</div>`;
-        const r = s.final_rank, teamsN = teamsByYear[s.year] || r;
-        if (r === 1) return `<div class="heat-cell champ" title="${s.year} — Champion">1</div>`;
-        const frac = r / teamsN;
-        let bg = 'transparent', borderStyle = '';
-        if (frac <= 0.3) bg = `rgba(76,154,107,${(0.5 - (frac / 0.3) * 0.3).toFixed(2)})`;
-        else if (frac >= 0.8) bg = `rgba(192,87,75,${(0.16 + ((frac - 0.8) / 0.2) * 0.34).toFixed(2)})`;
-        if (s.sacko > 0) borderStyle = 'border-color:var(--loss);';
-        return `<div class="heat-cell" style="background:${bg};${borderStyle}" title="${s.year} — ${r} of ${teamsN}${s.sacko > 0 ? ' (Sacko)' : ''}">${r}</div>`;
+      const last = {}; done.forEach(s => { last[s.year] = Math.max(last[s.year] || 0, s.final_rank || 0); });
+      const list = finish.map(x => x.name);
+      const state = s => {
+        if (!s || !s.final_rank) return 'none';
+        if (s.final_rank === 1) return 'champion';
+        if (s.final_rank === 2) return 'runner-up';
+        if (s.sacko > 0 || s.final_rank === last[s.year]) return 'sacko';
+        if (s.playoff > 0) return 'playoffs';
+        return '';
       };
-      const grid = `<div class="heat-name"></div>${years.map(y => `<div class="heat-yr">${y}</div>`).join('')}` +
-        playerList.map(name => `<div class="heat-name">${esc(name)}</div>${years.map(y => cell(byPlayer[name].find(s => s.year === y))).join('')}`).join('');
-      const legend = `<div class="heat-legend">
-        <div class="heat-legend-item"><span class="heat-swatch" style="background:var(--gold);border-color:var(--gold)"></span>Champion</div>
-        <div class="heat-legend-item"><span class="heat-swatch" style="background:rgba(76,154,107,0.45)"></span>Top tier</div>
-        <div class="heat-legend-item"><span class="heat-swatch"></span>Mid-table</div>
-        <div class="heat-legend-item"><span class="heat-swatch" style="background:rgba(192,87,75,0.4)"></span>Bottom tier</div>
-        <div class="heat-legend-item"><span class="heat-swatch" style="border-color:var(--loss)"></span>Sacko</div></div>`;
-      return glassCard('Dynasty Heatmap',
-        `<div class="heat-scroll"><div class="heat-grid" style="grid-template-columns:118px repeat(${years.length},32px)">${grid}</div></div>${legend}`);
+      const head = `<div></div>${years.map(y => `<div class="heat-y">'${String(y).slice(2)}</div>`).join('')}`;
+      const body = list.map(name => `<div class="heat-n">${esc(name)}</div>` + years.map(y => {
+        const s = done.find(x => x.player === name && x.year === y);
+        const st = state(s);
+        return `<div class="heat-c ${st}" title="${y}${s && s.final_rank ? ` — ${s.final_rank} of ${last[y]}` : ''}">${st === 'none' ? '·' : s.final_rank}</div>`;
+      }).join('')).join('');
+      const legend = `<div class="legend"><span><i class="champion"></i>Champion</span><span><i class="runner-up"></i>Runner-up</span><span><i class="playoffs"></i>Playoffs</span><span><i></i>Missed</span><span><i class="sacko"></i>Sacko</span></div>`;
+      return panel('Dynasty', `<div class="heat" style="grid-template-columns:62px repeat(${years.length}, minmax(0,1fr))">${head}${body}</div>${legend}`, 'Final finish');
     }
 
-
     TABS = [
-      { label: 'Summary', tiles },
+      { label: 'Summary', html: summaryHtml() },
       { label: 'Timeline', html: timelineHtml() },
       { label: 'Dynasty', html: dynastyHtml() },
-      { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true }), V('Title Count', champC, { hl: true }), V('Title Games', titleGames('Champ', true), { year: true })] },
-      { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, tone: 'bad' }), V('Sacko Count', sackC, { hl: true, tone: 'bad' }), V('Sacko Games', titleGames('Sacko', false), { year: true, tone: 'bad' })] },
-      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good', pick: 'max' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad', pick: 'min' }), V('Weekly High', weekly(true), { year: true, tone: 'good', pick: 'max' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad', pick: 'min' }), V('Average Median', avgMedian, { year: true, marks: true })] },
-      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true }), V('Draft Position', draftPosView(), { hl: true }), V('Schedule Luck', medianLuckView(), { hl: true }), V('Achievements', achievementsView(), { hl: true }), V('Power Ranking', powerRankingView(), { hl: true }), V('Power Index', powerIndexView(), { hl: true }), V('Clutch Factor', clutchDeltaView(), { hl: true })] },
-      { label: 'Efficiency', views: [V('Career Efficiency', effView(), { hl: true, tone: 'good' }), V('Points Left on Bench', benchView(), { hl: true }), V('Extra Wins Available', extraWinsView(), { hl: true })] },
-      { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), {}), V('With Median', streakView('combined'), {})] },
+      { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true, lead: 'none' }), V('Title Count', champC), V('Title Games', titleGames('Champ', true), { year: true, lead: 'max' })] },
+      { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, lead: 'none' }), V('Sacko Count', sackC, { bad: true }), V('Sacko Games', titleGames('Sacko', false), { year: true, lead: 'none' })] },
+      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, lead: 'max' }), V('Season Low', seasonPts(false), { year: true, lead: 'none', low: 'min' }), V('Weekly High', weekly(true), { year: true, lead: 'max' }), V('Weekly Low', weekly(false), { year: true, lead: 'none', low: 'min' }), V('Average Median', avgMedian, { year: true, lead: 'max', low: 'min' })] },
+      { label: 'Rankings', views: [V('Playoff Rate', rate), V('Average Finish', finish), V('Best Win Seasons', winSeasons(true)), V('Worst Win Seasons', winSeasons(false), { lead: 'none', low: 'first' }), V('Earnings', earn), V('Draft Position', draftPosView()), V('Schedule Luck', medianLuckView()), V('Achievements', achievementsView()), V('Power Ranking', powerRankingView()), V('Power Index', powerIndexView()), V('Clutch Factor', clutchDeltaView())] },
+      { label: 'Efficiency', views: [V('Career Efficiency', effView()), V('Points Left on Bench', benchView()), V('Extra Wins Available', extraWinsView())] },
+      { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { lead: 'none' }), V('With Median', streakView('combined'), { lead: 'none' })] },
     ];
   }
 
-  // One hero (the headline number, glowing) + the rest as quiet side stats and a tile strip
-  // below -- the whole point of the redesign is that not every number gets equal weight.
-  function tilesHtml(tiles) {
-    const hero = tiles[0], side = tiles.slice(1, 4), rest = tiles.slice(4);
-    const glow = hero.tone === 'bad' ? 'glow-loss' : 'glow';
-    const heroHtml = `<div class="glass hero2"><div class="hero2-main ${glow}"><div class="hero2-eyebrow">${esc(hero.title)}</div>` +
-      // filter(Boolean) so a tile with no supporting name doesn't render a
-      // leading separator.
-      `<div class="hero2-v">${esc(hero.val)}</div><div class="hero2-sub">${[hero.name, hero.sub].filter(Boolean).map(esc).join(' · ')}</div></div>` +
-      // No tone class on the side values: all three are the figures this
-      // card exists to show, so they all take the shared gold.
-      `<div class="hero2-side">${side.map(x => `<div class="hs"><div class="hs-l">${esc(x.title)}</div><div class="hs-r">` +
-        `<div class="hs-v">${esc(x.val)}</div><div class="hs-n">${esc(x.name)}</div></div></div>`).join('')}</div></div>`;
-    // Same rule as the hero's side values above: gold is the default,
-    // because every tile in this strip is a "best X" and colouring them all
-    // green says nothing the label doesn't. A tone is the exception, kept for
-    // a value whose meaning is actually bad.
-    const tilesRow = `<div class="glass qtiles">${rest.map(x => `<div><div class="qtile-v ${x.tone === 'bad' || x.tone === 'down' ? 'loss' : ''}">${esc(x.val)}</div><div class="qtile-t">${esc(x.title)}</div>` +
-      `<div class="qtile-n">${esc(x.name)}</div>${x.sub ? `<div class="qtile-s">${esc(x.sub)}</div>` : ''}</div>`).join('')}</div>`;
-    return heroHtml + '<div class="gap"></div>' + tilesRow;
-  }
-
+  // One list row. Year lists show the year in the left column, ranked lists
+  // the rank. Streak rows carry their own stat columns and state.
   function rowHtml(i, k, v) {
-    const mark = v.marks[k];
-    const isLead = !!mark || (v.hl ? k === 0 : k === v.best);
-    const tone = mark || v.tone;
-    const cls = ['qrow', isLead ? 'lead' : '', i.ring || ''].filter(Boolean).join(' ');
+    let state = i.state || '';
+    if (!i.stats) state = v.leads.has(k) ? (v.bad ? 'low' : 'lead') : k === v.low ? 'low' : '';
     const right = i.stats
-      ? `<div class="stats">${i.stats.map(s => `<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`
-      : `<div class="rec ${toneCls(i.tone || tone)}">${esc(i.val)}</div>`;
-    const rank = v.year ? i.rank : (i.stats ? '' : k + 1);
-    return `<div class="${cls}" ${i.stats ? 'style="grid-template-columns:minmax(0,1fr) auto"' : ''}>` + (i.stats ? '' : `<div class="rk">${rank}</div>`) +
-      `<div style="min-width:0">${i.name ? `<div class="nm">${esc(i.name)}</div>` : ''}${i.sub ? `<div class="meta">${esc(i.sub)}</div>` : ''}</div>${right}</div>`;
+      ? `<div class="lr-stats">${i.stats.map(s => `<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`
+      : `<div class="lr-v${i.tone ? ' ' + i.tone : ''}">${esc(i.val)}</div>`;
+    const left = i.stats ? '' : `<div class="lr-rk">${v.year ? `'${String(i.rank).slice(2)}` : k + 1}</div>`;
+    return `<div class="lr${state ? ' ' + state : ''}${i.stats ? ' nr' : ''}">${left}<div style="min-width:0">${i.name ? `<div class="lr-nm">${esc(i.name)}</div>` : ''}${i.sub ? `<div class="lr-sub">${esc(i.sub)}</div>` : ''}</div>${right}</div>`;
   }
 
   function render() {
     document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
     const T = TABS[tab], el = document.getElementById('overview');
+    keepSelectedInView(document.getElementById('tabs'));
     if (T.html) { el.innerHTML = T.html; keepSelectedInView(document.getElementById('tabs')); return; }
-    if (T.tiles) { el.innerHTML = tilesHtml(T.tiles); keepSelectedInView(document.getElementById('tabs')); return; }
     const vi = viewPick[tab] || 0, v = T.views[vi];
-    // No tone on the buttons: a selected control is gold site-wide. A view's
-    // own tone still colours the rows it renders, which is where it means
-    // something.
     const seg = `<div class="seg scroll">${T.views.map((x, i) => `<button class="${i === vi ? 'on' : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
+    // Rows fill down the first column, then the second, on desktop.
     const half = Math.ceil(v.items.length / 2);
-    const cols = `<div class="cols"><div>${v.items.slice(0, half).map((i, k) => rowHtml(i, k, v)).join('')}</div><div>${v.items.slice(half).map((i, k) => rowHtml(i, k + half, v)).join('')}</div></div>`;
-    // No card title: the selected view's own pill already names it.
-    el.innerHTML = glassCard('', seg + cols);
+    const order = window.matchMedia('(min-width:721px)').matches
+      ? v.items.slice(0, half).flatMap((x, k) => [[x, k], ...(v.items[k + half] ? [[v.items[k + half], k + half]] : [])])
+      : v.items.map((x, k) => [x, k]);
+    const list = v.items.length ? `<div class="list">${order.map(([x, k]) => rowHtml(x, k, v)).join('')}</div>` : '<div class="empty-note">Nothing here yet.</div>';
+    // No panel title: the selected view's own pill already names it.
+    el.innerHTML = `<div class="panel">${seg}<div class="p-body">${list}</div></div>`;
     keepSelectedInView(document.getElementById('tabs'));
     keepSelectedInView(el.querySelector('.seg'));
   }
@@ -461,6 +527,7 @@
     const s = e.target.closest('[data-v]');
     if (s) { viewPick[tab] = Number(s.dataset.v); render(); }
   });
+  window.matchMedia('(min-width:721px)').addEventListener('change', () => { if (TABS.length) render(); });
 
   Promise.all([
     LG.load(),
