@@ -111,19 +111,22 @@ export default {
 
     const entry = await env.COOLDOWN_KV.get(CACHE_KEY, "json");
 
+    // gameStates is the cache's own fallback copy, not for the page.
+    const publicView = ({ gameStates, ...rest }) => rest;
+
     if (!force && entry && now - entry.fetchedAt < COOLDOWN_SECONDS) {
-      return jsonResponse({ ...entry.data, cacheHit: true }, headers);
+      return jsonResponse({ ...publicView(entry.data), cacheHit: true }, headers);
     }
 
     try {
-      const dashboard = await buildDashboard(env);
+      const dashboard = await buildDashboard(env, entry?.data);
       await env.COOLDOWN_KV.put(CACHE_KEY, JSON.stringify({ fetchedAt: now, data: dashboard }));
-      return jsonResponse({ ...dashboard, cacheHit: false }, headers);
+      return jsonResponse({ ...publicView(dashboard), cacheHit: false }, headers);
     } catch (err) {
       // ESPN hiccup or bad credentials — better to serve stale data than
       // nothing, if we have it.
       if (entry) {
-        return jsonResponse({ ...entry.data, cacheHit: true, error: String(err) }, headers);
+        return jsonResponse({ ...publicView(entry.data), cacheHit: true, error: String(err) }, headers);
       }
       return jsonResponse({ error: String(err) }, headers, 502);
     }

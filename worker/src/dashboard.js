@@ -310,7 +310,11 @@ function countGameStatus(entries, gameStateByProTeam) {
   return { remaining, inPlay };
 }
 
-export async function buildDashboard(env) {
+/** `previous` is the last cached dashboard, if any. Its NFL game states
+ * stand in for this build's when the public scoreboard comes back failed
+ * or empty -- otherwise one blip blanks every player's team/opponent/
+ * kickoff line and zeroes the to-play counts for a whole cache window. */
+export async function buildDashboard(env, previous = null) {
   const league = await fetchLeague(env);
 
   const currentWeek = Math.min(league.scoringPeriodId, league.status.finalScoringPeriod);
@@ -342,7 +346,14 @@ export async function buildDashboard(env) {
       return null;
     }),
   ]);
-  const gameStateByProTeam = buildGameStateMap(nflScoreboard);
+  let gameStateByProTeam = buildGameStateMap(nflScoreboard);
+  // A game's state only ever moves pre -> in -> post, so a few-minutes-old
+  // copy can under-report progress but never claim a game is over early.
+  let nflScoreboardStale = false;
+  if (gameStateByProTeam.size === 0 && previous?.week === currentWeek && previous.gameStates?.length) {
+    gameStateByProTeam = new Map(previous.gameStates);
+    nflScoreboardStale = true;
+  }
 
   const currentScores = [];
   const projectedScores = [];
@@ -447,7 +458,7 @@ export async function buildDashboard(env) {
     // False when the NFL scoreboard couldn't be read, in which case every team
     // looks like it has nobody left to play and the dashboard must not claim
     // teams are finished or locked.
-    medianStatusKnown: Boolean(nflScoreboard) && gameStateByProTeam.size > 0,
+    medianStatusKnown: gameStateByProTeam.size > 0,
     teams: teams.map((t) => ({ ...t, playoffPct: anyPlayoffData ? round2(t.playoffPct) : null })),
     matchups,
     weeklyHigh: seasonStarted
@@ -474,5 +485,9 @@ export async function buildDashboard(env) {
         }
       : null,
     ...(nflScoreboardError ? { nflScoreboardError } : {}),
+    ...(nflScoreboardStale ? { nflScoreboardStale } : {}),
+    // Carried in the cache for the next build's fallback; index.js strips it
+    // from the response.
+    gameStates: [...gameStateByProTeam],
   };
 }
