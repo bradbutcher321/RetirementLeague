@@ -1858,15 +1858,25 @@
     const add = (cond, text) => { if (cond) facts.push(text); };
     const maxBy = (arr, f) => arr.reduce((a, b) => (a === null || f(b) > f(a) ? b : a), null);
     const minBy = (arr, f) => arr.reduce((a, b) => (a === null || f(b) < f(a) ? b : a), null);
+    // maxBy picks one winner even when several managers share the top value,
+    // which turned a three-way tie into "X, more than anyone". Use this for
+    // any fact that claims a record: it returns the value and everyone at it.
+    const topTied = (arr, f) => {
+      if (!arr.length) return { value: null, names: [] };
+      const value = Math.max(...arr.map(f));
+      return { value, names: arr.filter(p => f(p) === value).map(p => p.name) };
+    };
+    const nameList = names => names.length < 3 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
     const has = (p, f) => typeof f(p) === 'number';
     // Fisher-Yates-ish: good enough for "pick a handful at random" on a
     // list this small, not used anywhere order-sensitive.
     const sampleUpTo = (arr, n) => arr.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).slice(0, n).map(([, x]) => x);
 
     const withChamps = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.championships));
-    const topChamp = maxBy(withChamps, p => p.career.standings.championships);
-    add(topChamp && topChamp.career.standings.championships > 0,
-      `${topChamp && topChamp.name} has the most championships in league history with ${hi(topChamp && topChamp.career.standings.championships)}.`);
+    const champTop = topTied(withChamps, p => p.career.standings.championships);
+    add(champTop.value > 0, champTop.names.length > 1
+      ? `${nameList(champTop.names)} are tied for the most championships in league history with ${hi(champTop.value)}.`
+      : `${champTop.names[0]} has the most championships in league history with ${hi(champTop.value)}.`);
 
     const withWinPct = players.filter(p => has(p, p => p.career && p.career.win_rates && p.career.win_rates.reg_pct));
     const bestWinPct = maxBy(withWinPct, p => p.career.win_rates.reg_pct);
@@ -1903,8 +1913,10 @@
     const topSackos = maxBy(withSackos, p => p.weekly_sackos);
     add(topSackos && topSackos.weekly_sackos > 0, `${topSackos && topSackos.name} has taken home the most weekly Sacko awards in league history, ${hi(topSackos && topSackos.weekly_sackos)}.`);
     const withSeasonSackos = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.sackos));
-    const topSeasonSackos = maxBy(withSeasonSackos, p => p.career.standings.sackos);
-    add(topSeasonSackos && topSeasonSackos.career.standings.sackos > 0, `${topSeasonSackos && topSeasonSackos.name} has finished the full season as Sacko ${hi(topSeasonSackos && topSeasonSackos.career.standings.sackos)} time(s), more than anyone.`);
+    const sackoTop = topTied(withSeasonSackos, p => p.career.standings.sackos);
+    add(sackoTop.value > 0, sackoTop.names.length > 1
+      ? `${nameList(sackoTop.names)} are all tied for the most league Sackos with ${hi(sackoTop.value)}.`
+      : `${sackoTop.names[0]} has finished the full season as Sacko ${hi(sackoTop.value)} time${sackoTop.value === 1 ? '' : 's'}, more than anyone.`);
 
     const withMoney = players.filter(p => has(p, p => p.money && typeof p.money.net_result === 'number'));
     const topMoney = maxBy(withMoney, p => p.money.net_result);
@@ -1956,8 +1968,10 @@
     const topBestFinish = minBy(withBestFinish, p => p.career.standings.best_regular_finish);
     add(topBestFinish, `${topBestFinish && topBestFinish.name}'s best-ever regular season finish is ${hi('#' + topBestFinish.career.standings.best_regular_finish)}.`);
     const withWorstFinish = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.worst_regular_finish));
-    const topWorstFinish = maxBy(withWorstFinish, p => p.career.standings.worst_regular_finish);
-    add(topWorstFinish, `${topWorstFinish && topWorstFinish.name} has finished dead last in the regular season, ${hi('#' + topWorstFinish.career.standings.worst_regular_finish)}, worse than anyone else ever has.`);
+    const worstFinishTop = topTied(withWorstFinish, p => p.career.standings.worst_regular_finish);
+    add(worstFinishTop.names.length, worstFinishTop.names.length > 1
+      ? `${nameList(worstFinishTop.names)} have all finished dead last in the regular season, ${hi('#' + worstFinishTop.value)}.`
+      : `${worstFinishTop.names[0]} has finished dead last in the regular season, ${hi('#' + worstFinishTop.value)}, worse than anyone else ever has.`);
 
     const withByes = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.byes));
     const topByes = maxBy(withByes, p => p.career.standings.byes);
