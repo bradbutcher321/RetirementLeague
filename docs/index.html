@@ -433,7 +433,7 @@
   .mb-card.locked{ border-color: var(--gold); }
   .mb-card .mw-top, .mb-card .mw-bot{ display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
   .mb-card .mw-top{ align-items: baseline; }
-  .mb-card .mw-bot{ align-items: flex-start; }
+  .mb-card .mw-bot{ align-items: baseline; }
   .mb-card .mw-name{ font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   /* Margin to the median -- same size as the status line, colored like the score. */
   .mb-card .mw-margin{ font-size: 0.64rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -445,15 +445,17 @@
   .mb-card .mw-stat{ font-size: 0.64rem; white-space: nowrap; display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; color: var(--text-dim); }
   .mb-card .mw-stat.live{ color: var(--loss); }
   .mb-card .mw-stat.locked{ color: var(--gold); }
-  .mb-card .mw-stat .part{ display: inline-flex; align-items: center; gap: 4px; }
-  /* A two-up card on a phone is ~130px wide. There the status facts stack
-     one per line ("5 live" / "3 to play") instead of one long line, and the
-     name and score come down a step so a name like Flanders fits whole. */
+  /* A two-up card on a phone is ~130px wide. The status always stays on
+     one line ("5 live · 3 to play"), so in a card that narrow the name,
+     score and status each come down a step and the separator tightens.
+     No live dot on the card: the spread chart beside it already shows
+     who's live, and the dot cost the line its room. */
   @container (max-width: 200px){
     .mb-card .mw-name{ font-size: 0.9rem; }
     .mb-card .mw-score{ font-size: 1.12rem; }
-    .mb-card .mw-stat{ flex-direction: column; align-items: flex-end; gap: 0; }
-    .mb-card .mw-stat .sep{ display: none; }
+    .mb-card .mw-bot{ gap: 6px; }
+    .mb-card .mw-stat{ font-size: 0.6rem; gap: 3px; }
+    .mb-card .mw-margin{ font-size: 0.6rem; }
   }
   /* Same 0.68s/bounce-adjacent duration as cards+chart sliding into their
      new spot on toggle. */
@@ -997,12 +999,12 @@
 
   function mwCardHtml(t, tone, median) {
     const lines = miniStatusLines(t);
-    // Each fact on the players line is its own part, so a narrow card can
-    // stack them; the live dot rides with the first one.
+    // One line per fact group, never wrapped. No live dot here -- the spread
+    // chart beside the cards already marks who's live.
     const statHtml = l => {
       const parts = l.parts || [l.text];
-      const lead = l.cls === 'live' ? '<span class="live-dot"></span>' : l.cls === 'locked' ? '\u2713 ' : '';
-      return `<div class="mw-stat ${l.cls}">${parts.map((x, i) => `${i ? '<span class="sep">\u00b7</span>' : ''}<span class="part">${i ? '' : lead}${x}</span>`).join('')}</div>`;
+      const lead = l.cls === 'locked' ? '\u2713 ' : '';
+      return `<div class="mw-stat ${l.cls}">${lead}${parts.map((x, i) => `${i ? '<span class="sep">\u00b7</span>' : ''}<span>${x}</span>`).join('')}</div>`;
     };
     return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' : ''}" data-name="${t.name}">
       <div class="mw-top">
