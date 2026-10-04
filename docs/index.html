@@ -1517,18 +1517,28 @@
   const PARLAY_TOTAL_BET_TYPES = new Set(['Total Points', 'Total Goals', 'Total Rounds']);
   function parlayBetType(p) { return String(p.pick || '').split(':')[0].trim(); }
   function parlayIsTotalBet(p) { return PARLAY_TOTAL_BET_TYPES.has(parlayBetType(p)); }
+  const PARLAY_PROP_STAT_UNITS = {
+    'Anytime TD': ['TD', 'TDs'], 'Passing TD': ['Pass TD', 'Pass TDs'],
+    'Passing Yards': ['Pass Yd', 'Pass Yds'], 'Receiving Yards': ['Rec Yd', 'Rec Yds'], 'Total Yards': ['Yd', 'Yds'],
+    'Receptions': ['Rec', 'Rec'], 'Interceptions': ['INT', 'INTs'], 'Home Runs': ['HR', 'HRs'], 'Player Points': ['Pt', 'Pts'],
+  };
   // Mirrors parlay-results.html's own liveText -- a totals bet shows the
   // combined score (the thing actually being bet on), everything else the
-  // raw score; a prop shows its tracked stat instead.
-  function parlayLiveText(entry, isTotal) {
-    if (entry.kind !== 'team') return `${entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1)} so far`;
+  // raw score; a prop leads with its tracked stat ("0 TDs · 17-14 · Halftime").
+  function parlayLiveText(entry, p) {
     // entry.detail is ESPN's own phrase for where the game stands right now
     // ("Top 1st" for baseball, "4:32 - 2nd Quarter" for football), already
     // correct per sport -- falls back to the old quarter/clock guess only
     // if ESPN didn't supply one.
     const state = entry.detail ? ` · ${entry.detail}` : (entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '');
     const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
-    return `${isTotal ? a + b : `${a}-${b}`}${state}`;
+    if (entry.kind !== 'team') {
+      const n = entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1);
+      const [one, many] = PARLAY_PROP_STAT_UNITS[parlayBetType(p)] || ['', ''];
+      const stat = `${n} ${entry.stat === 1 ? one : many}`.trim();
+      return entry.team_score == null ? stat : `${stat} · ${a}-${b}${state}`;
+    }
+    return `${parlayIsTotalBet(p) ? a + b : `${a}-${b}`}${state}`;
   }
 
   function renderParlayHighlight() {
@@ -1563,7 +1573,7 @@
     if (entry) {
       const textTone = entry.tone === 'up' ? ' turf' : '';
       legClass = entry.tone === 'up' ? ' trend-up' : entry.tone === 'down' ? ' trend-down' : '';
-      rightHtml = `<span class="ph-live${textTone}"><span class="dot"></span>${parlayLiveText(entry, parlayIsTotalBet(p))}</span>`;
+      rightHtml = `<span class="ph-live${textTone}"><span class="dot"></span>${parlayLiveText(entry, p)}</span>`;
     } else if (p.result === 'Pending') {
       rightHtml = `<span class="ph-kickoff">Kickoff ${fmtKickoff(p.gametime)}</span>`;
     } else {

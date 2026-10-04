@@ -36,7 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 from generate_parlay_data import authorize, SHEET_ID, TARGET_TAB, build_payload, cell, to_int
 import auto_grade_results as ag
-from espn_gametime_lookup import find_live_score, find_prop_stat
+from espn_gametime_lookup import find_live_score, find_live_prop
 import history_lib as hl
 
 KV_NAMESPACE_ID = "1521d1a4fe954b00a05b4542c7a44670"  # COOLDOWN_KV, shared with the Dashboard cache
@@ -59,11 +59,13 @@ def build_live_scores(spreadsheet):
     in-progress score instead of the final one. 1st Half Spread shows the
     running score too, but with no tint -- covering it depends on the
     score specifically AT halftime, not knowable before the half ends.
-    Player props show the live stat total the same way (via
-    find_prop_stat with require_final=False), tinted the same up/down way
-    once it's already decided (a TD scored, or the Over/Under already
-    clinched) and left neutral otherwise, since a prop that hasn't
-    happened *yet* isn't the same as one that's failed.
+    Player props show the live stat total (via find_live_prop) alongside
+    the player's game's own score and clock. An Anytime TD is tinted just
+    like a team bet -- green once the TD is in, red until then, the same
+    "not covering right now" a trailing spread shows. An Over/Under prop is
+    tinted only once it's already clinched either way and left neutral
+    otherwise, since a yardage total that's short at halftime isn't the
+    same as one that's failed.
 
     Only ever looks at rows the sheet itself already marked Pending -- a
     handful at a time, not a full history scan -- and only shows a score
@@ -71,10 +73,17 @@ def build_live_scores(spreadsheet):
     not a scheduled-but-not-yet-kicked-off one. Reuses
     find_player_team/_find_event's own per-process caches (see
     espn_gametime_lookup.py), so multiple players' picks on the same game
-    cost one real ESPN fetch between them, not one per pick."""
+    cost one real ESPN fetch between them, not one per pick.
+
+    Returns (live, matchups). matchups maps the same keys to "Bears vs.
+    Jets" for every Pending prop whose game could be found, kicked off or
+    not -- a prop row never records its teams the way a team bet's
+    Team/Opponent columns do, so this is the only place the page can learn
+    which game the player is in."""
     ws = spreadsheet.worksheet(TARGET_TAB)
     rows = ws.get_values("A2:N3000")
     live = {}
+    matchups = {}
 
     for r in rows:
         result = str(cell(r, 13)).strip()
@@ -98,15 +107,22 @@ def build_live_scores(spreadsheet):
                 continue
             m = ag.MULTI_LEG_PROP_RE.match(player_prop)
             required, name = (int(m.group(1)), m.group(2)) if m else (1, player_prop)
-            total, found = find_prop_stat(name, bet_type, sport, gametime, require_final=False)
-            if not found:
+            game = find_live_prop(name, bet_type, sport, gametime)
+            if not game:
                 continue
+            matchups[key] = f"{game['team']} vs. {game['opponent']}"
+            if game["state"] == "pre" or game["stat"] is None:
+                continue
+            total = game["stat"]
             if bet_type in ag.PROP_BINARY_BET_TYPES:
-                tone = "up" if total >= required else None
+                tone = "up" if total >= required else "down"
             else:
                 outcome = ag.grade_over_under(total, line, side)
                 tone = "up" if outcome == "Win" else "down" if outcome == "Loss" else None
-            live[key] = {"kind": "prop", "stat": total, "tone": tone}
+            live[key] = {
+                "kind": "prop", "stat": total, "team_score": game["team_score"], "opponent_score": game["opponent_score"],
+                "period": game["period"], "clock": game["clock"], "detail": game["detail"], "tone": tone,
+            }
             continue
 
         if not team or not opponent:
@@ -124,7 +140,7 @@ def build_live_scores(spreadsheet):
             "period": state["period"], "clock": state["clock"], "detail": state["detail"], "tone": tone,
         }
 
-    return live
+    return live, matchups
 
 
 def main():
@@ -134,7 +150,14 @@ def main():
     weeks = output["weeks"]
 
     print("Checking live scores for Pending picks...")
-    output["live"] = build_live_scores(spreadsheet)
+    output["live"], matchups = build_live_scores(spreadsheet)
+    # Onto the pick itself rather than the live block: which game a prop is
+    # in holds before kickoff too, when there's no live entry yet.
+    for w in weeks:
+        for player, pick in w["picks"].items():
+            matchup = matchups.get(f"{w['year']}:{w['week']}:{player}")
+            if matchup:
+                pick["matchup"] = matchup
 
     payload = json.dumps(output)
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:

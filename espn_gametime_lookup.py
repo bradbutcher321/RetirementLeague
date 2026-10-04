@@ -878,7 +878,14 @@ def find_live_score(team, opponent, sport, gametime_iso):
     event, team_c, opp_c = _find_event(team, opponent, sport, gametime_iso)
     if event is None:
         return None
-    status = event["competitions"][0].get("status") or {}
+    return _game_state(event["competitions"][0], team_c, opp_c)
+
+
+def _game_state(comp, team_c, opp_c):
+    """find_live_score's dict for one ESPN competition, from team_c's side --
+    shared with find_live_prop, which locates its game a different way (by
+    the player's team rather than a recorded team-vs-opponent)."""
+    status = comp.get("status") or {}
     type_ = status.get("type") or {}
     return {
         "state": type_.get("state"),  # "pre" | "in" | "post"
@@ -1002,13 +1009,16 @@ def _read_prop_stat_from_team_block(team_block, player_name, bet_type):
 
 def _prop_stat_for_team(team, sport, gametime_iso, player_name, bet_type, require_final):
     """Looks up player_name's stat from one specific, already-known team's
-    game -- the fast path find_prop_stat tries first. Returns (total, found)."""
+    game -- the fast path find_prop_stat tries first. Returns (total, found,
+    event, team_competitor); the last two are the game it looked in, even
+    when the stat itself wasn't readable yet (a game that hasn't kicked off
+    has no box score), and (None, None) only if the team's game wasn't found."""
     event, team_c = _find_event_for_team(team, sport, gametime_iso)
     if event is None:
-        return None, False
+        return None, False, None, None
     comp = event["competitions"][0]
     if require_final and not comp.get("status", {}).get("type", {}).get("completed"):
-        return None, False
+        return None, False, event, team_c
 
     summary = None
     for espn_path in SPORT_ESPN_PATHS.get(sport, []):
@@ -1016,7 +1026,7 @@ def _prop_stat_for_team(team, sport, gametime_iso, player_name, bet_type, requir
         if summary and (summary.get("boxscore") or {}).get("players"):
             break
     if not summary:
-        return None, False
+        return None, False, event, team_c
 
     team_abbrev = (team_c.get("team") or {}).get("abbreviation")
     team_block = next(
@@ -1024,8 +1034,9 @@ def _prop_stat_for_team(team, sport, gametime_iso, player_name, bet_type, requir
         None,
     )
     if not team_block:
-        return None, False
-    return _read_prop_stat_from_team_block(team_block, player_name, bet_type)
+        return None, False, event, team_c
+    total, found = _read_prop_stat_from_team_block(team_block, player_name, bet_type)
+    return total, found, event, team_c
 
 
 def _sweep_prop_stat(player_name, bet_type, sport, gametime_iso, require_final):
@@ -1044,11 +1055,14 @@ def _sweep_prop_stat(player_name, bet_type, sport, gametime_iso, require_final):
     is exactly why it's a fallback, not the primary path. Only trusts a
     match if the player turns up in exactly one of that day's games -- if
     the same name shows up in two different teams' box scores that day,
-    this stays unresolved rather than guessing which one was meant."""
+    this stays unresolved rather than guessing which one was meant.
+
+    Returns (total, found, event, team_competitor), the same shape as
+    _prop_stat_for_team."""
     try:
         game_date = datetime.strptime(gametime_iso[:10], "%Y-%m-%d").date()
     except ValueError:
-        return None, False
+        return None, False, None, None
     date_str = game_date.strftime("%Y%m%d")
 
     hits = []
@@ -1066,11 +1080,55 @@ def _sweep_prop_stat(player_name, bet_type, sport, gametime_iso, require_final):
             for team_block in summary["boxscore"]["players"]:
                 total, found = _read_prop_stat_from_team_block(team_block, player_name, bet_type)
                 if found:
-                    hits.append(total)
+                    abbrev = (team_block.get("team") or {}).get("abbreviation")
+                    team_c = next((c for c in comp.get("competitors", [])
+                                   if (c.get("team") or {}).get("abbreviation") == abbrev), None)
+                    hits.append((total, event, team_c))
 
     if len(hits) == 1:
-        return hits[0], True
-    return None, False
+        total, event, team_c = hits[0]
+        return total, True, event, team_c
+    return None, False, None, None
+
+
+def _locate_prop_stat(player_name, bet_type, sport, gametime_iso, require_final):
+    """find_prop_stat's two-tier lookup (see there), also returning the game
+    the stat came from: (total, found, event, team_competitor). When neither
+    tier finds the player, the game is still the fast path's -- the
+    search-resolved team's game that day -- so a not-yet-started game can
+    still be named; (None, None) if even that wasn't found."""
+    team, resolved_sport = find_player_team(player_name, bet_type)
+    event = team_c = None
+    if team:
+        total, found, event, team_c = _prop_stat_for_team(team, resolved_sport or sport, gametime_iso, player_name, bet_type, require_final)
+        if found:
+            return total, found, event, team_c
+    total, found, sweep_event, sweep_team_c = _sweep_prop_stat(player_name, bet_type, sport, gametime_iso, require_final)
+    if found:
+        return total, found, sweep_event, sweep_team_c
+    return None, False, event, team_c
+
+
+def find_live_prop(player_name, bet_type, sport, gametime_iso):
+    """A player prop's live counterpart to find_live_score: the game the
+    player is in, from their team's side (find_live_score's state/period/
+    clock/detail/scores), plus `team`/`opponent` -- the two sides'
+    _canonical_name, since a prop row never records either -- and `stat`,
+    the running total find_prop_stat(require_final=False) would return, or
+    None if the player isn't on the box score yet (always the case before
+    kickoff). None if the player's game can't be found at all."""
+    total, found, event, team_c = _locate_prop_stat(player_name, bet_type, sport, gametime_iso, require_final=False)
+    if event is None or team_c is None:
+        return None
+    comp = event["competitions"][0]
+    opp_c = next((c for c in comp.get("competitors", []) if c is not team_c), None)
+    if opp_c is None:
+        return None
+    game = _game_state(comp, team_c, opp_c)
+    game["team"] = _canonical_name(team_c.get("team") or {}, team_c)
+    game["opponent"] = _canonical_name(opp_c.get("team") or {}, opp_c)
+    game["stat"] = total if found else None
+    return game
 
 
 def find_prop_stat(player_name, bet_type, sport, gametime_iso, require_final=True):
@@ -1100,12 +1158,8 @@ def find_prop_stat(player_name, bet_type, sport, gametime_iso, require_final=Tru
     showing a live in-progress stat (see find_live_score) rather than
     grading a final one -- auto_grade_results.py never passes this, since
     grading a still-in-progress stat as a final answer would be wrong."""
-    team, resolved_sport = find_player_team(player_name, bet_type)
-    if team:
-        total, found = _prop_stat_for_team(team, resolved_sport or sport, gametime_iso, player_name, bet_type, require_final)
-        if found:
-            return total, found
-    return _sweep_prop_stat(player_name, bet_type, sport, gametime_iso, require_final)
+    total, found, _, _ = _locate_prop_stat(player_name, bet_type, sport, gametime_iso, require_final)
+    return total, found
 
 
 def to_num(value):

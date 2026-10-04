@@ -157,7 +157,8 @@
   .leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 4px; line-height: 1.35; }
 
   .leg-detail{ max-height: 0; overflow: hidden; transition: max-height 0.22s ease; }
-  .leg.open .leg-detail{ max-height: 80px; }
+  /* Room for .leg-stats wrapping onto a second line (see there). */
+  .leg.open .leg-detail{ max-height: 120px; }
   @media (prefers-reduced-motion: reduce){ .leg-detail{ transition: none; } }
   /* The rule and its padding live on this full-width wrapper, not on
      .leg-stats itself -- .leg-stats is only as wide as its own content
@@ -165,27 +166,19 @@
      wherever the content stopped instead of running to the card's edge. */
   .leg-detail-in{ border-top: 1px solid var(--line); margin: 0 14px; padding: 10px 0 12px; }
 
-  /* Sport / Odds / Kickoff-or-Live-or-Final as a 2-row grid: label row,
-     value row. grid-auto-flow:column fills one column at a time, so the
-     children have to be written label,value,label,value,... in that order
-     -- grouping all three labels before all three values would pair each
-     label with the wrong value. This is what pins "SPORT/ODDS/LIVE" to one
-     shared row and "NFL/-110/<score>" to the row below regardless of
-     content width, rather than relying on three independent blocks
-     happening to line up. */
-  .leg-stats{
-    display: grid;
-    grid-auto-flow: column;
-    grid-template-rows: auto auto;
-    column-gap: 22px;
-    row-gap: 4px;
-    width: max-content;
-    max-width: 100%;
-  }
-  /* display:block + text-align:center, rather than relying on the grid's
-     own justify-items, so each label centers over ITS OWN column's value
-     even when the label and the value are different widths (e.g. "LIVE" is
-     narrower than its live score). */
+  /* Sport / Odds / Kickoff-or-Live / Matchup, each a label-over-value
+     block. Every block is built the same way (one label line, one value
+     line), so on a shared line "SPORT/ODDS/LIVE" still sit level with each
+     other and "NFL/-110/<score>" level below. It's a wrapping row rather
+     than the fixed one-line grid it used to be because a live prop's four
+     blocks ("0 TDs · 17-19 · 12:34 - 3rd" next to "Cardinals vs. Giants")
+     can run wider than a phone -- the last block drops to a second line
+     instead of being clipped off the card's edge. */
+  .leg-stats{ display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 10px; }
+  .leg-stats .st{ display: flex; flex-direction: column; gap: 4px; }
+  /* display:block + text-align:center so each label centers over ITS OWN
+     value even when the two are different widths (e.g. "LIVE" is narrower
+     than its live score). */
   .leg-stats .l{ display: block; text-align: center; color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; }
   .leg-stats .v{ display: block; text-align: center; font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
   /* inline-flex so the dot sits beside the score as one inline unit that
@@ -390,14 +383,21 @@
   const PLAYER_BET_TYPES = new Set(['Receiving Yards', 'Passing TD', 'Home Runs', 'Player Points',
     'Interceptions', 'Total Yards', 'Receptions', 'Passing Yards', 'Anytime TD', 'Coin Toss']);
   const isTotalBet = p => TOTAL_BET_TYPES.has(betTypeOf(p));
+  // What a live prop's running stat counts, [one, many] -- "1 TD", "0 TDs".
+  const PROP_STAT_UNITS = {
+    'Anytime TD': ['TD', 'TDs'], 'Passing TD': ['Pass TD', 'Pass TDs'],
+    'Passing Yards': ['Pass Yd', 'Pass Yds'], 'Receiving Yards': ['Rec Yd', 'Rec Yds'], 'Total Yards': ['Yd', 'Yds'],
+    'Receptions': ['Rec', 'Rec'], 'Interceptions': ['INT', 'INTs'], 'Home Runs': ['HR', 'HRs'], 'Player Points': ['Pt', 'Pts'],
+  };
 
-  // entry: {kind: 'team', team_score, opponent_score, period, clock, detail,
-  // tone} or {kind: 'prop', stat, tone} -- see publish_parlay_stats.py's
+  // entry: {kind: 'team'|'prop', team_score, opponent_score, period, clock,
+  // detail, tone}, plus `stat` on a prop -- see publish_parlay_stats.py's
   // build_live_scores. A totals bet shows the two scores added up, since
   // the combined number IS the thing being bet on -- "17-27" makes you do
-  // the arithmetic yourself to see where it stands against the line.
-  function liveText(entry, isTotal) {
-    if (entry.kind !== 'team') return `${entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1)} so far`;
+  // the arithmetic yourself to see where it stands against the line. A prop
+  // leads with its own stat, then its player's game the way a team bet
+  // shows it: "0 TDs · 17-14 · Halftime".
+  function liveText(entry, p) {
     // entry.detail is ESPN's own phrase for where the game stands --
     // "Top 1st" for baseball, "4:32 - 2nd Quarter" for football -- which is
     // already correct per sport. Falls back to the old quarter/clock guess
@@ -405,7 +405,14 @@
     // existed), which was never right for a sport without quarters anyway.
     const state = entry.detail ? ` · ${entry.detail}` : (entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '');
     const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
-    return `${isTotal ? a + b : `${a}-${b}`}${state}`;
+    if (entry.kind !== 'team') {
+      const n = entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1);
+      const [one, many] = PROP_STAT_UNITS[betTypeOf(p)] || ['', ''];
+      const stat = `${n} ${entry.stat === 1 ? one : many}`.trim();
+      // A prop published before props carried their game has no score.
+      return entry.team_score == null ? stat : `${stat} · ${a}-${b}${state}`;
+    }
+    return `${isTotalBet(p) ? a + b : `${a}-${b}`}${state}`;
   }
 
   // Rewrites the graded detail -- free text out of the sheet's Grade Detail
@@ -467,19 +474,21 @@
   // graded leg has nothing here any more -- its score sits in the chip
   // beside the verdict, and showing it in both places said it twice.
   function thirdStat(p, entry) {
-    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap${entry.tone === 'up' ? ' up' : ''}"><span class="dot"></span>${esc(liveText(entry, isTotalBet(p)))}</span>`];
+    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap${entry.tone === 'up' ? ' up' : ''}"><span class="dot"></span>${esc(liveText(entry, p))}</span>`];
     if (p.result === 'Pending') return ['Kickoff', esc(fmtTime(p.gametime))];
     return null;
   }
 
   function legStatsHtml(p, entry) {
     const third = thirdStat(p, entry);
-    // label,value,label,value,label,value -- see the .leg-stats comment in
-    // the stylesheet for why this order (not all labels then all values)
-    // is load-bearing for grid-auto-flow:column.
-    return `<span class="l">Sport</span><span class="v">${p.sport ? esc(p.sport) : '—'}</span>` +
-      `<span class="l">Odds</span><span class="v">${esc(fmtOdds(p.odds))}</span>` +
-      (third ? `<span class="l">${third[0]}</span><span class="v">${third[1]}</span>` : '');
+    const st = (label, value) => `<div class="st"><span class="l">${label}</span><span class="v">${value}</span></div>`;
+    // A prop's bet line names only the player, so the game they're in gets
+    // a fourth slot -- a team bet's line already reads "Bears -3 vs. Jets".
+    // publish_parlay_stats.py only finds it for a still-Pending prop.
+    return st('Sport', p.sport ? esc(p.sport) : '—') +
+      st('Odds', esc(fmtOdds(p.odds))) +
+      (third ? st(third[0], third[1]) : '') +
+      (p.matchup ? st('Matchup', esc(p.matchup)) : '');
   }
 
   // Keyed like the live-score map (year:week:name) so expanding a leg
@@ -521,8 +530,10 @@
       const entry = p.result === 'Pending' ? (live || {})[key] : null;
       const tone = entry && entry.tone ? ` live-${entry.tone}` : '';
       const open = expandedLegs.has(key) ? ' open' : '';
-      const resultTone = p.result === 'Win' ? 'turf' : p.result === 'Loss' ? 'loss' : '';
-      const resultLabel = p.result === 'Pending' ? '—' : p.result;
+      // A live leg says so where its Win/Loss will land -- red like the
+      // live dot, an "in progress" marker rather than a verdict either way.
+      const resultTone = p.result === 'Win' ? 'turf' : p.result === 'Loss' || entry ? 'loss' : '';
+      const resultLabel = entry ? 'Live' : p.result === 'Pending' ? '—' : p.result;
       return `
       <div class="leg ${p.result}${tone}${open}" data-leg-key="${esc(key)}">
         <div class="leg-head">
