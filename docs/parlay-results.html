@@ -50,10 +50,8 @@
   .back-link:disabled:hover{ background: none; }
   .back-link[hidden]{ display: none; }
 
-  /* Scope (year) sits above the category tabs and filters them, so theme.css
-     gives it an outlined gold chip where the tabs get a solid gold pill --
-     otherwise the two stacked rows read as one duplicated control. Only the
-     spacing between them is this page's business. */
+  /* Only Jon's Table still uses scope chips (Stats switched to a Year
+     dropdown beside its tabs). Inside .controls-row theme.css zeroes this. */
   .scope-row{ margin-bottom: 18px; }
 
   .seg{ margin: 4px 0 18px; }
@@ -297,8 +295,15 @@
 
     <section>
       <h2>Stats</h2>
-      <div class="scope-row" id="scope-tab-row"></div>
-      <div class="tabs" id="category-tab-row"></div>
+      <!-- Category tabs left, the scope (year) dropdown pinned right on the
+           same row -- the same tabs-plus-Year layout as Standings. -->
+      <div class="controls-row">
+        <div class="tabs" id="category-tab-row"></div>
+        <div class="selector-group">
+          <label class="selector-label" for="scope-select">Year</label>
+          <select class="parlay-select" id="scope-select" autocomplete="off"></select>
+        </div>
+      </div>
       <div id="sub-tab-row"></div>
       <div class="card-grid" id="stats-container"></div>
     </section>
@@ -866,7 +871,7 @@
       let activeScope = 'all';
       const activeSub = {}; // remembers the picked subsection per category
 
-      const scopeTabRow = document.getElementById('scope-tab-row');
+      const scopeSelect = document.getElementById('scope-select');
       const categoryTabRow = document.getElementById('category-tab-row');
       const subTabRow = document.getElementById('sub-tab-row');
       const statsContainer = document.getElementById('stats-container');
@@ -875,7 +880,8 @@
       const scopes = ['all', ...scopeYears.map(String)];
       const scopeLabel = s => s === 'all' ? 'All Time' : s;
 
-      scopeTabRow.innerHTML = scopes.map(s => `<button type="button" class="scope-btn${s === activeScope ? ' on' : ''}" data-scope="${s}">${scopeLabel(s)}</button>`).join('');
+      scopeSelect.innerHTML = scopes.map(s => `<option value="${s}">${s === 'all' ? 'All-Time' : s}</option>`).join('');
+      scopeSelect.value = activeScope;
       categoryTabRow.innerHTML = CATEGORIES.map((c, i) => `<button type="button" class="tab${i === activeCategory ? ' on' : ''}" data-i="${i}">${c.label}</button>`).join('');
 
       function renderStats() {
@@ -891,11 +897,8 @@
           statsContainer.innerHTML = cat.cards.map(key => CARD[key](s)).join('');
         }
       }
-      scopeTabRow.addEventListener('click', e => {
-        const btn = e.target.closest('[data-scope]');
-        if (!btn) return;
-        activeScope = btn.dataset.scope;
-        [...scopeTabRow.children].forEach(b => b.classList.toggle('on', b.dataset.scope === activeScope));
+      scopeSelect.addEventListener('change', () => {
+        activeScope = scopeSelect.value;
         renderStats();
       });
       categoryTabRow.addEventListener('click', e => {
@@ -975,7 +978,7 @@
           }
           if (st.scope && stats[st.scope]) {
             activeScope = st.scope;
-            [...scopeTabRow.children].forEach(b => b.classList.toggle('on', b.dataset.scope === activeScope));
+            scopeSelect.value = activeScope;
           }
           if (st.category !== undefined && CATEGORIES[st.category]) {
             activeCategory = st.category;
