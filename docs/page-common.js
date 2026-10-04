@@ -18,3 +18,14 @@ function formatUpdated(iso) {
   if (d.toDateString() === new Date().toDateString()) return time;
   return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
 }
+
+// Two-letter monogram per manager: first and last initial, as the league
+// knows everyone (TJ is just TJ). Shared so Game Records and Franchise's
+// Head to Head ledger always show the same letters for the same person.
+const MONOGRAMS = {
+  Collin: 'CR', 'Joe G': 'JG', Brad: 'BB', Flanders: 'NF', TJ: 'TJ', Kris: 'KC', Jon: 'JD',
+  Chad: 'CG', Ben: 'BR', 'Joe K': 'JK', Jared: 'JS', Jeff: 'JR', Chappy: 'DS', Corey: 'CC',
+};
+function monogram(name) {
+  return MONOGRAMS[name] || String(name ?? '').slice(0, 2).toUpperCase();
+}

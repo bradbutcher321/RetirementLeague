@@ -211,12 +211,15 @@ body{
 @media (max-width:700px){ .hero2{ grid-template-columns:1fr; } }
 .hero2-main{ position:relative; padding:36px 34px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
 .hero2-main::before{ content:''; position:absolute; inset:-40%; filter:blur(10px); pointer-events:none; }
-.hero2-main.glow::before{ background:radial-gradient(circle at 30% 40%, rgba(212,180,106,0.28), transparent 60%); }
-.hero2-main.glow-loss::before{ background:radial-gradient(circle at 30% 40%, rgba(214,98,79,0.24), transparent 60%); }
+/* No colour wash behind the headline any more. The gold (and red, for a
+   bad headline) radial glow was dropped site-wide after the Franchise
+   redesign -- the card is the same flat glass surface as every other panel,
+   and the headline's own colour carries it. .glow / .glow-loss are left in
+   the markup as harmless hooks. */
 .hero2-eyebrow{ position:relative; color:var(--gold); font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; }
-.hero2-v{ position:relative; font-family:var(--scoreboard); font-weight:900; font-size:clamp(2.2rem,5.5vw,3.4rem); line-height:0.95; margin:9px 0 6px; color:#fff; text-shadow:0 0 36px rgba(212,180,106,0.3); }
-.hero2-v.turf{ color:var(--turf); text-shadow:0 0 36px rgba(79,174,122,0.3); }
-.hero2-v.loss{ color:var(--loss); text-shadow:0 0 36px rgba(214,98,79,0.3); }
+.hero2-v{ position:relative; font-family:var(--scoreboard); font-weight:900; font-size:clamp(2.2rem,5.5vw,3.4rem); line-height:0.95; margin:9px 0 6px; color:#fff; }
+.hero2-v.turf{ color:var(--turf); }
+.hero2-v.loss{ color:var(--loss); }
 .hero2-sub{ position:relative; color:var(--text-dim); font-size:0.88rem; }
 .hero2-side{ background:rgba(0,0,0,0.22); border-left:1px solid var(--line); padding:24px 28px; display:flex; flex-direction:column; gap:18px; justify-content:center; }
 /* center, not baseline: the label is 0.76rem body text and the value is a

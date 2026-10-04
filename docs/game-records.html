@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=6">
+<link rel="stylesheet" href="theme.css?v=7">
 <link rel="stylesheet" href="nav.css?v=4">
 <link rel="stylesheet" href="league.css?v=6">
 <style>
@@ -128,7 +128,7 @@
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=2"></script>
+<script src="page-common.js?v=3"></script>
 <script src="league-common.js?v=3"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -236,12 +236,7 @@
     { title: 'Weekly High & Low Scores', hi: ['hiWk', 'Most weekly highs'], lo: ['loWk', 'Most weekly lows'] },
   ];
 
-  // First and last initial, as the league knows everyone (TJ is just TJ).
-  const MONOGRAMS = {
-    Collin: 'CR', 'Joe G': 'JG', Brad: 'BB', Flanders: 'NF', TJ: 'TJ', Kris: 'KC', Jon: 'JD',
-    Chad: 'CG', Ben: 'BR', 'Joe K': 'JK', Jared: 'JS', Jeff: 'JR', Chappy: 'DS', Corey: 'CC',
-  };
-  const monogram = name => MONOGRAMS[name] || name.slice(0, 2).toUpperCase();
+  // monogram() comes from page-common.js, shared with Franchise.
 
   // Rank by displayed value, so managers tied on a count share a rank (and
   // the record) instead of the sort order quietly picking one of them.

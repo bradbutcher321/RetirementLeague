@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=6">
+<link rel="stylesheet" href="theme.css?v=7">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* ---------- Matchup cards ----------
@@ -1724,11 +1724,19 @@
     const topAllPlay = maxBy(withAllPlay, p => p.all_play.pct);
     add(topAllPlay, `${topAllPlay && topAllPlay.name} would have the league's best record if everyone played everyone every week, at ${hi(fmtPct(topAllPlay && topAllPlay.all_play.pct))}.`);
 
-    const withLuck = players.filter(p => has(p, p => p.median_luck));
-    const unluckiest = maxBy(withLuck, p => p.median_luck);
-    const luckiest = minBy(withLuck, p => p.median_luck);
-    add(unluckiest && unluckiest.median_luck > 0, `${unluckiest && unluckiest.name} has been the league's unluckiest manager, scoring well enough for a ${hi(fmtPct(unluckiest && unluckiest.median_luck))} better record than they actually have.`);
-    add(luckiest && luckiest.median_luck < 0, `${luckiest && luckiest.name} has been the league's luckiest manager, outperforming what their actual scoring deserved by ${hi(fmtPct(Math.abs((luckiest && luckiest.median_luck) || 0)))}.`);
+    // Schedule luck: actual win rate minus all-play win rate, rounded so
+    // float noise can't split a real tie.
+    const luck = p => (p.all_play && typeof p.all_play.pct === 'number' && p.career && typeof p.career.win_rates.reg_pct === 'number')
+      ? Math.round((p.career.win_rates.reg_pct - p.all_play.pct) * 10) / 10 : null;
+    const withLuck = players.filter(p => has(p, luck));
+    const unlucky = topTied(withLuck, p => -luck(p));
+    const lucky = topTied(withLuck, luck);
+    add(unlucky.value > 0, unlucky.names.length > 1
+      ? `${nameList(unlucky.names)} are tied as the league's unluckiest managers, each winning ${hi(fmtPct(unlucky.value))} less often than their all-play record says they should.`
+      : `${unlucky.names[0]} has been the league's unluckiest manager, winning ${hi(fmtPct(unlucky.value))} less often than their all-play record says they should.`);
+    add(lucky.value > 0, lucky.names.length > 1
+      ? `${nameList(lucky.names)} are tied as the league's luckiest managers, each winning ${hi(fmtPct(lucky.value))} more often than their all-play record says they should.`
+      : `${lucky.names[0]} has been the league's luckiest manager, winning ${hi(fmtPct(lucky.value))} more often than their all-play record says they should.`);
 
     // ----- More single-league-record facts, to keep the rivalry facts
     // below from dominating the pool just by sheer per-manager volume. -----
@@ -1781,12 +1789,6 @@
     const withLowMargin = players.filter(p => has(p, p => p.extremes && typeof p.extremes.lowest_win_margin === 'number'));
     const topLowMargin = minBy(withLowMargin, p => p.extremes.lowest_win_margin);
     add(topLowMargin, `${topLowMargin && topLowMargin.name} is responsible for the closest win margin in league history, just ${hi(fmtScore(topLowMargin && topLowMargin.extremes.lowest_win_margin))} points.`);
-
-    const withStdevHigh = players.filter(p => has(p, p => p.extremes && p.extremes.score_stdev));
-    const mostInconsistent = maxBy(withStdevHigh, p => p.extremes.score_stdev);
-    add(mostInconsistent, `${mostInconsistent && mostInconsistent.name} is the league's most unpredictable scorer, with a week-to-week swing of ${hi(fmtScore(mostInconsistent && mostInconsistent.extremes.score_stdev))} points.`);
-    const mostConsistent = minBy(withStdevHigh, p => p.extremes.score_stdev);
-    add(mostConsistent, `${mostConsistent && mostConsistent.name} is the league's most consistent scorer, with a week-to-week swing of just ${hi(fmtScore(mostConsistent && mostConsistent.extremes.score_stdev))} points.`);
 
     const withPerfect = players.filter(p => has(p, p => p.efficiency && p.efficiency.perfect_lineups));
     const topPerfect = maxBy(withPerfect, p => p.efficiency.perfect_lineups);

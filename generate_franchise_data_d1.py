@@ -211,15 +211,11 @@ def compute_all_play(matchups, team_id_to_player_by_year):
 
 def compute_median_stats(reg_games_by_year_week, player_reg_games):
     """Median-era (year >= MEDIAN_ERA_START_YEAR) regular-season median
-    wins/losses, plus the reg-season win% restricted to the same years so
-    median_luck compares like for like."""
+    wins/losses."""
     med_w = med_l = 0
-    era_reg_w = era_reg_l = 0
     for g in player_reg_games:
         if g["year"] < MEDIAN_ERA_START_YEAR:
             continue
-        era_reg_w += g["outcome"] == "W"
-        era_reg_l += g["outcome"] == "L"
         median_score = reg_games_by_year_week.get((g["year"], g["week"]))
         if median_score is None or g["team_score"] is None:
             continue
@@ -227,10 +223,7 @@ def compute_median_stats(reg_games_by_year_week, player_reg_games):
             med_w += 1
         elif g["team_score"] < median_score:
             med_l += 1
-    median_pct = win_pct(med_w, med_l)
-    era_reg_pct = win_pct(era_reg_w, era_reg_l)
-    median_luck = round(median_pct - era_reg_pct, 1) if median_pct is not None and era_reg_pct is not None else None
-    return {"wins": med_w, "losses": med_l, "pct": median_pct}, median_luck
+    return {"wins": med_w, "losses": med_l, "pct": win_pct(med_w, med_l)}
 
 
 def compute_extremes(games):
@@ -252,7 +245,6 @@ def compute_extremes(games):
         "lowest_win_margin": min(win_margins) if win_margins else None,
         "biggest_loss_margin": max(loss_margins) if loss_margins else None,
         "lowest_loss_margin": min(loss_margins) if loss_margins else None,
-        "score_stdev": round(statistics.pstdev(scores), 2) if len(scores) > 1 else None,
         # Close/blowout counts, for achievement-style milestones ("Heartbreaker",
         # "Blowout Artist") -- cheap to add since win_margins/loss_margins are
         # already fully materialized above, just never counted before.
@@ -700,7 +692,7 @@ def main():
         reg_games = [g for g in games if g["bracket_type"] == "NONE"]
 
         career, _ = compute_record_and_points(games, reg_median_by_year_week)
-        median, median_luck = compute_median_stats(reg_median_by_year_week, reg_games)
+        median = compute_median_stats(reg_median_by_year_week, reg_games)
         career["median"] = median
         career["win_rates"]["median_pct"] = median["pct"]
         career["standings"] = compute_standings(teams_by_player, games, sacko_years_by_player.get(player, set()))
@@ -718,7 +710,6 @@ def main():
             "moves": compute_moves(teams_by_player),
             "draft": compute_draft(teams_by_player, draft_pos_by_year_team),
             "weekly_sackos": weekly_sacko_counts.get(player, 0),
-            "median_luck": median_luck,
             "money": money_block.get(player),
             "season_history": compute_season_history(teams_by_player, games, reg_median_by_year_week),
             "efficiency": compute_efficiency(team_week_efficiency, team_id_to_player_by_year, player),

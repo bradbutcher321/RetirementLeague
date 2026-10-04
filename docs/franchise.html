@@ -21,45 +21,13 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=6">
+<link rel="stylesheet" href="theme.css?v=7">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
      spacing and variants here. */
-  .selector-row{ margin-bottom: 26px; }
-  #tab-content > * + *{ margin-top: 14px; }
+  .selector-row{ margin-bottom: 16px; }
 
-  /* ---------- Cards ---------- */
-  /* A third column for the sections that have three cards, and the same
-     stack-on-narrow fallback theme.css gives the two-column default. */
-  .card-grid.three{ grid-template-columns: repeat(3, 1fr); }
-  @media (max-width: 720px){ .card-grid.three{ grid-template-columns: 1fr; } }
-  /* Clipped, unlike the shared default, so a card's rounded corners cut its
-     own content (the rivalry bars run edge to edge). */
-  .stat-card{ overflow: hidden; }
-
-  /* ---------- Hero ----------
-     The column split is theme.css's shared content-sized rule now; this
-     page used to override it and no longer needs to.
-
-     theme.css clips .hero2-main so the blurred glow behind the headline
-     can't bleed into the stats column. That also clipped the logo hover
-     previews, which are absolutely positioned and deliberately overhang
-     the tile. Moving the clip onto the glow itself keeps the bleed
-     contained while letting the previews out.
-
-     The glow's box is inset:-40%, so it measures 180% of the main area on
-     each axis. Trimming 40/180 = 22.23% off every edge lands it exactly on
-     the main area's bounds -- the same rectangle overflow:hidden gave us.
-     clip-path applies after filter, so the blur is clipped too. */
-  .hero2-main{ overflow: visible; }
-  .hero2-main::before{ clip-path: inset(22.23% round 14px 0 0 14px); }
-  @media (max-width:700px){ .hero2-main::before{ clip-path: inset(22.23% round 14px 14px 0 0); } }
-  /* theme.css masks .hero2 so iOS Safari rounds the glow's corner -- but a
-     mask clips every descendant it paints, position: fixed ones included,
-     which put the previews back in the box. The rounded clip-path above
-     does the same corner job on the glow alone, so the mask can go here. */
-  .hero2{ -webkit-mask-image: none; mask-image: none; }
 
   .hero-pills{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
   .aka{ background: var(--item); border: 1px solid var(--item-line); color: var(--text-dim); font-size: 0.74rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
@@ -128,158 +96,244 @@
     .aka-logo-preview{ bottom: anchor(top); margin-bottom: 8px; }
   }
 
-  /* ---------- Headline stat cards (.podium/.pod live in theme.css) ---------- */
-  .pod.hl{ border-color: var(--lead-line); background: var(--lead-tint); }
-  .pod.tone-win{ border-color: var(--win-line); background: var(--win-tint); }
-  .pod.tone-loss{ border-color: var(--loss-line); background: var(--loss-tint); }
-  :root[data-accent="outline"] .pod.hl,
-  :root[data-accent="outline"] .pod.tone-win,
-  :root[data-accent="outline"] .pod.tone-loss{ background: var(--item); }
-  .pod-label{ color: var(--text-dim); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
-  .pod-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; height: 2rem; line-height: 2rem; margin-top: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .pod.hl .pod-val{ color: var(--gold); }
-  .pod-val.win{ color: var(--turf); }
-  .pod-val.loss{ color: var(--loss); }
-  .pod-sub{ color: var(--text-dim); font-size: 0.7rem; min-height: 1em; margin-top: 2px; }
-
-  /* ---------- Rows ---------- */
-  .row{
-    display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px;
-    background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 9px 12px; margin-top: 6px; min-height: 58px;
-  }
-  .row-name{ font-weight: 700; font-size: 0.92rem; }
-  .row-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; }
-  .row-stats{ display: flex; gap: 16px; }
-  .row-stat{ text-align: center; min-width: 52px; }
-  .row-stat b.win{ color: var(--turf); }
-  .row-stat b.loss{ color: var(--loss); }
-
-  /* ---------- Rivalry / luck ---------- */
-  .feature{ text-align: center; padding: 16px 8px 8px; }
-  .feature-sub{ color: var(--text-dim); font-size: 0.85rem; margin-top: 4px; }
-  .luck-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 2rem; }
-  .luck-val.lucky{ color: var(--turf); }
-  .luck-val.unlucky{ color: var(--loss); }
-
-  /* ---------- Rivalries ---------- */
-  /* The card surface itself comes from theme.css's shared rule. */
-  .rivalry-card{ position: relative; padding: 22px 20px; text-align: center; }
-  /* Nemesis/favorite IS a state, so it keeps an accent -- but as the shared
-     outline treatment, not a top bar. */
-  .rivalry-card.nemesis{ border-color: var(--loss-line); }
-  .rivalry-card.favorite{ border-color: var(--win-line); }
-  .rivalry-eyebrow{
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .rivalry-card.nemesis .rivalry-eyebrow{ color: var(--loss); }
-  .rivalry-card.favorite .rivalry-eyebrow{ color: var(--turf); }
-  .rivalry-opponent{
-    font-family: var(--scoreboard);
-    font-weight: 800;
-    font-size: 1.6rem;
-  }
-  .rivalry-record{
-    margin-top: 6px;
-    color: var(--text-dim);
-    font-size: 0.9rem;
-  }
-  /* Side-by-side layout for the "But Also" case. "But Also" itself is the
-     divider (vertically centered via align-items, same trick the matchup
-     cards use to center "VS") rather than a label sitting above just the
-     second name — that pushed the two names out of alignment with each
-     other. */
-  .rivalry-split{
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 4px;
-  }
-  .rivalry-half{ flex: 1; min-width: 0; }
-  .rivalry-split-label{
-    flex-shrink: 0;
-    color: var(--text-dim);
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    text-align: center;
-    line-height: 1.3;
+  /* ---------- Hero ----------
+     Its own card rather than the shared .hero2: no gold glow behind the
+     name (the logo is the colour here), and not clipped, so the logo
+     previews can hang outside it. Phone: identity on top, a five-stat
+     strip underneath. Desktop: the strip turns into a column on the right. */
+  .fhero{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius:14px; display:grid; grid-template-columns:minmax(0,1fr); }
+  .fhero-main{ padding:18px 18px 16px; min-width:0; }
+  .fhero-id{ display:flex; align-items:center; gap:14px; }
+  .fhero-name{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.9rem, 8vw, 2.6rem); line-height:0.95; overflow-wrap:anywhere; }
+  .fhero-sub{ color:var(--text-dim); font-size:0.8rem; margin-top:5px; }
+  /* No dividers between stats. Cells hug their content and the leftover
+     width is shared evenly between them, so the visible gaps between
+     numbers come out equal ("3" doesn't sit in a cell as wide as "76-100"). */
+  .fhero-stats{ display:flex; justify-content:space-between; gap:8px; padding:0 20px; border-top:1px solid var(--line); background:rgba(0,0,0,0.22); border-radius:0 0 14px 14px; }
+  .fs{ padding:13px 0 12px; text-align:center; min-width:0; }
+  /* Each stat hugs its widest word, so a two-word label like "Weekly
+     Sackos" always wraps rather than only on narrower phones -- the strip
+     keeps one shape and even gaps at every width. */
+  .fs{ width:min-content; }
+  .fs-v{ justify-self:center; }
+  .fs-v{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.05rem, 5vw, 1.4rem); color:var(--gold); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .fs-l{ color:var(--text-dim); font-size:0.56rem; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; line-height:1.25; }
+  @media (min-width:721px){
+    .fhero{ grid-template-columns:minmax(0,1fr) auto; }
+    .fhero-main{ padding:26px 28px 24px; }
+    .fhero-stats{ display:flex; flex-direction:column; justify-content:center; gap:14px; border-top:none; border-left:1px solid var(--line); border-radius:0 14px 14px 0; padding:22px 26px; }
+    .fs{ display:flex; justify-content:space-between; align-items:center; gap:28px; padding:0; text-align:left; width:auto; }
+    .fs-v{ order:2; font-size:1.2rem; }
+    .fs-l{ order:1; font-size:0.76rem; text-transform:none; letter-spacing:0; margin:0; }
   }
 
-  /* ---------- Season history ---------- */
-  .hist-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; align-items: center; gap: 12px; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 10px 12px; margin-top: 6px; min-height: 58px; }
-  .hist-row.champion{ border-color: var(--lead-line); background: var(--lead-tint); }
-  :root[data-accent="outline"] .hist-row.champion{ background: var(--item); }
-  .hist-year{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.25rem; color: var(--text-dim); text-align: center; }
-  .hist-team{ font-weight: 700; font-size: 0.95rem; }
-  .badge{ font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 5px 10px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line); color: var(--text-dim); }
-  .badge.champion{ background: rgba(212,180,106,0.14); color: var(--gold); border-color: var(--gold); }
-  .badge.runner-up{ color: var(--gold); border-color: var(--gold); }
-  .badge.playoffs{ background: rgba(76,154,107,0.12); color: var(--turf); border-color: var(--turf-dim); }
-  .badge.progress{ border-style: dashed; }
-  .badge.missed{ background: rgba(192,87,75,0.12); color: var(--loss); border-color: var(--loss); }
+  /* ---------- Panels ----------
+     Every section is one panel: white title top-left, an optional status
+     chip top-right, then its content -- the same composition the
+     dashboard's cards settled on. */
+  .fr-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 16px 0; }
+  .fr-title{ font-weight:700; font-size:0.95rem; }
+  .fr-note{ color:var(--text-dim); font-size:0.74rem; line-height:1.45; padding:3px 16px 0; }
+  .fr-body{ padding:12px 12px 12px; }
+  .fr-body > * + *{ margin-top:8px; }
+  .chip{ font-size:0.68rem; font-weight:700; letter-spacing:0.03em; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--text-dim); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .chip.gold{ color:var(--gold); border-color:var(--lead-line); background:var(--lead-tint); }
+  .chip.win{ color:var(--turf); border-color:var(--win-line); background:var(--win-tint); }
+  .chip.loss{ color:var(--loss); border-color:var(--loss-line); background:var(--loss-tint); }
+
+  /* Page rhythm: one gap size between every panel, both directions. */
+  #tab-content{ display:grid; gap:12px; }
+  .pair{ display:grid; grid-template-columns:1fr; gap:12px; align-items:start; }
+  @media (min-width:721px){ .pair{ grid-template-columns:1fr 1fr; } }
+  .stat-card{ overflow:hidden; }
+
+  /* ---------- Tabs ----------
+     Eight sections don't fit one row on a phone, and wrapping them made a
+     three-row block of buttons. On a phone the track scrolls sideways
+     instead, with the selected tab kept in view. */
+  @media (max-width:720px){
+    .tabs.scroll{ flex-wrap:nowrap; overflow-x:auto; width:100%; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+    .tabs.scroll::-webkit-scrollbar{ display:none; }
+    .tabs.scroll .tab{ flex:none; }
+  }
+  section.fr-hero{ margin-bottom:14px; }
+
+  /* ---------- Tiles: a label, one number, an optional sub-line ---------- */
+  .tiles{ display:grid; grid-template-columns:repeat(var(--n,3), minmax(0,1fr)); gap:8px; }
+  .tile{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:10px 6px 9px; text-align:center; min-width:0; }
+  .tile-l{ color:var(--text-dim); font-size:0.6rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; line-height:1.15; margin-top:3px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .tile-s{ color:var(--text-dim); font-size:0.66rem; line-height:1.35; margin-top:2px; }
+  .tile-s span{ display:block; }
+  .tile.is-lead{ border-color:var(--lead-line); background:var(--lead-tint); }
+  .tile.is-win{ border-color:var(--win-line); background:var(--win-tint); }
+  .tile.is-loss{ border-color:var(--loss-line); background:var(--loss-tint); }
+  :root[data-accent="outline"] .tile.is-lead, :root[data-accent="outline"] .tile.is-win, :root[data-accent="outline"] .tile.is-loss{ background:var(--item); }
+  .tile.is-lead .tile-v{ color:var(--gold); }
+  .tile.is-win .tile-v{ color:var(--turf); }
+  .tile.is-loss .tile-v{ color:var(--loss); }
+  @media (max-width:420px){ .tile-v{ font-size:1.3rem; } }
+
+  /* ---------- Lines: label left, figures right, one box, hairlines between ----------
+     Replaces a stack of separately boxed 58px rows, which put a full row
+     of air between every stat. */
+  .lines{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; }
+  .line{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 12px; min-height:48px; }
+  .line + .line{ border-top:1px solid var(--line); }
+  .line-l{ min-width:0; }
+  .line-name{ font-weight:600; font-size:0.86rem; }
+  .line-sub{ color:var(--text-dim); font-size:0.7rem; margin-top:1px; line-height:1.35; }
+  .line-vals{ display:flex; gap:16px; flex:none; }
+  .lv{ text-align:center; min-width:40px; }
+  .lv b{ display:block; font-family:var(--scoreboard); font-weight:700; font-size:1.1rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .lv span{ display:block; color:var(--text-dim); font-size:0.56rem; letter-spacing:0.05em; text-transform:uppercase; white-space:nowrap; }
+  .lv b.win{ color:var(--turf); } .lv b.loss{ color:var(--loss); } .lv b.gold{ color:var(--gold); }
+
+  /* ---------- Dot chart (finish by year, efficiency by year) ----------
+     x positions are percentages so the chart fills any width without
+     scaling its text; the y labels live in an HTML column beside it. */
+  .chart{ display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px; }
+  .chart-y{ position:relative; width:30px; }
+  .chart-y span{ position:absolute; right:0; transform:translateY(-50%); color:var(--text-dim); font-size:0.6rem; white-space:nowrap; }
+  .chart svg{ display:block; width:100%; overflow:visible; }
+  .chart .grid{ stroke:rgba(255,255,255,0.06); stroke-width:1; }
+  .chart .link{ stroke:rgba(255,255,255,0.18); stroke-width:1.5; }
+  .chart .x{ fill:var(--text-dim); font-size:10px; font-family:var(--body); }
+  .chart .v{ fill:var(--text); font-size:10px; font-weight:700; font-family:var(--body); }
+  .dot{ stroke-width:2; }
+  .dot.champion{ fill:var(--gold); stroke:var(--gold); }
+  .dot.runner-up{ fill:var(--surface); stroke:var(--gold); }
+  .dot.playoffs{ fill:var(--turf); stroke:var(--turf); }
+  .dot.missed{ fill:var(--loss); stroke:var(--loss); }
+  .dot.progress{ fill:var(--surface); stroke:var(--text-dim); stroke-dasharray:2 2; }
+  .dot.plain{ fill:var(--gold); stroke:var(--gold); }
+  .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; color:var(--text-dim); font-size:0.68rem; padding:2px 2px 0; }
+  .legend i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:-1px; border:2px solid; }
+  .legend .lg-champion{ background:var(--gold); border-color:var(--gold); }
+  .legend .lg-runner-up{ border-color:var(--gold); }
+  .legend .lg-playoffs{ background:var(--turf); border-color:var(--turf); }
+  .legend .lg-missed{ background:var(--loss); border-color:var(--loss); }
+  .legend .lg-progress{ border-color:var(--text-dim); border-style:dashed; }
+
+  /* ---------- Career Arc: graph / grid ----------
+     The toggle is the shared segmented control, sized down to sit in the
+     panel's title row where a chip would go. */
+  .arc-seg{ --ctl-h:26px; --ctl-r:13px; --track-pad:3px; }
+  .arc-seg button{ padding:0 12px; font-size:0.74rem; }
+  .arc-views[data-view="graph"] .arc-grid,
+  .arc-views[data-view="grid"] .arc-graph{ display:none; }
+  .arc-views > .legend{ margin-top:8px; }
+  /* One row of narrow fixed-width tiles, every season side by side. On a
+     phone the row is wider than the card, so it scrolls sideways. */
+  .arc-grid{ display:flex; gap:6px; padding:4px 0 4px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .arc-grid::-webkit-scrollbar{ display:none; }
+  .arc-tile{ flex:none; width:60px; background:var(--item); border:1px solid var(--item-line); border-radius:8px; text-align:center; padding:9px 2px 8px; }
+  .arc-year{ color:var(--text-dim); font-size:0.62rem; font-weight:600; letter-spacing:0.04em; }
+  .arc-standing{ font-family:var(--scoreboard); font-weight:800; font-size:1.25rem; line-height:1.15; margin:2px 0 1px; }
+  .arc-rec{ color:var(--text-dim); font-size:0.62rem; font-variant-numeric:tabular-nums; }
+  /* Champion gets the full gold ring, runner-up the softer gold line, so
+     the two read apart the same way the graph's solid/hollow dots do. */
+  .arc-tile.champion{ border-color:var(--gold); background:var(--lead-tint); }
+  .arc-tile.runner-up{ border-color:var(--lead-line); }
+  .arc-tile.playoffs{ border-color:var(--win-line); background:var(--win-tint); }
+  .arc-tile.missed{ border-color:var(--loss-line); background:var(--loss-tint); }
+  .arc-tile.progress{ border-style:dashed; }
+  :root[data-accent="outline"] .arc-tile{ background:var(--item); }
+  .arc-tile.champion .arc-standing, .arc-tile.runner-up .arc-standing{ color:var(--gold); }
+  .arc-tile.playoffs .arc-standing{ color:var(--turf); }
+  .arc-tile.missed .arc-standing{ color:var(--loss); }
+  .arc-tile.progress .arc-standing{ color:var(--text-dim); }
+
+  /* ---------- Season list ---------- */
+  .season{ display:grid; grid-template-columns:40px minmax(0,1fr) auto; align-items:center; gap:10px; padding:9px 12px; background:var(--item); border:1px solid var(--item-line); border-radius:10px; }
+  .fr-body > .season + .season{ margin-top:6px; }
+  .season-yr{ font-family:var(--scoreboard); font-weight:700; font-size:1.05rem; color:var(--text-dim); }
+  .season-nm{ font-weight:600; font-size:0.86rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .season-sub{ color:var(--text-dim); font-size:0.7rem; margin-top:1px; }
+  .season-fin{ text-align:right; }
+  /* The outcome is the headline, the placement is its caption. */
+  /* Body font, not the scoreboard face -- that one is for numbers. */
+  .season-fin b{ display:block; font-weight:700; font-size:0.86rem; line-height:1.2; white-space:nowrap; }
+  .season-fin span{ display:block; color:var(--text-dim); font-size:0.62rem; letter-spacing:0.05em; text-transform:uppercase; white-space:nowrap; margin-top:1px; }
+  /* Title years are tinted gold, Sacko years red -- the two seasons that
+     define a career. Everything else stays a plain row. */
+  .season.champion{ border-color:var(--lead-line); background:var(--lead-tint); }
+  .season.sacko{ border-color:var(--loss-line); background:var(--loss-tint); }
+  :root[data-accent="outline"] .season.champion, :root[data-accent="outline"] .season.sacko{ background:var(--item); }
+  .season.champion .season-fin b, .season.runner-up .season-fin b{ color:var(--gold); }
+  .season.playoffs .season-fin b{ color:var(--turf); }
+  .season.missed .season-fin b, .season.sacko .season-fin b{ color:var(--loss); }
+  .season.progress{ border-style:dashed; }
+  .season.progress .season-fin b{ color:var(--text-dim); }
+
+  /* ---------- Rivalries ----------
+     The two callouts sit side by side even on a phone -- each is just a
+     name and a record. Nemesis/favorite IS a state, so each takes the
+     shared outline + tint. */
+  .rivals{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .rival{ border-radius:10px; padding:12px 8px 11px; text-align:center; border:1px solid; min-width:0; }
+  .rival.nemesis{ border-color:var(--loss-line); background:var(--loss-tint); }
+  .rival.favorite{ border-color:var(--win-line); background:var(--win-tint); }
+  .rival-l{ font-size:0.62rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
+  .rival.nemesis .rival-l{ color:var(--loss); }
+  .rival.favorite .rival-l{ color:var(--turf); }
+  .rival-nm{ font-family:var(--scoreboard); font-weight:800; font-size:1.6rem; line-height:1.1; margin-top:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rival-rec{ color:var(--text-dim); font-size:0.76rem; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .rival .empty-note{ padding:10px 4px; }
+
+  /* Head to head ledger: one row per opponent, best record to worst. The
+     initials circle carries the winning/even/losing colour so the record
+     itself can stay plain. Each row opens the Head to Head page with this
+     matchup already picked. Two columns on desktop. */
+  .ledger{ display:grid; grid-template-columns:1fr; }
+  @media (min-width:721px){ .ledger{ grid-template-columns:1fr 1fr; column-gap:24px; } }
+  .lrow{ display:grid; grid-template-columns:36px minmax(0,1fr) auto; gap:12px; align-items:center; padding:9px 6px; border-top:1px solid var(--line); color:inherit; text-decoration:none; transition:background 0.12s; }
+  .lrow:first-child{ border-top:none; }
+  @media (min-width:721px){ .lrow:nth-child(2){ border-top:none; } }
+  .lrow:hover{ background:var(--item-hover); }
+  .lrow:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .lmono{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:0.95rem; letter-spacing:0.02em; border:1px solid var(--line); background:var(--item); color:var(--text-dim); }
+  .lmono.win{ color:var(--turf); border-color:var(--win-line); background:var(--win-tint); }
+  .lmono.loss{ color:var(--loss); border-color:var(--loss-line); background:var(--loss-tint); }
+  .lname{ font-weight:600; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lsub{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
+  /* Record and percentage centred on one shared axis, so the short one sits
+     squarely under the long one instead of both hugging the right edge. */
+  .lrec{ text-align:center; min-width:62px; }
+  .lrec b{ display:block; font-family:var(--scoreboard); font-weight:800; font-size:1.35rem; line-height:1; font-variant-numeric:tabular-nums; }
+  .lrec span{ display:block; color:var(--text-dim); font-size:0.68rem; margin-top:3px; }
+  .lrow.former{ opacity:0.55; }
+  @media (prefers-reduced-motion: reduce){ .lrow{ transition:none; } }
+
+  /* ---------- Feature line (worst week, worst bench miss) ---------- */
+  .feat{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; }
+  .feat-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.6rem; color:var(--loss); white-space:nowrap; }
 
   /* ---------- Achievement shelf ---------- */
-  .shelf{ display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-  .shelf:empty{ display: none; }
-  .ach{ position: relative; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; min-height: 76px; overflow: hidden; }
-  .ach.flippable{ cursor: pointer; perspective: 800px; }
-  .ach-face-static, .ach-face{ padding: 14px 12px; display: flex; gap: 11px; align-items: flex-start; }
-  .ach-face-static{ height: 100%; }
-  .ach-flip-inner{ position: relative; width: 100%; height: 100%; min-height: 76px; transition: transform 0.5s; transform-style: preserve-3d; }
-  .ach.flipped .ach-flip-inner{ transform: rotateY(180deg); }
-  .ach-face{ position: absolute; inset: 0; backface-visibility: hidden; }
-  .ach-back{ transform: rotateY(180deg); }
-  .ach-icon{ flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-  .ach-icon svg{ width: 18px; height: 18px; }
-  .ach.good .ach-icon{ background: rgba(212,180,106,0.14); color: var(--gold); }
-  .ach.bad .ach-icon{ background: rgba(192,87,75,0.14); color: var(--loss); }
-  .ach.locked .ach-icon{ background: rgba(255,255,255,0.03); color: var(--text-dim); }
-  .ach-name{ font-weight: 700; font-size: 0.9rem; }
-  .ach.locked .ach-name{ color: var(--text-dim); }
-  .ach-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 2px; line-height: 1.4; }
-  .ach-divider{ color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 18px 0 12px; padding-top: 14px; border-top: 1px solid var(--line); }
-
-  /* ---------- Season arc ---------- */
-  .arc-scroll{ overflow-x: auto; padding-bottom: 6px; }
-  .arc{ display: flex; gap: 8px; min-width: max-content; }
-  .arc-tile{ width: 64px; flex-shrink: 0; background: var(--item); border: 1px solid var(--item-line); border-radius: 8px; text-align: center; padding: 10px 4px 8px; }
-  .arc-tile.champion{ border-color: var(--gold); background: var(--lead-tint); }
-  .arc-tile.runner-up{ border-color: var(--lead-line); background: var(--lead-tint); }
-  .arc-tile.playoffs{ border-color: var(--win-line); background: var(--win-tint); }
-  .arc-tile.missed{ border-color: var(--loss-line); background: var(--loss-tint); }
-  .arc-tile.progress{ border-style: dashed; }
-  :root[data-accent="outline"] .arc-tile.champion,
-  :root[data-accent="outline"] .arc-tile.runner-up,
-  :root[data-accent="outline"] .arc-tile.playoffs,
-  :root[data-accent="outline"] .arc-tile.missed{ background: var(--item); }
-  .arc-year{ color: var(--text-dim); font-size: 0.62rem; letter-spacing: 0.03em; }
-  .arc-standing{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.25rem; margin: 3px 0 1px; }
-  .arc-tile.champion .arc-standing, .arc-tile.runner-up .arc-standing{ color: var(--gold); }
-  .arc-tile.playoffs .arc-standing{ color: var(--turf); }
-  .arc-tile.missed .arc-standing{ color: var(--loss); }
-  .arc-tile.progress .arc-standing{ color: var(--text-dim); }
-  .arc-rec{ color: var(--text-dim); font-size: 0.62rem; font-variant-numeric: tabular-nums; }
-  .arc-legend{ display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
-  .arc-legend-item{ display: flex; align-items: center; gap: 7px; color: var(--text-dim); font-size: 0.76rem; }
-  .arc-swatch{ width: 11px; height: 11px; border-radius: 2px; flex-shrink: 0; }
-
-  /* ---------- Rival grid ---------- */
-  .grid-scroll{ overflow-x: auto; }
-  table.rivals{ border-collapse: collapse; width: 100%; min-width: 460px; font-size: 0.86rem; }
-  table.rivals th{ text-align: left; color: var(--text-dim); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em; padding: 0 10px 10px; }
-  table.rivals td{ padding: 9px 10px; border-top: 1px solid var(--line); }
-  table.rivals tr:hover td{ background: rgba(255,255,255,0.02); }
-  .rv-name{ font-weight: 700; }
-  .rv-name .tag{ color: var(--text-dim); font-weight: 500; font-size: 0.72rem; margin-left: 6px; }
-  .rv-bar-wrap{ display: flex; align-items: center; gap: 10px; }
-  .rv-bar{ flex: 1; height: 7px; border-radius: 999px; background: var(--line); overflow: hidden; min-width: 70px; }
-  .rv-bar-fill{ height: 100%; border-radius: 999px; }
-  .rv-pct{ font-family: var(--scoreboard); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+  .shelf{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:8px; }
+  .shelf:empty{ display:none; }
+  .ach{ position:relative; background:var(--item); border:1px solid var(--item-line); border-radius:10px; min-height:70px; overflow:hidden; }
+  .ach.good{ border-color:var(--lead-line); }
+  .ach.bad{ border-color:var(--loss-line); }
+  .ach.flippable{ cursor:pointer; perspective:800px; }
+  .ach-face-static, .ach-face{ padding:11px 10px; display:flex; gap:9px; align-items:flex-start; }
+  .ach-face-static{ height:100%; }
+  /* Both faces stack in one grid cell, so the card grows to whichever
+     face is taller instead of clipping a long description. */
+  .ach-flip-inner{ display:grid; position:relative; width:100%; height:100%; min-height:70px; transition:transform 0.5s; transform-style:preserve-3d; }
+  .ach.flipped .ach-flip-inner{ transform:rotateY(180deg); }
+  .ach-face{ grid-area:1 / 1; backface-visibility:hidden; -webkit-backface-visibility:hidden; }
+  .ach-back{ transform:rotateY(180deg); }
+  .ach-icon{ flex-shrink:0; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .ach-icon svg{ width:16px; height:16px; }
+  .ach.good .ach-icon{ background:rgba(212,180,106,0.14); color:var(--gold); }
+  .ach.bad .ach-icon{ background:rgba(214,98,79,0.14); color:var(--loss); }
+  .ach.locked .ach-icon{ background:rgba(255,255,255,0.03); color:var(--text-dim); }
+  .ach-name{ font-weight:700; font-size:0.82rem; line-height:1.25; }
+  .ach.locked{ opacity:0.6; }
+  .ach-sub{ color:var(--text-dim); font-size:0.7rem; margin-top:2px; line-height:1.35; }
+  .ach-divider{ color:var(--text-dim); font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; padding:8px 2px 0; }
+  @media (prefers-reduced-motion: reduce){ .ach-flip-inner{ transition:none; } }
 </style>
 </head>
 <body>
@@ -306,9 +360,9 @@
       <select class="franchise-select" id="franchise-select"></select>
     </div>
 
-    <section><div id="hero-container"><div class="loading-row">Loading franchise…</div></div></section>
+    <section class="fr-hero"><div id="hero-container"><div class="loading-row">Loading franchise…</div></div></section>
     <section>
-      <div class="tabs" id="tabs"></div>
+      <div class="tabs scroll" id="tabs"></div>
       <div id="tab-content"></div>
     </section>
 
@@ -316,56 +370,83 @@
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=2"></script>
+<script src="page-common.js?v=3"></script>
 <script src="achievements.js"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, EFFICIENCY_EXPERT_PCT, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
   const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toFixed(d);
   const fmtPct = n => (n === null || n === undefined) ? '—' : `${Number(n).toFixed(1)}%`;
-  const fmtMoney = n => (n === null || n === undefined) ? '—' : `${n < 0 ? '-' : ''}$${Math.abs(Number(n)).toLocaleString()}`;
+  const fmtSigned = (n, d = 1, unit = '%') => (n === null || n === undefined) ? '—' : `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n).toFixed(d)}${unit}`;
+  const fmtMoney = n => (n === null || n === undefined) ? '—' : `${n < 0 ? '−' : ''}$${Math.abs(Number(n)).toLocaleString()}`;
+  const fmtNum = (n, d = 0) => (n === null || n === undefined) ? '—' : Number(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
   const fmtOrdinal = n => {
     if (n === null || n === undefined) return '—';
     const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
+  const rec = (w, l, t) => `${fmt(w)}-${fmt(l)}${t ? '-' + t : ''}`;
 
-  // pods: [label, value, { cls, hl, sub }]
-  const pods = list => `<div class="podium">${list.map(([label, value, o = {}]) => `
-    <div class="pod${o.tone ? ' tone-' + o.tone : o.hl ? ' hl' : ''}">
-      <div class="pod-label">${label}</div>
-      <div class="pod-val${o.tone || o.cls ? ' ' + (o.tone || o.cls) : ''}${String(value).length > 6 ? ' long' : ''}">${value}</div>
-      <div class="pod-sub">${o.sub || '&nbsp;'}</div>
+  // ---------- Building blocks ----------
+  // A panel: white title top-left, optional chip top-right, optional
+  // one-line note, then the body.
+  const card = (title, body, o = {}) => `
+    <div class="stat-card${o.cls ? ' ' + o.cls : ''}">
+      ${title ? `<div class="fr-head"><div class="fr-title">${title}</div>${o.chip || ''}</div>` : ''}
+      ${o.note ? `<div class="fr-note">${o.note}</div>` : ''}
+      <div class="fr-body">${body}</div>
+    </div>`;
+  const chip = (text, tone) => `<span class="chip${tone ? ' ' + tone : ''}">${text}</span>`;
+
+  // tiles: [label, value, { tone: 'win'|'loss'|'lead', sub }]
+  const tiles = (list, n) => `<div class="tiles" style="--n:${n || list.length}">${list.map(([label, value, o = {}]) => `
+    <div class="tile${o.tone ? ' is-' + o.tone : ''}">
+      <div class="tile-l">${label}</div>
+      <div class="tile-v">${value}</div>
+      ${o.sub ? `<div class="tile-s">${o.sub}</div>` : ''}
     </div>`).join('')}</div>`;
 
-  // rows: [name, [[value, label, cls?], ...]]
-  const rows = list => list.map(([name, stats, sub]) => `
-    <div class="row">
-      <div><div class="row-name">${name}</div>${sub ? `<div class="row-sub">${sub}</div>` : ''}</div>
-      <div class="row-stats">${stats.map(([v, l, c]) => `<div class="row-stat"><b${c ? ` class="${c}"` : ''}>${v}</b><span>${l}</span></div>`).join('')}</div>
-    </div>`).join('');
+  // lines: [name, [[value, caption, cls], ...], sub]
+  const lines = list => `<div class="lines">${list.map(([name, vals, sub]) => `
+    <div class="line">
+      <div class="line-l"><div class="line-name">${name}</div>${sub ? `<div class="line-sub">${sub}</div>` : ''}</div>
+      <div class="line-vals">${vals.map(([v, cap, c]) => `<div class="lv"><b${c ? ` class="${c}"` : ''}>${v}</b>${cap ? `<span>${cap}</span>` : ''}</div>`).join('')}</div>
+    </div>`).join('')}</div>`;
 
-  const rateTone = v => v === null || v === undefined ? { hl: true } : { tone: v >= 50 ? 'win' : 'loss' };
-  const signTone = v => v > 0 ? { tone: 'win' } : v < 0 ? { tone: 'loss' } : { hl: true };
-  const card = (title, body, cls, note) => `<div class="stat-card${cls ? ' ' + cls : ''}">${title ? `<div class="stat-card-title">${title}</div>` : ''}${note ? `<div class="stat-card-note">${note}</div>` : ''}<div class="stat-card-body">${body}</div></div>`;
+  const rateTone = v => v === null || v === undefined ? null : v >= 50 ? 'win' : 'loss';
+  const signTone = v => v > 0 ? 'win' : v < 0 ? 'loss' : null;
+  const signCls = v => v > 0 ? 'win' : v < 0 ? 'loss' : '';
 
-  function clutchDelta(x) {
-    const r = x.career.record, wr = x.career.win_rates;
-    if ((r.playoff_w || 0) + (r.playoff_l || 0) === 0 || wr.reg_pct == null || wr.playoff_pct == null) return null;
-    return wr.playoff_pct - wr.reg_pct;
+  // A dot chart with percentage x positions, so it fills any width without
+  // scaling its own text. pts: [{ x: label, y, cls, label }]. invert puts
+  // the low value at the top (1st place up).
+  function dotChart(pts, { min, max, invert = false, ticks = [], tickLabel = v => v, height = 150 }) {
+    const top = 18, bottom = 22, plot = height - top - bottom;
+    const yOf = v => {
+      const t = (v - min) / (max - min || 1);
+      return top + (invert ? t : 1 - t) * plot;
+    };
+    const xOf = i => `${((i + 0.5) / pts.length * 100).toFixed(3)}%`;
+    const grid = ticks.map(t => `<line class="grid" x1="0" x2="100%" y1="${yOf(t)}" y2="${yOf(t)}"/>`).join('');
+    const links = pts.slice(1).map((p, i) => pts[i].y == null || p.y == null ? '' :
+      `<line class="link" x1="${xOf(i)}" y1="${yOf(pts[i].y)}" x2="${xOf(i + 1)}" y2="${yOf(p.y)}"/>`).join('');
+    const dots = pts.map((p, i) => p.y == null ? '' : `
+      <circle class="dot ${p.cls || 'plain'}" cx="${xOf(i)}" cy="${yOf(p.y)}" r="5"/>
+      ${p.label != null ? `<text class="v" x="${xOf(i)}" y="${yOf(p.y) - 9}" text-anchor="middle">${p.label}</text>` : ''}`).join('');
+    const xs = pts.map((p, i) => `<text class="x" x="${xOf(i)}" y="${height - 4}" text-anchor="middle">${p.x}</text>`).join('');
+    const yLabels = ticks.map(t => `<span style="top:${yOf(t)}px">${tickLabel(t)}</span>`).join('');
+    return `<div class="chart"><div class="chart-y" style="height:${height}px">${yLabels}</div>
+      <svg height="${height}" role="img">${grid}${links}${dots}${xs}</svg></div>`;
   }
 
+  // ---------- Active-manager ranking ----------
   function leagueCurrentYear(all) {
     let max = -Infinity;
     all.forEach(x => x.season_history.forEach(s => { if (s.year > max) max = s.year; }));
     return max;
   }
-
   function isActivePlayer(p, currentYear) {
     return p.season_history.length > 0 && p.season_history[p.season_history.length - 1].year === currentYear;
   }
-
-  // Shared by the rank badges and the scouting-report radar -- "how does
-  // this one number compare to the same field across a pool of players."
   function computeRank(mine, pool, getter, higherBetter = true) {
     if (mine === null || mine === undefined) return null;
     const better = pool.filter(x => {
@@ -374,6 +455,26 @@
     }).length;
     return better + 1;
   }
+  // "3rd of 12" among active managers, or '' for a retired one -- they
+  // aren't in that pool, so ranking them against it gives "13th of 12".
+  function rankSub(p, getter, higherBetter = true) {
+    const cy = CTX.currentYear;
+    if (!isActivePlayer(p, cy)) return '';
+    const pool = data.players.filter(x => isActivePlayer(x, cy));
+    const r = computeRank(getter(p), pool, getter, higherBetter);
+    return r ? `${fmtOrdinal(r)} of ${pool.length}` : '';
+  }
+
+  function clutchDelta(x) {
+    const r = x.career.record, wr = x.career.win_rates;
+    if ((r.playoff_w || 0) + (r.playoff_l || 0) === 0 || wr.reg_pct == null || wr.playoff_pct == null) return null;
+    return wr.playoff_pct - wr.reg_pct;
+  }
+  // Schedule luck: actual regular-season win rate minus all-play win rate
+  // (what you'd have won playing everyone every week). Positive means the
+  // schedule handed you wins your scoring didn't earn.
+  const scheduleLuck = x => (x.all_play && x.all_play.pct != null && x.career.win_rates.reg_pct != null)
+    ? x.career.win_rates.reg_pct - x.all_play.pct : null;
 
   function leagueRankBadges(p, all) {
     // Retired managers neither compete for these badges nor count toward
@@ -430,7 +531,7 @@
     if (!unlocked) {
       return `<div class="ach ${cls}"><div class="ach-face-static">${icon}<div>${name}<div class="ach-sub">${esc(a.desc)}</div></div></div></div>`;
     }
-    return `<div class="ach ${cls} flippable" title="Click to see how you earned this">
+    return `<div class="ach ${cls} flippable" title="Tap to see how you earned this">
       <div class="ach-flip-inner">
         <div class="ach-face ach-front">${icon}<div>${name}<div class="ach-sub">${esc(a.desc)}</div></div></div>
         <div class="ach-face ach-back">${icon}<div>${name}<div class="ach-sub">${esc(a.sub(p, ctx))}</div></div></div>
@@ -441,48 +542,14 @@
   function renderAchievements(p, ctx) {
     const unlocked = [], locked = [];
     ACHIEVEMENTS.forEach(a => (a.test(p, ctx) ? unlocked : locked).push(a));
-    const divider = locked.length ? `<div class="ach-divider">Locked — ${locked.length}</div>` : '';
+    // Earned good ones first, then the bad ones you'd rather not have.
+    unlocked.sort((a, b) => (a.bad ? 1 : 0) - (b.bad ? 1 : 0));
     const body = `<div class="shelf">${unlocked.map(a => achCard(a, true, ctx, p)).join('')}</div>`
-      + divider
-      + `<div class="shelf">${locked.map(a => achCard(a, false, ctx, p)).join('')}</div>`;
-    return card(`Achievements <span style="color:var(--text-dim);font-weight:600;font-size:0.8rem">${unlocked.length} / ${ACHIEVEMENTS.length} unlocked</span>`, body);
+      + (locked.length ? `<div class="ach-divider">Locked · ${locked.length}</div><div class="shelf">${locked.map(a => achCard(a, false, ctx, p)).join('')}</div>` : '');
+    return card('Achievements', body, { chip: chip(`${unlocked.length} / ${ACHIEVEMENTS.length}`, 'gold'), note: 'Tap an unlocked badge to see how it was earned.' });
   }
 
-  // ---------- Season arc ----------
-  function renderSeasonArc(p) {
-    const tiles = p.season_history.map(s => {
-      const state = seasonState(s);
-      const standing = state === 'progress' ? '—' : fmtOrdinal(s.final_standing);
-      return `<div class="arc-tile ${state}"><div class="arc-year">${s.year}</div><div class="arc-standing">${standing}</div><div class="arc-rec">${esc(s.reg_record)}</div></div>`;
-    }).join('');
-    const legend = [
-      ['var(--gold)', 'solid', 'Champion'], ['var(--gold)', 'outline', 'Runner-up'], ['var(--turf)', 'solid', 'Playoffs'],
-      ['var(--loss)', 'solid', 'Missed playoffs'], ['var(--text-dim)', 'dashed', 'In progress'],
-    ].map(([color, style, label]) => {
-      const swatch = style === 'solid' ? `background:${color}` : style === 'outline' ? `background:transparent;border:2px solid ${color}` : `background:transparent;border:2px dashed ${color}`;
-      return `<div class="arc-legend-item"><span class="arc-swatch" style="${swatch}"></span>${label}</div>`;
-    }).join('');
-    return card('Season Arc', `<div class="arc-scroll"><div class="arc">${tiles}</div></div><div class="arc-legend">${legend}</div>`);
-  }
-
-  // ---------- Rival grid ----------
-  function renderRivalGrid(p) {
-    const all = (p.rivalries && p.rivalries.all) || [];
-    if (all.length < 3) {
-      return card('Head-to-Head Records', '<div class="empty-note">Not enough opponents with 3+ meetings yet.</div>');
-    }
-    const rowsHtml = all.map(r => {
-      const tone = r.win_pct >= 50 ? 'var(--turf)' : 'var(--loss)';
-      const tag = p.rivalries.nemesis && p.rivalries.nemesis.opponent === r.opponent ? '<span class="tag">nemesis</span>'
-        : (p.rivalries.favorite_opponent && p.rivalries.favorite_opponent.opponent === r.opponent ? '<span class="tag">favorite</span>' : '');
-      return `<tr><td class="rv-name">${esc(r.opponent)} ${tag}</td><td>${r.wins}-${r.losses}</td>
-        <td><div class="rv-bar-wrap"><div class="rv-bar"><div class="rv-bar-fill" style="width:${r.win_pct}%;background:${tone}"></div></div>
-        <span class="rv-pct" style="color:${tone}">${fmtPct(r.win_pct)}</span></div></td></tr>`;
-    }).join('');
-    return card('Head-to-Head Records', `<div class="grid-scroll"><table class="rivals">
-      <tr><th>Opponent</th><th>Record</th><th style="width:200px">Win rate</th></tr>${rowsHtml}</table></div>`);
-  }
-
+  // ---------- Hero ----------
   // Deterministic "no photo" fallback -- a colored initials avatar, since
   // logo_url is whatever a manager pasted into ESPN years ago with no
   // validation or hosting of its own, and a real chunk of historical ones
@@ -523,277 +590,397 @@
   }
 
   function renderHero(p) {
-    const rec = p.career.record;
-    const w = (rec.reg_w || 0) + (rec.playoff_w || 0), l = (rec.reg_l || 0) + (rec.playoff_l || 0);
+    const r = p.career.record;
+    const w = (r.reg_w || 0) + (r.playoff_w || 0), l = (r.reg_l || 0) + (r.playoff_l || 0);
     const pct = w + l ? w / (w + l) * 100 : null;
     const ranks = leagueRankBadges(p, data.players).map(b => `<span class="rank-badge${b.bad ? ' bad' : ''}">${esc(b.label)}</span>`).join('');
-    const tenure = p.founded_year ? `Founded ${p.founded_year} · ${p.seasons} season${p.seasons === 1 ? '' : 's'}` : '';
+    const active = isActivePlayer(p, CTX.currentYear);
+    const last = p.season_history.length ? p.season_history[p.season_history.length - 1].year : null;
+    const span = p.founded_year ? (active ? `Since ${p.founded_year}` : `${p.founded_year}–${last}`) : '';
+    const tenure = [span, `${p.seasons} season${p.seasons === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
     const currentName = p.current_team_name || p.name;
     const currentLogoUrl = esc(p.current_team_logo || '');
-    // Career stats sit in the hero's right-hand well above 700px (same
-    // .hero2 split Overview and Parlay already use) instead of a full-width
-    // strip under the name, which left the right half of a desktop screen
-    // empty and made the card ~70px taller than it needed to be.
     // All gold, no per-stat tones: these are this franchise's headline
-    // career figures, and colouring some of them good/bad made the column
+    // career figures, and colouring some of them good/bad made the strip
     // read as a scorecard rather than a summary.
     const side = [
       ['Record', `${w}-${l}`],
       ['Win %', fmtPct(pct)],
       ['Ships', fmt(p.career.standings.championships)],
-      ['Playoff Apps.', fmt(p.career.standings.playoff_appearances)],
+      ['Playoffs', fmt(p.career.standings.playoff_appearances)],
+      ['Sackos', fmt(p.career.standings.sackos)],
       ['Weekly Sackos', fmt(p.weekly_sackos)],
-    ].map(([l2, v]) =>
-      `<div class="hs"><div class="hs-l">${l2}</div><div class="hs-r"><div class="hs-v">${v}</div></div></div>`
-    ).join('');
+    ].map(([l2, v]) => `<div class="fs"><div class="fs-v">${v}</div><div class="fs-l">${l2}</div></div>`).join('');
+    // No eyebrow or manager name: the page title and the dropdown right
+    // above already say "Franchise" and whose it is.
     return `
-      <div class="glass hero2">
-        <div class="hero2-main glow" style="padding:30px 32px 26px">
-          <div class="hero2-eyebrow">Franchise</div>
-          <div style="display:flex; align-items:center; gap:16px;">
-            <div class="hero2-v" style="font-size:clamp(2rem,5vw,2.8rem); margin:9px 0 6px;">${esc(currentName)}</div>
+      <div class="fhero">
+        <div class="fhero-main">
+          <div class="fhero-id">
             <span class="current-logo-tile" tabindex="0">
               <span class="current-logo-avatar">
                 <img src="${currentLogoUrl}" onerror="onImgError(this)">${logoPh(currentName, '1.3rem')}
               </span>
               <span class="current-logo-preview" style="position-anchor:--logo-current"><img src="${currentLogoUrl}" onerror="onImgError(this)">${logoPh(currentName, '2.5rem')}</span>
             </span>
+            <div style="min-width:0">
+              <div class="fhero-name">${esc(currentName)}</div>
+              <div class="fhero-sub">${esc(tenure)}${active ? '' : ' · Retired'}</div>
+            </div>
           </div>
-          <div class="hero2-sub">${esc(p.name)} · ${tenure}</div>
-          ${ranks ? `<div class="hero-pills" style="position:relative">${ranks}</div>` : ''}
+          ${ranks ? `<div class="hero-pills">${ranks}</div>` : ''}
           ${pastLogosHtml(p)}
         </div>
-        <div class="hero2-side">${side}</div>
+        <div class="fhero-stats">${side}</div>
       </div>`;
   }
 
-  function renderStreaks(p) {
-    return [['Versus Opponent', p.streaks.head_to_head], ['Versus Median', p.streaks.median], ['Versus Both', p.streaks.combined]].map(([title, s]) => {
-      const cur = s.current === 0 ? '—' : `${s.current > 0 ? 'W' : 'L'}${Math.abs(s.current)}`;
-      const cls = s.current > 0 ? 'win' : s.current < 0 ? 'loss' : '';
-      return card(title, pods([['Current', cur, s.current === 0 ? { hl: true } : { tone: s.current > 0 ? 'win' : 'loss' }], ['Longest W', fmt(s.longest_win)], ['Longest L', fmt(s.longest_loss)]]));
+  // ---------- History ----------
+  const FINISH_LABELS = { progress: 'In progress', champion: 'Champion', 'runner-up': 'Runner-up', playoffs: 'Playoffs', missed: 'Missed Playoffs', sacko: 'Sacko' };
+
+  function renderHistory(p) {
+    const hist = p.season_history;
+    if (!hist.length) return card('Seasons', '<div class="empty-note">No seasons on record yet.</div>');
+    const done = hist.filter(s => seasonState(s) !== 'progress' && s.final_standing);
+    const st = p.career.standings;
+    const finishes = done.map(s => s.final_standing);
+    const best = finishes.length ? Math.min(...finishes) : null;
+    const bestYears = done.filter(s => s.final_standing === best).map(s => `'${String(s.year).slice(2)}`);
+    const avg = finishes.length ? finishes.reduce((a, b) => a + b, 0) / finishes.length : null;
+    const made = done.filter(s => s.made_playoffs).length;
+    const rate = done.length ? made / done.length * 100 : null;
+    const finalsLost = st.champ_appearances - st.championships;
+
+    const summary = card('Career Arc', tiles([
+      ['Best Finish', fmtOrdinal(best), { tone: best === 1 ? 'lead' : null, sub: bestYears.length > 3 ? `${bestYears.length} times` : bestYears.join(', ') }],
+      ['Avg Finish', fmt(avg, 1), { sub: rankSub(p, x => { const f = x.season_history.filter(s => seasonState(s) !== 'progress' && s.final_standing).map(s => s.final_standing); return f.length ? f.reduce((a, b) => a + b, 0) / f.length : null; }, false) }],
+      ['Playoff %', rate == null ? '—' : `${Math.round(rate)}%`, { sub: `${made} of ${done.length}` }],
+      ['Finals', `${st.championships}-${finalsLost}`, { tone: st.championships > 0 ? 'lead' : null, sub: st.champ_appearances ? `${st.champ_appearances} trip${st.champ_appearances === 1 ? '' : 's'}` : 'None yet' }],
+    ], 4) + arcViews(p), { chip: arcToggle() });
+
+    // Last place that year, from the whole league -- it's been 8, 10 and
+    // 12 teams, so "last" can't be a fixed number.
+    const lastPlace = {};
+    data.players.forEach(x => x.season_history.forEach(h => { lastPlace[h.year] = Math.max(lastPlace[h.year] || 0, h.final_standing || 0); }));
+    const list = [...hist].reverse().map(s => {
+      let state = seasonState(s);
+      if (state === 'missed' && s.final_standing && s.final_standing === lastPlace[s.year]) state = 'sacko';
+      const regRank = s.reg_standing ? ` · ${fmtOrdinal(s.reg_standing)}${state === 'progress' ? ' so far' : ' reg'}` : '';
+      const po = s.playoff_record ? ` · Playoffs ${s.playoff_record}` : '';
+      const place = state === 'progress' ? '' : `${fmtOrdinal(s.final_standing)} place`;
+      return `
+        <div class="season ${state}">
+          <div class="season-yr">${s.year}</div>
+          <div style="min-width:0"><div class="season-nm">${esc(s.team_name || p.current_team_name || '')}</div>
+            <div class="season-sub">${esc(s.reg_record)}${regRank}${po}</div></div>
+          <div class="season-fin"><b>${FINISH_LABELS[state]}</b>${place ? `<span>${place}</span>` : ''}</div>
+        </div>`;
     }).join('');
+    return summary + card('Season by Season', list, { chip: chip(`${hist.length} season${hist.length === 1 ? '' : 's'}`) });
   }
 
-  function renderPerformance(p) {
-    const r = p.career.record, s = p.career.standings, wr = p.career.win_rates;
-    const regRows = [['Finish', [[fmt(s.best_regular_finish), 'Best'], [fmt(s.worst_regular_finish), 'Worst']]], ['Sackos', [[fmt(s.sackos), 'Total']]]];
-    // Both ranks below are only meaningful against the active-manager pool,
-    // and only for a player who's themselves active -- a retired manager
-    // isn't IN that pool, so ranking them against it produces nonsense
-    // like "13th of 12".
-    const currentYear = leagueCurrentYear(data.players);
-    const isActive = isActivePlayer(p, currentYear);
-    const activePool = data.players.filter(x => isActivePlayer(x, currentYear));
-    const ap = p.all_play;
-    if (ap && ap.pct != null) {
-      // "If you'd played every team, every week, instead of just your
-      // actual schedule" -- a Reg-season-only all-play record, so it
-      // lives in this card rather than a separate one.
-      const powerRank = isActive ? computeRank(ap.pct, activePool, x => x.all_play && x.all_play.pct, true) : null;
-      const stat = [`${fmt(ap.pct, 1)}%`, `${ap.w}-${ap.l}${ap.t ? '-' + ap.t : ''} all-play`, rateTone(ap.pct).tone];
-      regRows.push(['Power Ranking', powerRank ? [stat, [fmtOrdinal(powerRank), `of ${activePool.length}`]] : [stat]]);
-    }
-    const reg = card('Regular Season',
-      pods([['Win Rate', fmtPct(wr.reg_pct), rateTone(wr.reg_pct)], ['Record', `${fmt(r.reg_w)}-${fmt(r.reg_l)}${r.reg_t ? '-' + r.reg_t : ''}`], ['Reg Szn Champ', fmt(s.reg_season_champs)]]) +
-      rows(regRows));
+  // Final finish by year, 1st at the top. An in-progress season plots its
+  // current regular-season standing as a hollow dashed dot.
+  function finishChart(p) {
+    const maxTeams = Math.max(...data.players.flatMap(x => x.season_history.map(s => Math.max(s.final_standing || 0, s.reg_standing || 0))), 4);
+    const pts = p.season_history.map(s => {
+      const state = seasonState(s);
+      const y = state === 'progress' ? (s.reg_standing || null) : (s.final_standing || null);
+      return { x: `'${String(s.year).slice(2)}`, y, cls: state, label: y };
+    });
+    const mid = Math.round(maxTeams / 2);
+    const legend = [['champion', 'Champion'], ['runner-up', 'Runner-up'], ['playoffs', 'Playoffs'], ['missed', 'Missed'], ['progress', 'In progress']]
+      .filter(([k]) => p.season_history.some(s => seasonState(s) === k))
+      .map(([k, l]) => `<span><i class="lg-${k}"></i>${l}</span>`).join('');
+    return `<div class="arc-graph" style="padding-top:6px">${dotChart(pts, { min: 1, max: maxTeams, invert: true, ticks: [1, mid, maxTeams], tickLabel: fmtOrdinal, height: 160 })}</div>`;
+  }
 
-    const extraRows = [];
-    const delta = clutchDelta(p);
-    if (delta !== null) {
-      const stat = [`${delta > 0 ? '+' : ''}${fmt(delta, 1)}%`, 'Playoff vs Reg %', delta > 0 ? 'win' : delta < 0 ? 'loss' : ''];
-      // Ranked against active managers only, same pool leagueRankBadges
-      // uses -- so this number and a "#1 in Clutch Factor" hero badge
-      // (if this manager has one) always agree with each other.
-      const clutchRank = isActive ? computeRank(delta, activePool, x => clutchDelta(x), true) : null;
-      const stats = clutchRank ? [stat, [fmtOrdinal(clutchRank), `of ${activePool.length}`]] : [stat];
-      extraRows.push(['Clutch Factor', stats]);
+  // One tile per season, oldest first: year, finish, record. An
+  // in-progress season shows its current regular-season standing, dimmed,
+  // the same figure the graph plots for it.
+  function arcGrid(p) {
+    return `<div class="arc-grid">${p.season_history.map(s => {
+      const state = seasonState(s);
+      const standing = state === 'progress' ? fmtOrdinal(s.reg_standing) : fmtOrdinal(s.final_standing);
+      return `<div class="arc-tile ${state}"><div class="arc-year">${s.year}</div><div class="arc-standing">${standing}</div><div class="arc-rec">${esc(s.reg_record)}</div></div>`;
+    }).join('')}</div>`;
+  }
+
+  // Graph and grid are both rendered; the toggle only flips which one
+  // shows, so switching never rebuilds the tab.
+  let arcView = (() => { try { return localStorage.getItem('franchise-arc-view') === 'grid' ? 'grid' : 'graph'; } catch (e) { return 'graph'; } })();
+  const arcToggle = () => `<div class="seg arc-seg">${[['graph', 'Graph'], ['grid', 'Grid']].map(([k, l]) =>
+    `<button type="button" data-arc="${k}" class="${arcView === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  function arcViews(p) {
+    const legend = [['champion', 'Champion'], ['runner-up', 'Runner-up'], ['playoffs', 'Playoffs'], ['missed', 'Missed'], ['progress', 'In progress']]
+      .filter(([k]) => p.season_history.some(s => seasonState(s) === k))
+      .map(([k, l]) => `<span><i class="lg-${k}"></i>${l}</span>`).join('');
+    return `<div class="arc-views" data-view="${arcView}">${finishChart(p)}${arcGrid(p)}<div class="legend">${legend}</div></div>`;
+  }
+
+  // ---------- Record ----------
+  function renderStreaks(p) {
+    // Without any median games, Vs Median is empty and Vs Both is just
+    // Vs Opponent again, so only the one tile shows.
+    const list = hasMedian(p) ? [['Vs Opponent', p.streaks.head_to_head], ['Vs Median', p.streaks.median], ['Vs Both', p.streaks.combined]]
+      : [['Vs Opponent', p.streaks.head_to_head]];
+    const t = list.map(([label, s]) => {
+      const cur = s.current === 0 ? '—' : `${s.current > 0 ? 'W' : 'L'}${Math.abs(s.current)}`;
+      return [label, cur, { tone: s.current > 0 ? 'win' : s.current < 0 ? 'loss' : null,
+        sub: `<span style="white-space:nowrap">Longest W${fmt(s.longest_win)} · L${fmt(s.longest_loss)}</span>` }];
+    });
+    return card('Streaks', tiles(t, t.length));
+  }
+
+  function renderRegular(p) {
+    const r = p.career.record, s = p.career.standings, wr = p.career.win_rates, ap = p.all_play;
+    const luck = scheduleLuck(p);
+    const lineRows = [
+      ['Regular-Season Finish', [[fmtOrdinal(s.best_regular_finish), 'Best'], [fmtOrdinal(s.worst_regular_finish), 'Worst']]],
+    ];
+    if (ap && ap.pct != null) {
+      lineRows.push(['Power Ranking', [[fmtPct(ap.pct), rec(ap.w, ap.l, ap.t), rateTone(ap.pct)]],
+        rankSub(p, x => x.all_play && x.all_play.pct)]);
     }
-    if (s.champ_appearances > 0) {
-      extraRows.push(['Title Games', [[`${fmt(s.championships)}-${fmt(s.champ_appearances - s.championships)}`, 'Record']]]);
+    if (luck != null) {
+      lineRows.push(['Schedule Luck', [[fmtSigned(luck), luck > 0 ? 'Lucky' : luck < 0 ? 'Unlucky' : 'Even', signCls(luck)]]]);
+    }
+    return card('Regular Season', tiles([
+      ['Win Rate', fmtPct(wr.reg_pct), { tone: rateTone(wr.reg_pct), sub: rankSub(p, x => x.career.win_rates.reg_pct) }],
+      ['Record', rec(r.reg_w, r.reg_l, r.reg_t), { sub: `${fmt((r.reg_w || 0) + (r.reg_l || 0) + (r.reg_t || 0))} games` }],
+      ['Reg Szn Titles', fmt(s.reg_season_champs), { tone: s.reg_season_champs > 0 ? 'lead' : null, sub: 'Finished 1st' }],
+    ], 3) + lines(lineRows));
+  }
+
+  function renderPlayoffs(p) {
+    const r = p.career.record, s = p.career.standings, wr = p.career.win_rates;
+    const games = (r.playoff_w || 0) + (r.playoff_l || 0);
+    if (!games && !s.playoff_appearances) {
+      return card('Playoffs', '<div class="empty-note">No playoff appearances yet.</div>');
+    }
+    const delta = clutchDelta(p);
+    const lineRows = [
+      ['Appearances', [[fmt(s.playoff_appearances), 'Playoffs'], [fmt(s.byes), 'Byes'], [fmt(s.champ_appearances), 'Finals']]],
+    ];
+    if (delta !== null) {
+      const rk = rankSub(p, x => clutchDelta(x));
+      lineRows.push(['Clutch Factor', [[fmtSigned(delta), 'vs reg %', signCls(delta)]], rk]);
     }
     if ((r.consolation_w || 0) + (r.consolation_l || 0) > 0) {
-      extraRows.push(['Consolation', [[`${fmt(r.consolation_w)}-${fmt(r.consolation_l)}`, 'Record']]]);
+      lineRows.push(['Consolation', [[rec(r.consolation_w, r.consolation_l), 'Record']]]);
     }
-    const po = card('Playoffs',
-      pods([['Win Rate', fmtPct(wr.playoff_pct), rateTone(wr.playoff_pct)], ['Record', `${fmt(r.playoff_w)}-${fmt(r.playoff_l)}`], ['Ships', fmt(s.championships)]]) +
-      rows([['Appearances', [[fmt(s.playoff_appearances), 'Playoffs'], [fmt(s.champ_appearances), 'Finals']]], ['Byes', [[fmt(s.byes), 'Total']]], ...extraRows]));
-    return reg + po;
+    return card('Playoffs', tiles([
+      ['Win Rate', fmtPct(wr.playoff_pct), { tone: rateTone(wr.playoff_pct) }],
+      ['Record', rec(r.playoff_w, r.playoff_l), { sub: `${games} games` }],
+      ['Ships', fmt(s.championships), { tone: s.championships > 0 ? 'lead' : null, sub: s.champ_appearances ? `${s.championships}-${s.champ_appearances - s.championships} in finals` : '' }],
+    ], 3) + lines(lineRows));
   }
 
-  // Scoring is now strictly about points put up: how many, and how they
-  // were distributed. Margin-shaped stats (what the points added up to)
-  // split into their own card, Median moved to Performance next to the
-  // Versus Median streak it explains, and Money got its own tab -- dues
-  // and earnings were never a scoring stat.
-  function renderScoring(p) {
-    const pts = p.career.points, ex = p.extremes;
-    const scoring = card('Scoring', rows([
-      ['Total Points', [[fmt(pts.total_pf, 2), 'For'], [fmt(pts.total_pa, 2), 'Against']]],
-      ['Average', [[fmt(pts.avg_pf, 2), 'For'], [fmt(pts.avg_pa, 2), 'Against']]],
-      ['Single Game', [[fmt(ex.highest_score, 2), 'High'], [fmt(ex.lowest_score, 2), 'Low']]],
-      ['Consistency', [[fmt(ex.score_stdev, 2), 'Std Dev']], 'Lower means steadier week-to-week scoring'],
-    ]));
-    const margins = card('Margins', rows([
-      ['Win Margin', [[fmt(ex.biggest_win_margin, 2), 'Largest'], [fmt(ex.lowest_win_margin, 2), 'Smallest']]],
-      ['Loss Margin', [[fmt(ex.biggest_loss_margin, 2), 'Largest'], [fmt(ex.lowest_loss_margin, 2), 'Smallest']]],
-      ['Close Games', [[fmt(ex.close_wins), 'Wins'], [fmt(ex.close_losses), 'Losses']], 'Decided by under 5 points'],
-      ['Blowouts', [[fmt(ex.blowout_wins), 'Wins'], [fmt(ex.blowout_losses), 'Losses']], 'Decided by 50+ points'],
-    ]), null, 'How those points landed against the week’s opponent');
-    return scoring + margins;
-  }
+  const hasMedian = p => { const m = p.career.median || {}; return (m.wins || 0) + (m.losses || 0) > 0; };
 
   function renderMedian(p) {
     const med = p.career.median || {};
-    // Titled "Median Record" rather than "Versus Median" so it doesn't
-    // collide with the Versus Median streak card sitting above it.
-    return card('Median Record', pods([['Win Rate', fmtPct(med.pct), rateTone(med.pct)], ['Wins', fmt(med.wins)], ['Losses', fmt(med.losses)]]),
-      null, 'The second win or loss each week, scored against the league median');
+    const since = data.median_era_start_year;
+    if (!(med.wins + med.losses)) {
+      return card('Versus the Median', `<div class="empty-note">No median games -- the median game started in ${since}.</div>`);
+    }
+    return card('Versus the Median', tiles([
+      ['Win Rate', fmtPct(med.pct), { tone: rateTone(med.pct), sub: rankSub(p, x => x.career.median && x.career.median.pct) }],
+      ['Record', rec(med.wins, med.losses), { sub: `Since ${since}` }],
+    ], 2));
   }
 
-  function renderMoney(p) {
-    if (!p.money) return card('Money', '<div class="empty-note">Not tracked for this franchise.</div>');
-    return card('Money', pods([['Net Result', fmtMoney(p.money.net_result), signTone(p.money.net_result)], ['Dues', fmtMoney(p.money.total_dues)], ['Earnings', fmtMoney(p.money.total_earnings)]]) +
-      rows([['Parlays Purchased', [[fmtMoney(p.money.parlays_purchased), 'Total']]]]));
+  // ---------- Scoring ----------
+  function renderScoring(p) {
+    const pts = p.career.points, ex = p.extremes;
+    const diff = pts.avg_pf - pts.avg_pa;
+    const points = card('Points', tiles([
+      ['Avg For', fmt(pts.avg_pf, 1), { tone: 'lead', sub: rankSub(p, x => x.career.points.avg_pf) }],
+      ['Avg Against', fmt(pts.avg_pa, 1), { sub: rankSub(p, x => x.career.points.avg_pa) }],
+      ['Avg Margin', fmtSigned(diff, 1, ''), { tone: signTone(diff), sub: 'per game' }],
+    ], 3) + lines([
+      ['Career Total', [[fmtNum(pts.total_pf, 0), 'For'], [fmtNum(pts.total_pa, 0), 'Against']]],
+      ['Single Game', [[fmt(ex.highest_score, 1), 'High'], [fmt(ex.lowest_score, 1), 'Low']]]
+    ]));
+    const recTone = (w, l) => w > l ? 'win' : w < l ? 'loss' : '';
+    const margins = card('Margins', tiles([
+      ['Close Games', rec(ex.close_wins, ex.close_losses), { tone: signTone(ex.close_wins - ex.close_losses), sub: 'Under 5 pts' }],
+      ['Blowouts', rec(ex.blowout_wins, ex.blowout_losses), { tone: signTone(ex.blowout_wins - ex.blowout_losses), sub: '50+ pts' }],
+    ], 2) + lines([
+      ['Win Margin', [[fmt(ex.biggest_win_margin, 1), 'Largest'], [fmt(ex.lowest_win_margin, 2), 'Smallest']]],
+      ['Loss Margin', [[fmt(ex.biggest_loss_margin, 1), 'Largest'], [fmt(ex.lowest_loss_margin, 2), 'Smallest']]],
+    ]));
+    return `<div class="pair">${points}${margins}</div>`;
   }
 
+  // ---------- Rivalries ----------
   const RIVALRY_LABELS = { nemesis: "Who's Your Daddy", favorite: "Who's Your Bitch" };
 
-  function rivalryCard(kind, data) {
+  // Picked from current members only, so a rivalry with someone who left
+  // years ago can't hold either spot. A retired manager's own page uses
+  // everyone they actually played. Ties go to the bigger sample.
+  function pickRivals(p) {
+    const all = (p.rivalries && p.rivalries.all) || [];
+    const cy = CTX.currentYear;
+    const activeNames = new Set(data.players.filter(x => isActivePlayer(x, cy)).map(x => x.name));
+    const pool = isActivePlayer(p, cy) ? all.filter(r => activeNames.has(r.opponent)) : all;
+    if (!pool.length) return { nemesis: null, favorite: null };
+    const games = r => r.wins + r.losses;
+    const favorite = pool.reduce((a, b) => (b.win_pct > a.win_pct || (b.win_pct === a.win_pct && games(b) > games(a)) ? b : a));
+    const nemesis = pool.reduce((a, b) => (b.win_pct < a.win_pct || (b.win_pct === a.win_pct && games(b) > games(a)) ? b : a));
+    return { nemesis, favorite: favorite === nemesis ? null : favorite };
+  }
+
+  function rivalBox(kind, r) {
     const label = RIVALRY_LABELS[kind];
-    if (!data) {
-      return `<div class="rivalry-card ${kind}"><div class="rivalry-eyebrow">${label}</div><div class="empty-note">Not enough head-to-head history yet.</div></div>`;
-    }
-    // "also" only shows up when the top pick has left the league — surface
-    // the best-qualifying opponent who's still active this season too,
-    // side by side, since needling someone who's gone isn't much of a
-    // rivalry.
-    if (!data.also) {
-      return `
-        <div class="rivalry-card ${kind}">
-          <div class="rivalry-eyebrow">${label}</div>
-          <div class="rivalry-opponent">${data.opponent}</div>
-          <div class="rivalry-record">${data.wins}-${data.losses} · ${fmtPct(data.win_pct)}</div>
-        </div>`;
-    }
-    return `
-      <div class="rivalry-card ${kind}">
-        <div class="rivalry-eyebrow">${label}</div>
-        <div class="rivalry-split">
-          <div class="rivalry-half">
-            <div class="rivalry-opponent">${data.opponent}</div>
-            <div class="rivalry-record">${data.wins}-${data.losses} · ${fmtPct(data.win_pct)}</div>
-          </div>
-          <div class="rivalry-split-label">But<br>Also</div>
-          <div class="rivalry-half">
-            <div class="rivalry-opponent">${data.also.opponent}</div>
-            <div class="rivalry-record">${data.also.wins}-${data.also.losses} · ${fmtPct(data.also.win_pct)}</div>
-          </div>
-        </div>
-      </div>`;
+    if (!r) return `<div class="rival ${kind}"><div class="rival-l">${label}</div><div class="empty-note">Not enough games yet.</div></div>`;
+    return `<div class="rival ${kind}">
+      <div class="rival-l">${label}</div>
+      <div class="rival-nm">${esc(r.opponent)}</div>
+      <div class="rival-rec">${r.wins}-${r.losses} · ${fmtPct(r.win_pct)}</div>
+    </div>`;
   }
 
   function renderRivalries(p) {
-    return rivalryCard('nemesis', p.rivalries.nemesis) + rivalryCard('favorite', p.rivalries.favorite_opponent);
+    const { nemesis, favorite } = pickRivals(p);
+    const callouts = card('', `<div class="rivals">${rivalBox('nemesis', nemesis)}${rivalBox('favorite', favorite)}</div>`);
+    const all = (p.rivalries && p.rivalries.all) || [];
+    if (!all.length) return callouts + card('Head to Head', '<div class="empty-note">No opponent with 3+ meetings yet.</div>');
+    const cy = CTX.currentYear;
+    const activeNames = new Set(data.players.filter(x => isActivePlayer(x, cy)).map(x => x.name));
+    const games = r => r.wins + r.losses;
+    const sorted = [...all].sort((a, b) => b.win_pct - a.win_pct || games(b) - games(a));
+    const body = `<div class="ledger">${sorted.map(r => {
+      const former = !activeNames.has(r.opponent);
+      const tone = r.wins > r.losses ? 'win' : r.wins < r.losses ? 'loss' : '';
+      return `<a class="lrow${former ? ' former' : ''}" href="head-to-head.html" data-h2h="${esc(r.opponent)}">
+        <div class="lmono ${tone}">${esc(monogram(r.opponent))}</div>
+        <div style="min-width:0"><div class="lname">${esc(r.opponent)}</div><div class="lsub">${games(r)} games${former ? ' · Former member' : ''}</div></div>
+        <div class="lrec"><b>${r.wins}-${r.losses}</b><span>${fmtPct(r.win_pct)}</span></div>
+      </a>`;
+    }).join('')}</div>`;
+    return callouts + card('Head to Head', body, { chip: chip(`${all.length} opponents`) });
   }
 
-  // Lives next to Versus Median on Performance, not on Rivalries -- it's a
-  // read on this franchise's own schedule luck, not on any opponent.
-  function renderLuck(p) {
-    if (p.median_luck === null || p.median_luck === undefined) return card('Schedule Luck', '<div class="empty-note">Not enough median-era data yet.</div>');
-    const cls = p.median_luck === 0 ? '' : p.median_luck > 0 ? 'lucky' : 'unlucky';
-    const word = p.median_luck === 0 ? 'dead even' : p.median_luck > 0 ? 'luckier' : 'unluckier';
-    return card('Schedule Luck', `<div class="feature"><div class="luck-val ${cls}">${p.median_luck > 0 ? '+' : ''}${fmt(p.median_luck, 1)}%</div>
-      <div class="feature-sub">${word} than your scoring against the median alone would suggest, compared to your actual win rate.</div></div>`);
-  }
-
-  function renderDraft(p) {
-    const b = p.moves.busiest_season;
-    return card('Draft Position', pods([['Avg Draft Pos.', fmt(p.draft.avg_position, 1), { hl: true }], ['Highest Pick', fmt(p.draft.best_position)], ['Lowest Pick', fmt(p.draft.worst_position)]])) +
-      card('Roster Moves', pods([['Total Moves', fmt(p.moves.total), { hl: true }], ['Avg / Season', fmt(p.moves.avg_per_season, 1)], ['Busiest Season', b ? `'${String(b.year).slice(2)}` : '—', { sub: b ? `${b.moves} moves` : '' }]]));
-  }
-
+  // ---------- Lineups ----------
   const BRACKET_LABELS = { NONE: 'Regular Season', WINNERS_BRACKET: 'Playoffs', WINNERS_CONSOLATION_LADDER: 'Playoffs (Consolation)', LOSERS_CONSOLATION_LADDER: 'Consolation' };
   const bracketLabel = bt => BRACKET_LABELS[bt] || bt;
-  const weekLabel = r => `${bracketLabel(r.bracket_type)} · ${r.year} Week ${r.week}`;
+  const weekLabel = r => `${r.year} Week ${r.week}${r.bracket_type && r.bracket_type !== 'NONE' ? ' · ' + bracketLabel(r.bracket_type) : ''}`;
 
   function renderEfficiency(p) {
     const e = p.efficiency;
+    const since = data.efficiency_start_year;
     if (!e) {
-      return card('Lineup Efficiency', `<div class="empty-note">No box-score data for this franchise since ${data.efficiency_start_year} -- ESPN doesn't retain per-week rosters further back.</div>`);
+      return card('Lineup Efficiency', `<div class="empty-note">No box-score data for this franchise since ${since} -- ESPN doesn't keep weekly rosters further back.</div>`);
     }
-    const headline = card('Lineup Efficiency', pods([
-      ['Career Efficiency', fmtPct(e.career_pct), { hl: true }],
-      ['Left on Bench', fmt(e.points_left_on_bench, 1), { hl: true, sub: `${fmt(e.avg_points_left, 1)} / game avg` }],
-      ['Perfect Lineups', fmt(e.perfect_lineups), { hl: true, sub: `of ${e.games_analyzed} games` }],
-    ]) + `<div class="row-sub" style="text-align:center;padding:2px 4px 6px">Since ${data.efficiency_start_year} -- the earliest year ESPN retains full weekly rosters</div>`);
+    const headline = card('Lineup Efficiency', tiles([
+      ['Efficiency', fmtPct(e.career_pct), { tone: 'lead', sub: rankSub(p, x => x.efficiency && x.efficiency.career_pct) }],
+      ['Perfect Weeks', fmt(e.perfect_lineups), { sub: `of ${e.games_analyzed} games` }],
+      ['Bench Pts / Gm', fmt(e.avg_points_left, 1), { sub: `${fmtNum(e.points_left_on_bench, 0)} total` }],
+    ], 3) + seasonEffChart(e), { note: `Points started as a share of the best possible lineup, since ${since}.` });
 
-    const rec = e.optimal_record;
-    const fmtRec = r => `${r.w}-${r.l}${r.t ? '-' + r.t : ''}`;
-    const recordCard = card('Optimal Record', pods([
-      ['Actual', fmtRec(rec.actual)],
-      ['Optimal', fmtRec(rec.optimal), { hl: true }],
-      ['Extra Wins', rec.extra_wins > 0 ? `+${rec.extra_wins}` : fmt(rec.extra_wins), rec.extra_wins > 0 ? { tone: 'win' } : { hl: true }],
-    ]) + `<div class="row-sub" style="text-align:center;padding:2px 4px 6px">Regular season only · vs. each week's real opponent score · ${rec.games} games</div>`);
+    const r = e.optimal_record;
+    const fmtRec = x => rec(x.w, x.l, x.t);
+    const recordCard = card('With Perfect Lineups', tiles([
+      ['Actual', fmtRec(r.actual)],
+      ['Optimal', fmtRec(r.optimal), { tone: 'lead' }],
+      ['Wins Left', fmt(r.extra_wins), { tone: r.extra_wins > 0 ? 'loss' : null, sub: 'on the bench' }],
+    ], 3), { note: `Regular season, against each week's real opponent score · ${r.games} games.` });
 
-    const wg = e.worst_game;
-    const worstGameCard = card('Worst Lineup-Setting Week', wg
-      ? `<div class="feature"><div class="luck-val unlucky">-${fmt(wg.diff, 1)}</div>
-          <div class="feature-sub">Scored ${fmt(wg.actual, 1)}, best possible lineup was ${fmt(wg.optimal, 1)}<br>${weekLabel(wg)}</div></div>`
-      : '<div class="empty-note">Every week was optimal, or close to it.</div>');
-
-    const wb = e.worst_bench_miss;
-    const worstBenchCard = card('Worst Bench Miss', wb
-      ? `<div class="feature"><div class="luck-val unlucky">${fmt(wb.points, 1)}</div>
-          <div class="feature-sub">${esc(wb.player_name)} put up ${fmt(wb.points, 1)} pts on your bench<br>${weekLabel(wb)}</div></div>`
-      : '<div class="empty-note">No bench data yet.</div>');
-
-    const seasonCard = card('By Season', rows(e.by_season.map(s => [String(s.year), [[fmtPct(s.pct), 'Efficiency'], [fmt(s.games), 'Games']]])));
-
-    return `<div class="card-grid">${headline}${recordCard}</div>` +
-      `<div class="card-grid">${worstGameCard}${worstBenchCard}</div>` +
-      seasonCard;
+    const wg = e.worst_game, wb = e.worst_bench_miss;
+    const worst = card('Worst Calls', lines([
+      wg ? ['Worst Lineup Week', [[`−${fmt(wg.diff, 1)}`, 'pts left', 'loss']], `Scored ${fmt(wg.actual, 1)} of a possible ${fmt(wg.optimal, 1)} · ${weekLabel(wg)}`]
+        : ['Worst Lineup Week', [['—', '']], 'Every week was optimal, or close to it'],
+      wb ? ['Worst Bench Miss', [[fmt(wb.points, 1), 'pts benched', 'loss']], `${esc(wb.player_name)} · ${weekLabel(wb)}`]
+        : ['Worst Bench Miss', [['—', '']], 'No bench data yet'],
+    ]));
+    return headline + `<div class="pair">${recordCard}${worst}</div>`;
   }
 
-  const BADGE_LABELS = { progress: 'In Progress', champion: 'Champion', 'runner-up': 'Runner-Up', playoffs: 'Playoffs', missed: 'Missed Playoffs' };
-  function badge(season) {
-    const s = seasonState(season);
-    return `<span class="badge ${s}">${BADGE_LABELS[s]}</span>`;
-  }
-  function renderHistory(p) {
-    const list = [...p.season_history].reverse().map(s => `
-      <div class="hist-row${s.champion ? ' champion' : ''}">
-        <div class="hist-year">${s.year}</div>
-        <div><div class="hist-team">${esc(s.team_name || p.current_team_name || '')}</div>
-          <div class="row-sub">Reg ${s.reg_record} (${fmtOrdinal(s.reg_standing)})${s.playoff_record ? ' · Playoffs ' + s.playoff_record : ''}</div></div>
-        ${badge(s)}
-      </div>`).join('');
-    return `<div class="stat-card"><div class="stat-card-body">${list || '<div class="empty-note">No seasons on record yet.</div>'}</div></div>`;
+  function seasonEffChart(e) {
+    const s = e.by_season;
+    if (s.length < 2) return '';
+    const vals = s.map(x => x.pct);
+    const lo = Math.floor((Math.min(...vals) - 3) / 5) * 5, hi = Math.min(100, Math.ceil((Math.max(...vals) + 3) / 5) * 5);
+    const pts = s.map(x => ({ x: `'${String(x.year).slice(2)}`, y: x.pct, cls: x.pct >= EFFICIENCY_EXPERT_PCT ? 'champion' : 'runner-up', label: Math.round(x.pct) }));
+    return `<div style="padding-top:8px">${dotChart(pts, { min: lo, max: hi, ticks: [lo, (lo + hi) / 2, hi], tickLabel: v => `${Math.round(v)}%`, height: 140 })}</div>
+      <div class="legend"><span><i class="lg-champion"></i>${EFFICIENCY_EXPERT_PCT}%+ season</span><span><i class="lg-runner-up"></i>Under ${EFFICIENCY_EXPERT_PCT}%</span></div>`;
   }
 
+  // ---------- Money & Draft ----------
+  function renderMoney(p) {
+    const m = p.money;
+    const money = !m ? card('Money', '<div class="empty-note">Not tracked for this franchise.</div>') :
+      card('Money', tiles([
+        ['Net', fmtMoney(m.net_result), { tone: signTone(m.net_result), sub: rankSub(p, x => x.money && x.money.net_result) }],
+        ['Paid In', fmtMoney(m.total_dues), { sub: 'Dues' }],
+        ['Won', fmtMoney(m.total_earnings), { sub: m.total_dues ? `${Math.round(m.total_earnings / m.total_dues * 100)}% of dues back` : '' }],
+      ], 3) + lines([
+        ['Parlays Bought', [[fmtMoney(m.parlays_purchased), 'Spent']]],
+        ['Per Season', [[fmtSigned(m.net_result / (p.seasons || 1), 0, '').replace(/^([+−]?)/, '$1$'), 'Net', signCls(m.net_result)]]],
+      ]));
+    const b = p.moves.busiest_season;
+    const draft = card('Draft & Roster', tiles([
+      ['Avg Pick', fmt(p.draft.avg_position, 1), { tone: 'lead' }],
+      ['Earliest', fmt(p.draft.best_position), { sub: 'pick' }],
+      ['Latest', fmt(p.draft.worst_position), { sub: 'pick' }],
+    ], 3) + lines([
+      ['Roster Moves', [[fmt(p.moves.total), 'Total'], [fmt(p.moves.avg_per_season, 1), 'Per Szn']], rankSub(p, x => x.moves.total) ? `${rankSub(p, x => x.moves.total)} most active` : ''],
+      ['Busiest Season', [[b ? fmt(b.moves) : '—', b ? String(b.year) : '']]],
+    ]));
+    return `<div class="pair">${money}${draft}</div>`;
+  }
+
+  // ---------- Tabs ----------
   const TABS = [
-    { label: 'Performance', render: p => `<div class="card-grid three">${renderStreaks(p)}</div><div class="card-grid">${renderPerformance(p)}</div><div class="card-grid">${renderMedian(p)}${renderLuck(p)}</div>` },
-    { label: 'Scoring', render: p => `<div class="card-grid">${renderScoring(p)}</div>` },
-    { label: 'Money', render: p => renderMoney(p) },
-    { label: 'Efficiency', render: p => renderEfficiency(p) },
-    { label: 'Rivalries', render: p => `<div class="card-grid">${renderRivalries(p)}</div>${renderRivalGrid(p)}` },
-    { label: 'Draft & Roster', render: p => `<div class="card-grid">${renderDraft(p)}</div>` },
-    { label: 'History', render: p => `${renderSeasonArc(p)}${renderHistory(p)}` },
-    { label: 'Achievements', render: p => renderAchievements(p, CTX) },
+    { id: 'history', label: 'History', render: p => renderHistory(p) },
+    { id: 'record', label: 'Record', render: p => `<div class="pair">${renderStreaks(p)}${hasMedian(p) ? renderMedian(p) : ''}</div><div class="pair">${renderRegular(p)}${renderPlayoffs(p)}</div>` },
+    { id: 'scoring', label: 'Scoring', render: p => renderScoring(p) },
+    { id: 'rivals', label: 'Rivalries', render: p => renderRivalries(p) },
+    { id: 'lineups', label: 'Lineups', render: p => renderEfficiency(p) },
+    { id: 'money', label: 'Money & Draft', render: p => renderMoney(p) },
+    { id: 'achievements', label: 'Achievements', render: p => renderAchievements(p, CTX) },
   ];
 
-  let data = null, tab = 0, CTX = null;
+  let data = null, CTX = null;
+  let tab = (() => { try { const t = localStorage.getItem('franchise-tab'); return Math.max(0, TABS.findIndex(x => x.id === t)); } catch (e) { return 0; } })();
   function show(name) {
     const p = data.players.find(x => x.name === name);
     if (!p) return;
     document.getElementById('hero-container').innerHTML = renderHero(p);
-    document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
+    const tabsEl = document.getElementById('tabs');
+    tabsEl.innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
     document.getElementById('tab-content').innerHTML = TABS[tab].render(p);
+    // Keep the selected tab in view when the track scrolls (phone).
+    const on = tabsEl.querySelector('.tab.on');
+    if (on && tabsEl.scrollWidth > tabsEl.clientWidth) {
+      tabsEl.scrollLeft = on.offsetLeft - (tabsEl.clientWidth - on.offsetWidth) / 2;
+    }
   }
 
   document.addEventListener('click', e => {
     const t = e.target.closest('.tab');
-    if (t) { tab = Number(t.dataset.i); show(document.getElementById('franchise-select').value); return; }
+    if (t) {
+      tab = Number(t.dataset.i);
+      try { localStorage.setItem('franchise-tab', TABS[tab].id); } catch (err) {}
+      show(document.getElementById('franchise-select').value);
+      return;
+    }
+    // Opponent cards are plain links; this just hands Head to Head the pair
+    // it should open on, through the same storage key that page saves to.
+    const opp = e.target.closest('[data-h2h]');
+    if (opp) {
+      try { localStorage.setItem('h2h-pair', JSON.stringify([document.getElementById('franchise-select').value, opp.dataset.h2h])); } catch (err) {}
+      return;
+    }
+    const arcBtn = e.target.closest('[data-arc]');
+    if (arcBtn) {
+      arcView = arcBtn.dataset.arc;
+      try { localStorage.setItem('franchise-arc-view', arcView); } catch (err) {}
+      document.querySelectorAll('.arc-views').forEach(v => { v.dataset.view = arcView; });
+      document.querySelectorAll('[data-arc]').forEach(b => b.classList.toggle('on', b.dataset.arc === arcView));
+      return;
+    }
     const ach = e.target.closest('.ach.flippable');
     if (ach) ach.classList.toggle('flipped');
   });

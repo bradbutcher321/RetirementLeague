@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=6">
+<link rel="stylesheet" href="theme.css?v=7">
 <link rel="stylesheet" href="nav.css?v=4">
 <link rel="stylesheet" href="league.css?v=6">
 <style>
@@ -186,11 +186,14 @@
     const extraWinsView = () => !F ? [] : F.players.filter(p => p.efficiency && p.efficiency.optimal_record)
       .map(p => ({ name: p.name, sub: `${p.efficiency.optimal_record.games} regular season games`, val: (p.efficiency.optimal_record.extra_wins > 0 ? '+' : '') + p.efficiency.optimal_record.extra_wins }))
       .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
-    const consistencyView = () => !F ? [] : F.players.filter(p => p.extremes && p.extremes.score_stdev != null)
-      .map(p => ({ name: p.name, sub: 'Weekly score, standard deviation', val: f2(p.extremes.score_stdev) }))
-      .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
-    const medianLuckView = () => !F ? [] : F.players.filter(p => p.median_luck !== null && p.median_luck !== undefined)
-      .map(p => ({ name: p.name, sub: 'Actual vs. median-implied win rate', val: (p.median_luck > 0 ? '+' : '') + f1(p.median_luck) + '%', tone: p.median_luck > 0 ? 'up' : p.median_luck < 0 ? 'down' : '' }))
+    // Schedule luck: actual regular-season win rate minus all-play win rate
+    // (the record you'd have playing every team every week). Positive means
+    // the schedule handed you wins your scoring didn't earn. Same figure the
+    // Franchise page shows.
+    const scheduleLuck = p => (p.all_play && p.all_play.pct != null && p.career && p.career.win_rates.reg_pct != null)
+      ? Math.round((p.career.win_rates.reg_pct - p.all_play.pct) * 10) / 10 : null;
+    const medianLuckView = () => !F ? [] : F.players.filter(p => scheduleLuck(p) !== null)
+      .map(p => { const l = scheduleLuck(p); return { name: p.name, sub: `Won ${f1(p.career.win_rates.reg_pct)}% · all-play ${f1(p.all_play.pct)}%`, val: (l > 0 ? '+' : '') + f1(l) + '%', tone: l > 0 ? 'up' : l < 0 ? 'down' : '' }; })
       .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
     const draftPosView = () => !F ? [] : F.players.filter(p => p.draft && p.draft.avg_position != null)
       .map(p => ({ name: p.name, sub: `Best ${p.draft.best_position} · Worst ${p.draft.worst_position}`, val: f1(p.draft.avg_position) }))
@@ -442,8 +445,8 @@
       { label: 'Trends', html: scoringTrendHtml() },
       { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true }), V('Title Count', champC, { hl: true }), V('Title Games', titleGames('Champ', true), { year: true })] },
       { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, tone: 'bad' }), V('Sacko Count', sackC, { hl: true, tone: 'bad' }), V('Sacko Games', titleGames('Sacko', false), { year: true, tone: 'bad' })] },
-      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good', pick: 'max' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad', pick: 'min' }), V('Weekly High', weekly(true), { year: true, tone: 'good', pick: 'max' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad', pick: 'min' }), V('Average Median', avgMedian, { year: true, marks: true }), V('Consistency', consistencyView(), { hl: true, note: 'Standard deviation of weekly score — lower is steadier' })] },
-      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true }), V('Draft Position', draftPosView(), { hl: true, note: 'Average first-round draft slot' }), V('Median Luck', medianLuckView(), { hl: true, note: 'How much better or worse a manager\'s record is than their scoring vs. the weekly median alone would suggest' }), V('Achievements', achievementsView(), { hl: true, note: `Ranked by badges unlocked out of ${ACHIEVEMENTS_LIB.ACHIEVEMENTS.length} on the Franchise page` }), V('Power Ranking', powerRankingView(), { hl: true, note: 'If you\'d played every team, every week, instead of just your actual schedule — a schedule-independent regular-season win % (ties count half)' }), V('Power Index', powerIndexView(), { hl: true, note: 'Composite score blending titles, win%, scoring, lineup efficiency and earnings, weighted 35/25/15/15/10 — a component is skipped and the rest reweighted when a manager has no data for it' }), V('Clutch Factor', clutchDeltaView(), { hl: true, note: 'Playoff win % minus regular-season win % — positive means they raise their game in the playoffs' })] },
+      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good', pick: 'max' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad', pick: 'min' }), V('Weekly High', weekly(true), { year: true, tone: 'good', pick: 'max' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad', pick: 'min' }), V('Average Median', avgMedian, { year: true, marks: true })] },
+      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true }), V('Draft Position', draftPosView(), { hl: true, note: 'Average first-round draft slot' }), V('Schedule Luck', medianLuckView(), { hl: true, note: 'Actual win rate minus all-play win rate (every team, every week)' }), V('Achievements', achievementsView(), { hl: true, note: `Ranked by badges unlocked out of ${ACHIEVEMENTS_LIB.ACHIEVEMENTS.length} on the Franchise page` }), V('Power Ranking', powerRankingView(), { hl: true, note: 'If you\'d played every team, every week, instead of just your actual schedule — a schedule-independent regular-season win % (ties count half)' }), V('Power Index', powerIndexView(), { hl: true, note: 'Composite score blending titles, win%, scoring, lineup efficiency and earnings, weighted 35/25/15/15/10 — a component is skipped and the rest reweighted when a manager has no data for it' }), V('Clutch Factor', clutchDeltaView(), { hl: true, note: 'Playoff win % minus regular-season win % — positive means they raise their game in the playoffs' })] },
       { label: 'Efficiency', views: [V('Career Efficiency', effView(), { hl: true, tone: 'good', note: 'Actual points scored as a share of the best possible lineup, since ' + (F ? F.efficiency_start_year : '') }), V('Points Left on Bench', benchView(), { hl: true, note: 'Average points left unstarted per game — lower is more efficient' }), V('Extra Wins Available', extraWinsView(), { hl: true, note: 'Regular season wins an optimal lineup would have added' })] },
       { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { note: 'Head-to-head games only' }), V('With Median', streakView('combined'), { note: 'Includes the weekly median game (2025 onward)' })] },
     ];
