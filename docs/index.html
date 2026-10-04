@@ -668,7 +668,11 @@
   .vplot .median-tick.slim{ opacity: 0; }
   .mb-card{ background: rgba(255,255,255,0.03); border-radius: 8px; padding: 9px 10px; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); }
   .mb-card.locked{ border-color: var(--gold); }
+  /* Name with its margin to the median under it -- same size as the
+     "to play" line on the right, colored like the score. */
+  .mb-card .mw-left{ min-width: 0; display: flex; flex-direction: column; }
   .mb-card .mw-name{ font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .mb-card .mw-margin{ font-size: 0.64rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; margin-top: 2px; }
   /* The score and everything said about it stack in one right-hand column,
      so a second status line pushes the card taller rather than sideways. */
   .mb-card .mw-right{ text-align: right; flex-shrink: 0; }
@@ -1196,10 +1200,17 @@
     return lines;
   }
 
-  function mwCardHtml(t, tone) {
+  // How far a team sits above or below the median, signed, e.g. "+12.02" /
+  // "−0.97" (a real minus sign, so it lines up with the plus).
+  function fmtMwMargin(v) { return (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2); }
+
+  function mwCardHtml(t, tone, median) {
     const lines = miniStatusLines(t);
     return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' : ''}" data-name="${t.name}">
-      <span class="mw-name">${t.name}</span>
+      <div class="mw-left">
+        <span class="mw-name">${t.name}</span>
+        <div class="mw-margin" style="color:var(--${tone});">${fmtMwMargin(t.score - median)}</div>
+      </div>
       <div class="mw-right">
         <div class="mw-score" style="color:var(--${tone});">${fmtScore(t.score)}</div>
         ${lines.map(l => `<div class="mw-stat ${l.cls}">${l.cls === 'live' ? '<span class="live-dot"></span>' : ''}${l.cls === 'locked' ? '\u2713 ' : ''}${l.text}</div>`).join('')}
@@ -1207,8 +1218,8 @@
     </div>`;
   }
 
-  function mwGridHtml(list, tone) {
-    return `<div class="mw-grid">${list.map(t => mwCardHtml(t, tone)).join('')}</div>`;
+  function mwGridHtml(list, tone, median) {
+    return `<div class="mw-grid">${list.map(t => mwCardHtml(t, tone, median)).join('')}</div>`;
   }
 
   // Whether the Worker could read NFL game states this refresh; without that
@@ -1539,16 +1550,16 @@
     if (tick) tick.classList.remove('slim');
   }
 
-  function tickMwNumber(el, from, to) {
+  function tickMwNumber(el, from, to, format = v => v.toFixed(2)) {
     if (!el) return;
     const duration = 680;
     const fromV = Number(from), toV = Number(to);
-    el.textContent = fromV.toFixed(2);
+    el.textContent = format(fromV);
     const start = performance.now();
     function frame(now) {
       const t = Math.min(1, (now - start) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
-      el.textContent = (fromV + (toV - fromV) * eased).toFixed(2);
+      el.textContent = format(fromV + (toV - fromV) * eased);
       if (t < 1) requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
@@ -1579,9 +1590,9 @@
       bodyHtml = `
         <div class="card-body">
           <div>
-            <div id="median-above">${mwGridHtml(rows.above, 'turf')}</div>
+            <div id="median-above">${mwGridHtml(rows.above, 'turf', medianValue)}</div>
             <div class="median-split-label">${label} <b>${fmtScore(medianValue)}</b></div>
-            <div id="median-below">${mwGridHtml(rows.below, 'loss')}</div>
+            <div id="median-below">${mwGridHtml(rows.below, 'loss', medianValue)}</div>
           </div>
           <div class="spread-col${rows.zones ? ' zoned' : ''}" id="median-spreadcol" style="width:${rows.zones ? 118 : 88}px;">
             <div class="vplot${rows.zones ? ' zoned' : ''}" id="median-chart"></div>
@@ -1682,14 +1693,20 @@
   // live). Polled on its own 2-minute cycle, independent of the main
   // dashboard fetch above, matching how parlay-results.html keeps its own
   // live scores fresh.
+  //
+  // Same first-load guard as franchise.json above: until the main
+  // dashboard has rendered once, just store the data -- loadDashboard
+  // renders this card itself, so it appears in step with the rest of the
+  // page instead of popping in alone while everything else is loading.
   let parlayData = null;
   function loadParlayHighlight() {
     fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
       .then(res => res.json())
       .then(d => {
         parlayData = d;
+        if (!standingsData) return;
         renderParlayHighlight();
-        if (standingsData) renderStatOfMoment();
+        renderStatOfMoment();
       })
       .catch(() => {});
   }
@@ -2215,20 +2232,21 @@
           <div class="vplot" id="median-chart"></div>
         </div>
       </div>`;
-    document.getElementById('median-above').innerHTML = mwGridHtml(rows.above, 'turf');
-    document.getElementById('median-below').innerHTML = mwGridHtml(rows.below, 'loss');
+    document.getElementById('median-above').innerHTML = mwGridHtml(rows.above, 'turf', medianValue);
+    document.getElementById('median-below').innerHTML = mwGridHtml(rows.below, 'loss', medianValue);
     document.getElementById('median-spreadcol').style.width = (rows.zones ? 118 : 88) + 'px';
     document.getElementById('median-chart').classList.toggle('zoned', !!rows.zones);
     renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true, true);
     tagMedianTransitionNames();
 
     if (oldMode && oldMode !== mode) {
+      const oldMedianValue = oldMode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
       document.querySelectorAll('#median-above .mb-card, #median-below .mb-card').forEach(card => {
         const t = lastMedianTeams.find(x => medianTeamName(x) === card.dataset.name);
-        const scoreEl = card.querySelector('.mw-score');
-        if (t && scoreEl) tickMwNumber(scoreEl, t[oldMode], t[mode]);
+        if (!t) return;
+        tickMwNumber(card.querySelector('.mw-score'), t[oldMode], t[mode]);
+        tickMwNumber(card.querySelector('.mw-margin'), t[oldMode] - oldMedianValue, t[mode] - medianValue, fmtMwMargin);
       });
-      const oldMedianValue = oldMode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
       const splitValueEl = document.querySelector('#median-split b');
       if (splitValueEl) tickMwNumber(splitValueEl, oldMedianValue, medianValue);
       const oldRows = computeMedianRows(lastMedianTeams, oldMedianValue, oldMode);
@@ -2675,6 +2693,7 @@
         lastMedianTeams = teams;
         lastMedianData = data;
         renderMedianStatic(medianViewMode);
+        renderParlayHighlight();
         renderStatOfMoment();
 
         superlativesData = data;
