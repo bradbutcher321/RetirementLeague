@@ -443,7 +443,8 @@
      and separately whether the result is locked or final. Colored by class
      rather than inline, since the three readings are fixed. */
   .mb-card .mw-stat{ font-size: 0.64rem; white-space: nowrap; display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; color: var(--text-dim); }
-  .mb-card .mw-stat.live{ color: var(--loss); }
+  /* Only the live count is red; players still to play stay grey. */
+  .mb-card .mw-stat.live > span:first-child{ color: var(--loss); }
   .mb-card .mw-stat.locked{ color: var(--gold); }
   /* A two-up card on a phone is ~130px wide. The status always stays on
      one line ("5 live · 3 to play"), so in a card that narrow the name,
