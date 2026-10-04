@@ -60,12 +60,12 @@ def build_live_scores(spreadsheet):
     running score too, but with no tint -- covering it depends on the
     score specifically AT halftime, not knowable before the half ends.
     Player props show the live stat total (via find_live_prop) alongside
-    the player's game's own score and clock. An Anytime TD is tinted just
-    like a team bet -- green once the TD is in, red until then, the same
-    "not covering right now" a trailing spread shows. An Over/Under prop is
-    tinted only once it's already clinched either way and left neutral
-    otherwise, since a yardage total that's short at halftime isn't the
-    same as one that's failed.
+    the player's game's own score and clock, tinted like a team bet by
+    whether it's covering right now -- an Anytime TD green once the TD is
+    in and red until then, an Over/Under by which side of the line the
+    stat sits on at the moment. An Anytime TD that's in also carries
+    `hit`: a scored TD can't come off the board the way yards can, so the
+    page can call it a Win before the game ends and the sheet grades it.
 
     Only ever looks at rows the sheet itself already marked Pending -- a
     handful at a time, not a full history scan -- and only shows a score
@@ -75,8 +75,8 @@ def build_live_scores(spreadsheet):
     espn_gametime_lookup.py), so multiple players' picks on the same game
     cost one real ESPN fetch between them, not one per pick.
 
-    Returns (live, matchups). matchups maps the same keys to "Bears vs.
-    Jets" for every Pending prop whose game could be found, kicked off or
+    Returns (live, matchups). matchups maps the same keys to "CHI vs.
+    NYJ" for every Pending prop whose game could be found, kicked off or
     not -- a prop row never records its teams the way a team bet's
     Team/Opponent columns do, so this is the only place the page can learn
     which game the player is in."""
@@ -114,14 +114,16 @@ def build_live_scores(spreadsheet):
             if game["state"] == "pre" or game["stat"] is None:
                 continue
             total = game["stat"]
+            hit = False
             if bet_type in ag.PROP_BINARY_BET_TYPES:
-                tone = "up" if total >= required else "down"
+                hit = total >= required
+                tone = "up" if hit else "down"
             else:
                 outcome = ag.grade_over_under(total, line, side)
                 tone = "up" if outcome == "Win" else "down" if outcome == "Loss" else None
             live[key] = {
                 "kind": "prop", "stat": total, "team_score": game["team_score"], "opponent_score": game["opponent_score"],
-                "period": game["period"], "clock": game["clock"], "detail": game["detail"], "tone": tone,
+                "period": game["period"], "clock": game["clock"], "detail": game["detail"], "tone": tone, "hit": hit,
             }
             continue
 

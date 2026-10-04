@@ -171,9 +171,9 @@
      line), so on a shared line "SPORT/ODDS/LIVE" still sit level with each
      other and "NFL/-110/<score>" level below. It's a wrapping row rather
      than the fixed one-line grid it used to be because a live prop's four
-     blocks ("0 TDs · 17-19 · 12:34 - 3rd" next to "Cardinals vs. Giants")
-     can run wider than a phone -- the last block drops to a second line
-     instead of being clipped off the card's edge. */
+     blocks ("0 TDs · 17-19 · 12:34 - 3rd" next to "ARI vs. NYG") sit right
+     at a phone's width -- on a narrower one, or with a long clock, the last
+     block drops to a second line instead of being clipped off the card. */
   .leg-stats{ display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 10px; }
   .leg-stats .st{ display: flex; flex-direction: column; gap: 4px; }
   /* display:block + text-align:center so each label centers over ITS OWN
@@ -532,8 +532,11 @@
       const open = expandedLegs.has(key) ? ' open' : '';
       // A live leg says so where its Win/Loss will land -- red like the
       // live dot, an "in progress" marker rather than a verdict either way.
-      const resultTone = p.result === 'Win' ? 'turf' : p.result === 'Loss' || entry ? 'loss' : '';
-      const resultLabel = entry ? 'Live' : p.result === 'Pending' ? '—' : p.result;
+      // An Anytime TD that's already scored (entry.hit) can't un-hit, so it
+      // reads Win straight away rather than waiting for the final whistle.
+      const hit = entry && entry.hit;
+      const resultTone = p.result === 'Win' || hit ? 'turf' : p.result === 'Loss' || entry ? 'loss' : '';
+      const resultLabel = hit ? 'Win' : entry ? 'Live' : p.result === 'Pending' ? '—' : p.result;
       return `
       <div class="leg ${p.result}${tone}${open}" data-leg-key="${esc(key)}">
         <div class="leg-head">

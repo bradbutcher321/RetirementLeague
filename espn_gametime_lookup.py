@@ -1112,8 +1112,9 @@ def _locate_prop_stat(player_name, bet_type, sport, gametime_iso, require_final)
 def find_live_prop(player_name, bet_type, sport, gametime_iso):
     """A player prop's live counterpart to find_live_score: the game the
     player is in, from their team's side (find_live_score's state/period/
-    clock/detail/scores), plus `team`/`opponent` -- the two sides'
-    _canonical_name, since a prop row never records either -- and `stat`,
+    clock/detail/scores), plus `team`/`opponent` -- the two sides' ESPN
+    abbreviations ("ARI", "NYG"), since a prop row never records either and
+    the page only has room for the short form -- and `stat`,
     the running total find_prop_stat(require_final=False) would return, or
     None if the player isn't on the box score yet (always the case before
     kickoff). None if the player's game can't be found at all."""
@@ -1125,8 +1126,9 @@ def find_live_prop(player_name, bet_type, sport, gametime_iso):
     if opp_c is None:
         return None
     game = _game_state(comp, team_c, opp_c)
-    game["team"] = _canonical_name(team_c.get("team") or {}, team_c)
-    game["opponent"] = _canonical_name(opp_c.get("team") or {}, opp_c)
+    abbrev = lambda c: (c.get("team") or {}).get("abbreviation") or _canonical_name(c.get("team") or {}, c)
+    game["team"] = abbrev(team_c)
+    game["opponent"] = abbrev(opp_c)
     game["stat"] = total if found else None
     return game
 
