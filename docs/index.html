@@ -582,6 +582,8 @@
   /* Superlatives view toggle + race rows */
   /* Selector styling lives in theme.css -- only this page's spacing here. */
   .sup-seg{ margin-bottom: 14px; }
+  .standings-card{ margin-top: 14px; }
+  .standings-title{ padding: 16px 18px 0; font-weight: 700; font-size: 0.95rem; color: #fff; text-shadow: 0 0 14px rgba(255,255,255,0.45); }
   .sup-note{ position: relative; padding-top: 12px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 0.78rem; line-height: 1.5; }
   /* ---------- Comparison rows: real position on a shared axis instead of a
      label/value table. Each row plots one or two markers along a 0-100%
@@ -684,21 +686,21 @@
     </section>
 
     <section>
-      <h2>Superlatives</h2>
-      <div id="superlatives-toggle"></div>
+      <!-- Superlatives and standings answer the same question ("where does
+           the season stand, counting this week as of X?"), so they share one
+           heading and one Through / live / projected toggle. There are no
+           separate "Superlatives" / "Current Standings" headings: the cards
+           carry their own titles, and the standings panel has its own. -->
+      <h2>Season So Far</h2>
+      <div id="season-toggle"></div>
       <div class="accolades-grid" id="accolades-container">
         <div class="loading-row">Loading accolades…</div>
       </div>
-    </section>
-
-    <section>
-      <h2>Current Standings</h2>
-      <div id="standings-toggle"></div>
       <!-- Rows sit inside one glass panel rather than straight on the page
            background, so they have an edge to line up against -- same
-           treatment the Standings page uses. The heading above and the mode
-           toggle already label the list, so the panel takes no title. -->
-      <div class="glass">
+           treatment the Standings page uses. -->
+      <div class="glass standings-card">
+        <div class="standings-title">Standings</div>
         <div class="panel-body leaderboard" id="leaderboard-container">
           <div class="loading-row">Loading standings…</div>
         </div>
@@ -2109,7 +2111,46 @@
 
   // ---------- Standings: through last week / + this week live / + this week projected ----------
   let standingsData = null;
-  let standingsMode = 'through';
+
+  // ---------- Season So Far: one Through / live / projected mode shared by
+  // Superlatives and Standings. Defaults to "Through Week N-1" and is
+  // remembered across refreshes (falls back quietly if storage is blocked).
+  let seasonMode = 'through';
+  try {
+    const saved = localStorage.getItem('seasonViewMode');
+    if (saved === 'through' || saved === 'live' || saved === 'proj') seasonMode = saved;
+  } catch (e) {}
+
+  // Before kickoff every team's live score is 0, so a "live" option would
+  // just duplicate "through" -- skip it until someone's actually on the
+  // board. Projections are available pre-kickoff too, so that one stays.
+  function seasonModes(data) {
+    const teams = data.teams || [];
+    const week = data.week || 1;
+    const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
+    const started = teams.some(t => (t.current || 0) > 0);
+    return [
+      ...(hasPrior ? [['through', `Through Week ${week - 1}`]] : []),
+      ...(started ? [['live', `Week ${week} live`]] : []),
+      ['proj', `Week ${week} projected`],
+    ];
+  }
+
+  // A remembered mode that isn't offered right now (e.g. "live" before
+  // kickoff) shows the first option instead, without overwriting the saved pick.
+  function activeSeasonMode() {
+    const modes = standingsData ? seasonModes(standingsData) : [];
+    return modes.some(([k]) => k === seasonMode) ? seasonMode : (modes[0] ? modes[0][0] : 'through');
+  }
+
+  function renderSeasonToggle() {
+    if (!standingsData) return;
+    const modes = seasonModes(standingsData);
+    const active = activeSeasonMode();
+    document.getElementById('season-toggle').innerHTML = modes.length > 1
+      ? `<div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-season="${k}" class="${k === active ? 'on' : ''}">${l}</button>`).join('')}</div>`
+      : '';
+  }
 
   function formatRecordParts(w, l, t) { return `${w}-${l}${t ? '-' + t : ''}`; }
 
@@ -2153,30 +2194,16 @@
     if (!data) return;
     const teams = data.teams || [];
     const container = document.getElementById('leaderboard-container');
-    const toggle = document.getElementById('standings-toggle');
     const week = data.week || 1;
     const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
-    const started = teams.some(t => (t.current || 0) > 0);
 
     if (!hasPrior) {
       // Week 1: no earlier week to compare against.
-      toggle.innerHTML = '';
-      standingsMode = 'through';
       container.innerHTML = teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
       return;
     }
 
-    // Before kickoff every team's live score is 0, so a "live" option would
-    // just duplicate "through" -- skip it until someone's actually on the
-    // board. Projections are available pre-kickoff too, so that one stays.
-    const modes = [
-      ['through', `Through Week ${week - 1}`],
-      ...(started ? [['live', `Week ${week} live`]] : []),
-      ['proj', `Week ${week} projected`],
-    ];
-    if (!modes.some(([k]) => k === standingsMode)) standingsMode = 'through';
-    const m = standingsMode;
-    toggle.innerHTML = `<div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-stand="${k}" class="${k === m ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+    const m = activeSeasonMode();
 
     if (m === 'through') {
       container.innerHTML = teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
@@ -2207,11 +2234,14 @@
     }).join('');
   }
 
-  document.getElementById('standings-toggle').addEventListener('click', e => {
-    const b = e.target.closest('[data-stand]');
+  document.getElementById('season-toggle').addEventListener('click', e => {
+    const b = e.target.closest('[data-season]');
     if (!b) return;
-    standingsMode = b.dataset.stand;
+    seasonMode = b.dataset.season;
+    try { localStorage.setItem('seasonViewMode', seasonMode); } catch (err) {}
+    renderSeasonToggle();
     renderStandings();
+    renderSuperlatives();
   });
 
   // Only ever called before any games have been scored this season --
@@ -2227,13 +2257,11 @@
 
   // ---------- Superlatives: through last week / + this week live / + this week projected ----------
   let superlativesData = null;
-  let superlativesMode = 'live';
 
   function renderSuperlatives() {
     const data = superlativesData;
     if (!data) return;
     const container = document.getElementById('accolades-container');
-    const toggle = document.getElementById('superlatives-toggle');
     const teams = (data.teams || []).map(t => ({
       team: t.name,
       manager: t.manager,
@@ -2248,19 +2276,16 @@
 
     // Nothing has been scored yet this season: keep the original placeholders.
     if (!hasPrior && !teams.some(t => t.cur > 0)) {
-      toggle.innerHTML = '';
       container.innerHTML =
         renderAccoladeCard('Season High Score') +
         renderAccoladeCard('Season Points Leader');
       return;
     }
 
-    const modes = hasPrior
-      ? [['through', `Through Week ${week - 1}`], ['live', `Week ${week} live`], ['proj', `Week ${week} projected`]]
-      : [['live', `Week ${week} live`], ['proj', `Week ${week} projected`]];
-    if (!modes.some(([k]) => k === superlativesMode)) superlativesMode = 'live';
-    const m = superlativesMode;
-    toggle.innerHTML = `<div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-sup="${k}" class="${k === m ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+    // The shared Season So Far mode. "Through" needs the record as of last
+    // week to show, so without one this card reads the live view instead.
+    const shared = activeSeasonMode();
+    const m = shared === 'through' && !hasPrior ? 'live' : shared;
 
     const tag = (isNew, label) => !hasPrior || m === 'through' ? ''
       : (isNew ? `<span class="badge turf">${label}</span>` : '<span class="badge dim">Holding</span>');
@@ -2367,12 +2392,6 @@
       card('Season Points Leader', total(leader), leader.team, leader.manager, modeLabel, leadExtra, tag(leaderChanged, 'New leader'));
   }
 
-  document.getElementById('superlatives-toggle').addEventListener('click', e => {
-    const b = e.target.closest('[data-sup]');
-    if (!b) return;
-    superlativesMode = b.dataset.sup;
-    renderSuperlatives();
-  });
 
   // ---------- Site activity (unique visitors / page views from the Worker's own counter) ----------
   const PAGE_LABELS = { dashboard: 'Live Dashboard', franchise: 'Franchise', 'parlay-results': 'Parlay Results', standings: 'Standings', 'head-to-head': 'Head to Head', overview: 'League History', 'game-records': 'Game Records', 'draft-board': 'Draft Board', 'rule-changes': 'Rule Changes' };
@@ -2453,6 +2472,7 @@
         });
 
         standingsData = data;
+        renderSeasonToggle();
         renderStandings();
 
         // Before games kick off every team sits at 0.00 — an above/below split
