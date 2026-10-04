@@ -423,16 +423,21 @@
      instead of floating independently. Hidden during the animation and
      faded back in once settleMedianToMergedPills runs. */
   .vplot .median-tick.slim{ opacity: 0; }
-  .mb-card{ background: rgba(255,255,255,0.03); border-radius: 8px; padding: 9px 10px; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); }
+  /* Two independent rows: name | score on top, margin | status underneath.
+     They used to be two columns (name over margin, score over status), which
+     made the right column as wide as its longest status line -- "5 live · 3
+     to play" -- and on a phone's two-up cards that squeezed every name down
+     to "C." and ran the margin into the status. As rows, the name only has
+     to share its line with the score. */
+  .mb-card{ background: rgba(255,255,255,0.03); border-radius: 8px; padding: 9px 10px; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; border: 1px solid var(--line); container-type: inline-size; }
   .mb-card.locked{ border-color: var(--gold); }
-  /* Name with its margin to the median under it -- same size as the
-     "to play" line on the right, colored like the score. */
-  .mb-card .mw-left{ min-width: 0; display: flex; flex-direction: column; }
+  .mb-card .mw-top, .mb-card .mw-bot{ display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
+  .mb-card .mw-top{ align-items: baseline; }
+  .mb-card .mw-bot{ align-items: flex-start; }
   .mb-card .mw-name{ font-size: 1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  .mb-card .mw-margin{ font-size: 0.64rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; margin-top: 2px; }
-  /* The score and everything said about it stack in one right-hand column,
-     so a second status line pushes the card taller rather than sideways. */
-  .mb-card .mw-right{ text-align: right; flex-shrink: 0; }
+  /* Margin to the median -- same size as the status line, colored like the score. */
+  .mb-card .mw-margin{ font-size: 0.64rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mb-card .mw-stats{ text-align: right; flex-shrink: 0; }
   .mb-card .mw-score{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; line-height: 1.1; flex-shrink: 0; }
   /* One line per fact (see miniStatusLines): how many players are live/left,
      and separately whether the result is locked or final. Colored by class
@@ -440,6 +445,16 @@
   .mb-card .mw-stat{ font-size: 0.64rem; white-space: nowrap; display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; color: var(--text-dim); }
   .mb-card .mw-stat.live{ color: var(--loss); }
   .mb-card .mw-stat.locked{ color: var(--gold); }
+  .mb-card .mw-stat .part{ display: inline-flex; align-items: center; gap: 4px; }
+  /* A two-up card on a phone is ~130px wide. There the status facts stack
+     one per line ("5 live" / "3 to play") instead of one long line, and the
+     name and score come down a step so a name like Flanders fits whole. */
+  @container (max-width: 200px){
+    .mb-card .mw-name{ font-size: 0.9rem; }
+    .mb-card .mw-score{ font-size: 1.12rem; }
+    .mb-card .mw-stat{ flex-direction: column; align-items: flex-end; gap: 0; }
+    .mb-card .mw-stat .sep{ display: none; }
+  }
   /* Same 0.68s/bounce-adjacent duration as cards+chart sliding into their
      new spot on toggle. */
   ::view-transition-group(*){ animation-duration: 0.68s; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -968,7 +983,7 @@
     const players = [];
     if (t.inPlay) players.push(`${t.inPlay} live`);
     if (t.remaining) players.push(`${t.remaining} to play`);
-    if (players.length) lines.push({ text: players.join(' \u00b7 '), cls: t.inPlay ? 'live' : '' });
+    if (players.length) lines.push({ parts: players, cls: t.inPlay ? 'live' : '' });
     // A done team has no players line (nothing left to count), so "Final"
     // lands on the first line and that card doesn't grow a second one.
     if (t.locked) lines.push({ text: `Locked ${t.lockedAbove ? 'above' : 'below'}`, cls: 'locked' });
@@ -982,14 +997,21 @@
 
   function mwCardHtml(t, tone, median) {
     const lines = miniStatusLines(t);
+    // Each fact on the players line is its own part, so a narrow card can
+    // stack them; the live dot rides with the first one.
+    const statHtml = l => {
+      const parts = l.parts || [l.text];
+      const lead = l.cls === 'live' ? '<span class="live-dot"></span>' : l.cls === 'locked' ? '\u2713 ' : '';
+      return `<div class="mw-stat ${l.cls}">${parts.map((x, i) => `${i ? '<span class="sep">\u00b7</span>' : ''}<span class="part">${i ? '' : lead}${x}</span>`).join('')}</div>`;
+    };
     return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' : ''}" data-name="${t.name}">
-      <div class="mw-left">
+      <div class="mw-top">
         <span class="mw-name">${t.name}</span>
-        <div class="mw-margin" style="color:var(--${tone});">${fmtMwMargin(t.score - median)}</div>
-      </div>
-      <div class="mw-right">
         <div class="mw-score" style="color:var(--${tone});">${fmtScore(t.score)}</div>
-        ${lines.map(l => `<div class="mw-stat ${l.cls}">${l.cls === 'live' ? '<span class="live-dot"></span>' : ''}${l.cls === 'locked' ? '\u2713 ' : ''}${l.text}</div>`).join('')}
+      </div>
+      <div class="mw-bot">
+        <div class="mw-margin" style="color:var(--${tone});">${fmtMwMargin(t.score - median)}</div>
+        <div class="mw-stats">${lines.map(statHtml).join('')}</div>
       </div>
     </div>`;
   }
