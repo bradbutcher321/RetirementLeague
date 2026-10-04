@@ -103,7 +103,6 @@
   const { f2 } = LG;
   let D, tab = 0;
   const pickState = {};
-  const TABS = ['Records', 'Scores', 'Margins', 'Combined', 'Loss & Win'];
 
   const when = g => `${g.year} · Week ${g.week}${g.type === 'Reg' ? '' : ' · ' + g.type}`;
   const by = (list, fn, desc) => list.slice().sort((a, b) => (desc ? fn(b) - fn(a) : fn(a) - fn(b)));
@@ -129,44 +128,119 @@
       title, ownScore,
       items: by(list, fn, desc).slice(0, 10).map(g => ({ v: fn(g), m: side(g), meta: when(g) })),
     });
+    // ----- Luck: how many of that week's other scores you beat, regular
+    // season only (the only weeks where every team plays). A share rather
+    // than a count, since the league has been 8, 10 and 12 teams.
+    const weeks = new Map();
+    scores.filter(x => x.g.type === 'Reg').forEach(x => {
+      const k = `${x.g.year}:${x.g.week}`;
+      if (!weeks.has(k)) weeks.set(k, []);
+      weeks.get(k).push(x);
+    });
+    const allPlay = [...weeks.values()].flatMap(wk => wk.map(x => ({
+      ...x, beat: wk.filter(y => y.s < x.s).length, others: wk.length - 1, won: x.g.winner === x.team,
+    })));
+    const share = x => x.beat / x.others;
+    const luckItem = x => ({
+      v: x.s, tk: `${x.beat}/${x.others}/${x.s}`,
+      m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: `Beat ${x.beat} of ${x.others} · ${when(x.g)}`,
+    });
+    const unlucky = allPlay.filter(x => !x.won).sort((a, b) => share(b) - share(a) || b.s - a.s);
+    const lucky = allPlay.filter(x => x.won).sort((a, b) => share(a) - share(b) || a.s - b.s);
+
+    // ----- Title games -----
+    const finals = games.filter(g => g.type === 'Champ');
+    const finalScores = scores.filter(x => x.g.type === 'Champ');
+
+    // ----- Against the weekly median (every game type carries one) -----
+    const vsMedian = scores.filter(x => typeof x.g.median === 'number').map(x => ({ ...x, d: x.s - x.g.median }));
+    const signed = d => (d >= 0 ? '+' : '−') + f2(Math.abs(d));
+    const medianItem = x => ({ v: x.d, label: signed(x.d), m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: `Scored ${f2(x.s)} · ${when(x.g)}` });
+
+    // ----- Weekly high and low scores, counted per manager (regular season) -----
+    const tally = pick => {
+      const n = new Map();
+      [...weeks.values()].forEach(wk => { const x = pick(wk); n.set(x.team, (n.get(x.team) || 0) + 1); });
+      return [...n].sort((a, b) => b[1] - a[1]).slice(0, 10)
+        .map(([name, count]) => ({ v: count, label: String(count), m: { a: name }, meta: `of ${weeks.size} weeks` }));
+    };
+    const highest = wk => wk.reduce((a, b) => (b.s > a.s ? b : a));
+    const lowest = wk => wk.reduce((a, b) => (b.s < a.s ? b : a));
+
     return {
       topS: team('Top Scores', true), lowS: team('Lowest Scores', false),
       hiM: match('Highest Victory Margins', decided, margin, true),
       loM: match('Lowest Victory Margins', decided, margin, false),
       hiC: match('Most Combined Points', games, total, true), loC: match('Least Combined Points', games, total, false),
       hiL: match('Highest Score in a Loss', decided, lS, true, loseFirst, true), loW: match('Lowest Score in a Win', decided, wS, false, winFirst, true),
+      unl: { title: 'Unluckiest Losses', ownScore: true, items: unlucky.slice(0, 10).map(luckItem) },
+      lck: { title: 'Luckiest Wins', ownScore: true, items: lucky.slice(0, 10).map(luckItem) },
+      hiF: { title: 'Title Game Scores', ownScore: true, items: by(finalScores, x => x.s, true).slice(0, 10).map(x => ({ v: x.s, m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g) })) },
+      loF: match('Closest Title Games', finals, margin, false),
+      upMed: { title: 'Furthest Above the Median', ownScore: true, items: by(vsMedian, x => x.d, true).slice(0, 10).map(medianItem) },
+      dnMed: { title: 'Furthest Below the Median', ownScore: true, items: by(vsMedian, x => x.d, false).slice(0, 10).map(medianItem) },
+      hiWk: { title: 'Most Weekly High Scores', ownScore: true, ties: true, items: tally(highest) },
+      loWk: { title: 'Most Weekly Low Scores', ownScore: true, ties: true, items: tally(lowest) },
     };
   }
 
   const who = (c, i) => (c.ownScore ? esc(i.m.a) : `${esc(i.m.a)} ${f2(i.m.as)}`);
-  const versus = i => `vs ${esc(i.m.b)} ${f2(i.m.bs)}`;
+  const versus = i => (i.m.b ? `vs ${esc(i.m.b)} ${f2(i.m.bs)}` : '');
+  const shown = i => i.label || f2(i.v);
+  const detail = i => [versus(i), i.meta].filter(Boolean).join(' · ');
 
-  // Records tab: each panel pairs a category's high-end and low-end record.
+  // One table drives both the Records tab (each panel pairs a high-end and a
+  // low-end record) and the tabs after it (the same pair, as ranked lists,
+  // with the panel's own row labels on the switch).
   const LEDGER = [
-    ['Scores', 'topS', 'Highest', 'lowS', 'Lowest'],
-    ['Victory Margins', 'hiM', 'Biggest', 'loM', 'Closest'],
-    ['Combined Points', 'hiC', 'Most', 'loC', 'Least'],
-    ['Loss & Win', 'hiL', 'Highest in a loss', 'loW', 'Lowest in a win'],
+    { tab: 'Scores', title: 'Scores', hi: ['topS', 'Highest'], lo: ['lowS', 'Lowest'] },
+    { tab: 'Margins', title: 'Victory Margins', hi: ['hiM', 'Biggest'], lo: ['loM', 'Closest'] },
+    { tab: 'Combined', title: 'Combined Points', hi: ['hiC', 'Most'], lo: ['loC', 'Least'] },
+    { tab: 'Loss & Win', title: 'Loss & Win', hi: ['hiL', 'Highest in a loss'], lo: ['loW', 'Lowest in a win'] },
+    { tab: 'Luck', title: 'Luck', hi: ['unl', 'Unluckiest loss'], lo: ['lck', 'Luckiest win'] },
+    { tab: 'Title Games', title: 'Title Games', hi: ['hiF', 'Highest score'], lo: ['loF', 'Closest finish'] },
+    { tab: 'Median', title: 'Against the Weekly Median', hi: ['upMed', 'Furthest above'], lo: ['dnMed', 'Furthest below'] },
+    { tab: 'Weekly', title: 'Weekly High & Low Scores', hi: ['hiWk', 'Most weekly highs'], lo: ['loWk', 'Most weekly lows'] },
   ];
+  const TABS = ['Records', ...LEDGER.map(p => p.tab)];
+
+  // Rank by displayed value, so managers tied on a count share a rank (and
+  // the record) instead of the sort order quietly picking one of them.
+  function rankOf(items) {
+    const key = i => i.tk || shown(i);
+    const out = [];
+    items.forEach((i, k) => out.push(k > 0 && key(i) === key(items[k - 1]) ? out[k - 1] : k + 1));
+    return out;
+  }
+
   function ledgerRow(c, kind, high) {
     const i = c.items[0];
     if (!i) return `<div class="lrow"><div class="lrow-kind">${kind}</div><div class="lrow-meta">No games yet</div><div class="lrow-val">—</div></div>`;
-    return `<div class="lrow"><div class="lrow-kind">${kind}</div>` +
-      `<div style="min-width:0"><div class="lrow-name">${who(c, i)} ${versus(i)}</div><div class="lrow-meta">${i.meta}</div></div>` +
-      `<div class="lrow-val${high ? ' hi' : ''}">${f2(i.v)}</div></div>`;
+    // A count can be shared: name everyone tied at the top.
+    const leaders = c.ties ? c.items.filter(x => shown(x) === shown(i)) : [i];
+    const names = leaders.map(x => esc(x.m.a));
+    const name = names.length < 3 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+    const line = c.ties ? name : `${who(c, i)} ${versus(i)}`;
+    return `<div class="lrow"><div class="lrow-kind">${kind}${leaders.length > 1 ? ' · tied' : ''}</div>` +
+      `<div style="min-width:0"><div class="lrow-name">${line}</div><div class="lrow-meta">${i.meta}</div></div>` +
+      `<div class="lrow-val${high ? ' hi' : ''}">${shown(i)}</div></div>`;
   }
 
   // No tone on the buttons: a selected control is gold site-wide. The
-  // highest/lowest distinction is carried by the rows it reveals.
-  const seg = w => `<div class="seg"><button class="${w === 'hi' ? 'on' : ''}" data-seg="hi">Highest</button><button class="${w === 'lo' ? 'on' : ''}" data-seg="lo">Lowest</button></div>`;
-  const row = (c, i, rank) => `<div class="rrow${rank === 1 ? ' top' : ''}"><div class="rk">${rank}</div><div style="min-width:0"><div class="nm">${who(c, i)}</div><div class="mt">${versus(i)} · ${i.meta}</div></div><div class="vl">${f2(i.v)}</div></div>`;
+  // high/low distinction is carried by the rows it reveals.
+  const seg = (p, w) => `<div class="seg"><button class="${w === 'hi' ? 'on' : ''}" data-seg="hi">${p.hi[1]}</button><button class="${w === 'lo' ? 'on' : ''}" data-seg="lo">${p.lo[1]}</button></div>`;
+  // A count's meta ("of 153 weeks") is the same on every row, so the list
+  // drops it -- the Records tab's panel still says it once.
+  const row = (c, i, rank) => `<div class="rrow${rank === 1 ? ' top' : ''}"><div class="rk">${rank}</div><div style="min-width:0"><div class="nm">${who(c, i)}</div>${c.ties ? '' : `<div class="mt">${detail(i)}</div>`}</div><div class="vl">${shown(i)}</div></div>`;
 
-  function listCard(hi, lo, which) {
-    const c = which === 'lo' ? lo : hi;
-    const body = c.items.length
-      ? `<div class="rank-cols"><div class="rank-col">${c.items.slice(0, 5).map((i, k) => row(c, i, k + 1)).join('')}</div><div class="rank-col">${c.items.slice(5).map((i, k) => row(c, i, k + 6)).join('')}</div></div>`
+  function listCard(C, p, which) {
+    const c = C[(which === 'lo' ? p.lo : p.hi)[0]];
+    const r = rankOf(c.items);
+    const rows = c.items.map((i, k) => row(c, i, r[k]));
+    const body = rows.length
+      ? `<div class="rank-cols"><div class="rank-col">${rows.slice(0, 5).join('')}</div><div class="rank-col">${rows.slice(5).join('')}</div></div>`
       : '<div class="empty-note">No games yet for this season.</div>';
-    return `<div class="glass rank-panel"><div class="rank-head"><div class="rec-title">${c.title}</div>${seg(which)}</div>${body}</div>`;
+    return `<div class="glass rank-panel"><div class="rank-head"><div class="rec-title">${c.title}</div>${seg(p, which)}</div>${body}</div>`;
   }
 
   function render() {
@@ -175,13 +249,11 @@
     const C = categories(sel);
     const el = document.getElementById('records');
     if (tab === 0) {
-      el.innerHTML = `<div class="ledger">${LEDGER.map(([title, hk, hl, lk, ll]) =>
-        `<div class="glass ledger-panel"><div class="rec-title">${title}</div>${ledgerRow(C[hk], hl, true)}${ledgerRow(C[lk], ll, false)}</div>`).join('')}</div>`;
+      el.innerHTML = `<div class="ledger">${LEDGER.map(p =>
+        `<div class="glass ledger-panel"><div class="rec-title">${p.title}</div>${ledgerRow(C[p.hi[0]], p.hi[1], true)}${ledgerRow(C[p.lo[0]], p.lo[1], false)}</div>`).join('')}</div>`;
       return;
     }
-    const pairs = [[C.topS, C.lowS], [C.hiM, C.loM], [C.hiC, C.loC], [C.hiL, C.loW]];
-    const [hi, lo] = pairs[tab - 1];
-    el.innerHTML = listCard(hi, lo, pickState[tab] || 'hi');
+    el.innerHTML = listCard(C, LEDGER[tab - 1], pickState[tab] || 'hi');
   }
 
   document.addEventListener('click', e => {
