@@ -61,19 +61,6 @@
   .heat-legend-item{ display:flex; align-items:center; gap:6px; color:var(--text-dim); font-size:0.74rem; }
   .heat-swatch{ width:12px; height:12px; border-radius:3px; border:1px solid var(--line); flex-shrink:0; }
 
-  /* ---------- Scoring Trends ---------- */
-  .sc-wrap{ padding:22px 24px; }
-  .sc-chart{ width:100%; height:200px; display:block; }
-  .sc-grid-line{ stroke:var(--line); stroke-width:1; }
-  .sc-band{ fill:var(--gold); opacity:0.1; }
-  .sc-line{ fill:none; stroke:var(--gold); stroke-width:2; vector-effect:non-scaling-stroke; }
-  .sc-dot{ fill:var(--gold); stroke:var(--surface); stroke-width:1.5; vector-effect:non-scaling-stroke; }
-  .sc-axis-label{ fill:var(--text-dim); font-size:9px; font-family:'Big Shoulders Display',sans-serif; font-weight:600; }
-  .sc-end-label{ fill:var(--text); font-weight:800; font-size:13px; font-family:'Big Shoulders Display',sans-serif; }
-  .sc-annot-line{ stroke:var(--text-dim); stroke-width:1; stroke-dasharray:3 3; }
-  .sc-annot-text{ fill:var(--text-dim); font-size:9px; font-family:'Inter',sans-serif; }
-  .sc-caption{ text-align:center; color:var(--text-dim); font-size:0.76rem; margin-top:6px; }
-  .sc-caption b{ color:var(--text); }
 </style>
 </head>
 <body>
@@ -298,7 +285,7 @@
         marks[nums.indexOf(Math.max(...nums))] = 'good';
         marks[nums.indexOf(Math.min(...nums))] = 'bad';
       }
-      return { label, items, tone: o.tone || 'neutral', note: o.note, year: o.year, hl: o.hl, best, marks };
+      return { label, items, tone: o.tone || 'neutral', year: o.year, hl: o.hl, best, marks };
     };
     const first = (a, fallback = '—') => a[0] || { name: fallback, sub: '', val: '—' };
 
@@ -367,8 +354,7 @@
         if (sh) chips.push(chip('gold', 'Szn', `${esc(sh.name)} ${sh.val}`, payouts['Highest Points (Season)']));
         return `<div class="rail-item"><div class="rail-dot"></div><div class="rail-yr">${y}</div><div class="yr-chips">${chips.join('')}</div></div>`;
       }).join('');
-      return glassCard('Season Timeline', `<div style="padding:4px 24px 20px"><div class="rail">${items}</div></div>`,
-        'Championship, runner-up, Sacko and the weekly/season high scores, one year per row');
+      return glassCard('Season Timeline', `<div style="padding:4px 24px 20px"><div class="rail">${items}</div></div>`);
     }
 
     // ----- Dynasty Heatmap -----
@@ -399,56 +385,20 @@
         <div class="heat-legend-item"><span class="heat-swatch" style="background:rgba(192,87,75,0.4)"></span>Bottom tier</div>
         <div class="heat-legend-item"><span class="heat-swatch" style="border-color:var(--loss)"></span>Sacko</div></div>`;
       return glassCard('Dynasty Heatmap',
-        `<div class="heat-scroll"><div class="heat-grid" style="grid-template-columns:118px repeat(${years.length},32px)">${grid}</div></div>${legend}`,
-        'Final standing every season — a run of green is a dynasty, a run of red is a rut');
+        `<div class="heat-scroll"><div class="heat-grid" style="grid-template-columns:118px repeat(${years.length},32px)">${grid}</div></div>${legend}`);
     }
 
-    // ----- Scoring Trends -----
-    function scoringTrendHtml() {
-      const rows = D.years.map(y => {
-        const scores = [];
-        D.games.filter(g => g.year === y && g.type !== 'Bye' && g.p2 && g.winner !== 'In Progress').forEach(g => {
-          if (g.s1 > 0) scores.push(g.s1);
-          if (g.s2 > 0) scores.push(g.s2);
-        });
-        return scores.length ? { year: y, avg: scores.reduce((a, b) => a + b, 0) / scores.length, lo: Math.min(...scores), hi: Math.max(...scores) } : null;
-      }).filter(Boolean);
-      if (rows.length < 2) return glassCard('Scoring Trends', '<div class="empty-note" style="padding:22px 24px">Not enough seasons yet.</div>');
-      const W = 640, H = 200, PAD_L = 34, PAD_R = 14, PAD_T = 14, PAD_B = 22;
-      const n = rows.length;
-      const minV = Math.min(...rows.map(r => r.lo)), maxV = Math.max(...rows.map(r => r.hi));
-      const x = i => PAD_L + (i / (n - 1)) * (W - PAD_L - PAD_R);
-      const y = v => H - PAD_B - ((v - minV) / (maxV - minV)) * (H - PAD_T - PAD_B);
-      const bandTop = rows.map((r, i) => `${x(i).toFixed(1)},${y(r.hi).toFixed(1)}`).join(' ');
-      const bandBot = rows.map((r, i) => `${x(i).toFixed(1)},${y(r.lo).toFixed(1)}`).reverse().join(' ');
-      const line = rows.map((r, i) => `${x(i).toFixed(1)},${y(r.avg).toFixed(1)}`).join(' ');
-      const gridLines = [minV, (minV + maxV) / 2, maxV].map(v =>
-        `<line x1="${PAD_L}" y1="${y(v).toFixed(1)}" x2="${W - PAD_R}" y2="${y(v).toFixed(1)}" class="sc-grid-line" /><text x="2" y="${(y(v) + 3).toFixed(1)}" class="sc-axis-label">${Math.round(v)}</text>`).join('');
-      const yearLabels = rows.map((r, i) => (n <= 8 || i % 2 === 0 ? `<text x="${x(i).toFixed(1)}" y="${H - 5}" class="sc-axis-label" text-anchor="middle">${r.year}</text>` : '')).join('');
-      const medianIdx = rows.findIndex(r => r.year === 2025);
-      const annot = medianIdx >= 0 ? `<line x1="${x(medianIdx).toFixed(1)}" y1="${PAD_T}" x2="${x(medianIdx).toFixed(1)}" y2="${H - PAD_B}" class="sc-annot-line" />` +
-        `<text x="${(x(medianIdx) - 4).toFixed(1)}" y="${PAD_T + 9}" class="sc-annot-text" text-anchor="end">Median rule</text>` : '';
-      const last = rows[n - 1];
-      const svg = `<svg class="sc-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${gridLines}` +
-        `<polygon points="${bandTop} ${bandBot}" class="sc-band" />${annot}<polyline points="${line}" class="sc-line" />` +
-        `${rows.map((r, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(r.avg).toFixed(1)}" r="${i === n - 1 ? 4 : 2}" class="sc-dot" />`).join('')}` +
-        `<text x="${(x(n - 1) + 8).toFixed(1)}" y="${(y(last.avg) + 4).toFixed(1)}" class="sc-end-label">${last.avg.toFixed(1)}</text>${yearLabels}</svg>`;
-      const delta = last.avg - rows[0].avg;
-      const caption = `League average score is ${delta >= 0 ? 'up' : 'down'} <b>${delta >= 0 ? '+' : ''}${delta.toFixed(1)} pts</b> since ${rows[0].year} · shaded band is each season's low-to-high range`;
-      return glassCard('Scoring Trends', `<div class="sc-wrap">${svg}<div class="sc-caption">${caption}</div></div>`);
-    }
 
     TABS = [
       { label: 'Summary', tiles },
       { label: 'Timeline', html: timelineHtml() },
       { label: 'Dynasty', html: dynastyHtml() },
-      { label: 'Trends', html: scoringTrendHtml() },
       { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true }), V('Title Count', champC, { hl: true }), V('Title Games', titleGames('Champ', true), { year: true })] },
       { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, tone: 'bad' }), V('Sacko Count', sackC, { hl: true, tone: 'bad' }), V('Sacko Games', titleGames('Sacko', false), { year: true, tone: 'bad' })] },
       { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, tone: 'good', pick: 'max' }), V('Season Low', seasonPts(false), { year: true, tone: 'bad', pick: 'min' }), V('Weekly High', weekly(true), { year: true, tone: 'good', pick: 'max' }), V('Weekly Low', weekly(false), { year: true, tone: 'bad', pick: 'min' }), V('Average Median', avgMedian, { year: true, marks: true })] },
-      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true }), V('Draft Position', draftPosView(), { hl: true, note: 'Average first-round draft slot' }), V('Schedule Luck', medianLuckView(), { hl: true, note: 'Actual win rate minus all-play win rate (every team, every week)' }), V('Achievements', achievementsView(), { hl: true, note: `Ranked by badges unlocked out of ${ACHIEVEMENTS_LIB.ACHIEVEMENTS.length} on the Franchise page` }), V('Power Ranking', powerRankingView(), { hl: true, note: 'If you\'d played every team, every week, instead of just your actual schedule — a schedule-independent regular-season win % (ties count half)' }), V('Power Index', powerIndexView(), { hl: true, note: 'Composite score blending titles, win%, scoring, lineup efficiency and earnings, weighted 35/25/15/15/10 — a component is skipped and the rest reweighted when a manager has no data for it' }), V('Clutch Factor', clutchDeltaView(), { hl: true, note: 'Playoff win % minus regular-season win % — positive means they raise their game in the playoffs' })] },
-      { label: 'Efficiency', views: [V('Career Efficiency', effView(), { hl: true, tone: 'good', note: 'Actual points scored as a share of the best possible lineup, since ' + (F ? F.efficiency_start_year : '') }), V('Points Left on Bench', benchView(), { hl: true, note: 'Average points left unstarted per game — lower is more efficient' }), V('Extra Wins Available', extraWinsView(), { hl: true, note: 'Regular season wins an optimal lineup would have added' })] },
-      { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { note: 'Head-to-head games only' }), V('With Median', streakView('combined'), { note: 'Includes the weekly median game (2025 onward)' })] },
+      { label: 'Rankings', views: [V('Playoff Rate', rate, { hl: true }), V('Average Finish', finish, { hl: true }), V('Best Win Seasons', winSeasons(true), { year: true, tone: 'good', pick: 'first' }), V('Worst Win Seasons', winSeasons(false), { year: true, tone: 'bad', pick: 'first' }), V('Earnings', earn, { hl: true }), V('Draft Position', draftPosView(), { hl: true }), V('Schedule Luck', medianLuckView(), { hl: true }), V('Achievements', achievementsView(), { hl: true }), V('Power Ranking', powerRankingView(), { hl: true }), V('Power Index', powerIndexView(), { hl: true }), V('Clutch Factor', clutchDeltaView(), { hl: true })] },
+      { label: 'Efficiency', views: [V('Career Efficiency', effView(), { hl: true, tone: 'good' }), V('Points Left on Bench', benchView(), { hl: true }), V('Extra Wins Available', extraWinsView(), { hl: true })] },
+      { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), {}), V('With Median', streakView('combined'), {})] },
     ];
   }
 
@@ -499,7 +449,7 @@
     const seg = `<div class="seg">${T.views.map((x, i) => `<button class="${i === vi ? 'on' : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
     const half = Math.ceil(v.items.length / 2);
     const cols = `<div class="cols"><div>${v.items.slice(0, half).map((i, k) => rowHtml(i, k, v)).join('')}</div><div>${v.items.slice(half).map((i, k) => rowHtml(i, k + half, v)).join('')}</div></div>`;
-    el.innerHTML = glassCard(v.label, seg + cols, v.note);
+    el.innerHTML = glassCard(v.label, seg + cols);
   }
 
   document.addEventListener('click', e => {
