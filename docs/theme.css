@@ -337,13 +337,20 @@ body{
 .selector-group{ display: flex; align-items: center; gap: 12px; }
 
 /* A tab track and a lone control sharing one row -- track left, control
-   pushed to the far right -- instead of the control taking a whole row of its
+   pinned to the far right -- instead of the control taking a whole row of its
    own above the tabs. Each child keeps its own internal layout; this only
    decides where the two sit relative to each other, and takes over the
-   bottom margin from whichever of them would otherwise have set it. When
-   there isn't width for both, the control wraps below the track rather than
-   squeezing it. */
-.controls-row{ display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; margin-bottom: 14px; }
+   bottom margin from whichever of them would otherwise have set it.
+
+   When the tabs don't fit beside the control, the track wraps inside
+   itself and grows upward, and the control stays at the right, level with
+   the track's last row -- just above the content it controls, never with a
+   gap under it. Only on a phone, where there's no room beside the tabs at
+   all, does the control drop to its own row, still flush right. */
+.controls-row{ display: flex; align-items: flex-end; justify-content: space-between; gap: 10px 16px; margin-bottom: 14px; }
+.controls-row > :first-child{ min-width: 0; }
+.controls-row > :last-child{ flex: none; margin-left: auto; }
+@media (max-width: 600px){ .controls-row{ flex-wrap: wrap; } }
 .controls-row > .tabs, .controls-row > .tab-row, .controls-row > .seg,
 .controls-row > .sup-seg, .controls-row > .scope-row, .controls-row > .board-toggle,
 .controls-row > .selector-row, .controls-row > .selector-group{ margin-bottom: 0; }
