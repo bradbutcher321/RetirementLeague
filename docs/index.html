@@ -24,346 +24,131 @@
 <link rel="stylesheet" href="theme.css?v=6">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
-  /* ---------- Matchup cards ---------- */
-  .matchups{ display: flex; flex-direction: column; gap: 14px; }
+  /* ---------- Matchup cards ----------
+     Phone first: one card per row, both teams side by side, nothing
+     scrolls sideways. Two cards per row on desktop, where one card
+     stretched to 980px left a wide empty middle. Every class the card
+     adds is mu-prefixed -- Median Watch already owns .slot, .live, etc.
+
+     State is carried by exactly three things, so nothing on the card
+     competes with them:
+       - the status pill (VS -> pulsing red LIVE -> FINAL), which also
+         holds the expand chevron;
+       - the win-odds meter, gold on the favorite's share only (this
+         replaced a gold wash toward the favorite, which said who but not
+         by how much);
+       - one pip per starter, in roster order (outline = yet to play, red =
+         in a live game, gold = live and his team has the ball, grey = done). */
+  .matchups{ display: grid; gap: 12px; }
+  @media (min-width: 900px){ .matchups{ grid-template-columns: 1fr 1fr; align-items: start; gap: 14px; } }
 
   .matchup-card{
-    position: relative;
+    container: mu / inline-size;
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
     border-radius: 14px;
-    display: grid;
+    overflow: hidden;
     cursor: pointer;
-    /* Each side has a 175px floor instead of shrinking freely, so on a
-       narrow phone the card stays laid out side-by-side (never stacks) and
-       instead scrolls horizontally within itself — overflow-x lives on this
-       same element as the background/border so the background scrolls
-       along with the content instead of leaving a gap. overflow-y is
-       pinned to hidden (rather than left to auto-promote) so an
-       absolutely-positioned descendant -- namely the glow pseudo-element
-       below -- can never inflate this into a second, vertical scrollbar. */
-    grid-template-columns: minmax(175px, 1fr) auto minmax(175px, 1fr);
-    align-items: center;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
   }
-  /* Full-bleed wash toward whichever side is the projected favorite --
-     layered on top of the base surface gradient (first-listed background
-     paints on top), strongest at that side's edge and fading by center.
-     Gold pregame; the more specific .live rules below override to red
-     once the game actually has players in it, so red stays a dedicated
-     "this is live" signal rather than just another favorite indicator. */
-  .matchup-card.fav-away{ background: linear-gradient(90deg, rgba(212,180,106,0.10) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
-  .matchup-card.fav-home{ background: linear-gradient(270deg, rgba(212,180,106,0.10) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
-  .matchup-card.live.fav-away{ background: linear-gradient(90deg, rgba(214,98,79,0.12) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
-  .matchup-card.live.fav-home{ background: linear-gradient(270deg, rgba(214,98,79,0.12) 0%, transparent 46%), linear-gradient(165deg, var(--surface-2), var(--surface)); }
-  /* A live game gets a faint warm wash across the whole card -- a glance
-     down the list should pick out what's in progress before reading any
-     text. Sits behind everything else (z-index 0), which is why .side /
-     .vs-divider / .matchup-details / .live-indicator below all get
-     z-index 1+. inset:0 (not a negative inset) -- this card scrolls on
-     the x-axis, so anything extending past its own box would inflate the
-     scrollable area and add a phantom scrollbar even on a desktop width
-     that never needed one. */
-  .matchup-card::before{
-    content: ''; position: absolute; inset: 0; filter: blur(10px);
-    background: radial-gradient(circle at 50% 10%, rgba(214,98,79,0.22), transparent 60%);
-    pointer-events: none; z-index: 0; opacity: 0; transition: opacity 0.4s ease;
-  }
-  .matchup-card.live::before{ opacity: 1; }
 
-  .side{
-    position: relative; z-index: 1;
-    padding: 18px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  /* The top border accent that used to mark the live-score leader is
-     gone -- the full-bleed projected-favorite wash covers that now, and
-     having both read as two different, sometimes-disagreeing signals
-     (live lead vs. projected favorite) on the same card. */
-  .side.leading .score{ text-shadow: 0 0 20px rgba(212,180,106,0.45); }
-  .side.leading.final .score{ text-shadow: 0 0 20px rgba(79,174,122,0.45); }
-
-  .side.away{ text-align: left; align-items: flex-start; }
-  .side.home{ text-align: right; align-items: flex-end; }
-
+  .mu-head{ display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; gap: 12px; padding: 14px 14px 0; }
+  .mu-side{ min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .mu-side.home{ align-items: flex-end; text-align: right; }
   .team-name{
     font-weight: 600;
-    font-size: 1rem;
-    /* Stretch to the side's full width (overriding the flex-start/flex-end
-       shrink-wrap the other elements in .side use) so there's a fixed box
-       to measure and truncate against instead of wrapping to a second
-       line. Stays right-aligned by inheritance on the home side — same as
-       every other short name — until JS (see loadDashboard) detects this
-       particular name actually overflows and adds .truncate, which flips
-       just that one name to left-aligned so it reads from the start with
-       the cut, and the "…", landing at the end instead of the start. */
+    font-size: 0.95rem;
+    /* Stretched to the side's full width so there's a fixed box to measure
+       and truncate against. Stays right-aligned on the home side until JS
+       (see loadDashboard) finds this particular name overflowing and adds
+       .truncate, which flips just that one name to left-aligned so the cut
+       and the "…" land at the end instead of the start. */
     align-self: stretch;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .team-name.truncate{ text-align: left; }
-  .meta-row{
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    color: var(--text-dim);
-    font-size: 0.82rem;
-    white-space: nowrap;
-  }
-  .side.home .meta-row{ flex-direction: row-reverse; }
-  .manager-name{ font-weight: 500; }
-  .meta-dot{ color: var(--line); }
-
-  .score-line{
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    flex-wrap: nowrap;
-    white-space: nowrap;
-  }
-  .side.home .score-line{ flex-direction: row-reverse; }
-  .score{
+  .mu-meta{ font-size: 0.76rem; color: var(--text-dim); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .mu-stk.win{ color: var(--turf); }
+  .mu-stk.loss{ color: var(--loss); }
+  .mu-score{
     font-family: var(--scoreboard);
     font-weight: 700;
-    /* Shrinks fluidly on narrow phones instead of wrapping onto a second
-       line when a score picks up an extra digit or a minus sign. */
-    font-size: clamp(1.6rem, 8vw, 2.4rem);
+    font-size: 2.6rem;
+    line-height: 0.95;
     font-variant-numeric: tabular-nums;
-    line-height: 1;
-    /* Every score gets a soft ambient glow now, not just the leader's --
-       .side.leading below layers a stronger, colored glow on top of this
-       baseline rather than being the only score that glows at all. */
-    text-shadow: 0 0 14px rgba(255,255,255,0.18);
+    margin-top: 6px;
+    color: var(--text);
   }
-  .proj{
-    color: var(--text-dim);
-    font-size: 0.85rem;
-    font-variant-numeric: tabular-nums;
-  }
+  /* Live: the trailing score steps back a little. Decided: the winner's
+     score is gold with a glow -- it's the one number the card exists to
+     report -- and the loser's recedes. */
+  .mu-score.trail{ color: rgba(245,245,243,0.7); }
+  .mu-score.won{ color: var(--gold); text-shadow: 0 0 20px rgba(212,180,106,0.45); }
+  .mu-score.lost{ color: var(--text-dim); }
+  .mu-proj{ font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-  .remaining-badge{
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.76rem;
-    color: var(--text-dim);
-  }
-  .remaining-badge .dot{
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--turf);
-  }
-  .remaining-badge.done .dot{ background: var(--line); }
+  .mu-odds{ display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 12px 14px 0; font-size: 0.74rem; font-weight: 600; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .mu-odds .fav{ color: var(--gold); }
+  .mu-bar{ display: flex; gap: 3px; height: 5px; }
+  .mu-bar span{ border-radius: 3px; background: rgba(255,255,255,0.13); }
+  .mu-bar span.fav{ background: var(--gold); }
+  .mu-margin{ padding: 12px 14px 0; text-align: center; font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
-  .badge-row{ display: flex; gap: 10px; flex-wrap: wrap; }
-  .side.home .badge-row{ justify-content: flex-end; }
+  .mu-foot{ display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: 8px; padding: 12px 14px; }
+  .mu-pips-wrap{ display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .mu-pips-wrap.home{ align-items: flex-end; }
+  .mu-pips{ display: flex; gap: 3px; }
+  .mu-pip{ width: 12px; height: 5px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
+  .mu-pip.live{ background: var(--loss); box-shadow: none; }
+  .mu-pip.possession{ background: var(--gold); box-shadow: none; }
+  .mu-pip.final{ background: rgba(255,255,255,0.42); box-shadow: none; }
+  .mu-pip-text{ font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
+  .mu-pip-text .n-live{ color: var(--loss); font-weight: 600; }
 
-  .chip{
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    padding: 3px 8px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    color: var(--text-dim);
-  }
-  .chip.wp-fav{ border-color: var(--gold); color: var(--gold); }
-  .chip.streak-win{ border-color: var(--turf-dim); color: var(--turf); }
-  .chip.streak-loss{ border-color: var(--loss); color: var(--loss); }
-
-  .vs-divider{
-    position: relative;
-    z-index: 1;
-    padding: 0 8px;
-    align-self: stretch;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .expand-chip{
-    position: absolute;
-    bottom: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    background: var(--surface-raised);
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 3px 9px;
+  .mu-status{
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--scoreboard); font-weight: 800; font-size: 0.78rem;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 5px 9px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--text-dim);
     white-space: nowrap;
   }
-  /* Both labels always render; CSS (driven by the same .expanded class the
-     click handler already toggles) shows only the one that matches — no
-     extra JS needed to keep the chip's text in sync with the card state. */
-  .expand-chip .label-expanded{ display: none; }
-  .matchup-card.expanded .expand-chip .label-collapsed{ display: none; }
-  .matchup-card.expanded .expand-chip .label-expanded{ display: inline; }
-  .live-indicator{
-    /* Centered over the VS divider, not top-left -- top-left collided
-       with team names once real (often longer) names were in play. */
-    position: absolute;
-    top: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--loss);
-    background: var(--surface-raised);
-    border: 1px solid var(--loss);
-    border-radius: 999px;
-    padding: 3px 8px;
-    white-space: nowrap;
-  }
-  .live-indicator .pulse-dot{
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--loss);
-    animation: pulse 1.6s ease-in-out infinite;
-  }
+  .mu-status.live{ border-color: rgba(214,98,79,0.55); color: var(--loss); }
+  .mu-status.final{ border-color: rgba(255,255,255,0.18); color: var(--text); }
+  .mu-status .pulse-dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
+  .mu-chev{ display: grid; place-items: center; margin-right: -3px; opacity: 0.8; transition: transform 0.25s ease; }
+  .matchup-card.expanded .mu-chev{ transform: rotate(180deg); }
   @keyframes pulse{
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.45; transform: scale(1.35); }
   }
-  .vs-divider::before{
-    content: "";
-    position: absolute;
-    top: 16px;
-    bottom: 16px;
-    left: 50%;
-    width: 1px;
-    background: var(--line);
-    transform: translateX(-50%);
-  }
-  .vs-badge{
-    position: relative;
-    background: var(--surface-raised);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    font-family: var(--scoreboard);
-    font-weight: 800;
-    font-size: 0.74rem;
-    letter-spacing: 0.03em;
-    padding: 5px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
 
   /* ---------- Expanded matchup details (per-player roster) ---------- */
-  .matchup-details{
-    display: none;
-    grid-column: 1 / -1;
-    /* Matches the card's own surface — the per-row game-state colors are
-       what should read as "different here", not a separately-tinted
-       panel competing with them. The border-top plus a faint inset shadow
-       are enough to read as a drawer without changing the base color. */
-    background: var(--surface);
-    border-top: 1px solid var(--line);
-    box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.35);
-  }
+  .matchup-details{ display: none; border-top: 1px solid var(--line); background: rgba(0,0,0,0.22); padding: 4px; }
   .matchup-card.expanded .matchup-details{ display: block; }
+  .mu-row{ display: grid; grid-template-columns: minmax(0,1fr) 38px minmax(0,1fr); align-items: stretch; padding: 2px 0; }
+  .mu-row + .mu-row{ border-top: 1px solid rgba(255,255,255,0.04); }
+  .mu-slot{ align-self: center; justify-self: center; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; color: var(--text-dim); }
 
-  .detail-row{
-    display: grid;
-    grid-template-columns: minmax(130px, 1fr) 36px minmax(130px, 1fr);
-    align-items: stretch;
-    gap: 4px;
-    border-bottom: 1px solid var(--line);
-  }
-  .detail-row .detail-position{ align-self: center; }
-  .detail-row:last-child{ border-bottom: none; }
-  .detail-position{
-    text-align: center;
-  }
-  .position-label{
-    display: inline-block;
-    background: var(--surface-raised);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 1px 3px;
-    font-size: 0.66rem;
-    font-weight: 700;
-    color: var(--text-dim);
-    letter-spacing: 0.03em;
-  }
-
-  .player-cell{
-    display: grid;
-    grid-template-columns: 1fr auto;
-    column-gap: 8px;
-    padding: 10px 8px;
-    border: 1px solid transparent;
-    position: relative;
-    min-width: 0;
-  }
-  /* Home side mirrors the column order so its score still ends up on the
-     inner edge (next to the position label) and its name/info on the
-     outer edge, matching the away side's score-toward-center layout. */
-  .player-cell.home{ grid-template-columns: auto 1fr; }
-  .player-cell.home .player-info{ order: 2; text-align: right; }
-  .player-cell.home .player-score{ order: 1; text-align: left; }
-
-  /* Three readings, loudest to quietest: in progress with the ball (gold —
-     the one moment that should really pop, and now the only state that
-     still gets an edge bar), in progress (a pale wash), and finished (a
-     recessed dark wash — that player is settled and nothing about their
-     number will change again). Not-started stays plain. Cells are
-     full-bleed to the card's own edge — left for away, right for home —
-     with no rounding and no surrounding gap, so consecutive rows read as
-     one continuous strip rather than separate floating boxes. */
-  .player-cell.away{ border-left: 4px solid var(--state-bar-color, transparent); padding-left: 10px; }
-  .player-cell.home{ border-right: 4px solid var(--state-bar-color, transparent); padding-right: 10px; }
-  .player-cell.state-live{
-    background: rgba(214, 214, 208, 0.10);
-  }
-  .player-cell.state-possession{
-    --state-bar-color: rgba(212,180,106, 0.6);
-    background: rgba(212,180,106, 0.10);
-  }
-  /* Previously 'final' and 'not started' rendered identically, so the only
-     clue a starter had already played was a number showing up in the score
-     column. Now the cell recedes and the projection line turns into how far
-     over or under that projection they actually landed. */
-  .player-cell.state-final{ background: rgba(0,0,0,0.32); }
-  .player-cell.state-final .player-game-line{ color: var(--text-dim); opacity: 0.8; }
-  .player-score .delta{
-    font-size: 0.68rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    margin-top: 2px;
-    white-space: nowrap;
-  }
-  .player-score .delta.up{ color: var(--turf); }
-  .player-score .delta.down{ color: var(--loss); }
-  .player-score .delta.even{ color: var(--text-dim); }
-
-  /* Info (name/game-status/stats) top-aligns so the top two lines always
-     land in the same place regardless of how many stat lines (0-2) either
-     side ends up with. The score instead centers vertically, in line with
-     the position callout next to it, independent of that variable height. */
-  .player-info{ min-width: 0; text-align: left; align-self: start; }
-  .player-score{ text-align: right; align-self: center; }
+  /* No edge bars (house style: state is an outline plus a faint tint of
+     the same color). His team has the ball = the site's gold lead outline;
+     in a live game = a faint white one; finished = the name recedes and
+     the projection turns into how far over/under it he landed. */
+  .mu-pc{ min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; align-items: center; padding: 8px; border-radius: 9px; }
+  .mu-pc.home{ grid-template-columns: auto minmax(0,1fr); }
+  .mu-pc.home .mu-pinfo{ order: 2; text-align: right; }
+  .mu-pc.home .mu-pscore{ order: 1; text-align: left; }
+  .mu-pc.live{ background: rgba(255,255,255,0.035); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.11); }
+  .mu-pc.possession{ background: var(--lead-tint); box-shadow: inset 0 0 0 1px var(--lead-line); }
+  .mu-pinfo{ min-width: 0; align-self: start; }
+  /* Flex row so the team badge (flex-shrink: 0) always stays whole and the
+     name text hard-clips right where it meets it -- no ellipsis. */
+  .player-name{ display: flex; align-items: center; gap: 4px; min-width: 0; font-weight: 600; font-size: 0.82rem; }
+  .mu-pc.home .player-name{ justify-content: flex-end; }
+  .mu-pc.final .player-name{ color: rgba(245,245,243,0.75); }
+  .name-text{ min-width: 0; overflow: hidden; white-space: nowrap; }
   .team-tag{
-    display: inline-block;
     flex-shrink: 0;
     font-size: 0.6rem;
     font-weight: 700;
@@ -373,61 +158,33 @@
     border-radius: 4px;
     padding: 1px 4px;
   }
-  /* A flex row instead of a single nowrap text block, so the team tag
-     (flex-shrink: 0) always stays fully visible while only the name text
-     itself shrinks and hard-clips (no ellipsis — it just runs until it
-     meets the tag) when space is tight. */
-  .player-name{
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-    font-weight: 600;
-    font-size: 0.83rem;
+  .mu-gline{ font-size: 0.68rem; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mu-gline .clk{ color: var(--text); font-weight: 600; }
+  .mu-pc.possession .mu-gline .clk{ color: var(--gold); }
+  .mu-gline .ldot{ display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--loss); margin-right: 4px; vertical-align: 1px; animation: pulse 1.6s ease-in-out infinite; }
+  .mu-gline .ball{ display: inline-block; width: 9px; height: 6px; border-radius: 50%; background: var(--gold); margin-right: 4px; }
+  /* Up to two wrapped lines, then hard-cut (no ellipsis). */
+  .mu-sline{ font-size: 0.68rem; color: var(--text-dim); margin-top: 2px; line-height: 1.35; max-height: 2.7em; overflow: hidden; }
+  .mu-pscore{ text-align: right; font-variant-numeric: tabular-nums; }
+  .mu-pts{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.08rem; line-height: 1; }
+  .mu-pts.none{ color: var(--text-dim); }
+  .mu-sub{ font-size: 0.66rem; color: var(--text-dim); margin-top: 3px; white-space: nowrap; font-weight: 500; }
+  .mu-sub.up{ color: var(--turf); font-weight: 700; }
+  .mu-sub.down{ color: var(--loss); font-weight: 700; }
+
+  /* Game line: a narrow card (phone) drops the "PM" and the opponent on
+     live/final lines; a wide card (desktop) shows them. */
+  .mu-w{ display: none; }
+  @container mu (min-width: 460px){
+    .mu-w{ display: inline; }
+    .mu-n{ display: none; }
+    .mu-head{ padding: 16px 18px 0; }
+    .mu-odds, .mu-margin{ padding: 12px 18px 0; }
+    .mu-foot{ padding: 12px 18px; }
   }
-  .player-cell.home .player-name{ justify-content: flex-end; }
-  .name-text{
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-  .player-score .current{
-    font-family: var(--scoreboard);
-    font-weight: 700;
-    font-size: 1.05rem;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-  }
-  .player-score .projected{
-    font-size: 0.68rem;
-    color: var(--text-dim);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-    margin-top: 2px;
-  }
-  .player-game-line{
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    margin-top: 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  /* Sizes to however many stat lines there actually are (0-2, clipped
-     beyond that) rather than always reserving 2 — an empty or one-line
-     stat block just takes less room instead of leaving dead blank space.
-     Alignment across both sides comes from .player-cell's top-alignment
-     above, not from forcing this to a fixed height. */
-  .player-stat-line{
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    margin-top: 2px;
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  @media (prefers-reduced-motion: reduce){
+    .mu-status .pulse-dot, .mu-gline .ldot{ animation: none; }
+    .mu-chev{ transition: none; }
   }
   /* ---------- Leaderboard ---------- */
   /* One row per team instead of an 8-column table — Score/Proj dropped
@@ -881,7 +638,6 @@
 
   /* ---------- Small-phone tightening (must stay last: overrides base rules above) ---------- */
   @media (max-width: 480px){
-    .side{ padding: 16px; }
     .median-card{ padding: 16px; }
     .card-body{ gap: 8px; }
     .spread-col{ width: 84px; }
@@ -1002,8 +758,8 @@
 
   // Four states a starter's real NFL game can be in: hasn't kicked off
   // yet, in progress, in progress AND their team has the ball (the single
-  // highest-attention moment), or over. Drives the whole-cell wash and
-  // edge accent bar via .player-cell.state-* — colors live in CSS.
+  // highest-attention moment), or over. Drives the roster cell's outline
+  // and the card's starter pips via .mu-pc.* / .mu-pip.* -- colors live in CSS.
   function playerState(p) {
     if (!p || !p.game) return null;
     if (p.game.state === 'pre') return 'pre';
@@ -1011,23 +767,36 @@
     return p.game.hasPossession ? 'possession' : 'live';
   }
 
-  function renderPlayerCell(p, side, state) {
-    if (!p) return `<div class="player-cell ${side}"></div>`;
-    const hasLiveScore = p.livePoints !== null && p.livePoints !== undefined;
-    let gameLine = '';
-    if (p.game) {
-      if (p.game.state === 'pre') {
-        const kickoff = p.game.date ? new Date(p.game.date) : null;
-        const when = kickoff
-          ? `${kickoff.toLocaleDateString([], { weekday: 'short' })} ${kickoff.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-          : '';
-        gameLine = `vs ${p.game.opponent}${when ? ' · ' + when : ''}`;
-      } else if (p.game.state === 'post') {
-        gameLine = `${p.game.opponent} ${p.game.teamScore}-${p.game.opponentScore} Final`;
-      } else {
-        gameLine = `${p.game.opponent} ${p.game.teamScore}-${p.game.opponentScore} · Q${p.game.period} ${p.game.clock}`;
-      }
+  // "J. Allen" -- the roster is two players to a row on a 430px phone, so
+  // full first names clipped constantly. A D/ST's name ("Bears D/ST") is
+  // left whole: its first word is the only part that identifies it.
+  function shortName(p) {
+    const parts = (p.name || '').split(' ');
+    if (parts.length < 2 || p.slot === 'D/ST' || /D\/ST/.test(p.name)) return p.name || '';
+    return `${parts[0][0]}. ${parts.slice(1).join(' ')}`;
+  }
+
+  // mu-n is shown on a narrow (phone) card, mu-w on a wide (desktop) one.
+  function playerGameLine(p, state) {
+    const g = p.game;
+    if (!g) return '';
+    if (state === 'pre') {
+      const kickoff = g.date ? new Date(g.date) : null;
+      if (!kickoff) return `vs ${g.opponent}`;
+      const day = kickoff.toLocaleDateString([], { weekday: 'short' });
+      const time = kickoff.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      return `vs ${g.opponent} · ${day} <span class="mu-n">${time.replace(/\s?PM$/i, '')}</span><span class="mu-w">${time}</span>`;
     }
+    const score = `${g.teamScore}–${g.opponentScore}`;
+    if (state === 'final') return `Final · ${score}<span class="mu-w"> vs ${g.opponent}</span>`;
+    const period = g.period > 4 ? 'OT' : `Q${g.period}`;
+    const mark = state === 'possession' ? '<span class="ball"></span>' : '<span class="ldot"></span>';
+    return `${mark}<span class="clk">${period} ${g.clock}</span> · ${score}<span class="mu-w"> vs ${g.opponent}</span>`;
+  }
+
+  function renderPlayerCell(p, side, state) {
+    if (!p) return `<div class="mu-pc ${side}"></div>`;
+    const hasLiveScore = p.livePoints !== null && p.livePoints !== undefined;
     const teamTag = p.game && p.game.team ? `<span class="team-tag">${p.game.team}</span>` : '';
     // Once the game is over the pre-game projection stops being the useful
     // number — how far the player beat or missed it is. ESPN keeps serving
@@ -1037,17 +806,17 @@
       ? p.livePoints - p.projectedPoints
       : null;
     const scoreSub = delta === null
-      ? `<div class="projected">${fmtScore(p.projectedPoints)}</div>`
-      : `<div class="delta ${delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : 'even'}" title="Projected ${fmtScore(p.projectedPoints)}">${delta >= 0 ? '▲' : '▼'} ${fmtScore(Math.abs(delta))}</div>`;
+      ? `<div class="mu-sub">${fmtScore(p.projectedPoints)}</div>`
+      : `<div class="mu-sub ${delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : ''}" title="Projected ${fmtScore(p.projectedPoints)}">${delta >= 0 ? '▲' : '▼'} ${fmtScore(Math.abs(delta))}</div>`;
     return `
-      <div class="player-cell ${side} ${state ? 'state-' + state : ''}">
-        <div class="player-info">
-          <div class="player-name"><span class="name-text">${p.name}</span>${teamTag}</div>
-          <div class="player-game-line">${gameLine}</div>
-          <div class="player-stat-line">${p.statLine || ''}</div>
+      <div class="mu-pc ${side} ${state || ''}">
+        <div class="mu-pinfo">
+          <div class="player-name"><span class="name-text">${shortName(p)}</span>${teamTag}</div>
+          <div class="mu-gline">${playerGameLine(p, state)}</div>
+          ${p.statLine ? `<div class="mu-sline">${p.statLine}</div>` : ''}
         </div>
-        <div class="player-score">
-          <div class="current">${hasLiveScore ? fmtScore(p.livePoints) : '-'}</div>
+        <div class="mu-pscore">
+          <div class="mu-pts ${hasLiveScore ? '' : 'none'}">${hasLiveScore ? fmtScore(p.livePoints) : '–'}</div>
           ${scoreSub}
         </div>
       </div>`;
@@ -1061,21 +830,17 @@
     for (let i = 0; i < rowCount; i++) {
       const a = awayPlayers[i];
       const h = homePlayers[i];
-      const awayState = playerState(a);
-      const homeState = playerState(h);
       rows.push(`
-        <div class="detail-row">
-          ${renderPlayerCell(a, 'away', awayState)}
-          <div class="detail-position">
-            <span class="position-label">${(a && a.slot) || (h && h.slot) || ''}</span>
-          </div>
-          ${renderPlayerCell(h, 'home', homeState)}
+        <div class="mu-row">
+          ${renderPlayerCell(a, 'away', playerState(a))}
+          <span class="mu-slot">${(a && a.slot) || (h && h.slot) || ''}</span>
+          ${renderPlayerCell(h, 'home', playerState(h))}
         </div>`);
     }
     return `<div class="matchup-details">${rows.join('')}</div>`;
   }
 
-  // A matchup is decided (green bar, sinks to the bottom) once nobody is left to
+  // A matchup is decided (FINAL, sinks to the bottom) once nobody is left to
   // play on either side, or once a team with no players left is already behind
   // its opponent's current score: the opponent's score can only go up, so the
   // finished team can't catch back up. The second case needs the NFL game
@@ -1090,85 +855,90 @@
   }
 
   function renderMatchupCard(m) {
-    const homeLeading = parseFloat(m.homeScore) >= parseFloat(m.awayScore);
-    // Full-bleed wash leans toward whichever side is *projected* to win
-    // (win probability), not whichever is currently ahead on the live
-    // score -- those two can disagree mid-game, and the wash is meant to
-    // read as "who's expected to take this," not a live-score indicator
-    // (the score glow and .leading border already cover that).
-    const awayWP = typeof m.awayWinProbability === 'number' ? m.awayWinProbability
-      : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : null;
-    const favClass = awayWP === null ? '' : awayWP >= 50 ? ' fav-away' : ' fav-home';
+    const awayScore = parseFloat(m.awayScore) || 0;
+    const homeScore = parseFloat(m.homeScore) || 0;
     const homeInPlay = parseInt(m.homeInPlay, 10) || 0;
     const awayInPlay = parseInt(m.awayInPlay, 10) || 0;
     const homeRemaining = parseInt(m.homeRemaining, 10) || 0;
     const awayRemaining = parseInt(m.awayRemaining, 10) || 0;
-    const isLive = homeInPlay + awayInPlay > 0;
     const isFinal = matchupDecided(m);
-    const statusBadge = (count, label) => {
-      const done = count === 0;
-      return `<span class="remaining-badge ${done ? 'done' : ''}">
-                <span class="dot"></span>${count} ${label}
-              </span>`;
-    };
-    const statusRow = (inPlay, remaining) => `
-      <div class="badge-row">
-        ${statusBadge(inPlay, 'In Play')}
-        ${statusBadge(remaining, 'To Play')}
-      </div>`;
-    const chipRow = (winProbability, streak) => {
-      const wpChip = typeof winProbability === 'number'
-        ? `<span class="chip ${winProbability >= 50 ? 'wp-fav' : ''}">${Math.round(winProbability)}% to win</span>`
-        : '';
-      const streakChip = streak
-        ? `<span class="chip ${streak[0] === 'W' ? 'streak-win' : 'streak-loss'}">${streak}</span>`
-        : '';
-      return (wpChip || streakChip) ? `<div class="badge-row">${wpChip}${streakChip}</div>` : '';
-    };
-    const metaRow = (manager, record) => `
-      <div class="meta-row">
-        ${manager ? `<span class="manager-name">${manager}</span><span class="meta-dot">•</span>` : ''}
-        <span>${record}</span>
+    const isLive = !isFinal && homeInPlay + awayInPlay > 0;
+
+    // Live, the trailing score steps back; decided, the winner goes gold.
+    const scoreClass = (mine, theirs) => isFinal
+      ? (mine > theirs ? 'won' : mine < theirs ? 'lost' : '')
+      : (mine < theirs ? 'trail' : '');
+
+    const metaParts = (manager, record, streak) => [
+      manager ? `<span>${manager}</span>` : '',
+      record ? `<span>${record}</span>` : '',
+      streak ? `<span class="mu-stk ${streak[0] === 'W' ? 'win' : 'loss'}">${streak}</span>` : '',
+    ].filter(Boolean);
+
+    const side = (cls, name, meta, score, theirScore, projected) => `
+      <div class="mu-side ${cls}">
+        <div class="team-name">${name}</div>
+        <div class="mu-meta">${meta.join(' · ')}</div>
+        <div class="mu-score ${scoreClass(score, theirScore)}">${fmtScore(score)}</div>
+        ${isFinal ? '' : `<div class="mu-proj">proj ${fmtScore(projected)}</div>`}
       </div>`;
 
-    const sideClass = (leading) => leading ? `leading ${isFinal ? 'final' : ''}` : '';
+    // Win-odds meter while undecided; once decided, the winning margin.
+    const awayWP = typeof m.awayWinProbability === 'number' ? m.awayWinProbability
+      : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : null;
+    let oddsRow = '';
+    if (isFinal) {
+      const winner = awayScore > homeScore ? m.awayName : homeScore > awayScore ? m.homeName : null;
+      oddsRow = winner ? `<div class="mu-margin">${winner} by ${fmtScore(Math.abs(awayScore - homeScore))}</div>` : '';
+    } else if (awayWP !== null) {
+      const a = Math.max(1, Math.min(99, Math.round(awayWP)));
+      const h = 100 - a;
+      const awayFav = a >= 50;
+      oddsRow = `
+        <div class="mu-odds">
+          <span class="${awayFav ? 'fav' : ''}">${a}%</span>
+          <div class="mu-bar" role="img" aria-label="Win odds ${a}% to ${h}%"><span class="${awayFav ? 'fav' : ''}" style="flex-grow:${a}"></span><span class="${awayFav ? '' : 'fav'}" style="flex-grow:${h}"></span></div>
+          <span class="${awayFav ? '' : 'fav'}">${h}%</span>
+        </div>`;
+    }
+
+    const pips = (players, inPlay, remaining, cls) => {
+      const bits = [];
+      if (inPlay) bits.push(`<span class="n-live">${inPlay} live</span>`);
+      if (remaining) bits.push(`${remaining} to play`);
+      return `
+        <div class="mu-pips-wrap ${cls}">
+          <div class="mu-pips">${players.map(p => {
+            const st = playerState(p);
+            return `<span class="mu-pip ${st && st !== 'pre' ? st : ''}"></span>`;
+          }).join('')}</div>
+          ${bits.length ? `<span class="mu-pip-text">${bits.join(' · ')}</span>` : ''}
+        </div>`;
+    };
+
+    const chev = '<span class="mu-chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+    const status = isFinal ? `<span class="mu-status final">Final${chev}</span>`
+      : isLive ? `<span class="mu-status live"><span class="pulse-dot"></span>Live${chev}</span>`
+      : `<span class="mu-status">VS${chev}</span>`;
+
     const key = matchupKey(m);
     const expanded = expandedMatchups.has(key);
 
     return `
-      <div class="matchup-card ${expanded ? 'expanded' : ''}${isLive ? ' live' : ''}${favClass}" data-key="${encodeURIComponent(key)}">
-        ${isLive ? `<span class="live-indicator"><span class="pulse-dot"></span>Live</span>` : ''}
-        <div class="side away ${sideClass(!homeLeading)}">
-          <div class="team-name">${m.awayName}</div>
-          ${metaRow(m.awayManager, m.awayRecord)}
-          <div class="score-line">
-            <span class="score">${fmtScore(m.awayScore)}</span>
-            <span class="proj">proj ${fmtScore(m.awayProjected)}</span>
-          </div>
-          ${chipRow(m.awayWinProbability, m.awayStreak)}
-          ${statusRow(awayInPlay, awayRemaining)}
+      <div class="matchup-card ${expanded ? 'expanded' : ''}" data-key="${encodeURIComponent(key)}">
+        <div class="mu-head">
+          ${side('away', m.awayName, metaParts(m.awayManager, m.awayRecord, m.awayStreak), awayScore, homeScore, m.awayProjected)}
+          ${side('home', m.homeName, metaParts(m.homeManager, m.homeRecord, m.homeStreak).reverse(), homeScore, awayScore, m.homeProjected)}
         </div>
-        <div class="vs-divider">
-          <span class="vs-badge">VS</span>
-          <span class="expand-chip">
-            <span class="label-collapsed">▾ Expand</span>
-            <span class="label-expanded">▴ Collapse</span>
-          </span>
-        </div>
-        <div class="side home ${sideClass(homeLeading)}">
-          <div class="team-name">${m.homeName}</div>
-          ${metaRow(m.homeManager, m.homeRecord)}
-          <div class="score-line">
-            <span class="score">${fmtScore(m.homeScore)}</span>
-            <span class="proj">proj ${fmtScore(m.homeProjected)}</span>
-          </div>
-          ${chipRow(m.homeWinProbability, m.homeStreak)}
-          ${statusRow(homeInPlay, homeRemaining)}
+        ${oddsRow}
+        <div class="mu-foot">
+          ${pips(m.awayPlayers || [], awayInPlay, awayRemaining, 'away')}
+          ${status}
+          ${pips(m.homePlayers || [], homeInPlay, homeRemaining, 'home')}
         </div>
         ${renderMatchupDetails(m)}
       </div>`;
   }
-
   function medianTeamName(t) { return t.manager || t.name; }
 
   // The lines under each score, as separate facts rather than one slot that
