@@ -406,13 +406,18 @@
     const state = entry.detail ? ` · ${entry.detail}` : (entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '');
     const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
     if (entry.kind !== 'team') {
-      const n = entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1);
-      const [one, many] = PROP_STAT_UNITS[betTypeOf(p)] || ['', ''];
-      const stat = `${n} ${entry.stat === 1 ? one : many}`.trim();
+      const stat = propStatText(entry, p);
       // A prop published before props carried their game has no score.
       return entry.team_score == null ? stat : `${stat} · ${a}-${b}${state}`;
     }
     return `${isTotalBet(p) ? a + b : `${a}-${b}`}${state}`;
+  }
+
+  // "1 TD", "0 TDs", "64 Rec Yds".
+  function propStatText(entry, p) {
+    const n = entry.stat % 1 === 0 ? entry.stat : entry.stat.toFixed(1);
+    const [one, many] = PROP_STAT_UNITS[betTypeOf(p)] || ['', ''];
+    return `${n} ${entry.stat === 1 ? one : many}`.trim();
   }
 
   // Rewrites the graded detail -- free text out of the sheet's Grade Detail
@@ -450,9 +455,8 @@
   // live, or the graded final once it's decided -- never more than one of
   // the three at once, which is what keeps a leg card to a single stat row.
   // The chip beside the verdict: what the leg was graded from. Empty string
-  // until the leg is actually decided, so a pending or live leg shows nothing
-  // there -- its number is still moving and isn't a result yet, so it stays
-  // in the detail row below instead.
+  // until the leg is actually decided -- a live leg gets livePillHtml in the
+  // same spot instead, and a leg that hasn't kicked off gets nothing.
   function finalChipHtml(p) {
     if (p.result !== 'Win' && p.result !== 'Loss') return '';
     // auto_grade_results.py writes a score-graded detail as "17-10 final";
@@ -467,6 +471,25 @@
     // does -- see .fin.is-text.
     const cls = /^[\d\s.–—-]+$/.test(text) ? 'fin' : 'fin is-text';
     return `<span class="${cls}" title="${esc(text)}">${esc(text)}</span>`;
+  }
+
+  // finalChipHtml's live counterpart, in the same pill: the number the leg
+  // is riding on right now -- the score, a total's combined points, a
+  // prop's stat. A spread adds the game's margin written the way a spread
+  // is, so it reads straight against the bet's own line: Bears up 13-3 are
+  // playing like a -10 next to their -3. Not 1st Half Spread -- the live
+  // score is the full game's, which stops being the half's after halftime.
+  const LIVE_SPREAD_BET_TYPES = new Set(['Spread', 'Alt Spread']);
+  function livePillHtml(p, entry) {
+    let text;
+    if (entry.kind !== 'team') {
+      text = propStatText(entry, p);
+    } else {
+      const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
+      text = isTotalBet(p) ? String(a + b) : `${a}-${b}`;
+      if (LIVE_SPREAD_BET_TYPES.has(betTypeOf(p))) text += ` · ${a === b ? 'PK' : `${a > b ? '-' : '+'}${Math.abs(a - b)}`}`;
+    }
+    return `<span class="fin">${esc(text)}</span>`;
   }
 
   // The third stat slot, for a leg that hasn't been decided yet: the kickoff
@@ -543,7 +566,7 @@
           <div class="leg-top">
             <div class="leg-name">${esc(name)}</div>
             <div class="leg-result-group">
-              ${finalChipHtml(p)}
+              ${entry ? livePillHtml(p, entry) : finalChipHtml(p)}
               <span class="leg-result ${resultTone}">${resultLabel}</span>
               <span class="leg-chev">▶</span>
             </div>
