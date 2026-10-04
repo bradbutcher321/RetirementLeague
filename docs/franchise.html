@@ -53,7 +53,13 @@
      the main area's bounds -- the same rectangle overflow:hidden gave us.
      clip-path applies after filter, so the blur is clipped too. */
   .hero2-main{ overflow: visible; }
-  .hero2-main::before{ clip-path: inset(22.23%); }
+  .hero2-main::before{ clip-path: inset(22.23% round 14px 0 0 14px); }
+  @media (max-width:700px){ .hero2-main::before{ clip-path: inset(22.23% round 14px 14px 0 0); } }
+  /* theme.css masks .hero2 so iOS Safari rounds the glow's corner -- but a
+     mask clips every descendant it paints, position: fixed ones included,
+     which put the previews back in the box. The rounded clip-path above
+     does the same corner job on the glow alone, so the mask can go here. */
+  .hero2{ -webkit-mask-image: none; mask-image: none; }
 
   .hero-pills{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
   .aka{ background: var(--item); border: 1px solid var(--item-line); color: var(--text-dim); font-size: 0.74rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
@@ -100,9 +106,10 @@
      .glass (the card's rounded corners). Un-hiding all of them would let the
      glow bleed and square off the card, so instead the previews switch to
      position: fixed, which no ancestor's overflow can clip, and CSS anchor
-     positioning pins them back to their own tile. position-try-fallbacks
-     flips a preview above its tile when there's no room below, which is what
-     the past-team rows near the card's bottom edge need.
+     positioning pins them back to their own tile. Past-team previews sit
+     centered above their chip; the current logo's sits below it, since it's
+     near the top of the card. position-try-fallbacks flips either one to the
+     other side when the viewport has no room.
 
      Each element's position-anchor is set inline where it's rendered, since
      the names have to be unique per tile. Browsers without anchor support
@@ -113,11 +120,12 @@
       position: fixed;
       inset: auto;
       transform: none;
-      top: calc(anchor(bottom) + 8px);
       justify-self: anchor-center;
       position-try-fallbacks: flip-block;
       z-index: 50;
     }
+    .current-logo-preview{ top: anchor(bottom); margin-top: 8px; }
+    .aka-logo-preview{ bottom: anchor(top); margin-bottom: 8px; }
   }
 
   /* ---------- Headline stat cards (.podium/.pod live in theme.css) ---------- */
