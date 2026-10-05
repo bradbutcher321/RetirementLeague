@@ -2278,9 +2278,9 @@
   }
 
   // A couple of flat, data-free inside jokes in the rotation, per request.
-  // Rolled separately at a flat 5% rather than being mixed into the same
+  // Rolled separately at a flat 10% rather than being mixed into the same
   // pool as the real stats -- with 70+ real facts, an easter egg sitting
-  // in that same pool would show up far less than 5% of the time.
+  // in that same pool would show up far less than 10% of the time.
   const EASTER_EGG_FACTS = [
     'Shit hurts k',
     `&ldquo;Don't do it&rdquo;<span class="stat-moment-attrib">&mdash; Jon</span>`,
@@ -2292,12 +2292,12 @@
     "Joe K is the only member with a J in their name to win a ship. Poor Joe G, Jared, Jeff, Jon, TJ, and Ja'Kris.",
     'Every member without a J in their name has managed to win a championship except Kris...',
   ];
-  const EASTER_EGG_CHANCE = 0.05;
-  // Rolled separately from EASTER_EGG_FACTS, at its own flat 5%, same
+  const EASTER_EGG_CHANCE = 0.10;
+  // Rolled separately from EASTER_EGG_FACTS, at its own flat 1%, same
   // reasoning -- this fills in a random manager dynamically (any current
   // manager with zero championships), so it can't live as a static string
   // in that array, but mixing its ~6 generated instances into the ~75-ish
-  // main stat pool made it show up closer to 8% than the intended 5%.
+  // main stat pool made it show up far more often than intended.
   const DBZ_CHANCE = 0.01;
   function dbzFact(franchise) {
     const players = ((franchise && franchise.players) || []).filter(p => !PAST_MEMBERS.has(p.name));
