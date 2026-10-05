@@ -228,17 +228,25 @@
   .lb-meta{ color: var(--text-dim); font-size: 0.76rem; margin-top: 1px; }
   .lb-stat{ text-align: center; flex-shrink: 0; width: 48px; }
   .lb-stat .v{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
-  .lb-stat .l{ font-size: 0.58rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.02em; margin-top: 1px; }
+  /* One header over the list names the columns, instead of a caption
+     under every number -- and says what the chip is, which changes with
+     the Season So Far mode (playoff odds, or rank movement this week).
+     Same flex widths and gap as .lb-row so every label sits over its column. */
+  .lb-head{ display: flex; align-items: center; gap: 12px; padding: 0 15px; margin-bottom: -2px; color: var(--text-dim); font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .lb-head .lb-rank{ font-size: inherit; }
+  .lb-head .lb-chip-col{ flex-shrink: 0; width: 56px; text-align: center; }
   .lb-playoff-chip{
     flex-shrink: 0;
+    box-sizing: border-box;
     font-size: 0.68rem;
     font-weight: 700;
     padding: 3px 8px;
     border-radius: 999px;
     border: 1px solid var(--line);
     color: var(--text-dim);
-    min-width: 40px;
+    width: 56px;
     text-align: center;
+    white-space: nowrap;
   }
   .lb-playoff-chip.high{ border-color: var(--turf-dim); color: var(--turf); }
   .lb-playoff-chip.low{ border-color: rgba(192,87,75,0.4); color: var(--loss); }
@@ -755,7 +763,6 @@
     .spread-col{ width: 84px; }
     .lb-stat{ width: 34px; }
     .lb-stat .v{ font-size: 0.82rem; }
-    .lb-stat .l{ font-size: 0.52rem; }
     /* The desktop inset that pulls the four stats together leaves too
        little width on a phone -- Payout wrapped onto a second line. */
     .ph-stats{ margin: auto 0 0; }
@@ -2022,6 +2029,9 @@
     };
     const nameList = names => names.length < 3 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
     const has = (p, f) => typeof f(p) === 'number';
+    // season_history includes the season in progress (final_standing 0,
+    // live reg_standing) -- leave it out of any career average or record.
+    const completedSeasons = p => (p.season_history || []).filter(s => s.final_standing !== 0 && typeof s.reg_standing === 'number');
     // Fisher-Yates-ish: good enough for "pick a handful at random" on a
     // list this small, not used anywhere order-sensitive.
     const sampleUpTo = (arr, n) => arr.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).slice(0, n).map(([, x]) => x);
@@ -2045,9 +2055,11 @@
     const withHigh = players.filter(p => has(p, p => p.extremes && p.extremes.highest_score));
     const topHigh = maxBy(withHigh, p => p.extremes.highest_score);
     add(topHigh, `${topHigh && topHigh.name} owns the single-week scoring record in league history, ${hi(fmtScore(topHigh && topHigh.extremes.highest_score))}.`);
-    const withLow = players.filter(p => has(p, p => p.extremes && typeof p.extremes.lowest_score === 'number'));
-    const lowLow = minBy(withLow, p => p.extremes.lowest_score);
-    add(lowLow, `${lowLow && lowLow.name} is responsible for the lowest single-week score in league history, just ${hi(fmtScore(lowLow && lowLow.extremes.lowest_score))}.`);
+    const withLow = players.filter(p => has(p, p => p.extremes && p.extremes.lowest_score));
+    const lowLow = topTied(withLow, p => -p.extremes.lowest_score);
+    add(lowLow.names.length, lowLow.names.length > 1
+      ? `${nameList(lowLow.names)} share the lowest single-week score in league history, just ${hi(fmtScore(-lowLow.value))}.`
+      : `${lowLow.names[0]} is responsible for the lowest single-week score in league history, just ${hi(fmtScore(-lowLow.value))}.`);
 
     const withWinMargin = players.filter(p => has(p, p => p.extremes && p.extremes.biggest_win_margin));
     const topWinMargin = maxBy(withWinMargin, p => p.extremes.biggest_win_margin);
@@ -2083,11 +2095,17 @@
       ? `${nameList(sackoTop.names)} are all tied for the most league Sackos with ${hi(sackoTop.value)}.`
       : `${sackoTop.names[0]} has finished the full season as Sacko ${hi(sackoTop.value)} time${sackoTop.value === 1 ? '' : 's'}, more than anyone.`);
 
-    const withMoney = players.filter(p => has(p, p => p.money && typeof p.money.net_result === 'number'));
-    const topMoney = maxBy(withMoney, p => p.money.net_result);
-    const bottomMoney = minBy(withMoney, p => p.money.net_result);
-    add(topMoney, `${topMoney && topMoney.name} is up the most money in league history, ${hi('$' + fmtScore(topMoney && topMoney.money.net_result))}.`);
-    add(bottomMoney, `${bottomMoney && bottomMoney.name} is down the most money in league history, ${hi('$' + fmtScore(bottomMoney && bottomMoney.money.net_result))}.`);
+    // has() takes the value itself, not a true/false test -- passing it a
+    // `typeof x === 'number'` check made these pools silently empty.
+    const withMoney = players.filter(p => has(p, p => p.money && p.money.net_result));
+    const moneyUp = topTied(withMoney, p => p.money.net_result);
+    const moneyDown = topTied(withMoney, p => -p.money.net_result);
+    add(moneyUp.value > 0, moneyUp.names.length > 1
+      ? `${nameList(moneyUp.names)} are tied for the most money up in league history, ${hi(fmtMoney(moneyUp.value))} each.`
+      : `${moneyUp.names[0]} is up the most money in league history, ${hi(fmtMoney(moneyUp.value))}.`);
+    add(moneyDown.value > 0, moneyDown.names.length > 1
+      ? `${nameList(moneyDown.names)} are tied for the most money down in league history, ${hi(fmtMoney(moneyDown.value))} each.`
+      : `${moneyDown.names[0]} is down the most money in league history, ${hi(fmtMoney(moneyDown.value))}.`);
 
     const withEff = players.filter(p => has(p, p => p.efficiency && p.efficiency.career_pct));
     const topEff = maxBy(withEff, p => p.efficiency.career_pct);
@@ -2137,11 +2155,16 @@
     add(neverWonFounders.length > 0,
       `Look at all these founding members that have never won a ship: ${hi(neverWonFounders.map(p => p.name).join(', '))}.`);
 
-    const withBestFinish = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.best_regular_finish));
-    const topBestFinish = minBy(withBestFinish, p => p.career.standings.best_regular_finish);
-    add(topBestFinish, `${topBestFinish && topBestFinish.name}'s best-ever regular season finish is ${hi('#' + topBestFinish.career.standings.best_regular_finish)}.`);
-    const withWorstFinish = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.worst_regular_finish));
-    const worstFinishTop = topTied(withWorstFinish, p => p.career.standings.worst_regular_finish);
+    // career.standings.best/worst_regular_finish count the season in
+    // progress (Jon's "best 2" was a Week 3 rank), so finishes come from
+    // completed seasons only.
+    const finishes = p => completedSeasons(p).map(s => s.reg_standing);
+    const withFinishes = players.filter(p => finishes(p).length);
+    const bestFinishTop = topTied(withFinishes, p => -Math.min(...finishes(p)));
+    add(bestFinishTop.names.length, bestFinishTop.names.length > 1
+      ? `${nameList(bestFinishTop.names)} have all finished the regular season ${hi('#' + -bestFinishTop.value)}.`
+      : `${bestFinishTop.names[0]} is the only manager to finish the regular season ${hi('#' + -bestFinishTop.value)}.`);
+    const worstFinishTop = topTied(withFinishes, p => Math.max(...finishes(p)));
     add(worstFinishTop.names.length, worstFinishTop.names.length > 1
       ? `${nameList(worstFinishTop.names)} have all finished dead last in the regular season, ${hi('#' + worstFinishTop.value)}.`
       : `${worstFinishTop.names[0]} has finished dead last in the regular season, ${hi('#' + worstFinishTop.value)}, worse than anyone else ever has.`);
@@ -2162,14 +2185,16 @@
     const withCloseLosses = players.filter(p => has(p, p => p.extremes && p.extremes.close_losses));
     const topCloseLosses = maxBy(withCloseLosses, p => p.extremes.close_losses);
     add(topCloseLosses, `${topCloseLosses && topCloseLosses.name} has lost more heartbreakers than anyone in league history, ${hi(topCloseLosses && topCloseLosses.extremes.close_losses)} close losses.`);
-    const withLowMargin = players.filter(p => has(p, p => p.extremes && typeof p.extremes.lowest_win_margin === 'number'));
-    const topLowMargin = minBy(withLowMargin, p => p.extremes.lowest_win_margin);
-    add(topLowMargin, `${topLowMargin && topLowMargin.name} is responsible for the closest win margin in league history, just ${hi(fmtScore(topLowMargin && topLowMargin.extremes.lowest_win_margin))} points.`);
+    const withLowMargin = players.filter(p => has(p, p => p.extremes && p.extremes.lowest_win_margin));
+    const lowMargin = topTied(withLowMargin, p => -p.extremes.lowest_win_margin);
+    add(lowMargin.names.length, lowMargin.names.length > 1
+      ? `${nameList(lowMargin.names)} share the closest win margin in league history, just ${hi(fmtScore(-lowMargin.value))} points.`
+      : `${lowMargin.names[0]} is responsible for the closest win margin in league history, just ${hi(fmtScore(-lowMargin.value))} points.`);
 
     const withPerfect = players.filter(p => has(p, p => p.efficiency && p.efficiency.perfect_lineups));
     const topPerfect = maxBy(withPerfect, p => p.efficiency.perfect_lineups);
     add(topPerfect && topPerfect.efficiency.perfect_lineups > 0, `${topPerfect && topPerfect.name} has started the perfect optimal lineup ${hi(topPerfect && topPerfect.efficiency.perfect_lineups)} times, more than anyone.`);
-    const withWorstGame = players.filter(p => has(p, p => p.efficiency && p.efficiency.worst_game && typeof p.efficiency.worst_game.diff === 'number'));
+    const withWorstGame = players.filter(p => has(p, p => p.efficiency && p.efficiency.worst_game && p.efficiency.worst_game.diff));
     const topWorstGame = maxBy(withWorstGame, p => p.efficiency.worst_game.diff);
     if (topWorstGame) {
       const wg = topWorstGame.efficiency.worst_game;
@@ -2272,28 +2297,37 @@
     }).filter(Boolean);
     const mostClutch = maxBy(clutch, c => c.delta);
     const leastClutch = minBy(clutch, c => c.delta);
-    add(mostClutch && mostClutch.delta > 0, `${mostClutch && mostClutch.name} turns it up in the playoffs, with a win rate ${hi('+' + fmtScore(mostClutch && mostClutch.delta) + '%')} higher than in the regular season.`);
-    add(leastClutch && leastClutch.delta < 0, `${leastClutch && leastClutch.name} folds in the playoffs, with a win rate ${hi(fmtScore(leastClutch && leastClutch.delta) + '%')} lower than in the regular season.`);
+    // The delta is a difference of two percentages, so it's percentage
+    // points, and "higher"/"lower" already carry the sign.
+    const pctPts = d => `${Math.abs(d).toFixed(1)} percentage points`;
+    add(mostClutch && mostClutch.delta > 0, `${mostClutch && mostClutch.name} turns it up in the playoffs, with a win rate ${hi(pctPts(mostClutch && mostClutch.delta))} higher than in the regular season.`);
+    add(leastClutch && leastClutch.delta < 0, `${leastClutch && leastClutch.name} folds in the playoffs, with a win rate ${hi(pctPts(leastClutch && leastClutch.delta))} lower than in the regular season.`);
 
-    // ----- Average regular-season finish, across every season played. -----
-    const avgFinish = players.map(p => {
-      const seasons = (p.season_history || []).filter(s => typeof s.reg_standing === 'number');
-      if (!seasons.length) return null;
-      return { name: p.name, avg: seasons.reduce((a, s) => a + s.reg_standing, 0) / seasons.length };
-    }).filter(Boolean);
-    const bestAvgFinish = minBy(avgFinish, a => a.avg);
-    const worstAvgFinish = maxBy(avgFinish, a => a.avg);
-    add(bestAvgFinish, `${bestAvgFinish && bestAvgFinish.name} has the league's best average regular-season finish, ${hi('#' + fmtScore(bestAvgFinish && bestAvgFinish.avg))}.`);
-    add(worstAvgFinish, `${worstAvgFinish && worstAvgFinish.name} has the league's worst average regular-season finish, ${hi('#' + fmtScore(worstAvgFinish && worstAvgFinish.avg))}.`);
+    // ----- Average regular-season finish, across every completed season
+    // (the current season's rank is a weekly snapshot and would make the
+    // leader change hands every week). Rounded to the 2 decimals shown so
+    // float noise can't split a visible tie. -----
+    const avgFinish = withFinishes.map(p => {
+      const f = finishes(p);
+      return { name: p.name, avg: Math.round(f.reduce((a, n) => a + n, 0) / f.length * 100) / 100 };
+    });
+    const bestAvg = topTied(avgFinish, a => -a.avg);
+    const worstAvg = topTied(avgFinish, a => a.avg);
+    add(bestAvg.names.length, bestAvg.names.length > 1
+      ? `${nameList(bestAvg.names)} are tied for the league's best average regular-season finish, ${hi(fmtScore(-bestAvg.value))}.`
+      : `${bestAvg.names[0]} has the league's best average regular-season finish, ${hi(fmtScore(-bestAvg.value))}.`);
+    add(worstAvg.names.length, worstAvg.names.length > 1
+      ? `${nameList(worstAvg.names)} are tied for the league's worst average regular-season finish, ${hi(fmtScore(worstAvg.value))}.`
+      : `${worstAvg.names[0]} has the league's worst average regular-season finish, ${hi(fmtScore(worstAvg.value))}.`);
 
     // ----- More money: gross earnings and parlay volume (net_result,
     // above, already covers up/down -- these are different cuts of it). -----
     const withEarnings = players.filter(p => has(p, p => p.money && p.money.total_earnings));
     const topEarnings = maxBy(withEarnings, p => p.money.total_earnings);
-    add(topEarnings, `${topEarnings && topEarnings.name} has won more money than anyone in league history, ${hi('$' + fmtScore(topEarnings && topEarnings.money.total_earnings))}, before dues.`);
+    add(topEarnings, `${topEarnings && topEarnings.name} has won more money than anyone in league history, ${hi(fmtMoney(topEarnings && topEarnings.money.total_earnings))}, before dues.`);
     const withParlays = players.filter(p => has(p, p => p.money && p.money.parlays_purchased));
     const topParlays = maxBy(withParlays, p => p.money.parlays_purchased);
-    add(topParlays && topParlays.money.parlays_purchased > 0, `${topParlays && topParlays.name} has spent more on parlays than anyone in league history, ${hi('$' + fmtScore(topParlays && topParlays.money.parlays_purchased))}.`);
+    add(topParlays && topParlays.money.parlays_purchased > 0, `${topParlays && topParlays.name} has spent more on parlays than anyone in league history, ${hi(fmtMoney(topParlays && topParlays.money.parlays_purchased))}.`);
 
     return facts;
   }
@@ -2499,14 +2533,23 @@
           <div class="lb-name">${t.name}</div>
           <div class="lb-meta">${t.manager ? `${t.manager} • ` : ''}${t.record}</div>
         </div>
-        <div class="lb-stat"><div class="v">${fmtScore(t.pointsFor)}</div><div class="l">PF</div></div>
-        <div class="lb-stat"><div class="v">${fmtScore(t.pointsAgainst)}</div><div class="l">PA</div></div>
+        <div class="lb-stat"><div class="v">${fmtScore(t.pointsFor)}</div></div>
+        <div class="lb-stat"><div class="v">${fmtScore(t.pointsAgainst)}</div></div>
         <div class="lb-playoff-chip ${chipCls}">${fmtPct(t.playoffPct)}</div>
       </div>`;
   }
 
   // ---------- Standings: through last week / + this week live / + this week projected ----------
   let standingsData = null;
+
+  function renderLeaderboardHead(chipLabel) {
+    return `
+      <div class="lb-head" aria-hidden="true">
+        <span class="lb-rank"></span><span class="lb-identity"></span>
+        <span class="lb-stat">PF</span><span class="lb-stat">PA</span>
+        <span class="lb-chip-col">${chipLabel}</span>
+      </div>`;
+  }
 
   // ---------- Season So Far: one Through / live / projected mode shared by
   // Superlatives and Standings. Defaults to "Through Week N-1" and is
@@ -2595,14 +2638,14 @@
 
     if (!hasPrior) {
       // Week 1: no earlier week to compare against.
-      container.innerHTML = teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
+      container.innerHTML = renderLeaderboardHead('Odds') + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
       return;
     }
 
     const m = activeSeasonMode();
 
     if (m === 'through') {
-      container.innerHTML = teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
+      container.innerHTML = renderLeaderboardHead('Odds') + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
       return;
     }
 
@@ -2610,7 +2653,7 @@
     const base = projectStandings(data, 'through');
     const baseRank = new Map([...base].sort((a, b) => b.w - a.w || b.pf - a.pf).map((r, i) => [r.name, i + 1]));
     const ordered = [...rows].sort((a, b) => b.w - a.w || b.pf - a.pf);
-    container.innerHTML = ordered.map((r, i) => {
+    container.innerHTML = renderLeaderboardHead('Move') + ordered.map((r, i) => {
       const rank = i + 1;
       const move = baseRank.get(r.name) - rank;
       const chipCls = move > 0 ? 'high' : move < 0 ? 'low' : '';
@@ -2623,8 +2666,8 @@
           <div class="lb-name">${r.name}</div>
           <div class="lb-meta">${r.manager ? `${r.manager} • ` : ''}${formatRecordParts(r.w, r.l, r.ties)}</div>
         </div>
-        <div class="lb-stat"><div class="v">${fmtScore(r.pf)}</div><div class="l">PF</div></div>
-        <div class="lb-stat"><div class="v">${fmtScore(r.pa)}</div><div class="l">PA</div></div>
+        <div class="lb-stat"><div class="v">${fmtScore(r.pf)}</div></div>
+        <div class="lb-stat"><div class="v">${fmtScore(r.pa)}</div></div>
         <div class="lb-playoff-chip ${chipCls}">${chipText}</div>
       </div>`;
     }).join('');
@@ -2781,7 +2824,11 @@
         </div>
       </div>`;
     }).join('');
-    const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${week > 1 ? 'Thru Wk ' + (week - 1) : 'Before'} \u2192 ${modeLabel}</span></div>${leadRows}</div>`;
+    // The arrow reads "from where the bars start -> to where they end", so
+    // it only belongs in live/projected mode; Through mode has no movement.
+    const leadCaption = m === 'through' ? modeLabel
+      : `${week > 1 ? 'Week ' + (week - 1) : 'Preseason'} \u2192 Week ${week} ${m === 'live' ? 'live' : 'projected'}`;
+    const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${leadCaption}</span></div>${leadRows}</div>`;
 
     container.innerHTML =
       card('Season High Score', high.score, high.team, high.manager, high.meta, highExtra, tag(high.isNew, 'New record')) +
@@ -2798,6 +2845,8 @@
     return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
   }
 
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
   function loadActivity() {
     fetch(WORKER_URL + '/stats', { cache: 'no-store' })
       .then(res => res.json())
@@ -2810,8 +2859,8 @@
         document.getElementById('activity-container').innerHTML = `
           <div class="act-tiles">
             <div class="act-tile"><div class="act-label">Active now</div><div class="act-value">${st.activeNow}</div><div class="act-sub">last 5 minutes</div></div>
-            <div class="act-tile"><div class="act-label">Unique visitors today</div><div class="act-value">${st.visitorsToday}</div><div class="act-sub">people</div></div>
-            <div class="act-tile"><div class="act-label">Page views today</div><div class="act-value">${st.viewsToday}</div><div class="act-sub">pages opened</div></div>
+            <div class="act-tile"><div class="act-label">Unique visitors today</div><div class="act-value">${st.visitorsToday}</div><div class="act-sub">${st.visitorsToday === 1 ? 'person' : 'people'}</div></div>
+            <div class="act-tile"><div class="act-label">Page views today</div><div class="act-value">${st.viewsToday}</div><div class="act-sub">${st.viewsToday === 1 ? 'page opened' : 'pages opened'}</div></div>
           </div>
           <div class="act-panels">
             <div class="act-card"><div class="act-card-title">Last 7 days</div>
@@ -2820,7 +2869,7 @@
               <div class="act-row head"><span>Page</span><span class="r">Views</span></div>${pages || '<div class="act-row"><span class="n">No visits yet</span></div>'}</div>
           </div>`;
         document.getElementById('activity-summary').textContent =
-          `${st.activeNow} active now · ${st.visitorsToday} visitors · ${st.viewsToday} views today`;
+          `${st.activeNow} active now · ${plural(st.visitorsToday, 'visitor', 'visitors')} · ${plural(st.viewsToday, 'view', 'views')} today`;
         document.getElementById('activity-section').hidden = false;
       })
       .catch(() => { document.getElementById('activity-section').hidden = true; });
