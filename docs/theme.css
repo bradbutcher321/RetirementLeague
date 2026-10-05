@@ -754,6 +754,30 @@ h2{
 .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }
 footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
 
+/* ---------- Detail panels: a bottom sheet on a phone, a popover on desktop ----------
+   Shared by Game Records (a record's top 10) and the Dashboard's Median
+   Watch (a manager's players still to come). Each page decides which one
+   to open -- both switch at 720px -- and what goes inside; these are just
+   the surfaces. Neither moves anything on the page underneath. */
+.scrim{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.55); animation:panel-fade .18s ease-out; }
+.sheet{ position:fixed; left:0; right:0; bottom:0; z-index:61; max-height:82vh; display:flex; flex-direction:column;
+        background:#141414; border-top:1px solid rgba(255,255,255,0.1); border-radius:20px 20px 0 0; animation:panel-rise .22s ease-out; }
+.sheet-grab{ padding:8px 0 4px; display:flex; justify-content:center; cursor:grab; touch-action:none; }
+.sheet-grab span{ width:38px; height:5px; border-radius:3px; background:rgba(255,255,255,0.22); }
+.sheet-head{ padding:6px 16px 0; touch-action:none; }
+.sheet-body{ overflow-y:auto; padding:0 12px calc(14px + env(safe-area-inset-bottom, 0px)); overscroll-behavior:contain; }
+@keyframes panel-rise{ from{ transform:translateY(100%); } to{ transform:none; } }
+@keyframes panel-fade{ from{ opacity:0; } to{ opacity:1; } }
+@media (prefers-reduced-motion:reduce){ .sheet, .scrim{ animation:none; } }
+/* The arrow points at whatever opened the popover: centered by default, or
+   at --arrow-x when the popover is wider than its anchor. */
+.pop{ position:absolute; z-index:60; background:#151515; border:1px solid var(--lead-line); border-radius:12px; padding:14px 14px 8px; box-shadow:0 18px 50px -12px rgba(0,0,0,0.9); }
+.pop::before{ content:''; position:absolute; top:-7px; left:var(--arrow-x, 50%); width:12px; height:12px; margin-left:-6px; background:#151515; border-left:1px solid var(--lead-line); border-top:1px solid var(--lead-line); transform:rotate(45deg); }
+/* Scoped to the panels: franchise.html's chart labels also use class "x". */
+.pop .x, .sheet .x{ background:rgba(255,255,255,0.06); border:none; color:var(--text-dim); border-radius:999px; width:30px; height:30px; font:inherit; font-size:1rem; line-height:1; cursor:pointer; flex:none; }
+.pop .x:hover, .sheet .x:hover{ color:var(--text); }
+.pop .x:focus-visible, .sheet .x:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
 @media (max-width: 480px){
   .wrap{ padding: 0 14px 40px; }
   section{ margin-bottom: 32px; }

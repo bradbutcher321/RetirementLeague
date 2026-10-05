@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=8">
+<link rel="stylesheet" href="theme.css?v=9">
 <link rel="stylesheet" href="nav.css?v=4">
 <link rel="stylesheet" href="league.css?v=6">
 <style>
@@ -64,9 +64,6 @@
   /* ---------- The top 10 (sheet and popover share it) ---------- */
   .list-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
   .list-title{ font-weight:700; font-size:1.05rem; }
-  .x{ background:rgba(255,255,255,0.06); border:none; color:var(--text-dim); border-radius:999px; width:30px; height:30px; font:inherit; font-size:1rem; line-height:1; cursor:pointer; flex:none; }
-  .x:hover{ color:var(--text); }
-  .x:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   .list-switch{ margin-bottom:6px; }
   .crow{ display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:10px; align-items:center; padding:9px 4px; }
   .crow + .crow{ border-top:1px solid var(--line); }
@@ -76,22 +73,11 @@
   .crow .vl{ font-family:var(--scoreboard); font-weight:700; font-size:1.1rem; font-variant-numeric:tabular-nums; text-align:right; }
   .crow.top .rk, .crow.top .vl{ color:var(--gold); }
 
-  /* Phone: a bottom sheet, swiped down (or tapped outside) to close. */
-  .scrim{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,0.55); animation:gr-fade .18s ease-out; }
-  .sheet{ position:fixed; left:0; right:0; bottom:0; z-index:61; max-height:82vh; display:flex; flex-direction:column;
-          background:#141414; border-top:1px solid rgba(255,255,255,0.1); border-radius:20px 20px 0 0; animation:gr-rise .22s ease-out; }
-  .sheet-grab{ padding:8px 0 4px; display:flex; justify-content:center; cursor:grab; touch-action:none; }
-  .sheet-grab span{ width:38px; height:5px; border-radius:3px; background:rgba(255,255,255,0.22); }
-  .sheet-head{ padding:6px 16px 0; touch-action:none; }
-  .sheet-body{ overflow-y:auto; padding:0 12px calc(14px + env(safe-area-inset-bottom, 0px)); overscroll-behavior:contain; }
-  @keyframes gr-rise{ from{ transform:translateY(100%); } to{ transform:none; } }
-  @keyframes gr-fade{ from{ opacity:0; } to{ opacity:1; } }
-  @media (prefers-reduced-motion:reduce){ .sheet, .scrim{ animation:none; } }
-
-  /* Desktop: a popover under the whole card -- the same spot for either of
-     its records, so flipping the switch swaps the list without it moving. */
-  .pop{ position:absolute; z-index:60; background:#151515; border:1px solid var(--lead-line); border-radius:12px; padding:14px 14px 8px; box-shadow:0 18px 50px -12px rgba(0,0,0,0.9); }
-  .pop::before{ content:''; position:absolute; top:-7px; left:50%; width:12px; height:12px; margin-left:-6px; background:#151515; border-left:1px solid var(--lead-line); border-top:1px solid var(--lead-line); transform:rotate(45deg); }
+  /* The list opens in a bottom sheet on a phone and a popover under the
+     whole card on desktop -- the same spot for either of its records, so
+     flipping the switch swaps the list without it moving. Both surfaces,
+     and their × button, are shared with the Dashboard's Median Watch: see
+     "Detail panels" in theme.css. */
 </style>
 </head>
 <body>

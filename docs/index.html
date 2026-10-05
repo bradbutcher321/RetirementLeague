@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=8">
+<link rel="stylesheet" href="theme.css?v=9">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* ---------- Matchup cards ----------
@@ -464,6 +464,48 @@
     .mb-card .mw-stat{ font-size: 0.6rem; gap: 3px; }
     .mb-card .mw-margin{ font-size: 0.6rem; }
   }
+
+  /* ---------- Median Watch: a manager's players still to come ----------
+     A card with players left opens them -- in the shared bottom sheet on a
+     phone, the shared popover under the card on desktop (theme.css "Detail
+     panels", the same pair Game Records uses). Neither moves a card. */
+  .mb-card.can{ cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
+  .mb-card.can:hover{ background: var(--item-hover); }
+  .mb-card.can:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .mb-card.sel{ border-color: var(--lead-line); background: var(--lead-tint); }
+  #mw-pop{ padding: 14px; }
+  #mw-sheet .sheet-grab{ position: relative; }
+  #mw-sheet .sheet-head{ padding: 6px 18px 0; }
+  #mw-sheet .sheet-body{ padding: 0 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
+  .mwp-done{ position: absolute; right: 8px; top: 0; font: 600 0.82rem var(--body); color: var(--gold); background: none; border: 0; padding: 8px 12px; min-height: 36px; cursor: pointer; }
+  .mwp-head{ display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .mwp-head.has-x{ grid-template-columns: minmax(0,1fr) auto auto; }
+  .mwp-head .x{ align-self: start; }
+  .mwp-name{ font-size: 1.1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mwp-sub{ font-size: 0.74rem; color: var(--text-dim); margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .mwp-sub b{ font-family: var(--scoreboard); font-size: 0.95rem; font-weight: 700; color: var(--gold); margin-left: 3px; }
+  .mwp-score{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.9rem; line-height: 0.95; font-variant-numeric: tabular-nums; }
+  #mw-sheet .mwp-name{ font-size: 1.3rem; }
+  #mw-sheet .mwp-score{ font-size: 2.3rem; }
+  .mwp-label{ font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); margin: 12px 0 8px; }
+  .mwp-pods{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .mwp-pod{ background: var(--item); border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px 11px; min-width: 0; }
+  .mwp-pod-top{ display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  .mwp-st{ font-size: 0.6rem; color: var(--text-dim); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .mwp-st.live{ color: var(--loss); }
+  .mwp-st .ld{ width: 5px; height: 5px; border-radius: 50%; background: var(--loss); animation: pulse 1.5s ease-in-out infinite; }
+  .mwp-game{ font-size: 0.6rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
+  .mwp-pts{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.95rem; line-height: 1; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .mwp-pts.none{ color: var(--text-dim); }
+  .mwp-proj{ font-size: 0.6rem; color: var(--text-dim); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .mwp-nm{ font-size: 0.82rem; font-weight: 600; margin-top: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mwp-nm span{ color: var(--text-dim); font-weight: 500; font-size: 0.64rem; margin-left: 4px; }
+  .mwp-sline{ font-size: 0.66rem; color: var(--text-dim); margin-top: 3px; line-height: 1.35; min-height: 1.35em; }
+  .mwp-nav{ display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
+  .mwp-nav button{ font: 600 0.8rem var(--body); color: var(--text); background: rgba(255,255,255,0.06); border: 1px solid var(--line); border-radius: 999px; padding: 0 16px; min-height: 44px; cursor: pointer; }
+  .mwp-nav button.gone{ visibility: hidden; }
+  .mwp-nav button:focus-visible, .mwp-done:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ .mwp-st .ld{ animation: none; } }
   /* Same 0.68s/bounce-adjacent duration as cards+chart sliding into their
      new spot on toggle. */
   ::view-transition-group(*){ animation-duration: 0.68s; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -1027,7 +1069,10 @@
       const lead = l.cls === 'locked' ? '\u2713 ' : '';
       return `<div class="mw-stat ${l.cls}">${lead}${parts.map((x, i) => `${i ? '<span class="sep">\u00b7</span>' : ''}<span>${x}</span>`).join('')}</div>`;
     };
-    return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' : ''}" data-name="${t.name}">
+    // A card with anyone still to play opens them (see "players still to come" below).
+    const can = t.statusKnown && (t.inPlay + t.remaining) > 0;
+    const canAttrs = can ? ' role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false"' : '';
+    return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' : ''}${can ? ' can' : ''}" data-name="${t.name}"${canAttrs}>
       <div class="mw-top">
         <span class="mw-name">${t.name}</span>
         <div class="mw-score" style="color:var(--${tone});">${fmtScore(t.score)}</div>
@@ -1042,6 +1087,168 @@
   function mwGridHtml(list, tone, median) {
     return `<div class="mw-grid">${list.map(t => mwCardHtml(t, tone, median)).join('')}</div>`;
   }
+
+  // ---------- Median Watch: a manager's players still to come ----------
+  // Tapping a card with players left lists them: a bottom sheet on a phone,
+  // a popover under the card on desktop -- the same two surfaces, and the
+  // same 720px switch, the Game Records page uses for its top 10s (theme.css
+  // "Detail panels"). Neither moves a card. The open panel is rebuilt on
+  // every refresh, so its scores stay live, and it closes itself once that
+  // manager has nobody left to play.
+  const mwOneColumn = matchMedia('(max-width:720px)');
+  let mwOpen = null;
+
+  const mwCardEl = name => document.querySelector(`#median-container .mb-card[data-name="${CSS.escape(name)}"]`);
+  const mwStillToCome = p => ['pre', 'live', 'possession'].includes(playerState(p));
+
+  function mwPlayersLeft(name) {
+    const t = (lastMedianTeams || []).find(x => medianTeamName(x) === name);
+    if (!t || !lastMedianData) return null;
+    const m = (lastMedianData.matchups || []).find(x => x.awayName === t.name || x.homeName === t.name);
+    const players = m ? (m.awayName === t.name ? m.awayPlayers : m.homePlayers) || [] : [];
+    return { t, players: players.filter(mwStillToCome) };
+  }
+
+  // One player: game clock (or kickoff), his NFL game's score, his points so
+  // far, his pregame projection, and his stat line. Points stay white -- a
+  // player beating his projection mid-game isn't a result yet.
+  function mwPodHtml(p) {
+    const g = p.game || {};
+    const live = playerState(p) !== 'pre';
+    const status = live ? `<i class="ld"></i>${g.period > 4 ? 'OT' : `Q${g.period}`} ${g.clock}` : fmtKickoff(g.date);
+    const game = live ? `${g.team} ${g.teamScore}–${g.opponentScore} ${g.opponent}` : `${g.team} vs ${g.opponent}`;
+    const has = live && p.livePoints !== null && p.livePoints !== undefined;
+    return `<div class="mwp-pod">
+      <div class="mwp-pod-top"><span class="mwp-st${live ? ' live' : ''}">${status}</span><span class="mwp-game">${game}</span></div>
+      <div class="mwp-pts${has ? '' : ' none'}">${has ? fmtScore(p.livePoints) : '—'}</div>
+      <div class="mwp-proj">proj ${fmtScore(p.projectedPoints)}</div>
+      <div class="mwp-nm">${p.name}<span>${p.slot || ''}</span></div>
+      <div class="mwp-sline">${p.statLine || ''}</div>
+    </div>`;
+  }
+
+  // The manager, scored the way their card is right now (Current or
+  // Projected), with the other mode's number beside the margin.
+  function mwHeadHtml(t, name, withClose) {
+    const mode = medianViewMode;
+    const median = mode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
+    const card = mwCardEl(name);
+    const tone = card && card.closest('#median-below') ? 'loss' : 'turf';
+    const other = mode === 'current' ? `proj<b>${fmtScore(t.projected)}</b>` : `now<b>${fmtScore(t.current)}</b>`;
+    return `<div class="mwp-head${withClose ? ' has-x' : ''}">
+      <div style="min-width:0"><div class="mwp-name">${name}</div>
+        <div class="mwp-sub"><span style="color:var(--${tone})">${fmtMwMargin(t[mode] - median)}</span> vs median · ${other}</div></div>
+      <div class="mwp-score" style="color:var(--${tone})">${fmtScore(t[mode])}</div>
+      ${withClose ? '<button type="button" class="x" data-mw-close aria-label="Close">&times;</button>' : ''}
+    </div>`;
+  }
+
+  function mwShow(name, animate) {
+    const info = mwPlayersLeft(name);
+    if (!info || !info.players.length || !mwCardEl(name)) { mwHide(); return; }
+    mwOpen = name;
+    mwMark();
+    const count = info.players.length;
+    const label = `${name}: ${count} still to play`;
+    const list = `<div class="mwp-label">${count} still to play</div><div class="mwp-pods">${info.players.map(mwPodHtml).join('')}</div>`;
+
+    if (!mwOneColumn.matches) {
+      let pop = document.getElementById('mw-pop');
+      if (!pop) {
+        document.body.insertAdjacentHTML('beforeend', '<div class="pop" id="mw-pop" role="dialog"></div>');
+        pop = document.getElementById('mw-pop');
+      }
+      pop.setAttribute('aria-label', label);
+      pop.innerHTML = mwHeadHtml(info.t, name, true) + list;
+      mwPlacePop();
+      return;
+    }
+
+    // Phone: the sheet steps through managers itself, in card order.
+    const order = [...document.querySelectorAll('#median-container .mb-card.can')].map(c => c.dataset.name);
+    const i = order.indexOf(name), prev = order[i - 1], next = order[i + 1];
+    const nav = `<div class="mwp-nav">
+      <button type="button" class="${prev ? '' : 'gone'}" data-mw-go="${prev || ''}">‹ ${prev || ''}</button>
+      <button type="button" class="${next ? '' : 'gone'}" data-mw-go="${next || ''}">${next || ''} ›</button></div>`;
+    let sheet = document.getElementById('mw-sheet');
+    if (!sheet) {
+      const still = animate ? '' : ' style="animation:none"';
+      document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="mw-scrim" data-mw-close${still}></div>
+        <div class="sheet" id="mw-sheet" role="dialog" aria-modal="true"${still}>
+          <div class="sheet-grab" data-grab><span></span><button type="button" class="mwp-done" data-mw-close>Done</button></div>
+          <div class="sheet-head" data-grab data-head></div>
+          <div class="sheet-body" data-body></div></div>`);
+      sheet = document.getElementById('mw-sheet');
+      mwWireSwipe(sheet);
+    }
+    sheet.setAttribute('aria-label', label);
+    sheet.querySelector('[data-head]').innerHTML = mwHeadHtml(info.t, name, false);
+    const body = sheet.querySelector('[data-body]');
+    const keepScroll = sheet.dataset.name === name ? body.scrollTop : 0;
+    body.innerHTML = list + nav;
+    body.scrollTop = keepScroll;
+    sheet.dataset.name = name;
+  }
+
+  function mwHide() {
+    mwOpen = null;
+    mwMark();
+    ['mw-pop', 'mw-sheet', 'mw-scrim'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
+  }
+
+  // The open card wears the gold outline on desktop, where it stays visible
+  // beside its popover; on a phone the sheet covers it anyway.
+  function mwMark() {
+    document.querySelectorAll('#median-container .mb-card.can').forEach(c => {
+      const on = c.dataset.name === mwOpen;
+      c.classList.toggle('sel', on && !mwOneColumn.matches);
+      c.setAttribute('aria-expanded', on);
+    });
+  }
+
+  // Under the card, at least 360px wide and never off the side of the
+  // screen, with the arrow on the card's center. Two passes, as on Game
+  // Records: placing it can add a scrollbar, which shifts the card.
+  function mwPlacePop() {
+    const pop = document.getElementById('mw-pop');
+    if (!pop) return;
+    const card = mwOpen && mwCardEl(mwOpen);
+    if (!card) { mwHide(); return; }
+    for (let pass = 0; pass < 2; pass++) {
+      const r = card.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+      const w = Math.min(Math.max(r.width, 360), vw - 24);
+      const left = Math.min(Math.max(r.left, 12), vw - w - 12);
+      pop.style.width = w + 'px';
+      pop.style.left = (left + scrollX) + 'px';
+      pop.style.top = (r.bottom + scrollY + 10) + 'px';
+      pop.style.setProperty('--arrow-x', (r.left + r.width / 2 - left) + 'px');
+    }
+  }
+
+  // Drag the sheet down past 90px to dismiss it, like a native sheet.
+  function mwWireSwipe(sheet) {
+    let y0 = null, dy = 0;
+    sheet.querySelectorAll('[data-grab]').forEach(el => {
+      el.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; y0 = e.clientY; dy = 0; sheet.style.animation = 'none'; el.setPointerCapture(e.pointerId); });
+      el.addEventListener('pointermove', e => { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sheet.style.transform = `translateY(${dy}px)`; });
+      el.addEventListener('pointerup', () => { if (y0 === null) return; y0 = null; if (dy > 90) mwHide(); else sheet.style.transform = ''; });
+    });
+  }
+
+  // Called after every rebuild of the cards (refresh or Current/Projected).
+  function mwRefresh() { if (mwOpen) mwShow(mwOpen, false); }
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-mw-close]')) { mwHide(); return; }
+    const go = e.target.closest('[data-mw-go]');
+    if (go) { if (go.dataset.mwGo) mwShow(go.dataset.mwGo, false); return; }
+    // Desktop: a click anywhere but the popover or a card closes it.
+    if (mwOpen && !mwOneColumn.matches && !e.target.closest('#mw-pop') && !e.target.closest('#median-container .mb-card.can')) mwHide();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && mwOpen) mwHide(); });
+  addEventListener('resize', mwPlacePop);
+  // Crossing 720px swaps sheet for popover: close whichever was open.
+  mwOneColumn.addEventListener('change', mwHide);
 
   // Whether the Worker could read NFL game states this refresh; without that
   // every team would look finished, so status and locks stay hidden.
@@ -1462,6 +1669,7 @@
       }
     }
     updateKickoffCountdown();
+    mwRefresh();
   }
 
   // ---------- Stat of the Moment ----------
@@ -2089,6 +2297,7 @@
       if (highEl) tickMwNumber(highEl, oldRows.all[0].score, rows.all[0].score);
     }
     setMedianViewMode(mode);
+    mwRefresh();
   }
 
   const mwReduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2103,7 +2312,16 @@
   }
   document.getElementById('median-container').addEventListener('click', e => {
     const btn = e.target.closest('button[data-mode]');
-    if (btn) handleMedianToggle(btn.dataset.mode);
+    if (btn) { handleMedianToggle(btn.dataset.mode); return; }
+    const card = e.target.closest('.mb-card.can');
+    if (card) { if (mwOpen === card.dataset.name) mwHide(); else mwShow(card.dataset.name, true); }
+  });
+  document.getElementById('median-container').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.mb-card.can');
+    if (!card) return;
+    e.preventDefault();
+    if (mwOpen === card.dataset.name) mwHide(); else mwShow(card.dataset.name, true);
   });
 
   // Thursday Night Football kickoff is when this week's scores actually
