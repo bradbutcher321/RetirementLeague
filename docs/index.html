@@ -355,6 +355,7 @@
   /* Locked = a bright glowing outline around just that name, green above
      the median and red below; raised so the glow sits over its neighbors. */
   .name-row .slot.locked{ z-index: 1; border-radius: 3px; }
+  .name-row .slot.locked::after{ color: var(--gold); }
   .name-row .slot.locked.above{ border-color: var(--turf); box-shadow: 0 0 8px rgba(76,154,107,0.9), inset 0 0 6px rgba(76,154,107,0.45); }
   .name-row .slot.locked.below{ border-color: var(--loss); box-shadow: 0 0 8px rgba(192,87,75,0.9), inset 0 0 6px rgba(192,87,75,0.45); }
   .name-row .slot.above{ color: var(--turf); }
@@ -437,7 +438,9 @@
      to "C." and ran the margin into the status. As rows, the name only has
      to share its line with the score. */
   .mb-card{ background: rgba(255,255,255,0.03); border-radius: 8px; padding: 9px 10px; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; border: 1px solid var(--line); container-type: inline-size; }
-  .mb-card.locked{ border-color: var(--gold); }
+  /* Outline matches the chart's lock glow: green above, red below. The
+     "Locked above/below" text stays gold (.mw-stat.locked). */
+  .mb-card.locked{ border-color: var(--turf); }
   .mb-card.locked.locked-below{ border-color: var(--loss); }
   .mb-card .mw-top, .mb-card .mw-bot{ display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
   .mb-card .mw-top{ align-items: baseline; }
