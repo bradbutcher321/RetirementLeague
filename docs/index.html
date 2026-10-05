@@ -87,6 +87,12 @@
   .mu-score.won{ color: var(--gold); text-shadow: 0 0 20px rgba(212,180,106,0.45); }
   .mu-score.lost{ color: var(--text-dim); }
   .mu-proj{ font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* A decided card's result against its pregame projection: the arrow and
+     number take the tone, "vs proj" stays dim. */
+  .mu-proj.vs.up{ color: var(--turf); }
+  .mu-proj.vs.down{ color: var(--loss); }
+  .mu-proj.vs span{ color: var(--text-dim); }
+  .mu-arrow{ width: 0.62em; height: 0.5em; margin-right: 3px; vertical-align: 0.05em; }
 
   .mu-odds{ display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 12px 14px 0; font-size: 0.74rem; font-weight: 600; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .mu-odds .fav{ color: var(--gold); }
@@ -899,12 +905,26 @@
       streak ? `<span class="mu-stk ${streak[0] === 'W' ? 'win' : 'loss'}">${streak}</span>` : '',
     ].filter(Boolean);
 
-    const side = (cls, name, meta, score, theirScore, projected) => `
+    // Once decided, the live projection has nothing left to say, so its line
+    // reports how the team did against its starters' pregame projection
+    // instead (ESPN's per-player projection, which stays put after kickoff,
+    // summed). The line is always rendered -- even blank, if there are no
+    // projections to sum -- so a decided card keeps a live card's height.
+    const vsProj = (players, score) => {
+      const proj = players.reduce((sum, p) => sum + (p.projectedPoints || 0), 0);
+      if (!proj) return '<div class="mu-proj">&nbsp;</div>';
+      const diff = Math.round((score - proj) * 100) / 100;
+      const tone = diff > 0 ? 'up' : diff < 0 ? 'down' : '';
+      const arrow = diff ? `<svg class="mu-arrow" viewBox="0 0 10 8" aria-hidden="true"><path d="${diff > 0 ? 'M5 0L10 8H0Z' : 'M0 0H10L5 8Z'}" fill="currentColor"/></svg>` : '';
+      return `<div class="mu-proj vs ${tone}" title="Projected ${fmtScore(proj)} before kickoff">${arrow}${fmtScore(Math.abs(diff))} <span>vs proj</span></div>`;
+    };
+
+    const side = (cls, name, meta, score, theirScore, projected, players) => `
       <div class="mu-side ${cls}">
         <div class="team-name">${name}</div>
         <div class="mu-meta">${meta.join(' · ')}</div>
         <div class="mu-score ${scoreClass(score, theirScore)}">${fmtScore(score)}</div>
-        ${isFinal ? '' : `<div class="mu-proj">proj ${fmtScore(projected)}</div>`}
+        ${isFinal ? vsProj(players, score) : `<div class="mu-proj">proj ${fmtScore(projected)}</div>`}
       </div>`;
 
     // Win-odds meter while undecided; once decided, the winning margin.
@@ -951,8 +971,8 @@
     return `
       <div class="matchup-card ${expanded ? 'expanded' : ''}" data-key="${encodeURIComponent(key)}">
         <div class="mu-head">
-          ${side('away', m.awayName, metaParts(m.awayManager, m.awayRecord, m.awayStreak), awayScore, homeScore, m.awayProjected)}
-          ${side('home', m.homeName, metaParts(m.homeManager, m.homeRecord, m.homeStreak).reverse(), homeScore, awayScore, m.homeProjected)}
+          ${side('away', m.awayName, metaParts(m.awayManager, m.awayRecord, m.awayStreak), awayScore, homeScore, m.awayProjected, m.awayPlayers || [])}
+          ${side('home', m.homeName, metaParts(m.homeManager, m.homeRecord, m.homeStreak).reverse(), homeScore, awayScore, m.homeProjected, m.homePlayers || [])}
         </div>
         ${oddsRow}
         <div class="mu-foot">
