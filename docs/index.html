@@ -473,14 +473,21 @@
   .mb-card.can:hover{ background: var(--item-hover); }
   .mb-card.can:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .mb-card.sel{ border-color: var(--lead-line); background: var(--lead-tint); }
-  #mw-pop{ padding: 14px; }
+  #mw-pop{ padding: 12px 14px 14px; }
+  .mwp-line{ display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .mwp-line .mwp-label{ margin: 0; }
+  .mwp-line-r{ display: flex; align-items: center; gap: 10px; font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mwp-line-r b{ font-family: var(--scoreboard); font-size: 0.95rem; font-weight: 700; color: var(--gold); margin-left: 3px; }
+  /* Under the title while any card can open. "Click" with a mouse, "Tap" on a touchscreen. */
+  .mw-hint{ display: block; font-size: 0.72rem; font-weight: 500; color: var(--text-dim); margin-top: 3px; }
+  .mw-hint[hidden]{ display: none; }
+  .mw-hint .tap{ display: none; }
+  @media (hover: none){ .mw-hint .click{ display: none; } .mw-hint .tap{ display: inline; } }
   #mw-sheet .sheet-grab{ position: relative; }
   #mw-sheet .sheet-head{ padding: 6px 18px 0; }
   #mw-sheet .sheet-body{ padding: 0 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
   .mwp-done{ position: absolute; right: 8px; top: 0; font: 600 0.82rem var(--body); color: var(--gold); background: none; border: 0; padding: 8px 12px; min-height: 36px; cursor: pointer; }
   .mwp-head{ display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
-  .mwp-head.has-x{ grid-template-columns: minmax(0,1fr) auto auto; }
-  .mwp-head .x{ align-self: start; }
   .mwp-name{ font-size: 1.1rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .mwp-sub{ font-size: 0.74rem; color: var(--text-dim); margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .mwp-sub b{ font-family: var(--scoreboard); font-size: 0.95rem; font-weight: 700; color: var(--gold); margin-left: 3px; }
@@ -1127,19 +1134,21 @@
     </div>`;
   }
 
-  // The manager, scored the way their card is right now (Current or
-  // Projected), with the other mode's number beside the margin.
-  function mwHeadHtml(t, name, withClose) {
+  // The one number the card itself doesn't show: the other mode's total.
+  const mwOtherTotal = t => medianViewMode === 'current'
+    ? `proj<b>${fmtScore(t.projected)}</b>` : `now<b>${fmtScore(t.current)}</b>`;
+
+  // Phone only: the sheet covers the card, so it repeats the manager,
+  // scored the way their card is right now (Current or Projected).
+  function mwHeadHtml(t, name) {
     const mode = medianViewMode;
     const median = mode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
     const card = mwCardEl(name);
     const tone = card && card.closest('#median-below') ? 'loss' : 'turf';
-    const other = mode === 'current' ? `proj<b>${fmtScore(t.projected)}</b>` : `now<b>${fmtScore(t.current)}</b>`;
-    return `<div class="mwp-head${withClose ? ' has-x' : ''}">
+    return `<div class="mwp-head">
       <div style="min-width:0"><div class="mwp-name">${name}</div>
-        <div class="mwp-sub"><span style="color:var(--${tone})">${fmtMwMargin(t[mode] - median)}</span> vs median · ${other}</div></div>
+        <div class="mwp-sub"><span style="color:var(--${tone})">${fmtMwMargin(t[mode] - median)}</span> vs median · ${mwOtherTotal(t)}</div></div>
       <div class="mwp-score" style="color:var(--${tone})">${fmtScore(t[mode])}</div>
-      ${withClose ? '<button type="button" class="x" data-mw-close aria-label="Close">&times;</button>' : ''}
     </div>`;
   }
 
@@ -1150,8 +1159,10 @@
     mwMark();
     const count = info.players.length;
     const label = `${name}: ${count} still to play`;
-    const list = `<div class="mwp-label">${count} still to play</div><div class="mwp-pods">${info.players.map(mwPodHtml).join('')}</div>`;
+    const pods = `<div class="mwp-pods">${info.players.map(mwPodHtml).join('')}</div>`;
 
+    // Desktop: the popover sits right under its card, so it doesn't repeat
+    // the name, score or margin -- one line, then the players.
     if (!mwOneColumn.matches) {
       let pop = document.getElementById('mw-pop');
       if (!pop) {
@@ -1159,10 +1170,12 @@
         pop = document.getElementById('mw-pop');
       }
       pop.setAttribute('aria-label', label);
-      pop.innerHTML = mwHeadHtml(info.t, name, true) + list;
+      pop.innerHTML = `<div class="mwp-line"><span class="mwp-label">${count} still to play</span>
+        <span class="mwp-line-r"><span>${mwOtherTotal(info.t)}</span><button type="button" class="x" data-mw-close aria-label="Close">&times;</button></span></div>${pods}`;
       mwPlacePop();
       return;
     }
+    const list = `<div class="mwp-label">${count} still to play</div>${pods}`;
 
     // Phone: the sheet steps through managers itself, in card order.
     const order = [...document.querySelectorAll('#median-container .mb-card.can')].map(c => c.dataset.name);
@@ -1182,7 +1195,7 @@
       mwWireSwipe(sheet);
     }
     sheet.setAttribute('aria-label', label);
-    sheet.querySelector('[data-head]').innerHTML = mwHeadHtml(info.t, name, false);
+    sheet.querySelector('[data-head]').innerHTML = mwHeadHtml(info.t, name);
     const body = sheet.querySelector('[data-body]');
     const keepScroll = sheet.dataset.name === name ? body.scrollTop : 0;
     body.innerHTML = list + nav;
@@ -1236,7 +1249,12 @@
   }
 
   // Called after every rebuild of the cards (refresh or Current/Projected).
-  function mwRefresh() { if (mwOpen) mwShow(mwOpen, false); }
+  // The hint under the title only shows while some card can actually open.
+  function mwRefresh() {
+    const hint = document.getElementById('mw-hint');
+    if (hint) hint.hidden = !document.querySelector('#median-container .mb-card.can');
+    if (mwOpen) mwShow(mwOpen, false);
+  }
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-mw-close]')) { mwHide(); return; }
@@ -1630,7 +1648,8 @@
     document.getElementById('median-container').innerHTML = `
       <div class="median-card">
         <div class="median-card-header">
-          <span class="median-card-title">Median Watch</span>
+          <div><span class="median-card-title">Median Watch</span>
+            <span class="mw-hint" id="mw-hint" hidden><span class="click">Click</span><span class="tap">Tap</span> a card to see who’s still to play</span></div>
           ${toggleHtml}
         </div>
         <div id="median-body">${bodyHtml}</div>
@@ -2257,6 +2276,7 @@
       document.getElementById('median-body').innerHTML = medianPendingBodyHtml();
       updateKickoffCountdown();
       setMedianViewMode(mode);
+      mwRefresh();
       return;
     }
     const medianValue = mode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
