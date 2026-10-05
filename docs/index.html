@@ -2056,12 +2056,23 @@
     const topLossMargin = maxBy(withLossMargin, p => p.extremes.biggest_loss_margin);
     add(topLossMargin, `${topLossMargin && topLossMargin.name} is on the wrong end of the worst beatdown in league history, a ${hi(fmtScore(topLossMargin && topLossMargin.extremes.biggest_loss_margin))}-point loss.`);
 
-    const withStreakW = players.filter(p => has(p, p => p.streaks && p.streaks.combined && p.streaks.combined.longest_win));
-    const topStreakW = maxBy(withStreakW, p => p.streaks.combined.longest_win);
-    add(topStreakW, `${topStreakW && topStreakW.name} holds the league's longest winning streak ever at ${hi(topStreakW && topStreakW.streaks.combined.longest_win)} games.`);
-    const withStreakL = players.filter(p => has(p, p => p.streaks && p.streaks.combined && p.streaks.combined.longest_loss));
-    const topStreakL = maxBy(withStreakL, p => p.streaks.combined.longest_loss);
-    add(topStreakL, `${topStreakL && topStreakL.name} holds the league's longest losing streak ever at ${hi(topStreakL && topStreakL.streaks.combined.longest_loss)} games.`);
+    // Two streak rules, both real, and they disagree (Kris's 12 with median
+    // games vs Flanders/Chad/Collin's 10 head-to-head). Every streak fact
+    // names its rule, matching League History's "Head-to-Head" / "With
+    // Median" tabs, so the card never contradicts that page.
+    const STREAK_RULES = [
+      { key: 'head_to_head', label: 'head-to-head' },
+      { key: 'combined', label: 'with median games' },
+    ];
+    STREAK_RULES.forEach(({ key, label }) => {
+      [['longest_win', 'winning'], ['longest_loss', 'losing']].forEach(([field, kind]) => {
+        const withStreak = players.filter(p => has(p, p => p.streaks && p.streaks[key] && p.streaks[key][field]));
+        const top = topTied(withStreak, p => p.streaks[key][field]);
+        add(top.value > 0, top.names.length > 1
+          ? `${nameList(top.names)} are tied for the league's longest ${kind} streak ever, ${label}, at ${hi(top.value)} games.`
+          : `${top.names[0]} holds the league's longest ${kind} streak ever, ${label}, at ${hi(top.value)} games.`);
+      });
+    });
 
     const withSackos = players.filter(p => has(p, p => p.weekly_sackos));
     const topSackos = maxBy(withSackos, p => p.weekly_sackos);
@@ -2179,12 +2190,20 @@
 
     // ----- Per-manager: active streak (career-spanning, from completed
     // games only -- not tied to anything still in progress). -----
+    // One fact per rule, labelled like the record facts above: Kris can be
+    // W4 head-to-head while his matchup card (ESPN, median included) says L1.
+    // When both rules give the same run, say so once instead of twice.
+    const streakText = (name, cur, label) => cur > 0
+      ? `${name} is riding a ${hi(cur + '-game')} winning streak, ${label}.`
+      : `${name} is mired in a ${hi(Math.abs(cur) + '-game')} losing streak, ${label}.`;
     players.forEach(p => {
-      const cur = p.streaks && p.streaks.combined && p.streaks.combined.current;
-      if (typeof cur !== 'number' || Math.abs(cur) < 3) return;
-      add(true, cur > 0
-        ? `${p.name} is riding a ${hi(cur + '-game')} winning streak.`
-        : `${p.name} is mired in a ${hi(Math.abs(cur) + '-game')} losing streak.`);
+      const h2h = p.streaks && p.streaks.head_to_head && p.streaks.head_to_head.current;
+      const both = p.streaks && p.streaks.combined && p.streaks.combined.current;
+      const h2hOk = typeof h2h === 'number' && Math.abs(h2h) >= 3;
+      const bothOk = typeof both === 'number' && Math.abs(both) >= 3;
+      if (h2hOk && bothOk && h2h === both) { add(true, streakText(p.name, h2h, 'with or without median games')); return; }
+      add(h2hOk, h2hOk && streakText(p.name, h2h, 'head-to-head'));
+      add(bothOk, bothOk && streakText(p.name, both, 'with median games'));
     });
 
     // ----- Per-manager: rivalries (the funny "who owns who" ones). Capped
