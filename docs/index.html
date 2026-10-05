@@ -327,7 +327,7 @@
      locked fill in the middle of a stack is square. */
   .name-row .slot:first-child{ border-top-left-radius: 3px; border-top-right-radius: 3px; }
   .name-row .slot:last-child{ border-bottom-left-radius: 3px; border-bottom-right-radius: 3px; }
-  /* Status on the strip: check = no starters left, solid fill = result locked
+  /* Status on the strip: check = no starters left, glowing outline = result locked
      in (see renderMedianCard), red pulsing dot = a player is live. */
   .name-row .slot{ position: relative; }
   .name-row .slot.live::before{
@@ -352,10 +352,11 @@
     font-size: 0.6rem;
     line-height: 1;
   }
-  /* A red dot would vanish on a solid red (locked below) pill. */
-  .name-row .slot.locked.below.live::before{ background: #fff; --pc: 255,255,255; }
-  .name-row .slot.locked.above{ background: var(--turf); color: #08140d; border-color: var(--turf); }
-  .name-row .slot.locked.below{ background: var(--loss); color: #1a0908; border-color: var(--loss); }
+  /* Locked = a bright glowing outline around just that name, green above
+     the median and red below; raised so the glow sits over its neighbors. */
+  .name-row .slot.locked{ z-index: 1; border-radius: 3px; }
+  .name-row .slot.locked.above{ border-color: var(--turf); box-shadow: 0 0 8px rgba(76,154,107,0.9), inset 0 0 6px rgba(76,154,107,0.45); }
+  .name-row .slot.locked.below{ border-color: var(--loss); box-shadow: 0 0 8px rgba(192,87,75,0.9), inset 0 0 6px rgba(192,87,75,0.45); }
   .name-row .slot.above{ color: var(--turf); }
   .name-row .slot.below{ color: var(--loss); }
   /* Sits in .spread-col's own reserved padding, above/below .vplot's box
@@ -421,8 +422,8 @@
   .slot.slot-chip{ display: block; border-radius: 4px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
   .slot.slot-chip.above{ background: rgba(76,154,107,0.16); box-shadow: inset 0 0 0 1px var(--turf-dim); }
   .slot.slot-chip.below{ background: rgba(192,87,75,0.16); box-shadow: inset 0 0 0 1px rgba(192,87,75,0.45); }
-  .slot.slot-chip.locked.above{ background: var(--turf); color: #08140d; box-shadow: inset 0 0 0 1px var(--turf); }
-  .slot.slot-chip.locked.below{ background: var(--loss); color: #1a0908; box-shadow: inset 0 0 0 1px var(--loss); }
+  .slot.slot-chip.locked.above{ box-shadow: inset 0 0 0 1px var(--turf), 0 0 8px rgba(76,154,107,0.9), inset 0 0 6px rgba(76,154,107,0.45); }
+  .slot.slot-chip.locked.below{ box-shadow: inset 0 0 0 1px var(--loss), 0 0 8px rgba(192,87,75,0.9), inset 0 0 6px rgba(192,87,75,0.45); }
   /* chipStyle only: the tick is correctly positioned exactly at a cluster's
      above/below boundary, but chips sit edge-to-edge with no gap between
      them, so the line ends up sitting exactly on a chip's own border
@@ -437,6 +438,7 @@
      to share its line with the score. */
   .mb-card{ background: rgba(255,255,255,0.03); border-radius: 8px; padding: 9px 10px; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; border: 1px solid var(--line); container-type: inline-size; }
   .mb-card.locked{ border-color: var(--gold); }
+  .mb-card.locked.locked-below{ border-color: var(--loss); }
   .mb-card .mw-top, .mb-card .mw-bot{ display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
   .mb-card .mw-top{ align-items: baseline; }
   .mb-card .mw-bot{ align-items: baseline; }
@@ -615,6 +617,15 @@
   .ph-leg-result{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); white-space: nowrap; flex-shrink: 0; }
   .ph-leg-result.turf{ color: var(--turf); }
   .ph-leg-result.loss{ color: var(--loss); }
+  /* Graded-week recap: who lost a leg on the name line, then Sacko/killer
+     pills on the bet line. Both lines stay single so the box keeps a leg's
+     height -- the pills are a compact .hero-chip.loss (parlay-results.html)
+     on a line pinned to the bet line's height, so they draw a touch taller
+     than the text without making the box any taller. */
+  .ph-recap-label{ color: var(--text-dim); font-weight: 500; font-size: 0.78rem; margin-right: 8px; }
+  .ph-leg-name .turf{ color: var(--turf); }
+  .ph-recap .ph-leg-bet{ display: flex; align-items: center; gap: 6px; white-space: nowrap; height: calc(0.86rem * 1.35); }
+  .ph-chip{ display: inline-flex; align-items: center; border: 1px solid rgba(214,98,79,0.4); background: rgba(214,98,79,0.08); color: var(--loss); font-weight: 600; font-size: 0.74rem; border-radius: 999px; padding: 1px 9px; line-height: 1.35; flex-shrink: 0; }
   .ph-kickoff{ color: var(--text-dim); font-size: 0.78rem; white-space: nowrap; flex-shrink: 0; }
 
   /* The live dot is always red -- same as the parlay page's own
@@ -1093,7 +1104,7 @@
     // A card with anyone still to play opens them (see "players still to come" below).
     const can = t.statusKnown && (t.inPlay + t.remaining) > 0;
     const canAttrs = can ? ' role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false"' : '';
-    return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' : ''}${can ? ' can' : ''}" data-name="${t.name}"${canAttrs}>
+    return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' + (t.lockedBelow ? ' locked-below' : '') : ''}${can ? ' can' : ''}" data-name="${t.name}"${canAttrs}>
       <div class="mw-top">
         <span class="mw-name">${t.name}</span>
         <div class="mw-score" style="color:var(--${tone});">${fmtScore(t.score)}</div>
@@ -1441,11 +1452,11 @@
     if (zones) {
       if (zones.up !== null) {
         const yUp = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score <= zones.up));
-        html += `<div class="zone up" style="top:0; height:${yUp}%;"></div><div class="zone-label up" style="top:${yUp}%;">\u25B2 ${fmtScore(zones.up)}</div>`;
+        html += `<div class="zone up" style="top:0; height:${yUp}%;"></div><div class="zone-label up" style="top:${yUp}%;">${fmtScore(zones.up)}</div>`;
       }
       if (zones.down !== null) {
         const yDn = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score < zones.down));
-        html += `<div class="zone dn" style="top:${yDn}%; bottom:0;"></div><div class="zone-label dn" style="top:${yDn}%;">\u25BC ${fmtScore(zones.down)}</div>`;
+        html += `<div class="zone dn" style="top:${yDn}%; bottom:0;"></div><div class="zone-label dn" style="top:${yDn}%;">${fmtScore(zones.down)}</div>`;
       }
     }
     html += '<div class="axis"></div>';
@@ -1487,13 +1498,9 @@
         .sort((a, b) => b.score - a.score) // highest first = rendered on top
         .map(m => `<span class="slot${chipStyle ? ' slot-chip' : ''} ${m.score >= median ? 'above' : 'below'}${m.statusKnown ? (m.locked ? ' locked' : '') + (m.done ? ' final' : '') + (m.inPlay ? ' live' : '') : ''}" data-name="${m.name}">${m.name}</span>`)
         .join('');
-      // A row that's locked and uniformly on one side of the median gets a
-      // matching glow -- straddling rows skip it, since there's no single
-      // direction to glow toward.
-      const glow = !c.members.some(m => m.locked) ? '' : belowCount === 0 ? 'box-shadow:0 0 14px rgba(76,154,107,0.3);' : aboveCount === 0 ? 'box-shadow:0 0 14px rgba(192,87,75,0.3);' : '';
       html += chipStyle
         ? `<div class="name-row plain-wrap" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px;">${slots}</div>`
-        : `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor}; ${glow}">${splitFill}${slots}</div>`;
+        : `<div class="name-row" style="top:${toTopPct(c.pos)}%; width:${rowWidth}px; background-image:${background}; border-color:${borderColor};">${splitFill}${slots}</div>`;
     });
 
     const lowest = ascendingTeams[0], highest = ascendingTeams[ascendingTeams.length - 1];
@@ -1599,10 +1606,8 @@
         row.prepend(greenFill);
         row.prepend(redFill);
       }
-      const anyLocked = slots.some(s => s.classList.contains('locked'));
       row.style.backgroundImage = background;
       row.style.borderColor = borderColor;
-      row.style.boxShadow = !anyLocked ? '' : belowCount === 0 ? '0 0 14px rgba(76,154,107,0.3)' : aboveCount === 0 ? '0 0 14px rgba(192,87,75,0.3)' : '';
       row.classList.remove('plain-wrap');
       slots.forEach(s => s.classList.remove('slot-chip'));
     });
@@ -1821,8 +1826,8 @@
     const liveLeg = pending.find(([name]) => live[liveKey(name)]);
     // Whichever leg is most worth featuring: the live one if any, otherwise
     // whichever pending leg kicks off soonest (legs are sorted by gametime
-    // already). If the whole week is graded, fall back to the last leg to
-    // kick off as a recap rather than showing nothing.
+    // already). Once the whole week is graded, the box recaps the week
+    // instead (see recapHtml below), so this only matters while it's open.
     const [name, p] = liveLeg || pending[0] || legs[legs.length - 1];
     const entry = live[liveKey(name)];
 
@@ -1842,19 +1847,45 @@
       rightHtml = `<span class="ph-leg-result${tone}">${p.result}</span>`;
     }
 
-    container.innerHTML = `
-      <div class="parlay-highlight">
-        <div class="ph-head">
-          <div class="ph-title">Current Parlay</div>
-          <span class="badge ${statusTone}">${status}</span>
-        </div>
+    // Every leg graded: one more finished leg says little, so the box names
+    // who lost a leg instead, with the week's Sacko and killer(s) under it.
+    // Same two-line shape as a leg (name line, dim bet line), so the card
+    // doesn't change height when the last leg settles.
+    let legHtml;
+    if (!pending.length) {
+      const lost = legs.filter(([, q]) => q.result === 'Loss').map(([n]) => n);
+      const killers = week.killed_by || [];
+      // Same Sacko / Killed by pills as the parlay page's hero, shrunk to
+      // fit the bet line's height.
+      const notes = [
+        week.sacko ? `<span class="ph-chip">Sacko: ${week.sacko}</span>` : '',
+        killers.length ? `<span class="ph-chip">Killed by: ${killers.join(' & ')}</span>` : '',
+      ].filter(Boolean);
+      legHtml = `
+        <div class="ph-leg ph-recap">
+          <div class="ph-leg-top">
+            <div class="ph-leg-name">${lost.length ? `<span class="ph-recap-label">Lost legs</span>${lost.join(' · ')}` : `<span class="turf">All ${legs.length} legs hit</span>`}</div>
+          </div>
+          <div class="ph-leg-bet">${notes.join('') || '&nbsp;'}</div>
+        </div>`;
+    } else {
+      legHtml = `
         <div class="ph-leg${legClass}">
           <div class="ph-leg-top">
             <div class="ph-leg-name">${name}</div>
             ${rightHtml}
           </div>
           <div class="ph-leg-bet">${p.pick}</div>
+        </div>`;
+    }
+
+    container.innerHTML = `
+      <div class="parlay-highlight">
+        <div class="ph-head">
+          <div class="ph-title">Current Parlay</div>
+          <span class="badge ${statusTone}">${status}</span>
         </div>
+        ${legHtml}
         <div class="ph-stats">
           <div class="ph-stat"><b>${wins}</b><span>Hit</span></div>
           <div class="ph-stat"><b class="loss">${losses}</b><span>Lost</span></div>
