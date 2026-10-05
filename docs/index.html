@@ -621,14 +621,18 @@
   .ph-leg-result{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); white-space: nowrap; flex-shrink: 0; }
   .ph-leg-result.turf{ color: var(--turf); }
   .ph-leg-result.loss{ color: var(--loss); }
-  /* Graded-week recap: who lost a leg on the name line, then Sacko/killer
-     pills on the bet line. Both lines stay single so the box keeps a leg's
-     height -- the pills are a compact .hero-chip.loss (parlay-results.html)
-     on a line pinned to the bet line's height, so they draw a touch taller
-     than the text without making the box any taller. */
-  .ph-recap-label{ color: var(--text-dim); font-weight: 500; font-size: 0.78rem; margin-right: 8px; }
-  .ph-leg-name .turf{ color: var(--turf); }
-  .ph-recap .ph-leg-bet{ display: flex; align-items: center; gap: 6px; white-space: nowrap; height: calc(0.86rem * 1.35); }
+  /* Graded-week recap: one sentence (who failed their leg, what it cost)
+     with Sacko/killer pills centered under it. The wrap grows like the
+     stats row did (flex: 1); the hidden spacer inside is a real leg box +
+     stats row, so the card is exactly as tall as before, and the recap box
+     is laid over all of it. Text styled like League Lore's beside it. */
+  .ph-recap-wrap{ position: relative; flex: 1; display: flex; flex-direction: column; }
+  .ph-recap-spacer{ visibility: hidden; flex: 1; display: flex; flex-direction: column; }
+  .ph-leg.ph-recap{ position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 10px 14px; overflow: hidden; }
+  .ph-recap-text{ font-size: 1rem; font-weight: 600; line-height: 1.4; }
+  .ph-recap-text b{ font-weight: 800; }
+  .ph-recap-text b.gold{ font-family: var(--scoreboard); color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .ph-recap-chips{ display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
   .ph-chip{ display: inline-flex; align-items: center; border: 1px solid rgba(214,98,79,0.4); background: rgba(214,98,79,0.08); color: var(--loss); font-weight: 600; font-size: 0.74rem; border-radius: 999px; padding: 1px 9px; line-height: 1.35; flex-shrink: 0; }
   .ph-kickoff{ color: var(--text-dim); font-size: 0.78rem; white-space: nowrap; flex-shrink: 0; }
 
@@ -1861,36 +1865,54 @@
       rightHtml = `<span class="ph-leg-result${tone}">${p.result}</span>`;
     }
 
-    // Every leg graded: one more finished leg says little, so the box names
-    // who lost a leg instead, with the week's Sacko and killer(s) under it.
-    // Same two-line shape as a leg (name line, dim bet line), so the card
-    // doesn't change height when the last leg settles.
-    let legHtml;
+    const statsHtml = `
+        <div class="ph-stats">
+          <div class="ph-stat"><b>${wins}</b><span>Hit</span></div>
+          <div class="ph-stat"><b class="loss">${losses}</b><span>Lost</span></div>
+          <div class="ph-stat"><b>${fmtOdds(week.final && week.final.odds)}</b><span>Combined Odds</span></div>
+          <div class="ph-stat"><b>${fmtMoney(week.final && week.final.payout)}</b><span>Payout</span></div>
+        </div>`;
+
+    // Every leg graded: one more finished leg says little, so the box says
+    // who sank it and what it cost, with the week's Sacko and killer(s) as
+    // pills underneath. The stats row goes, and the box takes its place.
+    // The card must not change height when the last leg settles, so an
+    // invisible leg box + stats row still sit underneath holding the old
+    // height, and the recap box covers that whole area (.ph-recap-wrap).
+    let bodyHtml;
     if (!pending.length) {
-      const lost = legs.filter(([, q]) => q.result === 'Loss').map(([n]) => n);
+      const lost = legs.filter(([, q]) => q.result === 'Loss').map(([n]) => `<b>${n}</b>`);
+      const listed = lost.length < 3 ? lost.join(' and ') : `${lost.slice(0, -1).join(', ')}, and ${lost[lost.length - 1]}`;
+      const money = `<b class="gold">${fmtMoney(week.final && week.final.payout)}</b>`;
+      const text = lost.length
+        ? `${listed} cost us ${money} by failing their leg${lost.length === 1 ? '' : 's'} of the bet.`
+        : `All ${legs.length} legs hit for ${money}.`;
       const killers = week.killed_by || [];
-      // Same Sacko / Killed by pills as the parlay page's hero, shrunk to
-      // fit the bet line's height.
       const notes = [
         week.sacko ? `<span class="ph-chip">Sacko: ${week.sacko}</span>` : '',
         killers.length ? `<span class="ph-chip">Killed by: ${killers.join(' & ')}</span>` : '',
       ].filter(Boolean);
-      legHtml = `
-        <div class="ph-leg ph-recap">
-          <div class="ph-leg-top">
-            <div class="ph-leg-name">${lost.length ? `<span class="ph-recap-label">Lost legs</span>${lost.join(' · ')}` : `<span class="turf">All ${legs.length} legs hit</span>`}</div>
+      bodyHtml = `
+        <div class="ph-recap-wrap">
+          <div class="ph-recap-spacer" aria-hidden="true">
+            <div class="ph-leg"><div class="ph-leg-top"><div class="ph-leg-name">&nbsp;</div></div><div class="ph-leg-bet">&nbsp;</div></div>
+            ${statsHtml}
           </div>
-          <div class="ph-leg-bet">${notes.join('') || '&nbsp;'}</div>
+          <div class="ph-leg ph-recap">
+            <div class="ph-recap-text">${text}</div>
+            ${notes.length ? `<div class="ph-recap-chips">${notes.join('')}</div>` : ''}
+          </div>
         </div>`;
     } else {
-      legHtml = `
+      bodyHtml = `
         <div class="ph-leg${legClass}">
           <div class="ph-leg-top">
             <div class="ph-leg-name">${name}</div>
             ${rightHtml}
           </div>
           <div class="ph-leg-bet">${p.pick}</div>
-        </div>`;
+        </div>
+        ${statsHtml}`;
     }
 
     container.innerHTML = `
@@ -1899,13 +1921,7 @@
           <div class="ph-title">Current Parlay</div>
           <span class="badge ${statusTone}">${status}</span>
         </div>
-        ${legHtml}
-        <div class="ph-stats">
-          <div class="ph-stat"><b>${wins}</b><span>Hit</span></div>
-          <div class="ph-stat"><b class="loss">${losses}</b><span>Lost</span></div>
-          <div class="ph-stat"><b>${fmtOdds(week.final && week.final.odds)}</b><span>Combined Odds</span></div>
-          <div class="ph-stat"><b>${fmtMoney(week.final && week.final.payout)}</b><span>Payout</span></div>
-        </div>
+        ${bodyHtml}
       </div>`;
     container.querySelector('.parlay-highlight').addEventListener('click', () => {
       window.location.href = 'parlay-results.html';
