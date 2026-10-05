@@ -284,7 +284,7 @@
      No text label on it — the actual median value is already shown in
      the card header, and there's no space in this narrow a column to
      print it here without it colliding with the name rows on the line. */
-  .vplot .median-tick{ position: absolute; left: 50%; transform: translateX(-50%); height: 1px; background: var(--gold); box-shadow: 0 0 8px rgba(212,180,106,0.7); z-index: 2; }
+  .vplot .median-tick{ position: absolute; left: 0; right: 0; height: 1px; background: var(--gold); box-shadow: 0 0 8px rgba(212,180,106,0.7); z-index: 2; }
   /* Fixed-opacity backdrop marking which half of the plot is above vs.
      below the median -- not a per-team proportional bar, since its two
      bands don't scale with any one team's value. */
@@ -371,18 +371,13 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  /* Lock lines on the Current strip: above the green line a team can't fall
-     below the median any more, below the red line a finished team can't get above it. The plot shifts left
-     to leave room for the line labels. */
-  .spread-col.zoned{ width: 136px; }
-  .vplot.zoned .axis, .vplot.zoned .name-row, .vplot.zoned .median-tick{ left: 44px; }
-  .vplot.zoned .endcap-score{ left: 44px; }
+  /* Lock lines on the strip: above the green line a team can't fall below
+     the median any more, below the red line a finished team can't get above
+     it. Their values sit under the median label (.median-lock-line), not
+     beside the plot, so the strip stays 88px and the cards keep the room. */
   .zone{ position: absolute; left: 0; right: 0; z-index: 0; }
   .zone.up{ border-bottom: 1px dashed rgba(76,154,107,0.6); }
   .zone.dn{ border-top: 1px dashed rgba(192,87,75,0.6); }
-  .zone-label{ position: absolute; right: 0; z-index: 4; font-size: 0.58rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .zone-label.up{ color: var(--turf); transform: translateY(-105%); }
-  .zone-label.dn{ color: var(--loss); transform: translateY(5%); }
   .endcap-score.low{ bottom: -15px; }
   .endcap-score.high{ top: -15px; }
 
@@ -407,6 +402,12 @@
   /* ---------- Median Watch: unified Current/Projected toggle card ---------- */
   .median-split-label{ text-align: center; color: var(--gold); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; margin: 12px 0; padding: 7px 0; }
   .median-split-label b{ font-family: var(--scoreboard); font-variant-numeric: tabular-nums; margin-left: 6px; }
+  /* Pulled up under the median label, inside its bottom padding. */
+  .median-lock-line{ text-align: center; font-size: 0.66rem; font-weight: 600; color: var(--text-dim); margin: -8px 0 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .median-lock-line b{ font-family: var(--scoreboard); font-size: 0.8rem; font-weight: 700; margin-left: 4px; }
+  .median-lock-line .up b{ color: var(--turf); }
+  .median-lock-line .dn b{ color: var(--loss); }
+  .median-lock-line .sep{ margin: 0 8px; opacity: 0.5; }
   .mw-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
   @media (max-width: 420px){
     .mw-grid{ grid-template-columns: 1fr; }
@@ -470,8 +471,8 @@
     .mb-card .mw-margin{ font-size: 0.6rem; }
   }
   /* On an iPhone Pro Max (430-440px) the cards are narrower still: when the
-     spread strip shows its lock zones it's 118px wide, which leaves each
-     two-up card about 96px inside its padding, and a two-part status
+     spread strip was 118px wide (it's 88px now), each two-up card had
+     about 96px inside its padding, and a two-part status
      ("3 live · 1 to play") beside a margin needs about 110px. It ran past
      the card's edge. The status stays on one line (see above), so those
      cards get a little more room and a step smaller type instead. The
@@ -1455,15 +1456,15 @@
     if (zones) {
       if (zones.up !== null) {
         const yUp = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score <= zones.up));
-        html += `<div class="zone up" style="top:0; height:${yUp}%;"></div><div class="zone-label up" style="top:${yUp}%;">${fmtScore(zones.up)}</div>`;
+        html += `<div class="zone up" style="top:0; height:${yUp}%;"></div>`;
       }
       if (zones.down !== null) {
         const yDn = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score < zones.down));
-        html += `<div class="zone dn" style="top:${yDn}%; bottom:0;"></div><div class="zone-label dn" style="top:${yDn}%;">${fmtScore(zones.down)}</div>`;
+        html += `<div class="zone dn" style="top:${yDn}%; bottom:0;"></div>`;
       }
     }
     html += '<div class="axis"></div>';
-    html += `<div class="median-tick${chipStyle ? ' slim' : ''}" style="top:${medianPct}%; width:${rowWidth - 2}px;"></div>`;
+    html += `<div class="median-tick${chipStyle ? ' slim' : ''}" style="top:${medianPct}%;"></div>`;
 
     clusters.forEach(c => {
       const belowCount = c.members.filter(m => m.score < median).length;
@@ -1633,6 +1634,16 @@
     requestAnimationFrame(frame);
   }
 
+  // The lock-line values, shown under the median label rather than beside
+  // the strip's dashed lines (see .median-lock-line).
+  function mwLockLineHtml(zones) {
+    if (!zones) return '';
+    const parts = [];
+    if (zones.up !== null) parts.push(`<span class="up">Lock above<b>${fmtScore(zones.up)}</b></span>`);
+    if (zones.down !== null) parts.push(`<span class="dn">Lock below<b>${fmtScore(zones.down)}</b></span>`);
+    return `<div class="median-lock-line">${parts.join('<span class="sep">\u00b7</span>')}</div>`;
+  }
+
   function medianPendingBodyHtml() {
     return `<div class="median-pending"><div class="pending-headline" id="kickoff-countdown">\u2014</div><div class="pending-sub">Until Thursday Night Kickoff</div></div>`;
   }
@@ -1659,11 +1670,11 @@
         <div class="card-body">
           <div>
             <div id="median-above">${mwGridHtml(rows.above, 'turf', medianValue)}</div>
-            <div class="median-split-label">${label} <b>${fmtScore(medianValue)}</b></div>
+            <div class="median-split-label">${label} <b>${fmtScore(medianValue)}</b></div>${mwLockLineHtml(rows.zones)}
             <div id="median-below">${mwGridHtml(rows.below, 'loss', medianValue)}</div>
           </div>
-          <div class="spread-col${rows.zones ? ' zoned' : ''}" id="median-spreadcol" style="width:${rows.zones ? 118 : 88}px;">
-            <div class="vplot${rows.zones ? ' zoned' : ''}" id="median-chart"></div>
+          <div class="spread-col" id="median-spreadcol" style="width:88px;">
+            <div class="vplot" id="median-chart"></div>
           </div>
         </div>`;
     }
@@ -2334,7 +2345,7 @@
       <div class="card-body">
         <div>
           <div id="median-above"></div>
-          <div class="median-split-label" id="median-split">${label} <b>${fmtScore(medianValue)}</b></div>
+          <div class="median-split-label" id="median-split">${label} <b>${fmtScore(medianValue)}</b></div>${mwLockLineHtml(rows.zones)}
           <div id="median-below"></div>
         </div>
         <div class="spread-col" id="median-spreadcol" style="width:88px;">
@@ -2343,8 +2354,6 @@
       </div>`;
     document.getElementById('median-above').innerHTML = mwGridHtml(rows.above, 'turf', medianValue);
     document.getElementById('median-below').innerHTML = mwGridHtml(rows.below, 'loss', medianValue);
-    document.getElementById('median-spreadcol').style.width = (rows.zones ? 118 : 88) + 'px';
-    document.getElementById('median-chart').classList.toggle('zoned', !!rows.zones);
     renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true, true);
     tagMedianTransitionNames();
 
