@@ -464,6 +464,20 @@
     .mb-card .mw-stat{ font-size: 0.6rem; gap: 3px; }
     .mb-card .mw-margin{ font-size: 0.6rem; }
   }
+  /* On an iPhone Pro Max (430-440px) the cards are narrower still: when the
+     spread strip shows its lock zones it's 118px wide, which leaves each
+     two-up card about 96px inside its padding, and a two-part status
+     ("3 live · 1 to play") beside a margin needs about 110px. It ran past
+     the card's edge. The status stays on one line (see above), so those
+     cards get a little more room and a step smaller type instead. The
+     breakpoint is where the grid is still two-up (single-column below
+     421px); the container size catches only the narrowest cards. */
+  @media (min-width: 421px) and (max-width: 480px){ .mb-card{ padding: 9px 7px; } }
+  @container (max-width: 115px){
+    .mb-card .mw-bot{ gap: 4px; }
+    .mb-card .mw-stat{ font-size: 0.56rem; gap: 2px; }
+    .mb-card .mw-margin{ font-size: 0.56rem; }
+  }
 
   /* ---------- Median Watch: a manager's players still to come ----------
      A card with players left opens them -- in the shared bottom sheet on a
