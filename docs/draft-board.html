@@ -40,11 +40,58 @@
   .simple-label::after{ content: ''; flex: 1; height: 1px; background: var(--line); }
   /* Hard-capped at 3 columns (rather than auto-fit's implicit count) --
      room for the pro-team column means 4-up got too tight for names --
-     extra teams wrap to another row instead. */
-  .simple-board{ display: grid; grid-template-columns: repeat(2, 1fr); }
-  @media (min-width: 560px){ .simple-board{ grid-template-columns: repeat(3, 1fr); } }
+     extra teams wrap to another row instead. Breakpoints are the narrowest
+     viewports where every name in every year's draft fits uncut at that
+     column count; anything tighter clipped most of the board. Below the
+     first one, teams become full-width pages you swipe between instead of
+     a twelve-team stack. */
   .sb-col{ padding: 22px 24px; }
-  .sb-col + .sb-col{ border-left: 1px solid var(--line); }
+  .sb-pager{ display: none; }
+  @media (max-width: 799px){
+    .sb-track{
+      display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+      scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+    }
+    .sb-track::-webkit-scrollbar{ display: none; }
+    /* One team per swipe, however hard the flick. */
+    .sb-col{ flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+    .sb-pager{
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 14px 18px; border-bottom: 1px solid var(--line);
+    }
+    .sb-step{
+      flex: none; width: var(--track-h); height: var(--track-h); border-radius: 50%;
+      border: 1px solid var(--ctl-line); background: var(--ctl-bg-solid); color: var(--text-dim);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .sb-step:hover:not(:disabled){ color: var(--text); }
+    .sb-step:disabled{ opacity: 0.35; cursor: default; }
+    .sb-step:focus-visible, .sb-dot:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+    .sb-step svg{ width: 16px; height: 16px; }
+    .sb-dots{ display: flex; flex-wrap: wrap; justify-content: center; min-width: 0; }
+    /* The dot itself is 6px; the padding is the tap target around it. */
+    .sb-dot{ padding: 8px 4px; border: none; background: none; cursor: pointer; }
+    .sb-dot i{
+      display: block; width: 6px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.22);
+      transition: width .3s ease, background-color .3s ease;
+    }
+    .sb-dot.on i{ width: 18px; background: var(--gold); }
+  }
+  @media (max-width: 799px) and (prefers-reduced-motion: reduce){
+    .sb-dot i{ transition: none; }
+  }
+  @media (min-width: 800px){
+    .sb-track{ display: grid; grid-template-columns: repeat(2, 1fr); }
+    .sb-col:nth-child(n+3){ border-top: 1px solid var(--line); }
+    .sb-col:nth-child(2n){ border-left: 1px solid var(--line); }
+  }
+  @media (min-width: 1160px){
+    .sb-track{ grid-template-columns: repeat(3, 1fr); }
+    .sb-col:nth-child(2n){ border-left: none; }
+    .sb-col:nth-child(3n+2), .sb-col:nth-child(3n){ border-left: 1px solid var(--line); }
+    .sb-col:nth-child(n+3){ border-top: none; }
+    .sb-col:nth-child(n+4){ border-top: 1px solid var(--line); }
+  }
   .sb-name{ color: var(--gold); font-weight: 700; font-size: 1.05rem; margin-bottom: 14px; }
   /* Fixed-width badge/pick-number/team columns so names line up in a
      straight column instead of drifting with each row's badge text
@@ -56,15 +103,14 @@
   .sb-overall{ color: var(--text-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
   .sb-player{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 4px; }
   .sb-team{ color: var(--text-dim); font-size: 0.68rem; font-weight: 600; text-transform: uppercase; text-align: right; white-space: nowrap; }
+  @media (max-width: 799px){
+    /* One team per page has room for every name except the odd outlier on
+       a small phone (Marquez Valdes-Scantling at 375px) -- wrap that one
+       rather than cut it. */
+    .sb-player{ white-space: normal; }
+  }
   @media (max-width: 720px){
     .sb-col{ padding: 16px 18px; }
-  }
-  @media (max-width: 480px){
-    /* Team column is the least essential field here -- drop it first so
-       the player name (the thing actually being scanned) keeps its room
-       instead of getting clipped to a couple of characters. */
-    .sb-pick{ grid-template-columns: 40px 28px 1fr; }
-    .sb-team{ display: none; }
   }
 
   /* Table width is intrinsic (cell size × column count) so it stays the
@@ -276,10 +322,61 @@
             <span class="sb-team">${pick.pro_team ? esc(pick.pro_team) : 'FA'}</span>
           </div>`;
       }).join('');
-      return `<div class="sb-col"><div class="sb-name">${esc(c.manager || '')}</div>${rows}</div>`;
+      return `<div class="sb-col" data-manager="${esc(c.manager || '')}"><div class="sb-name">${esc(c.manager || '')}</div>${rows}</div>`;
     }).join('');
-    return `<div class="simple-label">${roundLabel}</div><div class="glass simple-board">${cols}</div>`;
+    // Pager only shows on phones, where the track swipes one team at a time
+    // (see .sb-track); on wider screens every team is on screen at once.
+    const chevron = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+    const dots = board.columns.map((c, i) =>
+      `<button type="button" class="sb-dot" data-goto="${i}" aria-label="${esc(c.manager || '')}"><i></i></button>`).join('');
+    const pager = `
+      <div class="sb-pager">
+        <button type="button" class="sb-step" data-step="-1" aria-label="Previous team">${chevron('m15 18-6-6 6-6')}</button>
+        <div class="sb-dots">${dots}</div>
+        <button type="button" class="sb-step" data-step="1" aria-label="Next team">${chevron('m9 18 6-6-6-6')}</button>
+      </div>`;
+    return `<div class="simple-label">${roundLabel}</div><div class="glass simple-board">${pager}<div class="sb-track">${cols}</div></div>`;
   }
+
+  // By Team on a phone: which team page is showing. Kept by manager name
+  // rather than position so switching years stays on the same person even
+  // when draft slots change.
+  let sbManager = null;
+  const boardContainer = document.getElementById('board-container');
+
+  // Exact page width, not clientWidth: that's rounded to whole pixels, and
+  // the rounding error adds up a pixel or two by the last few teams.
+  const sbWidth = track => track.getBoundingClientRect().width;
+  const sbIndex = track => sbWidth(track) ? Math.round(track.scrollLeft / sbWidth(track)) : 0;
+
+  function syncPager(track) {
+    const i = sbIndex(track), n = track.children.length;
+    boardContainer.querySelectorAll('.sb-dot').forEach((d, j) => {
+      d.classList.toggle('on', j === i);
+      d.setAttribute('aria-current', j === i ? 'true' : 'false');
+    });
+    boardContainer.querySelector('[data-step="-1"]').disabled = i <= 0;
+    boardContainer.querySelector('[data-step="1"]').disabled = i >= n - 1;
+    if (track.children[i]) sbManager = track.children[i].dataset.manager;
+  }
+
+  function goToTeam(track, i, smooth) {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    track.scrollTo({ left: i * sbWidth(track), behavior: smooth && !reduce ? 'smooth' : 'auto' });
+  }
+
+  // Scroll doesn't bubble, so listen in the capture phase -- this one
+  // listener survives every re-render of the board's innerHTML.
+  boardContainer.addEventListener('scroll', e => {
+    if (e.target.classList && e.target.classList.contains('sb-track')) syncPager(e.target);
+  }, true);
+  boardContainer.addEventListener('click', e => {
+    const btn = e.target.closest('[data-step], [data-goto]');
+    const track = boardContainer.querySelector('.sb-track');
+    if (!btn || !track) return;
+    const i = btn.dataset.goto != null ? +btn.dataset.goto : sbIndex(track) + +btn.dataset.step;
+    goToTeam(track, Math.max(0, Math.min(track.children.length - 1, i)), true);
+  });
 
   let boardView = 'grid';
   const viewToggle = document.getElementById('view-toggle');
@@ -299,6 +396,13 @@
         document.getElementById('board-container').innerHTML = !board
           ? '<div class="empty-note">No draft data for this year.</div>'
           : boardView === 'simple' ? renderSimpleBoard(board) : renderBoard(board);
+        const track = boardContainer.querySelector('.sb-track');
+        if (track) {
+          const cols = [...track.children];
+          const i = Math.max(0, cols.findIndex(c => c.dataset.manager === sbManager));
+          goToTeam(track, i, false);
+          syncPager(track);
+        }
       }
       sel.value = data.years[0];
       show(sel.value);
