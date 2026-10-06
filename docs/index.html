@@ -101,8 +101,13 @@
   .mu-bar span.fav{ background: var(--gold); }
   .mu-margin{ padding: 12px 14px 0; text-align: center; font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
-  .mu-foot{ display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: 8px; padding: 12px 14px; }
-  .mu-pips-wrap{ display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  /* Top-aligned, with each pip row pushed down to the status pill's
+     midline ((27px pill - 5px pip) / 2), so both pip rows line up with
+     each other and the pill even when only one side has a "to play" line
+     under it. Centering each column on its own height let that side ride
+     ~10px higher. */
+  .mu-foot{ display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: start; gap: 8px; padding: 12px 14px; }
+  .mu-pips-wrap{ display: flex; flex-direction: column; gap: 5px; min-width: 0; margin-top: 11px; }
   .mu-pips-wrap.home{ align-items: flex-end; }
   .mu-pips{ display: flex; gap: 3px; }
   .mu-pip{ width: 12px; height: 5px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
@@ -154,6 +159,13 @@
   .mu-pc.home .player-name{ justify-content: flex-end; }
   .mu-pc.final .player-name{ color: rgba(245,245,243,0.75); }
   .name-text{ min-width: 0; overflow: hidden; white-space: nowrap; }
+  /* Only names that actually overflow (flagged by markClippedNames) fade
+     out over their last 14px, so the cut reads as deliberate instead of a
+     glyph sliced in half. */
+  .name-text.clipped{
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 14px), transparent);
+  }
   .team-tag{
     flex-shrink: 0;
     font-size: 0.6rem;
@@ -2946,6 +2958,7 @@
         document.querySelectorAll('#matchups-container .team-name').forEach(el => {
           if (el.scrollWidth > el.clientWidth) el.classList.add('truncate');
         });
+        markClippedNames(document.getElementById('matchups-container'));
 
         standingsData = data;
         renderSeasonToggle();
@@ -2983,7 +2996,26 @@
     if (expandedMatchups.has(key)) expandedMatchups.delete(key);
     else expandedMatchups.add(key);
     card.classList.toggle('expanded');
+    markClippedNames(card);
   });
+
+  // Roster names hard-clip at the team badge; flag the ones that actually
+  // overflow so CSS can fade their last few px. Collapsed rosters are
+  // display:none (nothing to measure), so this also runs on expand, and on
+  // resize/font load since either can change what fits.
+  function markClippedNames(root) {
+    root.querySelectorAll('.matchup-card.expanded .name-text').forEach(el => {
+      el.classList.toggle('clipped', el.scrollWidth > el.clientWidth);
+    });
+  }
+  let clipResizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(clipResizeTimer);
+    clipResizeTimer = setTimeout(() => markClippedNames(document.getElementById('matchups-container')), 150);
+  });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => markClippedNames(document.getElementById('matchups-container')));
+  }
 
   // Background tabs don't poll (each poll costs Worker/KV quota); coming
   // back to the tab refreshes right away if the data is stale.
