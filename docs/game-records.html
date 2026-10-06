@@ -144,7 +144,10 @@
   const by = (list, fn, desc) => list.slice().sort((a, b) => (desc ? fn(b) - fn(a) : fn(a) - fn(b)));
 
   function categories(sel) {
-    const games = D.games.filter(g => g.type !== 'Bye' && g.p2 && g.s1 > 0 && g.s2 > 0 &&
+    // Consolation-bracket games ('Cons') don't count toward any record:
+    // nothing rides on them, so a benched-out lineup there isn't a real low
+    // score. The Sacko, 3rd and 5th place games still count.
+    const games = D.games.filter(g => g.type !== 'Bye' && g.type !== 'Cons' && g.p2 && g.s1 > 0 && g.s2 > 0 &&
       g.winner !== 'In Progress' && (sel === 'all' || g.year === Number(sel)));
     const decided = games.filter(g => g.winner === g.p1 || g.winner === g.p2);
     const scores = games.flatMap(g => [{ team: g.p1, s: g.s1, opp: g.p2, os: g.s2, g }, { team: g.p2, s: g.s2, opp: g.p1, os: g.s1, g }]);
