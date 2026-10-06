@@ -2132,6 +2132,25 @@
       ? `${nameList(lucky.names)} are tied as the league's luckiest managers, each winning ${hi(fmtPct(lucky.value))} more often than their all-play record says they should.`
       : `${lucky.names[0]} has been the league's luckiest manager, winning ${hi(fmtPct(lucky.value))} more often than their all-play record says they should.`);
 
+    // Record against the weekly median game alone -- the same career figure
+    // as League History's Vs Median ranking, in-progress season included.
+    // Ranked by win rate; the record is only quoted for a tie when every
+    // tied manager has the same one.
+    const withMedian = players.filter(p => has(p, p => p.career && p.career.median && p.career.median.pct));
+    const medRec = p => `${p.career.median.wins}-${p.career.median.losses}`;
+    const medianFact = (top, best) => {
+      if (!top.names.length) return;
+      const tied = withMedian.filter(p => top.names.includes(p.name));
+      const pct = fmtPct(best ? top.value : -top.value);
+      const sameRec = tied.every(p => medRec(p) === medRec(tied[0]));
+      const word = best ? 'best' : 'worst';
+      add(true, tied.length > 1
+        ? `${nameList(top.names)} are tied for the ${word} record against the weekly median, ${sameRec ? `${hi(medRec(tied[0]))} (${pct}) each` : hi(pct)}.`
+        : `${tied[0].name} has the ${word} record against the weekly median, ${hi(medRec(tied[0]))} (${pct}).`);
+    };
+    medianFact(topTied(withMedian, p => p.career.median.pct), true);
+    medianFact(topTied(withMedian, p => -p.career.median.pct), false);
+
     // ----- More single-league-record facts, to keep the rivalry facts
     // below from dominating the pool just by sheer per-manager volume. -----
     const withPlayoffApps = players.filter(p => has(p, p => p.career && p.career.standings && p.career.standings.playoff_appearances));
