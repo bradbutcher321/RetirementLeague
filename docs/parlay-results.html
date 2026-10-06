@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=9">
+<link rel="stylesheet" href="theme.css?v=10">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* ---------- Week selector ----------
@@ -283,7 +283,10 @@
         </div>
         <button type="button" class="back-link" id="back-to-current" hidden>Back to current</button>
       </div>
-      <div id="current-container"><div class="loading-row">Loading parlay…</div></div>
+      <div id="current-container">
+        <span class="sr-only">Loading parlay…</span>
+        <div class="sk-stack" aria-hidden="true"><div class="sk sk-hero"><div class="sk-main" style="gap:14px"><div class="sk-row"><i class="p" style="width:128px;height:26px"></i><i class="p" style="width:68px;height:26px"></i></div><i style="width:90px;height:14px;margin-top:6px"></i><i style="width:min(60%,230px);height:46px"></i><div class="sk-chips"><i class="p" style="width:150px;height:36px"></i><i class="p" style="width:170px;height:36px"></i></div></div><div class="sk-side" style="--n:4"><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div></div></div><div class="sk"><div class="sk-row"><i style="width:20%;height:16px"></i><i class="p" style="width:136px;height:42px"></i></div><div class="sk-item" style="padding:14px 16px"><div class="sk-row"><i style="width:22%;height:16px"></i><i class="p" style="width:96px;height:24px"></i></div><i style="width:72%;height:12px"></i></div><div class="sk-item" style="padding:14px 16px"><div class="sk-row"><i style="width:22%;height:16px"></i><i class="p" style="width:96px;height:24px"></i></div><i style="width:72%;height:12px"></i></div><div class="sk-item" style="padding:14px 16px"><div class="sk-row"><i style="width:22%;height:16px"></i><i class="p" style="width:96px;height:24px"></i></div><i style="width:72%;height:12px"></i></div><div class="sk-item" style="padding:14px 16px"><div class="sk-row"><i style="width:22%;height:16px"></i><i class="p" style="width:96px;height:24px"></i></div><i style="width:72%;height:12px"></i></div><div class="sk-item" style="padding:14px 16px"><div class="sk-row"><i style="width:22%;height:16px"></i><i class="p" style="width:96px;height:24px"></i></div><i style="width:72%;height:12px"></i></div><div class="sk-item" style="padding:14px 16px"><div class="sk-row"><i style="width:22%;height:16px"></i><i class="p" style="width:96px;height:24px"></i></div><i style="width:72%;height:12px"></i></div></div></div>
+      </div>
     </section>
 
     <section>
@@ -336,7 +339,7 @@
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=4"></script>
+<script src="page-common.js?v=5"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -885,6 +888,7 @@
         showSelected();
       }
       selectCurrent();
+      riseIn(container.children);
       yearSel.addEventListener('change', () => { fillWeeks(); showSelected(); });
       weekSel.addEventListener('change', showSelected);
       backBtn.addEventListener('click', selectCurrent);

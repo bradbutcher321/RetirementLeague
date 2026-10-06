@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=9">
+<link rel="stylesheet" href="theme.css?v=10">
 <link rel="stylesheet" href="nav.css?v=4">
 <link rel="stylesheet" href="league.css?v=6">
 <style>
@@ -102,14 +102,17 @@
           <select class="lg-select" id="year-select" autocomplete="off"></select>
         </div>
       </div>
-      <div id="standings-container"><div class="loading-row">Loading standings…</div></div>
+      <div id="standings-container">
+        <span class="sr-only">Loading standings…</span>
+        <div class="sk-stack" aria-hidden="true"><div class="sk" style="gap:8px"><i style="width:40%;height:16px;margin-bottom:10px"></i><div class="sk-item" style="display:flex;align-items:center;gap:16px;padding:20px 18px"><i style="width:12px;height:22px"></i><div class="sk-col"><i style="width:40%;height:15px"></i><i style="width:62%;height:10px"></i></div><i style="width:118px;height:30px"></i></div><div class="sk-item" style="display:flex;align-items:center;gap:16px;padding:20px 18px"><i style="width:12px;height:22px"></i><div class="sk-col"><i style="width:40%;height:15px"></i><i style="width:62%;height:10px"></i></div><i style="width:118px;height:30px"></i></div><div class="sk-item" style="display:flex;align-items:center;gap:16px;padding:20px 18px"><i style="width:12px;height:22px"></i><div class="sk-col"><i style="width:40%;height:15px"></i><i style="width:62%;height:10px"></i></div><i style="width:118px;height:30px"></i></div><div class="sk-item" style="display:flex;align-items:center;gap:16px;padding:20px 18px"><i style="width:12px;height:22px"></i><div class="sk-col"><i style="width:40%;height:15px"></i><i style="width:62%;height:10px"></i></div><i style="width:118px;height:30px"></i></div><div class="sk-item" style="display:flex;align-items:center;gap:16px;padding:20px 18px"><i style="width:12px;height:22px"></i><div class="sk-col"><i style="width:40%;height:15px"></i><i style="width:62%;height:10px"></i></div><i style="width:118px;height:30px"></i></div><div class="sk-item" style="display:flex;align-items:center;gap:16px;padding:20px 18px"><i style="width:12px;height:22px"></i><div class="sk-col"><i style="width:40%;height:15px"></i><i style="width:62%;height:10px"></i></div><i style="width:118px;height:30px"></i></div><div class="sk-item" style="display:flex;align-items:center;gap:16px;padding:20px 18px"><i style="width:12px;height:22px"></i><div class="sk-col"><i style="width:40%;height:15px"></i><i style="width:62%;height:10px"></i></div><i style="width:118px;height:30px"></i></div><div class="sk-item" style="display:flex;align-items:center;gap:16px;padding:20px 18px"><i style="width:12px;height:22px"></i><div class="sk-col"><i style="width:40%;height:15px"></i><i style="width:62%;height:10px"></i></div><i style="width:118px;height:30px"></i></div><div class="sk-item" style="display:flex;align-items:center;gap:16px;padding:20px 18px"><i style="width:12px;height:22px"></i><div class="sk-col"><i style="width:40%;height:15px"></i><i style="width:62%;height:10px"></i></div><i style="width:118px;height:30px"></i></div></div></div>
+      </div>
     </section>
 
     <footer>Data via ESPN Fantasy</footer>
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=4"></script>
+<script src="page-common.js?v=5"></script>
 <script src="league-common.js?v=3"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -217,6 +220,7 @@
     $('year-select').value = 'all';
     $('year-select').addEventListener('change', render);
     render();
+    riseIn(document.querySelectorAll('#standings-container .qrow'));
   }).catch(err => LG.showError('standings-container', err));
 </script>
 <script src="track.js?v=1" defer></script>

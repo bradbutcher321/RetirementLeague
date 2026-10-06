@@ -774,6 +774,67 @@ h2{
 .gap{ height:14px; }
 
 .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }
+
+/* ---------- Loading skeleton ----------
+   Card-shaped placeholders that hold a page's layout while its data loads,
+   instead of a lone "Loading…" line that the real cards then shove down the
+   page. Each page sketches its own first screen from these parts, sized to
+   roughly the height of what replaces it:
+     .sk        a card (same surface as .glass)   .sk-stack  cards with the page's gap
+     .sk-row    a row, ends pushed apart          .sk-item   a recessed row inside a card
+     .sk-grid   --cols equal columns of items       .sk-col    stacked lines filling a row's middle
+     .sk-chips  wrapping pills                       .sk-hero   see below
+     .sk i      a shimmering bar -- width/height inline; .o makes it a circle, .p a pill, .area a chart
+   Hidden from screen readers by aria-hidden on the outer element; the
+   container keeps an sr-only "Loading…" so the state is still announced. */
+.sk{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px;
+     padding: 18px 20px; display: grid; gap: 12px; align-content: start; }
+.sk-stack{ display: grid; gap: 14px; }
+.sk-row{ display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sk-col{ flex: 1; min-width: 0; display: grid; gap: 8px; }
+.sk-chips{ display: flex; flex-wrap: wrap; gap: 8px; }
+.sk-grid{ display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 8px; }
+/* The .hero2 shape (Franchise, Parlay Results): main block plus a stats
+   column on the right, folding to a strip of --n stats under it at the same
+   700px .hero2 does. Each stat is a label then a value. */
+.sk.sk-hero{ grid-template-columns: minmax(0, 1fr) 230px; padding: 0; gap: 0; overflow: hidden; }
+.sk-main{ padding: 22px 24px; display: grid; gap: 14px; align-content: center; }
+.sk-side{ background: rgba(0,0,0,0.22); border-left: 1px solid var(--line); padding: 24px 28px; display: grid; gap: 18px; align-content: center; }
+.sk-side > div{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+@media (max-width: 700px){
+  .sk.sk-hero{ grid-template-columns: 1fr; }
+  .sk-side{ border-left: 0; border-top: 1px solid var(--line); grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 8px; padding: 20px 14px; }
+  .sk-side > div{ flex-direction: column-reverse; gap: 8px; }
+  .sk-side > div > i:first-child{ width: 80% !important; }
+  .sk-side > div > i:last-child{ width: 70% !important; height: 28px !important; }
+}
+.sk-item{ background: var(--item); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 9px; }
+.sk i{ display: block; flex: none; width: 40%; height: 12px; border-radius: 6px;
+       background: linear-gradient(90deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.045) 90%);
+       background-size: 300% 100%; animation: sk-shimmer 1.25s linear infinite; }
+.sk i.o{ border-radius: 50%; }
+.sk i.p{ border-radius: 999px; }
+.sk i.area{ opacity: 0.55; }   /* a chart-sized block: full strength reads as a solid slab */
+@keyframes sk-shimmer{ from{ background-position: 100% 0; } to{ background-position: 0 0; } }
+/* A tab track that hasn't been filled yet would otherwise draw as a lone
+   dot (its padding and border with nothing inside): hold its loaded height
+   and shimmer like the cards below it. */
+.tabs:empty, .tab-row:empty{ width: min(100%, 300px); height: var(--track-h);
+  background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 45%, transparent 90%);
+  background-size: 300% 100%; animation: sk-shimmer 1.25s linear infinite; }
+.sr-only{ position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* The real cards then rise into place one after another -- first load
+   only, via riseIn() in page-common.js, which also strips the class once
+   each one lands (a filled transform animation would leave every card its
+   own stacking context and trap popovers under the next card). Same
+   overshoot curve as the Median Watch glide. */
+.rise{ animation: rise-in .5s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(var(--rise-i, 0) * 90ms); }
+@keyframes rise-in{ from{ opacity: 0; transform: translateY(14px); } }
+@media (prefers-reduced-motion: reduce){
+  .sk i, .tabs:empty, .tab-row:empty{ animation: none; }
+  .rise{ animation: none; }
+}
 footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
 
 /* ---------- Detail panels: a bottom sheet on a phone, a popover on desktop ----------

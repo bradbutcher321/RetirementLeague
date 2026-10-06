@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=9">
+<link rel="stylesheet" href="theme.css?v=10">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* ---------- Head to Head ----------
@@ -203,14 +203,17 @@
         </button>
         <select class="lg-select" id="p2" autocomplete="off" aria-label="Right manager"></select>
       </div>
-      <div id="compare"><div class="loading-row">Loading…</div></div>
+      <div id="compare">
+        <span class="sr-only">Loading…</span>
+        <div class="sk-stack" aria-hidden="true"><div class="sk" style="gap:14px"><div class="sk-row" style="padding-top:4px"><div style="width:30%;display:grid;justify-items:center;gap:9px"><i class="o" style="width:58px;height:58px"></i><i style="width:84%;height:30px"></i><i style="width:96%;height:10px"></i></div><i style="width:28%;height:52px"></i><div style="width:30%;display:grid;justify-items:center;gap:9px"><i class="o" style="width:58px;height:58px"></i><i style="width:84%;height:30px"></i><i style="width:96%;height:10px"></i></div></div><i style="width:44%;height:14px;margin:0 auto"></i><div class="sk-grid"><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div></div><i style="width:56%;height:9px;margin:4px auto 0"></i><div class="sk-chips" style="justify-content:center"><i class="o" style="width:26px;height:26px"></i><i class="o" style="width:26px;height:26px"></i><i class="o" style="width:26px;height:26px"></i><i class="o" style="width:26px;height:26px"></i><i class="o" style="width:26px;height:26px"></i><i class="o" style="width:26px;height:26px"></i><i class="o" style="width:26px;height:26px"></i><i class="o" style="width:26px;height:26px"></i><i class="o" style="width:26px;height:26px"></i><i class="o" style="width:26px;height:26px"></i></div></div><div class="sk"><i style="width:44%;height:16px"></i><i class="area" style="width:100%;height:200px"></i><div class="sk-grid"><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div></div></div></div>
+      </div>
     </section>
 
     <footer>Data via ESPN Fantasy</footer>
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=4"></script>
+<script src="page-common.js?v=5"></script>
 <script src="league-common.js?v=3"></script>
 <script>
   let DATA, FR = null;
@@ -470,6 +473,7 @@
     $('p2').addEventListener('change', render);
     $('swap').addEventListener('click', () => { const t = $('p1').value; $('p1').value = $('p2').value; $('p2').value = t; render(); });
     render();
+    riseIn($('compare').children);
   }).catch(err => LG.showError('compare', err));
 </script>
 <script src="track.js?v=1" defer></script>

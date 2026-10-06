@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=9">
+<link rel="stylesheet" href="theme.css?v=10">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
@@ -352,17 +352,17 @@
       <select class="franchise-select" id="franchise-select"></select>
     </div>
 
-    <section class="fr-hero"><div id="hero-container"><div class="loading-row">Loading franchise…</div></div></section>
+    <section class="fr-hero"><div id="hero-container"><span class="sr-only">Loading franchise…</span><div class="sk sk-hero" aria-hidden="true"><div class="sk-main"><div class="sk-row" style="justify-content:flex-start;gap:16px"><i class="o" style="width:72px;height:72px"></i><div class="sk-col" style="gap:10px"><i style="width:min(100%,260px);height:36px"></i><i style="width:min(80%,170px);height:12px"></i></div></div><div class="sk-chips"><i class="p" style="width:160px;height:26px"></i><i class="p" style="width:180px;height:26px"></i><i class="p" style="width:168px;height:26px"></i><i class="p" style="width:164px;height:26px"></i><i class="p" style="width:152px;height:26px"></i></div><i style="width:90px;height:10px"></i><div class="sk-chips"><i class="p" style="width:190px;height:30px"></i><i class="p" style="width:226px;height:30px"></i></div></div><div class="sk-side" style="--n:6"><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div></div></div></div></section>
     <section>
       <div class="tabs scroll" id="tabs"></div>
-      <div id="tab-content"></div>
+      <div id="tab-content"><div class="sk" aria-hidden="true"><div class="sk-row"><i style="width:34%;height:16px"></i><i class="p" style="width:128px;height:36px"></i></div><div class="sk-grid" style="--cols:4"><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div></div><i class="area" style="width:100%;height:190px"></i></div></div>
     </section>
 
     <footer>Data via ESPN Fantasy (Money Tracker from the league sheet) · Updates Tuesday &amp; Thursday mornings</footer>
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=4"></script>
+<script src="page-common.js?v=5"></script>
 <script src="achievements.js"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, EFFICIENCY_EXPERT_PCT, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
@@ -986,6 +986,7 @@
     const saved = (() => { try { return localStorage.getItem('franchise-selected'); } catch (e) { return null; } })();
     sel.value = d.players.some(p => p.name === saved) ? saved : d.players[0].name;
     show(sel.value);
+    riseIn([...document.getElementById('hero-container').children, ...document.getElementById('tab-content').children]);
     sel.addEventListener('change', () => {
       show(sel.value);
       try { localStorage.setItem('franchise-selected', sel.value); } catch (e) {}
@@ -993,6 +994,7 @@
   }).catch(err => {
     console.error(err);
     document.getElementById('hero-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading franchise data.</div>';
+    document.getElementById('tab-content').innerHTML = '';
   });
 </script>
 <script src="track.js?v=1" defer></script>

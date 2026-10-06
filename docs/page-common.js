@@ -73,3 +73,27 @@ function updateAllEdgeFades() {
   };
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
+
+// First-load entrance: the cards that just replaced a page's loading
+// skeleton (theme.css "Loading skeleton") rise into place one after
+// another. Pages call this once, after their first render only, so a tab
+// switch or a 2-minute refresh never replays it. Past `cap` items the rest
+// land together, so a long list doesn't keep trickling in. The class comes
+// off as each one lands (see theme.css for why); the target check skips
+// animations bubbling up from inside a card, like a live pip's pulse.
+function riseIn(els, cap = 8) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  [...els].forEach((el, i) => {
+    el.style.setProperty('--rise-i', Math.min(i, cap));
+    el.classList.add('rise');
+    const done = e => {
+      if (e.target !== el) return;
+      el.classList.remove('rise');
+      el.style.removeProperty('--rise-i');
+      el.removeEventListener('animationend', done);
+      el.removeEventListener('animationcancel', done);
+    };
+    el.addEventListener('animationend', done);
+    el.addEventListener('animationcancel', done);
+  });
+}
