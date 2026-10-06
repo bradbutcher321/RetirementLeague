@@ -458,12 +458,16 @@
 
     // ----- Dynasty Heatmap -----
     // Current members only (former members had no say in the current
-    // dynasty picture and padded the grid with empty columns), best average
-    // finish first.
+    // dynasty picture and padded the grid with empty columns), longest-
+    // tenured first, then best average finish.
     function dynastyHtml() {
       const years = D.completeYears;
       const last = {}; done.forEach(s => { last[s.year] = Math.max(last[s.year] || 0, s.final_rank || 0); });
-      const list = finish.map(x => x.name);
+      // Seniority first (earliest completed season), so every manager's
+      // "not in the league yet" dots stack into one block at the bottom
+      // left; ties keep finish's best-average-first order (stable sort).
+      const firstYear = name => Math.min(...doneOf(name).map(s => s.year));
+      const list = [...finish].sort((a, b) => firstYear(a.name) - firstYear(b.name)).map(x => x.name);
       const state = s => {
         if (!s || !s.final_rank) return 'none';
         if (s.final_rank === 1) return 'champion';
