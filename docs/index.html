@@ -612,6 +612,18 @@
      just the explicitly named cards/chips; everything else stays static
      and untouched the whole time. */
   ::view-transition-old(root), ::view-transition-new(root){ animation: none; mix-blend-mode: normal; }
+  /* A Season So Far row's rank, record and chip change along with its
+     place, and a cross-fade would show both versions stacked while it
+     moves. The row travels as its new self instead; its PF and PA count up
+     from the old values (see nameSeasonRows). */
+  #leaderboard-container .lb-row{ view-transition-class: sf-row; }
+  ::view-transition-old(*.sf-row){ display: none; }
+  ::view-transition-new(*.sf-row){ animation: none; }
+  /* A Superlatives card's old and new content cross-fade while the card
+     changes height; clipped to the card so the taller version doesn't spill
+     past its edge for the first few frames. */
+  #accolades-container .accolade-card{ view-transition-class: sf-acc; }
+  ::view-transition-group(*.sf-acc){ overflow: clip; border-radius: 14px; }
 
   /* ---------- Stat of the Moment: single rotating-feeling hero fact
      directly under Median Watch, wearing the same plain card outline. ------ */
@@ -2680,7 +2692,7 @@
     const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : 'low') : '';
     const inPlayoffPosition = playoffTeamCount > 0 && rank <= playoffTeamCount;
     return `
-      <div class="lb-row ${inPlayoffPosition ? 'playoff' : ''}">
+      <div class="lb-row ${inPlayoffPosition ? 'playoff' : ''}" data-sf="${rank - 1}">
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${t.name}</div>
@@ -2813,7 +2825,7 @@
       const chipText = move > 0 ? `\u25B2 ${move}` : move < 0 ? `\u25BC ${-move}` : '\u2013';
       const inPlayoffPosition = data.playoffTeamCount > 0 && rank <= data.playoffTeamCount;
       return `
-      <div class="lb-row ${inPlayoffPosition ? 'playoff' : ''}">
+      <div class="lb-row ${inPlayoffPosition ? 'playoff' : ''}" data-sf="${r.espnRank - 1}">
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${r.name}</div>
@@ -2826,14 +2838,60 @@
     }).join('');
   }
 
+  // Switching modes slides each standings row to its new rank while its PF
+  // and PA count from the old values (site audit Motion A) -- the Median
+  // Watch recipe: a view transition plus tickMwNumber. Rows carry data-sf,
+  // their team's index in standingsData.teams, so a row keeps its identity
+  // across modes. The Superlatives cards change height between modes, so
+  // they and the Standings card are named too: the cards grow while the
+  // panel below slides down with them, instead of the panel overlapping
+  // cards that already jumped to their new size. Everything is named only
+  // while this transition runs, so none of it gets lifted out of the page
+  // during Median Watch's.
+  function nameSeasonRows(on) {
+    const card = document.querySelector('#season-section .standings-card');
+    if (card) card.style.viewTransitionName = on ? 'sf-card' : '';
+    document.querySelectorAll('#accolades-container .accolade-card').forEach((c, i) => {
+      c.style.viewTransitionName = on ? 'sf-acc-' + i : '';
+    });
+    document.querySelectorAll('#leaderboard-container .lb-row[data-sf]').forEach(row => {
+      row.style.viewTransitionName = on ? 'sf-row-' + row.dataset.sf : '';
+    });
+  }
+  function seasonRowValues() {
+    const vals = new Map();
+    document.querySelectorAll('#leaderboard-container .lb-row[data-sf]').forEach(row => {
+      vals.set(row.dataset.sf, [...row.querySelectorAll('.lb-stat .v')].map(v => parseFloat(v.textContent)));
+    });
+    return vals;
+  }
+
   document.getElementById('season-toggle').addEventListener('click', e => {
     const b = e.target.closest('[data-season]');
-    if (!b) return;
+    if (!b || b.dataset.season === activeSeasonMode()) return;
     seasonMode = b.dataset.season;
     try { localStorage.setItem('seasonViewMode', seasonMode); } catch (err) {}
-    renderSeasonToggle();
-    renderStandings();
-    renderSuperlatives();
+    const apply = () => {
+      renderSeasonToggle();
+      renderStandings();
+      renderSuperlatives();
+    };
+    if (!document.startViewTransition || mwReduceMotion) { apply(); return; }
+    const was = seasonRowValues();
+    nameSeasonRows(true);
+    const vt = document.startViewTransition(() => {
+      apply();
+      nameSeasonRows(true);
+      document.querySelectorAll('#leaderboard-container .lb-row[data-sf]').forEach(row => {
+        const from = was.get(row.dataset.sf);
+        if (!from) return;
+        row.querySelectorAll('.lb-stat .v').forEach((v, j) => {
+          const to = parseFloat(v.textContent);
+          if (!isNaN(from[j]) && !isNaN(to) && Math.abs(to - from[j]) >= 0.005) tickMwNumber(v, from[j], to);
+        });
+      });
+    });
+    vt.finished.catch(() => {}).then(() => nameSeasonRows(false));
   });
 
   // Only ever called before any games have been scored this season --
