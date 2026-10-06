@@ -461,7 +461,7 @@ body{
 .scope-row .scope-btn.on:hover,
 .tabs.outer .tab.on:hover{ background: rgba(212,180,106,0.2); }
 
-/* Gliding selection (glideSelection in page-common.js). On a tap the
+/* Gliding selection ("Gliding selection" in page-common.js). On a tap the
    selected pill slides from the old choice to the new one instead of
    jumping. While it travels, the pill is a stand-in span (.glide-pill) that
    copies the new choice's own fill and outline, so a solid gold tab and an
