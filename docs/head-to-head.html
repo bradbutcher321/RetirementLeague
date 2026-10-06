@@ -84,6 +84,18 @@
   .vs-team{ color:var(--text-dim); font-size:0.72rem; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .vs-score{ display:flex; align-items:baseline; gap:6px; font-family:var(--scoreboard); font-weight:800; font-size:clamp(2.4rem, 11vw, 3.4rem); line-height:1; font-variant-numeric:tabular-nums; }
   .vs-score i{ font-style:normal; color:var(--text-dim); font-size:0.6em; }
+  /* Swap: each manager's picker, card side and win count carries a
+     view-transition-name keyed to the manager, not the side, so on ⇆ they
+     glide across and change colour in flight. Same 0.68s curve as the
+     dashboard's Median Watch; root's cross-fade is off so nothing else
+     on the page flashes. */
+  ::view-transition-group(*){ animation-duration:0.68s; animation-timing-function:cubic-bezier(0.34, 1.56, 0.64, 1); }
+  ::view-transition-old(root), ::view-transition-new(root){ animation:none; mix-blend-mode:normal; }
+  /* The pickers pass through the middle on their way across; keep the
+     button that was just pressed on top of them instead of hidden under. */
+  .swap{ view-transition-name:h2h-swap; }
+  ::view-transition-group(h2h-swap){ z-index:1; }
+  ::view-transition-old(h2h-swap), ::view-transition-new(h2h-swap){ animation:none; mix-blend-mode:normal; }
   .vs-verdict{ text-align:center; font-size:0.86rem; font-weight:600; padding:6px 14px 0; }
   .vs-verdict span{ color:var(--text-dim); font-weight:500; }
   .vs-verdict span.ca{ color:var(--a); font-weight:700; } .vs-verdict span.cb{ color:var(--b); font-weight:700; }
@@ -216,8 +228,10 @@
 <script src="page-common.js?v=5"></script>
 <script src="league-common.js?v=3"></script>
 <script>
-  let DATA, FR = null;
+  let DATA, FR = null, NAMES = [];
   const $ = id => document.getElementById(id);
+  // A manager's view-transition-name stem (see the Swap note in the CSS).
+  const vt = name => `h2h-m${NAMES.indexOf(name)}`;
   const TAGS = { Play: 'Playoffs', Champ: 'Final', Sacko: 'Sacko', Cons: 'Consolation', '3rd': '3rd place', '5th': '5th place' };
   const f1 = LG.f1, f2 = LG.f2;
   const CLOSE = 5, BLOWOUT = 30;
@@ -302,9 +316,9 @@
 
     return `<div class="panel">
       <div class="vs-top">
-        <div class="vs-side a">${logo(a, 'a')}<div class="vs-name">${esc(a)}</div><div class="vs-team">${team(a)}</div></div>
-        <div class="vs-score"><b class="ca">${A.wins}</b><i>–</i><b class="cb">${B.wins}</b></div>
-        <div class="vs-side b">${logo(b, 'b')}<div class="vs-name">${esc(b)}</div><div class="vs-team">${team(b)}</div></div>
+        <div class="vs-side a" style="view-transition-name:${vt(a)}">${logo(a, 'a')}<div class="vs-name">${esc(a)}</div><div class="vs-team">${team(a)}</div></div>
+        <div class="vs-score"><b class="ca" style="view-transition-name:${vt(a)}-w">${A.wins}</b><i>–</i><b class="cb" style="view-transition-name:${vt(b)}-w">${B.wins}</b></div>
+        <div class="vs-side b" style="view-transition-name:${vt(b)}">${logo(b, 'b')}<div class="vs-name">${esc(b)}</div><div class="vs-team">${team(b)}</div></div>
       </div>
       <div class="vs-verdict">${verdict}</div>
       <div class="facts">
@@ -442,6 +456,11 @@
   function render() {
     const a = $('p1').value, b = $('p2').value;
     try { localStorage.setItem('h2h-pair', JSON.stringify([a, b])); } catch (e) {}
+    // Named before any swap starts, since the transition snapshots the
+    // names already in place. Never the same name twice: a duplicate
+    // cancels the whole transition.
+    $('p1').style.viewTransitionName = a === b ? '' : `${vt(a)}-pick`;
+    $('p2').style.viewTransitionName = a === b ? '' : `${vt(b)}-pick`;
     if (a === b) { $('compare').innerHTML = '<div class="loading-row">Pick two different managers.</div>'; return; }
     const all = pairGames(a, b);
     if (!all.length) { $('compare').innerHTML = `<div class="loading-row">${esc(a)} and ${esc(b)} have never played each other.</div>`; return; }
@@ -456,7 +475,7 @@
     fetch('data/franchise.json', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
   ]).then(([data, franchise]) => {
     DATA = data; FR = franchise;
-    const names = [...new Set(data.games.flatMap(g => [g.p1, g.p2]).filter(Boolean))].sort();
+    const names = NAMES = [...new Set(data.games.flatMap(g => [g.p1, g.p2]).filter(Boolean))].sort();
     const active = names.filter(n => data.active.has(n));
     const former = names.filter(n => !data.active.has(n));
     const opts = `<optgroup label="Current teams">${active.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` +
@@ -471,7 +490,11 @@
     $('p2').value = ok(pair[1]) ? pair[1] : active[1];
     $('p1').addEventListener('change', render);
     $('p2').addEventListener('change', render);
-    $('swap').addEventListener('click', () => { const t = $('p1').value; $('p1').value = $('p2').value; $('p2').value = t; render(); });
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    $('swap').addEventListener('click', () => {
+      const update = () => { const t = $('p1').value; $('p1').value = $('p2').value; $('p2').value = t; render(); };
+      if (document.startViewTransition && !reduce) document.startViewTransition(update); else update();
+    });
     render();
     riseIn($('compare').children);
   }).catch(err => LG.showError('compare', err));
