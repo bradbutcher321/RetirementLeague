@@ -365,11 +365,22 @@ body{
    itself and grows upward, and the control stays at the right, level with
    the track's last row -- just above the content it controls, never with a
    gap under it. Only on a phone, where there's no room beside the tabs at
-   all, does the control drop to its own row, still flush right. */
+   all, does the control drop to its own row, still flush right -- unless
+   the track is a .scroll one, which narrows and scrolls beside the control
+   instead of needing the full width. */
 .controls-row{ display: flex; align-items: flex-end; justify-content: space-between; gap: 10px 16px; margin-bottom: 14px; }
 .controls-row > :first-child{ min-width: 0; }
 .controls-row > :last-child{ flex: none; margin-left: auto; }
-@media (max-width: 600px){ .controls-row{ flex-wrap: wrap; } }
+@media (max-width: 600px){
+  .controls-row{ flex-wrap: wrap; }
+  .controls-row:has(> .scroll){ flex-wrap: nowrap; gap: 10px; }
+  /* The dropdown's own value ("All-Time", "2025") already says it's a year,
+     and the caption's ~70px is a whole tab's worth of the track. Kept for
+     screen readers, which still need the control named. */
+  .controls-row:has(> .scroll) .selector-label{
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+}
 .controls-row > .tabs, .controls-row > .tab-row, .controls-row > .seg,
 .controls-row > .sup-seg, .controls-row > .scope-row, .controls-row > .board-toggle,
 .controls-row > .selector-row, .controls-row > .selector-group{ margin-bottom: 0; }
