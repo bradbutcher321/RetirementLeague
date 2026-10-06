@@ -2160,10 +2160,22 @@
     // completed seasons only.
     const finishes = p => completedSeasons(p).map(s => s.reg_standing);
     const withFinishes = players.filter(p => finishes(p).length);
-    const bestFinishTop = topTied(withFinishes, p => -Math.min(...finishes(p)));
-    add(bestFinishTop.names.length, bestFinishTop.names.length > 1
-      ? `${nameList(bestFinishTop.names)} have all finished the regular season ${hi('#' + -bestFinishTop.value)}.`
-      : `${bestFinishTop.names[0]} is the only manager to finish the regular season ${hi('#' + -bestFinishTop.value)}.`);
+    // Regular-season championship = finishing the regular season #1.
+    const regTitles = p => finishes(p).filter(n => n === 1).length;
+    const regChamps = withFinishes.filter(p => regTitles(p) > 0).map(p => p.name);
+    const regNever = withFinishes.filter(p => regTitles(p) === 0).map(p => p.name);
+    add(regChamps.length, regChamps.length > 1
+      ? `${hi(nameList(regChamps))} have all won a regular-season championship.`
+      : `${hi(regChamps[0])} is the only manager to win a regular-season championship.`);
+    add(regNever.length, regNever.length > 1
+      ? `${hi(nameList(regNever))} have never won a regular-season championship.`
+      : `${hi(regNever[0])} is the only manager who has never won a regular-season championship.`);
+    // Only a record once someone has more than one -- at 1 apiece it's the
+    // "have all won" fact above again.
+    const regTop = topTied(withFinishes, regTitles);
+    add(regTop.value > 1, regTop.names.length > 1
+      ? `${nameList(regTop.names)} are tied for the most regular-season championships, finishing #1 ${hi(regTop.value)} times each.`
+      : `${regTop.names[0]} has the most regular-season championships, finishing #1 ${hi(regTop.value)} times.`);
     const worstFinishTop = topTied(withFinishes, p => Math.max(...finishes(p)));
     add(worstFinishTop.names.length, worstFinishTop.names.length > 1
       ? `${nameList(worstFinishTop.names)} have all finished dead last in the regular season, ${hi('#' + worstFinishTop.value)}.`
