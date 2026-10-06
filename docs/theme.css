@@ -927,3 +927,22 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
 @keyframes a2hs-in{ from{ opacity:0; transform:translateY(18px); } }
 @keyframes a2hs-ping{ 0%{ box-shadow:0 0 0 0 rgba(212,180,106,0.7); } 100%{ box-shadow:0 0 0 12px rgba(212,180,106,0); } }
 @media (prefers-reduced-motion:reduce){ .a2hs, .a2hs::after{ animation:none; } }
+
+/* ---------- Pull to refresh ----------
+   page-common.js "Pull to refresh": the Home Screen app's only way to
+   reload. A round chip on the .pop surface drops in from above the top
+   edge as you pull (--ptr-y, the pull distance in px) while its arrow winds
+   round (--ptr-p, 0 to 1 of the way to armed). Armed it turns gold; let go
+   and it spins until the page reloads. .settle eases it back when a pull
+   is let go short. Above the sticky menu (30), under the drawer (40+). */
+.ptr{ position:fixed; top:0; left:50%; z-index:35; width:40px; height:40px; margin-left:-20px; border-radius:50%;
+      display:grid; place-items:center; background:#151515; border:1px solid var(--line); color:var(--text-dim);
+      box-shadow:0 10px 26px -8px rgba(0,0,0,0.9); pointer-events:none;
+      opacity:var(--ptr-p, 0); transform:translateY(calc(var(--ptr-y, 0px) - 52px));
+      transition:color .15s, border-color .15s; }
+.ptr svg{ width:20px; height:20px; transform:rotate(calc(var(--ptr-p, 0) * 300deg)); }
+.ptr.armed{ color:var(--gold); border-color:var(--lead-line); }
+.ptr.settle{ transition:transform .3s cubic-bezier(0.34,1.56,0.64,1), opacity .3s, color .15s, border-color .15s; }
+.ptr.busy svg{ animation:ptr-spin .7s linear infinite; }
+@keyframes ptr-spin{ from{ transform:rotate(300deg); } to{ transform:rotate(660deg); } }
+@media (prefers-reduced-motion:reduce){ .ptr.settle{ transition:none; } .ptr.busy svg{ animation:none; } }

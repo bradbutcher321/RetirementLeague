@@ -39,6 +39,8 @@
 
     const current = PAGES.find(p => p.href === currentFile()) || PAGES[0];
     const links = PAGES.map(p => `<a class="nav-link${p.href === current.href ? ' active' : ''}" href="${p.href}">${p.label}</a>`).join('');
+    // The desktop row (nav.css shows it only when all nine fit across).
+    const inline = PAGES.map(p => `<a${p.href === current.href ? ' class="active" aria-current="page"' : ''} href="${p.href}">${p.label}</a>`).join('');
 
     mount.innerHTML = `
       <div class="nav-bar">
@@ -46,6 +48,7 @@
           <span></span><span></span><span></span>
         </button>
         <div class="nav-brand">${current.label}</div>
+        <nav class="nav-links" aria-label="Pages">${inline}</nav>
       </div>
       <div class="nav-backdrop" id="nav-backdrop"></div>
       <nav class="nav-drawer" id="nav-drawer" aria-hidden="true">
@@ -77,6 +80,43 @@
     });
     backdrop.addEventListener('click', closeNav);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
+
+    autoHide(mount.querySelector('.nav-bar'), drawer);
+  }
+
+  // Tuck the sticky bar away while the page scrolls down and bring it back
+  // on any scroll up, so it costs no screen while reading but is one flick
+  // away from the bottom of a long page. Movement under SLACK px is held
+  // until it adds up, so a resting thumb's jitter doesn't flicker the bar.
+  function autoHide(bar, drawer) {
+    const SLACK = 6;
+    let lastY = window.scrollY;
+    let queued = false;
+
+    function update() {
+      queued = false;
+      const y = window.scrollY;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      // iOS rubber-banding past either end reports positions outside the
+      // page; the snap back from the bottom would read as a scroll up.
+      if (y < 0 || y > max) return;
+      if (y <= bar.offsetHeight) {
+        bar.classList.remove('tucked');
+        lastY = y;
+        return;
+      }
+      const dy = y - lastY;
+      if (Math.abs(dy) < SLACK) return;
+      if (dy < 0) bar.classList.remove('tucked');
+      else if (!drawer.classList.contains('open')) bar.classList.add('tucked');
+      lastY = y;
+    }
+
+    window.addEventListener('scroll', () => {
+      if (!queued) { queued = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    // Tabbing into a tucked bar brings it back into view.
+    bar.addEventListener('focusin', () => bar.classList.remove('tucked'));
   }
 
   if (document.readyState === 'loading') {

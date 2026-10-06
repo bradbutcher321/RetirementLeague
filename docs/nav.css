@@ -2,14 +2,30 @@
    page. Styled here (rather than inline in nav.js) so it reads/edits like
    any other stylesheet and stays in sync with the theme.css color tokens. */
 
+/* The mount is only a hook for nav.js. display:contents takes it out of the
+   box tree so .nav-bar's sticky range is the whole body; as a normal block
+   the mount would be exactly the bar's height and the bar couldn't stick. */
+#site-nav{ display: contents; }
+
+/* Sticky so the menu is in reach from the bottom of a long page. nav.js adds
+   .tucked while you scroll down (the bar slides up out of the way) and
+   removes it on any scroll up, near the top of the page, or when something
+   in the bar takes keyboard focus. z-index sits under the drawer's backdrop
+   (40), the Home Screen card (55) and the sheets (60). */
 .nav-bar{
+  position: sticky;
+  top: 0;
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 14px 20px;
   border-bottom: 1px solid var(--line);
   background: var(--surface);
+  transition: transform 0.25s ease;
 }
+.nav-bar.tucked{ transform: translateY(-100%); }
+@media (prefers-reduced-motion: reduce){ .nav-bar{ transition: none; } }
 
 .nav-toggle{
   flex-shrink: 0;
@@ -103,4 +119,27 @@
   border-left-color: var(--gold);
   background: rgba(212,180,106,0.1);
   font-weight: 700;
+}
+
+/* ---------- Desktop: every page inline, no hamburger ----------
+   Wide enough for all nine links in one row, the menu doesn't need to hide
+   behind a toggle. The active link carries the page name, so the brand
+   label (which repeats it) goes too. Same hover and active colors as the
+   drawer's links. */
+.nav-links{ display: none; }
+@media (min-width: 1080px){
+  .nav-toggle, .nav-brand, .nav-backdrop, .nav-drawer{ display: none; }
+  .nav-bar{ justify-content: center; padding: 10px 20px; }
+  .nav-links{ display: flex; gap: 2px; }
+  .nav-links a{
+    padding: 7px 11px;
+    border-radius: 999px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.86rem;
+    white-space: nowrap;
+  }
+  .nav-links a:hover{ color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-links a.active{ color: var(--gold); background: rgba(212,180,106,0.1); font-weight: 700; }
 }

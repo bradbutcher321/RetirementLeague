@@ -290,3 +290,84 @@ function riseIn(els, cap = 8) {
   const later = () => setTimeout(show, 2000);
   if (document.readyState === 'complete') later(); else addEventListener('load', later);
 })();
+
+// Pull to refresh (theme.css "Pull to refresh"). Opened from its Home
+// Screen icon the site has no reload button and iOS gives web apps no pull
+// to refresh, so a stale page could only be fixed by force-quitting it.
+// Pulling down from the very top drops a round arrow in from above; past
+// ARM it turns gold, and letting go there reloads the page. Only the Home
+// Screen app gets it (Safari and Chrome have their own); add ?ptr to any
+// URL to force it for testing.
+(() => {
+  const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  if (!installed && !/[?&]ptr\b/.test(location.search)) return;
+  const ARM = 72, MAX = 110;
+  // Taps inside these scroll or close something of their own.
+  const SKIP = '.sheet, .scrim, .nav-drawer, .pop, .a2hs';
+  let el = null, startX = 0, startY = 0, pull = 0, state = 'idle'; // idle | maybe | pulling | busy
+
+  const chip = () => {
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'ptr';
+      el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4.5h-4.5"/></svg>';
+      document.body.appendChild(el);
+    }
+    return el;
+  };
+  const draw = d => {
+    const c = chip();
+    c.style.setProperty('--ptr-y', `${d}px`);
+    c.style.setProperty('--ptr-p', Math.min(d / ARM, 1));
+    c.classList.toggle('armed', d >= ARM);
+  };
+  const reset = () => {
+    state = 'idle';
+    if (!el) return;
+    el.classList.add('settle');
+    draw(0);
+    el.addEventListener('transitionend', () => el && el.classList.remove('settle'), { once: true });
+  };
+
+  addEventListener('touchstart', e => {
+    if (state === 'busy' || e.touches.length !== 1 || window.scrollY > 0) return;
+    if (e.target.closest(SKIP) || document.querySelector('.nav-drawer.open, .sheet')) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    pull = 0;
+    state = 'maybe';
+  }, { passive: true });
+
+  addEventListener('touchmove', e => {
+    if (state !== 'maybe' && state !== 'pulling') return;
+    if (e.touches.length !== 1) { reset(); return; }
+    const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+    if (state === 'maybe') {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      // A sideways swipe (a tab row, Draft Board's board) or an upward
+      // scroll isn't a pull.
+      if (dy <= 0 || Math.abs(dx) > dy || window.scrollY > 0) { state = 'idle'; return; }
+      state = 'pulling';
+      if (el) el.classList.remove('settle');
+    }
+    // Half the finger's travel, easing off toward MAX like a rubber band.
+    pull = MAX * (1 - Math.exp(-Math.max(dy, 0) * 0.5 / MAX));
+    draw(pull);
+  }, { passive: true });
+
+  const end = () => {
+    if (state === 'maybe') { state = 'idle'; return; }
+    if (state !== 'pulling') return;
+    if (pull < ARM) { reset(); return; }
+    state = 'busy';
+    el.classList.add('settle', 'busy');
+    draw(ARM);
+    // Long enough to see the spin start, so the reload reads as an answer.
+    setTimeout(() => location.reload(), 350);
+  };
+  addEventListener('touchend', end);
+  addEventListener('touchcancel', reset);
+  // Coming back to a page from the back/forward cache, drop a spinning chip.
+  addEventListener('pageshow', e => { if (e.persisted && el) { el.classList.remove('busy'); reset(); } });
+})();
