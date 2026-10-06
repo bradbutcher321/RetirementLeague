@@ -274,10 +274,10 @@ function riseIn(els, cap = 8) {
     card.className = 'a2hs';
     card.dataset.arrow = { safari26: 'right', safari: 'center', chrome: 'none' }[kind];
     card.setAttribute('role', 'dialog');
-    card.setAttribute('aria-label', 'Add RL to your Home Screen');
+    card.setAttribute('aria-label', 'Add League to your Home Screen');
     card.innerHTML = `<div class="a2hs-row">
         <img class="a2hs-icon" src="icons/apple-touch-icon.png" alt="">
-        <div class="a2hs-txt"><div class="a2hs-ttl">Add RL to your Home Screen</div><div class="a2hs-sub">Opens full screen, straight to the dashboard.</div></div>
+        <div class="a2hs-txt"><div class="a2hs-ttl">Add League to your Home Screen</div><div class="a2hs-sub">Opens full screen, straight to the dashboard.</div></div>
         <button class="x" type="button" aria-label="Close">✕</button>
       </div>
       <div class="a2hs-steps">${kind === 'chrome' ? '<span class="a2hs-then">In the address bar,</span>' : ''}${steps.map((c, i) => i ? `<span class="a2hs-step"><span class="a2hs-then">then</span>${c}</span>` : c).join('')}</div>`;

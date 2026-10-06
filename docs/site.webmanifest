@@ -1,6 +1,6 @@
 {
   "name": "Retirement League",
-  "short_name": "RL",
+  "short_name": "Retirement League",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
