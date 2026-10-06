@@ -99,6 +99,7 @@
   .heat-n{ font-weight:600; font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:4px; }
   .heat-y{ text-align:center; color:var(--text-dim); font-size:0.58rem; }
   .heat-c{ height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:0.78rem; color:var(--text-dim); background:var(--item); border:1px solid var(--item-line); min-width:0; }
+  .heat-ast{ font-family:var(--body); font-weight:700; font-size:0.95em; line-height:1; margin-left:1px; align-self:flex-start; margin-top:5px; }
   .heat-c.none{ background:none; border-color:transparent; color:rgba(255,255,255,0.15); }
   .heat-c.champion{ border-color:var(--gold); background:color-mix(in srgb, var(--gold) 20%, transparent); color:var(--text); box-shadow:0 0 7px color-mix(in srgb, var(--gold) 55%, transparent); }
   .heat-c.runner-up{ border-color:var(--lead-line); color:var(--gold); }
@@ -477,10 +478,14 @@
         return 'missed';
       };
       const head = `<div></div>${years.map(y => `<div class="heat-y">'${String(y).slice(2)}</div>`).join('')}`;
+      // League joke (same one as the dashboard's "3*" easter egg): Flanders's
+      // first title gets an asterisk.
+      const flandersFirst = Math.min(...done.filter(s => s.player === 'Flanders' && s.final_rank === 1).map(s => s.year));
       const body = list.map(name => `<div class="heat-n">${esc(name)}</div>` + years.map(y => {
         const s = done.find(x => x.player === name && x.year === y);
         const st = state(s);
-        return `<div class="heat-c ${st}" title="${y}${s && s.final_rank ? ` — ${s.final_rank} of ${last[y]}` : ''}">${st === 'none' ? '·' : s.final_rank}</div>`;
+        const ast = name === 'Flanders' && y === flandersFirst;
+        return `<div class="heat-c ${st}" title="${y}${s && s.final_rank ? ` — ${s.final_rank} of ${last[y]}` : ''}${ast ? ' (we all know this one doesn’t count)' : ''}">${st === 'none' ? '·' : s.final_rank}${ast ? '<span class="heat-ast">*</span>' : ''}</div>`;
       }).join('')).join('');
       const legend = `<div class="legend"><span><i class="champion"></i>Champion</span><span><i class="runner-up"></i>Runner-up</span><span><i class="playoffs"></i>Playoffs</span><span><i class="missed"></i>Missed</span><span><i class="sacko"></i>Sacko</span></div>`;
       return panel('Dynasty', `<div class="heat" style="grid-template-columns:62px repeat(${years.length}, minmax(0,1fr))">${head}${body}</div>${legend}`, 'Final finish');
