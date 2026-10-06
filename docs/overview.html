@@ -103,14 +103,19 @@
   .heat-c.champion{ border-color:var(--gold); background:var(--lead-tint); color:var(--gold); }
   .heat-c.runner-up{ border-color:var(--lead-line); color:var(--gold); }
   .heat-c.playoffs{ border-color:var(--win-line); background:var(--win-tint); color:var(--turf); }
-  .heat-c.sacko{ border-color:var(--loss-line); background:var(--loss-tint); color:var(--loss); }
+  /* Red mirrors gold: champion is the full gold ring and runner-up the
+     softer line, so a Sacko is the full red ring with a glow and a missed
+     playoff year the softer red line. Glow and fill are mixed from --loss. */
+  .heat-c.missed{ border-color:var(--loss-line); background:var(--loss-tint); color:var(--loss); }
+  .heat-c.sacko{ border-color:var(--loss); background:color-mix(in srgb, var(--loss) 22%, transparent); color:var(--text); box-shadow:0 0 7px color-mix(in srgb, var(--loss) 55%, transparent); }
   :root[data-accent="outline"] .heat-c{ background:var(--item); }
   .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; color:var(--text-dim); font-size:0.68rem; padding:12px 2px 0; }
   .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; border:1px solid var(--item-line); background:var(--item); }
   .legend .champion{ border-color:var(--gold); background:var(--lead-tint); }
   .legend .runner-up{ border-color:var(--lead-line); background:none; }
   .legend .playoffs{ border-color:var(--win-line); background:var(--win-tint); }
-  .legend .sacko{ border-color:var(--loss-line); background:var(--loss-tint); }
+  .legend .missed{ border-color:var(--loss-line); background:var(--loss-tint); }
+  .legend .sacko{ border-color:var(--loss); background:color-mix(in srgb, var(--loss) 22%, transparent); box-shadow:0 0 5px color-mix(in srgb, var(--loss) 55%, transparent); }
 
   /* ---------- List views: divided rows in one box ----------
      The leader (or, on a "worst" list, the bottom) gets the outline + tint;
@@ -465,7 +470,7 @@
         if (s.final_rank === 2) return 'runner-up';
         if (s.sacko > 0 || s.final_rank === last[s.year]) return 'sacko';
         if (s.playoff > 0) return 'playoffs';
-        return '';
+        return 'missed';
       };
       const head = `<div></div>${years.map(y => `<div class="heat-y">'${String(y).slice(2)}</div>`).join('')}`;
       const body = list.map(name => `<div class="heat-n">${esc(name)}</div>` + years.map(y => {
@@ -473,7 +478,7 @@
         const st = state(s);
         return `<div class="heat-c ${st}" title="${y}${s && s.final_rank ? ` — ${s.final_rank} of ${last[y]}` : ''}">${st === 'none' ? '·' : s.final_rank}</div>`;
       }).join('')).join('');
-      const legend = `<div class="legend"><span><i class="champion"></i>Champion</span><span><i class="runner-up"></i>Runner-up</span><span><i class="playoffs"></i>Playoffs</span><span><i></i>Missed</span><span><i class="sacko"></i>Sacko</span></div>`;
+      const legend = `<div class="legend"><span><i class="champion"></i>Champion</span><span><i class="runner-up"></i>Runner-up</span><span><i class="playoffs"></i>Playoffs</span><span><i class="missed"></i>Missed</span><span><i class="sacko"></i>Sacko</span></div>`;
       return panel('Dynasty', `<div class="heat" style="grid-template-columns:62px repeat(${years.length}, minmax(0,1fr))">${head}${body}</div>${legend}`, 'Final finish');
     }
 
