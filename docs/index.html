@@ -79,13 +79,32 @@
     font-variant-numeric: tabular-nums;
     margin-top: 6px;
     color: var(--text);
+    /* Shrink-wrapped and positioned so a refresh's gain (.mu-delta) can sit
+       just past the number, on the side facing the middle of the card. */
+    position: relative;
+    align-self: flex-start;
+    transition: color .5s ease, text-shadow .5s ease;
   }
+  .mu-side.home .mu-score{ align-self: flex-end; }
   /* Live: the trailing score steps back a little. Decided: the winner's
      score is gold with a glow -- it's the one number the card exists to
      report -- and the loser's recedes. */
   .mu-score.trail{ color: rgba(245,245,243,0.7); }
   .mu-score.won{ color: var(--gold); text-shadow: 0 0 20px rgba(212,180,106,0.45); }
   .mu-score.lost{ color: var(--text-dim); }
+  /* What a refresh added, floating up off the score and fading (see
+     animateMatchupRefresh). Rises through the empty middle of the card
+     rather than across the team's meta line. */
+  .mu-delta{ position: absolute; top: 10px; font-family: var(--scoreboard); font-size: 1.05rem; font-weight: 800; color: var(--turf); white-space: nowrap; pointer-events: none; opacity: 0; animation: mu-float 1.7s ease-out forwards; }
+  .mu-delta.down{ color: var(--loss); }
+  .mu-side.away .mu-delta{ left: 100%; margin-left: 8px; }
+  .mu-side.home .mu-delta{ right: 100%; margin-right: 8px; }
+  @keyframes mu-float{
+    0%{ opacity: 0; transform: translateY(8px); }
+    14%{ opacity: 1; transform: translateY(-6px); }
+    70%{ opacity: 1; transform: translateY(-14px); }
+    100%{ opacity: 0; transform: translateY(-24px); }
+  }
   .mu-proj{ font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
   /* A decided card's result against its pregame projection: the arrow and
      number take the tone, "vs proj" stays dim. */
@@ -97,7 +116,7 @@
   .mu-odds{ display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 12px 14px 0; font-size: 0.74rem; font-weight: 600; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .mu-odds .fav{ color: var(--gold); }
   .mu-bar{ display: flex; gap: 3px; height: 5px; }
-  .mu-bar span{ border-radius: 3px; background: rgba(255,255,255,0.13); }
+  .mu-bar span{ border-radius: 3px; background: rgba(255,255,255,0.13); transition: flex-grow .68s cubic-bezier(0.34, 1.56, 0.64, 1), background-color .3s; }
   .mu-bar span.fav{ background: var(--gold); }
   .mu-margin{ padding: 12px 14px 0; text-align: center; font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
@@ -110,7 +129,7 @@
   .mu-pips-wrap{ display: flex; flex-direction: column; gap: 5px; min-width: 0; margin-top: 11px; }
   .mu-pips-wrap.home{ align-items: flex-end; }
   .mu-pips{ display: flex; gap: 3px; }
-  .mu-pip{ width: 12px; height: 5px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
+  .mu-pip{ width: 12px; height: 5px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); transition: background-color .35s, box-shadow .35s; }
   .mu-pip.live{ background: var(--loss); box-shadow: none; }
   .mu-pip.possession{ background: var(--gold); box-shadow: none; }
   .mu-pip.final{ background: rgba(255,255,255,0.42); box-shadow: none; }
@@ -127,6 +146,9 @@
   }
   .mu-status.live{ border-color: rgba(214,98,79,0.55); color: var(--loss); }
   .mu-status.final{ border-color: rgba(255,255,255,0.18); color: var(--text); }
+  /* VS -> Live -> Final on a refresh. */
+  .mu-status.pop{ animation: mu-pop .42s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes mu-pop{ from{ transform: scale(0.8); opacity: 0.3; } }
   .mu-status .pulse-dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
   .mu-chev{ display: grid; place-items: center; margin-right: -3px; opacity: 0.8; transition: transform 0.25s ease; }
   .matchup-card.expanded .mu-chev{ transform: rotate(180deg); }
@@ -136,8 +158,14 @@
   }
 
   /* ---------- Expanded matchup details (per-player roster) ---------- */
-  .matchup-details{ display: none; border-top: 1px solid var(--line); background: rgba(0,0,0,0.22); padding: 4px; }
-  .matchup-card.expanded .matchup-details{ display: block; }
+  /* Opens and closes with a height glide: a one-row grid going 0fr -> 1fr,
+     with the border and padding on the innermost box so nothing peeks out
+     while it's shut. Hidden from assistive tech once the close finishes. */
+  .matchup-details{ display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s cubic-bezier(.2,.8,.2,1); }
+  .matchup-card.expanded .matchup-details{ grid-template-rows: 1fr; }
+  .mu-det-in{ overflow: hidden; min-height: 0; visibility: hidden; transition: visibility 0s .4s; }
+  .matchup-card.expanded .mu-det-in{ visibility: visible; transition-delay: 0s; }
+  .mu-det-body{ border-top: 1px solid var(--line); background: rgba(0,0,0,0.22); padding: 4px; }
   .mu-row{ display: grid; grid-template-columns: minmax(0,1fr) 38px minmax(0,1fr); align-items: stretch; padding: 2px 0; }
   .mu-row + .mu-row{ border-top: 1px solid rgba(255,255,255,0.04); }
   .mu-slot{ align-self: center; justify-self: center; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em; color: var(--text-dim); }
@@ -146,7 +174,7 @@
      the same color). His team has the ball = the site's gold lead outline;
      in a live game = a faint white one; finished = the name recedes and
      the projection turns into how far over/under it he landed. */
-  .mu-pc{ min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; align-items: center; padding: 8px; border-radius: 9px; }
+  .mu-pc{ min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; align-items: center; padding: 8px; border-radius: 9px; transition: background-color .35s, box-shadow .35s; }
   .mu-pc.home{ grid-template-columns: auto minmax(0,1fr); }
   .mu-pc.home .mu-pinfo{ order: 2; text-align: right; }
   .mu-pc.home .mu-pscore{ order: 1; text-align: left; }
@@ -200,9 +228,12 @@
     .mu-odds, .mu-margin{ padding: 12px 18px 0; }
     .mu-foot{ padding: 12px 18px; }
   }
+  /* The "Updated" time goes gold when a refresh brings new data, then fades back. */
+  #updated-at{ transition: color .6s; }
+  #updated-at.flash{ color: var(--gold); transition: none; }
   @media (prefers-reduced-motion: reduce){
     .mu-status .pulse-dot, .mu-gline .ldot{ animation: none; }
-    .mu-chev{ transition: none; }
+    .mu-chev, .matchup-details, .mu-det-in{ transition: none; }
   }
   /* ---------- Leaderboard ---------- */
   /* One row per team instead of an 8-column table — Score/Proj dropped
@@ -1007,7 +1038,7 @@
       ? `<div class="mu-sub">${fmtScore(p.projectedPoints)}</div>`
       : `<div class="mu-sub ${delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : ''}" title="Projected ${fmtScore(p.projectedPoints)}">${delta >= 0 ? '▲' : '▼'} ${fmtScore(Math.abs(delta))}</div>`;
     return `
-      <div class="mu-pc ${side} ${state || ''}">
+      <div class="mu-pc ${side} ${state || ''}" data-pn="${encodeURIComponent(p.name || '')}">
         <div class="mu-pinfo">
           <div class="player-name"><span class="name-text">${shortName(p)}</span>${teamTag}</div>
           <div class="mu-gline">${playerGameLine(p, state)}</div>
@@ -1035,7 +1066,7 @@
           ${renderPlayerCell(h, 'home', playerState(h))}
         </div>`);
     }
-    return `<div class="matchup-details">${rows.join('')}</div>`;
+    return `<div class="matchup-details"><div class="mu-det-in"><div class="mu-det-body">${rows.join('')}</div></div></div>`;
   }
 
   // A matchup is decided (FINAL, sinks to the bottom) once nobody is left to
@@ -1091,7 +1122,7 @@
       <div class="mu-side ${cls}">
         <div class="team-name">${name}</div>
         <div class="mu-meta">${meta.join(' · ')}</div>
-        <div class="mu-score ${scoreClass(score, theirScore)}">${fmtScore(score)}</div>
+        <div class="mu-score ${scoreClass(score, theirScore)}"><span class="mu-val">${fmtScore(score)}</span></div>
         ${isFinal ? vsProj(players, score) : `<div class="mu-proj">proj ${fmtScore(projected)}</div>`}
       </div>`;
 
@@ -2986,6 +3017,127 @@
   // cache instantly; only once it's expired does a real ESPN fetch happen.
   const AUTO_REFRESH_MS = 2 * 60 * 1000;
 
+  // ---------- Live refresh motion ----------
+  // Every poll rebuilds the matchup cards and Median Watch from scratch, so
+  // on its own a score just snaps to its new value. Instead, what each card
+  // showed is read off the page before the rebuild, and afterwards every
+  // number that moved counts up from it (tickMwNumber, the same tick the
+  // Current/Projected toggle uses), a matchup score's gain floats off it,
+  // and the odds bar, pips, player outlines and score colors are put back
+  // to their old look for one frame so their CSS transitions run to the new
+  // one. The status pill pops when it changes (VS -> Live -> Final).
+  const muNum = el => (el ? parseFloat(el.textContent) : NaN);
+
+  function captureMatchupState() {
+    const state = new Map();
+    document.querySelectorAll('#matchups-container .matchup-card').forEach(card => {
+      const sides = ['away', 'home'].map(s => {
+        const sc = card.querySelector(`.mu-side.${s} .mu-score`);
+        return {
+          score: muNum(sc && sc.querySelector('.mu-val')),
+          cls: sc ? sc.className : '',
+          pips: [...card.querySelectorAll(`.mu-pips-wrap.${s} .mu-pip`)].map(p => p.className),
+        };
+      });
+      const odds = [...card.querySelectorAll('.mu-odds > span')].map(muNum);
+      const bars = [...card.querySelectorAll('.mu-bar span')].map(b => b.style.flexGrow);
+      const status = card.querySelector('.mu-status');
+      const players = new Map([...card.querySelectorAll('.mu-pc[data-pn]')].map(pc =>
+        [pc.dataset.pn, { pts: muNum(pc.querySelector('.mu-pts:not(.none)')), cls: pc.className }]));
+      state.set(card.dataset.key, { sides, odds, bars, status: status ? status.className.replace(/\s*pop\b/, '') : '', players });
+    });
+    return state;
+  }
+
+  function animateMatchupRefresh(prev) {
+    const olds = [], news = [];
+    // Put an element's old class back for the frame before its new one, so
+    // its color/background transition runs from old to new.
+    const restyle = (el, from, to) => {
+      if (from === to) return;
+      olds.push(() => { el.className = from; });
+      news.push(() => { el.className = to; });
+    };
+    document.querySelectorAll('#matchups-container .matchup-card').forEach(card => {
+      const was = prev.get(card.dataset.key);
+      if (!was) return;
+      ['away', 'home'].forEach((s, i) => {
+        const sc = card.querySelector(`.mu-side.${s} .mu-score`);
+        if (!sc) return;
+        const val = sc.querySelector('.mu-val');
+        const from = was.sides[i].score, to = muNum(val);
+        if (!isNaN(from) && !isNaN(to) && Math.abs(to - from) >= 0.005) {
+          tickMwNumber(val, from, to);
+          const d = document.createElement('span');
+          d.className = 'mu-delta' + (to < from ? ' down' : '');
+          d.setAttribute('aria-hidden', 'true');
+          d.textContent = (to > from ? '+' : '−') + Math.abs(to - from).toFixed(2);
+          d.addEventListener('animationend', () => d.remove());
+          sc.appendChild(d);
+        }
+        restyle(sc, was.sides[i].cls, sc.className);
+        const pips = card.querySelectorAll(`.mu-pips-wrap.${s} .mu-pip`);
+        if (pips.length === was.sides[i].pips.length) pips.forEach((p, j) => restyle(p, was.sides[i].pips[j], p.className));
+      });
+      // Odds: the percentages count and the bar's two halves slide.
+      const oddsEls = card.querySelectorAll('.mu-odds > span');
+      const bars = card.querySelectorAll('.mu-bar span');
+      if (oddsEls.length === 2 && was.odds.length === 2) {
+        oddsEls.forEach((el, j) => {
+          const to = muNum(el);
+          if (to !== was.odds[j]) tickMwNumber(el, was.odds[j], to, v => Math.round(v) + '%');
+        });
+        bars.forEach((b, j) => {
+          const from = was.bars[j], to = b.style.flexGrow;
+          if (from === to) return;
+          olds.push(() => { b.style.flexGrow = from; });
+          news.push(() => { b.style.flexGrow = to; });
+        });
+      }
+      const status = card.querySelector('.mu-status');
+      if (status && was.status && status.className !== was.status) {
+        status.classList.add('pop');
+        status.addEventListener('animationend', () => status.classList.remove('pop'), { once: true });
+      }
+      // The open roster: each player's points count and his outline fades
+      // between not started / live / has the ball / done.
+      if (card.classList.contains('expanded')) {
+        card.querySelectorAll('.mu-pc[data-pn]').forEach(pc => {
+          const p = was.players.get(pc.dataset.pn);
+          if (!p) return;
+          restyle(pc, p.cls, pc.className);
+          const pts = pc.querySelector('.mu-pts:not(.none)'), to = muNum(pts);
+          if (!isNaN(p.pts) && !isNaN(to) && Math.abs(to - p.pts) >= 0.005) tickMwNumber(pts, p.pts, to);
+        });
+      }
+    });
+    if (!olds.length) return;
+    olds.forEach(f => f());
+    void document.getElementById('matchups-container').offsetWidth;
+    news.forEach(f => f());
+  }
+
+  // Median Watch: each card's score and margin, and the median itself, count
+  // from the last poll's numbers when the mode hasn't changed in between.
+  function animateMedianRefresh(prevTeams, prevData) {
+    if (!prevTeams || !prevData) return;
+    const mode = medianViewMode;
+    const key = mode === 'current' ? 'currentMedian' : 'projectedMedian';
+    const oldMedian = prevData[key], median = lastMedianData[key];
+    const moved = (a, b) => typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) >= 0.005;
+    document.querySelectorAll('#median-above .mb-card, #median-below .mb-card').forEach(card => {
+      const t = lastMedianTeams.find(x => medianTeamName(x) === card.dataset.name);
+      const o = prevTeams.find(x => medianTeamName(x) === card.dataset.name);
+      if (!t || !o) return;
+      if (moved(o[mode], t[mode])) tickMwNumber(card.querySelector('.mw-score'), o[mode], t[mode]);
+      if (moved(o[mode] - oldMedian, t[mode] - median)) {
+        tickMwNumber(card.querySelector('.mw-margin'), o[mode] - oldMedian, t[mode] - median, fmtMwMargin);
+      }
+    });
+    const splitValueEl = document.querySelector('#median-container .median-split-label b');
+    if (splitValueEl && moved(oldMedian, median)) tickMwNumber(splitValueEl, oldMedian, median);
+  }
+
   let dashboardShown = false;
   function loadDashboard() {
     fetch(WORKER_URL, { cache: 'no-store' })
@@ -3005,13 +3157,25 @@
           .sort((a, b) => (a.final === b.final ? a.i - b.i : a.final ? 1 : -1))
           .map(({ m }) => m);
 
+        // A refresh after the first animates from what was on screen
+        // (see "Live refresh motion" above); the first load has its own rise.
+        const animate = dashboardShown && !mwReduceMotion;
+
         document.getElementById('week-header').textContent = data.week ? `Live Dashboard — Week ${data.week}` : 'Live Dashboard';
-        document.getElementById('updated-at').textContent = data.updatedAt
+        const updatedEl = document.getElementById('updated-at');
+        const updatedText = data.updatedAt
           ? new Date(data.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           : '—';
+        if (animate && updatedEl.textContent !== updatedText) {
+          updatedEl.classList.add('flash');
+          setTimeout(() => updatedEl.classList.remove('flash'), 60);
+        }
+        updatedEl.textContent = updatedText;
 
+        const prevMatchups = animate ? captureMatchupState() : null;
         document.getElementById('matchups-container').innerHTML =
           matchups.length ? matchups.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
+        if (prevMatchups) animateMatchupRefresh(prevMatchups);
 
         // Team names stay right-aligned (matching every other short name)
         // unless a specific one is actually too long for its box, in which
@@ -3033,9 +3197,11 @@
         // a "kickoff hasn't happened yet" placeholder instead (handled
         // inside renderMedianStatic/applyMedianUpdate). Projected always
         // renders normally, pregame or not.
+        const prevMedianTeams = lastMedianTeams, prevMedianData = lastMedianData;
         lastMedianTeams = teams;
         lastMedianData = data;
         renderMedianStatic(medianViewMode);
+        if (animate) animateMedianRefresh(prevMedianTeams, prevMedianData);
         renderParlayHighlight();
         renderStatOfMoment();
 
