@@ -133,7 +133,7 @@
     </header>
 
     <section id="compare-section">
-      <div class="tab-row" id="year-tab-row"></div>
+      <div class="tab-row scroll" id="year-tab-row"></div>
       <div id="selected-container"><div class="loading-row">Loading rules…</div></div>
     </section>
 
@@ -290,6 +290,7 @@
 
       function showYear(i) {
         [...tabRow.children].forEach((btn, idx) => btn.classList.toggle('active', idx === i));
+        keepSelectedInView(tabRow);
         const rec = list[i];
         const prev = i === 0 ? null : list[i - 1];
         const isCurrent = rec.year === data.current.year;

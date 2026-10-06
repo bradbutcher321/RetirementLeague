@@ -337,6 +337,12 @@ body{
   .scroll::-webkit-scrollbar{ display: none; }
   .scroll > *{ flex: none; }
 }
+/* Edge fades for any sideways scroller: page-common.js sets .fade-l/.fade-r
+   only while there's more to scroll that way, so a track that fits (or a
+   wrapped desktop .scroll) never gets one. */
+.fade-l{ -webkit-mask-image: linear-gradient(90deg, transparent, #000 34px); mask-image: linear-gradient(90deg, transparent, #000 34px); }
+.fade-r{ -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent); }
+.fade-l.fade-r{ -webkit-mask-image: linear-gradient(90deg, transparent, #000 34px, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(90deg, transparent, #000 34px, #000 calc(100% - 34px), transparent); }
 
 /* A selector and its caption on one line above the content they filter.
    .right pushes the whole row to the far edge instead of the near one. */
@@ -431,13 +437,18 @@ body{
 
    The outline is an inset box-shadow, not a border: a real 1px border adds
    2px of height to a control sized by --ctl-h, which would push the pill
-   past the track's own rounded edge. */
-.scope-row .scope-btn.on{
+   past the track's own rounded edge.
+
+   .tabs.outer is the same idea for a tab row that has sub-tabs under it
+   (Parlay's Stats categories above Record / Streaks / ...). */
+.scope-row .scope-btn.on,
+.tabs.outer .tab.on{
   background: rgba(212,180,106,0.12);
   box-shadow: inset 0 0 0 1px var(--gold);
   color: var(--gold);
 }
-.scope-row .scope-btn.on:hover{ background: rgba(212,180,106,0.2); }
+.scope-row .scope-btn.on:hover,
+.tabs.outer .tab.on:hover{ background: rgba(212,180,106,0.2); }
 
 .tabs .tab:focus-visible,
 .tab-row .year-tab:focus-visible,

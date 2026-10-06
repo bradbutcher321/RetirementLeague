@@ -36,4 +36,40 @@ function keepSelectedInView(track) {
   if (!track || track.scrollWidth <= track.clientWidth) return;
   const on = track.querySelector('.on, .active');
   if (on) track.scrollLeft = on.offsetLeft - track.offsetLeft - (track.clientWidth - on.offsetWidth) / 2;
+  updateEdgeFade(track);
 }
+
+// Fade whichever edge of a sideways scroller still has more to show, so a
+// tab past the edge reads as "keep swiping" rather than not existing. Covers
+// every .scroll track plus any other strip marked .edge-fade (see theme.css).
+// Pages don't wire anything up: scrolls are caught at the document, and
+// re-renders, resizes and late font loads re-check every track.
+const EDGE_FADE_SEL = '.scroll, .edge-fade';
+function updateEdgeFade(el) {
+  const max = el.scrollWidth - el.clientWidth;
+  // 2px of slack: scrollLeft can land a fraction short of the end on
+  // high-density screens, which would leave a fade over the last item.
+  el.classList.toggle('fade-l', max > 2 && el.scrollLeft > 2);
+  el.classList.toggle('fade-r', max > 2 && el.scrollLeft < max - 2);
+}
+function updateAllEdgeFades() {
+  document.querySelectorAll(EDGE_FADE_SEL).forEach(updateEdgeFade);
+}
+(() => {
+  let queued = false;
+  const queue = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; updateAllEdgeFades(); });
+  };
+  document.addEventListener('scroll', e => {
+    if (e.target instanceof Element && e.target.matches(EDGE_FADE_SEL)) updateEdgeFade(e.target);
+  }, { capture: true, passive: true });
+  window.addEventListener('resize', queue);
+  const start = () => {
+    new MutationObserver(queue).observe(document.body, { childList: true, subtree: true });
+    queue();
+    if (document.fonts) document.fonts.ready.then(queue);
+  };
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();

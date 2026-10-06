@@ -360,7 +360,7 @@
       const s = aw > bw ? 'a' : bw > aw ? 'b' : '';
       return `<div class="yr ${s}"><div class="yr-y">${y}</div><div class="yr-r"><span class="ca${aw < bw ? ' lose' : ''}">${aw}</span><span class="cd">-</span><span class="cb${bw < aw ? ' lose' : ''}">${bw}</span></div></div>`;
     }).join('');
-    return panel('Season by Season', `<div class="yrs">${tiles}</div>`, key(a, b));
+    return panel('Season by Season', `<div class="yrs edge-fade">${tiles}</div>`, key(a, b));
   }
 
   // ---------- The Edge ----------

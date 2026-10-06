@@ -691,7 +691,7 @@
   // in-progress season shows its current regular-season standing, dimmed,
   // the same figure the graph plots for it.
   function arcGrid(p) {
-    return `<div class="arc-grid">${p.season_history.map(s => {
+    return `<div class="arc-grid edge-fade">${p.season_history.map(s => {
       const state = seasonState(s);
       const standing = state === 'progress' ? fmtOrdinal(s.reg_standing) : fmtOrdinal(s.final_standing);
       return `<div class="arc-tile ${state}"><div class="arc-year">${s.year}</div><div class="arc-standing">${standing}</div><div class="arc-rec">${esc(s.reg_record)}</div></div>`;

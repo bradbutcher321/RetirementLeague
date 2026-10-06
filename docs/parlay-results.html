@@ -291,7 +291,7 @@
       <!-- Category tabs left, the scope (year) dropdown pinned right on the
            same row -- the same tabs-plus-Year layout as Standings. -->
       <div class="controls-row">
-        <div class="tabs" id="category-tab-row"></div>
+        <div class="tabs outer scroll" id="category-tab-row"></div>
         <div class="selector-group">
           <label class="selector-label" for="scope-select">Year</label>
           <select class="parlay-select" id="scope-select" autocomplete="off"></select>
@@ -927,8 +927,9 @@
         const cat = CATEGORIES[activeCategory];
         if (cat.subsections) {
           const subIdx = activeSub[activeCategory] || 0;
-          subTabRow.innerHTML = `<div class="seg">${cat.subsections.map((sub, i) => `<button type="button" class="${i === subIdx ? 'on' : ''}" data-sub="${i}">${sub.label}</button>`).join('')}</div>`;
+          subTabRow.innerHTML = `<div class="seg scroll">${cat.subsections.map((sub, i) => `<button type="button" class="${i === subIdx ? 'on' : ''}" data-sub="${i}">${sub.label}</button>`).join('')}</div>`;
           statsContainer.innerHTML = cat.subsections[subIdx].cards.map(key => CARD[key](s)).join('');
+          keepSelectedInView(subTabRow.firstElementChild);
         } else {
           subTabRow.innerHTML = '';
           statsContainer.innerHTML = cat.cards.map(key => CARD[key](s)).join('');
@@ -943,6 +944,7 @@
         if (!btn) return;
         activeCategory = Number(btn.dataset.i);
         [...categoryTabRow.children].forEach((b, i) => b.classList.toggle('on', i === activeCategory));
+        keepSelectedInView(categoryTabRow);
         renderStats();
       });
       subTabRow.addEventListener('click', e => {
@@ -1020,6 +1022,7 @@
           if (st.category !== undefined && CATEGORIES[st.category]) {
             activeCategory = st.category;
             [...categoryTabRow.children].forEach((b, i) => b.classList.toggle('on', i === activeCategory));
+            keepSelectedInView(categoryTabRow);
           }
           if (st.sub) Object.assign(activeSub, st.sub);
           renderStats();
