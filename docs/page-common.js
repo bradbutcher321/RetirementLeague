@@ -226,3 +226,67 @@ function riseIn(els, cap = 8) {
     el.addEventListener('animationcancel', done);
   });
 }
+
+// "Add to Home Screen" card (theme.css "Home Screen card"). iPhones give a
+// website no install button, so this shows where to tap instead, sitting
+// just above Safari's bottom toolbar with its arrow on the button to tap
+// first. Only Safari and Chrome on an iPhone/iPad see it; never once the
+// site is opened from its Home Screen icon; at most once per visit, 2s
+// after load; the ✕ hides it for 30 days. Add ?a2hs to any URL to force it
+// (on any device) for testing.
+(() => {
+  const KEY = 'rl-a2hs-hide-until', SEEN = 'rl-a2hs-seen';
+  const ua = navigator.userAgent;
+  const force = /[?&]a2hs\b/.test(location.search);
+  const store = (which, fn) => { try { return fn(which === 'local' ? localStorage : sessionStorage); } catch { return null; } };
+  const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  const chrome = /CriOS\//.test(ua);
+  // In-app browsers (Instagram, Facebook, the Google app...) can't add to
+  // the Home Screen at all, so only plain Safari and Chrome qualify.
+  const safari = /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|Instagram|FBAN|FBAV|Line\//.test(ua);
+  if (!force) {
+    if (!ios || installed || !(safari || chrome)) return;
+    if (Number(store('local', s => s.getItem(KEY))) > Date.now()) return;
+    if (store('session', s => s.getItem(SEEN))) return;
+  }
+  // Safari 26 keeps Share behind the ⋯ button at the bottom right, and its
+  // share sheet hides Add to Home Screen behind View More. Older Safari has
+  // Share in the middle of its bottom toolbar. Chrome has it in the address
+  // bar at the top, so there is nothing below for the arrow to point at.
+  const ver = Number((ua.match(/Version\/(\d+)/) || [])[1]) || 0;
+  const kind = force || (safari && ver >= 26) ? 'safari26' : safari ? 'safari' : 'chrome';
+  const I = {
+    more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg>',
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v7A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5H16"/></svg>',
+    viewMore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>',
+    add: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
+  };
+  const chip = (icon, label, aria) => `<span class="a2hs-k"${aria ? ` role="img" aria-label="${aria}"` : ''}>${I[icon]}${label}</span>`;
+  const steps = {
+    safari26: [chip('more', '', 'More'), chip('share', 'Share'), chip('viewMore', 'View More'), chip('add', 'Add to Home Screen')],
+    safari: [chip('share', 'Share'), chip('add', 'Add to Home Screen')],
+    chrome: [chip('share', 'Share'), chip('viewMore', 'View More'), chip('add', 'Add to Home Screen')],
+  }[kind];
+  const show = () => {
+    store('session', s => s.setItem(SEEN, '1'));
+    const card = document.createElement('div');
+    card.className = 'a2hs';
+    card.dataset.arrow = { safari26: 'right', safari: 'center', chrome: 'none' }[kind];
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-label', 'Add RL to your Home Screen');
+    card.innerHTML = `<div class="a2hs-row">
+        <img class="a2hs-icon" src="icons/apple-touch-icon.png" alt="">
+        <div class="a2hs-txt"><div class="a2hs-ttl">Add RL to your Home Screen</div><div class="a2hs-sub">Opens full screen, straight to the dashboard.</div></div>
+        <button class="x" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="a2hs-steps">${kind === 'chrome' ? '<span class="a2hs-then">In the address bar,</span>' : ''}${steps.map((c, i) => i ? `<span class="a2hs-step"><span class="a2hs-then">then</span>${c}</span>` : c).join('')}</div>`;
+    card.querySelector('.x').addEventListener('click', () => {
+      store('local', s => s.setItem(KEY, String(Date.now() + 30 * 864e5)));
+      card.remove();
+    });
+    document.body.appendChild(card);
+  };
+  const later = () => setTimeout(show, 2000);
+  if (document.readyState === 'complete') later(); else addEventListener('load', later);
+})();

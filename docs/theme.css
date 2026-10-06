@@ -890,3 +890,40 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
   .wrap{ padding: 0 14px 40px; }
   section{ margin-bottom: 32px; }
 }
+
+/* ---------- Home Screen card ----------
+   page-common.js shows it on iPhones only. The .pop surface with its arrow
+   flipped to point down at the Safari button to tap first: bottom right for
+   Safari 26's ⋯, the middle for older Safari's Share, none for Chrome. On
+   iOS 26, bottom:0 is the top edge of Safari's floating toolbar, so 12px
+   leaves the arrow just clear of it. Below the scrim (60) so an open sheet
+   still covers it. */
+.a2hs{ position:fixed; left:12px; right:12px; bottom:12px; z-index:55; max-width:460px; margin:0 auto;
+       background:#151515; border:1px solid var(--lead-line); border-radius:14px; padding:14px;
+       box-shadow:0 18px 50px -12px rgba(0,0,0,0.9); animation:a2hs-in .45s cubic-bezier(0.34,1.56,0.64,1) both; }
+.a2hs::after{ content:''; position:absolute; bottom:-7px; right:20px; width:12px; height:12px; background:#151515;
+              border-right:1px solid var(--lead-line); border-bottom:1px solid var(--lead-line); transform:rotate(45deg);
+              animation:a2hs-ping 1.4s ease-out .6s 2; }
+.a2hs[data-arrow="center"]::after{ right:auto; left:50%; margin-left:-6px; }
+.a2hs[data-arrow="none"]::after{ display:none; }
+.a2hs-row{ display:flex; gap:12px; align-items:center; }
+.a2hs-icon{ width:44px; height:44px; border-radius:11px; flex:none; box-shadow:0 0 0 1px rgba(255,255,255,0.1); }
+.a2hs-txt{ flex:1; min-width:0; }
+.a2hs-ttl{ font-weight:700; font-size:0.95rem; line-height:1.25; }
+.a2hs-sub{ color:var(--text-dim); font-size:0.76rem; margin-top:2px; }
+.a2hs-steps{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:12px; }
+.a2hs-k{ display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 9px; border-radius:999px; background:rgba(255,255,255,0.06);
+         border:1px solid var(--line); font-weight:600; font-size:0.78rem; white-space:nowrap; }
+.a2hs-k svg{ width:14px; height:14px; flex:none; }
+.a2hs-then{ color:var(--text-dim); font-size:0.78rem; }
+/* Each "then" wraps with the step it introduces, never alone at a row's end. */
+.a2hs-step{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+/* The panels' 30px ✕, with a 44px tap area around it. */
+.a2hs .x{ position:relative; background:rgba(255,255,255,0.06); border:none; color:var(--text-dim); border-radius:999px; width:30px; height:30px;
+          font:inherit; font-size:1rem; line-height:1; cursor:pointer; flex:none; }
+.a2hs .x::after{ content:''; position:absolute; inset:-7px; }
+.a2hs .x:hover{ color:var(--text); }
+.a2hs .x:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+@keyframes a2hs-in{ from{ opacity:0; transform:translateY(18px); } }
+@keyframes a2hs-ping{ 0%{ box-shadow:0 0 0 0 rgba(212,180,106,0.7); } 100%{ box-shadow:0 0 0 12px rgba(212,180,106,0); } }
+@media (prefers-reduced-motion:reduce){ .a2hs, .a2hs::after{ animation:none; } }
