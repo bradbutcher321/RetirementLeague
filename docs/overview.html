@@ -281,6 +281,21 @@
     const vsMedianView = () => activeF().filter(p => p.career.median && p.career.median.pct != null)
       .map(p => ({ name: p.name, sub: `${p.career.median.wins}-${p.career.median.losses}`, val: f1(p.career.median.pct) + '%', pct: p.career.median.pct, w: p.career.median.wins }))
       .sort((a, b) => b.pct - a.pct || b.w - a.w);
+    // The same median game, played back over every regular-season week since
+    // 2015. Every game row carries that week's median score (it matches the
+    // official 2025-on records exactly); a score equal to the median counts
+    // as neither, as it does in the official game.
+    const vsMedianAllTimeView = () => {
+      const r = {};
+      D.games.filter(g => g.type === 'Reg' && typeof g.median === 'number').forEach(g => [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => {
+        if (!D.active.has(p) || typeof s !== 'number' || s === g.median) return;
+        const x = r[p] || (r[p] = { w: 0, l: 0, since: g.year });
+        if (s > g.median) x.w++; else x.l++;
+        x.since = Math.min(x.since, g.year);
+      }));
+      return Object.entries(r).map(([name, x]) => ({ name, sub: `${x.w}-${x.l} · since ${x.since}`, val: f1(x.w / (x.w + x.l) * 100) + '%', pct: x.w / (x.w + x.l), w: x.w }))
+        .sort((a, b) => b.pct - a.pct || b.w - a.w);
+    };
     const draftPosView = () => activeF().filter(p => p.draft && p.draft.avg_position != null)
       .map(p => ({ name: p.name, sub: `Earliest ${p.draft.best_position} · latest ${p.draft.worst_position}`, val: f1(p.draft.avg_position) }))
       .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
@@ -504,7 +519,7 @@
       { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true, lead: 'none' }), V('Title Count', champC), V('Title Games', titleGames('Champ', true), { year: true, lead: 'max' })] },
       { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, lead: 'none' }), V('Sacko Count', sackC, { bad: true }), V('Sacko Games', titleGames('Sacko', false), { year: true, lead: 'none' })] },
       { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, lead: 'max' }), V('Season Low', seasonPts(false), { year: true, lead: 'none', low: 'min' }), V('Weekly High', weekly(true), { year: true, lead: 'max' }), V('Weekly Low', weekly(false), { year: true, lead: 'none', low: 'min' }), V('Average Median', avgMedian, { year: true, lead: 'max', low: 'min' })] },
-      { label: 'Rankings', views: [V('Playoff Rate', rate), V('Average Finish', finish), V('Best Win Seasons', winSeasons(true)), V('Worst Win Seasons', winSeasons(false), { lead: 'none', low: 'first' }), V('Earnings', earn), V('Draft Position', draftPosView()), V('Schedule Luck', medianLuckView()), V('Vs Median', vsMedianView()), V('Achievements', achievementsView()), V('Power Ranking', powerRankingView()), V('Power Index', powerIndexView()), V('Clutch Factor', clutchDeltaView())] },
+      { label: 'Rankings', views: [V('Playoff Rate', rate), V('Average Finish', finish), V('Best Win Seasons', winSeasons(true)), V('Worst Win Seasons', winSeasons(false), { lead: 'none', low: 'first' }), V('Earnings', earn), V('Draft Position', draftPosView()), V('Schedule Luck', medianLuckView()), V('Vs Median', vsMedianView()), V('Vs Median All-Time', vsMedianAllTimeView()), V('Achievements', achievementsView()), V('Power Ranking', powerRankingView()), V('Power Index', powerIndexView()), V('Clutch Factor', clutchDeltaView())] },
       { label: 'Efficiency', views: [V('Career Efficiency', effView()), V('Points Left on Bench', benchView()), V('Extra Wins Available', extraWinsView())] },
       { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { lead: 'none' }), V('With Median', streakView('combined'), { lead: 'none' })] },
     ];
