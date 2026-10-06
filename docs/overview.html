@@ -275,6 +275,12 @@
     const medianLuckView = () => activeF().filter(p => scheduleLuck(p) !== null)
       .map(p => { const l = scheduleLuck(p); return { name: p.name, sub: `Won ${f1(p.career.win_rates.reg_pct)}% · all-play ${f1(p.all_play.pct)}%`, val: (l > 0 ? '+' : '') + f1(l) + '%', tone: l > 0 ? 'up' : l < 0 ? 'down' : '' }; })
       .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
+    // Record against the weekly median game alone (2025 on). Same career
+    // figure as the Franchise page's Versus the Median card, so it includes
+    // the season in progress just as that card does.
+    const vsMedianView = () => activeF().filter(p => p.career.median && p.career.median.pct != null)
+      .map(p => ({ name: p.name, sub: `${p.career.median.wins}-${p.career.median.losses}`, val: f1(p.career.median.pct) + '%', pct: p.career.median.pct, w: p.career.median.wins }))
+      .sort((a, b) => b.pct - a.pct || b.w - a.w);
     const draftPosView = () => activeF().filter(p => p.draft && p.draft.avg_position != null)
       .map(p => ({ name: p.name, sub: `Earliest ${p.draft.best_position} · latest ${p.draft.worst_position}`, val: f1(p.draft.avg_position) }))
       .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
@@ -498,7 +504,7 @@
       { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true, lead: 'none' }), V('Title Count', champC), V('Title Games', titleGames('Champ', true), { year: true, lead: 'max' })] },
       { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, lead: 'none' }), V('Sacko Count', sackC, { bad: true }), V('Sacko Games', titleGames('Sacko', false), { year: true, lead: 'none' })] },
       { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, lead: 'max' }), V('Season Low', seasonPts(false), { year: true, lead: 'none', low: 'min' }), V('Weekly High', weekly(true), { year: true, lead: 'max' }), V('Weekly Low', weekly(false), { year: true, lead: 'none', low: 'min' }), V('Average Median', avgMedian, { year: true, lead: 'max', low: 'min' })] },
-      { label: 'Rankings', views: [V('Playoff Rate', rate), V('Average Finish', finish), V('Best Win Seasons', winSeasons(true)), V('Worst Win Seasons', winSeasons(false), { lead: 'none', low: 'first' }), V('Earnings', earn), V('Draft Position', draftPosView()), V('Schedule Luck', medianLuckView()), V('Achievements', achievementsView()), V('Power Ranking', powerRankingView()), V('Power Index', powerIndexView()), V('Clutch Factor', clutchDeltaView())] },
+      { label: 'Rankings', views: [V('Playoff Rate', rate), V('Average Finish', finish), V('Best Win Seasons', winSeasons(true)), V('Worst Win Seasons', winSeasons(false), { lead: 'none', low: 'first' }), V('Earnings', earn), V('Draft Position', draftPosView()), V('Schedule Luck', medianLuckView()), V('Vs Median', vsMedianView()), V('Achievements', achievementsView()), V('Power Ranking', powerRankingView()), V('Power Index', powerIndexView()), V('Clutch Factor', clutchDeltaView())] },
       { label: 'Efficiency', views: [V('Career Efficiency', effView()), V('Points Left on Bench', benchView()), V('Extra Wins Available', extraWinsView())] },
       { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { lead: 'none' }), V('With Median', streakView('combined'), { lead: 'none' })] },
     ];
