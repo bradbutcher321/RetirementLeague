@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=10">
+<link rel="stylesheet" href="theme.css?v=11">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* ---------- League History ----------
@@ -165,7 +165,7 @@
     <section>
       <!-- No section heading: the page is titled League History now, so a
            second line repeating it said nothing the tabs below don't. -->
-      <div class="tabs scroll" id="tabs"></div>
+      <div class="tabs scroll" id="tabs" data-glide-panel="overview"></div>
       <div id="overview">
         <span class="sr-only">Loading league history…</span>
         <div class="sk-stack" aria-hidden="true"><div class="sk"><div class="sk-grid"><div class="sk-item" style="justify-items:center;padding:20px 10px"><i style="width:60%;height:10px"></i><i style="width:56%;height:36px"></i><i style="width:44%;height:11px"></i></div><div class="sk-item" style="justify-items:center;padding:20px 10px"><i style="width:60%;height:10px"></i><i style="width:56%;height:36px"></i><i style="width:44%;height:11px"></i></div></div></div><div class="sk"><i style="width:44%;height:16px"></i><div class="sk-row" style="padding:6px 0"><i class="o" style="width:36px;height:36px"></i><div class="sk-col"><i style="width:30%;height:9px"></i><i style="width:54%;height:14px"></i><i style="width:66%;height:10px"></i></div><i style="width:84px;height:30px"></i></div><div class="sk-row" style="padding:6px 0"><i class="o" style="width:36px;height:36px"></i><div class="sk-col"><i style="width:30%;height:9px"></i><i style="width:54%;height:14px"></i><i style="width:66%;height:10px"></i></div><i style="width:84px;height:30px"></i></div><div class="sk-row" style="padding:6px 0"><i class="o" style="width:36px;height:36px"></i><div class="sk-col"><i style="width:30%;height:9px"></i><i style="width:54%;height:14px"></i><i style="width:66%;height:10px"></i></div><i style="width:84px;height:30px"></i></div><div class="sk-row" style="padding:6px 0"><i class="o" style="width:36px;height:36px"></i><div class="sk-col"><i style="width:30%;height:9px"></i><i style="width:54%;height:14px"></i><i style="width:66%;height:10px"></i></div><i style="width:84px;height:30px"></i></div><div class="sk-row" style="padding:6px 0"><i class="o" style="width:36px;height:36px"></i><div class="sk-col"><i style="width:30%;height:9px"></i><i style="width:54%;height:14px"></i><i style="width:66%;height:10px"></i></div><i style="width:84px;height:30px"></i></div><div class="sk-row" style="padding:6px 0"><i class="o" style="width:36px;height:36px"></i><div class="sk-col"><i style="width:30%;height:9px"></i><i style="width:54%;height:14px"></i><i style="width:66%;height:10px"></i></div><i style="width:84px;height:30px"></i></div><div class="sk-row" style="padding:6px 0"><i class="o" style="width:36px;height:36px"></i><div class="sk-col"><i style="width:30%;height:9px"></i><i style="width:54%;height:14px"></i><i style="width:66%;height:10px"></i></div><i style="width:84px;height:30px"></i></div></div></div>
@@ -176,7 +176,7 @@
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=5"></script>
+<script src="page-common.js?v=6"></script>
 <script src="league-common.js?v=3"></script>
 <script src="achievements.js"></script>
 <script>
@@ -546,7 +546,7 @@
     keepSelectedInView(document.getElementById('tabs'));
     if (T.html) { el.innerHTML = T.html; keepSelectedInView(document.getElementById('tabs')); return; }
     const vi = viewPick[tab] || 0, v = T.views[vi];
-    const seg = `<div class="seg scroll">${T.views.map((x, i) => `<button class="${i === vi ? 'on' : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
+    const seg = `<div class="seg scroll" data-glide-panel="next">${T.views.map((x, i) => `<button class="${i === vi ? 'on' : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
     // Rows fill down the first column, then the second, on desktop.
     const half = Math.ceil(v.items.length / 2);
     const order = window.matchMedia('(min-width:721px)').matches

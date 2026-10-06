@@ -461,6 +461,31 @@ body{
 .scope-row .scope-btn.on:hover,
 .tabs.outer .tab.on:hover{ background: rgba(212,180,106,0.2); }
 
+/* Gliding selection (glideSelection in page-common.js). On a tap the
+   selected pill slides from the old choice to the new one instead of
+   jumping. While it travels, the pill is a stand-in span (.glide-pill) that
+   copies the new choice's own fill and outline, so a solid gold tab and an
+   outlined .outer/.scope-row chip each glide as themselves, and the real
+   button goes clear (.glide-to) until it lands. The track is positioned so
+   the stand-in sits in its scrolled content, and isolated so z-index -1
+   puts it above the grey track but under the labels. Same overshoot curve
+   as the Median Watch glide, at the pace the audit demo settled on. */
+.tabs, .tab-row, .seg, .sup-seg, .scope-row, .board-toggle{ position: relative; isolation: isolate; }
+.glide-pill{
+  position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none;
+  transition: transform .5s cubic-bezier(0.34, 1.56, 0.64, 1), width .5s cubic-bezier(0.34, 1.56, 0.64, 1), height .5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.glide-clip{ overflow: clip; }
+.glide-to{ background: none !important; box-shadow: none !important; transition: color .3s ease .1s !important; }
+
+/* The content a tab row switches slides in from the side you moved toward.
+   12px, not more: a full-width panel inside the phone's 14px gutter would
+   otherwise poke past the screen edge and let a phone scroll sideways. */
+.glide-in-r{ animation: glide-in-r .34s cubic-bezier(.2,.8,.2,1); }
+.glide-in-l{ animation: glide-in-l .34s cubic-bezier(.2,.8,.2,1); }
+@keyframes glide-in-r{ from{ opacity: 0; transform: translateX(12px); } }
+@keyframes glide-in-l{ from{ opacity: 0; transform: translateX(-12px); } }
+
 .tabs .tab:focus-visible,
 .tab-row .year-tab:focus-visible,
 .seg button:focus-visible,
@@ -819,7 +844,7 @@ h2{
 /* A tab track that hasn't been filled yet would otherwise draw as a lone
    dot (its padding and border with nothing inside): hold its loaded height
    and shimmer like the cards below it. */
-.tabs:empty, .tab-row:empty{ width: min(100%, 300px); height: var(--track-h);
+.tabs:empty, .tab-row:empty, .seg:empty{ width: min(100%, 300px); height: var(--track-h);
   background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 45%, transparent 90%);
   background-size: 300% 100%; animation: sk-shimmer 1.25s linear infinite; }
 .sr-only{ position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -832,7 +857,7 @@ h2{
 .rise{ animation: rise-in .5s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(var(--rise-i, 0) * 90ms); }
 @keyframes rise-in{ from{ opacity: 0; transform: translateY(14px); } }
 @media (prefers-reduced-motion: reduce){
-  .sk i, .tabs:empty, .tab-row:empty{ animation: none; }
+  .sk i, .tabs:empty, .tab-row:empty, .seg:empty{ animation: none; }
   .rise{ animation: none; }
 }
 footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }

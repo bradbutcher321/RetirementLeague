@@ -32,12 +32,141 @@ function monogram(name) {
 
 // Centre a scrolling selector track (.scroll, see theme.css) on its selected
 // item, so after a re-render the choice you just made isn't off-screen.
+// Measured from the two boxes rather than offsetLeft: tracks are positioned
+// now (for the gliding pill), which changes what offsetLeft is relative to.
+// Right after a tap on this same track it scrolls smoothly, alongside the
+// pill's glide; a first render or a rebuilt track still jumps straight there.
 function keepSelectedInView(track) {
   if (!track || track.scrollWidth <= track.clientWidth) return;
   const on = track.querySelector('.on, .active');
-  if (on) track.scrollLeft = on.offsetLeft - track.offsetLeft - (track.clientWidth - on.offsetWidth) / 2;
+  if (!on) return;
+  const t = track.getBoundingClientRect(), o = on.getBoundingClientRect();
+  const left = track.scrollLeft + (o.left - t.left) - (track.clientWidth - o.width) / 2;
+  const smooth = track === glideTap.track && performance.now() - glideTap.at < 600 && !reducedMotion();
+  track.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
   updateEdgeFade(track);
 }
+
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- Gliding selection (site audit Motion B) ----------
+// Every selector track on the site (theme.css "Selectors") gets this with no
+// page wiring: a capture-phase click listener notes where the selected pill
+// is before the page's own handler runs, then waits for that handler's
+// re-render and slides a stand-in pill from there to the new choice. Pages
+// re-render tracks three different ways -- toggling .on in place, rebuilding
+// the track's buttons, or rebuilding the whole card the track sits in -- so
+// the track is found again by its path from the nearest id'd ancestor, and
+// for a few frames, since Median Watch applies its toggle inside a view
+// transition a frame or two later.
+//
+// A track with data-glide-panel also slides the content it switches in
+// from the side you moved toward: the value is the id of that container,
+// or "next" for the track's next sibling.
+const TRACK_SEL = '.tabs, .tab-row, .seg, .sup-seg, .scope-row, .board-toggle';
+const glideTap = { track: null, at: 0 };
+(() => {
+  const items = track => [...track.children].filter(c => !c.classList.contains('glide-pill'));
+  const selected = track => items(track).find(c => c.matches('.on, .active'));
+  // The pill's box in the track's scrolled content, which is where an
+  // absolutely positioned child of a positioned scroller is placed.
+  const boxOf = (track, el) => {
+    const t = track.getBoundingClientRect(), r = el.getBoundingClientRect();
+    return { x: r.left - t.left - track.clientLeft + track.scrollLeft, y: r.top - t.top - track.clientTop + track.scrollTop, w: r.width, h: r.height };
+  };
+  const place = (pill, b) => {
+    pill.style.width = b.w + 'px';
+    pill.style.height = b.h + 'px';
+    pill.style.transform = `translate(${b.x}px, ${b.y}px)`;
+  };
+  const pathTo = el => {
+    const parts = [];
+    for (; el && el !== document.body; el = el.parentElement) {
+      if (el.id) return [`#${CSS.escape(el.id)}`, ...parts].join(' > ');
+      parts.unshift(`${el.tagName.toLowerCase()}:nth-child(${[...el.parentElement.children].indexOf(el) + 1})`);
+    }
+    return ['body', ...parts].join(' > ');
+  };
+
+  function glide(track, from, to) {
+    track.querySelector(':scope > .glide-pill')?.remove();
+    const cs = getComputedStyle(to);
+    const pill = document.createElement('span');
+    pill.className = 'glide-pill';
+    pill.setAttribute('aria-hidden', 'true');
+    pill.style.background = cs.backgroundColor;
+    pill.style.boxShadow = cs.boxShadow;
+    pill.style.borderRadius = cs.borderRadius;
+    pill.style.transition = 'none';
+    place(pill, from);
+    // Appended last so pages that map track.children by index still line
+    // their buttons up with the right entries.
+    track.append(pill);
+    to.classList.add('glide-to');
+    // The overshoot would carry the pill past the end of a track that
+    // doesn't scroll; clip it to the track's rounded edge, as a scrolling
+    // one already does. Never on a scroller: overflow: clip would reset it.
+    const clip = getComputedStyle(track).overflowX === 'visible';
+    if (clip) track.classList.add('glide-clip');
+    pill.getBoundingClientRect();
+    pill.style.transition = '';
+    place(pill, boxOf(track, to));
+    let finished = false;
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      pill.remove();
+      to.classList.remove('glide-to');
+      if (clip) track.classList.remove('glide-clip');
+    };
+    pill.addEventListener('transitionend', e => { if (e.propertyName === 'transform') done(); });
+    setTimeout(done, 800);
+  }
+
+  function slidePanel(track, dir) {
+    const key = track.dataset.glidePanel;
+    const panel = key === 'next' ? track.nextElementSibling : key && document.getElementById(key);
+    if (!panel) return;
+    panel.classList.remove('glide-in-r', 'glide-in-l');
+    void panel.offsetWidth;
+    panel.classList.add(dir > 0 ? 'glide-in-r' : 'glide-in-l');
+    const end = e => {
+      if (e.target !== panel) return;
+      panel.classList.remove('glide-in-r', 'glide-in-l');
+      panel.removeEventListener('animationend', end);
+    };
+    panel.addEventListener('animationend', end);
+  }
+
+  document.addEventListener('click', e => {
+    if (reducedMotion() || !(e.target instanceof Element)) return;
+    const btn = e.target.closest('button');
+    const track = btn?.parentElement;
+    if (!track || !track.matches(TRACK_SEL) || btn.matches('.on, .active')) return;
+    const old = selected(track);
+    if (!old) return;
+    // Mid-glide, start from wherever the moving pill is right now.
+    const moving = track.querySelector(':scope > .glide-pill');
+    const from = boxOf(track, moving || old);
+    const fromIdx = items(track).indexOf(old);
+    const path = pathTo(track);
+    glideTap.track = track;
+    glideTap.at = performance.now();
+    let tries = 0;
+    const settle = () => {
+      const now = track.isConnected ? track : document.querySelector(path);
+      const to = now && now.matches(TRACK_SEL) && selected(now);
+      const toIdx = to ? items(now).indexOf(to) : -1;
+      if (!to || toIdx === fromIdx) {
+        if (++tries < 12) requestAnimationFrame(settle);
+        return;
+      }
+      glide(now, from, to);
+      slidePanel(now, toIdx - fromIdx);
+    };
+    requestAnimationFrame(settle);
+  }, true);
+})();
 
 // Fade whichever edge of a sideways scroller still has more to show, so a
 // tab past the edge reads as "keep swiping" rather than not existing. Covers

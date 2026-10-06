@@ -21,7 +21,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=10">
+<link rel="stylesheet" href="theme.css?v=11">
 <link rel="stylesheet" href="nav.css?v=4">
 <style>
   /* ---------- Week selector ----------
@@ -54,7 +54,12 @@
      dropdown beside its tabs). Inside .controls-row theme.css zeroes this. */
   .scope-row{ margin-bottom: 18px; }
 
-  .seg{ margin: 4px 0 18px; }
+  /* The subsection tabs + Year row: same spacing the subsection row had
+     when it sat on its own under the categories. */
+  .stats-controls{ margin: 4px 0 18px; }
+  /* A subsection with a single card (How Far Parlays Get's two charts each
+     have their own) takes the full width instead of half a row. */
+  #stats-container > :only-child{ grid-column: 1 / -1; }
 
   /* ---------- Parlay hero: Payout as the one glowing headline number,
      Legs Hit/Lost/Combined Odds/Split as quiet side stats, reusing the
@@ -291,16 +296,18 @@
 
     <section>
       <h2>Stats</h2>
-      <!-- Category tabs left, the scope (year) dropdown pinned right on the
-           same row -- the same tabs-plus-Year layout as Standings. -->
-      <div class="controls-row">
-        <div class="tabs outer scroll" id="category-tab-row"></div>
+      <!-- Category tabs on their own row, then the subsection tabs with the
+           scope (year) dropdown pinned right beside them -- the Year sits
+           on the row just above the cards it filters. Every category has
+           subsections, so that second row never disappears. -->
+      <div class="tabs outer scroll" id="category-tab-row" data-glide-panel="stats-container"></div>
+      <div class="controls-row stats-controls">
+        <div class="seg scroll" id="sub-tab-row" data-glide-panel="stats-container"></div>
         <div class="selector-group">
           <label class="selector-label" for="scope-select">Year</label>
           <select class="parlay-select" id="scope-select" autocomplete="off"></select>
         </div>
       </div>
-      <div id="sub-tab-row"></div>
       <div class="card-grid" id="stats-container"></div>
     </section>
 
@@ -339,7 +346,7 @@
   </div>
 
 <script src="nav.js?v=2"></script>
-<script src="page-common.js?v=5"></script>
+<script src="page-common.js?v=6"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -795,7 +802,13 @@
 
   // ---------- Category > subsection structure ----------
   const CATEGORIES = [
-    { label: 'How Far Parlays Get', cards: ['legsPerParlay', 'legsBeforeLoss'] },
+    {
+      label: 'How Far Parlays Get',
+      subsections: [
+        { label: 'Per Parlay', cards: ['legsPerParlay'] },
+        { label: 'Before First Loss', cards: ['legsBeforeLoss'] },
+      ],
+    },
     {
       label: 'Betting Stats',
       subsections: [
@@ -929,15 +942,10 @@
         const s = stats[activeScope];
         if (!s) return;
         const cat = CATEGORIES[activeCategory];
-        if (cat.subsections) {
-          const subIdx = activeSub[activeCategory] || 0;
-          subTabRow.innerHTML = `<div class="seg scroll">${cat.subsections.map((sub, i) => `<button type="button" class="${i === subIdx ? 'on' : ''}" data-sub="${i}">${sub.label}</button>`).join('')}</div>`;
-          statsContainer.innerHTML = cat.subsections[subIdx].cards.map(key => CARD[key](s)).join('');
-          keepSelectedInView(subTabRow.firstElementChild);
-        } else {
-          subTabRow.innerHTML = '';
-          statsContainer.innerHTML = cat.cards.map(key => CARD[key](s)).join('');
-        }
+        const subIdx = activeSub[activeCategory] || 0;
+        subTabRow.innerHTML = cat.subsections.map((sub, i) => `<button type="button" class="${i === subIdx ? 'on' : ''}" data-sub="${i}">${sub.label}</button>`).join('');
+        statsContainer.innerHTML = cat.subsections[subIdx].cards.map(key => CARD[key](s)).join('');
+        keepSelectedInView(subTabRow);
       }
       scopeSelect.addEventListener('change', () => {
         activeScope = scopeSelect.value;
