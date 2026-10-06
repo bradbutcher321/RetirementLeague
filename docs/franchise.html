@@ -192,7 +192,10 @@
   .chart .link{ stroke:rgba(255,255,255,0.18); stroke-width:1.5; }
   .chart .x{ fill:var(--text-dim); font-size:10px; font-family:var(--body); }
   .chart .v{ fill:var(--text); font-size:10px; font-weight:700; font-family:var(--body); }
-  .dot{ stroke-width:2; }
+  /* The transition only shows during the Career Arc morph, when a dot
+     keeps its old class for one frame before taking the new one. */
+  .dot{ stroke-width:2; transition:fill .35s, stroke .35s; }
+  @media (prefers-reduced-motion: reduce){ .dot{ transition:none; } }
   .dot.champion{ fill:var(--gold); stroke:var(--gold); }
   .dot.runner-up{ fill:var(--surface); stroke:var(--gold); }
   .dot.playoffs{ fill:var(--turf); stroke:var(--turf); }
@@ -391,7 +394,7 @@
 
   // tiles: [label, value, { tone: 'win'|'loss'|'lead', sub }]
   const tiles = (list, n) => `<div class="tiles" style="--n:${n || list.length}">${list.map(([label, value, o = {}]) => `
-    <div class="tile${o.tone ? ' is-' + o.tone : ''}">
+    <div class="tile${o.tone ? ' is-' + o.tone : ''}"${o.k ? ` data-k="${o.k}"` : ''}>
       <div class="tile-l">${label}</div>
       <div class="tile-v">${value}</div>
       ${o.sub ? `<div class="tile-s">${o.sub}</div>` : ''}
@@ -418,13 +421,16 @@
       return top + (invert ? t : 1 - t) * plot;
     };
     const xOf = i => `${((i + 0.5) / pts.length * 100).toFixed(3)}%`;
+    // An optional key per point (Career Arc passes the year) tags its dot,
+    // label, x label and links so morphArc can match them across managers.
+    const k = p => p.key != null ? ` data-k="${p.key}"` : '';
     const grid = ticks.map(t => `<line class="grid" x1="0" x2="100%" y1="${yOf(t)}" y2="${yOf(t)}"/>`).join('');
     const links = pts.slice(1).map((p, i) => pts[i].y == null || p.y == null ? '' :
-      `<line class="link" x1="${xOf(i)}" y1="${yOf(pts[i].y)}" x2="${xOf(i + 1)}" y2="${yOf(p.y)}"/>`).join('');
+      `<line class="link"${p.key != null ? ` data-a="${pts[i].key}" data-b="${p.key}"` : ''} x1="${xOf(i)}" y1="${yOf(pts[i].y)}" x2="${xOf(i + 1)}" y2="${yOf(p.y)}"/>`).join('');
     const dots = pts.map((p, i) => p.y == null ? '' : `
-      <circle class="dot ${p.cls || 'plain'}" cx="${xOf(i)}" cy="${yOf(p.y)}" r="5"/>
-      ${p.label != null ? `<text class="v" x="${xOf(i)}" y="${yOf(p.y) - 9}" text-anchor="middle">${p.label}</text>` : ''}`).join('');
-    const xs = pts.map((p, i) => `<text class="x" x="${xOf(i)}" y="${height - 4}" text-anchor="middle">${p.x}</text>`).join('');
+      <circle class="dot ${p.cls || 'plain'}"${k(p)} cx="${xOf(i)}" cy="${yOf(p.y)}" r="5"/>
+      ${p.label != null ? `<text class="v"${k(p)} x="${xOf(i)}" y="${yOf(p.y) - 9}" text-anchor="middle">${p.label}</text>` : ''}`).join('');
+    const xs = pts.map((p, i) => `<text class="x"${k(p)} x="${xOf(i)}" y="${height - 4}" text-anchor="middle">${p.x}</text>`).join('');
     const yLabels = ticks.map(t => `<span style="top:${yOf(t)}px">${tickLabel(t)}</span>`).join('');
     return `<div class="chart"><div class="chart-y" style="height:${height}px">${yLabels}</div>
       <svg height="${height}" role="img">${grid}${links}${dots}${xs}</svg></div>`;
@@ -645,8 +651,8 @@
 
     const summary = card('Career Arc', tiles([
       ['Best Finish', fmtOrdinal(best), { tone: best === 1 ? 'lead' : null, sub: bestYears.length > 3 ? `${bestYears.length} times` : bestYears.join(', ') }],
-      ['Avg Finish', fmt(avg, 1), { sub: rankSub(p, x => { const f = x.season_history.filter(s => seasonState(s) !== 'progress' && s.final_standing).map(s => s.final_standing); return f.length ? f.reduce((a, b) => a + b, 0) / f.length : null; }, false) }],
-      ['Playoff %', rate == null ? '—' : `${Math.round(rate)}%`, { sub: `${made} of ${done.length}` }],
+      ['Avg Finish', fmt(avg, 1), { k: 'avg', sub: rankSub(p, x => { const f = x.season_history.filter(s => seasonState(s) !== 'progress' && s.final_standing).map(s => s.final_standing); return f.length ? f.reduce((a, b) => a + b, 0) / f.length : null; }, false) }],
+      ['Playoff %', rate == null ? '—' : `${Math.round(rate)}%`, { k: 'po', sub:`${made} of ${done.length}` }],
       ['Finals', `${st.championships}-${finalsLost}`, { tone: st.championships > 0 ? 'lead' : null, sub: st.champ_appearances ? `${st.champ_appearances} trip${st.champ_appearances === 1 ? '' : 's'}` : 'None yet' }],
     ], 4) + arcViews(p), { chip: arcToggle() });
 
@@ -678,7 +684,7 @@
     const pts = p.season_history.map(s => {
       const state = seasonState(s);
       const y = state === 'progress' ? (s.reg_standing || null) : (s.final_standing || null);
-      return { x: `'${String(s.year).slice(2)}`, y, cls: state, label: y };
+      return { x: `'${String(s.year).slice(2)}`, y, cls: state, label: y, key: s.year };
     });
     const mid = Math.round(maxTeams / 2);
     const legend = [['champion', 'Champion'], ['runner-up', 'Runner-up'], ['playoffs', 'Playoffs'], ['missed', 'Missed'], ['progress', 'In progress']]
@@ -708,6 +714,124 @@
       .filter(([k]) => p.season_history.some(s => seasonState(s) === k))
       .map(([k, l]) => `<span><i class="lg-${k}"></i>${l}</span>`).join('');
     return `<div class="arc-views" data-view="${arcView}">${finishChart(p)}${arcGrid(p)}<div class="legend">${legend}</div></div>`;
+  }
+
+  // ---------- Career Arc morph ----------
+  // Changing manager on History glides each season's dot from the old
+  // finish to the new one, on Median Watch's 0.68s curve, and counts Avg
+  // Finish and Playoff % to their new values, so one career visibly turns
+  // into another instead of the chart redrawing. Points match by year; a
+  // year only one of the two managers played fades in or out in place.
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ARC_MS = 680;
+  // cubic-bezier(0.34, 1.56, 0.64, 1) for the JS-driven glide.
+  function bezier(x1, y1, x2, y2) {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+    const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    const sx = t => ((ax * t + bx) * t + cx) * t;
+    const sy = t => ((ay * t + by) * t + cy) * t;
+    const dx = t => (3 * ax * t + 2 * bx) * t + cx;
+    return x => {
+      let t = x;
+      for (let i = 0; i < 8; i++) { const e = sx(t) - x; if (Math.abs(e) < 1e-5) break; const d = dx(t); if (Math.abs(d) < 1e-6) break; t -= e / d; }
+      return sy(Math.max(0, Math.min(1, t)));
+    };
+  }
+  const glide = bezier(0.34, 1.56, 0.64, 1);
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  let arcRun = 0;
+
+  // The Career Arc as drawn right now (mid-glide included, so a quick
+  // second change carries on from where the dots are), or null when
+  // there's no graph showing to morph from.
+  function arcSnapshot() {
+    const svg = document.querySelector('#tab-content .arc-graph svg');
+    if (!svg || arcView !== 'graph') return null;
+    const num = (el, a) => parseFloat(el.getAttribute(a));
+    const dots = new Map(), xs = new Map();
+    svg.querySelectorAll('circle.dot[data-k]:not(.gone)').forEach(c => dots.set(c.dataset.k, {
+      x: num(c, 'cx'), y: num(c, 'cy'), cls: c.getAttribute('class'), c, label: svg.querySelector(`text.v[data-k="${c.dataset.k}"]`),
+    }));
+    svg.querySelectorAll('text.x[data-k]:not(.gone)').forEach(t => xs.set(t.dataset.k, { x: num(t, 'x'), t }));
+    const tile = k => parseFloat((document.querySelector(`#tab-content .tile[data-k="${k}"] .tile-v`) || {}).textContent);
+    return { dots, xs, avg: tile('avg'), po: tile('po') };
+  }
+
+  function morphArc(before) {
+    const svg = document.querySelector('#tab-content .arc-graph svg');
+    if (!svg) return;
+    const run = ++arcRun;
+    const num = (el, a) => parseFloat(el.getAttribute(a));
+    const pct = v => `${v.toFixed(3)}%`;
+
+    // Dots and their finish labels. A matched dot starts on its old class
+    // and takes the new one after a style flush, so .dot's fill/stroke
+    // transition recolors it in flight.
+    const dots = [];
+    svg.querySelectorAll('circle.dot[data-k]').forEach(c => {
+      const k = c.dataset.k, o = before.dots.get(k);
+      const d = { k, c, label: svg.querySelector(`text.v[data-k="${k}"]`), to: { x: num(c, 'cx'), y: num(c, 'cy') }, from: o || null, cls: c.getAttribute('class') };
+      if (o) c.setAttribute('class', o.cls);
+      dots.push(d);
+    });
+    // Years the new manager never played: the old dots stay where they
+    // were and fade out.
+    const gone = [];
+    before.dots.forEach((o, k) => {
+      if (svg.querySelector(`circle.dot[data-k="${k}"]`)) return;
+      [o.c, o.label].filter(Boolean).forEach(el => { el.classList.add('gone'); svg.appendChild(el); gone.push(el); });
+    });
+    const xs = [];
+    svg.querySelectorAll('text.x[data-k]').forEach(t => xs.push({ t, from: before.xs.get(t.dataset.k), to: num(t, 'x') }));
+    before.xs.forEach((o, k) => { if (!svg.querySelector(`text.x[data-k="${k}"]`)) { o.t.classList.add('gone'); svg.appendChild(o.t); gone.push(o.t); } });
+    const links = [...svg.querySelectorAll('line.link[data-a]')];
+
+    svg.getBoundingClientRect();
+    dots.forEach(d => { if (d.from) d.c.setAttribute('class', d.cls); });
+
+    const paint = t => {
+      const e = glide(t), pos = {};
+      dots.forEach(d => {
+        const x = d.from ? d.from.x + (d.to.x - d.from.x) * e : d.to.x;
+        const y = d.from ? d.from.y + (d.to.y - d.from.y) * e : d.to.y;
+        const op = d.from ? 1 : Math.min(1, t * 2);
+        pos[d.k] = { x, y, op };
+        d.c.setAttribute('cx', pct(x)); d.c.setAttribute('cy', y); d.c.style.opacity = op;
+        if (d.label) { d.label.setAttribute('x', pct(x)); d.label.setAttribute('y', y - 9); d.label.style.opacity = op; }
+      });
+      links.forEach(l => {
+        const a = pos[l.dataset.a], b = pos[l.dataset.b];
+        if (!a || !b) return;
+        l.setAttribute('x1', pct(a.x)); l.setAttribute('y1', a.y); l.setAttribute('x2', pct(b.x)); l.setAttribute('y2', b.y);
+        l.style.opacity = Math.min(a.op, b.op);
+      });
+      xs.forEach(x => {
+        if (x.from) x.t.setAttribute('x', pct(x.from.x + (x.to - x.from.x) * e));
+        else x.t.style.opacity = Math.min(1, t * 2);
+      });
+      gone.forEach(el => { el.style.opacity = Math.max(0, 1 - t * 2.5); });
+    };
+
+    const tick = (k, from, fmtV) => {
+      const el = document.querySelector(`#tab-content .tile[data-k="${k}"] .tile-v`);
+      const to = el && parseFloat(el.textContent);
+      if (!el || Number.isNaN(from) || Number.isNaN(to) || from === to) return null;
+      return t => { el.textContent = fmtV(from + (to - from) * easeOut(t)); };
+    };
+    const ticks = [tick('avg', before.avg, v => v.toFixed(1)), tick('po', before.po, v => `${Math.round(v)}%`)].filter(Boolean);
+
+    const t0 = performance.now();
+    const frame = now => {
+      if (run !== arcRun) return;
+      const t = Math.min(1, (now - t0) / ARC_MS);
+      paint(t);
+      ticks.forEach(f => f(t));
+      if (t < 1) requestAnimationFrame(frame);
+      else gone.forEach(el => el.remove());
+    };
+    paint(0);
+    ticks.forEach(f => f(0));
+    requestAnimationFrame(frame);
   }
 
   // ---------- Record ----------
@@ -936,13 +1060,17 @@
 
   let data = null, CTX = null;
   let tab = (() => { try { const t = localStorage.getItem('franchise-tab'); return Math.max(0, TABS.findIndex(x => x.id === t)); } catch (e) { return 0; } })();
-  function show(name) {
+  // morph: a manager change, which on History glides the Career Arc
+  // across rather than redrawing it.
+  function show(name, morph) {
     const p = data.players.find(x => x.name === name);
     if (!p) return;
     document.getElementById('hero-container').innerHTML = renderHero(p);
     const tabsEl = document.getElementById('tabs');
     tabsEl.innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
+    const before = morph && !reduceMotion && TABS[tab].id === 'history' ? arcSnapshot() : null;
     document.getElementById('tab-content').innerHTML = TABS[tab].render(p);
+    if (before) morphArc(before);
     keepSelectedInView(tabsEl);
   }
 
@@ -988,7 +1116,7 @@
     show(sel.value);
     riseIn([...document.getElementById('hero-container').children, ...document.getElementById('tab-content').children]);
     sel.addEventListener('change', () => {
-      show(sel.value);
+      show(sel.value, true);
       try { localStorage.setItem('franchise-selected', sel.value); } catch (e) {}
     });
   }).catch(err => {
