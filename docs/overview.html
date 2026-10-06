@@ -100,18 +100,18 @@
   .heat-y{ text-align:center; color:var(--text-dim); font-size:0.58rem; }
   .heat-c{ height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:0.78rem; color:var(--text-dim); background:var(--item); border:1px solid var(--item-line); min-width:0; }
   .heat-c.none{ background:none; border-color:transparent; color:rgba(255,255,255,0.15); }
-  .heat-c.champion{ border-color:var(--gold); background:var(--lead-tint); color:var(--gold); }
+  .heat-c.champion{ border-color:var(--gold); background:color-mix(in srgb, var(--gold) 20%, transparent); color:var(--text); box-shadow:0 0 7px color-mix(in srgb, var(--gold) 55%, transparent); }
   .heat-c.runner-up{ border-color:var(--lead-line); color:var(--gold); }
   .heat-c.playoffs{ border-color:var(--win-line); background:var(--win-tint); color:var(--turf); }
   /* Red mirrors gold: champion is the full gold ring and runner-up the
-     softer line, so a Sacko is the full red ring with a glow and a missed
+     softer line, so a Sacko (like a title) is the full ring with a glow and a missed
      playoff year the softer red line. Glow and fill are mixed from --loss. */
   .heat-c.missed{ border-color:var(--loss-line); background:var(--loss-tint); color:var(--loss); }
   .heat-c.sacko{ border-color:var(--loss); background:color-mix(in srgb, var(--loss) 22%, transparent); color:var(--text); box-shadow:0 0 7px color-mix(in srgb, var(--loss) 55%, transparent); }
   :root[data-accent="outline"] .heat-c{ background:var(--item); }
   .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; color:var(--text-dim); font-size:0.68rem; padding:12px 2px 0; }
   .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; border:1px solid var(--item-line); background:var(--item); }
-  .legend .champion{ border-color:var(--gold); background:var(--lead-tint); }
+  .legend .champion{ border-color:var(--gold); background:color-mix(in srgb, var(--gold) 20%, transparent); box-shadow:0 0 5px color-mix(in srgb, var(--gold) 55%, transparent); }
   .legend .runner-up{ border-color:var(--lead-line); background:none; }
   .legend .playoffs{ border-color:var(--win-line); background:var(--win-tint); }
   .legend .missed{ border-color:var(--loss-line); background:var(--loss-tint); }
