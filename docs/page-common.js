@@ -49,6 +49,43 @@ function keepSelectedInView(track) {
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// Playoff race (site audit 29), shared by the dashboard's standings and the
+// Standings page. `rows` are in standings order, each { w, l, t }; `spots`
+// is how many teams make the playoffs; `totalGames` is every team's full
+// regular-season game count (median games included). Per row:
+//   clinched -- fewer than `spots` other teams can still reach its wins
+//   out      -- `spots` teams already have more wins than it can reach
+//   gb       -- wins behind the last playoff spot (rows below the line only)
+// Ties in wins go to total points, which nobody can promise, so a tie
+// counts against the team both ways: only a certainty earns a tag. Teams
+// playing each other are ignored too, which can only delay a tag, never
+// award a wrong one. Null when the season length isn't known.
+function playoffRace(rows, spots, totalGames) {
+  if (!spots || !totalGames || rows.length <= spots) return null;
+  const score = r => r.w + (r.t || 0) / 2;
+  const best = r => score(r) + Math.max(0, totalGames - r.w - r.l - (r.t || 0));
+  const line = score(rows[spots - 1]);
+  return rows.map((r, i) => {
+    const others = rows.filter(o => o !== r);
+    return {
+      clinched: others.filter(o => best(o) >= score(r)).length < spots,
+      out: others.filter(o => score(o) > best(r)).length >= spots,
+      gb: i >= spots ? Math.max(0, line - score(r)) : 0,
+    };
+  });
+}
+// A row's race marker, one more part of its record line: Clinched (turf),
+// Eliminated (red), or how far a team below the line trails it. A word
+// rather than a pill badge, because a badge didn't fit beside a record at
+// phone width. A team level with the line shows nothing; the records say so.
+function raceMark(r) {
+  if (!r) return '';
+  if (r.clinched) return '<span class="race-in">Clinched</span>';
+  if (r.out) return '<span class="race-out">Eliminated</span>';
+  return r.gb > 0 ? `<span>${Number.isInteger(r.gb) ? r.gb : r.gb.toFixed(1)} GB</span>` : '';
+}
+const PLAYOFF_LINE = '<div class="po-line" role="separator" aria-label="Playoff line">Playoff line</div>';
+
 // ---------- Gliding selection (site audit Motion B) ----------
 // Every selector track on the site (theme.css "Selectors") gets this with no
 // page wiring: a capture-phase click listener notes where the selected pill

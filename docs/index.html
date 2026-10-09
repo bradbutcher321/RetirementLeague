@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=13">
+<link rel="stylesheet" href="theme.css?v=14">
 <link rel="stylesheet" href="nav.css?v=5">
 <style>
   /* ---------- Matchup cards ----------
@@ -288,7 +288,16 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .lb-meta{ color: var(--text-dim); font-size: 0.76rem; margin-top: 1px; }
+  .lb-meta{ color: var(--text-dim); font-size: 0.76rem; margin-top: 1px; overflow: hidden; }
+  /* "Manager • record • race marker", where a part that doesn't fit drops
+     to the next line whole (a late-season "Eliminated" at phone width)
+     instead of the record splitting at its hyphen. Same trick as the
+     Standings page's PF/PA line: every part carries its own leading
+     bullet, and the row is shifted left by one bullet's width inside the
+     overflow:hidden line, so whichever part starts a line loses its bullet. */
+  .lb-parts{ display: flex; flex-wrap: wrap; margin-left: -1em; }
+  .lb-parts > span{ white-space: nowrap; }
+  .lb-parts > span::before{ content: '•'; display: inline-block; width: 1em; text-align: center; color: var(--text-dim); font-weight: 400; }
   .lb-stat{ text-align: center; flex-shrink: 0; width: 48px; }
   .lb-stat .v{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
   /* One header over the list names the columns, instead of a caption
@@ -981,7 +990,7 @@
   </div>
 
 <script src="nav.js?v=3"></script>
-<script src="page-common.js?v=9"></script>
+<script src="page-common.js?v=10"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -2701,7 +2710,14 @@
     return manager ? `a href="franchise.html" data-fr="${esc(manager)}"` : 'div';
   }
 
-  function renderLeaderboardRow(t, rank, playoffTeamCount) {
+  // The line under a team's name: manager, record and playoff race marker
+  // (raceMark in page-common.js), each part kept whole -- see .lb-parts.
+  function lbMeta(manager, record, race) {
+    const parts = [manager ? `<span>${manager}</span>` : '', `<span>${record}</span>`, raceMark(race)];
+    return `<div class="lb-meta"><span class="lb-parts">${parts.join('')}</span></div>`;
+  }
+
+  function renderLeaderboardRow(t, rank, playoffTeamCount, race) {
     const hasPlayoffPct = typeof t.playoffPct === 'number';
     const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : 'low') : '';
     const inPlayoffPosition = playoffTeamCount > 0 && rank <= playoffTeamCount;
@@ -2710,7 +2726,7 @@
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${t.name}</div>
-          <div class="lb-meta">${t.manager ? `${t.manager} • ` : ''}${t.record}</div>
+          ${lbMeta(t.manager, t.record, race)}
         </div>
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsFor)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsAgainst)}</div></div>
@@ -2807,6 +2823,13 @@
     });
   }
 
+  // The Playoff line goes after the last playoff spot (site audit 29). It
+  // isn't named in the mode switch's view transition, so it holds still
+  // while the rows glide past it.
+  function withPlayoffLine(rowsHtml, spots) {
+    return rowsHtml.map((h, i) => (spots > 0 && i === spots - 1 && rowsHtml.length > spots ? h + PLAYOFF_LINE : h)).join('');
+  }
+
   function renderStandings() {
     const data = standingsData;
     if (!data) return;
@@ -2814,42 +2837,49 @@
     const container = document.getElementById('leaderboard-container');
     const week = data.week || 1;
     const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
+    const spots = data.playoffTeamCount || 0;
+    // Every week is a head-to-head game plus a game against the median.
+    const totalGames = 2 * (data.regularSeasonWeeks || 0);
 
     if (!hasPrior) {
-      // Week 1: no earlier week to compare against.
-      container.innerHTML = renderLeaderboardHead('Odds') + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
+      // Week 1: no earlier week to compare against, and no games yet for
+      // a race to read.
+      container.innerHTML = renderLeaderboardHead('Odds') + withPlayoffLine(teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, spots)), spots);
       return;
     }
 
     const m = activeSeasonMode();
 
     if (m === 'through') {
-      container.innerHTML = renderLeaderboardHead('Odds') + teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, data.playoffTeamCount)).join('');
+      const race = playoffRace(teams.map(t => t.prior), spots, totalGames);
+      container.innerHTML = renderLeaderboardHead('Odds') + withPlayoffLine(teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, spots, race && race[idx])), spots);
       return;
     }
 
+    // Live and projected: the race as it would stand if the week ended so.
     const rows = projectStandings(data, m);
     const base = projectStandings(data, 'through');
     const baseRank = new Map([...base].sort((a, b) => b.w - a.w || b.pf - a.pf).map((r, i) => [r.name, i + 1]));
     const ordered = [...rows].sort((a, b) => b.w - a.w || b.pf - a.pf);
-    container.innerHTML = renderLeaderboardHead('Move') + ordered.map((r, i) => {
+    const race = playoffRace(ordered.map(r => ({ w: r.w, l: r.l, t: r.ties })), spots, totalGames);
+    container.innerHTML = renderLeaderboardHead('Move') + withPlayoffLine(ordered.map((r, i) => {
       const rank = i + 1;
       const move = baseRank.get(r.name) - rank;
       const chipCls = move > 0 ? 'high' : move < 0 ? 'low' : '';
-      const chipText = move > 0 ? `\u25B2 ${move}` : move < 0 ? `\u25BC ${-move}` : '\u2013';
-      const inPlayoffPosition = data.playoffTeamCount > 0 && rank <= data.playoffTeamCount;
+      const chipText = move > 0 ? `▲ ${move}` : move < 0 ? `▼ ${-move}` : '–';
+      const inPlayoffPosition = spots > 0 && rank <= spots;
       return `
       <${lbRowTag(r.manager)} class="lb-row ${inPlayoffPosition ? 'playoff' : ''}" data-sf="${r.espnRank - 1}">
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${r.name}</div>
-          <div class="lb-meta">${r.manager ? `${r.manager} • ` : ''}${formatRecordParts(r.w, r.l, r.ties)}</div>
+          ${lbMeta(r.manager, formatRecordParts(r.w, r.l, r.ties), race && race[i])}
         </div>
         <div class="lb-stat"><div class="v">${fmtScore(r.pf)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(r.pa)}</div></div>
         <div class="lb-playoff-chip ${chipCls}">${chipText}</div>
       </${r.manager ? 'a' : 'div'}>`;
-    }).join('');
+    }), spots);
   }
 
   // Switching modes slides each standings row to its new rank while its PF

@@ -455,6 +455,8 @@ export async function buildDashboard(env, previous = null) {
     currentMedian,
     projectedMedian,
     playoffTeamCount: league.settings?.scheduleSettings?.playoffTeamCount || 0,
+    // Regular-season weeks, for the standings' Clinched/Eliminated math.
+    regularSeasonWeeks: league.settings?.scheduleSettings?.matchupPeriodCount || 0,
     // False when the NFL scoreboard couldn't be read, in which case every team
     // looks like it has nobody left to play and the dashboard must not claim
     // teams are finished or locked.

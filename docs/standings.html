@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=13">
+<link rel="stylesheet" href="theme.css?v=14">
 <link rel="stylesheet" href="nav.css?v=5">
 <link rel="stylesheet" href="league.css?v=6">
 <style>
@@ -106,6 +106,9 @@
   .mv.down{ border-color:rgba(214,98,79,0.4); color:var(--loss); }
 
   #standings-container{ margin-top:14px; }
+  /* Rows sit 6px apart (each .qrow's margin-top); the Playoff line takes
+     10px either side of it, counting the next row's own 6px. */
+  #standings-container .po-line{ margin:10px 0 4px; }
 </style>
 </head>
 <body>
@@ -145,7 +148,7 @@
   </div>
 
 <script src="nav.js?v=3"></script>
-<script src="page-common.js?v=9"></script>
+<script src="page-common.js?v=10"></script>
 <script src="league-common.js?v=3"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -211,7 +214,7 @@
     return new Map(order.map((p, i) => [p, i + 1]));
   }
   let formerCount = 0, prevRank = null, lastWeek = 0;
-  function row(r, k, n, type, complete, year) {
+  function row(r, k, n, type, complete, year, race) {
     const cls = ['qrow'];
     if (r.former) cls.push('former');
     else if (r.rank === 1) cls.push('top'); else if (r.rank === n - (year === 'all' ? formerCount : 0)) cls.push('last');
@@ -228,7 +231,7 @@
     }
     const metaParts = [];
     if (year === 'all') metaParts.push(`${r.seasons} seasons`);
-    metaParts.push(`<span class="pfpa"><span>PF ${f2(r.pf)}</span><span>PA ${f2(r.pa)}</span></span>`);
+    metaParts.push(`<span class="pfpa"><span>PF ${f2(r.pf)}</span><span>PA ${f2(r.pa)}</span>${raceMark(race)}</span>`);
     const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
     // One badge reads fine next to the name at any width. Two at once
     // (All-Time view, a manager with both titles and sackos) are wide
@@ -260,13 +263,23 @@
     const rows = build(year, tab);
     formerCount = rows.filter(r => r.former).length;
     prevRank = year === D.currentYear && !complete ? lastWeekRanks(year) : null;
+    // The season in progress gets the playoff race (site audit 29): a
+    // Playoff line after the last spot, and Clinched, Eliminated or games
+    // back at the end of each row's PF/PA line. Read from
+    // the regular-season record alone, median games included, so it holds
+    // once the playoffs start too.
+    const live = year === D.currentYear && !complete;
+    const set = live && D.settings && D.settings[year];
+    const spots = set ? set.playoff_teams : 0;
+    const race = set ? playoffRace(rows.map(r => ({ w: r.s.reg_w + r.s.med_w, l: r.s.reg_l + r.s.med_l })), spots,
+      set.reg_weeks * (year >= MEDIAN_ERA_START ? 2 : 1)) : null;
     const legend = tab === 'reg' && complete
       ? '<div class="legend"><span><i style="background:var(--turf)"></i>Made the playoffs</span><span><i style="background:var(--line)"></i>Missed the playoffs</span></div>'
       : '';
     const note = year === 'all' ? 'Every season combined, current teams ranked by win percentage (former teams listed after). Median games count from 2025 on.' : year >= 2025 ? 'Wins and losses include the weekly median game.' : '';
     $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}"${k === tab && note ? ` title="${esc(note)}"` : ''}>${l}</button>`).join('');
     // 18px above the first row (or the legend) matches the rows' 18px sides.
-    $('standings-container').innerHTML = `<div class="glass">${legend}<div style="padding:${legend ? 14 : 18}px 18px 20px">${rows.map((r, k) => row(r, k, rows.length, tab, complete, year)).join('')}</div></div>`;
+    $('standings-container').innerHTML = `<div class="glass">${legend}<div style="padding:${legend ? 14 : 18}px 18px 20px">${rows.map((r, k) => row(r, k, rows.length, tab, complete, year, race && race[k]) + (spots && k === spots - 1 && rows.length > spots ? PLAYOFF_LINE : '')).join('')}</div></div>`;
   }
 
   document.addEventListener('click', e => {

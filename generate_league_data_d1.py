@@ -62,7 +62,8 @@ def load_d1():
         "SELECT year, round_num, round_pick, team_id FROM draft_picks WHERE round_num = 1"
     )
     season_sackos = hl.d1_query("SELECT year, team_id, opponent_team_id FROM season_sackos")
-    return teams, matchups, draft_picks, season_sackos
+    league_settings = hl.d1_query("SELECT year, reg_season_count, playoff_team_count FROM league_settings")
+    return teams, matchups, draft_picks, season_sackos, league_settings
 
 
 # --------------------------------------------------------------------------
@@ -116,8 +117,8 @@ def compute_season_row(player, team, games_this_team_year, reg_median_by_year_we
 
 
 def main():
-    print("Loading D1 (teams + matchups + draft_picks + season_sackos)...")
-    teams, matchups, draft_picks, season_sackos = load_d1()
+    print("Loading D1 (teams + matchups + draft_picks + season_sackos + league_settings)...")
+    teams, matchups, draft_picks, season_sackos, league_settings = load_d1()
 
     # Overwrite ESPN's own final_standing with the league's actual rule --
     # see history_lib.apply_final_standings. Same helper
@@ -192,6 +193,14 @@ def main():
         "seasons": season_out,
         "draft_order": draft_order,
         "earnings": {p: (m or {}).get("net_result") for p, m in money.items()},
+        # Each season's regular-season length and playoff spots, for the
+        # Standings page's playoff line and Clinched/Eliminated tags. String
+        # keys, as JSON stores them, so the unchanged-data check below
+        # compares like with like.
+        "settings": {
+            str(ls["year"]): {"reg_weeks": ls["reg_season_count"], "playoff_teams": ls["playoff_team_count"]}
+            for ls in league_settings
+        },
     }
     if os.path.exists(OUTPUT_PATH):
         with open(OUTPUT_PATH, encoding="utf-8") as f:

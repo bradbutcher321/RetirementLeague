@@ -674,6 +674,18 @@ body{
 .badge.turf{ color:var(--turf); border-color:var(--turf); }
 .badge.loss{ color:var(--loss); border-color:var(--loss); }
 
+/* ---------- Playoff line (site audit 29) ----------
+   The cut between the last playoff spot and the first team out, in the
+   dashboard's standings and the Standings page's season in progress. A
+   dashed gold rule with its label centred; it takes the list's own gap
+   above and below, so the rows either side stay evenly spaced. */
+.po-line{ display:flex; align-items:center; gap:10px; color:var(--gold); font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.09em; line-height:1; padding:0 4px; }
+.po-line::before, .po-line::after{ content:''; flex:1; border-top:1px dashed var(--lead-line); }
+/* The race marker at the end of a row's record line (playoffRace in
+   page-common.js); games back stays in the line's own dim grey. */
+.race-in{ color:var(--turf); font-weight:600; }
+.race-out{ color:var(--loss); font-weight:600; }
+
 /* ---------- Delta pill (a trend/margin figure, tinted by direction) ---------- */
 .pill{ font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pill.up{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.10); }
