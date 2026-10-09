@@ -826,6 +826,23 @@
   /* Superlatives view toggle + race rows */
   /* Selector styling lives in theme.css -- only this page's spacing here. */
   .sup-seg{ margin-bottom: 14px; }
+  /* Season So Far's one mode toggle drives the cards and the standings, so
+     it pins to the top of the screen while you scroll the section instead
+     of sitting a long scroll above the standings. It sits under the site
+     nav while that's showing and slides up with it when it tucks away.
+     The band spans the page gutter so rows pass cleanly beneath it, and
+     gets its hairline only once it's pinned (.stuck, set below). */
+  #season-toggle{
+    position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px)); z-index: 20;
+    margin: 0 -20px 14px; padding: 8px 20px; background: var(--bg);
+    transition: top .25s ease, box-shadow .2s ease;
+  }
+  body:has(.nav-bar:not(.tucked)) #season-toggle{ --nav-shown: var(--nav-h, 0px); }
+  #season-toggle:empty{ display: none; }
+  #season-toggle .sup-seg{ margin-bottom: 0; }
+  #season-toggle.stuck{ box-shadow: 0 1px 0 var(--line), 0 12px 18px -14px rgba(0,0,0,0.9); }
+  @media (max-width: 480px){ #season-toggle{ margin-inline: -14px; padding-inline: 14px; } }
+  @media (prefers-reduced-motion: reduce){ #season-toggle{ transition: none; } }
   .standings-card{ margin-top: 14px; }
   .standings-title{ padding: 16px 18px 0; font-weight: 700; font-size: 0.95rem; color: #fff; text-shadow: 0 0 14px rgba(255,255,255,0.45); }
   .sup-note{ position: relative; padding-top: 12px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 0.78rem; line-height: 1.5; }
@@ -850,32 +867,21 @@
   .cmp-ref-label{ position: absolute; top: -15px; transform: translateX(-50%); font-size: 0.56rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold-dim); white-space: nowrap; }
   .cmp-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.92rem; text-align: right; font-variant-numeric: tabular-nums; min-width: 50px; color: var(--text-dim); }
   .cmp-val.on{ color: var(--gold); }
-  /* Points race (site audit 33), under Season Points Leader's rows. */
-  .race{ margin-top: 4px; }
-  .race-plot{ position: relative; height: 120px; margin: 10px 0 0 26px; touch-action: pan-y; cursor: crosshair; }
-  .race-plot svg{ position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-  .race-zero{ stroke: rgba(255,255,255,0.14); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
-  .race-line{ fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-  .race-line.now{ stroke-dasharray: 3 4; }
-  .race-dot{ position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--surface); pointer-events: none; }
-  .race-y{ position: absolute; right: calc(100% + 6px); transform: translateY(-50%); font-size: 0.6rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .race-x{ position: relative; height: 16px; margin: 6px 0 0 26px; }
-  .race-x span{ position: absolute; transform: translateX(-50%); font-size: 0.6rem; color: var(--text-dim); white-space: nowrap; }
-  .race-x span:last-child{ transform: translateX(-100%); }
-  .race-key{ display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 0.72rem; color: var(--text-dim); }
-  .race-key span{ display: inline-flex; align-items: center; gap: 6px; }
-  .race-key i, .rt-row i{ display: inline-block; width: 12px; height: 2px; border-radius: 1px; }
-  .race-cross{ position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid rgba(255,255,255,0.28); pointer-events: none; }
-  .race-tip{
-    position: absolute; top: -6px; z-index: 3; pointer-events: none; min-width: 150px;
-    background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.5); font-size: 0.7rem;
-  }
-  .rt-wk{ color: var(--text-dim); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-  .rt-row{ display: grid; grid-template-columns: 12px auto 1fr auto; align-items: center; gap: 7px; line-height: 1.6; }
-  .rt-row b{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
-  .rt-row span{ color: var(--text-dim); white-space: nowrap; }
-  .rt-row em{ font-style: normal; color: var(--text-dim); font-variant-numeric: tabular-nums; text-align: right; }
+  /* Leader after each week (site audit 33), under Season Points Leader's
+     rows: week tiles in an item box each, gold for weeks the shown leader
+     led, dashed for this week in the live/projected modes. */
+  .ls{ margin-top: 4px; }
+  .ls-strip{ display: grid; grid-auto-flow: column; grid-auto-columns: minmax(64px, 1fr); gap: 6px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .ls-strip::-webkit-scrollbar{ display: none; }
+  .ls-wk{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 8px 8px 9px; min-width: 0; }
+  .ls-wk.on{ border-color: var(--lead-line); background: var(--lead-tint); }
+  .ls-wk.now{ border-style: dashed; }
+  .ls-l{ font-size: 0.56rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); white-space: nowrap; }
+  .ls-n, .ls-s{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ls-n{ font-weight: 700; font-size: 0.82rem; margin-top: 3px; }
+  .ls-wk.on .ls-n{ color: var(--gold); }
+  .ls-v{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; color: var(--text); font-variant-numeric: tabular-nums; }
+  .ls-s{ font-size: 0.62rem; color: var(--text-dim); }
   .cmp-delta{ font-size: 0.64rem; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-top: 1px; text-align: right; }
   @media (max-width: 480px){
     /* Padding only -- the height comes from --ctl-h, so a shorthand here
@@ -3180,6 +3186,24 @@
     if (fr) { try { localStorage.setItem('franchise-selected', fr.dataset.fr); } catch (err) {} }
   });
 
+  // The pinned toggle (see #season-toggle in the CSS) needs the nav bar's
+  // height to sit under it, and marks itself .stuck while pinned.
+  (() => {
+    const el = document.getElementById('season-toggle');
+    let queued = false;
+    const check = () => {
+      queued = false;
+      const bar = document.querySelector('.nav-bar');
+      if (bar) document.documentElement.style.setProperty('--nav-h', bar.offsetHeight + 'px');
+      const top = parseFloat(getComputedStyle(el).top) || 0;
+      el.classList.toggle('stuck', window.scrollY > 0 && el.getBoundingClientRect().top <= top + 1);
+    };
+    const queue = () => { if (!queued) { queued = true; requestAnimationFrame(check); } };
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue);
+    queue();
+  })();
+
   document.getElementById('season-toggle').addEventListener('click', e => {
     const b = e.target.closest('[data-season]');
     if (!b || b.dataset.season === activeSeasonMode()) return;
@@ -3219,115 +3243,51 @@
       </div>`;
   }
 
-  // ---------- Points race (site audit 33) ----------
-  // Inside Season Points Leader: how far each of the top four has been
-  // behind (or ahead of) the current leader after every week, drawn like
-  // Head to Head's "Who's Been on Top". The leader is the flat gold line at
-  // zero, so the chart shows how the lead was built, not just who has it.
-  // In the live and projected modes the last step is this week, dashed.
-  // Colors go by place in the race (gold is the leader, as in the rows
-  // above it): blue, orange and aqua were checked for color-blind and
-  // normal-vision separation against the card.
-  const RACE_COLORS = ['#D4B46A', '#3987e5', '#d95926', '#199e70'];
-
-  function pointsRaceHtml(top4, week, mode, thisWeek) {
-    if (top4.length < 2 || !historyThrough(week)) return '';
+  // ---------- Leader after each week (site audit 33) ----------
+  // Inside Season Points Leader: one tile per week naming who led the
+  // league in points after it, by how much, and over whom -- how the lead
+  // was built, not just who has it. Counted over every team, not just the
+  // four rows above, since the leader of an early week can be anyone.
+  // Gold marks a week led by the leader this mode shows. In the live and
+  // projected modes the last tile is this week, dashed. Past about five
+  // weeks the strip scrolls on a phone, opening on the latest week.
+  function leaderStripHtml(teams, leaderTeam, week, mode) {
+    if (!historyThrough(week) || teams.some(t => !t.manager)) return '';
     const live = mode !== 'through';
-    const scores = [];
-    for (let w = 1; w < week; w++) scores.push(weekScores(w));
-    const series = top4.map(r => {
-      let sum = 0;
-      const pts = [0];
-      scores.forEach(s => { sum += s.get(r.manager) || 0; pts.push(sum); });
-      if (live) pts.push(sum + thisWeek(r));
-      return pts;
-    });
-    if (top4.some(r => !r.manager) || series[0].length < 3) return '';
-    const n = series[0].length - 1;
-    const gaps = series.map(pts => pts.map((v, i) => v - series[0][i]));
-    const all = gaps.flat();
-    const hi = Math.max(0, ...all), lo = Math.min(0, ...all);
-    const span = hi - lo || 1;
-    // Percent coordinates: the SVG stretches to the plot box, and the dots,
-    // labels and crosshair are HTML laid over it on the same scale.
-    const PAD = 6;
-    const xp = i => (i / n) * 100;
-    const yp = v => PAD + ((hi - v) / span) * (100 - 2 * PAD);
-    const line = (g, from, to) => g.slice(from, to + 1).map((v, i) => `${xp(from + i).toFixed(2)},${yp(v).toFixed(2)}`).join(' ');
-    const lines = gaps.map((g, k) => {
-      const color = RACE_COLORS[k];
-      const solidTo = live ? n - 1 : n;
-      return `<polyline class="race-line" style="stroke:${color}" points="${line(g, 0, solidTo)}"/>`
-        + (live ? `<polyline class="race-line now" style="stroke:${color}" points="${line(g, n - 1, n)}"/>` : '');
-    }).reverse().join('');
-    const dots = gaps.map((g, k) => `<i class="race-dot" style="left:${xp(n)}%;top:${yp(g[n])}%;background:${RACE_COLORS[k]}"></i>`).reverse().join('');
-    const step = n > 8 ? 2 : 1;
-    const xl = Array.from({ length: n }, (_, i) => i + 1)
-      .filter(w => w === n || (w % step === 0 && n - w >= step))
-      .map(w => `<span style="left:${xp(w)}%">${w === week && live ? `Wk ${w}` : w}</span>`).join('');
-    const yl = (lo < 0 ? `<span class="race-y" style="top:${yp(lo)}%">−${Math.round(-lo)}</span>` : '')
-      + (hi > 0 ? `<span class="race-y" style="top:${yp(hi)}%">+${Math.round(hi)}</span>` : '');
-    const legend = top4.map((r, k) => `<span><i style="background:${RACE_COLORS[k]}"></i>${esc(r.n)}</span>`).join('');
-    // What the crosshair reads out: week label, then each team's total and gap.
-    const readout = {
-      weeks: series[0].map((_, i) => (i === 0 ? 'Start' : `Week ${i}${live && i === n ? (mode === 'live' ? ' live' : ' projected') : ''}`)),
-      rows: top4.map((r, k) => ({ n: r.n, c: RACE_COLORS[k], pts: series[k], gap: gaps[k] })),
+    const sums = new Map(teams.map(t => [t.manager, 0]));
+    const tiles = [];
+    const tile = (label, cls) => {
+      const order = [...sums].sort((a, b) => b[1] - a[1]);
+      const [first, second] = order;
+      const tied = Math.round((first[1] - second[1]) * 100) === 0;
+      const isLeader = !tied && first[0] === leaderTeam.manager;
+      tiles.push(`<div class="ls-wk${isLeader ? ' on' : ''}${cls}">
+          <div class="ls-l">${label}</div>
+          <div class="ls-n">${tied ? 'Tied' : esc(first[0])}</div>
+          <div class="ls-v">${tied ? fmtScore(first[1]) : '+' + fmtScore(first[1] - second[1])}</div>
+          <div class="ls-s">${tied ? `${esc(first[0])} &amp; ${esc(second[0])}` : `over ${esc(second[0])}`}</div>
+        </div>`);
     };
+    for (let w = 1; w < week; w++) {
+      const sc = weekScores(w);
+      sums.forEach((v, k) => sums.set(k, v + (sc.get(k) || 0)));
+      tile(`Week ${w}`, '');
+    }
+    if (live) {
+      teams.forEach(t => sums.set(t.manager, sums.get(t.manager) + (mode === 'live' ? t.cur : t.proj)));
+      tile(`Wk ${week} ${mode === 'live' ? 'live' : 'proj'}`, ' now');
+    }
+    if (!tiles.length) return '';
     return `
-      <div class="race">
-        <div class="cmp-head"><span>Gap to the leader, week by week</span><span>Pts</span></div>
-        <div class="race-plot" data-race="${esc(JSON.stringify(readout))}">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <line class="race-zero" x1="0" x2="100" y1="${yp(0)}" y2="${yp(0)}"/>${lines}
-          </svg>
-          ${yl}${dots}
-          <div class="race-cross" hidden></div>
-          <div class="race-tip" hidden></div>
-        </div>
-        <div class="race-x">${xl}</div>
-        <div class="race-key">${legend}</div>
+      <div class="ls">
+        <div class="cmp-head"><span>Leader after each week</span></div>
+        <div class="ls-strip edge-fade">${tiles.join('')}</div>
       </div>`;
   }
-
-  // One crosshair for whichever race chart is on the page: hover on
-  // desktop, tap or drag on a phone. Snaps to the nearest week.
-  (() => {
-    const box = document.getElementById('accolades-container');
-    const show = e => {
-      const plot = e.target.closest && e.target.closest('.race-plot');
-      if (!plot) return;
-      const data = JSON.parse(plot.dataset.race);
-      const n = data.weeks.length - 1;
-      const rect = plot.getBoundingClientRect();
-      const i = Math.max(0, Math.min(n, Math.round(((e.clientX - rect.left) / rect.width) * n)));
-      const cross = plot.querySelector('.race-cross'), tip = plot.querySelector('.race-tip');
-      cross.hidden = false;
-      cross.style.left = (i / n) * 100 + '%';
-      const rows = data.rows.map(r => `<div class="rt-row"><i style="background:${r.c}"></i><b>${fmtScore(r.pts[i])}</b><span>${esc(r.n)}</span><em>${i && r.gap[i] ? (r.gap[i] > 0 ? '+' : '−') + fmtScore(Math.abs(r.gap[i])) : ''}</em></div>`).join('');
-      tip.innerHTML = `<div class="rt-wk">${data.weeks[i]}</div>${rows}`;
-      tip.hidden = false;
-      // Beside the crosshair, on whichever side has room.
-      const right = i / n < 0.5;
-      tip.style.left = right ? `calc(${(i / n) * 100}% + 10px)` : '';
-      tip.style.right = right ? '' : `calc(${100 - (i / n) * 100}% + 10px)`;
-    };
-    // Mouse only: a finger lifting off fires pointerleave too, which would
-    // close the readout the tap just opened.
-    const hide = e => {
-      const plot = e.target;
-      if (e.pointerType !== 'mouse' || !plot.classList || !plot.classList.contains('race-plot')) return;
-      plot.querySelector('.race-cross').hidden = true;
-      plot.querySelector('.race-tip').hidden = true;
-    };
-    box.addEventListener('pointermove', show);
-    box.addEventListener('pointerdown', show);
-    box.addEventListener('pointerleave', hide, true);
-    // A tap elsewhere on the page closes a phone's readout.
-    document.addEventListener('pointerdown', e => {
-      if (e.pointerType === 'mouse' || (e.target.closest && e.target.closest('.race-plot'))) return;
-      box.querySelectorAll('.race-cross, .race-tip').forEach(el => { el.hidden = true; });
-    });
-  })();
+  // Open every strip on its latest week.
+  function scrollStripsToEnd() {
+    document.querySelectorAll('#accolades-container .ls-strip').forEach(el => { el.scrollLeft = el.scrollWidth; });
+  }
 
   // ---------- Superlatives: through last week / + this week live / + this week projected ----------
   let superlativesData = null;
@@ -3464,11 +3424,12 @@
     const leadCaption = m === 'through' ? modeLabel
       : `${week > 1 ? 'Week ' + (week - 1) : 'Preseason'} \u2192 Week ${week} ${m === 'live' ? 'live' : 'projected'}`;
     const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${leadCaption}</span></div>${leadRows}</div>`
-      + pointsRaceHtml(top4, week, m, r => (m === 'live' ? r.cur : r.proj));
+      + leaderStripHtml(teams, leader, week, m);
 
     container.innerHTML =
       card('Season High Score', high.score, high.team, high.manager, high.meta, highExtra, tag(high.isNew, 'New record')) +
       card('Season Points Leader', total(leader), leader.team, leader.manager, modeLabel, leadExtra, tag(leaderChanged, 'New leader'));
+    scrollStripsToEnd();
   }
 
 
