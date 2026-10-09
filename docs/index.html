@@ -658,17 +658,11 @@
      past its edge for the first few frames. */
   #accolades-container .accolade-card{ view-transition-class: sf-acc; }
   ::view-transition-group(*.sf-acc){ overflow: clip; border-radius: 14px; }
-  /* Season So Far's mode toggle has to stay drawn on top of the cards
-     gliding under it while it's pinned, and the two engines need opposite
-     tricks (see VT_HOLE in the script):
-     - Safari: the toggle isn't captured at all. Captured, Safari drew the
-       pinned band nowhere and lost its pill. The transition's overlay gets
-       a hole the shape of the band (--vt-clip) and the real toggle shows
-       through it, gliding its pill as on any other track.
-     - Chrome draws nothing under the overlay, so a hole would be blank.
-       The band is captured as its own layer (sf-toggle), stacked above the
-       cards in paint order, and page-common.js carries the pill. */
-  ::view-transition{ clip-path: var(--vt-clip, none); }
+  /* The pinned mode toggle gets its own layer during the switch: left in
+     the page's flat picture, the cards and rows gliding under it were
+     drawn over it. Layers stack in paint order, and the toggle (z-index
+     20) paints after the cards, so it stays on top. Its pill and labels
+     are layers of their own, above it (see page-common.js). */
   ::view-transition-old(sf-toggle){ display: none; }
   ::view-transition-new(sf-toggle){ animation: none; }
 
@@ -1086,7 +1080,7 @@
   </div>
 
 <script src="nav.js?v=3"></script>
-<script src="page-common.js?v=13"></script>
+<script src="page-common.js?v=12"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -3068,7 +3062,7 @@
     const modes = seasonModes(standingsData);
     const active = activeSeasonMode();
     document.getElementById('season-toggle').innerHTML = modes.length > 1
-      ? `<div class="sf-band"><div class="sup-seg"${VT_HOLE ? ' data-glide-live' : ''}>${modes.map(([k, l]) => `<button type="button" data-season="${k}" class="${k === active ? 'on' : ''}">${l}</button>`).join('')}</div></div>`
+      ? `<div class="sf-band"><div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-season="${k}" class="${k === active ? 'on' : ''}">${l}</button>`).join('')}</div></div>`
       : '';
   }
 
@@ -3181,18 +3175,10 @@
   // cards that already jumped to their new size. Everything is named only
   // while this transition runs, so none of it gets lifted out of the page
   // during Median Watch's.
-  // Which way Season So Far keeps its toggle on top during a switch (see
-  // the ::view-transition rules in the CSS). Every iPhone browser is
-  // WebKit (CriOS etc.), desktop Safari too; Chrome and Edge say Chrome/.
-  // There's no feature test for "draws the page under the overlay", so
-  // this goes by engine.
-  const VT_HOLE = /CriOS|FxiOS|EdgiOS/.test(navigator.userAgent)
-    || (/AppleWebKit/.test(navigator.userAgent) && !/Chrome\/|Chromium|Edg\//.test(navigator.userAgent));
-
   function nameSeasonRows(on) {
     const card = document.querySelector('#season-section .standings-card');
     if (card) card.style.viewTransitionName = on ? 'sf-card' : '';
-    const band = !VT_HOLE && document.querySelector('#season-toggle .sf-band');
+    const band = document.querySelector('#season-toggle .sf-band');
     if (band) band.style.viewTransitionName = on ? 'sf-toggle' : '';
     document.querySelectorAll('#accolades-container .accolade-card').forEach((c, i) => {
       c.style.viewTransitionName = on ? 'sf-acc-' + i : '';
@@ -3245,13 +3231,6 @@
     if (!document.startViewTransition || mwReduceMotion) { apply(); return; }
     const was = seasonRowValues();
     nameSeasonRows(true);
-    const band = VT_HOLE && document.querySelector('#season-toggle .sf-band');
-    if (band) {
-      const r = band.getBoundingClientRect();
-      const [l, t, rt, bt] = [r.left, r.top, r.right, r.bottom].map(v => Math.round(v) + 'px');
-      document.documentElement.style.setProperty('--vt-clip',
-        `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${l} ${t}, ${rt} ${t}, ${rt} ${bt}, ${l} ${bt}, ${l} ${t})`);
-    }
     const vt = document.startViewTransition(() => {
       apply();
       nameSeasonRows(true);
@@ -3264,10 +3243,7 @@
         });
       });
     });
-    vt.finished.catch(() => {}).then(() => {
-      nameSeasonRows(false);
-      document.documentElement.style.removeProperty('--vt-clip');
-    });
+    vt.finished.catch(() => {}).then(() => nameSeasonRows(false));
   });
 
   // Only ever called before any games have been scored this season --

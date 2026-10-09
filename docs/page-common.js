@@ -230,10 +230,7 @@ const glideTap = { track: null, at: 0 };
   const nativeVT = document.startViewTransition.bind(document);
   document.startViewTransition = arg => {
     const track = glideTap.track;
-    // A track marked data-glide-live is shown live through the transition
-    // (the dashboard's pinned Season So Far toggle), so its own glide runs.
-    if (!track || !track.isConnected || performance.now() - glideTap.at > 400 || reducedMotion()
-      || track.matches('[data-glide-live]')) return nativeVT(arg);
+    if (!track || !track.isConnected || performance.now() - glideTap.at > 400 || reducedMotion()) return nativeVT(arg);
     const path = pathTo(track);
     const named = [];
     let pill = null, on = null;
