@@ -116,6 +116,15 @@ const glideTap = { track: null, at: 0 };
     pill.style.height = b.h + 'px';
     pill.style.transform = `translate(${b.x}px, ${b.y}px)`;
   };
+  // The button takes the pill's place the instant the pill goes: its own
+  // color fade would otherwise run from clear back to gold, a flash of no
+  // gold right as the glide lands.
+  const land = btn => {
+    btn.style.transition = 'none';
+    btn.classList.remove('glide-to');
+    getComputedStyle(btn).backgroundColor;
+    btn.style.transition = '';
+  };
   const pathTo = el => {
     const parts = [];
     for (; el && el !== document.body; el = el.parentElement) {
@@ -153,7 +162,7 @@ const glideTap = { track: null, at: 0 };
       if (finished) return;
       finished = true;
       pill.remove();
-      to.classList.remove('glide-to');
+      land(to);
       if (clip) track.classList.remove('glide-clip');
     };
     pill.addEventListener('transitionend', e => { if (e.propertyName === 'transform') done(); });
@@ -226,10 +235,10 @@ const glideTap = { track: null, at: 0 };
     const named = [];
     let pill = null, on = null;
     const unname = () => {
-      named.forEach(el => { el.style.viewTransitionName = ''; });
+      named.forEach(el => { el.style.viewTransitionName = ''; el.style.viewTransitionClass = ''; });
       named.length = 0;
       if (pill) pill.remove();
-      if (on) on.classList.remove('glide-to');
+      if (on) land(on);
       pill = on = null;
     };
     // A pill on the selected button of track `t`, the button gone clear
@@ -253,7 +262,7 @@ const glideTap = { track: null, at: 0 };
       on.classList.add('glide-to');
       pill.style.viewTransitionName = 'gp-pill';
       named.push(pill);
-      items(t).forEach((b, i) => { b.style.viewTransitionName = 'gp-b' + i; named.push(b); });
+      items(t).forEach((b, i) => { b.style.viewTransitionName = 'gp-b' + i; b.style.viewTransitionClass = 'gp-btn'; named.push(b); });
     };
     glideTap.vt = true;
     pillOn(track);

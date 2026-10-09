@@ -482,6 +482,10 @@ body{
    as it slides and resizes between the two choices. */
 ::view-transition-old(gp-pill){ display: none; }
 ::view-transition-new(gp-pill){ animation: none; height: 100%; }
+/* The labels cross-fade from their old color to their new one on a plain
+   ease, done about when the pill lands. Left to inherit the glide's
+   overshoot curve, the fade overshot too and the labels flickered. */
+::view-transition-old(*.gp-btn), ::view-transition-new(*.gp-btn){ animation-duration: .3s; animation-timing-function: ease; }
 
 /* The content a tab row switches slides in from the side you moved toward.
    12px, not more: a full-width panel inside the phone's 14px gutter would
