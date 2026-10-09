@@ -234,6 +234,23 @@
   .mu-sub.up{ color: var(--turf); font-weight: 700; }
   .mu-sub.down{ color: var(--loss); font-weight: 700; }
 
+  /* Series line (site audit 27): the pair's all-time record before this
+     week, under the pips. A link to Head to Head, so it gets the full 44px
+     tap height and its own hairline, apart from the expand-on-tap card. */
+  .mu-series{
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    min-height: 44px; padding: 0 14px; border-top: 1px solid var(--line);
+    color: var(--text-dim); font-size: 0.74rem; text-decoration: none; font-variant-numeric: tabular-nums;
+    transition: background-color .15s;
+  }
+  .mu-series:hover{ background: var(--item-hover); }
+  .mu-series:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  .mu-series b{ color: var(--text); font-weight: 600; }
+  .mu-series-lead{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mu-series-last{ flex: none; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .mu-series-last svg{ width: 6px; height: 10px; opacity: 0.8; }
+  @container mu (min-width: 460px){ .mu-series{ padding: 0 18px; } }
+
   /* Game line: a narrow card (phone) drops the "PM" and the opponent on
      live/final lines; a wide card (desktop) shows them. */
   .mu-w{ display: none; }
@@ -298,6 +315,10 @@
   .lb-parts{ display: flex; flex-wrap: wrap; margin-left: -1em; }
   .lb-parts > span{ white-space: nowrap; }
   .lb-parts > span::before{ content: '•'; display: inline-block; width: 1em; text-align: center; color: var(--text-dim); font-weight: 400; }
+  /* The all-play record always starts its own line: at phone width it only
+     fit beside a short record now and then, which left rows of different
+     heights. Its bullet falls in the hidden 1em like any line-starting part. */
+  .lb-parts > .lb-ap{ flex-basis: 100%; }
   .lb-stat{ text-align: center; flex-shrink: 0; width: 48px; }
   .lb-stat .v{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
   /* One header over the list names the columns, instead of a caption
@@ -752,7 +773,28 @@
   .ph-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
 
   /* ---------- Superlatives ---------- */
-  .accolades-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  /* ---------- Week in Review (site audit 28) ----------
+     The dashboard card shape: white title top-left, chip top-right, then
+     six stat pods in bordered item boxes, two across on a phone and three
+     on desktop. Gold is each pod's figure; the two misses are red. */
+  #recap-section{ margin-bottom: 14px; }
+  .recap-card{
+    background: linear-gradient(165deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px 18px;
+  }
+  .recap-grid{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  @media (min-width: 700px){ .recap-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; } }
+  .rc-pod{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 10px 12px 11px; min-width: 0; }
+  .rc-l, .rc-n, .rc-s{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rc-l{ font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); }
+  .rc-v{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.45rem; line-height: 1.1; margin-top: 5px; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .rc-v.loss{ color: var(--loss); }
+  .rc-n{ font-weight: 700; font-size: 0.88rem; margin-top: 2px; }
+  .rc-s{ font-size: 0.72rem; color: var(--text-dim); margin-top: 1px; }
+
+  /* Top-aligned: Season Points Leader carries the points race, so making
+     the two cards match heights left Season High Score half empty. */
+  .accolades-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
   @media (max-width: 640px){ .accolades-grid{ grid-template-columns: 1fr; } }
 
   /* Matches Current Parlay / League Lore's own composition: title top-left
@@ -768,7 +810,6 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-    height: 100%;
   }
   .acc-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .acc-title{ font-weight: 700; font-size: 0.92rem; }
@@ -809,6 +850,32 @@
   .cmp-ref-label{ position: absolute; top: -15px; transform: translateX(-50%); font-size: 0.56rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold-dim); white-space: nowrap; }
   .cmp-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.92rem; text-align: right; font-variant-numeric: tabular-nums; min-width: 50px; color: var(--text-dim); }
   .cmp-val.on{ color: var(--gold); }
+  /* Points race (site audit 33), under Season Points Leader's rows. */
+  .race{ margin-top: 4px; }
+  .race-plot{ position: relative; height: 120px; margin: 10px 0 0 26px; touch-action: pan-y; cursor: crosshair; }
+  .race-plot svg{ position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .race-zero{ stroke: rgba(255,255,255,0.14); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+  .race-line{ fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+  .race-line.now{ stroke-dasharray: 3 4; }
+  .race-dot{ position: absolute; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--surface); pointer-events: none; }
+  .race-y{ position: absolute; right: calc(100% + 6px); transform: translateY(-50%); font-size: 0.6rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .race-x{ position: relative; height: 16px; margin: 6px 0 0 26px; }
+  .race-x span{ position: absolute; transform: translateX(-50%); font-size: 0.6rem; color: var(--text-dim); white-space: nowrap; }
+  .race-x span:last-child{ transform: translateX(-100%); }
+  .race-key{ display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 0.72rem; color: var(--text-dim); }
+  .race-key span{ display: inline-flex; align-items: center; gap: 6px; }
+  .race-key i, .rt-row i{ display: inline-block; width: 12px; height: 2px; border-radius: 1px; }
+  .race-cross{ position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid rgba(255,255,255,0.28); pointer-events: none; }
+  .race-tip{
+    position: absolute; top: -6px; z-index: 3; pointer-events: none; min-width: 150px;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.5); font-size: 0.7rem;
+  }
+  .rt-wk{ color: var(--text-dim); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .rt-row{ display: grid; grid-template-columns: 12px auto 1fr auto; align-items: center; gap: 7px; line-height: 1.6; }
+  .rt-row b{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+  .rt-row span{ color: var(--text-dim); white-space: nowrap; }
+  .rt-row em{ font-style: normal; color: var(--text-dim); font-variant-numeric: tabular-nums; text-align: right; }
   .cmp-delta{ font-size: 0.64rem; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-top: 1px; text-align: right; }
   @media (max-width: 480px){
     /* Padding only -- the height comes from --ctl-h, so a shorthand here
@@ -869,6 +936,11 @@
         </div>
       </div>
     </header>
+
+    <!-- Week in Review (site audit 28): leads the page from the end of the
+         week until the next one kicks off, when Median Watch and the
+         matchups have nothing new to say. Hidden the rest of the week. -->
+    <section id="recap-section" hidden></section>
 
     <section>
       <div id="median-container">
@@ -1221,8 +1293,25 @@
           ${status}
           ${pips(m.homePlayers || [], homeInPlay, homeRemaining, 'home')}
         </div>
+        ${seriesHtml(m)}
         ${renderMatchupDetails(m)}
       </div>`;
+  }
+  // The pair's all-time series before this week (site audit 27), as a link
+  // to Head to Head with the two managers preselected, away side on the left.
+  let dashWeek = 1;
+  function seriesHtml(m) {
+    const a = m.awayManager, b = m.homeManager;
+    const s = seriesFor(a, b, dashWeek);
+    if (!s) return '';
+    const lead = s.a === s.b
+      ? (s.a ? `Series tied <b>${s.a}-${s.b}</b>` : 'First meeting')
+      : `<b>${esc(s.a > s.b ? a : b)}</b> leads the series <b>${Math.max(s.a, s.b)}-${Math.min(s.a, s.b)}</b>`;
+    const last = s.last ? `Last met ${s.last.year === leagueYear ? '' : s.last.year + ' · '}Wk ${s.last.week}` : '';
+    return `<a class="mu-series" href="head-to-head.html" data-h2h="${esc(JSON.stringify([a, b]))}">
+        <span class="mu-series-lead">${lead}</span>
+        <span class="mu-series-last">${last}<svg viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>`;
   }
   function medianTeamName(t) { return t.manager || t.name; }
 
@@ -1931,6 +2020,66 @@
     })
     .catch(() => {});
 
+  // ---------- Game history (data/league.json) ----------
+  // Every finished game since 2015, by manager name -- the names the Worker
+  // reports as each team's manager. Read by the matchup cards' series line,
+  // Week in Review, the standings' all-play record and the points race.
+  // The first dashboard render waits for it (it's a small static file that
+  // usually lands before the live Worker fetch), so those parts appear with
+  // the page instead of popping in one poll later. Without it, they're left out.
+  let leagueGames = null, leagueYear = null;
+  const leagueReady = fetch('data/league.json', { cache: 'no-store' })
+    .then(res => res.json())
+    .then(d => {
+      leagueGames = d.games.map(g => ({ year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7], median: g[9] }));
+      leagueYear = Math.max(...d.seasons.map(s => s.year));
+    })
+    .catch(() => {});
+
+  // This season's finished regular-season games for one week (byes have no p2).
+  const weekGames = week => (leagueGames || []).filter(g => g.year === leagueYear && g.week === week && g.type === 'Reg' && g.p2);
+  // Every week before `week` is in league.json. It's refreshed from a hand-
+  // kept Game Tracker, so it can trail the Worker by a week; anything built
+  // week by week is left out rather than shown with a week missing.
+  const historyThrough = week => {
+    if (!leagueGames) return false;
+    for (let w = 1; w < week; w++) if (!weekGames(w).length) return false;
+    return true;
+  };
+
+  // Head-to-head series between two managers before this week, playoffs
+  // included -- the same games Head to Head counts.
+  function seriesFor(a, b, week) {
+    if (!leagueGames || !a || !b) return null;
+    const games = leagueGames.filter(g => g.p2 && ((g.p1 === a && g.p2 === b) || (g.p1 === b && g.p2 === a))
+      && (g.winner === a || g.winner === b) && !(g.year === leagueYear && g.week >= week));
+    const last = games.reduce((m, g) => (!m || g.year > m.year || (g.year === m.year && g.week > m.week) ? g : m), null);
+    return { a: games.filter(g => g.winner === a).length, b: games.filter(g => g.winner === b).length, last };
+  }
+
+  // All-play: every team's score against every other team's that week.
+  // `weeks` is a list of Maps (manager -> score); returns manager -> {w,l,t}.
+  function allPlayRecords(weeks) {
+    const out = new Map();
+    weeks.forEach(scores => {
+      const list = [...scores];
+      list.forEach(([name, s]) => {
+        const r = out.get(name) || { w: 0, l: 0, t: 0 };
+        list.forEach(([other, o]) => {
+          if (other === name) return;
+          if (s > o) r.w++; else if (s < o) r.l++; else r.t++;
+        });
+        out.set(name, r);
+      });
+    });
+    return out;
+  }
+  function weekScores(week) {
+    const m = new Map();
+    weekGames(week).forEach(g => { m.set(g.p1, g.s1); m.set(g.p2, g.s2); });
+    return m;
+  }
+
   // ---------- Current Parlay highlight ----------
   // Same Worker, same /parlay-stats endpoint parlay-results.html itself
   // reads -- see that page's own fetch for the full shape (players, weeks,
@@ -2573,6 +2722,100 @@
       </div>`;
   }
 
+  // ---------- Week in Review (site audit 28) ----------
+  // Between the last Monday night game and Thursday's kickoff the rest of
+  // the dashboard is a frozen Sunday, so a recap of the finished week leads
+  // the page. Two sources, whichever is current:
+  //   - this week from the Worker, once every starter on every team is done
+  //     (Monday night, before ESPN rolls the week over);
+  //   - last week from league.json, once the new week is up but nobody has
+  //     scored yet (and only when league.json has that week).
+  // Add ?recap to the URL to show the latest finished week at any time.
+  const FORCE_RECAP = /[?&]recap\b/.test(location.search);
+
+  function recapWeek(data) {
+    const week = data.week || 1;
+    const teams = data.teams || [];
+    const matchups = data.matchups || [];
+    const scored = teams.some(t => (t.current || 0) > 0);
+    const allDone = medianStatusKnown && scored && teams.every(t => !(t.remaining || 0) && !(t.inPlay || 0));
+    if (allDone && matchups.length) {
+      return {
+        week,
+        games: matchups.map(m => ({ a: m.awayManager || m.awayName, b: m.homeManager || m.homeName, sa: parseFloat(m.awayScore) || 0, sb: parseFloat(m.homeScore) || 0 })),
+      };
+    }
+    if (scored && !FORCE_RECAP) return null;
+    for (let w = week - 1; w >= 1; w--) {
+      const gs = weekGames(w);
+      if (gs.length) {
+        return { week: w, median: gs[0].median, games: gs.map(g => ({ a: g.p1, b: g.p2, sa: g.s1, sb: g.s2 })) };
+      }
+      if (!FORCE_RECAP) break;
+    }
+    return null;
+  }
+
+  function renderRecap() {
+    const section = document.getElementById('recap-section');
+    const rw = standingsData && recapWeek(standingsData);
+    if (!rw || !rw.games.length) { section.hidden = true; section.innerHTML = ''; return; }
+    const r2 = v => Math.round(v * 100) / 100;
+    const sides = rw.games.flatMap(g => [
+      { name: g.a, score: g.sa, opp: g.b, oppScore: g.sb },
+      { name: g.b, score: g.sb, opp: g.a, oppScore: g.sa },
+    ]);
+    const sorted = sides.map(s => s.score).sort((x, y) => x - y);
+    const mid = sorted.length / 2;
+    const median = typeof rw.median === 'number' ? rw.median
+      : sorted.length % 2 ? sorted[Math.floor(mid)] : (sorted[mid - 1] + sorted[mid]) / 2;
+    const others = sides.length - 1;
+    const result = s => (s.score > s.oppScore ? `def. ${esc(s.opp)}` : s.score < s.oppScore ? `lost to ${esc(s.opp)}` : `tied ${esc(s.opp)}`);
+    // Every manager at the top value, never just the first (League Lore's
+    // tie rule); the detail line is only spelled out for a single holder.
+    const tops = (list, f) => {
+      if (!list.length) return [];
+      const best = Math.max(...list.map(x => r2(f(x))));
+      return list.filter(x => r2(f(x)) === best);
+    };
+    const names = list => esc(list.map(x => x.name).join(' & '));
+    const wins = sides.filter(s => s.score > s.oppScore).map(s => ({ ...s, margin: s.score - s.oppScore, beat: sides.filter(o => o !== s && o.score < s.score).length }));
+    const pod = (label, list, value, sub, tone, subForTies) => list.length ? `
+        <div class="rc-pod">
+          <div class="rc-l">${label}</div>
+          <div class="rc-v${tone ? ' ' + tone : ''}">${value(list[0])}</div>
+          <div class="rc-n">${names(list)}</div>
+          <div class="rc-s">${list.length > 1 && !subForTies ? `${list.length}-way tie` : sub(list[0])}</div>
+        </div>` : '';
+
+    const high = tops(sides, s => s.score);
+    const low = tops(sides, s => -s.score);
+    const blowout = tops(wins, s => s.margin);
+    const closest = tops(wins, s => -s.margin);
+    const lucky = tops(wins, s => -s.beat);
+    const missed = tops(sides.filter(s => s.score < median), s => s.score);
+    const pods = [
+      pod('Top score', high, s => fmtScore(s.score), result),
+      pod('Biggest blowout', blowout, s => '+' + fmtScore(s.margin), s => `over ${esc(s.opp)}`),
+      pod('Closest game', closest, s => '+' + fmtScore(s.margin), s => `over ${esc(s.opp)}`),
+      // The win with the score that would have beaten the fewest teams.
+      // The count is what's shared in a tie, so it's the value, and the
+      // line under it holds for every tied manager.
+      pod('Luckiest win', lucky, s => `${s.beat} of ${others}`, () => 'teams outscored', '', true),
+      pod('Just missed the median', missed, s => '−' + fmtScore(median - s.score), s => `scored ${fmtScore(s.score)}`, 'loss'),
+      pod('Sacko', low, s => fmtScore(s.score), result, 'loss'),
+    ].join('');
+    section.innerHTML = `
+      <div class="recap-card">
+        <div class="acc-head">
+          <div class="acc-title">Week ${rw.week} in Review</div>
+          <span class="badge dim">Median ${fmtScore(median)}</span>
+        </div>
+        <div class="recap-grid">${pods}</div>
+      </div>`;
+    section.hidden = false;
+  }
+
   // Toggle-click path only -- assumes renderMedianStatic has already built
   // the card shell at least once, and only touches the inner list/chart
   // pieces + the toggle buttons' active state, same architecture the lab
@@ -2712,12 +2955,31 @@
 
   // The line under a team's name: manager, record and playoff race marker
   // (raceMark in page-common.js), each part kept whole -- see .lb-parts.
-  function lbMeta(manager, record, race) {
-    const parts = [manager ? `<span>${manager}</span>` : '', `<span>${record}</span>`, raceMark(race)];
+  // `ap` is the all-play record (site audit 31): what the record would be
+  // if every team played every other team every week.
+  function lbMeta(manager, record, race, ap) {
+    const apText = ap ? `<span class="lb-ap" title="Record if everyone played everyone every week">${formatRecordParts(ap.w, ap.l, ap.t)} all-play</span>` : '';
+    const parts = [manager ? `<span>${manager}</span>` : '', `<span>${record}</span>`, raceMark(race), apText];
     return `<div class="lb-meta"><span class="lb-parts">${parts.join('')}</span></div>`;
   }
 
-  function renderLeaderboardRow(t, rank, playoffTeamCount, race) {
+  // All-play records for the Season So Far mode: completed weeks from
+  // league.json, plus this week's live or projected scores in those modes.
+  // Null when league.json is missing a week (see historyThrough).
+  function seasonAllPlay(data, mode) {
+    const week = data.week || 1;
+    if (week < 2 || !historyThrough(week)) return null;
+    const weeks = [];
+    for (let w = 1; w < week; w++) weeks.push(weekScores(w));
+    if (mode !== 'through') {
+      const cur = new Map((data.teams || []).filter(t => t.manager).map(t => [t.manager,
+        mode === 'proj' ? Math.max(t.projected || 0, t.current || 0) : (t.current || 0)]));
+      weeks.push(cur);
+    }
+    return allPlayRecords(weeks);
+  }
+
+  function renderLeaderboardRow(t, rank, playoffTeamCount, race, ap) {
     const hasPlayoffPct = typeof t.playoffPct === 'number';
     const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : 'low') : '';
     const inPlayoffPosition = playoffTeamCount > 0 && rank <= playoffTeamCount;
@@ -2726,7 +2988,7 @@
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${t.name}</div>
-          ${lbMeta(t.manager, t.record, race)}
+          ${lbMeta(t.manager, t.record, race, ap)}
         </div>
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsFor)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsAgainst)}</div></div>
@@ -2850,9 +3112,12 @@
 
     const m = activeSeasonMode();
 
+    const ap = seasonAllPlay(data, m);
+    const apOf = manager => (ap && manager && ap.get(manager)) || null;
+
     if (m === 'through') {
       const race = playoffRace(teams.map(t => t.prior), spots, totalGames);
-      container.innerHTML = renderLeaderboardHead('Odds') + withPlayoffLine(teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, spots, race && race[idx])), spots);
+      container.innerHTML = renderLeaderboardHead('Odds') + withPlayoffLine(teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, spots, race && race[idx], apOf(t.manager))), spots);
       return;
     }
 
@@ -2873,7 +3138,7 @@
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${r.name}</div>
-          ${lbMeta(r.manager, formatRecordParts(r.w, r.l, r.ties), race && race[i])}
+          ${lbMeta(r.manager, formatRecordParts(r.w, r.l, r.ties), race && race[i], apOf(r.manager))}
         </div>
         <div class="lb-stat"><div class="v">${fmtScore(r.pf)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(r.pa)}</div></div>
@@ -2953,6 +3218,116 @@
         <div class="acc-placeholder">Stats will appear once games get underway.</div>
       </div>`;
   }
+
+  // ---------- Points race (site audit 33) ----------
+  // Inside Season Points Leader: how far each of the top four has been
+  // behind (or ahead of) the current leader after every week, drawn like
+  // Head to Head's "Who's Been on Top". The leader is the flat gold line at
+  // zero, so the chart shows how the lead was built, not just who has it.
+  // In the live and projected modes the last step is this week, dashed.
+  // Colors go by place in the race (gold is the leader, as in the rows
+  // above it): blue, orange and aqua were checked for color-blind and
+  // normal-vision separation against the card.
+  const RACE_COLORS = ['#D4B46A', '#3987e5', '#d95926', '#199e70'];
+
+  function pointsRaceHtml(top4, week, mode, thisWeek) {
+    if (top4.length < 2 || !historyThrough(week)) return '';
+    const live = mode !== 'through';
+    const scores = [];
+    for (let w = 1; w < week; w++) scores.push(weekScores(w));
+    const series = top4.map(r => {
+      let sum = 0;
+      const pts = [0];
+      scores.forEach(s => { sum += s.get(r.manager) || 0; pts.push(sum); });
+      if (live) pts.push(sum + thisWeek(r));
+      return pts;
+    });
+    if (top4.some(r => !r.manager) || series[0].length < 3) return '';
+    const n = series[0].length - 1;
+    const gaps = series.map(pts => pts.map((v, i) => v - series[0][i]));
+    const all = gaps.flat();
+    const hi = Math.max(0, ...all), lo = Math.min(0, ...all);
+    const span = hi - lo || 1;
+    // Percent coordinates: the SVG stretches to the plot box, and the dots,
+    // labels and crosshair are HTML laid over it on the same scale.
+    const PAD = 6;
+    const xp = i => (i / n) * 100;
+    const yp = v => PAD + ((hi - v) / span) * (100 - 2 * PAD);
+    const line = (g, from, to) => g.slice(from, to + 1).map((v, i) => `${xp(from + i).toFixed(2)},${yp(v).toFixed(2)}`).join(' ');
+    const lines = gaps.map((g, k) => {
+      const color = RACE_COLORS[k];
+      const solidTo = live ? n - 1 : n;
+      return `<polyline class="race-line" style="stroke:${color}" points="${line(g, 0, solidTo)}"/>`
+        + (live ? `<polyline class="race-line now" style="stroke:${color}" points="${line(g, n - 1, n)}"/>` : '');
+    }).reverse().join('');
+    const dots = gaps.map((g, k) => `<i class="race-dot" style="left:${xp(n)}%;top:${yp(g[n])}%;background:${RACE_COLORS[k]}"></i>`).reverse().join('');
+    const step = n > 8 ? 2 : 1;
+    const xl = Array.from({ length: n }, (_, i) => i + 1)
+      .filter(w => w === n || (w % step === 0 && n - w >= step))
+      .map(w => `<span style="left:${xp(w)}%">${w === week && live ? `Wk ${w}` : w}</span>`).join('');
+    const yl = (lo < 0 ? `<span class="race-y" style="top:${yp(lo)}%">−${Math.round(-lo)}</span>` : '')
+      + (hi > 0 ? `<span class="race-y" style="top:${yp(hi)}%">+${Math.round(hi)}</span>` : '');
+    const legend = top4.map((r, k) => `<span><i style="background:${RACE_COLORS[k]}"></i>${esc(r.n)}</span>`).join('');
+    // What the crosshair reads out: week label, then each team's total and gap.
+    const readout = {
+      weeks: series[0].map((_, i) => (i === 0 ? 'Start' : `Week ${i}${live && i === n ? (mode === 'live' ? ' live' : ' projected') : ''}`)),
+      rows: top4.map((r, k) => ({ n: r.n, c: RACE_COLORS[k], pts: series[k], gap: gaps[k] })),
+    };
+    return `
+      <div class="race">
+        <div class="cmp-head"><span>Gap to the leader, week by week</span><span>Pts</span></div>
+        <div class="race-plot" data-race="${esc(JSON.stringify(readout))}">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <line class="race-zero" x1="0" x2="100" y1="${yp(0)}" y2="${yp(0)}"/>${lines}
+          </svg>
+          ${yl}${dots}
+          <div class="race-cross" hidden></div>
+          <div class="race-tip" hidden></div>
+        </div>
+        <div class="race-x">${xl}</div>
+        <div class="race-key">${legend}</div>
+      </div>`;
+  }
+
+  // One crosshair for whichever race chart is on the page: hover on
+  // desktop, tap or drag on a phone. Snaps to the nearest week.
+  (() => {
+    const box = document.getElementById('accolades-container');
+    const show = e => {
+      const plot = e.target.closest && e.target.closest('.race-plot');
+      if (!plot) return;
+      const data = JSON.parse(plot.dataset.race);
+      const n = data.weeks.length - 1;
+      const rect = plot.getBoundingClientRect();
+      const i = Math.max(0, Math.min(n, Math.round(((e.clientX - rect.left) / rect.width) * n)));
+      const cross = plot.querySelector('.race-cross'), tip = plot.querySelector('.race-tip');
+      cross.hidden = false;
+      cross.style.left = (i / n) * 100 + '%';
+      const rows = data.rows.map(r => `<div class="rt-row"><i style="background:${r.c}"></i><b>${fmtScore(r.pts[i])}</b><span>${esc(r.n)}</span><em>${i && r.gap[i] ? (r.gap[i] > 0 ? '+' : '−') + fmtScore(Math.abs(r.gap[i])) : ''}</em></div>`).join('');
+      tip.innerHTML = `<div class="rt-wk">${data.weeks[i]}</div>${rows}`;
+      tip.hidden = false;
+      // Beside the crosshair, on whichever side has room.
+      const right = i / n < 0.5;
+      tip.style.left = right ? `calc(${(i / n) * 100}% + 10px)` : '';
+      tip.style.right = right ? '' : `calc(${100 - (i / n) * 100}% + 10px)`;
+    };
+    // Mouse only: a finger lifting off fires pointerleave too, which would
+    // close the readout the tap just opened.
+    const hide = e => {
+      const plot = e.target;
+      if (e.pointerType !== 'mouse' || !plot.classList || !plot.classList.contains('race-plot')) return;
+      plot.querySelector('.race-cross').hidden = true;
+      plot.querySelector('.race-tip').hidden = true;
+    };
+    box.addEventListener('pointermove', show);
+    box.addEventListener('pointerdown', show);
+    box.addEventListener('pointerleave', hide, true);
+    // A tap elsewhere on the page closes a phone's readout.
+    document.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' || (e.target.closest && e.target.closest('.race-plot'))) return;
+      box.querySelectorAll('.race-cross, .race-tip').forEach(el => { el.hidden = true; });
+    });
+  })();
 
   // ---------- Superlatives: through last week / + this week live / + this week projected ----------
   let superlativesData = null;
@@ -3088,7 +3463,8 @@
     // it only belongs in live/projected mode; Through mode has no movement.
     const leadCaption = m === 'through' ? modeLabel
       : `${week > 1 ? 'Week ' + (week - 1) : 'Preseason'} \u2192 Week ${week} ${m === 'live' ? 'live' : 'projected'}`;
-    const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${leadCaption}</span></div>${leadRows}</div>`;
+    const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${leadCaption}</span></div>${leadRows}</div>`
+      + pointsRaceHtml(top4, week, m, r => (m === 'live' ? r.cur : r.proj));
 
     container.innerHTML =
       card('Season High Score', high.score, high.team, high.manager, high.meta, highExtra, tag(high.isNew, 'New record')) +
@@ -3263,12 +3639,12 @@
 
   let dashboardShown = false;
   function loadDashboard() {
-    fetch(WORKER_URL, { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => {
+    Promise.all([fetch(WORKER_URL, { cache: 'no-store' }).then(res => res.json()), leagueReady])
+      .then(([data]) => {
         if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
 
         const teams = data.teams || [];
+        dashWeek = data.week || 1;
         // Fully final matchups (nobody left to play, nobody in play, on
         // either side) sink to the bottom, but only ever move there once —
         // live and not-yet-started matchups keep their original relative
@@ -3312,6 +3688,7 @@
         markClippedNames(document.getElementById('matchups-container'));
 
         standingsData = data;
+        renderRecap();
         renderSeasonToggle();
         renderStandings();
 
@@ -3339,7 +3716,7 @@
         if (!dashboardShown) {
           dashboardShown = true;
           if (!parlayData) document.getElementById('parlay-highlight-container').innerHTML = '';
-          riseIn(document.querySelectorAll('#median-container > :not(.sr-only), .lore-row > div > *, #matchups-container > *, #season-section'));
+          riseIn(document.querySelectorAll('#recap-section:not([hidden]), #median-container > :not(.sr-only), .lore-row > div > *, #matchups-container > *, #season-section'));
         }
       })
       .catch(err => {
@@ -3353,6 +3730,12 @@
   // time), so this just needs to flip the class on the clicked element and
   // keep that Set in sync for the next re-render.
   document.getElementById('matchups-container').addEventListener('click', (e) => {
+    // The series line opens Head to Head on this pair instead.
+    const series = e.target.closest('[data-h2h]');
+    if (series) {
+      try { localStorage.setItem('h2h-pair', series.dataset.h2h); } catch (err) {}
+      return;
+    }
     const card = e.target.closest('.matchup-card');
     if (!card) return;
     const key = decodeURIComponent(card.dataset.key);

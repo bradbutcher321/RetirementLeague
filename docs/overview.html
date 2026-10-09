@@ -473,10 +473,42 @@
       const cell = (label, name, detail, cls) => `<div class="yc"><span class="cap${cls ? ' ' + cls : ''}">${label}</span><div class="yc-n">${name ? esc(name) : '—'}</div><div class="yc-d">${detail || '&nbsp;'}</div></div>`;
       const wl = g => g.s1 >= g.s2 ? [g.p1, g.p2] : [g.p2, g.p1];
 
-      const cards = D.years.slice().reverse().map(y => {
-        if (!complete.has(y)) {
+      // The season in progress (site audit 30): the same six-cell card as a
+      // finished year, filled with where things stand -- the regular-season
+      // leader, the last team in, the Sacko watch (last place), the top and
+      // low week so far and the points leader. Every manager tied at a top
+      // value is named. Dashed, like before, so it still reads as unfinished.
+      function liveYearHtml(y) {
+        const rows = D.seasons.filter(s => s.year === y);
+        const games = noBye.filter(g => g.year === y && g.type === 'Reg');
+        const weeks = games.length ? Math.max(...games.map(g => g.week)) : 0;
+        if (!rows.length || !weeks) {
           return `<div class="yr live"><div class="yr-h"><div class="yr-y">${y}</div><span class="chip">In progress</span></div><div class="yr-live">Season under way.</div></div>`;
         }
+        const ranked = rows.slice().sort((a, b) => a.reg_rank - b.reg_rank);
+        const spots = (D.settings && D.settings[y] && D.settings[y].playoff_teams) || 0;
+        const lastIn = spots && ranked[spots - 1];
+        const scores = games.flatMap(g => [{ name: g.p1, s: g.s1, week: g.week }, { name: g.p2, s: g.s2, week: g.week }]);
+        const tied = (list, f) => { const v = Math.max(...list.map(f)); return list.filter(x => f(x) === v); };
+        const names = list => [...new Set(list.map(x => x.name || x.player))].join(' & ');
+        const weekOf = list => list.length === 1 ? ` · Wk ${list[0].week}` : '';
+        const hiW = tied(scores, x => x.s), loW = tied(scores, x => -x.s);
+        const pf = tied(rows, s => s.reg_pf);
+        return `<div class="yr live">
+          <div class="yr-h"><div class="yr-y">${y}</div><span class="chip">Through Week ${weeks}</span></div>
+          <div class="yr-grid">
+            ${cell('Leader', ranked[0].player, regRec(ranked[0]))}
+            ${cell(spots ? `Last in · #${spots}` : 'Last in', lastIn && lastIn.player, lastIn && regRec(lastIn))}
+            ${cell('Sacko watch', ranked[ranked.length - 1].player, regRec(ranked[ranked.length - 1]), 'loss')}
+            ${cell('Top week', names(hiW), f2(hiW[0].s) + weekOf(hiW))}
+            ${cell('Points leader', names(pf), f2(pf[0].reg_pf))}
+            ${cell('Low week', names(loW), f2(loW[0].s) + weekOf(loW))}
+          </div>
+        </div>`;
+      }
+
+      const cards = D.years.slice().reverse().map(y => {
+        if (!complete.has(y)) return liveYearHtml(y);
         const pay = payoutsFor(y);
         const cg = champG[y], champ = cg ? wl(cg)[0] : null;
         const tg = thirdG[y], sg = sackoG[y], wh = weeklyHighByYear[y], sh = seasonHighByYear[y];

@@ -44,9 +44,28 @@
 
   /* .selector-row and .board-select styling both live in theme.css. */
 
-  .legend{ display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
-  .legend-chip{ display: flex; align-items: center; gap: 6px; font-size: 0.74rem; color: var(--text-dim); }
+  /* The legend doubles as a filter (site audit 32): tap a position to dim
+     every other one, tap more to add them. Each chip is a 44px tap target
+     around a smaller pill. Tapping a manager's column header lights up just
+     that column. Clear appears once anything is picked. */
+  .legend{ display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; margin: -5px 0 11px; }
+  .legend-chip{ height: 44px; padding: 0; border: none; background: none; cursor: pointer; font: inherit; color: var(--text-dim); }
+  .legend-chip > span{
+    display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 999px;
+    border: 1px solid var(--ctl-line); background: var(--ctl-bg); font-size: 0.74rem; font-weight: 600;
+    transition: background-color .2s, border-color .2s, color .2s;
+  }
+  .legend-chip:hover > span{ color: var(--text); }
+  .legend-chip.on > span{ color: var(--text); border-color: var(--c); background: color-mix(in srgb, var(--c) 20%, transparent); }
+  .legend-chip:focus-visible{ outline: none; }
+  .legend-chip:focus-visible > span{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .legend-swatch{ width: 10px; height: 10px; border-radius: 2px; }
+  .legend-hint{ font-size: 0.72rem; color: var(--text-dim); margin-left: 4px; }
+  .legend-clear{ height: 44px; padding: 0 6px; border: none; background: none; cursor: pointer; font: 600 0.74rem var(--body); color: var(--gold); }
+  .pick-cell, .sb-pick, table.board thead th{ transition: opacity .25s ease; }
+  .pick-cell.dim{ opacity: 0.16; }
+  .sb-pick.dim{ opacity: 0.22; }
+  table.board thead th.dim{ opacity: 0.4; }
 
   /* .board-toggle styling lives in theme.css with the other selectors. */
 
@@ -140,6 +159,12 @@
     font-weight: 700; font-size: 0.78rem; padding: 8px 4px; text-align: center; white-space: nowrap;
     position: sticky; top: 0; z-index: 2; border-radius: 4px;
   }
+  /* The header is a button that picks out the manager's column. */
+  table.board thead th.mgr{ padding: 0; }
+  .mgr-btn{ display: block; width: 100%; padding: 8px 4px; border: none; border-radius: 4px; background: none; color: inherit; font: inherit; cursor: pointer; }
+  .mgr-btn:hover .slot-manager{ text-decoration: underline; text-underline-offset: 2px; }
+  .mgr-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  table.board thead th.on{ box-shadow: inset 0 0 0 1px var(--gold); }
   table.board thead th .slot-manager{ display: block; color: var(--gold); font-size: 0.74rem; margin-bottom: 2px; }
   table.board thead th .slot-team{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.64rem; max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto; }
 
@@ -252,13 +277,39 @@
     return seen;
   }
 
+  // Filters (site audit 32): positions picked in the legend, and one
+  // manager picked from the grid's column headers. Both survive switching
+  // year or view. A pick stays lit when it matches every active filter.
+  const posFilter = new Set();
+  let mgrFilter = null;
+
   function renderLegend(board) {
     const seen = board ? positionsIn(board) : new Set(Object.keys(POSITION_COLORS));
-    return Object.entries(POSITION_COLORS)
+    const chips = Object.entries(POSITION_COLORS)
       .filter(([pos]) => seen.has(pos))
       .map(([pos, color]) =>
-        `<div class="legend-chip"><span class="legend-swatch" style="background:${color}"></span>${pos}</div>`
+        `<button type="button" class="legend-chip${posFilter.has(pos) ? ' on' : ''}" data-pos="${pos}" aria-pressed="${posFilter.has(pos)}" style="--c:${color}"><span><span class="legend-swatch" style="background:${color}"></span>${pos}</span></button>`
       ).join('');
+    const tail = posFilter.size || mgrFilter
+      ? '<button type="button" class="legend-clear" data-clear>Clear</button>'
+      : `<span class="legend-hint">Pick to highlight</span>`;
+    return chips + tail;
+  }
+
+  // Dims whatever the filters leave out, in whichever view is showing. The
+  // manager filter only applies to the grid, where it has columns to pick.
+  function applyFilters() {
+    const posOk = pos => !posFilter.size || posFilter.has(pos);
+    const mgrOk = mgr => !mgrFilter || mgr === mgrFilter;
+    boardContainer.querySelectorAll('.pick-cell[data-mgr]').forEach(td => {
+      td.classList.toggle('dim', !(posOk(td.dataset.pos) && mgrOk(td.dataset.mgr)));
+    });
+    boardContainer.querySelectorAll('thead th.mgr').forEach(th => {
+      th.classList.toggle('on', mgrFilter === th.dataset.mgr);
+      th.classList.toggle('dim', Boolean(mgrFilter) && mgrFilter !== th.dataset.mgr);
+      th.querySelector('.mgr-btn').setAttribute('aria-pressed', String(mgrFilter === th.dataset.mgr));
+    });
+    boardContainer.querySelectorAll('.sb-pick[data-pos]').forEach(row => row.classList.toggle('dim', !posOk(row.dataset.pos)));
   }
 
   function splitName(name) {
@@ -267,14 +318,14 @@
     return [parts[0], parts.slice(1).join(' ')];
   }
 
-  function renderCell(pick, round, teamCount, arrow) {
+  function renderCell(pick, round, teamCount, arrow, manager) {
     if (!pick || !pick.player_name) {
-      return `<td class="pick-cell pos-none"><div class="pick-empty">—</div></td>`;
+      return `<td class="pick-cell pos-none" data-mgr="${esc(manager)}" data-pos=""><div class="pick-empty">—</div></td>`;
     }
     const pickInRound = pick.overall - (round - 1) * teamCount;
     const [first, last] = splitName(pick.player_name);
     return `
-      <td class="pick-cell ${posClass(pick.position)}">
+      <td class="pick-cell ${posClass(pick.position)}" data-mgr="${esc(manager)}" data-pos="${esc(pick.position || '')}">
         ${pick.keeper ? '<div class="pick-keeper" title="Keeper"></div>' : ''}
         <div class="pick-top">
           <span class="pick-tag">
@@ -292,9 +343,11 @@
     const teamCount = board.team_count;
     const lastRound = board.rounds[board.rounds.length - 1];
     const headerCells = board.columns.map(c => `
-      <th>
-        <span class="slot-manager">${esc(c.manager || '')}</span>
-        <span class="slot-team">${esc(c.team_name || '')}</span>
+      <th class="mgr" data-mgr="${esc(c.manager || '')}">
+        <button type="button" class="mgr-btn" aria-pressed="false" aria-label="Highlight ${esc(c.manager || '')}'s picks">
+          <span class="slot-manager">${esc(c.manager || '')}</span>
+          <span class="slot-team">${esc(c.team_name || '')}</span>
+        </button>
       </th>`).join('');
 
     const rows = board.rounds.map(round => {
@@ -303,7 +356,7 @@
       const cells = board.columns.map(c => {
         const isTurn = c.slot === turnSlot;
         const arrow = isTurn ? (round === lastRound ? '' : '↓') : (ascending ? '→' : '←');
-        return renderCell(board.grid[round] && board.grid[round][c.slot], round, teamCount, arrow);
+        return renderCell(board.grid[round] && board.grid[round][c.slot], round, teamCount, arrow, c.manager || '');
       }).join('');
       return `<tr>${cells}</tr>`;
     }).join('');
@@ -331,7 +384,7 @@
         const pickInRound = pick.overall - (r - 1) * teamCount;
         const color = POSITION_COLORS[pick.position] || '#8A8A85';
         return `
-          <div class="sb-pick">
+          <div class="sb-pick" data-pos="${esc(pick.position || '')}">
             <span class="sb-badge" style="background:${color}">${esc(pick.position_rank || pick.position || '')}</span>
             <span class="sb-overall">${r}.${pickInRound}</span>
             <span class="sb-player">${esc(pick.player_name)}</span>
@@ -412,6 +465,7 @@
         document.getElementById('board-container').innerHTML = !board
           ? '<div class="empty-note">No draft data for this year.</div>'
           : boardView === 'simple' ? renderSimpleBoard(board) : renderBoard(board);
+        applyFilters();
         const track = boardContainer.querySelector('.sb-track');
         if (track) {
           const cols = [...track.children];
@@ -424,6 +478,29 @@
       show(sel.value);
       riseIn(document.getElementById('board-container').children);
       sel.addEventListener('change', () => show(sel.value));
+      // A filter change only re-dims the board in place; the legend redraws
+      // for its on/off states and the Clear button.
+      const refilter = () => {
+        document.getElementById('legend').innerHTML = renderLegend(data.boards[sel.value]);
+        applyFilters();
+      };
+      document.getElementById('legend').addEventListener('click', e => {
+        const chip = e.target.closest('[data-pos]');
+        if (chip) {
+          const pos = chip.dataset.pos;
+          if (posFilter.has(pos)) posFilter.delete(pos); else posFilter.add(pos);
+        } else if (e.target.closest('[data-clear]')) {
+          posFilter.clear();
+          mgrFilter = null;
+        } else return;
+        refilter();
+      });
+      boardContainer.addEventListener('click', e => {
+        const th = e.target.closest('th.mgr');
+        if (!th) return;
+        mgrFilter = mgrFilter === th.dataset.mgr ? null : th.dataset.mgr;
+        refilter();
+      });
       viewToggle.addEventListener('click', e => {
         const btn = e.target.closest('[data-view]');
         if (!btn) return;
