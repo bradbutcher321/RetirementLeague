@@ -44,7 +44,7 @@
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
      (.selector-group) all live in theme.css. */
-  .legend{ display:flex; gap:16px; flex-wrap:wrap; color:var(--text-dim); font-size:0.74rem; padding:14px 24px 0; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; color:var(--text-dim); font-size:0.74rem; padding:18px 24px 0; }
   .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
 
   .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; min-width:0; }
@@ -101,7 +101,6 @@
   .mv.down{ border-color:rgba(214,98,79,0.4); color:var(--loss); }
 
   #standings-container{ margin-top:14px; }
-  .glass-title-hint{ cursor:help; }
 </style>
 </head>
 <body>
@@ -149,16 +148,9 @@
   const TABS = [['reg', 'Regular Season'], ['final', 'Final Standings']];
   let D, tab = 'final';
   const $ = id => document.getElementById(id);
-  // note used to always render as its own paragraph under the title --
-  // moved to a native hover tooltip on the title instead (dotted
-  // underline hints it's there) so it's available without permanently
-  // taking up space.
-  // Bottom padding is 0 here, matching theme.css's shared .panel-title --
-  // the gap below the title comes entirely from whatever follows (the
-  // legend's or the rows wrapper's own top padding, both 14px). It used to
-  // be 16px on top of that 14px, stacking to a 30px gap that only showed up
-  // visually -- nothing to click or scroll made the 16px half obvious.
-  const glassCard = (title, body, note) => `<div class="glass"><div style="padding:20px 24px 0"><div class="${note ? 'glass-title-hint' : ''}" style="font-weight:700;font-size:1rem;display:inline-block" ${note ? `title="${esc(note)}"` : ''}>${title}</div></div>${body}</div>`;
+  // No card title: it read "Regular Season" / "Final Standings" directly
+  // under the selected tab saying the same thing. The note that used to be
+  // the title's hover tooltip now rides on the selected tab instead.
 
   function build(year, type) {
     const reg = type === 'reg';
@@ -260,7 +252,6 @@
     const sel = $('year-select').value;
     const year = sel === 'all' ? 'all' : Number(sel);
     const complete = year !== 'all' && D.completeYears.includes(year);
-    $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
     const rows = build(year, tab);
     formerCount = rows.filter(r => r.former).length;
     prevRank = year === D.currentYear && !complete ? lastWeekRanks(year) : null;
@@ -268,8 +259,9 @@
       ? '<div class="legend"><span><i style="background:var(--turf)"></i>Made the playoffs</span><span><i style="background:var(--line)"></i>Missed the playoffs</span></div>'
       : '';
     const note = year === 'all' ? 'Every season combined, current teams ranked by win percentage (former teams listed after). Median games count from 2025 on.' : year >= 2025 ? 'Wins and losses include the weekly median game.' : '';
-    $('standings-container').innerHTML = glassCard(tab === 'reg' ? 'Regular Season' : 'Final Standings', legend +
-      `<div style="padding:14px 18px 20px">${rows.map((r, k) => row(r, k, rows.length, tab, complete, year)).join('')}</div>`, note);
+    $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}"${k === tab && note ? ` title="${esc(note)}"` : ''}>${l}</button>`).join('');
+    // 18px above the first row (or the legend) matches the rows' 18px sides.
+    $('standings-container').innerHTML = `<div class="glass">${legend}<div style="padding:${legend ? 14 : 18}px 18px 20px">${rows.map((r, k) => row(r, k, rows.length, tab, complete, year)).join('')}</div></div>`;
   }
 
   document.addEventListener('click', e => {

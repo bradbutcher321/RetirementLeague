@@ -364,10 +364,10 @@
     </header>
 
     <div class="selector-row">
-      <!-- "Franchise", not "Franchise Selection:" -- every other page labels
-           its dropdown with a single word and no colon (Season, Year, Week),
-           and this page is already titled Franchise. -->
-      <label class="selector-label" for="franchise-select">Franchise</label>
+      <!-- Label kept for screen readers only: on screen it read "FRANCHISE"
+           directly under the "Franchise" h1, and the dropdown's value (a
+           manager's name) already says what it picks. -->
+      <label class="sr-only" for="franchise-select">Franchise</label>
       <select class="franchise-select" id="franchise-select"></select>
     </div>
 

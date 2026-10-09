@@ -94,8 +94,10 @@
   /* Clears the status ribbon above -- its badge text length varies
      ("Alive" vs "Dead" vs "Hit"), so the first side row needs guaranteed
      headroom rather than whatever theme.css's default .hero2-side padding
-     happens to leave. */
-  .hero2-side{ padding-top: 46px; }
+     happens to leave. Desktop only: once the hero stacks (theme.css, 700px)
+     the side strip sits below the payout, nowhere near the ribbon, and this
+     padding was just a 46px empty band above the stats. */
+  @media (min-width: 701px){ .hero2-side{ padding-top: 46px; } }
 
   .hero-chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
   .hero-chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); }
