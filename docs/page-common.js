@@ -231,6 +231,17 @@ const glideTap = { track: null, at: 0 };
   document.startViewTransition = arg => {
     const track = glideTap.track;
     if (!track || !track.isConnected || performance.now() - glideTap.at > 400 || reducedMotion()) return nativeVT(arg);
+    // A track marked data-glide-jump skips the glide for this switch: its
+    // pill goes straight to the new choice and the transition shows it
+    // there from the start. The dashboard sets it on the pinned Season So
+    // Far toggle in Safari, where the carried pill below vanished.
+    if (track.matches('[data-glide-jump]')) {
+      glideTap.vt = true;
+      const vt = nativeVT(arg);
+      const off = () => { glideTap.vt = false; };
+      vt.finished.then(off, off);
+      return vt;
+    }
     const path = pathTo(track);
     const named = [];
     let pill = null, on = null;

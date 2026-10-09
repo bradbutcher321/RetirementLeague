@@ -1080,7 +1080,7 @@
   </div>
 
 <script src="nav.js?v=3"></script>
-<script src="page-common.js?v=12"></script>
+<script src="page-common.js?v=14"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -3175,6 +3175,11 @@
   // cards that already jumped to their new size. Everything is named only
   // while this transition runs, so none of it gets lifted out of the page
   // during Median Watch's.
+  // Safari's engine: desktop Safari, and every browser on an iPhone (CriOS
+  // and friends). Chrome and Edge say Chrome/ in theirs.
+  const SAFARI = /CriOS|FxiOS|EdgiOS/.test(navigator.userAgent)
+    || (/AppleWebKit/.test(navigator.userAgent) && !/Chrome\/|Chromium|Edg\//.test(navigator.userAgent));
+
   function nameSeasonRows(on) {
     const card = document.querySelector('#season-section .standings-card');
     if (card) card.style.viewTransitionName = on ? 'sf-card' : '';
@@ -3230,6 +3235,12 @@
     };
     if (!document.startViewTransition || mwReduceMotion) { apply(); return; }
     const was = seasonRowValues();
+    // Pinned, in Safari, the gold jumps to the new choice instead of
+    // sliding (data-glide-jump, see page-common.js): every way of sliding it
+    // over the cards gliding underneath dropped the pill, or the whole
+    // toggle, on an iPhone. Everywhere else it slides as usual.
+    const pinnedTrack = document.querySelector('#season-toggle .sup-seg');
+    if (pinnedTrack) pinnedTrack.toggleAttribute('data-glide-jump', SAFARI && document.getElementById('season-toggle').classList.contains('stuck'));
     nameSeasonRows(true);
     const vt = document.startViewTransition(() => {
       apply();
