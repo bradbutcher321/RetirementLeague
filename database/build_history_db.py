@@ -13,6 +13,12 @@ from its 2015 inception through the current season. Two fidelity tiers:
     starters-only list with no real lineup-slot detail), so roster_entries
     is intentionally left empty for these years -- that data doesn't exist
     to recover, from ESPN or anywhere else.
+    Correction (2026-10-08, checked with a logged-in session): ESPN does
+    serve 2018's full weekly rosters (rosterForCurrentScoringPeriod) and
+    2017's starters with their points, both adding up to every official
+    score. 2015-2016's starter lists are missing players in over half the
+    games. Those two complete years were exported straight to the site by
+    generate_old_lineup_data.py; roster_entries still starts at 2019.
 
 The canonical copy of this data now lives in Cloudflare D1 (see
 update_history_d1.py, which writes there directly) -- this script and its

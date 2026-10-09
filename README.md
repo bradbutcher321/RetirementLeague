@@ -50,7 +50,9 @@ career stats in sync with the league's Google Sheet.
   The filename stays `overview.html` (it was titled "Overview" first) so old
   links and the analytics `page` key both keep working.
 - **Game Records** (`docs/game-records.html`) — top-10 single-game records,
-  all-time or for a single season.
+  all-time or for a single season. Tapping a game in a top 10 opens both
+  teams' lineups from `docs/data/lineups/<year>.json` (2017 on: 2017 is
+  starters only, 2018 on adds the bench).
 
 Standings, Head to Head, League History, and Game Records all read
 `docs/data/league.json` and share `league.css` / `league-common.js`.
@@ -272,6 +274,8 @@ generate_franchise_data_d1.py  Franchise page data pipeline (D1-backed)
 generate_draft_board_data.py  Draft Board page data pipeline
 generate_parlay_data.py       Parlay stats logic, shared by publish_parlay_stats.py (live) and its own local-preview main()
 generate_league_data_d1.py    Standings / Head to Head / League History / Game Records data pipeline (D1-backed)
+generate_lineup_data_d1.py    Game Records' per-game lineups, 2019 on (D1-backed)
+generate_old_lineup_data.py   One-off export of the 2017-2018 lineups straight from ESPN (needs ESPN cookies)
 generate_rule_changes_data.py Rule Changes page data pipeline
 database/history_lib.py       Shared D1 row-building + final-standings + wrangler-CLI logic, used by every D1-writing script above
 database/update_history_d1.py Daily D1 sync from ESPN -- the foundation every *_d1.py script above reads from

@@ -81,13 +81,62 @@
   .list-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
   .list-title{ font-weight:700; font-size:1.05rem; }
   .list-switch{ margin-bottom:6px; }
-  .crow{ display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:10px; align-items:center; padding:9px 4px; }
-  .crow + .crow{ border-top:1px solid var(--line); }
+  /* Separators are drawn as a pseudo-line rather than a border-top, so an
+     open row's gold outline isn't interrupted by the line above it. */
+  .crow{ display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:10px; align-items:center; padding:9px 4px; position:relative; border:1px solid transparent; border-radius:10px; }
+  .crow + .crow::before, .lineup + .crow::before{ content:''; position:absolute; left:4px; right:4px; top:-1px; height:1px; background:var(--line); }
+  /* A list of single games gets a chevron column, on every row so the
+     values stay aligned even where a game has no lineup (before 2019). */
+  .crow.g{ grid-template-columns:22px minmax(0,1fr) auto 12px; }
+  button.crow{ width:100%; font:inherit; color:inherit; text-align:left; background:none; cursor:pointer; }
+  button.crow:hover{ background:var(--item-hover); }
+  button.crow:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .crow.open{ background:var(--lead-tint); border-color:var(--lead-line); }
+  .crow.open::before, .crow.open + .lineup + .crow::before{ display:none; }
+  .crow .go{ color:var(--text-dim); font-size:1rem; line-height:1; text-align:center; transition:transform .25s; }
+  .crow.open .go{ transform:rotate(90deg); color:var(--gold); }
   .crow .rk{ font-family:var(--scoreboard); font-weight:700; font-size:1rem; color:var(--text-dim); text-align:center; }
   .crow .nm{ font-weight:600; font-size:0.86rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .crow .mt{ color:var(--text-dim); font-size:0.71rem; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .crow .vl{ font-family:var(--scoreboard); font-weight:700; font-size:1.1rem; font-variant-numeric:tabular-nums; text-align:right; }
   .crow.top .rk, .crow.top .vl{ color:var(--gold); }
+
+  /* ---------- A game's full lineups, opened under its row ----------
+     The Dashboard's matchup roster rows (index.html, .mu-*), minus the
+     live-game states: the record holder on the left, the opponent mirrored
+     on the right, the lineup slot between them. Starters, then the bench.
+     Opens with the same 0fr -> 1fr height glide. */
+  .lineup{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .4s cubic-bezier(.2,.8,.2,1); }
+  .lineup.on{ grid-template-rows:1fr; }
+  .lineup > div{ overflow:hidden; min-height:0; visibility:hidden; transition:visibility 0s .4s; }
+  .lineup.on > div{ visibility:visible; transition-delay:0s; }
+  .lu-body{ background:rgba(0,0,0,0.22); border:1px solid var(--line); border-radius:10px; padding:4px; margin:6px 0 8px; }
+  .lu-note{ color:var(--text-dim); font-size:0.78rem; padding:12px 8px; text-align:center; }
+  .mu-row{ display:grid; grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr); align-items:stretch; padding:1px 0; }
+  .mu-row + .mu-row{ border-top:1px solid rgba(255,255,255,0.04); }
+  .mu-slot{ align-self:center; justify-self:center; font-size:0.6rem; font-weight:700; letter-spacing:0.04em; color:var(--text-dim); }
+  .mu-pc{ min-width:0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; align-items:center; padding:7px 6px; }
+  .mu-pc.r{ grid-template-columns:auto minmax(0,1fr); }
+  .mu-pc.r .mu-pinfo{ order:2; text-align:right; }
+  .mu-pc.r .mu-pscore{ order:1; text-align:left; }
+  .mu-pinfo{ min-width:0; }
+  /* Flex row so the team badge always stays whole and the name hard-clips
+     where it meets it; only names that actually overflow fade out. */
+  .player-name{ display:flex; align-items:center; gap:4px; min-width:0; font-weight:600; font-size:0.8rem; }
+  .mu-pc.r .player-name{ justify-content:flex-end; }
+  .name-text{ min-width:0; overflow:hidden; white-space:nowrap; }
+  .name-text.clipped{ -webkit-mask-image:linear-gradient(to right, #000 calc(100% - 12px), transparent); mask-image:linear-gradient(to right, #000 calc(100% - 12px), transparent); }
+  .team-tag{ flex-shrink:0; font-size:0.58rem; font-weight:700; color:var(--text-dim); background:var(--surface-raised); border:1px solid var(--line); border-radius:4px; padding:1px 4px; }
+  .mu-pscore{ text-align:right; font-variant-numeric:tabular-nums; }
+  .mu-pts{ font-family:var(--scoreboard); font-weight:700; font-size:1.05rem; line-height:1; }
+  .mu-sub{ font-size:0.64rem; color:var(--text-dim); margin-top:3px; white-space:nowrap; font-weight:500; }
+  .mu-sub.up{ color:var(--turf); font-weight:700; }
+  .mu-sub.down{ color:var(--loss); font-weight:700; }
+  .mu-row.bench .player-name{ color:rgba(245,245,243,0.6); }
+  .mu-row.bench .mu-pts{ color:var(--text-dim); }
+  .lu-div{ display:flex; align-items:center; gap:8px; padding:8px 6px 4px; color:var(--text-dim); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+  .lu-div::before, .lu-div::after{ content:''; flex:1; height:1px; background:var(--line); }
+  @media (prefers-reduced-motion:reduce){ .lineup, .lineup > div, .crow .go{ transition:none; } }
 
   /* The list opens in a bottom sheet on a phone and a popover under the
      whole card on desktop -- the same spot for either of its records, so
@@ -161,11 +210,11 @@
     // name stands alone -- printing the score beside it would repeat it.
     const team = (title, desc) => ({
       title, ownScore: true,
-      items: by(scores, x => x.s, desc).slice(0, 10).map(x => ({ v: x.s, m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g) })),
+      items: by(scores, x => x.s, desc).slice(0, 10).map(x => ({ v: x.s, m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g), g: x.g })),
     });
     const match = (title, list, fn, desc, side = winFirst, ownScore = false) => ({
       title, ownScore,
-      items: by(list, fn, desc).slice(0, 10).map(g => ({ v: fn(g), m: side(g), meta: when(g) })),
+      items: by(list, fn, desc).slice(0, 10).map(g => ({ v: fn(g), m: side(g), meta: when(g), g })),
     });
     // ----- Luck: how many of that week's other scores you beat, regular
     // season only (the only weeks where every team plays). A share rather
@@ -182,7 +231,7 @@
     const share = x => x.beat / x.others;
     const luckItem = x => ({
       v: x.s, tk: `${x.beat}/${x.others}/${x.s}`,
-      m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: `Beat ${x.beat} of ${x.others} · ${when(x.g)}`,
+      m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: `Beat ${x.beat} of ${x.others} · ${when(x.g)}`, g: x.g,
     });
     const unlucky = allPlay.filter(x => !x.won).sort((a, b) => share(b) - share(a) || b.s - a.s);
     const lucky = allPlay.filter(x => x.won).sort((a, b) => share(a) - share(b) || a.s - b.s);
@@ -194,7 +243,7 @@
     // ----- Against the weekly median (every game type carries one) -----
     const vsMedian = scores.filter(x => typeof x.g.median === 'number').map(x => ({ ...x, d: x.s - x.g.median }));
     const signed = d => (d >= 0 ? '+' : '−') + f2(Math.abs(d));
-    const medianItem = x => ({ v: x.d, label: signed(x.d), m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g) });
+    const medianItem = x => ({ v: x.d, label: signed(x.d), m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g), g: x.g });
 
     // ----- Weekly high and low scores, counted per manager (regular season) -----
     const tally = pick => {
@@ -214,7 +263,7 @@
       hiL: match('Highest Score in a Loss', decided, lS, true, loseFirst, true), loW: match('Lowest Score in a Win', decided, wS, false, winFirst, true),
       unl: { title: 'Unluckiest Losses', ownScore: true, items: unlucky.slice(0, 10).map(luckItem) },
       lck: { title: 'Luckiest Wins', ownScore: true, items: lucky.slice(0, 10).map(luckItem) },
-      hiF: { title: 'Title Game Scores', ownScore: true, items: by(finalScores, x => x.s, true).slice(0, 10).map(x => ({ v: x.s, m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g) })) },
+      hiF: { title: 'Title Game Scores', ownScore: true, items: by(finalScores, x => x.s, true).slice(0, 10).map(x => ({ v: x.s, m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g), g: x.g })) },
       loF: match('Closest Title Games', finals, margin, false),
       upMed: { title: 'Furthest Above the Median', ownScore: true, items: by(vsMedian, x => x.d, true).slice(0, 10).map(medianItem) },
       dnMed: { title: 'Furthest Below the Median', ownScore: true, items: by(vsMedian, x => x.d, false).slice(0, 10).map(medianItem) },
@@ -281,12 +330,90 @@
     const p = LEDGER[open.panel], c = C[p[open.side][0]];
     const r = rankOf(c.items);
     // A count's meta ("of 153 weeks") is the same on every row, so the list drops it.
+    // A row that is one game opens that game's lineups underneath it.
+    const games = c.items.some(i => i.g);
     const rows = c.items.length
-      ? c.items.map((i, k) => `<div class="crow${r[k] === 1 ? ' top' : ''}"><div class="rk">${r[k]}</div><div style="min-width:0"><div class="nm">${withScore(c, i)}</div>${c.ties ? '' : `<div class="mt">${[versus(i), i.meta].filter(Boolean).join(' · ')}</div>`}</div><div class="vl">${shown(i)}</div></div>`).join('')
+      ? c.items.map((i, k) => {
+        const cls = `crow${games ? ' g' : ''}${r[k] === 1 ? ' top' : ''}`;
+        const inner = `<div class="rk">${r[k]}</div><div style="min-width:0"><div class="nm">${withScore(c, i)}</div>${c.ties ? '' : `<div class="mt">${[versus(i), i.meta].filter(Boolean).join(' · ')}</div>`}</div><div class="vl">${shown(i)}</div>`;
+        if (!hasLineup(i)) return `<div class="${cls}">${inner}${games ? '<div></div>' : ''}</div>`;
+        const g = i.g;
+        return `<button type="button" class="${cls}" data-lu="${g.year}|${g.week}|${esc(i.m.a)}|${esc(i.m.b)}" aria-expanded="false">${inner}<div class="go" aria-hidden="true">&#8250;</div></button><div class="lineup"><div></div></div>`;
+      }).join('')
       : '<div class="empty-note">No games yet for this season.</div>';
     const head = `<div class="list-head"><div class="list-title">${p.title}</div><button type="button" class="x" data-close aria-label="Close">&times;</button></div>
       <div class="seg list-switch"><button class="${open.side === 'hi' ? 'on' : ''}" data-switch="hi">${p.hi[1]}</button><button class="${open.side === 'lo' ? 'on' : ''}" data-switch="lo">${p.lo[1]}</button></div>`;
     return { head, rows, label: c.title };
+  }
+
+  // ---------- A game's lineups ----------
+  // data/lineups/<year>.json, written by generate_lineup_data_d1.py (2019 on)
+  // and generate_old_lineup_data.py (2017-2018). ESPN kept no usable
+  // lineups before 2017, so those games don't open.
+  const LINEUP_FROM = 2017;
+  const hasLineup = i => i.g && i.g.year >= LINEUP_FROM && i.m.b;
+  const lineupYears = new Map();
+  const lineupYear = y => {
+    if (!lineupYears.has(y)) {
+      lineupYears.set(y, fetch(`data/lineups/${y}.json`, { cache: 'no-cache' })
+        .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+        .catch(err => { lineupYears.delete(y); throw err; }));
+    }
+    return lineupYears.get(y);
+  };
+  const SLOT_LABEL = { 'RB/WR/TE': 'FLEX', BE: 'BN' };
+  const BENCH = new Set(['BE', 'IR']);
+  // "J. Allen", as on the Dashboard: two players to a row on a phone. A
+  // D/ST keeps its whole name, since its first word is what identifies it.
+  const shortName = n => { const parts = n.split(' '); return parts.length < 2 || /D\/ST/.test(n) ? n : `${parts[0][0]}. ${parts.slice(1).join(' ')}`; };
+
+  function playerCell(p, side) {
+    if (!p) return `<div class="mu-pc ${side}"></div>`;
+    const [name, team, slot, pts, proj] = p;
+    // A starter's result against his projection goes green or red; a
+    // bench player's stays grey, since it didn't count.
+    const d = proj > 0 ? pts - proj : null;
+    const tone = BENCH.has(slot) || d === null ? '' : d > 0.05 ? ' up' : d < -0.05 ? ' down' : '';
+    const sub = d === null ? '' : `<div class="mu-sub${tone}" title="Projected ${f2(proj)}">${d >= 0 ? '▲' : '▼'} ${f2(Math.abs(d))}</div>`;
+    return `<div class="mu-pc ${side}"><div class="mu-pinfo"><div class="player-name"><span class="name-text">${esc(shortName(name))}</span>${team ? `<span class="team-tag">${esc(team)}</span>` : ''}</div></div>` +
+      `<div class="mu-pscore"><div class="mu-pts">${f2(pts)}</div>${sub}</div></div>`;
+  }
+  function lineupRows(a, b, bench) {
+    const out = [];
+    for (let k = 0; k < Math.max(a.length, b.length); k++) {
+      const slot = (a[k] || b[k])[2];
+      out.push(`<div class="mu-row${bench ? ' bench' : ''}">${playerCell(a[k], '')}<span class="mu-slot">${SLOT_LABEL[slot] || slot}</span>${playerCell(b[k], 'r')}</div>`);
+    }
+    return out.join('');
+  }
+  // The record holder's team on the left, as the row above it reads.
+  function lineupHtml(data, week, a, b) {
+    const wk = data.weeks[week] || {};
+    if (!wk[a] || !wk[b]) return '<div class="lu-body"><div class="lu-note">No lineups for this game.</div></div>';
+    const starters = l => l.filter(p => !BENCH.has(p[2])), bench = l => l.filter(p => BENCH.has(p[2]));
+    const ba = bench(wk[a]), bb = bench(wk[b]);
+    return `<div class="lu-body">${lineupRows(starters(wk[a]), starters(wk[b]), false)}` +
+      (ba.length || bb.length ? `<div class="lu-div">Bench</div>${lineupRows(ba, bb, true)}` : '') + '</div>';
+  }
+  // Names hard-clip at the team badge; only the ones that actually do fade out.
+  const markClipped = root => root.querySelectorAll('.name-text').forEach(n => n.classList.toggle('clipped', n.scrollWidth > n.clientWidth + 1));
+
+  // Several games can be open at once, to compare them.
+  function toggleLineup(row) {
+    const on = !row.classList.contains('open');
+    const box = row.nextElementSibling;
+    row.classList.toggle('open', on);
+    row.setAttribute('aria-expanded', on);
+    box.classList.toggle('on', on);
+    if (!on || box.dataset.filled) return;
+    const [year, week, a, b] = row.dataset.lu.split('|');
+    const inner = box.firstElementChild;
+    inner.innerHTML = '<div class="lu-body"><div class="lu-note">Loading lineups…</div></div>';
+    lineupYear(year).then(data => {
+      inner.innerHTML = lineupHtml(data, week, a, b);
+      box.dataset.filled = '1';
+      markClipped(inner);
+    }).catch(() => { inner.innerHTML = `<div class="lu-body"><div class="lu-note">Couldn't load the lineups.</div></div>`; });
   }
 
   // The cards are built once per year. Opening, closing and switching a list
@@ -373,6 +500,8 @@
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-close]')) { hideList(); return; }
+    const lu = e.target.closest('button.crow[data-lu]');
+    if (lu) { toggleLineup(lu); return; }
     const sw = e.target.closest('[data-switch]');
     if (sw && open) { if (sw.dataset.switch !== open.side) { open = { ...open, side: sw.dataset.switch }; showList(false); } return; }
     const b = e.target.closest('button.rec[data-panel]');
