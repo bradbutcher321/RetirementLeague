@@ -477,6 +477,11 @@ body{
 }
 .glide-clip{ overflow: clip; }
 .glide-to{ background: none !important; box-shadow: none !important; transition: color .3s ease .1s !important; }
+/* When the tap starts a view transition, the transition carries the pill
+   (page-common.js): only its "after" picture shows, stretched to the box
+   as it slides and resizes between the two choices. */
+::view-transition-old(gp-pill){ display: none; }
+::view-transition-new(gp-pill){ animation: none; height: 100%; }
 
 /* The content a tab row switches slides in from the side you moved toward.
    12px, not more: a full-width panel inside the phone's 14px gutter would

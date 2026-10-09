@@ -191,6 +191,9 @@ const glideTap = { track: null, at: 0 };
     glideTap.at = performance.now();
     let tries = 0;
     const settle = () => {
+      // The page started a view transition for this tap; it carries the
+      // pill instead (see below).
+      if (glideTap.vt) return;
       const now = track.isConnected ? track : document.querySelector(path);
       const to = now && now.matches(TRACK_SEL) && selected(now);
       const toIdx = to ? items(now).indexOf(to) : -1;
@@ -203,6 +206,68 @@ const glideTap = { track: null, at: 0 };
     };
     requestAnimationFrame(settle);
   }, true);
+
+  // When the tap also starts a view transition (the dashboard's Median
+  // Watch and Season So Far toggles animate their content with one), the
+  // whole page, track included, is shown as a pair of pictures until it
+  // ends. Chrome keeps redrawing those pictures, but an iPhone shows them
+  // still, so the glide above never appeared there: the gold vanished and
+  // jumped. Instead the transition carries the pill itself. A plain pill
+  // named gp-pill sits on the old choice in the "before" picture and on
+  // the new one in the "after", and the transition slides it across. The
+  // track's buttons are named too (gp-b0, gp-b1, ...) so their labels are
+  // drawn above the pill rather than under it in the page's own picture.
+  if (!document.startViewTransition) return;
+  const nativeVT = document.startViewTransition.bind(document);
+  document.startViewTransition = arg => {
+    const track = glideTap.track;
+    if (!track || !track.isConnected || performance.now() - glideTap.at > 400 || reducedMotion()) return nativeVT(arg);
+    const path = pathTo(track);
+    const named = [];
+    let pill = null, on = null;
+    const unname = () => {
+      named.forEach(el => { el.style.viewTransitionName = ''; });
+      named.length = 0;
+      if (pill) pill.remove();
+      if (on) on.classList.remove('glide-to');
+      pill = on = null;
+    };
+    // A pill on the selected button of track `t`, the button gone clear
+    // so only the pill shows gold, and every button named.
+    const pillOn = t => {
+      on = t && t.matches(TRACK_SEL) ? selected(t) : null;
+      if (!on) return;
+      // A track that flips .on in place (Median Watch's) has the button's
+      // own color fade just starting, which would read as clear; read the
+      // selected look with that fade cut short.
+      on.style.transition = 'none';
+      const cs = getComputedStyle(on);
+      const look = { background: cs.backgroundColor, boxShadow: cs.boxShadow, borderRadius: cs.borderRadius, transition: 'none' };
+      on.style.transition = '';
+      pill = document.createElement('span');
+      pill.className = 'glide-pill';
+      pill.setAttribute('aria-hidden', 'true');
+      Object.assign(pill.style, look);
+      place(pill, boxOf(t, on));
+      t.append(pill);
+      on.classList.add('glide-to');
+      pill.style.viewTransitionName = 'gp-pill';
+      named.push(pill);
+      items(t).forEach((b, i) => { b.style.viewTransitionName = 'gp-b' + i; named.push(b); });
+    };
+    glideTap.vt = true;
+    pillOn(track);
+    const update = typeof arg === 'function' ? arg : arg && arg.update;
+    const run = async () => {
+      if (update) await update();
+      unname();
+      pillOn(track.isConnected ? track : document.querySelector(path));
+    };
+    const vt = nativeVT(typeof arg === 'object' && arg ? { ...arg, update: run } : run);
+    const done = () => { unname(); glideTap.vt = false; };
+    vt.finished.then(done, done);
+    return vt;
+  };
 })();
 
 // Fade whichever edge of a sideways scroller still has more to show, so a

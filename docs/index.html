@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=14">
+<link rel="stylesheet" href="theme.css?v=15">
 <link rel="stylesheet" href="nav.css?v=5">
 <style>
   /* ---------- Matchup cards ----------
@@ -658,11 +658,11 @@
      past its edge for the first few frames. */
   #accolades-container .accolade-card{ view-transition-class: sf-acc; }
   ::view-transition-group(*.sf-acc){ overflow: clip; border-radius: 14px; }
-  /* The pinned mode toggle gets its own layer during the switch, on top:
-     left in the page's flat snapshot, the cards and rows gliding under it
-     were drawn over it, so it vanished until the glide ended. It shows
-     only its live self, so its own pill glide plays as normal. */
-  ::view-transition-group(sf-toggle){ z-index: 1; }
+  /* The pinned mode toggle gets its own layer during the switch: left in
+     the page's flat picture, the cards and rows gliding under it were
+     drawn over it. Layers stack in paint order, and the toggle (z-index
+     20) paints after the cards, so it stays on top. Its pill and labels
+     are layers of their own, above it (see page-common.js). */
   ::view-transition-old(sf-toggle){ display: none; }
   ::view-transition-new(sf-toggle){ animation: none; }
 
@@ -838,18 +838,23 @@
      of sitting a long scroll above the standings. It sits under the site
      nav while that's showing and slides up with it when it tucks away.
      The band spans the page gutter so rows pass cleanly beneath it, and
-     gets its hairline only once it's pinned (.stuck, set below). */
+     gets its hairline only once it's pinned (.stuck, set below).
+     The band's look lives on an inner .sf-band rather than on the pinned
+     element itself: a mode switch captures the band as its own layer (see
+     nameSeasonRows), and Safari drew a captured *pinned* element nowhere,
+     so the whole toggle vanished mid-switch on an iPhone. */
   #season-toggle{
     position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px)); z-index: 20;
-    margin: 0 -20px 14px; padding: 8px 20px; background: var(--bg);
-    transition: top .25s ease, box-shadow .2s ease;
+    margin: 0 -20px 14px;
+    transition: top .25s ease;
   }
   body:has(.nav-bar:not(.tucked)) #season-toggle{ --nav-shown: var(--nav-h, 0px); }
   #season-toggle:empty{ display: none; }
-  #season-toggle .sup-seg{ margin-bottom: 0; }
-  #season-toggle.stuck{ box-shadow: 0 1px 0 var(--line), 0 12px 18px -14px rgba(0,0,0,0.9); }
-  @media (max-width: 480px){ #season-toggle{ margin-inline: -14px; padding-inline: 14px; } }
-  @media (prefers-reduced-motion: reduce){ #season-toggle{ transition: none; } }
+  .sf-band{ padding: 8px 20px; background: var(--bg); transition: box-shadow .2s ease; }
+  .sf-band .sup-seg{ margin-bottom: 0; }
+  #season-toggle.stuck .sf-band{ box-shadow: 0 1px 0 var(--line), 0 12px 18px -14px rgba(0,0,0,0.9); }
+  @media (max-width: 480px){ #season-toggle{ margin-inline: -14px; } .sf-band{ padding-inline: 14px; } }
+  @media (prefers-reduced-motion: reduce){ #season-toggle, .sf-band{ transition: none; } }
   .standings-card{ margin-top: 14px; }
   .standings-title{ padding: 16px 18px 0; font-weight: 700; font-size: 0.95rem; color: #fff; text-shadow: 0 0 14px rgba(255,255,255,0.45); }
   .sup-note{ position: relative; padding-top: 12px; border-top: 1px solid var(--line); color: var(--text-dim); font-size: 0.78rem; line-height: 1.5; }
@@ -1075,7 +1080,7 @@
   </div>
 
 <script src="nav.js?v=3"></script>
-<script src="page-common.js?v=10"></script>
+<script src="page-common.js?v=11"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -3057,7 +3062,7 @@
     const modes = seasonModes(standingsData);
     const active = activeSeasonMode();
     document.getElementById('season-toggle').innerHTML = modes.length > 1
-      ? `<div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-season="${k}" class="${k === active ? 'on' : ''}">${l}</button>`).join('')}</div>`
+      ? `<div class="sf-band"><div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-season="${k}" class="${k === active ? 'on' : ''}">${l}</button>`).join('')}</div></div>`
       : '';
   }
 
@@ -3173,7 +3178,8 @@
   function nameSeasonRows(on) {
     const card = document.querySelector('#season-section .standings-card');
     if (card) card.style.viewTransitionName = on ? 'sf-card' : '';
-    document.getElementById('season-toggle').style.viewTransitionName = on ? 'sf-toggle' : '';
+    const band = document.querySelector('#season-toggle .sf-band');
+    if (band) band.style.viewTransitionName = on ? 'sf-toggle' : '';
     document.querySelectorAll('#accolades-container .accolade-card').forEach((c, i) => {
       c.style.viewTransitionName = on ? 'sf-acc-' + i : '';
     });
