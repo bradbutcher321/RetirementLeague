@@ -112,6 +112,15 @@
   .lineup.on > div{ visibility:visible; transition-delay:0s; }
   .lu-body{ background:rgba(0,0,0,0.22); border:1px solid var(--line); border-radius:10px; padding:4px; margin:6px 0 8px; }
   .lu-note{ color:var(--text-dim); font-size:0.78rem; padding:12px 8px; text-align:center; }
+  /* Who is on which side: each manager over their score, the winner's in
+     gold, and the result read from the left (record holder's) side. */
+  .lu-head{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:end; gap:10px; padding:10px 10px 10px; border-bottom:1px solid var(--line); }
+  .lu-side{ min-width:0; }
+  .lu-side.r{ text-align:right; }
+  .lu-mgr{ font-weight:600; font-size:0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lu-score{ font-family:var(--scoreboard); font-weight:700; font-size:1.7rem; line-height:1; margin-top:3px; font-variant-numeric:tabular-nums; }
+  .lu-score.won{ color:var(--gold); }
+  .lu-res{ align-self:center; color:var(--text-dim); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; }
   .mu-row{ display:grid; grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr); align-items:stretch; padding:1px 0; }
   .mu-row + .mu-row{ border-top:1px solid rgba(255,255,255,0.04); }
   .mu-slot{ align-self:center; justify-self:center; font-size:0.6rem; font-weight:700; letter-spacing:0.04em; color:var(--text-dim); }
@@ -338,7 +347,7 @@
         const inner = `<div class="rk">${r[k]}</div><div style="min-width:0"><div class="nm">${withScore(c, i)}</div>${c.ties ? '' : `<div class="mt">${[versus(i), i.meta].filter(Boolean).join(' · ')}</div>`}</div><div class="vl">${shown(i)}</div>`;
         if (!hasLineup(i)) return `<div class="${cls}">${inner}${games ? '<div></div>' : ''}</div>`;
         const g = i.g;
-        return `<button type="button" class="${cls}" data-lu="${g.year}|${g.week}|${esc(i.m.a)}|${esc(i.m.b)}" aria-expanded="false">${inner}<div class="go" aria-hidden="true">&#8250;</div></button><div class="lineup"><div></div></div>`;
+        return `<button type="button" class="${cls}" data-lu="${g.year}|${g.week}|${esc(i.m.a)}|${esc(i.m.b)}|${i.m.as}|${i.m.bs}" aria-expanded="false">${inner}<div class="go" aria-hidden="true">&#8250;</div></button><div class="lineup"><div></div></div>`;
       }).join('')
       : '<div class="empty-note">No games yet for this season.</div>';
     const head = `<div class="list-head"><div class="list-title">${p.title}</div><button type="button" class="x" data-close aria-label="Close">&times;</button></div>
@@ -386,13 +395,20 @@
     }
     return out.join('');
   }
+  // The two managers over their scores, heading the lineups so each column
+  // says whose it is.
+  function lineupHead(a, b, as, bs) {
+    const res = as > bs ? 'def.' : as < bs ? 'lost to' : 'tied';
+    const sideHtml = (name, mine, theirs, cls) => `<div class="lu-side${cls}"><div class="lu-mgr">${esc(name)}</div><div class="lu-score${mine > theirs ? ' won' : ''}">${f2(mine)}</div></div>`;
+    return `<div class="lu-head">${sideHtml(a, as, bs, '')}<div class="lu-res">${res}</div>${sideHtml(b, bs, as, ' r')}</div>`;
+  }
   // The record holder's team on the left, as the row above it reads.
-  function lineupHtml(data, week, a, b) {
+  function lineupHtml(data, week, a, b, as, bs) {
     const wk = data.weeks[week] || {};
     if (!wk[a] || !wk[b]) return '<div class="lu-body"><div class="lu-note">No lineups for this game.</div></div>';
     const starters = l => l.filter(p => !BENCH.has(p[2])), bench = l => l.filter(p => BENCH.has(p[2]));
     const ba = bench(wk[a]), bb = bench(wk[b]);
-    return `<div class="lu-body">${lineupRows(starters(wk[a]), starters(wk[b]), false)}` +
+    return `<div class="lu-body">${lineupHead(a, b, as, bs)}${lineupRows(starters(wk[a]), starters(wk[b]), false)}` +
       (ba.length || bb.length ? `<div class="lu-div">Bench</div>${lineupRows(ba, bb, true)}` : '') + '</div>';
   }
   // Names hard-clip at the team badge; only the ones that actually do fade out.
@@ -406,11 +422,11 @@
     row.setAttribute('aria-expanded', on);
     box.classList.toggle('on', on);
     if (!on || box.dataset.filled) return;
-    const [year, week, a, b] = row.dataset.lu.split('|');
+    const [year, week, a, b, as, bs] = row.dataset.lu.split('|');
     const inner = box.firstElementChild;
     inner.innerHTML = '<div class="lu-body"><div class="lu-note">Loading lineups…</div></div>';
     lineupYear(year).then(data => {
-      inner.innerHTML = lineupHtml(data, week, a, b);
+      inner.innerHTML = lineupHtml(data, week, a, b, Number(as), Number(bs));
       box.dataset.filled = '1';
       markClipped(inner);
     }).catch(() => { inner.innerHTML = `<div class="lu-body"><div class="lu-note">Couldn't load the lineups.</div></div>`; });
