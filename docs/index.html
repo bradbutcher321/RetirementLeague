@@ -658,6 +658,13 @@
      past its edge for the first few frames. */
   #accolades-container .accolade-card{ view-transition-class: sf-acc; }
   ::view-transition-group(*.sf-acc){ overflow: clip; border-radius: 14px; }
+  /* The pinned mode toggle gets its own layer during the switch, on top:
+     left in the page's flat snapshot, the cards and rows gliding under it
+     were drawn over it, so it vanished until the glide ended. It shows
+     only its live self, so its own pill glide plays as normal. */
+  ::view-transition-group(sf-toggle){ z-index: 1; }
+  ::view-transition-old(sf-toggle){ display: none; }
+  ::view-transition-new(sf-toggle){ animation: none; }
 
   /* ---------- Stat of the Moment: single rotating-feeling hero fact
      directly under Median Watch, wearing the same plain card outline. ------ */
@@ -3166,6 +3173,7 @@
   function nameSeasonRows(on) {
     const card = document.querySelector('#season-section .standings-card');
     if (card) card.style.viewTransitionName = on ? 'sf-card' : '';
+    document.getElementById('season-toggle').style.viewTransitionName = on ? 'sf-toggle' : '';
     document.querySelectorAll('#accolades-container .accolade-card').forEach((c, i) => {
       c.style.viewTransitionName = on ? 'sf-acc-' + i : '';
     });
