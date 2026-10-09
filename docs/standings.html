@@ -79,13 +79,18 @@
     .qrow .stats{ gap:8px; }
     .qrow .stats div{ min-width:26px; }
   }
-  /* "PF x · PA y" is one nowrap unit so it can't split mid-pair, and
-     always forced onto its own line after "N seasons" (at every width,
-     not just mobile) -- exactly two lines, seasons alone then PF/PA
-     together, instead of "seasons · PF" sharing a line while "PA" gets
-     stranded below. */
-  .qrow .meta-seg{ white-space:nowrap; display:block; }
+  /* "PF x · PA y" is always forced onto its own line after "N seasons"
+     (at every width, not just mobile), instead of "seasons · PF" sharing
+     a line while "PA" gets stranded below. Within it, PF and PA each stay
+     whole, and only when the pair is wider than the column (two-decimal
+     all-time totals at 375-390px) does PA drop to its own line. Every
+     part carries its own leading " · ", and the row is shifted left by
+     that separator's width inside an overflow:hidden segment, so the
+     separator of whichever part starts a line is clipped off. */
+  .qrow .meta-seg{ white-space:nowrap; display:block; overflow:hidden; }
   .qrow .meta-sep{ display:none; }
+  .qrow .pfpa{ display:flex; flex-wrap:wrap; margin-left:-1em; }
+  .qrow .pfpa > span::before{ content:'·'; display:inline-block; width:1em; text-align:center; }
 
   /* Every row opens that manager's Franchise page. */
   a.qrow{ color:inherit; text-decoration:none; }
@@ -144,7 +149,7 @@
 <script src="league-common.js?v=3"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
-  const { f1, pct } = LG;
+  const { f2, pct } = LG;
   const TABS = [['reg', 'Regular Season'], ['final', 'Final Standings']];
   let D, tab = 'final';
   const $ = id => document.getElementById(id);
@@ -223,7 +228,7 @@
     }
     const metaParts = [];
     if (year === 'all') metaParts.push(`${r.seasons} seasons`);
-    metaParts.push(`PF ${f1(r.pf)} · PA ${f1(r.pa)}`);
+    metaParts.push(`<span class="pfpa"><span>PF ${f2(r.pf)}</span><span>PA ${f2(r.pa)}</span></span>`);
     const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
     // One badge reads fine next to the name at any width. Two at once
     // (All-Time view, a manager with both titles and sackos) are wide

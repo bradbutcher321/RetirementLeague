@@ -241,8 +241,8 @@
       const g = noBye.find(x => x.year === y && x.type === type); if (!g) return null;
       const [w, ws, l, ls] = g.s1 >= g.s2 ? [g.p1, g.s1, g.p2, g.s2] : [g.p2, g.s2, g.p1, g.s1];
       return winnerFirst
-        ? { rank: y, name: `${w} def. ${l}`, sub: `${f2(ws)} – ${f2(ls)}`, val: '+' + f1(ws - ls) }
-        : { rank: y, name: `${l} lost to ${w}`, sub: `${f2(ls)} – ${f2(ws)}`, val: '−' + f1(ws - ls) };
+        ? { rank: y, name: `${w} def. ${l}`, sub: `${f2(ws)} – ${f2(ls)}`, val: '+' + f2(ws - ls) }
+        : { rank: y, name: `${l} lost to ${w}`, sub: `${f2(ls)} – ${f2(ws)}`, val: '−' + f2(ws - ls) };
     }).filter(Boolean);
 
     const seasonPts = max => yearsDesc.map(y => {
@@ -280,7 +280,7 @@
       .map(p => ({ name: p.name, sub: `${p.efficiency.games_analyzed} games`, val: f1(p.efficiency.career_pct) + '%' }))
       .sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
     const benchView = () => activeF().filter(p => p.efficiency && p.efficiency.avg_points_left != null)
-      .map(p => ({ name: p.name, sub: `${f1(p.efficiency.points_left_on_bench)} total`, val: f2(p.efficiency.avg_points_left) }))
+      .map(p => ({ name: p.name, sub: `${f2(p.efficiency.points_left_on_bench)} total`, val: f2(p.efficiency.avg_points_left) }))
       .sort((a, b) => parseFloat(a.val) - parseFloat(b.val));
     const extraWinsView = () => activeF().filter(p => p.efficiency && p.efficiency.optimal_record)
       .map(p => ({ name: p.name, sub: `${p.efficiency.optimal_record.games} regular season games`, val: (p.efficiency.optimal_record.extra_wins > 0 ? '+' : '') + p.efficiency.optimal_record.extra_wins }))
@@ -488,7 +488,7 @@
             ${cell('3rd', tg && wl(tg)[0], join(tg && `def. ${esc(wl(tg)[1])}`, amt(pay['3rd Place'])))}
             ${cell('Sacko', sg && wl(sg)[1], sg && `lost to ${esc(wl(sg)[0])}`, 'loss')}
             ${cell('Top week', wh && wh.name, join(wh && wh.val, amt(pay['Highest Points (Week)'])))}
-            ${cell('Top season', sh && sh.name, join(sh && f1(parseFloat(sh.val)), amt(pay['Highest Points (Season)'])))}
+            ${cell('Top season', sh && sh.name, join(sh && sh.val, amt(pay['Highest Points (Season)'])))}
             ${cell('Best record', (() => { const r = done.filter(s => s.year === y).sort((a, b) => b.reg_w - a.reg_w || a.reg_rank - b.reg_rank)[0]; return r && r.player; })(),
                 (() => { const r = done.filter(s => s.year === y).sort((a, b) => b.reg_w - a.reg_w || a.reg_rank - b.reg_rank)[0]; return r ? regRec(r) : ''; })())}
           </div>

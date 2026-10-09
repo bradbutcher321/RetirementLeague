@@ -406,14 +406,14 @@
     const out = [];
 
     // Average score
-    { const s = who(A.avg, B.avg); out.push(card('Average score', s, f1(s === 'b' ? B.avg : A.avg), s ? `vs ${f1(s === 'a' ? B.avg : A.avg)}` : 'Dead even')); }
+    { const s = who(A.avg, B.avg); out.push(card('Average score', s, f2(s === 'b' ? B.avg : A.avg), s ? `vs ${f2(s === 'a' ? B.avg : A.avg)}` : 'Dead even')); }
     // Total margin -- once, for whoever is up
-    { const m = A.pts - B.pts, s = m > 0 ? 'a' : m < 0 ? 'b' : ''; out.push(card('Points edge', s, s ? `+${f1(Math.abs(m))}` : '0', s ? `over ${all.length} games` : 'Dead even')); }
+    { const m = A.pts - B.pts, s = m > 0 ? 'a' : m < 0 ? 'b' : ''; out.push(card('Points edge', s, s ? `+${f2(Math.abs(m))}` : '0', s ? `over ${all.length} games` : 'Dead even')); }
     // Highest score
     { const ha = sc(A.hiG, a), hb = sc(B.hiG, b), s = who(ha, hb), g = s === 'b' ? B.hiG : A.hiG; out.push(card('Highest score', s || 'a', f2(Math.max(ha, hb)), when(g))); }
     // Biggest win
     { const ma = A.bigW ? mg(A.bigW) : -1, mb = B.bigW ? mg(B.bigW) : -1, s = who(ma, mb) || 'a', g = s === 'a' ? A.bigW : B.bigW;
-      out.push(card('Biggest win', s, `+${f1(mg(g))}`, `${f2(sc(g, g.winner))}-${f2(sc(g, g.winner === a ? b : a))} · ${g.year}`)); }
+      out.push(card('Biggest win', s, `+${f2(mg(g))}`, `${f2(sc(g, g.winner))}-${f2(sc(g, g.winner === a ? b : a))} · ${g.year}`)); }
     // Close games and blowouts as records, from the leader's side
     const rec = (label, x, y, what) => { const s = who(x, y); return card(label, s, x + y ? `${Math.max(x, y)}-${Math.min(x, y)}` : '—', x + y ? (s ? what : `${what} · even`) : `None ${what}`); };
     out.push(rec('Close games', A.close, B.close, `under ${CLOSE} pts`));
@@ -437,7 +437,7 @@
       ['Playoff trips', p => p.career.standings.playoff_appearances, String, 1],
       ['Win %', p => p.career.win_rates.reg_pct, v => f1(v) + '%', 1],
       ['Power ranking', p => p.all_play && p.all_play.pct, v => f1(v) + '%', 1],
-      ['Avg points', p => p.career.points.avg_pf, f1, 1],
+      ['Avg points', p => p.career.points.avg_pf, f2, 1],
       ['Lineup eff.', p => p.efficiency && p.efficiency.career_pct, v => f1(v) + '%', 1],
       ['Sackos', p => p.career.standings.sackos, String, -1],
       ['Net money', p => p.money && p.money.net_result, LG.money, 1],
@@ -463,7 +463,7 @@
       return `<div class="g${g.type === 'Champ' ? ' final' : ''}">
         <div class="g-when"><b>${g.year}</b><span${tag ? ` class="tag${g.type === 'Sacko' ? ' sacko' : ''}"` : ''}>${tag || `Week ${g.week}`}</span></div>
         <div class="g-sc pair2"><span class="${aw ? 'ca' : 'lose'}">${f2(sc(g, a))}</span><i>–</i><span class="${aw ? 'lose' : 'cb'}">${f2(sc(g, b))}</span></div>
-        <div class="g-win">${mono(g.winner, s)}<span class="g-m c${s}">+${f1(mg(g))}</span></div>
+        <div class="g-win">${mono(g.winner, s)}<span class="g-m c${s}">+${f2(mg(g))}</span></div>
       </div>`;
     }).join('');
     return panel('Every Game', `<div class="glist-head"><div></div><div class="pair2"><span class="ca">${esc(a)}</span><span></span><span class="cb">${esc(b)}</span></div><div style="text-align:right" class="cd">Winner</div></div>${rows}`, `<span class="chip">${all.length} games</span>`);

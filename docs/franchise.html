@@ -478,6 +478,16 @@
     const r = computeRank(getter(p), pool, getter, higherBetter);
     return r ? `${fmtOrdinal(r)} of ${pool.length}` : '';
   }
+  // Gold outline only for a top-3 figure, in the same active-manager pool
+  // rankSub uses. Elsewhere on the site that outline means a title or first
+  // place, so a stat that ranks 11th of 12 stays a plain tile.
+  function topTone(p, getter, higherBetter = true) {
+    const cy = CTX.currentYear;
+    if (!isActivePlayer(p, cy)) return null;
+    const pool = data.players.filter(x => isActivePlayer(x, cy));
+    const r = computeRank(getter(p), pool, getter, higherBetter);
+    return r && r <= 3 ? 'lead' : null;
+  }
 
   function clutchDelta(x) {
     const r = x.career.record, wr = x.career.win_rates;
@@ -927,20 +937,20 @@
     const pts = p.career.points, ex = p.extremes;
     const diff = pts.avg_pf - pts.avg_pa;
     const points = card('Points', tiles([
-      ['Avg For', fmt(pts.avg_pf, 1), { tone: 'lead', sub: rankSub(p, x => x.career.points.avg_pf) }],
-      ['Avg Against', fmt(pts.avg_pa, 1), { sub: rankSub(p, x => x.career.points.avg_pa) }],
-      ['Avg Margin', fmtSigned(diff, 1, ''), { tone: signTone(diff), sub: 'per game' }],
+      ['Avg For', fmt(pts.avg_pf, 2), { tone: topTone(p, x => x.career.points.avg_pf), sub: rankSub(p, x => x.career.points.avg_pf) }],
+      ['Avg Against', fmt(pts.avg_pa, 2), { sub: rankSub(p, x => x.career.points.avg_pa) }],
+      ['Avg Margin', fmtSigned(diff, 2, ''), { tone: signTone(diff), sub: 'per game' }],
     ], 3) + lines([
-      ['Career Total', [[fmtNum(pts.total_pf, 0), 'For'], [fmtNum(pts.total_pa, 0), 'Against']]],
-      ['Single Game', [[fmt(ex.highest_score, 1), 'High'], [fmt(ex.lowest_score, 1), 'Low']]]
+      ['Career Total', [[fmtNum(pts.total_pf, 2), 'For'], [fmtNum(pts.total_pa, 2), 'Against']]],
+      ['Single Game', [[fmt(ex.highest_score, 2), 'High'], [fmt(ex.lowest_score, 2), 'Low']]]
     ]));
     const recTone = (w, l) => w > l ? 'win' : w < l ? 'loss' : '';
     const margins = card('Margins', tiles([
       ['Close Games', rec(ex.close_wins, ex.close_losses), { tone: signTone(ex.close_wins - ex.close_losses), sub: 'Under 5 pts' }],
       ['Blowouts', rec(ex.blowout_wins, ex.blowout_losses), { tone: signTone(ex.blowout_wins - ex.blowout_losses), sub: '50+ pts' }],
     ], 2) + lines([
-      ['Win Margin', [[fmt(ex.biggest_win_margin, 1), 'Largest'], [fmt(ex.lowest_win_margin, 2), 'Smallest']]],
-      ['Loss Margin', [[fmt(ex.biggest_loss_margin, 1), 'Largest'], [fmt(ex.lowest_loss_margin, 2), 'Smallest']]],
+      ['Win Margin', [[fmt(ex.biggest_win_margin, 2), 'Largest'], [fmt(ex.lowest_win_margin, 2), 'Smallest']]],
+      ['Loss Margin', [[fmt(ex.biggest_loss_margin, 2), 'Largest'], [fmt(ex.lowest_loss_margin, 2), 'Smallest']]],
     ]));
     return `<div class="pair">${points}${margins}</div>`;
   }
@@ -1006,24 +1016,30 @@
       return card('Lineup Efficiency', `<div class="empty-note">No box-score data for this franchise since ${since} -- ESPN doesn't keep weekly rosters further back.</div>`);
     }
     const headline = card('Lineup Efficiency', tiles([
-      ['Efficiency', fmtPct(e.career_pct), { tone: 'lead', sub: rankSub(p, x => x.efficiency && x.efficiency.career_pct) }],
+      ['Efficiency', fmtPct(e.career_pct), { tone: topTone(p, x => x.efficiency && x.efficiency.career_pct), sub: rankSub(p, x => x.efficiency && x.efficiency.career_pct) }],
       ['Perfect Weeks', fmt(e.perfect_lineups), { sub: `of ${e.games_analyzed} games` }],
-      ['Bench Pts / Gm', fmt(e.avg_points_left, 1), { sub: `${fmtNum(e.points_left_on_bench, 0)} total` }],
+      ['Bench Pts / Gm', fmt(e.avg_points_left, 2), { sub: `${fmtNum(e.points_left_on_bench, 2)} total` }],
     ], 3) + seasonEffChart(e), { note: `Points started as a share of the best possible lineup, since ${since}.` });
 
     const r = e.optimal_record;
+    // Ranked by win rate, not raw wins, so a longer tenure doesn't win it.
+    const optimalPct = x => {
+      const o = x.efficiency && x.efficiency.optimal_record && x.efficiency.optimal_record.optimal;
+      const g = o ? o.w + o.l + (o.t || 0) : 0;
+      return g ? (o.w + (o.t || 0) / 2) / g : null;
+    };
     const fmtRec = x => rec(x.w, x.l, x.t);
     const recordCard = card('With Perfect Lineups', tiles([
       ['Actual', fmtRec(r.actual)],
-      ['Optimal', fmtRec(r.optimal), { tone: 'lead' }],
+      ['Optimal', fmtRec(r.optimal), { tone: topTone(p, optimalPct) }],
       ['Wins Left', fmt(r.extra_wins), { tone: r.extra_wins > 0 ? 'loss' : null, sub: 'on the bench' }],
     ], 3), { note: `Regular season, against each week's real opponent score · ${r.games} games.` });
 
     const wg = e.worst_game, wb = e.worst_bench_miss;
     const worst = card('Worst Calls', lines([
-      wg ? ['Worst Lineup Week', [[`−${fmt(wg.diff, 1)}`, 'pts left', 'loss']], `Scored ${fmt(wg.actual, 1)} of a possible ${fmt(wg.optimal, 1)} · ${weekLabel(wg)}`]
+      wg ? ['Worst Lineup Week', [[`−${fmt(wg.diff, 2)}`, 'pts left', 'loss']], `Scored ${fmt(wg.actual, 2)} of a possible ${fmt(wg.optimal, 2)} · ${weekLabel(wg)}`]
         : ['Worst Lineup Week', [['—', '']], 'Every week was optimal, or close to it'],
-      wb ? ['Worst Bench Miss', [[fmt(wb.points, 1), 'pts benched', 'loss']], `${esc(wb.player_name)} · ${weekLabel(wb)}`]
+      wb ? ['Worst Bench Miss', [[fmt(wb.points, 2), 'pts benched', 'loss']], `${esc(wb.player_name)} · ${weekLabel(wb)}`]
         : ['Worst Bench Miss', [['—', '']], 'No bench data yet'],
     ]));
     return headline + `<div class="pair">${recordCard}${worst}</div>`;
@@ -1053,7 +1069,8 @@
       ]));
     const b = p.moves.busiest_season;
     const draft = card('Draft & Roster', tiles([
-      ['Avg Pick', fmt(p.draft.avg_position, 1), { tone: 'lead' }],
+      // Lowest average pick ranks first.
+      ['Avg Pick', fmt(p.draft.avg_position, 1), { tone: topTone(p, x => x.draft && x.draft.avg_position, false) }],
       ['Earliest', fmt(p.draft.best_position), { sub: 'pick' }],
       ['Latest', fmt(p.draft.worst_position), { sub: 'pick' }],
     ], 3) + lines([
