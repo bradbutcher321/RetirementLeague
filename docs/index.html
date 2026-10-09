@@ -276,6 +276,10 @@
     flex-shrink: 0;
   }
   .lb-row.playoff .lb-rank{ color: var(--gold); }
+  /* A row whose manager is known opens their Franchise page. */
+  a.lb-row{ color: inherit; text-decoration: none; }
+  a.lb-row:hover{ background: var(--item-hover); }
+  a.lb-row:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
   .lb-identity{ flex: 1; min-width: 0; }
   .lb-name{
     font-weight: 600;
@@ -2689,12 +2693,20 @@
   // that can disagree with raw rank (tiebreakers, remaining schedule).
   // Deliberately not the same threshold, so showing both is more
   // informative than picking just one.
+  // Opening tag for a standings row: a link to the manager's Franchise page
+  // when the Worker knows who they are (its names follow the same rules as
+  // Franchise's), a plain row otherwise. Franchise opens on whoever is in
+  // its 'franchise-selected' key, which the click handler below sets.
+  function lbRowTag(manager) {
+    return manager ? `a href="franchise.html" data-fr="${esc(manager)}"` : 'div';
+  }
+
   function renderLeaderboardRow(t, rank, playoffTeamCount) {
     const hasPlayoffPct = typeof t.playoffPct === 'number';
     const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : 'low') : '';
     const inPlayoffPosition = playoffTeamCount > 0 && rank <= playoffTeamCount;
     return `
-      <div class="lb-row ${inPlayoffPosition ? 'playoff' : ''}" data-sf="${rank - 1}">
+      <${lbRowTag(t.manager)} class="lb-row ${inPlayoffPosition ? 'playoff' : ''}" data-sf="${rank - 1}">
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${t.name}</div>
@@ -2703,7 +2715,7 @@
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsFor)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsAgainst)}</div></div>
         <div class="lb-playoff-chip ${chipCls}">${fmtPct(t.playoffPct)}</div>
-      </div>`;
+      </${t.manager ? 'a' : 'div'}>`;
   }
 
   // ---------- Standings: through last week / + this week live / + this week projected ----------
@@ -2827,7 +2839,7 @@
       const chipText = move > 0 ? `\u25B2 ${move}` : move < 0 ? `\u25BC ${-move}` : '\u2013';
       const inPlayoffPosition = data.playoffTeamCount > 0 && rank <= data.playoffTeamCount;
       return `
-      <div class="lb-row ${inPlayoffPosition ? 'playoff' : ''}" data-sf="${r.espnRank - 1}">
+      <${lbRowTag(r.manager)} class="lb-row ${inPlayoffPosition ? 'playoff' : ''}" data-sf="${r.espnRank - 1}">
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${r.name}</div>
@@ -2836,7 +2848,7 @@
         <div class="lb-stat"><div class="v">${fmtScore(r.pf)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(r.pa)}</div></div>
         <div class="lb-playoff-chip ${chipCls}">${chipText}</div>
-      </div>`;
+      </${r.manager ? 'a' : 'div'}>`;
     }).join('');
   }
 
@@ -2867,6 +2879,11 @@
     });
     return vals;
   }
+
+  document.getElementById('leaderboard-container').addEventListener('click', e => {
+    const fr = e.target.closest('[data-fr]');
+    if (fr) { try { localStorage.setItem('franchise-selected', fr.dataset.fr); } catch (err) {} }
+  });
 
   document.getElementById('season-toggle').addEventListener('click', e => {
     const b = e.target.closest('[data-season]');
