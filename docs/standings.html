@@ -87,6 +87,19 @@
   .qrow .meta-seg{ white-space:nowrap; display:block; }
   .qrow .meta-sep{ display:none; }
 
+  /* Every row opens that manager's Franchise page. */
+  a.qrow{ color:inherit; text-decoration:none; }
+  a.qrow:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+
+  /* Current season only: places gained or lost since last week, the same
+     pill as the dashboard's Move column. It sits beside the name, where a
+     finished season's Champion/Sacko badge goes -- a column of its own
+     beside W/L/Win % pushed the stats into the PF/PA line at phone width. */
+  .mv{ flex:none; box-sizing:border-box; width:40px; padding:2px 0; border-radius:999px; border:1px solid var(--line); text-align:center;
+       color:var(--text-dim); font-style:normal; font-size:0.68rem; font-weight:700; line-height:1.2; white-space:nowrap; }
+  .mv.up{ border-color:var(--turf-dim); color:var(--turf); }
+  .mv.down{ border-color:rgba(214,98,79,0.4); color:var(--loss); }
+
   #standings-container{ margin-top:14px; }
   .glass-title-hint{ cursor:help; }
 </style>
@@ -168,13 +181,39 @@
     }
     const rows = D.seasons.filter(s => s.year === year).map(s => {
       const m = mk(s);
-      return { player: s.player, ...m, pct: m.w + m.l ? m.w / (m.w + m.l) : null, rank: reg ? s.reg_rank : s.final_rank, s };
+      // ESPN leaves final_rank at 0 until the season ends, so a season in
+      // progress shows its current regular-season order on both tabs.
+      return { player: s.player, ...m, pct: m.w + m.l ? m.w / (m.w + m.l) : null, rank: reg ? s.reg_rank : (s.final_rank || s.reg_rank), s };
     });
     rows.sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99) || b.w - a.w || b.pf - a.pf);
     return rows;
   }
 
-  let formerCount = 0;
+  const MEDIAN_ERA_START = 2025;
+
+  // Each manager's rank after the previous week of a season in progress:
+  // every regular-season game before the latest week played, head-to-head
+  // plus median results, ordered by wins then PF -- the same order the
+  // dashboard's Move column uses. Null before Week 2.
+  function lastWeekRanks(year) {
+    const reg = D.games.filter(g => g.year === year && g.type === 'Reg');
+    const latest = Math.max(0, ...reg.map(g => g.week));
+    if (latest < 2) return null;
+    lastWeek = latest - 1;
+    const t = {};
+    reg.filter(g => g.week < latest).forEach(g => {
+      [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => {
+        if (!p) return;
+        const e = t[p] || (t[p] = { w: 0, pf: 0 });
+        e.pf += s || 0;
+        if (g.winner === p) e.w++;
+        if (year >= MEDIAN_ERA_START && g.median != null && s > g.median) e.w++;
+      });
+    });
+    const order = Object.keys(t).sort((a, b) => t[b].w - t[a].w || t[b].pf - t[a].pf);
+    return new Map(order.map((p, i) => [p, i + 1]));
+  }
+  let formerCount = 0, prevRank = null, lastWeek = 0;
   function row(r, k, n, type, complete, year) {
     const cls = ['qrow'];
     if (r.former) cls.push('former');
@@ -205,9 +244,16 @@
     // directly) shows exactly one.
     const isMulti = badges.length >= 2;
     const sideBadges = isMulti ? `<div class="badge-side">${badges.join('')}</div>` : '';
-    return `<div class="${cls.join(' ')}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span><span class="badges-inline${isMulti ? ' multi' : ''}">${badges.join('')}</span></div>` +
+    let moveHtml = '';
+    if (prevRank && prevRank.has(r.player) && r.rank) {
+      const mv = prevRank.get(r.player) - r.rank;
+      const txt = mv > 0 ? `▲ ${mv}` : mv < 0 ? `▼ ${-mv}` : '–';
+      const say = mv > 0 ? `Up ${mv}` : mv < 0 ? `Down ${-mv}` : 'No change';
+      moveHtml = `<i class="mv${mv > 0 ? ' up' : mv < 0 ? ' down' : ''}" title="${say} since Week ${lastWeek}" aria-label="${say} since Week ${lastWeek}">${txt}</i>`;
+    }
+    return `<a class="${cls.join(' ')}" href="franchise.html" data-fr="${esc(r.player)}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline${isMulti ? ' multi' : ''}">${badges.join('')}</span></div>` +
       `<div class="meta">${metaHtml}</div></div>` +
-      `<div class="stats-col">${sideBadges}<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div></div>`;
+      `<div class="stats-col">${sideBadges}<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div></a>`;
   }
 
   function render() {
@@ -217,6 +263,7 @@
     $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
     const rows = build(year, tab);
     formerCount = rows.filter(r => r.former).length;
+    prevRank = year === D.currentYear && !complete ? lastWeekRanks(year) : null;
     const legend = tab === 'reg' && complete
       ? '<div class="legend"><span><i style="background:var(--turf)"></i>Made the playoffs</span><span><i style="background:var(--line)"></i>Missed the playoffs</span></div>'
       : '';
@@ -227,7 +274,11 @@
 
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-t]');
-    if (t) { tab = t.dataset.t; render(); }
+    if (t) { tab = t.dataset.t; render(); return; }
+    // Rows are plain links; this hands Franchise the manager to open on,
+    // through the same storage key that page saves its own pick to.
+    const fr = e.target.closest('[data-fr]');
+    if (fr) { try { localStorage.setItem('franchise-selected', fr.dataset.fr); } catch (err) {} }
   });
 
   LG.load().then(data => {

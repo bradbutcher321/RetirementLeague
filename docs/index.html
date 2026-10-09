@@ -735,6 +735,7 @@
   .ph-stat{ text-align: center; }
   .ph-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--gold); }
   .ph-stat b.loss{ color: var(--loss); }
+  .ph-stat b.none{ color: var(--text); }
   .ph-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
 
   /* ---------- Superlatives ---------- */
@@ -2013,7 +2014,7 @@
     const statsHtml = `
         <div class="ph-stats">
           <div class="ph-stat"><b>${wins}</b><span>Hit</span></div>
-          <div class="ph-stat"><b class="loss">${losses}</b><span>Lost</span></div>
+          <div class="ph-stat"><b class="${losses ? 'loss' : 'none'}">${losses}</b><span>Lost</span></div>
           <div class="ph-stat"><b>${fmtOdds(week.final && week.final.odds)}</b><span>Combined Odds</span></div>
           <div class="ph-stat"><b>${fmtMoney(week.final && week.final.payout)}</b><span>Payout</span></div>
         </div>`;
