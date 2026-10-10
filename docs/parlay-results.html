@@ -179,6 +179,19 @@
   }
   .legs-actions{ display: flex; gap: 8px; }
   #leg-share{ width: 84px; }
+
+  /* The Share button's picture: a copy of the hero + legs card as it reads
+     on screen, legs collapsed and buttons gone, parked offscreen while it's
+     drawn to a PNG. Nothing animates in a still. */
+  .share-shot{ position: fixed; left: -10000px; top: 0; padding: 16px; background: var(--bg); }
+  .share-shot, .share-shot *{ animation: none !important; transition: none !important; }
+  .share-shot .legs-actions, .share-shot .leg-detail, .share-shot .chev{ display: none; }
+  .share-shot .eyebrow{ margin-bottom: 12px; }
+  /* Fallback when the share sheet can't open: the picture itself, to
+     press-and-hold (save / share) or right-click. */
+  .share-overlay{ position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; }
+  .share-overlay img{ max-width: 100%; max-height: 78vh; border-radius: 12px; border: 1px solid var(--line); user-select: auto; -webkit-user-select: auto; -webkit-touch-callout: default; }
+  .share-overlay p{ color: var(--text-dim); font-size: 0.85rem; margin: 0; }
   /* Grey and a size down from the name -- this is supporting text under a
      bold headline, not a second headline. */
   .leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 4px; line-height: 1.35; }
@@ -644,48 +657,80 @@
       </div>`;
   }
 
-  // The week as a text message: status and money up top, then one line per
-  // leg in game-time order, led by an emoji that says where it stands (the
-  // same Win/Loss/Live/kickoff the leg cards show). Plain text with emoji
-  // since that's all a group text renders.
-  function parlayShareText(week, players, live) {
-    const legs = legsSorted(week, players);
-    const wins = legs.filter(([, p]) => p.result === 'Win').length;
-    const losses = legs.filter(([, p]) => p.result === 'Loss').length;
-    const left = legs.length - wins - losses;
-    const result = week.final.result;
-    const status = result === 'Loss' ? '💀 DEAD' : result === 'Win' ? '💰 HIT' : '🟡 ALIVE';
-    const record = [`${wins} hit`, `${losses} lost`, left ? `${left} to go` : ''].filter(Boolean).join(' · ');
-    const lines = [
-      `🎰 Retirement League Parlay · ${week.year} Wk ${week.week}`,
-      `${status} · ${record}`,
-      `Odds ${fmtOdds(week.final.odds)} · Payout ${fmtMoney(week.final.payout)}`,
-      '',
-    ];
-    legs.forEach(([name, p]) => {
-      const entry = p.result === 'Pending' ? (live || {})[`${week.year}:${week.week}:${name}`] : null;
-      let icon, note;
-      if (p.result === 'Win' || p.result === 'Loss') {
-        icon = p.result === 'Win' ? '✅' : '❌';
-        const raw = (p.detail || '').replace(/\s*\bfinal\b\s*$/i, '').trim();
-        note = raw ? finalChipText(p, raw) : '';
-      } else if (entry) {
-        icon = entry.hit ? '✅' : entry.tone === 'up' ? '🟢' : entry.tone === 'down' ? '🔴' : '⚪';
-        note = `LIVE ${liveText(entry, p)}`;
-      } else {
-        icon = '⏳';
-        note = fmtTime(p.gametime);
-      }
-      lines.push(`${icon} ${name} — ${p.pick} (${fmtOdds(p.odds)})${note ? `\n      ${note}` : ''}`);
+  // ---------- Share: the parlay card as a picture ----------
+  // modern-screenshot draws a DOM node to a PNG (fonts included), loaded
+  // only once the page is up. The picture is redrawn in the background
+  // after every render, so a tap can hand it straight to the share sheet --
+  // iPhone Safari refuses navigator.share once a tap has waited on anything.
+  let shotLib = null;
+  function loadShotLib() {
+    if (!shotLib) shotLib = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/modern-screenshot@4.7.0/dist/index.js';
+      s.onload = () => resolve(window.modernScreenshot);
+      s.onerror = reject;
+      document.head.appendChild(s);
     });
-    players.filter(p => !week.picks[p]).forEach(name => lines.push(`➖ ${name} — No pick yet`));
-    const tail = [
-      week.killed_by.length ? `☠️ Killed by ${week.killed_by.join(' & ')}` : '',
-      week.sacko ? `🚽 Sacko: ${week.sacko}` : '',
-    ].filter(Boolean);
-    if (tail.length) lines.push('', ...tail);
-    lines.push('', 'https://bradbutcher321.github.io/RetirementLeague/parlay-results.html');
-    return lines.join('\n');
+    return shotLib;
+  }
+
+  // The site's two fonts as @font-face rules with the files inlined. The
+  // library can't read Google's stylesheet itself (it's cross-origin), and
+  // without this the picture falls back to system fonts -- wider, so names
+  // truncate and chips wrap. Static one-weight files from Fontsource rather
+  // than Google's variable ones: Safari draws a variable font at its
+  // thinnest weight inside the picture. Latin only, all the league's text.
+  const SHOT_FONTS = [['Inter', 'inter', [400, 500, 600, 700]], ['Big Shoulders Display', 'big-shoulders-display', [600, 700, 800]]];
+  let shotFonts = null;
+  function loadShotFonts() {
+    if (!shotFonts) {
+      const toDataUrl = blob => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob); });
+      shotFonts = Promise.all(SHOT_FONTS.flatMap(([family, slug, weights]) => weights.map(w =>
+        fetch(`https://cdn.jsdelivr.net/npm/@fontsource/${slug}@5/files/${slug}-latin-${w}-normal.woff2`)
+          .then(r => r.blob()).then(toDataUrl)
+          .then(d => `@font-face{font-family:'${family}';font-style:normal;font-weight:${w};src:url(${d}) format('woff2');}`)
+      ))).then(rules => rules.join('\n')).catch(() => '');
+    }
+    return shotFonts;
+  }
+
+  // A copy of the hero + legs card under a "Retirement League" eyebrow,
+  // at the width it has on screen -- a phone's own layout on a phone.
+  async function drawParlayShot(container) {
+    const [lib, fontCss] = await Promise.all([loadShotLib(), loadShotFonts()]);
+    const wrap = document.createElement('div');
+    wrap.className = 'share-shot';
+    wrap.style.width = `${container.offsetWidth + 32}px`;
+    wrap.innerHTML = '<div class="eyebrow">Retirement League</div>';
+    [...container.children].forEach(el => {
+      const c = el.cloneNode(true);
+      c.classList.remove('rise');
+      c.querySelectorAll('.leg.open').forEach(l => l.classList.remove('open'));
+      wrap.appendChild(c);
+    });
+    document.body.appendChild(wrap);
+    try {
+      await document.fonts.ready;
+      return await lib.domToBlob(wrap, {
+        scale: Math.max(2, window.devicePixelRatio || 1), type: 'image/png',
+        font: fontCss ? { cssText: fontCss } : undefined,
+      });
+    } finally {
+      wrap.remove();
+    }
+  }
+
+  function showShotOverlay(blob) {
+    const url = URL.createObjectURL(blob);
+    const o = document.createElement('div');
+    o.className = 'share-overlay';
+    o.innerHTML = `<img src="${url}" alt="Parlay card"><p>Press and hold the picture to save or share it</p><button type="button" class="back-link">Close</button>`;
+    o.addEventListener('click', e => {
+      if (e.target.closest('img')) return;
+      o.remove();
+      URL.revokeObjectURL(url);
+    });
+    document.body.appendChild(o);
   }
 
   // ---------- Stat cards ----------
@@ -927,14 +972,31 @@
         weekSel.innerHTML = inYear.map(w => `<option value="${w.week}">Week ${w.week}</option>`).join('');
         if (preferred !== undefined && inYear.some(w => w.week === preferred)) weekSel.value = preferred;
       }
-      let shownWeek = null;
+      // The latest drawing of the card for the Share button (see
+      // drawParlayShot). Redrawn a moment after every render -- a week
+      // change, a live-score poll -- and dropped the instant the card
+      // changes, so a tap never shares a stale picture.
+      // shotBlob is the same drawing once it's finished, held as a plain
+      // value so the share can happen synchronously inside the tap.
+      let shot = null, shotBlob = null, shotTimer = null;
+      function startShot() {
+        const p = drawParlayShot(container);
+        shot = p;
+        p.then(b => { if (shot === p) shotBlob = b; }, () => { if (shot === p) shot = null; });
+        return p;
+      }
+      function queueShot() {
+        shot = shotBlob = null;
+        clearTimeout(shotTimer);
+        shotTimer = setTimeout(startShot, 800);
+      }
       function showSelected() {
         const w = weeks.find(x => x.year === Number(yearSel.value) && x.week === Number(weekSel.value));
         if (!w) return;
         const isCurrent = w === current;
         backBtn.hidden = isCurrent;
-        shownWeek = w;
         container.innerHTML = renderParlay(w, players, live);
+        queueShot();
       }
       // Keeps the all-toggle's label matching the actual state after a
       // per-row click, instead of waiting for the next full re-render.
@@ -949,21 +1011,33 @@
       // showSelected() rebuilds the legs' markup wholesale on every
       // selection change and every 2-minute live-score poll.
       container.addEventListener('click', e => {
-        // On a phone, the share sheet (straight into Messages); anywhere
-        // else, the clipboard. Cancelling the share sheet does nothing.
+        // On a phone, the picture goes to the share sheet (straight into
+        // Messages); anywhere else, onto the clipboard to paste. If either
+        // is refused, the picture opens on screen to save by hand.
+        // Cancelling the share sheet does nothing.
         const shareBtn = e.target.closest('#leg-share');
         if (shareBtn) {
-          const text = parlayShareText(shownWeek, players, live);
-          const done = () => {
-            shareBtn.textContent = 'Copied!';
-            setTimeout(() => { shareBtn.textContent = 'Share'; }, 1200);
-          };
+          if (!shot) {
+            clearTimeout(shotTimer);
+            startShot();
+          }
+          const pending = shot;
+          const fileOf = blob => new File([blob], `parlay-${yearSel.value}-week-${weekSel.value}.png`, { type: 'image/png' });
           if (navigator.share && matchMedia('(pointer: coarse)').matches) {
-            navigator.share({ text }).catch(() => {});
-          } else if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+            // Already drawn: share inside this same tap. Not yet: draw,
+            // then try -- Safari may refuse that, which lands on the overlay.
+            const share = blob => navigator.share({ files: [fileOf(blob)] })
+              .catch(err => { if (err.name !== 'AbortError') showShotOverlay(blob); });
+            if (shotBlob) share(shotBlob); else pending.then(share).catch(() => {});
+          } else if (navigator.clipboard && window.ClipboardItem) {
+            navigator.clipboard.write([new ClipboardItem({ 'image/png': pending })])
+              .then(() => {
+                shareBtn.textContent = 'Copied!';
+                setTimeout(() => { shareBtn.textContent = 'Share'; }, 1200);
+              })
+              .catch(() => pending.then(showShotOverlay));
           } else {
-            fallbackCopy(text, done);
+            pending.then(showShotOverlay).catch(() => {});
           }
           return;
         }
