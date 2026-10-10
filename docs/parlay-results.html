@@ -177,6 +177,8 @@
     text-align: center;
     flex-shrink: 0;
   }
+  .legs-actions{ display: flex; gap: 8px; }
+  #leg-share{ width: 84px; }
   /* Grey and a size down from the name -- this is supporting text under a
      bold headline, not a second headline. */
   .leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 4px; line-height: 1.35; }
@@ -632,11 +634,58 @@
     const toggleAll = legKeys.length
       ? `<button type="button" class="leg-expand-toggle" id="leg-expand-toggle">${allOpen ? 'Collapse all' : 'Expand all'}</button>`
       : '';
+    const share = legKeys.length
+      ? `<button type="button" class="leg-expand-toggle" id="leg-share">Share</button>`
+      : '';
     return `${hero}
       <div class="glass" style="margin-top:14px">
-        <div class="panel-title">Legs${toggleAll}</div>
+        <div class="panel-title">Legs<span class="legs-actions">${share}${toggleAll}</span></div>
         <div class="panel-body">${rows}</div>
       </div>`;
+  }
+
+  // The week as a text message: status and money up top, then one line per
+  // leg in game-time order, led by an emoji that says where it stands (the
+  // same Win/Loss/Live/kickoff the leg cards show). Plain text with emoji
+  // since that's all a group text renders.
+  function parlayShareText(week, players, live) {
+    const legs = legsSorted(week, players);
+    const wins = legs.filter(([, p]) => p.result === 'Win').length;
+    const losses = legs.filter(([, p]) => p.result === 'Loss').length;
+    const left = legs.length - wins - losses;
+    const result = week.final.result;
+    const status = result === 'Loss' ? '💀 DEAD' : result === 'Win' ? '💰 HIT' : '🟡 ALIVE';
+    const record = [`${wins} hit`, `${losses} lost`, left ? `${left} to go` : ''].filter(Boolean).join(' · ');
+    const lines = [
+      `🎰 Retirement League Parlay · ${week.year} Wk ${week.week}`,
+      `${status} · ${record}`,
+      `Odds ${fmtOdds(week.final.odds)} · Payout ${fmtMoney(week.final.payout)}`,
+      '',
+    ];
+    legs.forEach(([name, p]) => {
+      const entry = p.result === 'Pending' ? (live || {})[`${week.year}:${week.week}:${name}`] : null;
+      let icon, note;
+      if (p.result === 'Win' || p.result === 'Loss') {
+        icon = p.result === 'Win' ? '✅' : '❌';
+        const raw = (p.detail || '').replace(/\s*\bfinal\b\s*$/i, '').trim();
+        note = raw ? finalChipText(p, raw) : '';
+      } else if (entry) {
+        icon = entry.hit ? '✅' : entry.tone === 'up' ? '🟢' : entry.tone === 'down' ? '🔴' : '⚪';
+        note = `LIVE ${liveText(entry, p)}`;
+      } else {
+        icon = '⏳';
+        note = fmtTime(p.gametime);
+      }
+      lines.push(`${icon} ${name} — ${p.pick} (${fmtOdds(p.odds)})${note ? `\n      ${note}` : ''}`);
+    });
+    players.filter(p => !week.picks[p]).forEach(name => lines.push(`➖ ${name} — No pick yet`));
+    const tail = [
+      week.killed_by.length ? `☠️ Killed by ${week.killed_by.join(' & ')}` : '',
+      week.sacko ? `🚽 Sacko: ${week.sacko}` : '',
+    ].filter(Boolean);
+    if (tail.length) lines.push('', ...tail);
+    lines.push('', 'https://bradbutcher321.github.io/RetirementLeague/parlay-results.html');
+    return lines.join('\n');
   }
 
   // ---------- Stat cards ----------
@@ -878,11 +927,13 @@
         weekSel.innerHTML = inYear.map(w => `<option value="${w.week}">Week ${w.week}</option>`).join('');
         if (preferred !== undefined && inYear.some(w => w.week === preferred)) weekSel.value = preferred;
       }
+      let shownWeek = null;
       function showSelected() {
         const w = weeks.find(x => x.year === Number(yearSel.value) && x.week === Number(weekSel.value));
         if (!w) return;
         const isCurrent = w === current;
         backBtn.hidden = isCurrent;
+        shownWeek = w;
         container.innerHTML = renderParlay(w, players, live);
       }
       // Keeps the all-toggle's label matching the actual state after a
@@ -898,6 +949,24 @@
       // showSelected() rebuilds the legs' markup wholesale on every
       // selection change and every 2-minute live-score poll.
       container.addEventListener('click', e => {
+        // On a phone, the share sheet (straight into Messages); anywhere
+        // else, the clipboard. Cancelling the share sheet does nothing.
+        const shareBtn = e.target.closest('#leg-share');
+        if (shareBtn) {
+          const text = parlayShareText(shownWeek, players, live);
+          const done = () => {
+            shareBtn.textContent = 'Copied!';
+            setTimeout(() => { shareBtn.textContent = 'Share'; }, 1200);
+          };
+          if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+            navigator.share({ text }).catch(() => {});
+          } else if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+          } else {
+            fallbackCopy(text, done);
+          }
+          return;
+        }
         const toggleAll = e.target.closest('#leg-expand-toggle');
         if (toggleAll) {
           const rows = [...container.querySelectorAll('.leg:not(.missing)')];
