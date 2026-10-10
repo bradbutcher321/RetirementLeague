@@ -181,11 +181,11 @@
   #leg-share{ width: 84px; }
 
   /* The Share button's picture: a copy of the hero + legs card as it reads
-     on screen, legs collapsed and buttons gone, parked offscreen while it's
+     on screen, every leg expanded and buttons gone, parked offscreen while it's
      drawn to a PNG. Nothing animates in a still. */
   .share-shot{ position: fixed; left: -10000px; top: 0; padding: 16px; background: var(--bg); }
   .share-shot, .share-shot *{ animation: none !important; transition: none !important; }
-  .share-shot .legs-actions, .share-shot .leg-detail, .share-shot .chev{ display: none; }
+  .share-shot .legs-actions, .share-shot .chev{ display: none; }
   .share-shot .eyebrow{ margin-bottom: 12px; }
   /* Fallback when the share sheet can't open: the picture itself, to
      press-and-hold (save / share) or right-click. */
@@ -705,7 +705,7 @@
     [...container.children].forEach(el => {
       const c = el.cloneNode(true);
       c.classList.remove('rise');
-      c.querySelectorAll('.leg.open').forEach(l => l.classList.remove('open'));
+      c.querySelectorAll('.leg:not(.missing)').forEach(l => l.classList.add('open'));
       wrap.appendChild(c);
     });
     document.body.appendChild(wrap);
