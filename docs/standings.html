@@ -148,7 +148,7 @@
   </div>
 
 <script src="nav.js?v=4"></script>
-<script src="page-common.js?v=15"></script>
+<script src="page-common.js?v=16"></script>
 <script src="league-common.js?v=3"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -251,7 +251,7 @@
       const say = mv > 0 ? `Up ${mv}` : mv < 0 ? `Down ${-mv}` : 'No change';
       moveHtml = `<i class="mv${mv > 0 ? ' up' : mv < 0 ? ' down' : ''}" title="${say} since Week ${lastWeek}" aria-label="${say} since Week ${lastWeek}">${txt}</i>`;
     }
-    return `<a class="${cls.join(' ')}" href="franchise.html" data-fr="${esc(r.player)}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline${isMulti ? ' multi' : ''}">${badges.join('')}</span></div>` +
+    return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline${isMulti ? ' multi' : ''}">${badges.join('')}</span></div>` +
       `<div class="meta">${metaHtml}</div></div>` +
       `<div class="stats-col">${sideBadges}<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div></a>`;
   }
@@ -261,6 +261,8 @@
     const year = sel === 'all' ? 'all' : Number(sel);
     const complete = year !== 'all' && D.completeYears.includes(year);
     const rows = build(year, tab);
+    // The defaults (All-Time, Final Standings) leave the URL bare.
+    setUrlParams({ year: year === 'all' ? null : year, tab: tab === 'final' ? null : tab });
     formerCount = rows.filter(r => r.former).length;
     prevRank = year === D.currentYear && !complete ? lastWeekRanks(year) : null;
     // The season in progress gets the playoff race (site audit 29): a
@@ -284,17 +286,16 @@
 
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-t]');
-    if (t) { tab = t.dataset.t; render(); return; }
-    // Rows are plain links; this hands Franchise the manager to open on,
-    // through the same storage key that page saves its own pick to.
-    const fr = e.target.closest('[data-fr]');
-    if (fr) { try { localStorage.setItem('franchise-selected', fr.dataset.fr); } catch (err) {} }
+    if (t) { tab = t.dataset.t; render(); }
   });
 
   LG.load().then(data => {
     D = data;
     $('year-select').innerHTML = '<option value="all">All-Time</option>' + data.years.slice().reverse().map(y => `<option value="${y}">${y}</option>`).join('');
-    $('year-select').value = 'all';
+    // A shared link's ?year=2024&tab=reg, where it names a real year and tab.
+    const y = urlParam('year');
+    $('year-select').value = data.years.includes(Number(y)) ? y : 'all';
+    if (TABS.some(([k]) => k === urlParam('tab'))) tab = urlParam('tab');
     $('year-select').addEventListener('change', render);
     render();
     riseIn(document.querySelectorAll('#standings-container .qrow'));

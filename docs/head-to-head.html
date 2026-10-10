@@ -243,7 +243,7 @@
   </div>
 
 <script src="nav.js?v=4"></script>
-<script src="page-common.js?v=15"></script>
+<script src="page-common.js?v=16"></script>
 <script src="league-common.js?v=3"></script>
 <script>
   let DATA, FR = null, NAMES = [];
@@ -474,6 +474,7 @@
   function render() {
     const a = $('p1').value, b = $('p2').value;
     try { localStorage.setItem('h2h-pair', JSON.stringify([a, b])); } catch (e) {}
+    setUrlParams({ a, b });
     // Named before any swap starts, since the transition snapshots the
     // names already in place. Never the same name twice: a duplicate
     // cancels the whole transition.
@@ -503,7 +504,9 @@
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem('h2h-pair')); } catch (e) {}
     const ok = n => names.includes(n);
-    const pair = saved && ok(saved[0]) && ok(saved[1]) ? saved : ['Joe G', 'Joe K'];
+    // A shared link (?a=Joe+G&b=Joe+K) wins over the saved pair.
+    const fromUrl = [matchName(names, urlParam('a')), matchName(names, urlParam('b'))];
+    const pair = fromUrl[0] && fromUrl[1] ? fromUrl : saved && ok(saved[0]) && ok(saved[1]) ? saved : ['Joe G', 'Joe K'];
     $('p1').value = ok(pair[0]) ? pair[0] : active[0];
     $('p2').value = ok(pair[1]) ? pair[1] : active[1];
     $('p1').addEventListener('change', render);

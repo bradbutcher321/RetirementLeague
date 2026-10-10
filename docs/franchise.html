@@ -383,7 +383,7 @@
   </div>
 
 <script src="nav.js?v=4"></script>
-<script src="page-common.js?v=15"></script>
+<script src="page-common.js?v=16"></script>
 <script src="achievements.js"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, EFFICIENCY_EXPERT_PCT, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
@@ -997,7 +997,7 @@
     const body = `<div class="ledger">${sorted.map(r => {
       const former = !activeNames.has(r.opponent);
       const tone = r.wins > r.losses ? 'win' : r.wins < r.losses ? 'loss' : '';
-      return `<a class="lrow${former ? ' former' : ''}" href="head-to-head.html" data-h2h="${esc(r.opponent)}">
+      return `<a class="lrow${former ? ' former' : ''}" href="${esc(pageLink('head-to-head.html', { a: p.name, b: r.opponent }))}">
         <div class="lmono ${tone}">${esc(monogram(r.opponent))}</div>
         <div style="min-width:0"><div class="lname">${esc(r.opponent)}</div><div class="lsub">${games(r)} games${former ? ' · Former member' : ''}</div></div>
         <div class="lrec"><b>${r.wins}-${r.losses}</b><span>${fmtPct(r.win_pct)}</span></div>
@@ -1094,7 +1094,13 @@
   ];
 
   let data = null, CTX = null;
-  let tab = (() => { try { const t = localStorage.getItem('franchise-tab'); return Math.max(0, TABS.findIndex(x => x.id === t)); } catch (e) { return 0; } })();
+  const tabIndex = id => TABS.findIndex(x => x.id === String(id ?? '').toLowerCase());
+  // The URL's tab (?tab=scoring, from a shared link) wins over the saved one.
+  let tab = (() => {
+    const fromUrl = tabIndex(urlParam('tab'));
+    if (fromUrl >= 0) return fromUrl;
+    try { return Math.max(0, tabIndex(localStorage.getItem('franchise-tab'))); } catch (e) { return 0; }
+  })();
   // morph: a manager change, which on History glides the Career Arc
   // across rather than redrawing it.
   function show(name, morph) {
@@ -1107,21 +1113,16 @@
     document.getElementById('tab-content').innerHTML = TABS[tab].render(p);
     if (before) morphArc(before);
     keepSelectedInView(tabsEl);
+    // Whatever is on screen is both the saved pick and the link to share.
+    try { localStorage.setItem('franchise-selected', p.name); localStorage.setItem('franchise-tab', TABS[tab].id); } catch (e) {}
+    setUrlParams({ m: p.name, tab: TABS[tab].id });
   }
 
   document.addEventListener('click', e => {
     const t = e.target.closest('.tab');
     if (t) {
       tab = Number(t.dataset.i);
-      try { localStorage.setItem('franchise-tab', TABS[tab].id); } catch (err) {}
       show(document.getElementById('franchise-select').value);
-      return;
-    }
-    // Opponent cards are plain links; this just hands Head to Head the pair
-    // it should open on, through the same storage key that page saves to.
-    const opp = e.target.closest('[data-h2h]');
-    if (opp) {
-      try { localStorage.setItem('h2h-pair', JSON.stringify([document.getElementById('franchise-select').value, opp.dataset.h2h])); } catch (err) {}
       return;
     }
     const arcBtn = e.target.closest('[data-arc]');
@@ -1146,13 +1147,13 @@
     document.getElementById('updated-at').textContent = formatUpdated(d.generated_at);
     const sel = document.getElementById('franchise-select');
     sel.innerHTML = d.players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
+    const names = d.players.map(p => p.name);
     const saved = (() => { try { return localStorage.getItem('franchise-selected'); } catch (e) { return null; } })();
-    sel.value = d.players.some(p => p.name === saved) ? saved : d.players[0].name;
+    sel.value = matchName(names, urlParam('m')) || (names.includes(saved) ? saved : names[0]);
     show(sel.value);
     riseIn([...document.getElementById('hero-container').children, ...document.getElementById('tab-content').children]);
     sel.addEventListener('change', () => {
       show(sel.value, true);
-      try { localStorage.setItem('franchise-selected', sel.value); } catch (e) {}
     });
   }).catch(err => {
     console.error(err);

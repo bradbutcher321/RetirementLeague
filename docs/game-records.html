@@ -193,7 +193,7 @@
   </div>
 
 <script src="nav.js?v=4"></script>
-<script src="page-common.js?v=15"></script>
+<script src="page-common.js?v=16"></script>
 <script src="league-common.js?v=3"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -438,7 +438,9 @@
   // never rebuild them -- that would replay the sheet's slide-up on every
   // switch and lose the reader's scroll position.
   function render() {
-    C = categories(document.getElementById('year-select').value);
+    const year = document.getElementById('year-select').value;
+    C = categories(year);
+    setUrlParams({ year: year === 'all' ? null : year });
     document.getElementById('records').innerHTML = `<div class="sections">${LEDGER.map((p, n) =>
       `<section class="glass section" data-section="${n}"><div class="section-title">${p.title}</div>${recHtml(C[p.hi[0]], p.hi[1], n, 'hi')}${recHtml(C[p.lo[0]], p.lo[1], n, 'lo')}</section>`).join('')}</div>`;
     if (open) showList(false);
@@ -541,6 +543,9 @@
     D = data;
     const sel = document.getElementById('year-select');
     sel.innerHTML = '<option value="all">All-Time</option>' + data.years.slice().reverse().map(y => `<option value="${y}">${y}</option>`).join('');
+    // A shared link's ?year=2024, where it names a real year.
+    const y = urlParam('year');
+    if (data.years.includes(Number(y))) sel.value = y;
     sel.addEventListener('change', render);
     render();
     riseIn(document.querySelectorAll('#records .section'));

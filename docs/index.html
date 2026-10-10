@@ -1087,7 +1087,7 @@
   </div>
 
 <script src="nav.js?v=4"></script>
-<script src="page-common.js?v=15"></script>
+<script src="page-common.js?v=16"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -1333,7 +1333,7 @@
       ? (s.a ? `Series tied <b>${s.a}-${s.b}</b>` : 'First meeting')
       : `<b>${esc(s.a > s.b ? a : b)}</b> leads the series <b>${Math.max(s.a, s.b)}-${Math.min(s.a, s.b)}</b>`;
     const last = s.last ? `Last met ${s.last.year === leagueYear ? '' : s.last.year + ' · '}Wk ${s.last.week}` : '';
-    return `<a class="mu-series" href="head-to-head.html" data-h2h="${esc(JSON.stringify([a, b]))}">
+    return `<a class="mu-series" href="${esc(pageLink('head-to-head.html', { a, b }))}">
         <span class="mu-series-lead">${lead}</span>
         <span class="mu-series-last">${last}<svg viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </a>`;
@@ -2972,10 +2972,10 @@
   // informative than picking just one.
   // Opening tag for a standings row: a link to the manager's Franchise page
   // when the Worker knows who they are (its names follow the same rules as
-  // Franchise's), a plain row otherwise. Franchise opens on whoever is in
-  // its 'franchise-selected' key, which the click handler below sets.
+  // Franchise's), a plain row otherwise. The link names the manager
+  // (franchise.html?m=Brad), so it can be opened in a new tab or shared.
   function lbRowTag(manager) {
-    return manager ? `a href="franchise.html" data-fr="${esc(manager)}"` : 'div';
+    return manager ? `a href="${esc(pageLink('franchise.html', { m: manager }))}"` : 'div';
   }
 
   // The line under a team's name: manager, record and playoff race marker
@@ -3206,11 +3206,6 @@
     });
     return vals;
   }
-
-  document.getElementById('leaderboard-container').addEventListener('click', e => {
-    const fr = e.target.closest('[data-fr]');
-    if (fr) { try { localStorage.setItem('franchise-selected', fr.dataset.fr); } catch (err) {} }
-  });
 
   // The pinned toggle (see #season-toggle in the CSS) needs the nav bar's
   // height to sit under it, and marks itself .stuck while pinned.
@@ -3723,12 +3718,8 @@
   // time), so this just needs to flip the class on the clicked element and
   // keep that Set in sync for the next re-render.
   document.getElementById('matchups-container').addEventListener('click', (e) => {
-    // The series line opens Head to Head on this pair instead.
-    const series = e.target.closest('[data-h2h]');
-    if (series) {
-      try { localStorage.setItem('h2h-pair', series.dataset.h2h); } catch (err) {}
-      return;
-    }
+    // The series line is a link to Head to Head on this pair instead.
+    if (e.target.closest('.mu-series')) return;
     const card = e.target.closest('.matchup-card');
     if (!card) return;
     const key = decodeURIComponent(card.dataset.key);

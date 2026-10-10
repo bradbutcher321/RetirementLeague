@@ -86,6 +86,35 @@ function raceMark(r) {
 }
 const PLAYOFF_LINE = '<div class="po-line" role="separator" aria-label="Playoff line">Playoff line</div>';
 
+// ---------- Shareable views (site audit 21) ----------
+// Franchise (?m=Brad&tab=scoring), Head to Head (?a=Joe+G&b=Joe+K),
+// Standings (?year=2024&tab=reg) and Game Records (?year=2024) keep their
+// view in the query string so it can be sent as a link. urlParam reads it on
+// load, ahead of each page's localStorage fallback; setUrlParams writes
+// changes back with replaceState, so picks don't pile up in Back. A null
+// value drops the key; keys it isn't given (?recap, ?accent) stay put.
+function urlParam(key) {
+  return new URLSearchParams(location.search).get(key);
+}
+function setUrlParams(params) {
+  const q = new URLSearchParams(location.search);
+  for (const [k, v] of Object.entries(params)) {
+    if (v == null) q.delete(k); else q.set(k, v);
+  }
+  const s = q.toString();
+  try { history.replaceState(history.state, '', location.pathname + (s ? '?' + s : '') + location.hash); } catch (e) {}
+}
+// A link straight to another page's view: pageLink('franchise.html', { m: 'Brad' }).
+// Goes through esc() like any other text when it lands in an href.
+function pageLink(page, params) {
+  return page + '?' + new URLSearchParams(params);
+}
+// The real name for one typed into a URL by hand, ignoring case (?m=brad).
+function matchName(names, s) {
+  const k = String(s ?? '').trim().toLowerCase();
+  return (k && names.find(n => n.toLowerCase() === k)) || null;
+}
+
 // ---------- Gliding selection (site audit Motion B) ----------
 // Every selector track on the site (theme.css "Selectors") gets this with no
 // page wiring: a capture-phase click listener notes where the selected pill
