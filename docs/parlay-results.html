@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=16">
+<link rel="stylesheet" href="theme.css?v=17">
 <link rel="stylesheet" href="nav.css?v=5">
 <style>
   /* ---------- Week selector ----------
@@ -165,8 +165,7 @@
   .leg-result{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); white-space: nowrap; }
   .leg-result.turf{ color: var(--turf); }
   .leg-result.loss{ color: var(--loss); }
-  .leg-chev{ color: var(--text-dim); font-size: 0.65rem; transition: transform 0.15s; }
-  .leg.open .leg-chev{ transform: rotate(90deg); }
+  .leg-result-group .chev{ color: var(--text-dim); }
   /* Fixed width (measured against "Collapse all", the longer of the two
      labels, at this font) so the pill doesn't resize when the label
      changes -- a width that merely fit "Expand all" would grow on every
@@ -178,7 +177,6 @@
     text-align: center;
     flex-shrink: 0;
   }
-  @media (prefers-reduced-motion: reduce){ .leg-chev{ transition: none; } }
   /* Grey and a size down from the name -- this is supporting text under a
      bold headline, not a second headline. */
   .leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 4px; line-height: 1.35; }
@@ -340,7 +338,7 @@
         <summary>
           <span class="tray-title">Jon's Table</span>
           <span class="tray-summary" id="jt-summary"></span>
-          <span class="tray-chevron" aria-hidden="true"></span>
+          <span class="chev" aria-hidden="true"></span>
         </summary>
         <div class="tray-body">
           <!-- Scope on the left, actions on the right, one row -- the two
@@ -366,11 +364,11 @@
       </details>
     </section>
 
-    <footer id="footer">Full refresh every 10 minutes · Data from the league sheet</footer>
+    <footer id="site-footer" data-source="Data from the league sheet" data-note="Refreshes every 10 minutes"></footer>
   </div>
 
-<script src="nav.js?v=3"></script>
-<script src="page-common.js?v=14"></script>
+<script src="nav.js?v=4"></script>
+<script src="page-common.js?v=15"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -602,7 +600,7 @@
             <div class="leg-result-group">
               ${entry ? livePillHtml(p, entry) : finalChipHtml(p)}
               <span class="leg-result ${resultTone}">${resultLabel}</span>
-              <span class="leg-chev">▶</span>
+              <span class="chev" aria-hidden="true"></span>
             </div>
           </div>
           <div class="leg-bet">${esc(p.pick)}</div>

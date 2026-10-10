@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=16">
+<link rel="stylesheet" href="theme.css?v=17">
 <link rel="stylesheet" href="nav.css?v=5">
 <link rel="stylesheet" href="league.css?v=6">
 <style>
@@ -76,8 +76,8 @@
   /* Wraps rather than truncating: on a phone "· Champ" was cut to "· Cha…". */
   .ctx{ display:block; color:var(--text-dim); font-size:0.72rem; line-height:1.4; }
   .rec-val{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; color:var(--gold); font-variant-numeric:tabular-nums; line-height:1; white-space:nowrap; }
-  .chev{ color:var(--text-dim); font-size:1.1rem; line-height:1; }
-  .rec.open .chev{ color:var(--gold); }
+  .rec .chev, .crow .chev{ color:var(--text-dim); justify-self:center; }
+  .rec.open .chev, .crow.open .chev{ color:var(--gold); }
 
   /* ---------- The top 10 (sheet and popover share it) ---------- */
   .list-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
@@ -97,8 +97,6 @@
   button.crow:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
   .crow.open{ background:var(--lead-tint); border-color:var(--lead-line); }
   .crow.open::before, .crow.open + .lineup + .crow::before{ display:none; }
-  .crow .go{ color:var(--text-dim); font-size:1rem; line-height:1; text-align:center; transition:transform .25s; }
-  .crow.open .go{ transform:rotate(90deg); color:var(--gold); }
   .crow .rk{ font-family:var(--scoreboard); font-weight:700; font-size:1rem; color:var(--text-dim); text-align:center; }
   .crow .nm{ font-weight:600; font-size:0.86rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .crow .mt{ color:var(--text-dim); font-size:0.71rem; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -149,7 +147,7 @@
   .mu-row.bench .mu-pts{ color:var(--text-dim); }
   .lu-div{ display:flex; align-items:center; gap:8px; padding:8px 6px 4px; color:var(--text-dim); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
   .lu-div::before, .lu-div::after{ content:''; flex:1; height:1px; background:var(--line); }
-  @media (prefers-reduced-motion:reduce){ .lineup, .lineup > div, .crow .go{ transition:none; } }
+  @media (prefers-reduced-motion:reduce){ .lineup, .lineup > div{ transition:none; } }
 
   /* The list opens in a bottom sheet on a phone and a popover under the
      whole card on desktop -- the same spot for either of its records, so
@@ -191,11 +189,11 @@
       </div>
     </section>
 
-    <footer>Data via ESPN Fantasy</footer>
+    <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=3"></script>
-<script src="page-common.js?v=14"></script>
+<script src="nav.js?v=4"></script>
+<script src="page-common.js?v=15"></script>
 <script src="league-common.js?v=3"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -333,7 +331,7 @@
     return `<button type="button" class="rec${isOpen ? ' open' : ''}" data-panel="${panel}" data-side="${side}" aria-haspopup="dialog" aria-expanded="${!!isOpen}">` +
       (many ? `<span class="mono many">${lead.length}&times;</span>` : `<span class="mono">${esc(monogram(i.m.a))}</span>`) +
       `<span style="min-width:0"><span class="cap">${kind}</span><span class="holder">${holder}</span><span class="ctx">${ctx}</span></span>` +
-      `<span class="rec-val">${shown(i)}</span><span class="chev" aria-hidden="true">&#8250;</span></button>`;
+      `<span class="rec-val">${shown(i)}</span><span class="chev" aria-hidden="true"></span></button>`;
   }
 
   // The card's own title heads the list, with its two records as the switch
@@ -351,7 +349,7 @@
         const inner = `<div class="rk">${r[k]}</div><div style="min-width:0"><div class="nm">${withScore(c, i)}</div>${c.ties ? '' : `<div class="mt">${[versus(i), i.meta].filter(Boolean).join(' · ')}</div>`}</div><div class="vl">${shown(i)}</div>`;
         if (!hasLineup(i)) return `<div class="${cls}">${inner}${games ? '<div></div>' : ''}</div>`;
         const g = i.g;
-        return `<button type="button" class="${cls}" data-lu="${g.year}|${g.week}|${esc(i.m.a)}|${esc(i.m.b)}|${i.m.as}|${i.m.bs}" aria-expanded="false">${inner}<div class="go" aria-hidden="true">&#8250;</div></button><div class="lineup"><div></div></div>`;
+        return `<button type="button" class="${cls}" data-lu="${g.year}|${g.week}|${esc(i.m.a)}|${esc(i.m.b)}|${i.m.as}|${i.m.bs}" aria-expanded="false">${inner}<span class="chev" aria-hidden="true"></span></button><div class="lineup"><div></div></div>`;
       }).join('')
       : '<div class="empty-note">No games yet for this season.</div>';
     const head = `<div class="list-head"><div class="list-title">${p.title}</div><button type="button" class="x" data-close aria-label="Close">&times;</button></div>

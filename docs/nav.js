@@ -119,9 +119,22 @@
     bar.addEventListener('focusin', () => bar.classList.remove('tucked'));
   }
 
+  // The same one-line footer on every page: where the data comes from, plus
+  // an optional per-page note (data-note), with data-source standing in for
+  // the default where a page doesn't read ESPN at all (Parlay Results).
+  function renderFooter() {
+    const foot = document.getElementById('site-footer');
+    if (!foot) return;
+    const parts = [foot.dataset.source || 'Data via ESPN Fantasy'];
+    if (foot.dataset.note) parts.push(foot.dataset.note);
+    foot.textContent = parts.join(' · ');
+  }
+
+  function render() { renderNav(); renderFooter(); }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', renderNav);
+    document.addEventListener('DOMContentLoaded', render);
   } else {
-    renderNav();
+    render();
   }
 })();

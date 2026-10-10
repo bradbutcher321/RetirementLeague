@@ -740,13 +740,22 @@ body{
   .tray > summary:hover .tray-title{ color: var(--text); }
 }
 .tray-summary{ flex: 1; text-align: right; font-size: 0.78rem; font-weight: 500; }
-.tray-chevron{
-  width: 8px; height: 8px; border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
-  transform: rotate(45deg) translateY(-2px); transition: transform 0.2s ease; align-self: center;
-}
-.tray[open] > summary .tray-chevron{ transform: rotate(-135deg) translateY(-2px); }
+.tray > summary .chev{ color: var(--gold); align-self: center; }
 .tray-body{ margin-top: 16px; }
-@media (prefers-reduced-motion: reduce){ .tray-chevron{ transition: none; } }
+
+/* ---------- Disclosure chevron ----------
+   The one arrow on everything that opens -- matchup cards, parlay legs, Game
+   Records rows, the trays: points down closed, flips up open. A mask rather
+   than a text glyph, so it's the same shape in every font and takes the
+   host's text color. */
+.chev{
+  display: inline-block; flex: none; width: 12px; height: 12px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 5l4 4 4-4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 5l4 4 4-4' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform 0.25s ease;
+}
+.open .chev, .expanded .chev, details[open] > summary .chev{ transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce){ .chev{ transition: none; } }
 
 /* ---------- Quiet tile strip ---------- */
 .qtiles{ display:flex; gap:30px; flex-wrap:wrap; padding:24px 30px; }

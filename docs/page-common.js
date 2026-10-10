@@ -14,7 +14,7 @@ function esc(s) {
 function formatUpdated(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '—';
-  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   if (d.toDateString() === new Date().toDateString()) return time;
   return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
 }
