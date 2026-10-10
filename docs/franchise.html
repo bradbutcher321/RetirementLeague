@@ -301,7 +301,9 @@
   .lrow{ display:grid; grid-template-columns:36px minmax(0,1fr) auto; gap:12px; align-items:center; padding:9px 6px; border-top:1px solid var(--line); color:inherit; text-decoration:none; transition:background 0.12s; }
   .lrow:first-child{ border-top:none; }
   @media (min-width:721px){ .lrow:nth-child(2){ border-top:none; } }
-  .lrow:hover{ background:var(--item-hover); }
+  @media (hover: hover){
+    .lrow:hover{ background:var(--item-hover); }
+  }
   .lrow:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
   .lmono{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:0.95rem; letter-spacing:0.02em; border:1px solid var(--line); background:var(--item); color:var(--text-dim); }
   .lmono.win{ color:var(--turf); border-color:var(--win-line); background:var(--win-tint); }

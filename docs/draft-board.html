@@ -55,7 +55,9 @@
     border: 1px solid var(--ctl-line); background: var(--ctl-bg); font-size: 0.74rem; font-weight: 600;
     transition: background-color .2s, border-color .2s, color .2s;
   }
-  .legend-chip:hover > span{ color: var(--text); }
+  @media (hover: hover){
+    .legend-chip:hover > span{ color: var(--text); }
+  }
   .legend-chip.on > span{ color: var(--text); border-color: var(--c); background: color-mix(in srgb, var(--c) 20%, transparent); }
   .legend-chip:focus-visible{ outline: none; }
   .legend-chip:focus-visible > span{ outline: 2px solid var(--gold); outline-offset: 2px; }
@@ -99,7 +101,9 @@
       border: 1px solid var(--ctl-line); background: var(--ctl-bg-solid); color: var(--text-dim);
       cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
-    .sb-step:hover:not(:disabled){ color: var(--text); }
+    @media (hover: hover){
+      .sb-step:hover:not(:disabled){ color: var(--text); }
+    }
     .sb-step:disabled{ opacity: 0.35; cursor: default; }
     .sb-step:focus-visible, .sb-dot:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
     .sb-step svg{ width: 16px; height: 16px; }
@@ -162,7 +166,9 @@
   /* The header is a button that picks out the manager's column. */
   table.board thead th.mgr{ padding: 0; }
   .mgr-btn{ display: block; width: 100%; padding: 8px 4px; border: none; border-radius: 4px; background: none; color: inherit; font: inherit; cursor: pointer; }
-  .mgr-btn:hover .slot-manager{ text-decoration: underline; text-underline-offset: 2px; }
+  @media (hover: hover){
+    .mgr-btn:hover .slot-manager{ text-decoration: underline; text-underline-offset: 2px; }
+  }
   .mgr-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
   table.board thead th.on{ box-shadow: inset 0 0 0 1px var(--gold); }
   table.board thead th .slot-manager{ display: block; color: var(--gold); font-size: 0.74rem; margin-bottom: 2px; }

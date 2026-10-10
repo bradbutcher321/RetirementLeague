@@ -59,11 +59,15 @@
     border-radius: 999px;
     cursor: pointer;
   }
-  .back-link:hover, .leg-expand-toggle:hover{ background: rgba(212,180,106,0.1); }
+  @media (hover: hover){
+    .back-link:hover, .leg-expand-toggle:hover{ background: rgba(212,180,106,0.1); }
+  }
   .back-link:focus-visible, .leg-expand-toggle:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .back-link{ font-size: 0.8rem; padding: 8px 14px; }
   .back-link:disabled{ opacity: 0.5; cursor: default; }
-  .back-link:disabled:hover{ background: none; }
+  @media (hover: hover){
+    .back-link:disabled:hover{ background: none; }
+  }
   .back-link[hidden]{ display: none; }
 
   /* Only Jon's Table still uses scope chips (Stats switched to a Year
@@ -270,7 +274,9 @@
   .jt-table th, .jt-table td{ padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .jt-table th{ color: var(--text-dim); font-weight: 700; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--surface-raised); }
   .jt-table th:first-child, .jt-table td:first-child{ text-align: left; font-weight: 600; }
-  .jt-table tbody tr:hover{ background: var(--surface-raised); }
+  @media (hover: hover){
+    .jt-table tbody tr:hover{ background: var(--surface-raised); }
+  }
   .jt-table tbody tr:last-child td{ border-bottom: none; }
 </style>
 </head>

@@ -63,7 +63,9 @@
   #p1{ border-color:var(--a-line); }
   #p2{ border-color:var(--b-line); }
   .swap{ width:var(--track-h); height:var(--track-h); border-radius:50%; border:1px solid var(--ctl-line); background:var(--ctl-bg-solid); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .swap:hover{ color:var(--text); }
+  @media (hover: hover){
+    .swap:hover{ color:var(--text); }
+  }
   .swap:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   .swap svg{ width:16px; height:16px; }
   @media (min-width:721px){ .picker{ grid-template-columns:240px auto 240px; justify-content:start; } }

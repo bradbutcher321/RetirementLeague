@@ -411,14 +411,22 @@ body{
   .tabs .tab, .tab-row .year-tab, .seg button, .sup-seg button, .scope-row .scope-btn, .board-toggle button{ transition: none; }
 }
 
-.tabs .tab:hover:not(.on),
-.tab-row .year-tab:hover:not(.active),
-.seg button:hover:not(.on),
-.sup-seg button:hover:not(.on),
-.scope-row .scope-btn:hover:not(.on),
-.board-toggle button:hover:not(.on){
-  color: var(--text);
-  background: rgba(255,255,255,0.05);
+/* Hover styles sit behind (hover: hover), here and in every page's styles.
+   iOS applies :hover on a tap and keeps it until the next tap elsewhere, so
+   an unguarded fill stuck on whatever was last tapped (a Median Watch card
+   after its sheet closed, a tab after switching). Phones get no hover state.
+   The exceptions are Franchise's logo previews, where the tap is how a phone
+   opens them, and the scrollbar thumb, which phones never draw. */
+@media (hover: hover){
+  .tabs .tab:hover:not(.on),
+  .tab-row .year-tab:hover:not(.active),
+  .seg button:hover:not(.on),
+  .sup-seg button:hover:not(.on),
+  .scope-row .scope-btn:hover:not(.on),
+  .board-toggle button:hover:not(.on){
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+  }
 }
 
 .tabs .tab.on,
@@ -458,8 +466,10 @@ body{
   box-shadow: inset 0 0 0 1px var(--gold);
   color: var(--gold);
 }
-.scope-row .scope-btn.on:hover,
-.tabs.outer .tab.on:hover{ background: rgba(212,180,106,0.2); }
+@media (hover: hover){
+  .scope-row .scope-btn.on:hover,
+  .tabs.outer .tab.on:hover{ background: rgba(212,180,106,0.2); }
+}
 
 /* Gliding selection ("Gliding selection" in page-common.js). On a tap the
    selected pill slides from the old choice to the new one instead of
@@ -612,15 +622,17 @@ body{
     background: none;
     color: var(--gold);
   }
-  .lg-select option:hover, .parlay-select option:hover,
-  .franchise-select option:hover, .board-select option:hover{
-    background: rgba(255,255,255,0.08);
-    color: var(--text);
-  }
-  .lg-select option:checked:hover, .parlay-select option:checked:hover,
-  .franchise-select option:checked:hover, .board-select option:checked:hover{
-    background: rgba(255,255,255,0.08);
-    color: var(--gold);
+  @media (hover: hover){
+    .lg-select option:hover, .parlay-select option:hover,
+    .franchise-select option:hover, .board-select option:hover{
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+    .lg-select option:checked:hover, .parlay-select option:checked:hover,
+    .franchise-select option:checked:hover, .board-select option:checked:hover{
+      background: rgba(255,255,255,0.08);
+      color: var(--gold);
+    }
   }
   /* The UA's tick in the selected row -- the gold text already says it. */
   .lg-select option::checkmark, .parlay-select option::checkmark,
@@ -644,7 +656,9 @@ body{
 
 /* ---------- Quiet row list (everything that isn't this section's hero) ---------- */
 .qrow{ display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:14px; padding:12px 18px; margin-top:6px; border-radius:10px; background:var(--item); border:1px solid var(--item-line); }
-.qrow:hover{ background:var(--item-hover); }
+@media (hover: hover){
+  .qrow:hover{ background:var(--item-hover); }
+}
 .qrow .rk{ color:var(--text-dim); font-family:var(--scoreboard); font-size:0.95rem; text-align:center; }
 .qrow .nm{ font-weight:600; font-size:0.9rem; }
 /* 1px was measured against plain text only -- a champ/sacko badge pill is
@@ -722,7 +736,9 @@ body{
   padding-bottom: 10px; border-bottom: 1px solid var(--line); color: var(--text-dim); font-size: 1rem; font-weight: 600;
 }
 .tray > summary::-webkit-details-marker{ display: none; }
-.tray > summary:hover .tray-title{ color: var(--text); }
+@media (hover: hover){
+  .tray > summary:hover .tray-title{ color: var(--text); }
+}
 .tray-summary{ flex: 1; text-align: right; font-size: 0.78rem; font-weight: 500; }
 .tray-chevron{
   width: 8px; height: 8px; border-right: 2px solid var(--gold); border-bottom: 2px solid var(--gold);
@@ -904,7 +920,9 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
 .pop::before{ content:''; position:absolute; top:-7px; left:var(--arrow-x, 50%); width:12px; height:12px; margin-left:-6px; background:#151515; border-left:1px solid var(--lead-line); border-top:1px solid var(--lead-line); transform:rotate(45deg); }
 /* Scoped to the panels: franchise.html's chart labels also use class "x". */
 .pop .x, .sheet .x{ background:rgba(255,255,255,0.06); border:none; color:var(--text-dim); border-radius:999px; width:30px; height:30px; font:inherit; font-size:1rem; line-height:1; cursor:pointer; flex:none; }
-.pop .x:hover, .sheet .x:hover{ color:var(--text); }
+@media (hover: hover){
+  .pop .x:hover, .sheet .x:hover{ color:var(--text); }
+}
 .pop .x:focus-visible, .sheet .x:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 
 @media (max-width: 480px){
@@ -943,7 +961,9 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
 .a2hs .x{ position:relative; background:rgba(255,255,255,0.06); border:none; color:var(--text-dim); border-radius:999px; width:30px; height:30px;
           font:inherit; font-size:1rem; line-height:1; cursor:pointer; flex:none; }
 .a2hs .x::after{ content:''; position:absolute; inset:-7px; }
-.a2hs .x:hover{ color:var(--text); }
+@media (hover: hover){
+  .a2hs .x:hover{ color:var(--text); }
+}
 .a2hs .x:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 @keyframes a2hs-in{ from{ opacity:0; transform:translateY(18px); } }
 @keyframes a2hs-ping{ 0%{ box-shadow:0 0 0 0 rgba(212,180,106,0.7); } 100%{ box-shadow:0 0 0 12px rgba(212,180,106,0); } }

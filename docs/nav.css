@@ -113,7 +113,9 @@
   font-size: 0.95rem;
   border-left: 3px solid transparent;
 }
-.nav-link:hover{ background: rgba(255,255,255,0.04); }
+@media (hover: hover){
+  .nav-link:hover{ background: rgba(255,255,255,0.04); }
+}
 .nav-link.active{
   color: var(--gold);
   border-left-color: var(--gold);
@@ -140,6 +142,8 @@
     font-size: 0.86rem;
     white-space: nowrap;
   }
-  .nav-links a:hover{ color: var(--text); background: rgba(255,255,255,0.04); }
+  @media (hover: hover){
+    .nav-links a:hover{ color: var(--text); background: rgba(255,255,255,0.04); }
+  }
   .nav-links a.active{ color: var(--gold); background: rgba(212,180,106,0.1); font-weight: 700; }
 }

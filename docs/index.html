@@ -243,7 +243,9 @@
     color: var(--text-dim); font-size: 0.74rem; text-decoration: none; font-variant-numeric: tabular-nums;
     transition: background-color .15s;
   }
-  .mu-series:hover{ background: var(--item-hover); }
+  @media (hover: hover){
+    .mu-series:hover{ background: var(--item-hover); }
+  }
   .mu-series:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
   .mu-series b{ color: var(--text); font-weight: 600; }
   .mu-series-lead{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -295,7 +297,9 @@
   .lb-row.playoff .lb-rank{ color: var(--gold); }
   /* A row whose manager is known opens their Franchise page. */
   a.lb-row{ color: inherit; text-decoration: none; }
-  a.lb-row:hover{ background: var(--item-hover); }
+  @media (hover: hover){
+    a.lb-row:hover{ background: var(--item-hover); }
+  }
   a.lb-row:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
   .lb-identity{ flex: 1; min-width: 0; }
   .lb-name{
@@ -591,7 +595,9 @@
      phone, the shared popover under the card on desktop (theme.css "Detail
      panels", the same pair Game Records uses). Neither moves a card. */
   .mb-card.can{ cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
-  .mb-card.can:hover{ background: var(--item-hover); }
+  @media (hover: hover){
+    .mb-card.can:hover{ background: var(--item-hover); }
+  }
   .mb-card.can:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .mb-card.sel{ border-color: var(--lead-line); background: var(--lead-tint); }
   #mw-pop{ padding: 12px 14px 14px; }
@@ -727,7 +733,9 @@
     display: flex;
     flex-direction: column;
   }
-  .parlay-highlight:hover{ border-color: rgba(255,255,255,0.18); }
+  @media (hover: hover){
+    .parlay-highlight:hover{ border-color: rgba(255,255,255,0.18); }
+  }
   .ph-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
   .ph-title{ font-weight: 700; font-size: 0.92rem; }
 
