@@ -42,7 +42,7 @@
 <style>
   /* ---------- Head to Head ----------
      Built phone-first around one idea: two sides, each with its own colour
-     for the whole page -- gold for the left manager, silver for the right.
+     for the whole page -- gold for the left manager, Canaveral blue (UCF Space Game) for the right.
      Whoever won a game, a season or a stat is shown in their colour (and
      their monogram), never by spelling out a shortened name, and a stat that
      is just the mirror image of the other side (+158 / -158) is stated once,
@@ -50,10 +50,10 @@
      comparison one side's good is the other's bad, so they'd say nothing. */
   :root{
     --a: var(--gold); --a-line: rgba(212,180,106,0.45); --a-tint: rgba(212,180,106,0.08);
-    --b: #BCC0C6;     --b-line: rgba(188,192,198,0.45); --b-tint: rgba(188,192,198,0.08);
+    --b: #7AAEDB;     --b-line: rgba(122,174,219,0.45); --b-tint: rgba(122,174,219,0.08);
   }
   .chip{ font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--text-dim); white-space:nowrap; }
-  /* Losing figures sit well below silver so the two never blur together. */
+  /* Losing figures sit well below the blue so the two never blur together. */
   :root{ --lose: #626262; }
   .ca{ color:var(--a); } .cb{ color:var(--b); } .cd{ color:var(--text-dim); }
 
@@ -168,7 +168,7 @@
      careers, so both numbers carry information. */
   /* One column at every width: split in two, the second column's left
      values sat right next to the first column's right ones and the
-     left = gold / right = silver reading fell apart. On desktop it's held to
+     left = gold / right = blue reading fell apart. On desktop it's held to
      a readable width instead. */
   .tape, .tape-head{ max-width:600px; margin-left:auto; margin-right:auto; }
   .tr{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:10px; padding:8px 4px; border-top:1px solid var(--line); }
