@@ -524,7 +524,8 @@
   // is riding on right now -- the score, a total's combined points, a
   // prop's stat. A spread adds the game's margin written the way a spread
   // is, so it reads straight against the bet's own line: Bears up 13-3 are
-  // playing like a -10 next to their -3. Not 1st Half Spread -- the live
+  // playing like a -10 next to their -3, and a tie reads "±0" rather than
+  // "PK", which looked like it described the bet. Not 1st Half Spread -- the live
   // score is the full game's, which stops being the half's after halftime.
   const LIVE_SPREAD_BET_TYPES = new Set(['Spread', 'Alt Spread']);
   function livePillHtml(p, entry) {
@@ -534,7 +535,7 @@
     } else {
       const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
       text = isTotalBet(p) ? String(a + b) : `${a}-${b}`;
-      if (LIVE_SPREAD_BET_TYPES.has(betTypeOf(p))) text += ` · ${a === b ? 'PK' : `${a > b ? '-' : '+'}${Math.abs(a - b)}`}`;
+      if (LIVE_SPREAD_BET_TYPES.has(betTypeOf(p))) text += ` · ${a === b ? '±0' : `${a > b ? '-' : '+'}${Math.abs(a - b)}`}`;
     }
     return `<span class="fin">${esc(text)}</span>`;
   }
