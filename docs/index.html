@@ -318,10 +318,6 @@
   .lb-parts{ display: flex; flex-wrap: wrap; margin-left: -1em; }
   .lb-parts > span{ white-space: nowrap; }
   .lb-parts > span::before{ content: '•'; display: inline-block; width: 1em; text-align: center; color: var(--text-dim); font-weight: 400; }
-  /* The all-play record always starts its own line: at phone width it only
-     fit beside a short record now and then, which left rows of different
-     heights. Its bullet falls in the hidden 1em like any line-starting part. */
-  .lb-parts > .lb-ap{ flex-basis: 100%; }
   .lb-stat{ text-align: center; flex-shrink: 0; width: 48px; }
   .lb-stat .v{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
   /* One header over the list names the columns, instead of a caption
@@ -2502,7 +2498,7 @@
   // ---------- Game history (data/league.json) ----------
   // Every finished game since 2015, by manager name -- the names the Worker
   // reports as each team's manager. Read by the matchup cards' series line,
-  // Week in Review, the standings' all-play record and the points race.
+  // Week in Review and the points race.
   // The first dashboard render waits for it (it's a small static file that
   // usually lands before the live Worker fetch), so those parts appear with
   // the page instead of popping in one poll later. Without it, they're left out.
@@ -2536,23 +2532,6 @@
     return { a: games.filter(g => g.winner === a).length, b: games.filter(g => g.winner === b).length, last };
   }
 
-  // All-play: every team's score against every other team's that week.
-  // `weeks` is a list of Maps (manager -> score); returns manager -> {w,l,t}.
-  function allPlayRecords(weeks) {
-    const out = new Map();
-    weeks.forEach(scores => {
-      const list = [...scores];
-      list.forEach(([name, s]) => {
-        const r = out.get(name) || { w: 0, l: 0, t: 0 };
-        list.forEach(([other, o]) => {
-          if (other === name) return;
-          if (s > o) r.w++; else if (s < o) r.l++; else r.t++;
-        });
-        out.set(name, r);
-      });
-    });
-    return out;
-  }
   function weekScores(week) {
     const m = new Map();
     weekGames(week).forEach(g => { m.set(g.p1, g.s1); m.set(g.p2, g.s2); });
@@ -3485,35 +3464,18 @@
     return manager ? `a href="${esc(pageLink('franchise.html', { m: manager }))}"` : 'div';
   }
 
-  // The line under a team's name: manager, record and playoff race marker
-  // (raceMark in page-common.js), each part kept whole -- see .lb-parts.
-  // `ap` is the all-play record (site audit 31): what the record would be
-  // if every team played every other team every week.
+  // The lines under a team's name: manager and record, then the schedule
+  // left and playoff race marker (sosMark, raceMark in page-common.js) on a
+  // line of their own, each part kept whole -- see .lb-parts.
   // `sos` is the schedule left (scheduleLeft in page-common.js, site audit
   // II #31) and `hard` whether it's among the league's toughest.
-  function lbMeta(manager, record, race, ap, sos, hard) {
-    const apText = ap ? `<span class="lb-ap" title="Record if everyone played everyone every week">${formatRecordParts(ap.w, ap.l, ap.t)} all-play</span>` : '';
-    const parts = [manager ? `<span>${manager}</span>` : '', `<span>${record}</span>`, raceMark(race), sosMark(sos, hard), apText];
-    return `<div class="lb-meta"><span class="lb-parts">${parts.join('')}</span></div>`;
+  function lbMeta(manager, record, race, sos, hard) {
+    const line = parts => `<span class="lb-parts">${parts.join('')}</span>`;
+    const second = sosMark(sos, hard) + raceMark(race);
+    return `<div class="lb-meta">${line([manager ? `<span>${manager}</span>` : '', `<span>${record}</span>`])}${second ? line([second]) : ''}</div>`;
   }
 
-  // All-play records for the Season So Far mode: completed weeks from
-  // league.json, plus this week's live or projected scores in those modes.
-  // Null when league.json is missing a week (see historyThrough).
-  function seasonAllPlay(data, mode) {
-    const week = data.week || 1;
-    if (week < 2 || !historyThrough(week)) return null;
-    const weeks = [];
-    for (let w = 1; w < week; w++) weeks.push(weekScores(w));
-    if (mode !== 'through') {
-      const cur = new Map((data.teams || []).filter(t => t.manager).map(t => [t.manager,
-        mode === 'proj' ? Math.max(t.projected || 0, t.current || 0) : (t.current || 0)]));
-      weeks.push(cur);
-    }
-    return allPlayRecords(weeks);
-  }
-
-  function renderLeaderboardRow(t, rank, playoffTeamCount, race, ap, sos, hard) {
+  function renderLeaderboardRow(t, rank, playoffTeamCount, race, sos, hard) {
     const hasPlayoffPct = typeof t.playoffPct === 'number';
     const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : 'low') : '';
     const inPlayoffPosition = playoffTeamCount > 0 && rank <= playoffTeamCount;
@@ -3522,7 +3484,7 @@
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${t.name}</div>
-          ${lbMeta(t.manager, t.record, race, ap, sos, hard)}
+          ${lbMeta(t.manager, t.record, race, sos, hard)}
         </div>
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsFor)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsAgainst)}</div></div>
@@ -3646,9 +3608,6 @@
 
     const m = activeSeasonMode();
 
-    const ap = seasonAllPlay(data, m);
-    const apOf = manager => (ap && manager && ap.get(manager)) || null;
-
     // Schedule left: every opponent from this week on in Through mode; once
     // this week counts (live, projected), from next week.
     const aheadOf = new Map(teams.map(t => [t.manager, t.ahead || []]));
@@ -3661,7 +3620,7 @@
       const race = playoffRace(teams.map(t => t.prior), spots, totalGames);
       const priorOf = new Map(teams.map(t => [t.manager, t.prior]));
       const sc = schedules(teams, n => priorOf.get(n), 0);
-      container.innerHTML = renderLeaderboardHead('Odds') + withPlayoffLine(teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, spots, race && race[idx], apOf(t.manager), sc.sos[idx], sc.hard[idx])), spots);
+      container.innerHTML = renderLeaderboardHead('Odds') + withPlayoffLine(teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, spots, race && race[idx], sc.sos[idx], sc.hard[idx])), spots);
       return;
     }
 
@@ -3684,7 +3643,7 @@
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${r.name}</div>
-          ${lbMeta(r.manager, formatRecordParts(r.w, r.l, r.ties), race && race[i], apOf(r.manager), sc.sos[i], sc.hard[i])}
+          ${lbMeta(r.manager, formatRecordParts(r.w, r.l, r.ties), race && race[i], sc.sos[i], sc.hard[i])}
         </div>
         <div class="lb-stat"><div class="v">${fmtScore(r.pf)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(r.pa)}</div></div>
