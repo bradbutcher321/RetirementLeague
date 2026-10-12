@@ -3353,6 +3353,8 @@
   function handleMedianToggle(mode) {
     if (mode === medianViewMode || !lastMedianTeams) return;
     if (document.startViewTransition && !mwReduceMotion) {
+      // Jumps in Safari, like Season So Far's (see its click handler).
+      document.getElementById('median-toggle-seg')?.toggleAttribute('data-glide-jump', SAFARI);
       const vt = document.startViewTransition(() => applyMedianUpdate(mode));
       vt.finished.then(settleMedianToMergedPills).catch(() => {});
     } else {
@@ -3702,12 +3704,12 @@
     };
     if (!document.startViewTransition || mwReduceMotion) { apply(); return; }
     const was = seasonRowValues();
-    // Pinned, in Safari, the gold jumps to the new choice instead of
-    // sliding (data-glide-jump, see page-common.js): every way of sliding it
-    // over the cards gliding underneath dropped the pill, or the whole
-    // toggle, on an iPhone. Everywhere else it slides as usual.
-    const pinnedTrack = document.querySelector('#season-toggle .sup-seg');
-    if (pinnedTrack) pinnedTrack.toggleAttribute('data-glide-jump', SAFARI && document.getElementById('season-toggle').classList.contains('stuck'));
+    // In Safari the gold jumps to the new choice instead of sliding
+    // (data-glide-jump, see page-common.js): every way of sliding it during
+    // this transition, pinned or not, dropped the pill or the whole toggle
+    // on an iPhone. Same for Median Watch's toggle. Elsewhere it slides.
+    const seasonTrack = document.querySelector('#season-toggle .sup-seg');
+    if (seasonTrack) seasonTrack.toggleAttribute('data-glide-jump', SAFARI);
     nameSeasonRows(true);
     const vt = document.startViewTransition(() => {
       apply();
