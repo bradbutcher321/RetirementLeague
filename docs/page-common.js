@@ -253,13 +253,19 @@ const glideTap = { track: null, at: 0 };
 
   function glide(track, from, to) {
     track.querySelector(':scope > .glide-pill')?.remove();
+    // The new choice's own fade to gold has only just started, so read its
+    // selected look with that fade cut short. Read mid-fade, the pill came
+    // out nearly clear and glided as a grey gap.
+    to.style.transition = 'none';
     const cs = getComputedStyle(to);
+    const look = { background: cs.backgroundColor, boxShadow: cs.boxShadow, borderRadius: cs.borderRadius };
+    to.style.transition = '';
     const pill = document.createElement('span');
     pill.className = 'glide-pill';
     pill.setAttribute('aria-hidden', 'true');
-    pill.style.background = cs.backgroundColor;
-    pill.style.boxShadow = cs.boxShadow;
-    pill.style.borderRadius = cs.borderRadius;
+    pill.style.background = look.background;
+    pill.style.boxShadow = look.boxShadow;
+    pill.style.borderRadius = look.borderRadius;
     pill.style.transition = 'none';
     place(pill, from);
     // Appended last so pages that map track.children by index still line
