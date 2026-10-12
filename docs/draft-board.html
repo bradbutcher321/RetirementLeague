@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=23">
+<link rel="stylesheet" href="theme.css?v=24">
 <link rel="stylesheet" href="nav.css?v=6">
 <style>
   .wrap.wide{ max-width: 1180px; }
@@ -70,6 +70,12 @@
   table.board thead th.dim{ opacity: 0.4; }
 
   /* .board-toggle styling lives in theme.css with the other selectors. */
+  /* A third view (Value) made View + Year too wide for one row on a phone;
+     as on Standings, the captions go there (kept for screen readers) -- the
+     buttons and "2022" say what they are. */
+  @media (max-width:600px){
+    .selector-row .selector-label{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  }
 
   /* ---------- Simple "by team" view: one column per manager, picks listed
      top to bottom, instead of the snake-order grid ---------- */
@@ -215,6 +221,43 @@
     .pick-cell{ width: 78px; height: 60px; }
     table.board thead th{ width: 78px; }
   }
+
+  /* ---------- Draft value (site audit II #33) ----------
+     Each pick's regular-season points as a starter for the team that drafted
+     him (data/draft-value.json), bottom left of its cell -- the cells grow a
+     line for it -- and as a column in By Team. */
+  table.board.has-pts .pick-cell{ height: 76px; }
+  @media (max-width: 480px){ table.board.has-pts .pick-cell{ height: 72px; } }
+  .pick-pts{ position: absolute; bottom: 3px; left: 6px; font-size: 0.62rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); opacity: 0.8; line-height: 1; }
+  .simple-board.has-pts .sb-pick{ grid-template-columns: 46px 30px 1fr 34px 44px; }
+  .sb-pts{ text-align: right; font-size: 0.78rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* The Value view: the draft's best value and biggest bust, then every
+     manager's draft graded against that year's field. */
+  .dv-note{ color: var(--text-dim); font-size: 0.74rem; padding: 4px 22px 0; }
+  .dv-pair{ margin-bottom: 14px; }
+  .dv-item{ padding: 14px 16px; }
+  .dv-top{ display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .dv-name{ font-weight: 700; font-size: 1rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dv-meta{ color: var(--text-dim); font-size: 0.74rem; margin-top: 6px; }
+  .dv-v{ display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .dv-v b{ font-family: var(--scoreboard); font-size: 1.5rem; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .dv-v span{ color: var(--text-dim); font-size: 0.74rem; }
+  .dv-v .win{ color: var(--turf); font-weight: 600; }
+  .dv-v .loss{ color: var(--loss); font-weight: 600; }
+  .chip{ font-size: 0.7rem; font-weight: 600; color: var(--text-dim); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+  /* The grade takes the rank column: a letter in a rounded square, coloured
+     only where it means something (A/B good, D/F bad), the letter always
+     saying it too. */
+  .dv-list .qrow{ grid-template-columns: 34px minmax(0,1fr) auto; }
+  a.qrow{ color: inherit; text-decoration: none; }
+  a.qrow:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  .grade{ width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-family: var(--scoreboard); font-weight: 800; font-size: 1.15rem; border: 1px solid var(--item-line); background: var(--item); color: var(--text); }
+  .grade.g-A, .grade.g-B{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
+  .grade.g-D, .grade.g-F{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
+  .dv-list .meta{ line-height: 1.5; }
+  .dv-list .meta .win{ color: var(--turf); } .dv-list .meta .loss{ color: var(--loss); }
 </style>
 </head>
 <body>
@@ -246,6 +289,7 @@
           <div class="board-toggle" id="view-toggle" data-glide-panel="board-container">
             <button type="button" class="on" data-view="grid">Grid</button>
             <button type="button" data-view="simple">By Team</button>
+            <button type="button" data-view="value">Value</button>
           </div>
         </div>
         <div class="selector-group">
@@ -261,7 +305,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=22"></script>
+<script src="page-common.js?v=23"></script>
 <script>
   const POSITION_COLORS = {
     QB: '#E0644F', RB: '#4C9A6B', WR: '#4A90D9', TE: '#D9852F', K: '#9B6BC4', 'D/ST': '#8A8A85',
@@ -324,12 +368,26 @@
     return [parts[0], parts.slice(1).join(' ')];
   }
 
-  function renderCell(pick, round, teamCount, arrow, manager) {
+  // ---------- Draft value (site audit II #33) ----------
+  // data/draft-value.json, by year: picks {round: {slot: [pts, starts, pts
+  // minus the round's average]}}, each manager's total and grade, and the
+  // draft's best value and biggest bust. Null for a year before 2017 (no
+  // lineups) or when the file didn't load.
+  let VALUE = {};
+  const yearValue = year => VALUE[year] || null;
+  const pickValue = (v, round, slot) => (v && v.picks[round] && v.picks[round][slot]) || null;
+  const f1 = n => Number(n).toFixed(1), f2 = n => Number(n).toFixed(2);
+  const signed = n => `${n > 0 ? '+' : n < 0 ? '−' : ''}${f2(Math.abs(n))}`;
+  const starts = n => `${n} start${n === 1 ? '' : 's'}`;
+  const valueTitle = pv => `${f2(pv[0])} pts in ${starts(pv[1])} for the team that drafted him · ${signed(pv[2])} vs the round's average`;
+
+  function renderCell(pick, round, teamCount, arrow, manager, pv) {
     if (!pick || !pick.player_name) {
       return `<td class="pick-cell pos-none" data-mgr="${esc(manager)}" data-pos=""><div class="pick-empty">—</div></td>`;
     }
     const pickInRound = pick.overall - (round - 1) * teamCount;
     const [first, last] = splitName(pick.player_name);
+    const pts = pv ? `<div class="pick-pts" title="${esc(valueTitle(pv))}">${f1(pv[0])}</div>` : '';
     return `
       <td class="pick-cell ${posClass(pick.position)}" data-mgr="${esc(manager)}" data-pos="${esc(pick.position || '')}">
         ${pick.keeper ? '<div class="pick-keeper" title="Keeper"></div>' : ''}
@@ -341,11 +399,11 @@
           <span class="pick-overall">${round}.${pickInRound}</span>
         </div>
         <div class="pick-player"><span>${esc(first)}</span>${last ? `<span>${esc(last)}</span>` : ''}</div>
-        ${arrow ? `<div class="pick-arrow">${arrow}</div>` : ''}
+        ${pts}${arrow ? `<div class="pick-arrow">${arrow}</div>` : ''}
       </td>`;
   }
 
-  function renderBoard(board) {
+  function renderBoard(board, v) {
     const teamCount = board.team_count;
     const lastRound = board.rounds[board.rounds.length - 1];
     const headerCells = board.columns.map(c => `
@@ -362,14 +420,14 @@
       const cells = board.columns.map(c => {
         const isTurn = c.slot === turnSlot;
         const arrow = isTurn ? (round === lastRound ? '' : '↓') : (ascending ? '→' : '←');
-        return renderCell(board.grid[round] && board.grid[round][c.slot], round, teamCount, arrow, c.manager || '');
+        return renderCell(board.grid[round] && board.grid[round][c.slot], round, teamCount, arrow, c.manager || '', pickValue(v, round, c.slot));
       }).join('');
       return `<tr>${cells}</tr>`;
     }).join('');
 
     return `
       <div class="board-scroll">
-        <table class="board">
+        <table class="board${v ? ' has-pts' : ''}">
           <thead><tr>${headerCells}</tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -379,7 +437,7 @@
   // One column per manager, picks listed top to bottom in draft order --
   // an alternative to the snake-order grid for reading "what did my team
   // draft" at a glance instead of "who was on the clock when."
-  function renderSimpleBoard(board) {
+  function renderSimpleBoard(board, v) {
     const teamCount = board.team_count;
     const firstRound = board.rounds[0], lastRound = board.rounds[board.rounds.length - 1];
     const roundLabel = firstRound === lastRound ? `Round ${firstRound}` : `Rounds ${firstRound}–${lastRound}`;
@@ -389,12 +447,14 @@
         if (!pick || !pick.player_name) return '';
         const pickInRound = pick.overall - (r - 1) * teamCount;
         const color = POSITION_COLORS[pick.position] || '#8A8A85';
+        const pv = pickValue(v, r, c.slot);
         return `
           <div class="sb-pick" data-pos="${esc(pick.position || '')}">
             <span class="sb-badge" style="background:${color}">${esc(pick.position_rank || pick.position || '')}</span>
             <span class="sb-overall">${r}.${pickInRound}</span>
             <span class="sb-player">${esc(pick.player_name)}</span>
             <span class="sb-team">${pick.pro_team ? esc(pick.pro_team) : 'FA'}</span>
+            ${pv ? `<span class="sb-pts" title="${esc(valueTitle(pv))}">${f1(pv[0])}</span>` : ''}
           </div>`;
       }).join('');
       return `<div class="sb-col" data-manager="${esc(c.manager || '')}"><div class="sb-name">${esc(c.manager || '')}</div>${rows}</div>`;
@@ -410,7 +470,37 @@
         <div class="sb-dots">${dots}</div>
         <button type="button" class="sb-step" data-step="1" aria-label="Next team">${chevron('m9 18 6-6-6-6')}</button>
       </div>`;
-    return `<div class="simple-label">${roundLabel}</div><div class="glass simple-board">${pager}<div class="sb-track">${cols}</div></div>`;
+    return `<div class="simple-label">${roundLabel}</div><div class="glass simple-board${v ? ' has-pts' : ''}">${pager}<div class="sb-track">${cols}</div></div>`;
+  }
+
+  // The Value view: best value and biggest bust, then every manager's draft
+  // total and grade, best first.
+  function renderValue(year, v) {
+    if (!v) {
+      return `<div class="glass"><div class="empty-note">${Number(year) < 2017
+        ? `No weekly lineups before 2017, so there's no draft value for ${year}.`
+        : `No draft value for ${year} yet.`}</div></div>`;
+    }
+    const when = v.complete ? '' : `Through Week ${v.through_week}`;
+    const pickCard = (title, x, tone) => {
+      const color = POSITION_COLORS[x.position] || '#8A8A85';
+      return `<div class="glass"><div class="panel-title">${title}</div><div class="panel-body"><div class="item dv-item">
+        <div class="dv-top"><span class="sb-badge" style="background:${color}">${esc(x.position || '')}</span><span class="dv-name">${esc(x.player)}</span></div>
+        <div class="dv-meta">${mgrLink(x.manager)} · Round ${x.round}, pick ${x.pick} · ${starts(x.gs)}</div>
+        <div class="dv-v"><b>${f2(x.pts)}</b><span>pts</span><span class="${tone}">${signed(x.v)} vs round avg</span></div>
+      </div></div></div>`;
+    };
+    const rows = Object.entries(v.managers).map(([name, m]) => `
+      <a class="qrow" href="${esc(pageLink('franchise.html', { m: name, tab: 'money' }))}">
+        <div class="grade g-${m.grade}" aria-label="Grade ${m.grade}">${m.grade}</div>
+        <div style="min-width:0"><div class="nm">${esc(name)}</div>
+          <div class="meta">Best ${esc(m.best.player)} <span class="win">${signed(m.best.v)}</span> · Bust ${esc(m.bust.player)} <span class="loss">${signed(m.bust.v)}</span></div></div>
+        <div class="stats"><div><b>${Math.round(m.pts).toLocaleString('en-US')}</b><span>Pts</span></div></div>
+      </a>`).join('');
+    return `<div class="card-grid dv-pair">${pickCard('Best Value', v.best, 'win')}${pickCard('Biggest Bust', v.bust, 'loss')}</div>
+      <div class="glass"><div class="panel-title">Draft Grades${when ? `<span class="chip">${when}</span>` : ''}</div>
+        <div class="dv-note">Regular-season points each team's picks scored as its starters, graded A to F against that year's field. Value is a pick's points against the average for his round.</div>
+        <div class="panel-body dv-list">${rows}</div></div>`;
   }
 
   // By Team on a phone: which team page is showing. Kept by manager name
@@ -458,7 +548,7 @@
   // By Team is the better one on a phone; the URL wins over the saved one.
   // The newest year leaves the URL bare. The view is always written, so a
   // link opens on the sender's view rather than whatever the reader saved.
-  const VIEWS = { grid: 'grid', team: 'simple' };
+  const VIEWS = { grid: 'grid', team: 'simple', value: 'value' };
   const viewKey = v => Object.keys(VIEWS).find(k => VIEWS[k] === v);
   let boardView = VIEWS[urlParam('view')]
     || (() => { try { return VIEWS[localStorage.getItem('draft-board-view')]; } catch (e) { return null; } })()
@@ -466,22 +556,29 @@
   const viewToggle = document.getElementById('view-toggle');
   [...viewToggle.children].forEach(b => b.classList.toggle('on', b.dataset.view === boardView));
 
-  fetch('data/draft-board.json', { cache: 'no-store' })
-    .then(res => res.json())
-    .then(data => {
+  // Draft value is extra: if it fails, the board still shows, without points.
+  const valueReady = fetch('data/draft-value.json', { cache: 'no-store' })
+    .then(res => res.json()).then(d => { VALUE = d.years || {}; })
+    .catch(err => console.error('Draft value data error:', err));
+  Promise.all([fetch('data/draft-board.json', { cache: 'no-store' }).then(res => res.json()), valueReady])
+    .then(([data]) => {
       const sel = document.getElementById('year-select');
       sel.innerHTML = data.years.map(y => `<option value="${y}">${y}</option>`).join('');
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
 
       function show(year) {
         setUrlParams({ year: String(year) === String(data.years[0]) ? null : year, view: viewKey(boardView) });
-        const board = data.boards[year];
+        const board = data.boards[year], v = yearValue(year);
         // Legend is redrawn per year, not once at load -- which positions
-        // exist changes with the era's roster rules.
-        document.getElementById('legend').innerHTML = renderLegend(board);
+        // exist changes with the era's roster rules. The Value view has no
+        // picks to filter, so no legend.
+        const legend = document.getElementById('legend');
+        legend.innerHTML = boardView === 'value' ? '' : renderLegend(board);
+        legend.hidden = boardView === 'value';
         document.getElementById('board-container').innerHTML = !board
           ? '<div class="empty-note">No draft data for this year.</div>'
-          : boardView === 'simple' ? renderSimpleBoard(board) : renderBoard(board);
+          : boardView === 'value' ? renderValue(year, v)
+          : boardView === 'simple' ? renderSimpleBoard(board, v) : renderBoard(board, v);
         applyFilters();
         const track = boardContainer.querySelector('.sb-track');
         if (track) {
@@ -499,6 +596,7 @@
       // A filter change only re-dims the board in place; the legend redraws
       // for its on/off states and the Clear button.
       const refilter = () => {
+        if (boardView === 'value') return;
         document.getElementById('legend').innerHTML = renderLegend(data.boards[sel.value]);
         applyFilters();
       };

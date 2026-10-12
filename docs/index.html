@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=23">
+<link rel="stylesheet" href="theme.css?v=24">
 <link rel="stylesheet" href="nav.css?v=6">
 <style>
   /* ---------- Matchup cards ----------
@@ -1143,7 +1143,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=22"></script>
+<script src="page-common.js?v=23"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -2839,10 +2839,30 @@
         ['low', (n, v) => `${n} has posted the week's lowest score ${v} times, more than anyone.`, (n, v) => `${n} are tied for the most weekly low scores, ${v} each.`],
         ['bubW', (n, v) => `${n} has squeaked past the weekly median ${v} times, more than anyone.`, (n, v) => `${n} are tied for the most bubble wins, squeaking past the weekly median ${v} times each.`],
         ['bubL', (n, v) => `${n} has missed the weekly median by one spot ${v} times, more than anyone.`, (n, v) => `${n} are tied for the most bubble losses, missing the weekly median by one spot ${v} times each.`],
+        // Site audit II #30 and #34: the median against the matchup, and
+        // the extremes of a manager's own scoring.
+        ['stolen', (n, v) => `${n} has stolen ${v} wins while scoring below the weekly median, more than anyone.`, (n, v) => `${n} are tied for the most wins stolen below the weekly median, ${v} each.`],
+        ['robbed', (n, v) => `${n} has been robbed ${v} times, losing while scoring above the weekly median, more than anyone.`, (n, v) => `${n} are tied for the most losses while scoring above the weekly median, ${v} each.`],
+        ['boom', (n, v) => `${n} has had ${v} weeks of ${BOOM_PTS} or more, more than anyone.`, (n, v) => `${n} are tied for the most ${BOOM_PTS}-point weeks, ${v} each.`],
+        ['bust', (n, v) => `${n} has had ${v} weeks under ${BUST_PTS}, more than anyone.`, (n, v) => `${n} are tied for the most weeks under ${BUST_PTS}, ${v} each.`],
       ].forEach(([key, one, tied]) => {
         const top = weeklyLeaders(wf, key, pool);
         add(top.names.length, top.names.length > 1 ? tied(nameList(top.names), hi(top.value)) : one(top.names[0], hi(top.value)));
       });
+      // Swing: the standard deviation of weekly scores, to one decimal so a
+      // tie is a real tie. Two seasons' worth of weeks before anyone counts.
+      const swings = [...wf.by].filter(([n, t]) => pool.has(n) && t.weeks >= 26).map(([n, t]) => [n, Math.round(t.sd * 10) / 10]);
+      if (swings.length) {
+        const hiSd = Math.max(...swings.map(x => x[1])), loSd = Math.min(...swings.map(x => x[1]));
+        const at = v => swings.filter(x => x[1] === v).map(x => x[0]);
+        const wide = at(hiSd), steady = at(loSd);
+        add(true, wide.length > 1
+          ? `${nameList(wide)} are tied for the league's wildest scoring, swinging ${hi(hiSd.toFixed(1))} points from their own average in a typical week.`
+          : `${wide[0]} has the league's wildest scoring, swinging ${hi(hiSd.toFixed(1))} points from their own average in a typical week.`);
+        add(true, steady.length > 1
+          ? `${nameList(steady)} are tied for the league's steadiest scoring, a typical week landing within ${hi(loSd.toFixed(1))} points of their own average.`
+          : `${steady[0]} has the league's steadiest scoring, a typical week landing within ${hi(loSd.toFixed(1))} points of their own average.`);
+      }
     }
 
     const withWinMargin = players.filter(p => has(p, p => p.extremes && p.extremes.biggest_win_margin));
@@ -3461,9 +3481,11 @@
   // (raceMark in page-common.js), each part kept whole -- see .lb-parts.
   // `ap` is the all-play record (site audit 31): what the record would be
   // if every team played every other team every week.
-  function lbMeta(manager, record, race, ap) {
+  // `sos` is the schedule left (scheduleLeft in page-common.js, site audit
+  // II #31) and `hard` whether it's among the league's toughest.
+  function lbMeta(manager, record, race, ap, sos, hard) {
     const apText = ap ? `<span class="lb-ap" title="Record if everyone played everyone every week">${formatRecordParts(ap.w, ap.l, ap.t)} all-play</span>` : '';
-    const parts = [manager ? `<span>${manager}</span>` : '', `<span>${record}</span>`, raceMark(race), apText];
+    const parts = [manager ? `<span>${manager}</span>` : '', `<span>${record}</span>`, raceMark(race), sosMark(sos, hard), apText];
     return `<div class="lb-meta"><span class="lb-parts">${parts.join('')}</span></div>`;
   }
 
@@ -3483,7 +3505,7 @@
     return allPlayRecords(weeks);
   }
 
-  function renderLeaderboardRow(t, rank, playoffTeamCount, race, ap) {
+  function renderLeaderboardRow(t, rank, playoffTeamCount, race, ap, sos, hard) {
     const hasPlayoffPct = typeof t.playoffPct === 'number';
     const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : 'low') : '';
     const inPlayoffPosition = playoffTeamCount > 0 && rank <= playoffTeamCount;
@@ -3492,7 +3514,7 @@
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${t.name}</div>
-          ${lbMeta(t.manager, t.record, race, ap)}
+          ${lbMeta(t.manager, t.record, race, ap, sos, hard)}
         </div>
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsFor)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(t.pointsAgainst)}</div></div>
@@ -3619,9 +3641,19 @@
     const ap = seasonAllPlay(data, m);
     const apOf = manager => (ap && manager && ap.get(manager)) || null;
 
+    // Schedule left: every opponent from this week on in Through mode; once
+    // this week counts (live, projected), from next week.
+    const aheadOf = new Map(teams.map(t => [t.manager, t.ahead || []]));
+    const schedules = (list, recOf, skip) => {
+      const sos = list.map(r => scheduleLeft((aheadOf.get(r.manager) || []).slice(skip), recOf));
+      return { sos, hard: hardSchedules(sos) };
+    };
+
     if (m === 'through') {
       const race = playoffRace(teams.map(t => t.prior), spots, totalGames);
-      container.innerHTML = renderLeaderboardHead('Odds') + withPlayoffLine(teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, spots, race && race[idx], apOf(t.manager))), spots);
+      const priorOf = new Map(teams.map(t => [t.manager, t.prior]));
+      const sc = schedules(teams, n => priorOf.get(n), 0);
+      container.innerHTML = renderLeaderboardHead('Odds') + withPlayoffLine(teams.map((t, idx) => renderLeaderboardRow(t, idx + 1, spots, race && race[idx], apOf(t.manager), sc.sos[idx], sc.hard[idx])), spots);
       return;
     }
 
@@ -3631,6 +3663,8 @@
     const baseRank = new Map([...base].sort((a, b) => b.w - a.w || b.pf - a.pf).map((r, i) => [r.name, i + 1]));
     const ordered = [...rows].sort((a, b) => b.w - a.w || b.pf - a.pf);
     const race = playoffRace(ordered.map(r => ({ w: r.w, l: r.l, t: r.ties })), spots, totalGames);
+    const rowOf = new Map(ordered.map(r => [r.manager, { w: r.w, l: r.l, t: r.ties }]));
+    const sc = schedules(ordered, n => rowOf.get(n), 1);
     container.innerHTML = renderLeaderboardHead('Move') + withPlayoffLine(ordered.map((r, i) => {
       const rank = i + 1;
       const move = baseRank.get(r.name) - rank;
@@ -3642,7 +3676,7 @@
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${r.name}</div>
-          ${lbMeta(r.manager, formatRecordParts(r.w, r.l, r.ties), race && race[i], apOf(r.manager))}
+          ${lbMeta(r.manager, formatRecordParts(r.w, r.l, r.ties), race && race[i], apOf(r.manager), sc.sos[i], sc.hard[i])}
         </div>
         <div class="lb-stat"><div class="v">${fmtScore(r.pf)}</div></div>
         <div class="lb-stat"><div class="v">${fmtScore(r.pa)}</div></div>

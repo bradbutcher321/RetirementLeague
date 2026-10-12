@@ -108,6 +108,33 @@ function raceMark(r) {
   return r.gb > 0 ? `<span>${Number.isInteger(r.gb) ? r.gb : r.gb.toFixed(1)} GB</span>` : '';
 }
 const PLAYOFF_LINE = '<div class="po-line" role="separator" aria-label="Playoff line">Playoff line</div>';
+// Strength of the schedule left (site audit II #31): the combined win % of
+// every opponent a team still has to play, each counted once per meeting,
+// from their records in the same standings (median games included).
+// ahead: opponents' names; recordOf(name) -> { w, l, t } or null.
+function scheduleLeft(ahead, recordOf) {
+  let won = 0, games = 0;
+  (ahead || []).forEach(o => {
+    const r = recordOf(o);
+    if (!r) return;
+    won += r.w + (r.t || 0) / 2;
+    games += r.w + r.l + (r.t || 0);
+  });
+  return games ? { pct: won / games, n: ahead.length } : null;
+}
+// "SOS .563" after the race marker; the hardest schedules left (the top
+// quarter of the league) read in the loss red, so the tough road stands out.
+function sosMark(s, hard) {
+  if (!s) return '';
+  const say = `Remaining schedule: opponents' combined win % across ${s.n} game${s.n === 1 ? '' : 's'} left`;
+  return `<span class="sos${hard ? ' hard' : ''}" title="${say}" aria-label="${say}, ${(s.pct * 100).toFixed(1)}%">SOS ${s.pct.toFixed(3).replace(/^0/, '')}</span>`;
+}
+// sosMark's `hard` for every team at once: the top quarter by SOS.
+function hardSchedules(list) {
+  const vals = list.filter(Boolean).map(s => s.pct).sort((a, b) => b - a);
+  const cut = vals.length >= 4 ? vals[Math.floor(vals.length / 4) - 1] : Infinity;
+  return list.map(s => !!s && s.pct >= cut);
+}
 
 // ---------- Shareable views (site audit 21) ----------
 // Franchise (?m=Brad&tab=scoring), Head to Head (?a=Joe+G&b=Joe+K),
@@ -160,6 +187,8 @@ function matchName(names, s) {
 //   stolen         won the matchup while scoring below the median
 //   robbed         lost it while scoring above
 //   boom / bust    scored 150+ / under 80
+//   sd             standard deviation of the week's scores: how far a
+//                  typical week swings from the manager's own average
 //   dist12         finish counts (1st..12th) in 12-team weeks, weeks12 of them
 // Returns { weeks: number of weeks counted, by: Map(name -> tallies) }.
 const BOOM_PTS = 150, BUST_PTS = 80;
@@ -175,7 +204,7 @@ function weeklyFinishes(games) {
   });
   const by = new Map();
   const of = p => by.get(p) || by.set(p, { weeks: 0, high: 0, low: 0, bubW: 0, bubL: 0, beat: 0, lost: 0, margin: 0,
-    stolen: 0, robbed: 0, boom: 0, bust: 0, dist12: Array(12).fill(0), weeks12: 0 }).get(p);
+    stolen: 0, robbed: 0, boom: 0, bust: 0, dist12: Array(12).fill(0), weeks12: 0, sum: 0, sq: 0, sd: 0 }).get(p);
   let counted = 0;
   weeks.forEach((list, k) => {
     if (broken.has(k) || list.length < 2) return;
@@ -197,9 +226,11 @@ function weeklyFinishes(games) {
       if (x.lost && x.s > med) t.robbed++;
       if (x.s >= BOOM_PTS) t.boom++;
       if (x.s < BUST_PTS) t.bust++;
+      t.sum += x.s; t.sq += x.s * x.s;
       if (n === 12) { t.weeks12++; t.dist12[s.indexOf(x.s)]++; }
     });
   });
+  by.forEach(t => { if (t.weeks) t.sd = Math.sqrt(Math.max(0, t.sq / t.weeks - (t.sum / t.weeks) ** 2)); });
   return { weeks: counted, by };
 }
 // Every name at the top of one weeklyFinishes() tally, for "most" claims

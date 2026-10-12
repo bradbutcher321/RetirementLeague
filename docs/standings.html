@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=23">
+<link rel="stylesheet" href="theme.css?v=24">
 <link rel="stylesheet" href="nav.css?v=6">
 <link rel="stylesheet" href="league.css?v=7">
 <style>
@@ -97,6 +97,38 @@
   .mv.down{ border-color:rgba(214,98,79,0.4); color:var(--loss); }
 
   #standings-container{ margin-top:14px; }
+
+  /* Form (site audit II #32): the season in progress's last five
+     head-to-head results under W/L/Win %, oldest first, a letter in each so
+     colour isn't the only signal. */
+  .form{ display:flex; gap:3px; justify-content:flex-end; margin-top:6px; }
+  .form i{ width:16px; height:16px; border-radius:4px; border:1px solid; display:flex; align-items:center; justify-content:center;
+    font-style:normal; font-size:0.55rem; font-weight:800; line-height:1; }
+  .form i.w{ color:var(--turf); border-color:var(--win-line); background:var(--win-tint); }
+  .form i.l{ color:var(--loss); border-color:var(--loss-line); background:var(--loss-tint); }
+  .form i.t{ color:var(--text-dim); border-color:var(--line); }
+
+  /* Rank by Week (site audit II #32): one line per manager through the
+     regular season. Grey until one is picked (tap a line or a name), which
+     turns gold while the rest fade. Drawn at the panel's real width, so the
+     text never scales. */
+  .bump-card{ margin-top:14px; }
+  .bump-hint{ color:var(--text-dim); font-size:0.74rem; padding:4px 22px 0; }
+  .bump{ padding:10px 12px 16px; }
+  .bump svg{ display:block; width:100%; overflow:visible; }
+  .bump .grid{ stroke:var(--line); }
+  .bump .ax{ fill:var(--text-dim); font-size:10px; font-family:var(--body); }
+  .bump .ln{ fill:none; stroke:rgba(255,255,255,0.22); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; transition:stroke .2s, opacity .2s; }
+  .bump .dt{ fill:#5a5a58; transition:fill .2s, opacity .2s; }
+  .bump .nm{ fill:var(--text); font-size:11px; font-weight:600; font-family:var(--body); cursor:pointer; transition:fill .2s, opacity .2s; }
+  .bump .hit{ fill:none; stroke:transparent; stroke-width:14; cursor:pointer; pointer-events:stroke; }
+  .bump.picked .ln, .bump.picked .dt, .bump.picked .nm{ opacity:0.25; }
+  .bump.picked .on{ opacity:1; }
+  .bump .ln.on{ stroke:var(--gold); stroke-width:3; }
+  .bump .dt.on{ fill:var(--gold); }
+  .bump .nm.on{ fill:var(--gold); }
+  .bump .rk-v{ fill:#111; font-size:8px; font-weight:800; font-family:var(--body); pointer-events:none; }
+  @media (hover:hover){ .bump .nm:hover{ fill:var(--gold); } }
   /* Rows sit 6px apart (each .qrow's margin-top); the Playoff line takes
      10px either side of it, counting the next row's own 6px. */
   #standings-container .po-line{ margin:10px 0 4px; }
@@ -139,7 +171,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=22"></script>
+<script src="page-common.js?v=23"></script>
 <script src="league-common.js?v=4"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -207,8 +239,95 @@
     const order = Object.keys(t).sort((a, b) => t[b].w - t[a].w || t[b].pf - t[a].pf);
     return new Map(order.map((p, i) => [p, i + 1]));
   }
+  // Every manager's rank after each finished regular-season week of a year,
+  // ordered the same way as lastWeekRanks. The last week takes the real
+  // standing (reg_rank) instead, since ESPN's tiebreakers can differ from
+  // wins-then-PF. Returns { weeks: [1..n], by: Map(name -> [rank per week]) }.
+  function ranksByWeek(year) {
+    const reg = D.games.filter(g => g.year === year && g.type === 'Reg');
+    const open = new Set(reg.filter(g => g.winner === 'In Progress').map(g => g.week));
+    const weeks = [...new Set(reg.map(g => g.week))].filter(w => !open.has(w)).sort((a, b) => a - b);
+    const t = {}, by = new Map();
+    weeks.forEach((wk, i) => {
+      reg.filter(g => g.week === wk).forEach(g => {
+        [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => {
+          if (!p) return;
+          const e = t[p] || (t[p] = { w: 0, pf: 0 });
+          e.pf += s || 0;
+          if (g.winner === p) e.w++;
+          if (year >= D.median_era_start_year && g.median != null && s > g.median) e.w++;
+        });
+      });
+      Object.keys(t).sort((a, b) => t[b].w - t[a].w || t[b].pf - t[a].pf).forEach((p, r) => {
+        if (!by.has(p)) by.set(p, Array(weeks.length).fill(null));
+        by.get(p)[i] = r + 1;
+      });
+    });
+    const last = weeks.length - 1;
+    if (last >= 0) D.seasons.filter(s => s.year === year && s.reg_rank).forEach(s => { if (by.has(s.player)) by.get(s.player)[last] = s.reg_rank; });
+    return { weeks, by };
+  }
+
+  let bumpPick = null;
+  function bumpChart(year) {
+    if (ranksByWeek(year).weeks.length < 2) return '';
+    return `<div class="glass bump-card"><div class="panel-title">Rank by Week</div>
+      <div class="bump-hint">Tap a line or a name to follow one team.</div>
+      <div class="bump" id="bump" data-year="${year}"></div></div>`;
+  }
+  // Drawn after the card is on the page, at its real width.
+  function drawBump() {
+    const el = $('bump');
+    if (!el) return;
+    const { weeks, by } = ranksByWeek(Number(el.dataset.year));
+    const names = [...by.keys()], n = names.length;
+    const W = el.clientWidth - 24, left = 22, right = 66, top = 8, rowH = 22;
+    const H = top + (n - 1) * rowH + 26;
+    const x = i => left + i * (W - left - right) / Math.max(1, weeks.length - 1);
+    const y = r => top + (r - 1) * rowH;
+    let svg = '';
+    for (let r = 1; r <= n; r++) svg += `<line class="grid" x1="${left}" x2="${W - right}" y1="${y(r)}" y2="${y(r)}"/><text class="ax" x="0" y="${y(r) + 3.5}">${r}</text>`;
+    weeks.forEach((wk, i) => { svg += `<text class="ax" x="${x(i)}" y="${H - 4}" text-anchor="middle">${wk}</text>`; });
+    const on = name => name === bumpPick ? ' on' : '';
+    // The picked line last, so it draws over the rest.
+    [...names].sort((a, b) => (a === bumpPick) - (b === bumpPick)).forEach(name => {
+      const rk = by.get(name), m = esc(name), picked = name === bumpPick;
+      const pts = rk.map((r, i) => r == null ? null : `${x(i).toFixed(1)},${y(r)}`).filter(Boolean).join(' ');
+      svg += `<polyline class="ln${on(name)}" data-m="${m}" points="${pts}"/>`;
+      svg += rk.map((r, i) => r == null ? '' : `<circle class="dt${on(name)}" data-m="${m}" cx="${x(i).toFixed(1)}" cy="${y(r)}" r="${picked ? 7 : 3}"/>` +
+        (picked ? `<text class="rk-v" x="${x(i).toFixed(1)}" y="${y(r) + 3}" text-anchor="middle">${r}</text>` : '')).join('');
+      svg += `<polyline class="hit" data-m="${m}" points="${pts}"><title>${m}</title></polyline>`;
+      const lastR = rk[rk.length - 1];
+      if (lastR != null) svg += `<text class="nm${on(name)}" data-m="${m}" x="${W - right + 10}" y="${y(lastR) + 4}">${m}</text>`;
+    });
+    el.classList.toggle('picked', !!bumpPick);
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Each manager's rank after every week">${svg}</svg>`;
+  }
+  addEventListener('resize', () => { clearTimeout(drawBump.t); drawBump.t = setTimeout(drawBump, 120); });
+
+  // Last five head-to-head results of a season, oldest first.
+  function formOf(year, player) {
+    return D.games.filter(g => g.year === year && g.type === 'Reg' && g.p2 && g.winner !== 'In Progress' && (g.p1 === player || g.p2 === player))
+      .sort((a, b) => a.week - b.week).slice(-5)
+      .map(g => g.winner === player ? 'w' : (g.winner === g.p1 || g.winner === g.p2) ? 'l' : 't');
+  }
+
+  // The Worker's live dashboard, for the schedule left (site audit II #31):
+  // { week, ahead: Map(manager -> opponents from that week on) }. Only
+  // fetched for the season in progress; null until it lands or if it fails.
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  let LIVE = null, liveAsked = false;
+  function askLive() {
+    if (liveAsked) return;
+    liveAsked = true;
+    fetch(WORKER_URL, { cache: 'no-store' }).then(r => r.json()).then(d => {
+      LIVE = { week: d.week, ahead: new Map((d.teams || []).filter(t => t.manager).map(t => [t.manager, t.ahead || []])) };
+      render();
+    }).catch(err => console.error('Schedule left:', err));
+  }
+
   let formerCount = 0, prevRank = null, lastWeek = 0;
-  function row(r, k, n, type, complete, year, race) {
+  function row(r, k, n, type, complete, year, race, sos, hard, form) {
     const cls = ['qrow'];
     if (r.former) cls.push('former');
     else if (r.rank === 1) cls.push('top'); else if (r.rank === n - (year === 'all' ? formerCount : 0)) cls.push('last');
@@ -227,7 +346,7 @@
       }
       metaParts.push(`<span class="tally">${tally.join('')}</span>`);
     }
-    metaParts.push(`<span class="pfpa"><span>PF ${n0(r.pf)}</span><span>PA ${n0(r.pa)}</span>${raceMark(race)}</span>`);
+    metaParts.push(`<span class="pfpa"><span>PF ${n0(r.pf)}</span><span>PA ${n0(r.pa)}</span>${raceMark(race)}${sosMark(sos, hard)}</span>`);
     const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
     let moveHtml = '';
     if (prevRank && prevRank.has(r.player) && r.rank) {
@@ -238,7 +357,9 @@
     }
     return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline">${badges.join('')}</span></div>` +
       `<div class="meta">${metaHtml}</div></div>` +
-      `<div class="stats-col"><div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div></a>`;
+      `<div class="stats-col"><div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div>` +
+      (form && form.length ? `<div class="form" aria-label="Last ${form.length}: ${form.map(f => f.toUpperCase()).join(' ')}">${form.map(f => `<i class="${f}" aria-hidden="true">${f.toUpperCase()}</i>`).join('')}</div>` : '') +
+      `</div></a>`;
   }
 
   function render() {
@@ -260,18 +381,36 @@
     const spots = set ? set.playoff_teams : 0;
     const race = set ? playoffRace(rows.map(r => ({ w: r.s.reg_w + r.s.med_w, l: r.s.reg_l + r.s.med_l })), spots,
       set.reg_weeks * (year >= D.median_era_start_year ? 2 : 1)) : null;
+    // Schedule left, once the Worker answers: from next week on if
+    // league.json already has the Worker's current week, else from it.
+    let sos = null, hard = null;
+    if (live) {
+      askLive();
+      if (LIVE) {
+        const have = Math.max(0, ...D.games.filter(g => g.year === year && g.type === 'Reg' && g.winner !== 'In Progress').map(g => g.week));
+        const skip = have >= LIVE.week ? 1 : 0;
+        const recOf = new Map(rows.map(r => [r.player, { w: r.s.reg_w + r.s.med_w, l: r.s.reg_l + r.s.med_l }]));
+        sos = rows.map(r => scheduleLeft((LIVE.ahead.get(r.player) || []).slice(skip), nm => recOf.get(nm)));
+        hard = hardSchedules(sos);
+      }
+    }
     const legend = tab === 'reg' && complete
       ? '<div class="legend"><span><i style="background:var(--turf)"></i>Made the playoffs</span><span><i style="background:var(--line)"></i>Missed the playoffs</span></div>'
       : '';
     const note = year === 'all' ? 'Every season combined, current teams ranked by win percentage (former teams listed after). Median games count from 2025 on.' : year >= 2025 ? 'Wins and losses include the weekly median game.' : '';
     $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}"${k === tab && note ? ` title="${esc(note)}"` : ''}>${l}</button>`).join('');
     // 18px above the first row (or the legend) matches the rows' 18px sides.
-    $('standings-container').innerHTML = `<div class="glass">${legend}<div style="padding:${legend ? 14 : 18}px 18px 20px">${rows.map((r, k) => row(r, k, rows.length, tab, complete, year, race && race[k]) + (spots && k === spots - 1 && rows.length > spots ? PLAYOFF_LINE : '')).join('')}</div></div>`;
+    $('standings-container').innerHTML = `<div class="glass">${legend}<div style="padding:${legend ? 14 : 18}px 18px 20px">${rows.map((r, k) => row(r, k, rows.length, tab, complete, year, race && race[k], sos && sos[k], hard && hard[k], live ? formOf(year, r.player) : null) + (spots && k === spots - 1 && rows.length > spots ? PLAYOFF_LINE : '')).join('')}</div></div>` +
+      // Rank by Week: the season in progress, or a finished one's Regular Szn tab.
+      (year !== 'all' && (live || tab === 'reg') ? bumpChart(year) : '');
+    drawBump();
   }
 
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-t]');
-    if (t) { tab = t.dataset.t; render(); }
+    if (t) { tab = t.dataset.t; render(); return; }
+    const b = e.target.closest('#bump [data-m]');
+    if (b) { bumpPick = bumpPick === b.dataset.m ? null : b.dataset.m; drawBump(); }
   });
 
   LG.load().then(data => {

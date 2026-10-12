@@ -710,6 +710,8 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
    page-common.js); games back stays in the line's own dim grey. */
 .race-in{ color:var(--turf); font-weight:600; }
 .race-out{ color:var(--loss); font-weight:600; }
+/* Strength of schedule left (sosMark), the part after the race marker. */
+.sos.hard{ color:var(--loss); }
 
 /* ---------- Delta pill (a trend/margin figure, tinted by direction) ---------- */
 .pill{ font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }

@@ -322,6 +322,26 @@ function priorStandings(schedule, currentWeek) {
   return out;
 }
 
+/** teamId -> the teamIds it still plays in the regular season, in order,
+ * starting with the current matchup period's opponent (site audit II #31,
+ * strength of the schedule left). */
+function opponentsAhead(schedule, fromPeriod, lastPeriod) {
+  const out = new Map();
+  const add = (id, opp) => {
+    if (id === undefined || opp === undefined) return;
+    if (!out.has(id)) out.set(id, []);
+    out.get(id).push(opp);
+  };
+  [...schedule]
+    .filter((m) => m.matchupPeriodId >= fromPeriod && m.matchupPeriodId <= lastPeriod)
+    .sort((a, b) => a.matchupPeriodId - b.matchupPeriodId)
+    .forEach((m) => {
+      add(m.home?.teamId, m.away?.teamId);
+      add(m.away?.teamId, m.home?.teamId);
+    });
+  return out;
+}
+
 /** Highest single-week score anywhere in the league, through `upToWeek`. */
 function findWeeklyHigh(weekScores, upToWeek) {
   let best = { teamId: null, week: null, score: -1 };
@@ -393,6 +413,8 @@ export async function buildDashboard(env, previous = null) {
   const priorByTeam = priorStandings(schedule, currentWeek);
   const weekScores = scoresByTeam(schedule);
   const managerNames = buildManagerNames(teamsRaw);
+  const regularPeriods = league.settings?.scheduleSettings?.matchupPeriodCount || 0;
+  const aheadByTeam = opponentsAhead(schedule, matchupPeriod, regularPeriods);
   const seasonAverages = buildSeasonAverages(league, Number(env.ESPN_YEAR), currentWeek);
 
   let nflScoreboardError = null;
@@ -498,6 +520,8 @@ export async function buildDashboard(env, previous = null) {
           const p = priorByTeam.get(t.teamId) || { w: 0, l: 0, t: 0, pf: 0, pa: 0 };
           return { w: p.w, l: p.l, t: p.t, pf: round2(p.pf), pa: round2(p.pa) };
         })(),
+        // Managers still to play this regular season, this week's first.
+        ahead: (aheadByTeam.get(t.teamId) || []).map((id) => managerNames.get(id) || ""),
         standing: t.standing,
         pointsFor: round2(t.pointsFor),
         pointsAgainst: t.pointsAgainst,

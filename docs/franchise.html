@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=23">
+<link rel="stylesheet" href="theme.css?v=24">
 <link rel="stylesheet" href="nav.css?v=6">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
@@ -254,6 +254,14 @@
   .arc-tile.playoffs .arc-standing{ color:var(--turf); }
   .arc-tile.missed .arc-standing{ color:var(--loss); }
   .arc-tile.progress .arc-standing{ color:var(--text-dim); }
+  /* Money's Draft Grades strip (site audit II #33) reuses the arc tiles: the
+     grade's letter, green for an A or B and red for a D or F, dashed while
+     that season is still being played. */
+  .arc-tile.g-good{ border-color:var(--win-line); background:var(--win-tint); }
+  .arc-tile.g-bad{ border-color:var(--loss-line); background:var(--loss-tint); }
+  .arc-tile.g-good .arc-standing{ color:var(--turf); }
+  .arc-tile.g-bad .arc-standing{ color:var(--loss); }
+  .dg-grid{ margin-bottom:10px; }
 
   /* ---------- Season list ---------- */
   .season{ display:grid; grid-template-columns:40px minmax(0,1fr) auto; align-items:center; gap:10px; padding:9px 12px; background:var(--item); border:1px solid var(--item-line); border-radius:10px; }
@@ -402,7 +410,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=22"></script>
+<script src="page-common.js?v=23"></script>
 <script src="achievements.js?v=3"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
@@ -1148,6 +1156,9 @@
       ['Stolen Wins', [[fmt(w.stolen), '']], `Won while scoring below the median${weeklyRankSub(p, 'stolen') ? ` · ${weeklyRankSub(p, 'stolen')}` : ''}`],
       ['Robbed Losses', [[fmt(w.robbed), '']], `Lost while scoring above it${weeklyRankSub(p, 'robbed') ? ` · ${weeklyRankSub(p, 'robbed')}` : ''}`],
       ['Boom and Bust', [[fmt(w.boom), `${BOOM_PTS}+`, 'gold'], [fmt(w.bust), `Under ${BUST_PTS}`, 'loss']], `Weeks of ${BOOM_PTS}+ and weeks under ${BUST_PTS}`],
+      // Site audit II #34: how far a typical week lands from this manager's
+      // own average. Ranked widest first.
+      ['Weekly Swing', [[`±${fmt(w.sd, 1)}`, 'pts']], `Standard deviation of weekly scores${weeklyRankSub(p, 'sd') ? ` · ${weeklyRankSub(p, 'sd')} widest` : ''}`],
     ]));
 
     return `${finishes}<div class="pair">${strip}${med}</div>${renderBestWorst(p)}`;
@@ -1196,7 +1207,34 @@
       ['Roster Moves', [[fmt(p.moves.total), 'Total'], [fmt(p.moves.avg_per_season, 1), 'Per Szn']], rankSub(p, x => x.moves.total) ? `${rankSub(p, x => x.moves.total)} most active` : ''],
       ['Busiest Season', [[b ? fmt(b.moves) : '—', b ? String(b.year) : '']]],
     ]));
-    return `<div class="pair">${money}${draft}</div>`;
+    return `<div class="pair">${money}${draft}</div>${renderDraftGrades(p)}`;
+  }
+
+  // Draft value (site audit II #33), from data/draft-value.json: each
+  // year's grade against that draft's field, then the best and worst pick
+  // of every draft since lineups began in 2017. Picks are scored by their
+  // regular-season points as this team's starters.
+  function renderDraftGrades(p) {
+    if (DRAFTV === undefined) return card('Draft Grades', '<div class="empty-note">Loading draft grades…</div>');
+    if (!DRAFTV) return '';
+    const years = Object.keys(DRAFTV).map(Number).sort((a, b) => a - b).filter(y => DRAFTV[y].managers[p.name]);
+    if (!years.length) return card('Draft Grades', '<div class="empty-note">No drafts since 2017, when weekly lineups begin.</div>');
+    const tilesHtml = years.map(y => {
+      const v = DRAFTV[y], m = v.managers[p.name];
+      const tone = v.complete ? (m.grade <= 'B' ? ' g-good' : m.grade >= 'D' ? ' g-bad' : '') : ' progress';
+      return `<div class="arc-tile${tone}" title="${esc(`${y}: ${fmtNum(m.pts, 2)} pts, ${fmtOrdinal(m.rank)} of ${Object.keys(v.managers).length}${v.complete ? '' : ` through Week ${v.through_week}`}`)}"><div class="arc-year">${y}</div><div class="arc-standing">${m.grade}</div><div class="arc-rec">${fmtOrdinal(m.rank)}</div></div>`;
+    }).join('');
+    const all = years.map(y => [y, DRAFTV[y].managers[p.name]]);
+    const best = all.reduce((a, b) => (!a || b[1].best.v > a[1].best.v ? b : a), null);
+    const bust = all.reduce((a, b) => (!a || b[1].bust.v < a[1].bust.v ? b : a), null);
+    const pickSub = (y, x) => `${esc(x.player)} · ${y} Rd ${x.round}.${x.pick} · ${fmtSigned(x.v, 2, '')} vs round avg`;
+    const done = all.filter(([y]) => DRAFTV[y].complete);
+    const avgRank = done.length ? done.reduce((a, [, m]) => a + m.rank, 0) / done.length : null;
+    return card('Draft Grades', `<div class="arc-grid edge-fade dg-grid">${tilesHtml}</div>` + lines([
+      ['Best Pick', [[fmt(best[1].best.pts, 2), 'pts', 'gold']], pickSub(best[0], best[1].best)],
+      ['Biggest Bust', [[fmt(bust[1].bust.pts, 2), 'pts', 'loss']], pickSub(bust[0], bust[1].bust)],
+      ...(avgRank != null ? [['Average Draft', [[fmt(avgRank, 1), 'Rank']], `Among each year's field · ${done.length} finished draft${done.length === 1 ? '' : 's'}`]] : []),
+    ]), { note: `Points each pick scored as a starter for this team in the regular season, graded A to F against that year's draft. <a class="mgr" href="draft-board.html?view=value">Draft Board</a> has every pick.` });
   }
 
   // ---------- Tabs ----------
@@ -1216,7 +1254,8 @@
 
   // WEEKLY: weeklyFinishes() over GAMES once league.json is in; undefined
   // while it loads, null if it failed.
-  let data = null, CTX = null, GAMES = [], WEEKLY;
+  // DRAFTV: data/draft-value.json's years, the same way.
+  let data = null, CTX = null, GAMES = [], WEEKLY, DRAFTV;
   const tabIndex = id => { const k = String(id ?? '').toLowerCase(); return TABS.findIndex(x => x.id === (OLD_TABS[k] || k)); };
   // The URL's tab (?tab=scoring, from a shared link) wins over the saved one.
   let tab = (() => {
@@ -1277,6 +1316,12 @@
     const p = data && data.players.find(x => x.name === document.getElementById('franchise-select').value);
     if (p && TABS[tab].id === 'weekly') document.getElementById('tab-content').innerHTML = renderWeekly(p);
   });
+
+  fetch('data/draft-value.json', { cache: 'no-store' }).then(r => r.json()).then(d => { DRAFTV = d.years || {}; })
+    .catch(err => { console.error(err); DRAFTV = null; }).then(() => {
+      const p = data && data.players.find(x => x.name === document.getElementById('franchise-select').value);
+      if (p && TABS[tab].id === 'money') document.getElementById('tab-content').innerHTML = renderMoney(p);
+    });
 
   fetch('data/franchise.json', { cache: 'no-store' }).then(r => r.json()).then(d => {
     data = d;

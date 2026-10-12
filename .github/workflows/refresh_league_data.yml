@@ -56,6 +56,11 @@ jobs:
         CLOUDFLARE_ACCOUNT_ID: f53f8e388e691eca52769f9f586713df
       run: python generate_lineup_data_d1.py
 
+    # Draft Board's Value view and Franchise's draft grades (audit II #33),
+    # from the lineups just written. No D1: it reads the committed board.
+    - name: Run Draft Value Script
+      run: python generate_draft_board_data.py --value
+
     - name: Remove Google Secret File
       if: always()
       run: rm -f google_secret.json
@@ -64,7 +69,7 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add docs/data/league.json docs/data/lineups
+        git add docs/data/league.json docs/data/lineups docs/data/draft-value.json
         git diff --cached --quiet || git commit -m "Update league data"
         git pull --rebase
         git push
