@@ -349,6 +349,73 @@ const glideTap = { track: null, at: 0 };
   // the new one in the "after", and the transition slides it across. The
   // track's buttons are named too (gp-b0, gp-b1, ...) so their labels are
   // drawn above the pill rather than under it in the page's own picture.
+  // The transition's pill slides as its own layer over the whole page, so
+  // its overshoot used to carry it out past the track's end -- and on an
+  // iPhone, heading for the last choice, it vanished for the whole slide.
+  // The plain glide (League History) clips the same overshoot at the track,
+  // so the pill bounces behind the track's border instead. This redraws the
+  // transition's slide the same way: the UA's own animation is replaced by
+  // one sampled along the same curve, clipped each frame to the track.
+  const bezier = (x1, y1, x2, y2) => t => {
+    // Solve x(u) = t for u (Newton, then bisection), return y(u).
+    const c = (a, b, u) => 3 * a * u * (1 - u) * (1 - u) + 3 * b * u * u * (1 - u) + u * u * u;
+    let u = t;
+    for (let i = 0; i < 8; i++) {
+      const x = c(x1, x2, u) - t;
+      const d = 3 * x1 * (1 - u) * (1 - u) + 6 * (x2 - x1) * u * (1 - u) + 3 * (1 - x2) * u * u;
+      if (Math.abs(x) < 1e-5 || !d) break;
+      u -= x / d;
+    }
+    if (!(u >= 0 && u <= 1)) {
+      let lo = 0, hi = 1;
+      for (let i = 0; i < 30; i++) { u = (lo + hi) / 2; if (c(x1, x2, u) < t) lo = u; else hi = u; }
+    }
+    return c(y1, y2, u);
+  };
+  const easeOf = css => {
+    const m = /cubic-bezier\(([^)]+)\)/.exec(css || '');
+    const v = m && m[1].split(',').map(Number);
+    if (v && v.length === 4 && v.every(n => !isNaN(n))) return bezier(...v);
+    return { linear: t => t, 'ease-in': bezier(.42, 0, 1, 1), 'ease-out': bezier(0, 0, .58, 1), 'ease-in-out': bezier(.42, 0, .58, 1) }[css] || bezier(.25, .1, .25, 1);
+  };
+  function clipPillToTrack(pillBox, trackBox, trackCs) {
+    const name = '::view-transition-group(gp-pill)';
+    const anim = document.getAnimations().find(a => a.effect && a.effect.pseudoElement === name);
+    if (!anim) return;
+    const kf = anim.effect.getKeyframes();
+    const first = kf[0], last = kf[kf.length - 1];
+    if (!first || !last || !first.transform || !last.transform) return;
+    const a = new DOMMatrix(first.transform), b = new DOMMatrix(last.transform);
+    const num = (v, dflt) => { const n = parseFloat(v); return isNaN(n) ? dflt : n; };
+    const w0 = num(first.width, pillBox.width), w1 = num(last.width, pillBox.width);
+    const h0 = num(first.height, pillBox.height), h1 = num(last.height, pillBox.height);
+    // The track's inside edge, in the transition's own coordinates: offset
+    // from where the pill lands, which the last keyframe places.
+    const bl = num(trackCs.borderLeftWidth, 0), br = num(trackCs.borderRightWidth, 0);
+    const left = b.e + (trackBox.left + bl - pillBox.left);
+    const right = b.e + (trackBox.right - br - pillBox.left);
+    // A pill's ends are half its height round; so is the track's inside
+    // corner, near enough, so the clipped end tucks in along its curve.
+    const radius = pillBox.height / 2;
+    const timing = anim.effect.getComputedTiming();
+    const ease = easeOf(first.easing && first.easing !== 'linear' ? first.easing : getComputedStyle(document.documentElement, name).animationTimingFunction);
+    const frames = [];
+    const N = 40;
+    for (let i = 0; i <= N; i++) {
+      const t = i / N, e = ease(t);
+      const x = a.e + (b.e - a.e) * e, y = a.f + (b.f - a.f) * e;
+      const w = w0 + (w1 - w0) * e, h = h0 + (h1 - h0) * e;
+      const cl = Math.max(0, Math.min(w, left - x)), cr = Math.max(0, Math.min(w, x + w - right));
+      frames.push({
+        offset: t, easing: 'linear',
+        transform: `translate(${x}px, ${y}px)`, width: `${w}px`, height: `${h}px`,
+        clipPath: `inset(0 ${cr}px 0 ${cl}px round ${radius}px)`,
+      });
+    }
+    anim.cancel();
+    document.documentElement.animate(frames, { duration: timing.duration, delay: timing.delay || 0, fill: 'both', pseudoElement: name });
+  }
+
   if (!document.startViewTransition) return;
   const nativeVT = document.startViewTransition.bind(document);
   document.startViewTransition = arg => {
@@ -404,19 +471,13 @@ const glideTap = { track: null, at: 0 };
     const run = async () => {
       if (update) await update();
       unname();
-      const t = track.isConnected ? track : document.querySelector(path);
-      pillOn(t);
-      // Headed for the first or last choice, the overshoot would carry the
-      // pill past the track's end (the plain glide clips it there; a
-      // transition can't). Past the right end, on a phone, that is past the
-      // screen's edge too, and an iPhone dropped the pill for the whole
-      // slide whenever the third choice was picked. It eases in instead.
-      if (pill && on) {
-        const list = items(t);
-        if (on === list[0] || on === list[list.length - 1]) pill.style.viewTransitionClass = 'gp-edge';
-      }
+      dest = track.isConnected ? track : document.querySelector(path);
+      pillOn(dest);
+      if (pill) { pillBox = pill.getBoundingClientRect(); trackBox = dest.getBoundingClientRect(); trackCs = getComputedStyle(dest); }
     };
+    let dest = null, pillBox = null, trackBox = null, trackCs = null;
     const vt = nativeVT(typeof arg === 'object' && arg ? { ...arg, update: run } : run);
+    vt.ready.then(() => { if (pillBox) clipPillToTrack(pillBox, trackBox, trackCs); }).catch(() => {});
     const done = () => { unname(); glideTap.vt = false; };
     vt.finished.then(done, done);
     return vt;

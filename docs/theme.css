@@ -491,9 +491,6 @@ body{
    as it slides and resizes between the two choices. */
 ::view-transition-old(gp-pill){ display: none; }
 ::view-transition-new(gp-pill){ animation: none; height: 100%; }
-/* Sliding to the first or last choice: no overshoot past the track's end
-   (page-common.js sets gp-edge). Same duration as the page's other groups. */
-::view-transition-group(*.gp-edge){ animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
 /* The labels cross-fade from their old color to their new one on a plain
    ease, done about when the pill lands. Left to inherit the glide's
    overshoot curve, the fade overshot too and the labels flickered. */
