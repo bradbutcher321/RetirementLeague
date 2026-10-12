@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=17">
+<link rel="stylesheet" href="theme.css?v=18">
 <link rel="stylesheet" href="nav.css?v=5">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
@@ -46,7 +46,6 @@
 
 
   .hero-pills{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  .aka{ background: var(--item); border: 1px solid var(--item-line); color: var(--text-dim); font-size: 0.74rem; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
   .rank-badge{ background: rgba(212,180,106,0.14); border: 1px solid var(--gold); color: var(--gold); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
   .rank-badge.bad{ background: rgba(214,98,79,0.14); border-color: var(--loss); color: var(--loss); }
 
@@ -176,7 +175,6 @@
   .tile.is-lead{ border-color:var(--lead-line); background:var(--lead-tint); }
   .tile.is-win{ border-color:var(--win-line); background:var(--win-tint); }
   .tile.is-loss{ border-color:var(--loss-line); background:var(--loss-tint); }
-  :root[data-accent="outline"] .tile.is-lead, :root[data-accent="outline"] .tile.is-win, :root[data-accent="outline"] .tile.is-loss{ background:var(--item); }
   .tile.is-lead .tile-v{ color:var(--gold); }
   .tile.is-win .tile-v{ color:var(--turf); }
   .tile.is-loss .tile-v{ color:var(--loss); }
@@ -249,7 +247,6 @@
   .arc-tile.playoffs{ border-color:var(--win-line); background:var(--win-tint); }
   .arc-tile.missed{ border-color:var(--loss-line); background:var(--loss-tint); }
   .arc-tile.progress{ border-style:dashed; }
-  :root[data-accent="outline"] .arc-tile{ background:var(--item); }
   .arc-tile.champion .arc-standing, .arc-tile.runner-up .arc-standing{ color:var(--gold); }
   .arc-tile.playoffs .arc-standing{ color:var(--turf); }
   .arc-tile.missed .arc-standing{ color:var(--loss); }
@@ -270,7 +267,6 @@
      define a career. Everything else stays a plain row. */
   .season.champion{ border-color:var(--lead-line); background:var(--lead-tint); }
   .season.sacko{ border-color:var(--loss-line); background:var(--loss-tint); }
-  :root[data-accent="outline"] .season.champion, :root[data-accent="outline"] .season.sacko{ background:var(--item); }
   .season.champion .season-fin b, .season.runner-up .season-fin b{ color:var(--gold); }
   .season.playoffs .season-fin b{ color:var(--turf); }
   .season.missed .season-fin b, .season.sacko .season-fin b{ color:var(--loss); }
@@ -317,10 +313,6 @@
   .lrec span{ display:block; color:var(--text-dim); font-size:0.68rem; margin-top:3px; }
   .lrow.former{ opacity:0.55; }
   @media (prefers-reduced-motion: reduce){ .lrow{ transition:none; } }
-
-  /* ---------- Feature line (worst week, worst bench miss) ---------- */
-  .feat{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; }
-  .feat-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.6rem; color:var(--loss); white-space:nowrap; }
 
   /* ---------- Achievement shelf ---------- */
   .shelf{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:8px; }
@@ -382,7 +374,7 @@
     <footer id="site-footer" data-note="Money Tracker from the league sheet · Updates Tuesday &amp; Thursday mornings"></footer>
   </div>
 
-<script src="nav.js?v=4"></script>
+<script src="nav.js?v=5"></script>
 <script src="page-common.js?v=16"></script>
 <script src="achievements.js"></script>
 <script>
@@ -715,9 +707,6 @@
       return { x: `'${String(s.year).slice(2)}`, y, cls: state, label: y, key: s.year };
     });
     const mid = Math.round(maxTeams / 2);
-    const legend = [['champion', 'Champion'], ['runner-up', 'Runner-up'], ['playoffs', 'Playoffs'], ['missed', 'Missed'], ['progress', 'In progress']]
-      .filter(([k]) => p.season_history.some(s => seasonState(s) === k))
-      .map(([k, l]) => `<span><i class="lg-${k}"></i>${l}</span>`).join('');
     return `<div class="arc-graph" style="padding-top:6px">${dotChart(pts, { min: 1, max: maxTeams, invert: true, ticks: [1, mid, maxTeams], tickLabel: fmtOrdinal, height: 160 })}</div>`;
   }
 

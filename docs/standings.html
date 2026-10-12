@@ -37,9 +37,9 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=17">
+<link rel="stylesheet" href="theme.css?v=18">
 <link rel="stylesheet" href="nav.css?v=5">
-<link rel="stylesheet" href="league.css?v=6">
+<link rel="stylesheet" href="league.css?v=7">
 <style>
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
@@ -147,9 +147,9 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=4"></script>
+<script src="nav.js?v=5"></script>
 <script src="page-common.js?v=16"></script>
-<script src="league-common.js?v=3"></script>
+<script src="league-common.js?v=4"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
   const { f2, pct } = LG;
@@ -189,8 +189,6 @@
     return rows;
   }
 
-  const MEDIAN_ERA_START = 2025;
-
   // Each manager's rank after the previous week of a season in progress:
   // every regular-season game before the latest week played, head-to-head
   // plus median results, ordered by wins then PF -- the same order the
@@ -207,7 +205,7 @@
         const e = t[p] || (t[p] = { w: 0, pf: 0 });
         e.pf += s || 0;
         if (g.winner === p) e.w++;
-        if (year >= MEDIAN_ERA_START && g.median != null && s > g.median) e.w++;
+        if (year >= D.median_era_start_year && g.median != null && s > g.median) e.w++;
       });
     });
     const order = Object.keys(t).sort((a, b) => t[b].w - t[a].w || t[b].pf - t[a].pf);
@@ -274,7 +272,7 @@
     const set = live && D.settings && D.settings[year];
     const spots = set ? set.playoff_teams : 0;
     const race = set ? playoffRace(rows.map(r => ({ w: r.s.reg_w + r.s.med_w, l: r.s.reg_l + r.s.med_l })), spots,
-      set.reg_weeks * (year >= MEDIAN_ERA_START ? 2 : 1)) : null;
+      set.reg_weeks * (year >= D.median_era_start_year ? 2 : 1)) : null;
     const legend = tab === 'reg' && complete
       ? '<div class="legend"><span><i style="background:var(--turf)"></i>Made the playoffs</span><span><i style="background:var(--line)"></i>Missed the playoffs</span></div>'
       : '';

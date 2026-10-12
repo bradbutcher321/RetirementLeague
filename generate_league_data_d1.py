@@ -201,6 +201,9 @@ def main():
             str(ls["year"]): {"reg_weeks": ls["reg_season_count"], "playoff_teams": ls["playoff_team_count"]}
             for ls in league_settings
         },
+        # First season with a weekly median game, so Standings counts median
+        # wins from the same year this script does.
+        "median_era_start_year": MEDIAN_ERA_START_YEAR,
     }
     if os.path.exists(OUTPUT_PATH):
         with open(OUTPUT_PATH, encoding="utf-8") as f:

@@ -441,12 +441,7 @@ export async function buildDashboard(env, previous = null) {
   const currentMedian = currentScores.length ? round2(median(currentScores)) : 0;
   const projectedMedian = projectedScores.length ? round2(median(projectedScores)) : 0;
 
-  const weeklyHigh = findWeeklyHigh(weekScores, currentWeek);
   const priorHigh = findWeeklyHigh(weekScores, Math.max(currentWeek - 1, 0));
-  const seasonLeaderTeam = teamsRaw.reduce((best, t) => (t.pointsFor > (best?.pointsFor ?? -1) ? t : best), null);
-
-  const seasonStarted = weeklyHigh.score > 0;
-  const seasonPointsStarted = (seasonLeaderTeam?.pointsFor || 0) > 0;
   const anyPlayoffData = teamsRaw.some((t) => t.playoffPct);
 
   return {
@@ -463,27 +458,12 @@ export async function buildDashboard(env, previous = null) {
     medianStatusKnown: gameStateByProTeam.size > 0,
     teams: teams.map((t) => ({ ...t, playoffPct: anyPlayoffData ? round2(t.playoffPct) : null })),
     matchups,
-    weeklyHigh: seasonStarted
-      ? {
-          team: teamsById.get(weeklyHigh.teamId)?.name || "",
-          manager: managerNames.get(weeklyHigh.teamId) || "",
-          week: weeklyHigh.week,
-          score: round2(weeklyHigh.score),
-        }
-      : null,
     priorSeasonHigh: priorHigh.score > 0
       ? {
           team: teamsById.get(priorHigh.teamId)?.name || "",
           manager: managerNames.get(priorHigh.teamId) || "",
           week: priorHigh.week,
           score: round2(priorHigh.score),
-        }
-      : null,
-    seasonLeader: seasonPointsStarted
-      ? {
-          team: seasonLeaderTeam.name,
-          manager: managerNames.get(seasonLeaderTeam.teamId) || "",
-          points: round2(seasonLeaderTeam.pointsFor),
         }
       : null,
     ...(nflScoreboardError ? { nflScoreboardError } : {}),

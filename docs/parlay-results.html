@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=17">
+<link rel="stylesheet" href="theme.css?v=18">
 <link rel="stylesheet" href="nav.css?v=5">
 <style>
   /* ---------- Week selector ----------
@@ -129,10 +129,6 @@
   .leg.Loss{ border-color: var(--loss-line); background: var(--loss-tint); }
   .leg.live-up{ border-color: var(--win-line); background: var(--win-tint); }
   .leg.live-down{ border-color: var(--loss-line); background: var(--loss-tint); }
-  :root[data-accent="outline"] .leg.Win,
-  :root[data-accent="outline"] .leg.Loss,
-  :root[data-accent="outline"] .leg.live-up,
-  :root[data-accent="outline"] .leg.live-down{ background: var(--item); }
   .leg.missing{ cursor: default; }
 
   .leg-head{ padding: 12px 14px 11px; }
@@ -257,8 +253,6 @@
   .ln.rec.up .rk{ color: var(--turf); }
   .ln.rec.down{ border-color: var(--loss-line); background: var(--loss-tint); }
   .ln.rec.down .rk{ color: var(--loss); }
-  :root[data-accent="outline"] .ln.rec.up,
-  :root[data-accent="outline"] .ln.rec.down{ background: var(--item); }
   .row-stats{ display: flex; gap: 14px; }
   .row-stat{ text-align: center; min-width: 34px; }
   .row-stat b.up{ color: var(--turf); }
@@ -382,7 +376,7 @@
     <footer id="site-footer" data-source="Data from the league sheet" data-note="Refreshes every 10 minutes"></footer>
   </div>
 
-<script src="nav.js?v=4"></script>
+<script src="nav.js?v=5"></script>
 <script src="page-common.js?v=16"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';

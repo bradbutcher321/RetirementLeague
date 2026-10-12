@@ -26,15 +26,10 @@ const LG = (() => {
     return data;
   }
 
-  function card(title, body, note) {
-    return `<div class="stat-card"><div class="stat-card-title">${title}</div>` +
-      (note ? `<div class="stat-card-note">${note}</div>` : '') + `<div class="stat-card-body">${body}</div></div>`;
-  }
-
   function showError(id, err) {
     const el = document.getElementById(id);
     if (el) el.innerHTML = `<div class="loading-row">Couldn't load league data (${esc(err.message)}).</div>`;
   }
 
-  return { f1, f2, pct, money, load, card, showError };
+  return { f1, f2, pct, money, load, showError };
 })();

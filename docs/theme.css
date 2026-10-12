@@ -130,12 +130,12 @@ body{
    The extra names are the per-page card classes that were each carrying
    their own byte-identical copy of these four properties (.stat-card in
    league.css plus Franchise and Parlay, .rules-card on Rule Changes,
-   .rivalry-card on Franchise, .median-card on the Dashboard). They share the
+   .median-card on the Dashboard). They share the
    surface here and keep only what actually differs -- their own padding, and
    whether they clip their overflow -- next to the markup that uses them.
    overflow:hidden stays on .glass alone, since the others deliberately
-   differ: .rivalry-card and .median-card let content out. */
-.glass, .stat-card, .rules-card, .rivalry-card, .median-card{
+   differ: .median-card lets content out. */
+.glass, .stat-card, .rules-card, .median-card{
   background: linear-gradient(165deg, var(--surface-2), var(--surface));
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -175,28 +175,22 @@ body{
 }
 
 /* ---------- State accents ----------
-   Outline + tint by default. data-accent="outline" on <html> drops the tint
-   and keeps only the colored outline, so the two readings can be compared on
-   the real pages -- append ?accent=outline to any URL (see nav.js). Written
-   so the default needs no attribute and therefore never flashes.
+   Colored outline + tint.
 
    These three are the generic primitive for a NEW component: mark won/lost/
    leading with one of them and it picks up whatever the site-wide reading
    is. Existing components predate it and spell the same thing with their own
-   state class (.qrow.top, .row.hl, .leg.Win, .pod.tone-win, ...), each
+   state class (.qrow.top, .leg.Win, .arc-tile.champion, ...), each
    pointing at the same --win/--loss/--lead tokens -- so the colors already
    move together even though the class names don't. */
 .is-win{ border-color: var(--win-line); background: var(--win-tint); }
 .is-loss{ border-color: var(--loss-line); background: var(--loss-tint); }
 .is-lead{ border-color: var(--lead-line); background: var(--lead-tint); }
-:root[data-accent="outline"] .is-win,
-:root[data-accent="outline"] .is-loss,
-:root[data-accent="outline"] .is-lead{ background: var(--item); }
 
 /* ---------- Hero: one glowing headline number/name + quiet supporting stats ----------
    The one-hero-per-section rule is deliberate -- previous full-site passes gave every
    tile identical weight, which read as flat. Exactly one number per page section gets
-   this treatment; everything else uses .qrow/.qtiles below. */
+   this treatment; everything else uses .qrow below. */
 /* The side column is sized by its own content (auto), not by a fixed share
    of the card. A ratio gave it whatever was left over, so its labels sat
    marooned from their values on a wide screen; auto makes the column only
@@ -216,11 +210,9 @@ body{
    redesign -- the card is the same flat glass surface as every other panel,
    and the headline's own colour carries it. .glow / .glow-loss are left in
    the markup as harmless hooks. */
-.hero2-eyebrow{ position:relative; color:var(--gold); font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; }
 .hero2-v{ position:relative; font-family:var(--scoreboard); font-weight:900; font-size:clamp(2.2rem,5.5vw,3.4rem); line-height:0.95; margin:9px 0 6px; color:#fff; }
 .hero2-v.turf{ color:var(--turf); }
 .hero2-v.loss{ color:var(--loss); }
-.hero2-sub{ position:relative; color:var(--text-dim); font-size:0.88rem; }
 .hero2-side{ background:rgba(0,0,0,0.22); border-left:1px solid var(--line); padding:24px 28px; display:flex; flex-direction:column; gap:18px; justify-content:center; }
 /* center, not baseline: the label is 0.76rem body text and the value is a
    1.2rem scoreboard numeral, so sitting them on a shared baseline left the
@@ -238,7 +230,6 @@ body{
    strip from collapsing unevenly. */
 .hs-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; color:var(--gold); white-space:nowrap; }
 .hs-v.turf{ color:var(--turf); } .hs-v.loss{ color:var(--loss); } .hs-v.gold{ color:var(--gold); }
-.hs-n{ color:var(--text); font-size:0.76rem; font-weight:600; }
 
 /* Once the hero stacks, the side column stops being a column. A row of
    label-left/value-right lines reads fine beside the headline, but under it
@@ -278,15 +269,8 @@ body{
      the row fits, so between the point where labels start wrapping and the
      point where the rule kicked in there was a band with visible slack.
      No threshold, no band. min-width stays at its auto default so a tile
-     can't be squeezed below this.
-
-     It is scoped away from tiles carrying a .hs-n name line (Overview's
-     "Jared · Jeff · Flanders"), because min-content applies to EVERY child:
-     on those it forced the names onto one word per line while half the row
-     sat empty. Those tiles size to their names, which is real content
-     rather than slack, so they need no hugging. */
-  .hs{ flex:0 1 auto; }
-  .hs:not(:has(.hs-n)){ width:min-content; }
+     can't be squeezed below this. */
+  .hs{ flex:0 1 auto; width:min-content; }
   /* display:contents on .hs-r dissolves it so the value and its sub-line
      become siblings of the label, which is the only way to get all three
      into one order: value, then label, then sub. Reordering .hs-r as a unit
@@ -299,7 +283,6 @@ body{
      intact. */
   .hs-v{ order:1; font-size:clamp(1rem, 5vw, 1.5rem); }
   .hs-l{ order:2; font-size:clamp(0.5rem, 2.4vw, 0.66rem); text-transform:uppercase; letter-spacing:0.04em; line-height:1.25; }
-  .hs-n{ order:3; font-size:clamp(0.58rem, 2.4vw, 0.74rem); line-height:1.3; }
 }
 
 /* ---------- Selectors: tab rows, segmented controls, dropdowns ----------
@@ -516,7 +499,7 @@ body{
    furniture, and the page already spends gold on the eyebrow, the hero
    figure, the rank badges and the selected tab. A fifth claim on it would
    leave none of them meaning anything. Small uppercase and dim is the
-   site's existing caption voice (.qtile-t, .past-logos-label, .act-label). */
+   site's existing caption voice (.past-logos-label, .act-label). */
 .selector-label{
   color: var(--text-dim);
   font-size: 0.68rem;
@@ -672,8 +655,6 @@ body{
 .qrow.top .rk{ color:var(--turf); }
 .qrow.last{ border-color:var(--loss-line); background:var(--loss-tint); }
 .qrow.last .rk{ color:var(--loss); }
-:root[data-accent="outline"] .qrow.top,
-:root[data-accent="outline"] .qrow.last{ background:var(--item); }
 .qrow.po .rk{ color:var(--turf); }
 .qrow.former{ opacity:0.55; }
 
@@ -714,13 +695,6 @@ body{
 .pill.up{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.10); }
 .pill.down{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.10); }
 
-/* ---------- Podium (top three, side by side above a ranked list) ---------- */
-.podium{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-.pod{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 6px; text-align: center; min-width: 0; }
-/* A value too long for the headline size (a record, a date) drops a step
-   rather than wrapping or overflowing its pod. */
-.pod-val.long{ font-size: 1.25rem; }
-
 /* ---------- Stat column inside a row (W / L / PCT etc.) ----------
    The container's gap and each column's floor width differ by page (how many
    columns, how wide the widest value is), so only the numeral and its
@@ -757,26 +731,6 @@ body{
 .open .chev, .expanded .chev, details[open] > summary .chev{ transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce){ .chev{ transition: none; } }
 
-/* ---------- Quiet tile strip ---------- */
-.qtiles{ display:flex; gap:30px; flex-wrap:wrap; padding:24px 30px; }
-@media (max-width:560px){ .qtiles{ gap:20px; padding:20px; } }
-/* Centered so a short value (e.g. "9") sits in the middle of its tile's
-   width, not flush left of a longer label below it (e.g. "PLAYOFF APPS."). */
-.qtile-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; color:var(--gold); text-align:center; }
-.qtile-v.turf{ color:var(--turf); } .qtile-v.loss{ color:var(--loss); }
-.qtile-t{ color:var(--text-dim); font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; text-align:center; }
-.qtile-n{ font-weight:600; font-size:0.82rem; margin-top:6px; text-align:center; }
-.qtile-s{ color:var(--text-dim); font-size:0.7rem; margin-top:2px; text-align:center; }
-
-/* ---------- Dot-rail timeline (Season Timeline, Rule Changes) ---------- */
-.rail{ position:relative; padding-left:22px; }
-.rail::before{ content:''; position:absolute; left:4px; top:4px; bottom:4px; width:1px; background:var(--line); }
-.rail-item{ position:relative; margin-bottom:14px; }
-.rail-item:last-child{ margin-bottom:0; }
-.rail-dot{ position:absolute; left:-22px; top:5px; width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 10px rgba(212,180,106,0.6); }
-.rail-yr{ font-family:var(--scoreboard); font-weight:800; font-size:1rem; color:var(--gold); margin-bottom:6px; }
-.rail-chg{ background:rgba(255,255,255,0.03); border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:0.82rem; margin-top:6px; }
-.rail-chg:first-of-type{ margin-top:0; }
 
 /* ---------- Live pulse (Dashboard, Parlay) ---------- */
 .pulse-dot{ width:7px; height:7px; border-radius:50%; background:var(--loss); animation:pulse 1.6s ease-in-out infinite; display:inline-block; }
@@ -841,7 +795,6 @@ h2{
 
 .qrow.lead{ border-color:var(--lead-line); background:var(--lead-tint); }
 .qrow.lead .rk, .qrow.lead .rec{ color:var(--gold); }
-:root[data-accent="outline"] .qrow.lead{ background:var(--item); }
 .gap{ height:14px; }
 
 .loading-row{ padding: 30px 16px; color: var(--text-dim); font-size: 0.9rem; text-align: center; }

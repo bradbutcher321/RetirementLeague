@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=17">
+<link rel="stylesheet" href="theme.css?v=18">
 <link rel="stylesheet" href="nav.css?v=5">
 <style>
   /* ---------- Matchup cards ----------
@@ -365,7 +365,6 @@
      spread strip (right, fixed width) side by side, so the grids run 2
      columns x 3 rows instead of 3 x 2 to leave room for it. */
   .card-body{ display: grid; grid-template-columns: 1fr auto; gap: 16px; }
-  .live-dot{ display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--loss); --pc: 192,87,75; animation: live-pulse 1.6s infinite; }
   @keyframes live-pulse{
     0%{ box-shadow: 0 0 0 0 rgba(var(--pc), 0.6); }
     70%{ box-shadow: 0 0 0 6px rgba(var(--pc), 0); }
@@ -389,12 +388,6 @@
      the card header, and there's no space in this narrow a column to
      print it here without it colliding with the name rows on the line. */
   .vplot .median-tick{ position: absolute; left: 0; right: 0; height: 1px; background: var(--gold); box-shadow: 0 0 8px rgba(212,180,106,0.7); z-index: 2; }
-  /* Fixed-opacity backdrop marking which half of the plot is above vs.
-     below the median -- not a per-team proportional bar, since its two
-     bands don't scale with any one team's value. */
-  .median-zone-wash{ position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none; }
-  .median-zone-wash.above{ background: linear-gradient(to top, transparent, rgba(79,174,122,0.07)); }
-  .median-zone-wash.below{ background: linear-gradient(to bottom, transparent, rgba(214,98,79,0.07)); }
   /* Background is set inline per-row (solid green/above, solid red/below,
      or a split gradient sized to how many members are on each side of the
      median for a merged row) since it varies per team composition. Width
@@ -1124,7 +1117,7 @@
     <footer id="site-footer" data-note="Refreshes every 2 minutes"></footer>
   </div>
 
-<script src="nav.js?v=4"></script>
+<script src="nav.js?v=5"></script>
 <script src="page-common.js?v=16"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
@@ -2061,7 +2054,7 @@
     return (belowEdge + aboveEdge) / 2;
   }
 
-  function renderSpreadChart(elId, ascendingTeams, median, zones, noWash, chipStyle) {
+  function renderSpreadChart(elId, ascendingTeams, median, zones, chipStyle) {
     const el = document.getElementById(elId);
     if (!el || ascendingTeams.length < 2) return;
     const plotSize = el.clientHeight || 220;
@@ -2075,15 +2068,7 @@
     const GREEN = 'rgba(76,154,107,0.28)';
 
     let html = '';
-    // Soft background wash marking "above" (toward higher scores, top of
-    // the plot) vs "below" the median -- a fixed-opacity backdrop behind
-    // everything else, not a per-team proportional bar, so it reinforces
-    // direction without claiming to encode any one team's distance from it.
     const medianPct = toTopPct(findMedianTickPos(clusters, median, plotSize));
-    if (!noWash) {
-      html += `<div class="median-zone-wash above" style="top:0; height:${medianPct}%;"></div>`;
-      html += `<div class="median-zone-wash below" style="top:${medianPct}%; height:${100 - medianPct}%;"></div>`;
-    }
     if (zones) {
       if (zones.up !== null) {
         const yUp = toTopPct(findMedianTickPos(clusters, median, plotSize, m => m.score <= zones.up));
@@ -2319,7 +2304,7 @@
         <div id="median-body">${bodyHtml}</div>
       </div>`;
     if (rows) {
-      renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+      renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones);
       // Every card/chart element needs a view-transition-name BEFORE a
       // toggle starts, not just after one -- the browser's View Transition
       // snapshots whatever names are already in the DOM at the moment
@@ -2345,7 +2330,7 @@
         const mode = medianViewMode;
         document.fonts.ready.then(() => {
           if (medianViewMode === mode) {
-            renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
+            renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones);
             tagMedianTransitionNames();
           }
         });
@@ -3230,7 +3215,7 @@
       </div>`;
     document.getElementById('median-above').innerHTML = mwGridHtml(rows.above, 'turf', medianValue);
     document.getElementById('median-below').innerHTML = mwGridHtml(rows.below, 'loss', medianValue);
-    renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true, true);
+    renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones, true);
     tagMedianTransitionNames();
 
     if (oldMode && oldMode !== mode) {

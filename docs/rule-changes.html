@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=17">
+<link rel="stylesheet" href="theme.css?v=18">
 <link rel="stylesheet" href="nav.css?v=5">
 <style>
   /* Selector styling lives in theme.css -- only this page's spacing here. */
@@ -91,9 +91,6 @@
      reads "old -> new". */
   .rules-chip.line-added{ border-color: var(--lead-line); background: var(--lead-tint); color: var(--gold); }
   .rules-chip.line-dropped{ border-color: var(--loss-line); background: var(--loss-tint); }
-  :root[data-accent="outline"] .rules-chip.line-changed,
-  :root[data-accent="outline"] .rules-chip.line-added,
-  :root[data-accent="outline"] .rules-chip.line-dropped{ background: var(--item); }
   .rules-chip.line-dropped .now{ color: var(--loss); }
   .rules-chip .was{ color: var(--text-dim); margin-right: 2px; }
   .rules-chip .now{ color: var(--gold); font-weight: 700; }
@@ -106,8 +103,6 @@
   }
   .manager-chip.added{ background: var(--win-tint); border-color: var(--win-line); color: var(--turf); }
   .manager-chip.removed{ background: var(--loss-tint); border-color: var(--loss-line); color: var(--loss); }
-  :root[data-accent="outline"] .manager-chip.added,
-  :root[data-accent="outline"] .manager-chip.removed{ background: var(--item); }
 
   /* ---------- Timeline ----------
      Each year is its own glass panel sitting beside its dot on the rail,
@@ -128,8 +123,6 @@
   .manager-delta{ display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; margin: 2px 3px 2px 0; }
   .manager-delta.in{ background: var(--win-tint); color: var(--turf); border: 1px solid var(--win-line); }
   .manager-delta.out{ background: var(--loss-tint); color: var(--loss); border: 1px solid var(--loss-line); }
-  :root[data-accent="outline"] .manager-delta.in,
-  :root[data-accent="outline"] .manager-delta.out{ background: none; }
 </style>
 </head>
 <body>
@@ -161,7 +154,7 @@
     <footer id="site-footer" data-note="Money from the league sheet"></footer>
   </div>
 
-<script src="nav.js?v=4"></script>
+<script src="nav.js?v=5"></script>
 <script src="page-common.js?v=16"></script>
 <script>
 
