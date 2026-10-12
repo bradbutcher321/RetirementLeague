@@ -67,12 +67,13 @@ export async function sendTest(request, env) {
     url: "index.html",
     tag: "test",
   });
-  return { status: status < 300 ? 200 : 502, body: { ok: status < 300, pushStatus: status } };
+  const ok = status >= 200 && status < 300;
+  return { status: ok ? 200 : 502, body: { ok, pushStatus: status } };
 }
 
 /** Sends, and forgets a subscription the push service says is gone. */
 async function deliver(env, sub, message) {
-  const status = await sendPush(env, sub, { ...message, url: SITE + (message.url || "") }).catch(() => 0);
+  const status = await sendPush(env, sub, { ...message, url: SITE + (message.url || "") }).catch((err) => { console.error("Push send failed:", err && err.stack || err); return 0; });
   if (status === 404 || status === 410) {
     await env.DB.prepare("DELETE FROM push_subs WHERE endpoint = ?1").bind(sub.endpoint).run();
   }
@@ -106,7 +107,7 @@ function currentEvents(year, dashboard, parlay) {
           to: me,
           pref: "final",
           message: {
-            title: `Week ${week} final: ${head} ${f2(mine)}–${f2(theirs)}`,
+            title: `Week ${week} final: ${head} ${f2(mine)}â€“${f2(theirs)}`,
             body: `You ${verb} ${opp}${mine !== theirs ? ` by ${f2(Math.abs(mine - theirs))}` : ""}.`,
             url: "index.html",
             tag: `final-${week}`,

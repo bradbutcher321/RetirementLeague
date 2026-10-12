@@ -39,7 +39,9 @@ async function hmac(key, data) {
 }
 
 async function vapidHeader(env, endpoint) {
-  const jwk = JSON.parse(env.VAPID_PRIVATE_JWK);
+  // Trimmed of a byte-order mark: a secret piped in from PowerShell once
+  // arrived with one, and JSON.parse rejects it.
+  const jwk = JSON.parse(String(env.VAPID_PRIVATE_JWK).replace(/^\uFEFF/, '').trim());
   const key = await crypto.subtle.importKey("jwk", { ...jwk, key_ops: ["sign"] }, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
   const head = b64uEncode(enc.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
   const body = b64uEncode(enc.encode(JSON.stringify({
