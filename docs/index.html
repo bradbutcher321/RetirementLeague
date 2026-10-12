@@ -233,6 +233,93 @@
   .mu-sub.up{ color: var(--turf); font-weight: 700; }
   .mu-sub.down{ color: var(--loss); font-weight: 700; }
 
+  /* A starter opens his game log. The hover fill only where there's a
+     pointer to hover with; the live/possession outlines stay as they are. */
+  .mu-pc[data-pid]{ cursor: pointer; }
+  @media (hover: hover){
+    .mu-pc[data-pid]:not(.live):not(.possession):hover{ background: rgba(255,255,255,0.04); }
+  }
+  .mu-pc[data-pid]:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  .mu-pc.pl-on{ box-shadow: inset 0 0 0 1px var(--lead-line); }
+
+  /* ---------- Player game log (sheet on a phone, popover on desktop) ---------- */
+  #pl-pop{ padding: 12px 14px 10px; max-width: 460px; }
+  #pl-sheet .sheet-head{ padding: 26px 18px 0; }
+  #pl-sheet .sheet-body{ padding: 0 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
+  #pl-sheet .sheet-grab{ position: relative; }
+  .pl-head{ display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  #pl-pop .pl-head{ grid-template-columns: minmax(0,1fr) auto auto; }
+  .pl-name{ display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 1.15rem; font-weight: 700; }
+  .pl-name > span:first-child{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #pl-sheet .pl-name{ font-size: 1.3rem; }
+  .pl-inj{ flex: none; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; color: var(--loss); border: 1px solid rgba(214,98,79,0.45); background: rgba(214,98,79,0.08); border-radius: 999px; padding: 1px 6px; }
+  .pl-sub{ font-size: 0.74rem; color: var(--text-dim); margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
+  .pl-total{ text-align: right; }
+  .pl-total b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.9rem; line-height: 0.95; color: var(--gold); font-variant-numeric: tabular-nums; }
+  #pl-sheet .pl-total b{ font-size: 2.3rem; }
+  .pl-total span{ font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); }
+  #pl-pop .pl-x{ align-self: start; }
+
+  /* The season as bars: solid gold for points scored, a hollow outline for
+     a projection, the week on screen ringed. Tapping a bar brings its row up. */
+  .pl-bars{ display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 2px; height: 74px; margin: 14px 0 4px; }
+  .pl-bar{ display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; min-width: 0; padding: 0; border: 0; background: none; cursor: pointer; font: inherit; color: inherit; }
+  .pl-bar i{ display: block; margin: 0 2px; border-radius: 4px 4px 0 0; background: var(--gold); min-height: 2px; }
+  .pl-bar.fut i{ background: rgba(255,255,255,0.03); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28); }
+  .pl-bar.cur i{ box-shadow: 0 0 0 2px #151515, 0 0 0 3px var(--gold); }
+  .pl-bar.dnp i, .pl-bar.bye i{ background: rgba(255,255,255,0.14); box-shadow: none; }
+  .pl-bar span{ display: block; text-align: center; font-size: 0.56rem; color: var(--text-dim); margin-top: 4px; font-variant-numeric: tabular-nums; line-height: 1; }
+  .pl-bar.cur span{ color: var(--gold); font-weight: 700; }
+  .pl-bar:focus-visible{ outline: 2px solid var(--gold); outline-offset: 1px; border-radius: 4px; }
+  .pl-key{ display: flex; gap: 14px; justify-content: flex-end; font-size: 0.62rem; color: var(--text-dim); margin-bottom: 4px; }
+  .pl-key i{ display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; background: var(--gold); }
+  .pl-key i.fut{ background: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4); }
+
+  .pl-list{ margin-top: 6px; }
+  .pl-row{ display: grid; grid-template-columns: 30px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 8px; border-radius: 9px; border: 1px solid transparent; }
+  .pl-row + .pl-row{ border-top-color: rgba(255,255,255,0.05); border-radius: 0; }
+  .pl-row.cur, .pl-row.cur + .pl-row{ border-radius: 9px; }
+  .pl-row.cur{ border-color: var(--lead-line); background: var(--lead-tint); }
+  .pl-row.flash{ animation: pl-flash 1.2s ease-out; }
+  @keyframes pl-flash{ from{ background: rgba(212,180,106,0.16); } }
+  .pl-wk{ font-size: 0.66rem; font-weight: 700; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .pl-wk b{ display: block; font-family: var(--scoreboard); font-size: 1rem; color: var(--text); line-height: 1; }
+  .pl-row.cur .pl-wk b{ color: var(--gold); }
+  .pl-opp{ font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pl-opp em{ font-style: normal; font-weight: 500; color: var(--text-dim); }
+  /* The roster's game line, in full: the sheet has room for the PM and the opponent. */
+  .pl-opp .mu-n{ display: none; }
+  .pl-opp .mu-w{ display: inline; }
+  .pl-opp .clk{ color: var(--text); }
+  .pl-opp .ldot{ display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--loss); margin-right: 4px; vertical-align: 1px; animation: pulse 1.6s ease-in-out infinite; }
+  .pl-opp .ball{ display: inline-block; width: 9px; height: 6px; border-radius: 50%; background: var(--gold); margin-right: 4px; }
+  .pl-line{ font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; line-height: 1.35; }
+  .pl-pts{ text-align: right; font-variant-numeric: tabular-nums; }
+  .pl-pts b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.08rem; line-height: 1; }
+  .pl-pts span{ display: block; font-size: 0.62rem; color: var(--text-dim); margin-top: 3px; white-space: nowrap; }
+  .pl-row.fut .pl-pts b, .pl-row.dim .pl-pts b{ color: var(--text-dim); font-weight: 600; }
+  .pl-row.bye .pl-opp{ color: var(--text-dim); font-weight: 500; letter-spacing: 0.04em; }
+  .pl-div{ font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); margin: 14px 8px 4px; }
+  .pl-msg{ padding: 26px 0; text-align: center; font-size: 0.8rem; color: var(--text-dim); }
+
+  /* ---------- Week stepper (header) ---------- */
+  /* One pill split in two, no wider than the Updated stamp under it, so
+     the header keeps the title and this column side by side at 430px.
+     Each half's tap area reaches 44px tall past the pill. */
+  .wk-step{ display: inline-flex; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.06); }
+  .wk-step[hidden]{ display: none; }
+  .wk-step button{ position: relative; width: 34px; height: 30px; border: 0; background: none; color: var(--text); display: grid; place-items: center; cursor: pointer; padding: 0; border-radius: 999px; }
+  .wk-step button + button{ box-shadow: -1px 0 0 var(--line); border-radius: 0 999px 999px 0; }
+  .wk-step button:first-child{ border-radius: 999px 0 0 999px; }
+  .wk-step button::after{ content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }
+  .wk-step button svg{ width: 8px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .wk-step button:disabled{ opacity: 0.3; cursor: default; }
+  @media (hover: hover){ .wk-step button:not(:disabled):hover{ color: var(--gold); } }
+  .wk-step button:focus-visible, .wk-live:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .wk-live{ font: inherit; color: var(--gold); background: none; border: 0; padding: 0; cursor: pointer; }
+  /* While a past week loads, what's on screen steps back. */
+  body.wk-loading .wrap > section{ opacity: 0.45; transition: opacity .2s; pointer-events: none; }
+
   /* Series line (site audit 27): the pair's all-time record before this
      week, under the pips. A link to Head to Head, so it gets the full 44px
      tap height and its own hairline, apart from the expand-on-tap card. */
@@ -1022,8 +1109,15 @@
           <div class="eyebrow">Retirement League</div>
           <h1 id="week-header">Live Dashboard</h1>
         </div>
+        <!-- Week stepper: back through finished weeks (each rebuilt by the
+             Worker's /?week=N), forward again to the live one. On a past
+             week the Updated stamp gives way to a jump back to live. -->
         <div class="updated-block">
-          <div class="updated-label">Updated</div>
+          <div class="wk-step" id="wk-step" hidden>
+            <button type="button" data-wk="-1" aria-label="Previous week"><svg viewBox="0 0 8 12" aria-hidden="true"><path d="M6 2L2 6l4 4"/></svg></button>
+            <button type="button" data-wk="1" aria-label="Next week"><svg viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4"/></svg></button>
+          </div>
+          <div class="updated-label" id="updated-label">Updated</div>
           <div class="updated-value" id="updated-at">—</div>
         </div>
       </div>
@@ -1065,7 +1159,7 @@
     </section>
 
     <section>
-      <h2>This week's matchups</h2>
+      <h2 id="matchups-h">This week's matchups</h2>
       <div class="matchups" id="matchups-container">
         <span class="sr-only">Loading matchups…</span>
         <div class="sk" aria-hidden="true">
@@ -1250,7 +1344,7 @@
       ? `<div class="mu-sub">${fmtScore(p.projectedPoints)}</div>`
       : `<div class="mu-sub ${delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : ''}" title="Projected ${fmtScore(p.projectedPoints)}">${delta >= 0 ? '▲' : '▼'} ${fmtScore(Math.abs(delta))}</div>`;
     return `
-      <div class="mu-pc ${side} ${state || ''}" data-pn="${encodeURIComponent(p.name || '')}">
+      <div class="mu-pc ${side} ${state || ''}${p.id && p.id === plOpenId ? ' pl-on' : ''}" data-pn="${encodeURIComponent(p.name || '')}"${p.id ? ` data-pid="${p.id}" role="button" tabindex="0" aria-label="${esc(p.name || '')}: game log"` : ''}>
         <div class="mu-pinfo">
           <div class="player-name"><span class="name-text">${shortName(p)}</span>${teamTag}</div>
           <div class="mu-gline">${playerGameLine(p, state)}</div>
@@ -1581,7 +1675,8 @@
   }
 
   // The one number the card itself doesn't show: the other mode's total.
-  const mwOtherTotal = t => medianViewMode === 'current' ? `proj<b>${fmtScore(t.projected)}</b>`
+  const mwOtherTotal = t => lastMedianData && lastMedianData.archived ? 'final'
+    : medianViewMode === 'current' ? `proj<b>${fmtScore(t.projected)}</b>`
     : medianViewMode === 'average' ? `proj<b>${fmtScore(t.projected)}</b> · now<b>${fmtScore(t.current)}</b>`
     : `now<b>${fmtScore(t.current)}</b>`;
 
@@ -1719,24 +1814,288 @@
   // Crossing 720px swaps sheet for popover: close whichever was open.
   mwOneColumn.addEventListener('change', mwHide);
 
+  // ---------- Player game log ----------
+  // Tap a starter in an open matchup: his season week by week -- points and
+  // stat line for weeks played, opponent (or bye) and ESPN's projection for
+  // the weeks ahead (the Worker's /player, worker/src/playerLog.js). The row
+  // for the week on screen is drawn from the dashboard's own numbers, so it
+  // stays as live as the card it was opened from.
+  let plOpenId = null;
+  const plLogs = new Map(); // "id:liveWeek" -> Promise of the log
+  const PL_INJURY = { OUT: 'OUT', QUESTIONABLE: 'Q', DOUBTFUL: 'D', INJURY_RESERVE: 'IR', SUSPENSION: 'SUSP' };
+
+  function plFind(id) {
+    for (const m of (shownData && shownData.matchups) || []) {
+      const p = [...(m.awayPlayers || []), ...(m.homePlayers || [])].find(x => x.id === id);
+      if (p) return p;
+    }
+    return null;
+  }
+
+  const plLiveWeek = () => (liveData && (liveData.liveWeek || liveData.week)) || (shownData && (shownData.liveWeek || shownData.week)) || 1;
+
+  function plFetch(id) {
+    const live = plLiveWeek();
+    const last = Math.max((shownData && shownData.finalWeek) || 17, live);
+    const key = `${id}:${live}`;
+    if (!plLogs.has(key)) {
+      plLogs.set(key, fetch(`${WORKER_URL}/player?id=${id}&week=${live}&last=${last}`)
+        .then(res => res.json())
+        .then(d => { if (!d || !Array.isArray(d.weeks)) throw new Error((d && d.error) || 'No game log'); return d; })
+        .catch(err => { plLogs.delete(key); throw err; }));
+    }
+    return plLogs.get(key);
+  }
+
+  const plOpp = r => `${r.home ? 'vs' : '@'} ${esc(r.opp || '')}`;
+  function plDate(ms) {
+    return new Date(ms).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  function plHeadHtml(p, log, closeBtn) {
+    const name = (log && log.name) || (p && p.name) || '';
+    const team = (log && log.team) || (p && p.game && p.game.team) || '';
+    const inj = log && log.injury ? `<span class="pl-inj">${PL_INJURY[log.injury] || esc(log.injury)}</span>` : '';
+    const pos = (log && log.position) || (p && p.slot) || '';
+    const sub = log
+      ? [pos, log.games ? `${fmtScore(log.avg)} a game` : '', `${log.games} game${log.games === 1 ? '' : 's'} played`].filter(Boolean).join(' · ')
+      : pos;
+    return `<div class="pl-head">
+      <div style="min-width:0">
+        <div class="pl-name"><span>${esc(name)}</span>${team ? `<span class="team-tag">${esc(team)}</span>` : ''}${inj}</div>
+        <div class="pl-sub">${esc(sub)}</div>
+      </div>
+      ${log ? `<div class="pl-total"><b>${fmtScore(log.total)}</b><span>Season pts</span></div>` : ''}
+      ${closeBtn || ''}
+    </div>`;
+  }
+
+  // Each week as { w, kind, value, ... }: kind is past, cur, fut, dnp or bye.
+  function plWeeks(log, p) {
+    const cur = (shownData && shownData.week) || log.liveWeek;
+    return log.weeks.map(r => {
+      const row = { ...r };
+      if (r.bye) row.kind = 'bye';
+      else if (r.w === cur) {
+        row.kind = 'cur';
+        if (p) {
+          const st = playerState(p);
+          row.pts = p.livePoints !== null && p.livePoints !== undefined ? p.livePoints : null;
+          row.proj = p.projectedPoints;
+          row.line = p.statLine || '';
+          row.gline = p.game ? playerGameLine(p, st) : null;
+          row.state = st;
+        }
+      } else if (r.w === log.liveWeek && typeof r.pts === 'number' && !r.dnp) row.kind = 'past'; // this week, seen from a past one
+      else if (r.w >= log.liveWeek) row.kind = 'fut';
+      else if (r.dnp || typeof r.pts !== 'number') row.kind = 'dnp';
+      else row.kind = 'past';
+      // A bar shows points once there are any, else the projection.
+      const started = row.kind === 'cur' && row.state && row.state !== 'pre' && typeof row.pts === 'number';
+      row.barFut = row.kind === 'fut' || (row.kind === 'cur' && !started && !(row.w < log.liveWeek));
+      row.value = row.kind === 'past' ? row.pts
+        : row.kind === 'fut' ? (row.proj || 0)
+        : row.kind === 'cur' ? (row.barFut ? (row.proj || 0) : (row.pts || 0))
+        : 0;
+      return row;
+    });
+  }
+
+  function plBarsHtml(rows) {
+    const max = Math.max(1, ...rows.map(r => r.value || 0));
+    return `<div class="pl-bars" role="img" aria-label="Points by week">${rows.map(r => {
+        const h = r.kind === 'bye' || r.kind === 'dnp' ? 2 : Math.max(2, Math.round(((r.value || 0) / max) * 56));
+        const what = r.kind === 'bye' ? 'bye' : r.kind === 'dnp' ? 'did not play' : `${fmtScore(r.value)}${r.barFut ? ' projected' : ''}`;
+        const cls = [r.barFut ? 'fut' : '', r.kind === 'cur' ? 'cur' : '', r.kind === 'bye' ? 'bye' : '', r.kind === 'dnp' ? 'dnp' : ''].filter(Boolean).join(' ');
+        return `<button type="button" class="pl-bar ${cls}" data-pl-wk="${r.w}" title="Week ${r.w}: ${what}" aria-label="Week ${r.w}: ${what}"><i style="height:${h}px"></i><span>${r.w}</span></button>`;
+      }).join('')}</div>
+      <div class="pl-key"><span><i></i>Scored</span><span><i class="fut"></i>Projected</span></div>`;
+  }
+
+  function plRowHtml(r) {
+    const head = `<span class="pl-wk">Wk<b>${r.w}</b></span>`;
+    if (r.kind === 'bye') return `<div class="pl-row bye" data-pl-row="${r.w}">${head}<div class="pl-opp">BYE</div><div></div></div>`;
+    let mid, pts;
+    if (r.kind === 'cur') {
+      const opp = r.gline || `${plOpp(r)}${r.date ? ` <em>· ${plDate(r.date)}</em>` : ''}`;
+      mid = `<div class="pl-opp">${opp}</div>${r.line ? `<div class="pl-line">${esc(r.line)}</div>` : ''}`;
+      pts = typeof r.pts === 'number'
+        ? `<b>${fmtScore(r.pts)}</b>${typeof r.proj === 'number' ? `<span>proj ${fmtScore(r.proj)}</span>` : ''}`
+        : `<b>${typeof r.proj === 'number' ? fmtScore(r.proj) : '–'}</b><span>proj</span>`;
+    } else if (r.kind === 'fut') {
+      mid = `<div class="pl-opp">${plOpp(r)} <em>· ${r.date ? plDate(r.date) : 'TBD'}</em></div>`;
+      pts = `<b>${typeof r.proj === 'number' ? fmtScore(r.proj) : '–'}</b><span>proj</span>`;
+    } else {
+      mid = `<div class="pl-opp">${plOpp(r)}</div><div class="pl-line">${r.kind === 'dnp' ? 'Did not play' : esc(r.line || '')}</div>`;
+      pts = `<b>${r.kind === 'dnp' ? '–' : fmtScore(r.pts)}</b>${typeof r.proj === 'number' && r.kind !== 'dnp' ? `<span>proj ${fmtScore(r.proj)}</span>` : ''}`;
+    }
+    const cls = r.kind === 'cur' ? 'cur' : r.kind === 'fut' ? 'fut' : r.kind === 'dnp' ? 'dim' : '';
+    return `<div class="pl-row ${cls}" data-pl-row="${r.w}">${head}<div style="min-width:0">${mid}</div><div class="pl-pts">${pts}</div></div>`;
+  }
+
+  function plBodyHtml(log, p) {
+    const rows = plWeeks(log, p);
+    let list = '', aheadShown = false;
+    rows.forEach(r => {
+      // One divider where the projections start.
+      if (!aheadShown && r.kind === 'fut') {
+        list += '<div class="pl-div">Ahead · projected</div>';
+        aheadShown = true;
+      }
+      list += plRowHtml(r);
+    });
+    return plBarsHtml(rows) + `<div class="pl-list">${list}</div>`;
+  }
+
+  // On desktop the tapped player keeps a gold outline beside his popover.
+  function plMark() {
+    document.querySelectorAll('.mu-pc.pl-on').forEach(el => el.classList.remove('pl-on'));
+    if (plOpenId && !mwOneColumn.matches) {
+      const cell = document.querySelector(`.mu-pc[data-pid="${plOpenId}"]`);
+      if (cell) cell.classList.add('pl-on');
+    }
+  }
+
+  // Fills whichever panel is open: the log, or a loading/error line.
+  function plRender(log, msg) {
+    const p = plFind(plOpenId);
+    const body = log ? plBodyHtml(log, p) : `<div class="pl-msg">${msg || 'Loading game log…'}</div>`;
+    const pop = document.getElementById('pl-pop');
+    if (pop) {
+      pop.innerHTML = plHeadHtml(p, log, '<button type="button" class="x pl-x" data-pl-close aria-label="Close">&times;</button>') + body;
+      plPlace();
+      return;
+    }
+    const sheet = document.getElementById('pl-sheet');
+    if (!sheet) return;
+    sheet.querySelector('[data-head]').innerHTML = plHeadHtml(p, log);
+    const b = sheet.querySelector('[data-body]');
+    const keep = b.scrollTop;
+    b.innerHTML = body;
+    b.scrollTop = keep;
+  }
+
+  function plOpen(id) {
+    mwHide();
+    if (mhIsOpen) mhClose();
+    plHide();
+    plOpenId = id;
+    const p = plFind(id);
+    const label = esc(`${(p && p.name) || 'Player'}: game log`);
+    if (!mwOneColumn.matches) {
+      document.body.insertAdjacentHTML('beforeend', `<div class="pop" id="pl-pop" role="dialog" aria-label="${label}"></div>`);
+    } else {
+      document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="pl-scrim" data-pl-close></div>
+        <div class="sheet" id="pl-sheet" role="dialog" aria-modal="true" aria-label="${label}">
+          <div class="sheet-grab" data-grab><span></span><button type="button" class="mwp-done" data-pl-close>Done</button></div>
+          <div class="sheet-head" data-grab data-head></div>
+          <div class="sheet-body" data-body></div></div>`);
+      mwWireSwipe(document.getElementById('pl-sheet'), plHide);
+    }
+    plMark();
+    plRender(null);
+    plFetch(id)
+      .then(log => {
+        if (plOpenId !== id) return;
+        plRender(log);
+        plScrollTo((shownData && shownData.week) || log.liveWeek, false);
+      })
+      .catch(() => { if (plOpenId === id) plRender(null, 'Couldn’t load this game log. Try again in a minute.'); });
+  }
+
+  function plHide() {
+    plOpenId = null;
+    plMark();
+    ['pl-pop', 'pl-sheet', 'pl-scrim'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
+  }
+
+  // The sheet opens with the week on screen near the top of its list (the
+  // weeks before it are a scroll up); a tapped bar brings its row up and
+  // flashes it.
+  function plScrollTo(week, flash) {
+    const panel = document.getElementById('pl-sheet') || document.getElementById('pl-pop');
+    const row = panel && panel.querySelector(`[data-pl-row="${week}"]`);
+    if (!row) return;
+    const body = panel.querySelector('[data-body]');
+    if (body) {
+      const top = row.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
+      // Opening: the bars stay in view unless the row would start below the
+      // sheet's fold; then it comes up to just under the middle.
+      const target = flash ? top - 60 : (top + row.offsetHeight > body.clientHeight ? top - body.clientHeight * 0.45 : 0);
+      body.scrollTo({ top: Math.max(0, target), behavior: flash && !mwReduceMotion ? 'smooth' : 'auto' });
+    } else if (flash) {
+      row.scrollIntoView({ block: 'nearest', behavior: mwReduceMotion ? 'auto' : 'smooth' });
+    }
+    if (flash) { row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); }
+  }
+
+  // Under the tapped player, 400-460px wide, never off the side of the
+  // screen, arrow on the player.
+  function plPlace() {
+    const pop = document.getElementById('pl-pop');
+    if (!pop) return;
+    const cell = plOpenId && document.querySelector(`.mu-pc[data-pid="${plOpenId}"]`);
+    if (!cell) { plHide(); return; }
+    for (let pass = 0; pass < 2; pass++) {
+      const r = cell.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+      const w = Math.min(Math.max(r.width, 400), 460, vw - 24);
+      const left = Math.min(Math.max(r.left + r.width / 2 - w / 2, 12), vw - w - 12);
+      pop.style.width = w + 'px';
+      pop.style.left = (left + scrollX) + 'px';
+      pop.style.top = (r.bottom + scrollY + 10) + 'px';
+      pop.style.setProperty('--arrow-x', (r.left + r.width / 2 - left) + 'px');
+    }
+  }
+
+  // After every dashboard render: the open log takes the new numbers, and
+  // closes if its player is no longer on screen (another week).
+  function plRefresh() {
+    if (!plOpenId) return;
+    if (!plFind(plOpenId)) { plHide(); return; }
+    plMark();
+    const log = plLogs.get(`${plOpenId}:${plLiveWeek()}`);
+    if (log) log.then(l => { if (plOpenId === l.id) plRender(l); }).catch(() => {});
+    else plPlace();
+  }
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-pl-close]')) { plHide(); return; }
+    const bar = e.target.closest('[data-pl-wk]');
+    if (bar) { plScrollTo(Number(bar.dataset.plWk), true); return; }
+    // Desktop: a click anywhere but the popover or a player closes it.
+    if (plOpenId && !mwOneColumn.matches && !e.target.closest('#pl-pop') && !e.target.closest('.mu-pc[data-pid]')) plHide();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && plOpenId) { plHide(); return; }
+    const cell = (e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('.mu-pc[data-pid]');
+    if (cell) { e.preventDefault(); plOpen(Number(cell.dataset.pid)); }
+  });
+  addEventListener('resize', plPlace);
+  mwOneColumn.addEventListener('change', plHide);
+
   // ---------- Median Watch: the projected median over the week ----------
   // The Worker's scheduled run saves the projected median and every team's
   // projection (10 minutes apart during games, hourly otherwise); this
   // charts them, plus the live poll as the newest point. A sparkline sits
   // in the median label; tapping it opens the full chart, where any number
   // of managers -- none by default -- can be drawn against the median.
-  let mhHistory = null, mhFetchedAt = 0, mhIsOpen = false, mhResizeT;
+  let mhHistory = null, mhFetchedAt = 0, mhFetchedFor = null, mhIsOpen = false, mhResizeT;
   let mhSel = new Set();
   try { mhSel = new Set(JSON.parse(localStorage.getItem('mhManagers') || '[]')); } catch (e) {}
   const mhSave = () => { try { localStorage.setItem('mhManagers', JSON.stringify([...mhSel])); } catch (e) {} };
 
   function mhLoad() {
-    if (Date.now() - mhFetchedAt < 4 * 60 * 1000) return;
+    // A past week's chart never changes; the live one is polled.
+    const archived = Boolean(lastMedianData && lastMedianData.archived);
+    const want = archived ? dashWeek : 'live';
+    if (want === mhFetchedFor && (archived || Date.now() - mhFetchedAt < 4 * 60 * 1000)) return;
     mhFetchedAt = Date.now();
-    fetch(WORKER_URL + '/median-history', { cache: 'no-store' })
+    mhFetchedFor = want;
+    const week = dashWeek;
+    fetch(WORKER_URL + '/median-history' + (archived ? `?week=${week}` : ''), { cache: 'no-store' })
       .then(res => res.json())
       .then(d => {
-        if (!d || !Array.isArray(d.points)) return;
+        if (!d || !Array.isArray(d.points) || week !== dashWeek) return;
         const had = mhSeries().length >= 2;
         mhHistory = d;
         // The card was built before the history arrived: swap the plain
@@ -1753,7 +2112,7 @@
   // Saved snapshots for the week on screen, then the live poll if it's newer.
   function mhSeries() {
     const pts = mhHistory && mhHistory.week === dashWeek ? mhHistory.points.slice() : [];
-    if (lastMedianData && lastMedianTeams) {
+    if (lastMedianData && lastMedianTeams && !lastMedianData.archived) {
       const t = Math.floor(Date.parse(lastMedianData.updatedAt) / 1000);
       if (t && (!pts.length || t > pts[pts.length - 1].t + 30)) {
         const p = {};
@@ -1767,7 +2126,7 @@
 
   function medianSplitHtml(mode, medianValue, id) {
     const idAttr = id ? ` id="${id}"` : '';
-    const label = MW_MODES[mode].label;
+    const label = lastMedianData && lastMedianData.archived ? 'Median' : MW_MODES[mode].label;
     if (mode !== 'projected' || mhSeries().length < 2) {
       return `<div class="median-split-label"${idAttr}>${label} <b>${fmtScore(medianValue)}</b></div>`;
     }
@@ -2303,6 +2662,7 @@
   // and falls back to it if localStorage is blocked/unavailable or holds
   // something unexpected.
   let medianViewMode = 'projected';
+  let mwLiveMode = null; // the live week's mode, kept while a past week shows
   try {
     const saved = localStorage.getItem('medianViewMode');
     if (saved === 'current' || saved === 'projected' || saved === 'average') medianViewMode = saved;
@@ -2407,7 +2767,8 @@
   // refresh landing mid-animation would be an awkward collision otherwise.
   function renderMedianStatic(mode) {
     const currentHasStarted = lastMedianTeams.some(t => t.current > 0);
-    const toggleHtml = mwToggleHtml(mode);
+    // A past week's three modes are all its final scores: no toggle.
+    const toggleHtml = lastMedianData && lastMedianData.archived ? '' : mwToggleHtml(mode);
     let bodyHtml, rows = null, medianValue = null;
     if (mode === 'current' && !currentHasStarted) {
       bodyHtml = medianPendingBodyHtml();
@@ -3550,6 +3911,13 @@
     const week = data.week || 1;
     const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
     const started = teams.some(t => (t.current || 0) > 0);
+    // A past week is over: before it, and after it.
+    if (data.archived) {
+      return [
+        ...(hasPrior ? [['through', `Through Week ${week - 1}`]] : []),
+        ['live', `Week ${week} final`],
+      ];
+    }
     return [
       ...(hasPrior ? [['through', `Through Week ${week - 1}`]] : []),
       ...(started ? [['live', `Week ${week} live`]] : []),
@@ -4171,12 +4539,117 @@
   }
   // Picking (or changing) your team redraws from the numbers already here.
   let lastDashboardData = null;
-  window.addEventListener('rl-me', () => { if (lastDashboardData) renderDashboard(lastDashboardData, false); });
+  // liveData: the Worker's latest live answer. shownData: whatever is on
+  // screen -- the live week, or a past one picked with the week stepper.
+  let liveData = null, shownData = null;
+  window.addEventListener('rl-me', () => { if (shownData) renderDashboard(shownData, false, true); });
+
+  // ---------- Week stepper ----------
+  // ‹ › in the header step back through finished weeks: the Worker rebuilds
+  // each one (/?week=N) the way the live dashboard looked once it was over,
+  // recap and standings included. null = the live week. The week is kept
+  // in the address (?week=N) so a past week can be shared or reloaded.
+  let viewWeek = null;
+  const pastWeeks = new Map(); // week -> Promise of that week's dashboard
+  const liveWeekNow = () => (liveData && (liveData.liveWeek || liveData.week)) || 0;
+
+  function renderWeekStep() {
+    const step = document.getElementById('wk-step');
+    const live = liveWeekNow();
+    step.hidden = !(live > 1);
+    const on = viewWeek || live;
+    step.querySelector('[data-wk="-1"]').disabled = on <= 1;
+    step.querySelector('[data-wk="1"]').disabled = viewWeek === null;
+  }
+
+  function setWeekParam(week) {
+    try {
+      const url = new URL(location.href);
+      if (week) url.searchParams.set('week', week); else url.searchParams.delete('week');
+      history.replaceState(history.state, '', url);
+    } catch (e) {}
+  }
+
+  function showWeek(week) {
+    const live = liveWeekNow();
+    if (!live) return;
+    plHide();
+    mwHide();
+    if (!(week >= 1 && week < live)) {
+      viewWeek = null;
+      setWeekParam(null);
+      document.body.classList.remove('wk-loading');
+      renderDashboard(liveData, false, true);
+      return;
+    }
+    viewWeek = week;
+    setWeekParam(week);
+    renderWeekStep();
+    if (!pastWeeks.has(week)) {
+      pastWeeks.set(week, fetch(`${WORKER_URL}/?week=${week}`)
+        .then(res => res.json())
+        .then(d => { if (!d || !d.teams || !d.archived) throw new Error((d && d.error) || 'No data for that week'); return d; })
+        .catch(err => { pastWeeks.delete(week); throw err; }));
+    }
+    document.body.classList.add('wk-loading');
+    pastWeeks.get(week)
+      .then(d => {
+        if (viewWeek !== week) return;
+        document.body.classList.remove('wk-loading');
+        renderDashboard(d, false, true);
+      })
+      .catch(() => {
+        if (viewWeek !== week) return;
+        document.body.classList.remove('wk-loading');
+        viewWeek = null;
+        setWeekParam(null);
+        renderWeekStep();
+        alertWeek(`Couldn’t load Week ${week}. Try again in a minute.`);
+      });
+  }
+
+  // A one-line note under the header when a past week fails to load.
+  function alertWeek(text) {
+    let el = document.getElementById('wk-note');
+    if (!el) {
+      document.querySelector('header').insertAdjacentHTML('beforeend', '<div id="wk-note" class="loading-row" style="color:var(--loss);margin:-14px 0 18px" role="status"></div>');
+      el = document.getElementById('wk-note');
+    }
+    el.textContent = text;
+    clearTimeout(alertWeek.t);
+    alertWeek.t = setTimeout(() => el.remove(), 5000);
+  }
+
+  // ?week=N on arrival opens that week once the live one says what's past.
+  let weekRequested = parseInt(new URLSearchParams(location.search).get('week'), 10) || null;
+  function openRequestedWeek() {
+    if (!weekRequested) return;
+    const w = weekRequested;
+    weekRequested = null;
+    if (w < liveWeekNow()) showWeek(w);
+    else setWeekParam(null);
+  }
+
+  document.getElementById('wk-step').addEventListener('click', e => {
+    const b = e.target.closest('[data-wk]');
+    if (!b || b.disabled) return;
+    const on = viewWeek || liveWeekNow();
+    showWeek(on + Number(b.dataset.wk));
+  });
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-wk-live]')) showWeek(null);
+  });
 
   let dashboardShown = false;
   function loadDashboard() {
     Promise.all([fetch(WORKER_URL, { cache: 'no-store' }).then(res => res.json()), leagueReady])
-      .then(([data]) => renderDashboard(data, true))
+      .then(([data]) => {
+        if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
+        liveData = data;
+        if (viewWeek === null) renderDashboard(data, true);
+        else { lastDashboardData = data; renderWeekStep(); }
+        openRequestedWeek();
+      })
       .catch(err => {
         console.error('Dashboard error:', err);
         if (dashboardShown) return;
@@ -4196,15 +4669,19 @@
       .then(data => {
         if (!data || !data.teams || dashboardShown) return;
         if (!(Date.now() - new Date(data.updatedAt).getTime() < 864e5)) return;
-        return leagueReady.then(() => { if (!dashboardShown) renderDashboard(data, false); });
+        return leagueReady.then(() => { if (!dashboardShown && viewWeek === null) renderDashboard(data, false); });
       })
       .catch(() => {});
   }
 
-  function renderDashboard(data, fresh) {
+  // `still`: no refresh motion -- a week switch or a re-render of the same
+  // numbers, not a poll bringing new ones.
+  function renderDashboard(data, fresh, still) {
         if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
         if (fresh) lastDashboardData = data;
         else if (!lastDashboardData) lastDashboardData = data;
+        shownData = data;
+        const archived = Boolean(data.archived);
 
         const teams = data.teams || [];
         dashWeek = data.week || 1;
@@ -4221,18 +4698,31 @@
 
         // A refresh after the first animates from what was on screen
         // (see "Live refresh motion" above); the first load has its own rise.
-        const animate = dashboardShown && !mwReduceMotion;
+        const animate = dashboardShown && !mwReduceMotion && !still;
 
-        document.getElementById('week-header').textContent = data.week ? `Live Dashboard — Week ${data.week}` : 'Live Dashboard';
+        document.getElementById('week-header').textContent = archived ? `Week ${data.week} — Final`
+          : data.week ? `Live Dashboard — Week ${data.week}` : 'Live Dashboard';
+        document.getElementById('matchups-h').textContent = archived ? 'Matchups' : "This week's matchups";
+        // A past week's numbers are final, so the parlay and Lore cards
+        // (both about right now) step aside.
+        document.querySelector('.lore-row').style.display = archived ? 'none' : '';
         const updatedEl = document.getElementById('updated-at');
-        const updatedText = data.updatedAt
-          ? formatUpdated(data.updatedAt)
-          : '—';
-        if (animate && updatedEl.textContent !== updatedText) {
-          updatedEl.classList.add('flash');
-          setTimeout(() => updatedEl.classList.remove('flash'), 60);
+        if (archived) {
+          const live = (liveData && liveData.week) || data.liveWeek;
+          document.getElementById('updated-label').textContent = 'Live now';
+          updatedEl.innerHTML = `<button type="button" class="wk-live" data-wk-live>Week ${live} ›</button>`;
+        } else {
+          document.getElementById('updated-label').textContent = 'Updated';
+          const updatedText = data.updatedAt
+            ? formatUpdated(data.updatedAt)
+            : '—';
+          if (animate && updatedEl.textContent !== updatedText) {
+            updatedEl.classList.add('flash');
+            setTimeout(() => updatedEl.classList.remove('flash'), 60);
+          }
+          updatedEl.textContent = updatedText;
         }
-        updatedEl.textContent = updatedText;
+        renderWeekStep();
 
         // Yours (getMe in page-common.js) comes out of the list and leads
         // the page instead.
@@ -4269,6 +4759,10 @@
         const prevMedianTeams = lastMedianTeams, prevMedianData = lastMedianData;
         lastMedianTeams = teams;
         lastMedianData = data;
+        // A past week shows its final scores (Current), without touching the
+        // saved pick, which comes back with the live week.
+        if (archived) { if (!mwLiveMode) mwLiveMode = medianViewMode; medianViewMode = 'current'; }
+        else if (mwLiveMode) { medianViewMode = mwLiveMode; mwLiveMode = null; }
         renderMedianStatic(medianViewMode);
         if (animate) animateMedianRefresh(prevMedianTeams, prevMedianData);
         mhLoad();
@@ -4278,6 +4772,7 @@
         superlativesData = data;
         renderSuperlatives();
         document.getElementById('season-section').hidden = false;
+        plRefresh();
 
         // First load: the skeleton has just been swapped out, so bring the
         // real cards up in reading order. The parlay card's skeleton is
@@ -4299,6 +4794,9 @@
     if (e.target.closest('.mu-series')) return;
     const card = e.target.closest('.matchup-card');
     if (!card) return;
+    // An open card's starters open their game logs instead of closing it.
+    const cell = card.classList.contains('expanded') && e.target.closest('.mu-pc[data-pid]');
+    if (cell) { plOpen(Number(cell.dataset.pid)); return; }
     const key = decodeURIComponent(card.dataset.key);
     if (expandedMatchups.has(key)) expandedMatchups.delete(key);
     else expandedMatchups.add(key);

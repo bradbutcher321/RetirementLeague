@@ -14,6 +14,10 @@
  *                      returns it. Falls back to serving stale cache (with
  *                      an `error` field) if a fresh ESPN fetch fails.
  * GET /?force=1    -> bypasses the cooldown (manual testing).
+ * GET /?week=N     -> a finished week, rebuilt the same way (the dashboard's
+ *                      week stepper); cached for three hours. N at or past
+ *                      the live week is just the live dashboard.
+ * GET /player?id=&week=&last= -> one player's game log (see playerLog.js).
  * POST /hit, GET /stats -> site analytics (see analytics.js).
  * POST /refresh-parlay -> dispatches the Parlay data refresh Action on
  *                      demand (see parlayRefresh.js); used by the "Refresh
@@ -40,10 +44,14 @@ import { getStats, recordHit } from "./analytics.js";
 import { dispatchParlayRefresh } from "./parlayRefresh.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
+import { getPlayerLog } from "./playerLog.js";
+import { cached } from "./cache.js";
 
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
 
 const COOLDOWN_SECONDS = 120;
+// A finished week only changes with ESPN's stat corrections.
+const PAST_WEEK_SECONDS = 3 * 60 * 60;
 const CACHE_KEY = "dashboard:v2";
 // The two-minute cache is a row in D1, whose free tier allows 100k row
 // writes a day. KV allows only 1k, and a game day of rebuilds every two
@@ -136,6 +144,11 @@ export default {
       const url = new URL(request.url);
       return jsonResponse(await getMedianHistory(env, url).catch((err) => ({ error: String(err), points: [] })), headers);
     }
+    if (path === "/player") {
+      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await getPlayerLog(env, new URL(request.url)).catch((err) => ({ status: 502, body: { error: String(err) } }));
+      return jsonResponse(result.body, headers, result.status);
+    }
     if (PUSH_ROUTES[path]) {
       if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await PUSH_ROUTES[path](request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
@@ -165,6 +178,18 @@ export default {
 
     // gameStates and averages are for the next build, not for the page.
     const publicView = ({ gameStates, averages, ...rest }) => rest;
+
+    // The live cache knows which week is live; a week before it is history.
+    const week = parseInt(url.searchParams.get("week"), 10);
+    const liveWeek = entry?.data?.liveWeek || entry?.data?.week;
+    if (week >= 1 && liveWeek && week < liveWeek) {
+      try {
+        const past = await cached(env, `dashboard:week:${env.ESPN_YEAR}:${week}`, PAST_WEEK_SECONDS, () => buildDashboard(env, null, { week }));
+        return jsonResponse(publicView(past), headers);
+      } catch (err) {
+        return jsonResponse({ error: String(err) }, headers, 502);
+      }
+    }
 
     if (!force && entry && now - entry.fetchedAt < COOLDOWN_SECONDS) {
       return jsonResponse({ ...publicView(entry.data), cacheHit: true }, headers);

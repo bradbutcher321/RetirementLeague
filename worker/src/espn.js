@@ -103,3 +103,34 @@ export function findMatchupPeriod(matchupPeriodsObj, week) {
   }
   return null;
 }
+
+/** Players' full current-season lines: one stat row per NFL week played
+ * (actual points and every stat category, keyed to that week's game by
+ * `externalId`), plus the season totals. The same view and filter the
+ * espn_api library's player_info() uses. */
+export async function fetchPlayerCards(env, playerIds) {
+  const url = buildUrl(leagueEndpoint(env.ESPN_YEAR, env.ESPN_LEAGUE_ID), { view: "kona_playercard" });
+  const filter = {
+    players: {
+      filterIds: { value: playerIds },
+      filterStatsForTopScoringPeriodIds: { value: 18, additionalValue: [`00${env.ESPN_YEAR}`, `10${env.ESPN_YEAR}`] },
+    },
+  };
+  return espnGet(url, env, { "x-fantasy-filter": JSON.stringify(filter) });
+}
+
+/** Players' projection for one future week. ESPN only hands out a week's
+ * projection when asked for that week by scoringPeriodId, one week per
+ * request (no filter combination was found that returns them all). */
+export async function fetchPlayerWeek(env, playerIds, week) {
+  const url = buildUrl(leagueEndpoint(env.ESPN_YEAR, env.ESPN_LEAGUE_ID), { view: "kona_player_info", scoringPeriodId: week });
+  const filter = { players: { filterIds: { value: playerIds } } };
+  return espnGet(url, env, { "x-fantasy-filter": JSON.stringify(filter) });
+}
+
+/** Every NFL team's schedule for the season: each week's game (id, home
+ * and away team ids, kickoff) and its bye week. */
+export async function fetchProSchedules(env) {
+  const url = buildUrl(`${FANTASY_BASE}/seasons/${env.ESPN_YEAR}`, { view: "proTeamSchedules_wl" });
+  return espnGet(url, env);
+}

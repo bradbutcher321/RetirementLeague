@@ -31,11 +31,11 @@ const SLOT_ORDER = [0, 2, 4, 6, 23, 16, 17];
 // A FLEX-slotted player's *real* position (needed to pick the right stat
 // line) isn't in the lineup slot — it's ESPN's separate defaultPositionId,
 // a different numbering than SLOT_LABELS above.
-const DEFAULT_POSITION_MAP = { 1: "QB", 2: "RB", 3: "WR", 4: "TE", 5: "K", 16: "D/ST" };
+export const DEFAULT_POSITION_MAP = { 1: "QB", 2: "RB", 3: "WR", 4: "TE", 5: "K", 16: "D/ST" };
 
 // Subset of espn_api football/constant.py PLAYER_STATS_MAP needed to build
 // a readable per-position stat line from a player's raw `stats` object.
-function formatStatLine(position, stats) {
+export function formatStatLine(position, stats) {
   const s = stats || {};
   const n = (id) => s[id] || 0;
   switch (position) {
@@ -199,6 +199,8 @@ function buildPlayerCard(entry, gameStateByProTeam, seasonAverages) {
   const projStat = stats.find((s) => s.statSourceId === 1);
   const game = gameStateByProTeam.get(player.proTeamId) || null;
   const card = {
+    // ESPN's player id, for the game log (playerLog.js).
+    id: player.id || entry.playerId,
     name: player.fullName || "",
     slot,
     livePoints: actualStat ? round2(actualStat.appliedTotal) : null,
@@ -421,11 +423,18 @@ function countGameStatus(entries, gameStateByProTeam) {
  * stand in for this build's when the public scoreboard comes back failed
  * or empty -- otherwise one blip blanks every player's team/opponent/
  * kickoff line and zeroes the to-play counts for a whole cache window.
- * Its season averages are reused for up to an hour (seasonAverages()). */
-export async function buildDashboard(env, previous = null) {
+ * Its season averages are reused for up to an hour (seasonAverages()).
+ *
+ * `opts.week`, when it's a week before the live one, builds that finished
+ * week instead -- the dashboard's week stepper. Records are rebuilt as they
+ * stood after that week, and the live-only pieces (playoff odds, streaks,
+ * season averages) are left out. */
+export async function buildDashboard(env, previous = null, opts = {}) {
   const league = await fetchLeague(env);
 
-  const currentWeek = Math.min(league.scoringPeriodId, league.status.finalScoringPeriod);
+  const liveWeek = Math.min(league.scoringPeriodId, league.status.finalScoringPeriod);
+  const archived = opts.week >= 1 && opts.week < liveWeek;
+  const currentWeek = archived ? opts.week : liveWeek;
   const matchupPeriodsObj = league.settings?.scheduleSettings?.matchupPeriods || {};
   const matchupPeriod = findMatchupPeriod(matchupPeriodsObj, currentWeek) ?? league.status.currentMatchupPeriod;
 
@@ -438,6 +447,22 @@ export async function buildDashboard(env, previous = null) {
   const teamsById = new Map(teamsRaw.map((t) => [t.teamId, t]));
   const schedule = league.schedule || [];
   const priorByTeam = priorStandings(schedule, currentWeek);
+  if (archived) {
+    // ESPN's records, streaks and odds are today's; a past week shows the
+    // record it ended with, and is ordered by the one it started with (what
+    // the standings' Through mode lists).
+    const after = priorStandings(schedule, currentWeek + 1);
+    const before = (id) => priorByTeam.get(id) || { w: 0, pf: 0 };
+    const end = (id) => after.get(id) || { w: 0, l: 0, t: 0, pf: 0 };
+    for (const t of teamsRaw) {
+      const r = end(t.teamId);
+      Object.assign(t, { wins: r.w, losses: r.l, ties: r.t, record: formatRecord(r.w, r.l, r.t), streak: null, playoffPct: 0 });
+    }
+    [...teamsRaw]
+      .sort((a, b) => before(b.teamId).w - before(a.teamId).w || before(b.teamId).pf - before(a.teamId).pf
+        || end(b.teamId).w - end(a.teamId).w || end(b.teamId).pf - end(a.teamId).pf)
+      .forEach((t, i) => { t.standing = i + 1; });
+  }
   const weekScores = scoresByTeam(schedule);
   const managerNames = buildManagerNames(teamsRaw);
   const regularPeriods = league.settings?.scheduleSettings?.matchupPeriodCount || 0;
@@ -459,7 +484,8 @@ export async function buildDashboard(env, previous = null) {
   const boxPlayerIds = (boxData.schedule || []).flatMap((m) => [m.home, m.away])
     .flatMap((side) => side?.rosterForCurrentScoringPeriod?.entries || [])
     .map((e) => e.playerPoolEntry?.player?.id || e.playerId);
-  const averages = await seasonAverages(env, previous, currentWeek, boxPlayerIds);
+  // A finished week counts every starter's final points, no averages needed.
+  const averages = archived ? { map: new Map(), cache: previous?.averages || null } : await seasonAverages(env, previous, currentWeek, boxPlayerIds);
   let gameStateByProTeam = buildGameStateMap(nflScoreboard);
   // A game's state only ever moves pre -> in -> post, so a few-minutes-old
   // copy can under-report progress but never claim a game is over early.
@@ -483,6 +509,7 @@ export async function buildDashboard(env, previous = null) {
 
     for (const side of [home, away]) {
       if (!side) continue;
+      if (archived) side.projected = side.score; // a finished week's projection is its final
       teamStatusById.set(side.teamId, countGameStatus(side.entries, gameStateByProTeam));
       side.starters = buildStarters(side.entries, gameStateByProTeam, averages.map);
       const average = round2(side.starters.reduce((sum, p) => sum + p.avgPoints, 0));
@@ -570,6 +597,11 @@ export async function buildDashboard(env, previous = null) {
   return {
     updatedAt: new Date().toISOString(),
     week: currentWeek,
+    // The week being played now, and the fantasy season's last one: the
+    // week stepper's bounds and the game log's past/future split.
+    liveWeek,
+    finalWeek: league.status.finalScoringPeriod,
+    ...(archived ? { archived: true } : {}),
     currentMedian,
     projectedMedian,
     averageMedian,
