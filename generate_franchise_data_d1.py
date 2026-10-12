@@ -33,7 +33,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
-from sheets_lib import authorize, load_money, SHEET_ID, longest_and_current_streak
+from sheets_lib import authorize, load_games, load_money, SHEET_ID, longest_and_current_streak
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data", "franchise.json")
 MEDIAN_ERA_START_YEAR = 2025
@@ -226,9 +226,16 @@ def compute_median_stats(reg_games_by_year_week, player_reg_games):
     return {"wins": med_w, "losses": med_l, "pct": win_pct(med_w, med_l)}
 
 
-def compute_extremes(games):
+def compute_extremes(games, cons_weeks):
+    """cons_weeks: this manager's (year, week) consolation-bracket games, from
+    the Game Tracker's hand-tagged "Cons" type (D1's bracket_type can't tell
+    them from the Sacko/3rd/5th games). Their scores count for the high --
+    the weekly high-score prize counts every game -- but not the low, since
+    a lineup nobody set for a game with nothing riding on it isn't a real
+    low score. Same rule as Game Records and League History."""
     scores = [g["team_score"] for g in games if g["team_score"] is not None]
-    nonzero_scores = [s for s in scores if s > 0]
+    nonzero_scores = [g["team_score"] for g in games if g["team_score"] is not None and g["team_score"] > 0
+                      and (g["year"], g["week"]) not in cons_weeks]
     win_margins, loss_margins = [], []
     for g in games:
         if g["opponent_team_id"] is None or g["team_score"] is None or g["opponent_score"] is None:
@@ -655,9 +662,15 @@ def main():
     active_players = {team_id_to_player_by_year[(current_year, t["team_id"])] for t in teams
                        if t["year"] == current_year and (current_year, t["team_id"]) in team_id_to_player_by_year}
 
-    print("Loading Google Sheet (Money Tracker)...")
+    print("Loading Google Sheet (Money Tracker + Game Tracker)...")
     spreadsheet = authorize().open_by_key(SHEET_ID)
     money_block = load_money(spreadsheet)
+    cons_weeks_by_player = {}
+    for g in load_games(spreadsheet):
+        if g["type"] == "Cons":
+            for name in (g["p1"], g["p2"]):
+                if name:
+                    cons_weeks_by_player.setdefault(name, set()).add((g["year"], g["week"]))
     weekly_sacko_counts = compute_weekly_sackos(matchups, team_id_to_player_by_year)
 
     slot_counts_by_year = roster_slot_counts_by_year(league_settings)
@@ -704,7 +717,7 @@ def main():
             "founded_year": years_played[0] if years_played else None,
             "seasons": len(years_played),
             "career": career,
-            "extremes": compute_extremes(games),
+            "extremes": compute_extremes(games, cons_weeks_by_player.get(player, set())),
             "streaks": compute_streaks(games, reg_median_by_year_week),
             "rivalries": compute_rivalries(games, team_id_to_player_by_year, active_players),
             "moves": compute_moves(teams_by_player),

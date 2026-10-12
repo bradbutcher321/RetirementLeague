@@ -204,13 +204,18 @@
   const by = (list, fn, desc) => list.slice().sort((a, b) => (desc ? fn(b) - fn(a) : fn(a) - fn(b)));
 
   function categories(sel) {
-    // Consolation-bracket games ('Cons') don't count toward any record:
-    // nothing rides on them, so a benched-out lineup there isn't a real low
-    // score. The Sacko, 3rd and 5th place games still count.
-    const games = D.games.filter(g => g.type !== 'Bye' && g.type !== 'Cons' && g.p2 && g.s1 > 0 && g.s2 > 0 &&
+    // Consolation-bracket games ('Cons') count only toward a manager's own
+    // high scores -- the weekly high-score prize counts every game. Nothing
+    // rides on them otherwise, so a lineup nobody set there isn't a real low
+    // score (or a real margin). The Sacko, 3rd and 5th place games count
+    // everywhere.
+    const played = D.games.filter(g => g.type !== 'Bye' && g.p2 && g.s1 > 0 && g.s2 > 0 &&
       g.winner !== 'In Progress' && (sel === 'all' || g.year === Number(sel)));
+    const games = played.filter(g => g.type !== 'Cons');
     const decided = games.filter(g => g.winner === g.p1 || g.winner === g.p2);
-    const scores = games.flatMap(g => [{ team: g.p1, s: g.s1, opp: g.p2, os: g.s2, g }, { team: g.p2, s: g.s2, opp: g.p1, os: g.s1, g }]);
+    const sides = list => list.flatMap(g => [{ team: g.p1, s: g.s1, opp: g.p2, os: g.s2, g }, { team: g.p2, s: g.s2, opp: g.p1, os: g.s1, g }]);
+    const scores = sides(games), allScores = sides(played);
+    const allDecided = played.filter(g => g.winner === g.p1 || g.winner === g.p2);
     const margin = g => Math.abs(g.s1 - g.s2), total = g => g.s1 + g.s2;
     const wS = g => (g.winner === g.p1 ? g.s1 : g.s2), lS = g => (g.winner === g.p1 ? g.s2 : g.s1);
     const lt = g => (g.winner === g.p1 ? g.p2 : g.p1);
@@ -221,7 +226,7 @@
     // name stands alone -- printing the score beside it would repeat it.
     const team = (title, desc) => ({
       title, ownScore: true,
-      items: by(scores, x => x.s, desc).slice(0, 10).map(x => ({ v: x.s, m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g), g: x.g })),
+      items: by(desc ? allScores : scores, x => x.s, desc).slice(0, 10).map(x => ({ v: x.s, m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g), g: x.g })),
     });
     const match = (title, list, fn, desc, side = winFirst, ownScore = false) => ({
       title, ownScore,
@@ -252,7 +257,7 @@
     const finalScores = scores.filter(x => x.g.type === 'Champ');
 
     // ----- Against the weekly median (every game type carries one) -----
-    const vsMedian = scores.filter(x => typeof x.g.median === 'number').map(x => ({ ...x, d: x.s - x.g.median }));
+    const vsMedian = allScores.filter(x => typeof x.g.median === 'number').map(x => ({ ...x, d: x.s - x.g.median }));
     const signed = d => (d >= 0 ? '+' : '−') + f2(Math.abs(d));
     const medianItem = x => ({ v: x.d, label: signed(x.d), m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g), g: x.g });
 
@@ -270,13 +275,13 @@
       hiM: match('Highest Victory Margins', decided, margin, true),
       loM: match('Lowest Victory Margins', decided, margin, false),
       hiC: match('Most Combined Points', games, total, true), loC: match('Least Combined Points', games, total, false),
-      hiL: match('Highest Score in a Loss', decided, lS, true, loseFirst, true), loW: match('Lowest Score in a Win', decided, wS, false, winFirst, true),
+      hiL: match('Highest Score in a Loss', allDecided, lS, true, loseFirst, true), loW: match('Lowest Score in a Win', decided, wS, false, winFirst, true),
       unl: { title: 'Unluckiest Losses', ownScore: true, items: unlucky.slice(0, 10).map(luckItem) },
       lck: { title: 'Luckiest Wins', ownScore: true, items: lucky.slice(0, 10).map(luckItem) },
       hiF: { title: 'Title Game Scores', ownScore: true, items: by(finalScores, x => x.s, true).slice(0, 10).map(x => ({ v: x.s, m: { a: x.team, as: x.s, b: x.opp, bs: x.os }, meta: when(x.g), g: x.g })) },
       loF: match('Closest Title Games', finals, margin, false),
       upMed: { title: 'Furthest Above the Median', ownScore: true, items: by(vsMedian, x => x.d, true).slice(0, 10).map(medianItem) },
-      dnMed: { title: 'Furthest Below the Median', ownScore: true, items: by(vsMedian, x => x.d, false).slice(0, 10).map(medianItem) },
+      dnMed: { title: 'Furthest Below the Median', ownScore: true, items: by(vsMedian.filter(x => x.g.type !== 'Cons'), x => x.d, false).slice(0, 10).map(medianItem) },
       hiWk: { title: 'Most Weekly High Scores', ownScore: true, ties: true, items: tally('high') },
       loWk: { title: 'Most Weekly Low Scores', ownScore: true, ties: true, items: tally('low') },
       bubW: { title: 'Most Bubble Wins', ownScore: true, ties: true, items: tally('bubW') },

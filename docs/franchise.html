@@ -400,7 +400,7 @@
 
 <script src="nav.js?v=5"></script>
 <script src="page-common.js?v=17"></script>
-<script src="achievements.js"></script>
+<script src="achievements.js?v=2"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
   const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toFixed(d);
@@ -1148,11 +1148,13 @@
     return `${finishes}<div class="pair">${strip}${med}</div>${renderBestWorst(p)}`;
   }
 
-  // Every finished game this manager played, playoffs and consolation
-  // included -- the same games the old Single Game high and low came from.
+  // Every finished game this manager played, playoffs included. Consolation
+  // games count for the highs only (the weekly high-score prize counts every
+  // game); a lineup nobody set there isn't a real low.
   function renderBestWorst(p) {
     const mine = GAMES.filter(g => g.type !== 'Bye' && g.p2 && g.winner !== 'In Progress' && g.s1 > 0 && g.s2 > 0 && (g.p1 === p.name || g.p2 === p.name))
       .map(g => g.p1 === p.name ? { s: g.s1, o: g.p2, os: g.s2, won: g.winner === g.p1, lost: g.winner === g.p2, g } : { s: g.s2, o: g.p1, os: g.s1, won: g.winner === g.p2, lost: g.winner === g.p1, g });
+    const lows = mine.filter(x => x.g.type !== 'Cons');
     const pick = (list, better) => list.reduce((a, b) => (!a || better(b, a) ? b : a), null);
     // Same game-type words as Head to Head's tags.
     const TYPE = { Play: 'Playoffs', Champ: 'Final', Sacko: 'Sacko', Cons: 'Consolation', '3rd': '3rd place', '5th': '5th place' };
@@ -1160,9 +1162,9 @@
     const row = (label, x, cls) => x ? [label, [[fmt(x.s, 2), '', cls]], `vs ${esc(x.o)} ${fmt(x.os, 2)} · ${when(x)}`] : null;
     const rows = [
       row('Highest Score', pick(mine, (a, b) => a.s > b.s), 'gold'),
-      row('Lowest Score', pick(mine, (a, b) => a.s < b.s), 'loss'),
+      row('Lowest Score', pick(lows, (a, b) => a.s < b.s), 'loss'),
       row('Most Points in a Loss', pick(mine.filter(x => x.lost), (a, b) => a.s > b.s)),
-      row('Fewest Points in a Win', pick(mine.filter(x => x.won), (a, b) => a.s < b.s)),
+      row('Fewest Points in a Win', pick(lows.filter(x => x.won), (a, b) => a.s < b.s)),
     ].filter(Boolean);
     return rows.length ? card('Best and Worst Weeks', lines(rows)) : '';
   }

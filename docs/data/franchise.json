@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-08T18:21:03.401838+00:00",
+  "generated_at": "2026-10-12T02:37:55.077206+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -639,8 +639,8 @@
         ]
       },
       "moves": {
-        "total": 384,
-        "avg_per_season": 32.0,
+        "total": 385,
+        "avg_per_season": 32.1,
         "busiest_season": {
           "year": 2019,
           "moves": 78
@@ -651,7 +651,7 @@
         "best_position": 1,
         "worst_position": 10
       },
-      "weekly_sackos": 2,
+      "weekly_sackos": 1,
       "money": {
         "total_dues": 1600.0,
         "net_result": 2730.0,
@@ -1061,8 +1061,8 @@
         ]
       },
       "moves": {
-        "total": 150,
-        "avg_per_season": 12.5,
+        "total": 151,
+        "avg_per_season": 12.6,
         "busiest_season": {
           "year": 2015,
           "moves": 28
@@ -1832,7 +1832,7 @@
       },
       "extremes": {
         "highest_score": 160.8,
-        "lowest_score": 28.4,
+        "lowest_score": 56.94,
         "biggest_win_margin": 70.34,
         "lowest_win_margin": 0.06,
         "biggest_loss_margin": 84.9,
@@ -2735,7 +2735,7 @@
       },
       "extremes": {
         "highest_score": 152.86,
-        "lowest_score": 37.2,
+        "lowest_score": 38.66,
         "biggest_win_margin": 71.62,
         "lowest_win_margin": 1.8,
         "biggest_loss_margin": 108.58,
@@ -2869,7 +2869,7 @@
         "best_position": 1,
         "worst_position": 11
       },
-      "weekly_sackos": 3,
+      "weekly_sackos": 4,
       "money": {
         "total_dues": 1600.0,
         "net_result": -1010.0,
@@ -3685,8 +3685,8 @@
         ]
       },
       "moves": {
-        "total": 221,
-        "avg_per_season": 22.1,
+        "total": 222,
+        "avg_per_season": 22.2,
         "busiest_season": {
           "year": 2018,
           "moves": 31
@@ -3987,7 +3987,7 @@
       },
       "extremes": {
         "highest_score": 158.28,
-        "lowest_score": 43.7,
+        "lowest_score": 61.1,
         "biggest_win_margin": 72.36,
         "lowest_win_margin": 0.96,
         "biggest_loss_margin": 70.06,
@@ -4347,7 +4347,7 @@
       },
       "extremes": {
         "highest_score": 158.76,
-        "lowest_score": 63.1,
+        "lowest_score": 64.52,
         "biggest_win_margin": 72.72,
         "lowest_win_margin": 0.74,
         "biggest_loss_margin": 63.94,
@@ -4762,8 +4762,8 @@
         ]
       },
       "moves": {
-        "total": 157,
-        "avg_per_season": 31.4,
+        "total": 159,
+        "avg_per_season": 31.8,
         "busiest_season": {
           "year": 2022,
           "moves": 46
@@ -5130,7 +5130,7 @@
           "total_pf": 2650.82,
           "total_pa": 3061.28,
           "avg_pf": 82.84,
-          "avg_pa": 95.66
+          "avg_pa": 95.67
         },
         "median": {
           "wins": 0,

@@ -1,5 +1,5 @@
 // Shared achievement definitions -- used by Franchise (the per-manager badge shelf) and
-// Overview (the league-wide Achievement Leaderboard), so both read the exact same 26 badges
+// Overview (the league-wide Achievement Leaderboard), so both read the exact same badges
 // and unlock logic instead of two copies drifting apart.
 const ACHIEVEMENTS_LIB = (() => {
   // A season counts as "in progress" below 10 games played, same cutoff Franchise's season
@@ -69,6 +69,20 @@ const ACHIEVEMENTS_LIB = (() => {
       test: p => p.streaks.head_to_head.longest_loss >= 5, sub: p => `${p.streaks.head_to_head.longest_loss}-game losing streak` },
     { name: 'Rock Bottom', icon: 'snow', bad: true, desc: 'Lose 8 games in a row',
       test: p => p.streaks.head_to_head.longest_loss >= 8, sub: p => `${p.streaks.head_to_head.longest_loss}-game losing streak` },
+    // Streaks against the weekly median: official median games only (the
+    // median era), from franchise.json's streaks.median.
+    { name: 'Above Average', icon: 'flame', desc: 'Beat the median 3 weeks in a row',
+      test: p => p.streaks.median.longest_win >= 3, sub: p => `Beat the median ${p.streaks.median.longest_win} weeks in a row` },
+    { name: 'Median Machine', icon: 'flame', desc: 'Beat the median 5 weeks in a row',
+      test: p => p.streaks.median.longest_win >= 5, sub: p => `Beat the median ${p.streaks.median.longest_win} weeks in a row` },
+    { name: 'Top-Half Lock', icon: 'flame', desc: 'Beat the median 8 weeks in a row',
+      test: p => p.streaks.median.longest_win >= 8, sub: p => `Beat the median ${p.streaks.median.longest_win} weeks in a row` },
+    { name: 'Below Average', icon: 'snow', bad: true, desc: 'Lose to the median 3 weeks in a row',
+      test: p => p.streaks.median.longest_loss >= 3, sub: p => `Lost to the median ${p.streaks.median.longest_loss} weeks in a row` },
+    { name: 'Bottom Feeder', icon: 'snow', bad: true, desc: 'Lose to the median 5 weeks in a row',
+      test: p => p.streaks.median.longest_loss >= 5, sub: p => `Lost to the median ${p.streaks.median.longest_loss} weeks in a row` },
+    { name: 'Basement Lease', icon: 'snow', bad: true, desc: 'Lose to the median 8 weeks in a row',
+      test: p => p.streaks.median.longest_loss >= 8, sub: p => `Lost to the median ${p.streaks.median.longest_loss} weeks in a row` },
     { name: 'Efficiency Expert', icon: 'target', desc: `${EFFICIENCY_EXPERT_PCT}%+ lineup efficiency in a season`,
       test: p => !!(p.efficiency && p.efficiency.by_season.some(s => s.pct >= EFFICIENCY_EXPERT_PCT)),
       sub: p => { const s = p.efficiency.by_season.filter(s => s.pct >= EFFICIENCY_EXPERT_PCT).sort((a, b) => b.pct - a.pct)[0]; return `${s.pct.toFixed(1)}% efficiency in ${s.year}`; } },

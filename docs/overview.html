@@ -193,7 +193,7 @@
 <script src="nav.js?v=5"></script>
 <script src="page-common.js?v=17"></script>
 <script src="league-common.js?v=4"></script>
-<script src="achievements.js"></script>
+<script src="achievements.js?v=2"></script>
 <script>
   // esc() and monogram() are globals from page-common.js, not part of LG.
   const { f1, f2, money } = LG;
@@ -249,9 +249,11 @@
       const b = rows.reduce((a, c) => ((max ? c.tot_pf > a.tot_pf : c.tot_pf < a.tot_pf) ? c : a));
       return { rank: y, name: b.player, sub: `${rec(b)} record`, val: f2(b.tot_pf) };
     });
+    // Consolation games count for the weekly high (the prize counts every
+    // game) but not the low: a lineup nobody set there isn't a real low.
     const weekly = max => D.years.slice().reverse().map(y => {
       let best = null;
-      noBye.filter(g => g.year === y).forEach(g => [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => {
+      noBye.filter(g => g.year === y && (max || g.type !== 'Cons')).forEach(g => [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => {
         if (!s || s <= 0) return;
         if (!best || (max ? s > best.s : s < best.s)) best = { p, s, t: g.type, w: g.week };
       }));
