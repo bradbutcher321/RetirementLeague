@@ -50,47 +50,31 @@
   .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; min-width:0; }
   .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
   .qrow-main{ min-width:0; }
-  /* Two badges at once (All-Time view) sit next to the name whenever
-     there's room, same as a single badge always does -- only moving to
-     the row's right side, above W/L/Win%, once they genuinely don't fit
-     (breakpoint tuned to where "Flanders" + both badges stops fitting,
-     confirmed directly, not guessed). CSS can't move one element based
-     on available space, so both copies render and this toggles which is
-     visible. */
-  /* .qrow centers every column vertically by default, fine when they're
-     all one line tall -- but the name/meta column can run 2-3 lines
-     (seasons + PF/PA) while stats-col is only 1-2, and centering each
-     independently let the shorter one drift into the taller one's space
-     (confirmed directly: real visual overlap between the meta line and
-     the W/L/Win% numbers). Top-aligning stats-col keeps it level with
-     the name at the top of the row regardless of how tall either gets. */
-  .qrow .stats-col{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; align-self:start; }
-  .qrow .badge-side{ display:none; flex-direction:row; flex-wrap:wrap; justify-content:flex-end; gap:4px; }
+  /* All-Time titles and Sackos ride the line under the name ("12 szns ·
+     3 titles · 2 Sackos", site audit II #10) instead of badges, which
+     had to shrink and move above W/L once two of them met a narrow row.
+     That leaves stats-col one line tall; top-aligning it keeps it level
+     with the name however tall the meta lines run. */
+  .qrow .stats-col{ display:flex; flex-direction:column; align-items:flex-end; align-self:start; }
+  .qrow .meta .t{ color:var(--gold); font-weight:600; }
+  .qrow .meta .s{ color:var(--loss); font-weight:600; }
   @media (max-width:580px){
-    .qrow .badges-inline.multi{ display:none; }
-    .qrow .badge-side{ display:flex; }
-    /* At a genuine ~320-375px width there's not enough room for
-       full-size badges + W/L/Win% + any sliver of name all at once
-       (confirmed directly: real text overlap between the meta line and
-       the stats numbers). Shrinking badges specifically in this narrow
-       fallback -- never in the normal inline case above the breakpoint,
-       which stays full-size -- claws back enough room to actually fit. */
-    .qrow .badge-side .badge{ font-size:0.52rem; padding:1px 5px; }
     .qrow .stats{ gap:8px; }
     .qrow .stats div{ min-width:26px; }
   }
   /* "PF x · PA y" is always forced onto its own line after "N seasons"
      (at every width, not just mobile), instead of "seasons · PF" sharing
      a line while "PA" gets stranded below. Within it, PF and PA each stay
-     whole, and only when the pair is wider than the column (two-decimal
-     all-time totals at 375-390px) does PA drop to its own line. Every
+     whole, and only when the pair is wider than the column does PA drop
+     to its own line. The All-Time "szns · titles · Sackos" line (.tally)
+     wraps the same way at 375-390px instead of clipping. Every
      part carries its own leading " · ", and the row is shifted left by
      that separator's width inside an overflow:hidden segment, so the
      separator of whichever part starts a line is clipped off. */
   .qrow .meta-seg{ white-space:nowrap; display:block; overflow:hidden; }
   .qrow .meta-sep{ display:none; }
-  .qrow .pfpa{ display:flex; flex-wrap:wrap; margin-left:-1em; }
-  .qrow .pfpa > span::before{ content:'·'; display:inline-block; width:1em; text-align:center; }
+  .qrow .pfpa, .qrow .tally{ display:flex; flex-wrap:wrap; margin-left:-1em; }
+  .qrow .pfpa > span::before, .qrow .tally > span::before{ content:'·'; display:inline-block; width:1em; text-align:center; color:var(--text-dim); font-weight:400; }
 
   /* Every row opens that manager's Franchise page. */
   a.qrow{ color:inherit; text-decoration:none; }
@@ -152,7 +136,10 @@
 <script src="league-common.js?v=4"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
-  const { f2, pct } = LG;
+  const { pct } = LG;
+  // Whole points with thousands separators: all-time totals with two
+  // decimals pushed PA onto its own line at phone width.
+  const n0 = n => Math.round(n).toLocaleString('en-US');
   const TABS = [['reg', 'Regular Season'], ['final', 'Final Standings']];
   let D, tab = 'final';
   const $ = id => document.getElementById(id);
@@ -218,30 +205,21 @@
     else if (r.rank === 1) cls.push('top'); else if (r.rank === n - (year === 'all' ? formerCount : 0)) cls.push('last');
     else if (type === 'reg' && complete && r.s.playoff > 0) cls.push('po');
     const badges = [];
-    if (year === 'all') {
-      if (type === 'final') {
-        if (r.s.champ) badges.push(`<span class="badge gold">${r.s.champ}× Title</span>`);
-        if (r.s.sacko) badges.push(`<span class="badge loss">${r.s.sacko}× Sacko</span>`);
-      }
-    } else if (complete && type === 'final') {
+    if (year !== 'all' && complete && type === 'final') {
       if (r.s.champ) badges.push('<span class="badge gold">Champion</span>');
       else if (r.s.sacko) badges.push('<span class="badge loss">Sacko</span>');
     }
     const metaParts = [];
-    if (year === 'all') metaParts.push(`${r.seasons} seasons`);
-    metaParts.push(`<span class="pfpa"><span>PF ${f2(r.pf)}</span><span>PA ${f2(r.pa)}</span>${raceMark(race)}</span>`);
+    if (year === 'all') {
+      const tally = [`<span>${r.seasons} szns</span>`];
+      if (type === 'final') {
+        if (r.s.champ) tally.push(`<span class="t">${r.s.champ} title${r.s.champ === 1 ? '' : 's'}</span>`);
+        if (r.s.sacko) tally.push(`<span class="s">${r.s.sacko} Sacko${r.s.sacko === 1 ? '' : 's'}</span>`);
+      }
+      metaParts.push(`<span class="tally">${tally.join('')}</span>`);
+    }
+    metaParts.push(`<span class="pfpa"><span>PF ${n0(r.pf)}</span><span>PA ${n0(r.pa)}</span>${raceMark(race)}</span>`);
     const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
-    // One badge reads fine next to the name at any width. Two at once
-    // (All-Time view, a manager with both titles and sackos) are wide
-    // enough together to squeeze the name out on a narrow row -- but
-    // should still sit next to the name whenever there's room, only
-    // moving to the row's right side (above W/L/Win%) once they
-    // genuinely don't fit. CSS can't reposition one element based on
-    // available space, so both copies render and a media query (tuned to
-    // where "Flanders" + both badges actually stops fitting, confirmed
-    // directly) shows exactly one.
-    const isMulti = badges.length >= 2;
-    const sideBadges = isMulti ? `<div class="badge-side">${badges.join('')}</div>` : '';
     let moveHtml = '';
     if (prevRank && prevRank.has(r.player) && r.rank) {
       const mv = prevRank.get(r.player) - r.rank;
@@ -249,9 +227,9 @@
       const say = mv > 0 ? `Up ${mv}` : mv < 0 ? `Down ${-mv}` : 'No change';
       moveHtml = `<i class="mv${mv > 0 ? ' up' : mv < 0 ? ' down' : ''}" title="${say} since Week ${lastWeek}" aria-label="${say} since Week ${lastWeek}">${txt}</i>`;
     }
-    return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline${isMulti ? ' multi' : ''}">${badges.join('')}</span></div>` +
+    return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline">${badges.join('')}</span></div>` +
       `<div class="meta">${metaHtml}</div></div>` +
-      `<div class="stats-col">${sideBadges}<div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div></a>`;
+      `<div class="stats-col"><div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div></div></a>`;
   }
 
   function render() {
