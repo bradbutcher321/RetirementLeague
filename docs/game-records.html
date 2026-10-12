@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=22">
+<link rel="stylesheet" href="theme.css?v=23">
 <link rel="stylesheet" href="nav.css?v=6">
 <link rel="stylesheet" href="league.css?v=7">
 <style>
@@ -188,7 +188,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=21"></script>
+<script src="page-common.js?v=22"></script>
 <script src="league-common.js?v=4"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -328,15 +328,21 @@
     };
   }
 
-  const versus = i => (i.m.b ? `vs ${esc(i.m.b)} ${f2(i.m.bs)}` : '');
+  // Names link to the manager's Franchise page (site audit #22) wherever
+  // they aren't already inside something you tap: in the opened list's plain
+  // rows and over a game's lineups, not on the record cards or a game row
+  // (those open the list and the lineups).
+  let MGRS = new Set();
+  const nm = (n, link) => (link ? mgrLink(n, MGRS) : esc(n));
+  const versus = (i, link) => (i.m.b ? `vs ${nm(i.m.b, link)} ${f2(i.m.bs)}` : '');
   const shown = i => i.label || f2(i.v);
   const nameList = n => n.length < 3 ? n.join(' and ') : `${n.slice(0, -1).join(', ')}, and ${n[n.length - 1]}`;
   // The holder's own score always sits next to their name -- on the card and
   // in the top 10 alike -- even where it's also the record's value. A count
   // (weekly highs/lows) has no score of its own to show.
   // A player's game names the player, then whose lineup he was in.
-  const withScore = (c, i) => (i.player ? `${esc(i.player)} <span class="own">for ${esc(i.m.a)}</span>`
-    : `${esc(i.m.a)}${!c.ties && i.m.as != null ? ` <span class="own">${f2(i.m.as)}</span>` : ''}`);
+  const withScore = (c, i, link) => (i.player ? `${esc(i.player)} <span class="own">for ${nm(i.m.a, link)}</span>`
+    : `${nm(i.m.a, link)}${!c.ties && i.m.as != null ? ` <span class="own">${f2(i.m.as)}</span>` : ''}`);
 
   // Each card's records, as [key, caption, tile]: the tile's arrow says
   // which end of the card's range a record is.
@@ -399,8 +405,9 @@
     const rows = c.items.length
       ? c.items.map((i, k) => {
         const cls = `crow${games ? ' g' : ''}${r[k] === 1 ? ' top' : ''}`;
-        const inner = `<div class="rk">${r[k]}</div><div style="min-width:0"><div class="nm">${withScore(c, i)}</div>${c.ties ? '' : `<div class="mt">${[versus(i), i.meta].filter(Boolean).join(' · ')}</div>`}</div><div class="vl">${shown(i)}</div>`;
-        if (!hasLineup(i)) return `<div class="${cls}">${inner}${games ? '<div></div>' : ''}</div>`;
+        const link = !hasLineup(i);
+        const inner = `<div class="rk">${r[k]}</div><div style="min-width:0"><div class="nm">${withScore(c, i, link)}</div>${c.ties ? '' : `<div class="mt">${[versus(i, link), i.meta].filter(Boolean).join(' · ')}</div>`}</div><div class="vl">${shown(i)}</div>`;
+        if (link) return `<div class="${cls}">${inner}${games ? '<div></div>' : ''}</div>`;
         const g = i.g;
         return `<button type="button" class="${cls}" data-lu="${g.year}|${g.week}|${esc(i.m.a)}|${esc(i.m.b)}|${i.m.as}|${i.m.bs}" aria-expanded="false">${inner}<span class="chev" aria-hidden="true"></span></button><div class="lineup"><div></div></div>`;
       }).join('')
@@ -453,7 +460,7 @@
   // says whose it is.
   function lineupHead(a, b, as, bs) {
     const res = as > bs ? 'def.' : as < bs ? 'lost to' : 'tied';
-    const sideHtml = (name, mine, theirs, cls) => `<div class="lu-side${cls}"><div class="lu-mgr">${esc(name)}</div><div class="lu-score${mine > theirs ? ' won' : ''}">${f2(mine)}</div></div>`;
+    const sideHtml = (name, mine, theirs, cls) => `<div class="lu-side${cls}"><div class="lu-mgr">${mgrLink(name, MGRS)}</div><div class="lu-score${mine > theirs ? ' won' : ''}">${f2(mine)}</div></div>`;
     return `<div class="lu-head">${sideHtml(a, as, bs, '')}<div class="lu-res">${res}</div>${sideHtml(b, bs, as, ' r')}</div>`;
   }
   // The record holder's team on the left, as the row above it reads.
@@ -596,6 +603,7 @@
   Promise.all([LG.load(), records]).then(([data, pr]) => {
     D = data;
     PR = pr;
+    MGRS = new Set(data.seasons.map(s => s.player));
     const sel = document.getElementById('year-select');
     sel.innerHTML = '<option value="all">All-Time</option>' + data.years.slice().reverse().map(y => `<option value="${y}">${y}</option>`).join('');
     // A shared link's ?year=2024, where it names a real year.

@@ -37,11 +37,10 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=22">
+<link rel="stylesheet" href="theme.css?v=23">
 <link rel="stylesheet" href="nav.css?v=6">
 <style>
-  /* Selector styling lives in theme.css -- only this page's spacing here. */
-  .tab-row{ margin-bottom: 18px; }
+  /* Selector styling (.selector-row/.lg-select) lives in theme.css. */
 
   /* The card surface itself comes from theme.css's shared rule; clipped here
      so the quadrant hairlines stop at the card's rounded corners. */
@@ -142,7 +141,14 @@
     </header>
 
     <section id="compare-section">
-      <div class="tab-row scroll" id="year-tab-row" data-glide-panel="selected-container"></div>
+      <!-- A dropdown, not a sliding year track (site audit II #19): one
+           pill per rules snapshot ran off the edge of a phone. -->
+      <div class="selector-row right">
+        <div class="selector-group">
+          <label class="selector-label" for="year-select">Year</label>
+          <select class="lg-select" id="year-select" autocomplete="off"></select>
+        </div>
+      </div>
       <div id="selected-container"><span class="sr-only">Loading rules…</span><div class="sk" aria-hidden="true" style="gap:16px"><i style="width:22%;height:32px;margin-bottom:6px"></i><div style="display:grid;gap:12px;border-top:1px solid var(--line);margin:0 -20px;padding:18px 20px 4px"><i style="width:38%;height:11px"></i><div class="sk-chips"><i class="p" style="width:120px;height:32px"></i><i class="p" style="width:170px;height:32px"></i><i class="p" style="width:250px;height:32px"></i><i class="p" style="width:150px;height:32px"></i><i class="p" style="width:280px;height:32px"></i><i class="p" style="width:130px;height:32px"></i></div></div><div style="display:grid;gap:12px;border-top:1px solid var(--line);margin:0 -20px;padding:18px 20px 4px"><i style="width:42%;height:11px"></i><div class="sk-chips"><i class="p" style="width:64px;height:32px"></i><i class="p" style="width:64px;height:32px"></i><i class="p" style="width:64px;height:32px"></i><i class="p" style="width:58px;height:32px"></i><i class="p" style="width:80px;height:32px"></i><i class="p" style="width:74px;height:32px"></i><i class="p" style="width:50px;height:32px"></i></div></div><div style="display:grid;gap:12px;border-top:1px solid var(--line);margin:0 -20px;padding:18px 20px 4px"><i style="width:18%;height:11px"></i><div class="sk-chips"><i class="p" style="width:110px;height:32px"></i><i class="p" style="width:140px;height:32px"></i><i class="p" style="width:130px;height:32px"></i></div></div><div style="display:grid;gap:12px;border-top:1px solid var(--line);margin:0 -20px;padding:18px 20px 4px"><i style="width:30%;height:11px"></i><div class="sk-chips"><i class="p" style="width:60px;height:32px"></i><i class="p" style="width:60px;height:32px"></i><i class="p" style="width:74px;height:32px"></i><i class="p" style="width:96px;height:32px"></i><i class="p" style="width:64px;height:32px"></i><i class="p" style="width:54px;height:32px"></i><i class="p" style="width:70px;height:32px"></i><i class="p" style="width:66px;height:32px"></i></div></div></div></div>
     </section>
 
@@ -155,7 +161,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=21"></script>
+<script src="page-common.js?v=22"></script>
 <script>
 
   function section(title, lines, footnote) {
@@ -289,27 +295,25 @@
       const lastYear = list[list.length - 1].year;
       if (data.current.year !== lastYear) list.push(data.current);
 
-      const tabRow = document.getElementById('year-tab-row');
+      const yearSelect = document.getElementById('year-select');
       const selectedContainer = document.getElementById('selected-container');
-      tabRow.innerHTML = list.map((rec, i) => {
-        const isCurrent = rec.year === data.current.year;
-        const label = isCurrent ? 'Current' : i === 0 ? 'Start' : rec.year;
-        return `<button type="button" class="year-tab${isCurrent ? ' is-current' : ''}${i === 0 ? ' active' : ''}" data-i="${i}">${label}</button>`;
-      }).join('');
+      // Newest first, opening on today's rules (site audit II #19): most
+      // visits want the current rules, and the timeline below carries the
+      // history.
+      yearSelect.innerHTML = list.map((rec, i) => {
+        const label = rec.year === data.current.year ? 'Current' : rec.year;
+        return `<option value="${i}">${label}</option>`;
+      }).reverse().join('');
 
       function showYear(i) {
-        [...tabRow.children].forEach((btn, idx) => btn.classList.toggle('active', idx === i));
-        keepSelectedInView(tabRow);
         const rec = list[i];
         const prev = i === 0 ? null : list[i - 1];
         const isCurrent = rec.year === data.current.year;
         selectedContainer.innerHTML = yearCard(rec, prev, isCurrent);
       }
-      tabRow.addEventListener('click', e => {
-        const btn = e.target.closest('.year-tab');
-        if (btn) showYear(Number(btn.dataset.i));
-      });
-      showYear(0);
+      yearSelect.addEventListener('change', () => showYear(Number(yearSelect.value)));
+      yearSelect.value = String(list.length - 1);
+      showYear(list.length - 1);
 
       const changesContainer = document.getElementById('changes-container');
       if (!data.changes.length) {

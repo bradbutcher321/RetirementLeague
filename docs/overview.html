@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=22">
+<link rel="stylesheet" href="theme.css?v=23">
 <link rel="stylesheet" href="nav.css?v=6">
 <style>
   /* ---------- League History ----------
@@ -230,17 +230,23 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=21"></script>
+<script src="page-common.js?v=22"></script>
 <script src="league-common.js?v=4"></script>
 <script src="achievements.js?v=3"></script>
 <script>
   // esc() and typeTile() are globals from page-common.js, not part of LG.
   const { f1, f2, money } = LG;
   let TABS = [], LB = [], LISTS = [], tab = 0;
+  // Every manager's name opens their Franchise page (site audit #22), except
+  // inside a card that is itself one tap (the Leaderboards cards, the
+  // Superlatives): there the whole list or the points come first.
+  let MGRS = new Set();
+  const link = name => mgrLink(name, MGRS);
   const panel = (title, body, chip) => `<div class="panel">${title ? `<div class="p-head"><div class="p-title">${title}</div>${chip ? `<span class="chip">${chip}</span>` : ''}</div>` : ''}<div class="p-body">${body}</div></div>`;
   const nameList = names => names.length < 3 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 
   function build(D, F, R) {
+    MGRS = new Set(D.seasons.map(s => s.player));
     // Payouts are stored as sparse "effective from this year on" snapshots
     // (see rule-changes.json) rather than one row per season -- resolve to
     // whichever snapshot was in force as of a given year, same as
@@ -487,8 +493,8 @@
     function summaryHtml() {
       const c = champs[0], sk = sackos[0];
       const reign = `<div class="reign">
-        <div class="reign-c champ"><div class="reign-l">Reigning Champion</div><div class="reign-n">${esc(c.player)}</div><div class="reign-s">${c.year} · ${rec(c)}</div></div>
-        <div class="reign-c sacko"><div class="reign-l">Reigning Sacko</div><div class="reign-n">${esc(sk.player)}</div><div class="reign-s">${sk.year} · ${regRec(sk)}</div></div>
+        <div class="reign-c champ"><div class="reign-l">Reigning Champion</div><div class="reign-n">${link(c.player)}</div><div class="reign-s">${c.year} · ${rec(c)}</div></div>
+        <div class="reign-c sacko"><div class="reign-l">Reigning Sacko</div><div class="reign-n">${link(sk.player)}</div><div class="reign-s">${sk.year} · ${regRec(sk)}</div></div>
       </div>`;
 
       const managers = new Set(D.seasons.map(s => s.player));
@@ -501,7 +507,7 @@
       </div>`;
 
       // Every record names everyone tied at the top.
-      const row = (icon, cap, names, ctx, value, cls) => `<div class="rec-row">${typeTile(icon, cls)}<div style="min-width:0"><span class="cap">${cap}</span><span class="holder">${esc(nameList(names))}</span>${ctx ? `<span class="ctx">${ctx}</span>` : ''}</div><span class="rec-v${cls ? ' ' + cls : ''}">${value}</span></div>`;
+      const row = (icon, cap, names, ctx, value, cls) => `<div class="rec-row">${typeTile(icon, cls)}<div style="min-width:0"><span class="cap">${cap}</span><span class="holder">${nameList(names.map(link))}</span>${ctx ? `<span class="ctx">${ctx}</span>` : ''}</div><span class="rec-v${cls ? ' ' + cls : ''}">${value}</span></div>`;
       const yrs = list => list.map(s => s.year).sort((a, b) => b - a).map(y => `'${String(y).slice(2)}`).join(', ');
       const rows = [];
       { const t = topTied(champC, x => x.val); rows.push(row('trophy', 'Most titles', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', t.value)); }
@@ -531,16 +537,16 @@
       const logoUrl = name => { const p = F && F.players.find(x => x.name === name); return (p && p.current_team_logo) || ''; };
       const ord = r => r + (r === 1 ? 'st' : r === 2 ? 'nd' : r === 3 ? 'rd' : 'th');
 
-      const head = (y, sackoLabel, sackoName, chip) => `<div class="yr-h"><div class="yr-hl"><div class="yr-y">${y}</div>${chip || ''}</div>${sackoName ? `<span class="yr-sk"><span>${sackoLabel}</span><b>${esc(sackoName)}</b></span>` : ''}</div>`;
+      const head = (y, sackoLabel, sackoName, chip) => `<div class="yr-h"><div class="yr-hl"><div class="yr-y">${y}</div>${chip || ''}</div>${sackoName ? `<span class="yr-sk"><span>${sackoLabel}</span><b>${link(sackoName)}</b></span>` : ''}</div>`;
       const podium = places => `<div class="podium">${places.map((x, i) => {
         const url = x.name ? esc(logoUrl(x.name)) : '';
         const lg = x.name ? `<div class="pd-lg">${url ? `<img src="${url}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}<span class="ph" style="${url ? '' : 'display:flex'}">${esc(monogram(x.name))}</span></div>` : '';
-        return `<div class="pd p${i + 1}">${lg}<div class="pd-r">${ord(i + 1)}</div><div class="pd-n">${x.name ? esc(x.name) : '—'}</div><div class="pd-a">${x.sub || ''}</div></div>`;
+        return `<div class="pd p${i + 1}">${lg}<div class="pd-r">${ord(i + 1)}</div><div class="pd-n">${x.name ? link(x.name) : '—'}</div><div class="pd-a">${x.sub || ''}</div></div>`;
       }).join('')}</div>`;
       // Nine slots (4th-12th) always, so an 8- or 10-team year is the same size.
       const standings = (label, rest) => `<div class="yr-sec"><span class="cap">${label}</span><div class="slots">${[...Array(9)].map((_, i) => {
         const x = rest[i];
-        return x ? `<div class="slot ${x.st}"><b>${x.r}</b><span>${esc(x.name)}</span></div>` : '<div class="slot empty"></div>';
+        return x ? `<div class="slot ${x.st}"><b>${x.r}</b><span>${link(x.name)}</span></div>` : '<div class="slot empty"></div>';
       }).join('')}</div></div>`;
       // The title carries the prize: "$200 ea" when both pay the same, both
       // amounts when they don't, nothing for the years before they paid.
@@ -623,7 +629,7 @@
       // League joke (same one as the dashboard's "3*" easter egg): Flanders's
       // first title gets an asterisk.
       const flandersFirst = Math.min(...done.filter(s => s.player === 'Flanders' && s.final_rank === 1).map(s => s.year));
-      const body = list.map(name => `<div class="heat-n">${esc(name)}</div>` + years.map(y => {
+      const body = list.map(name => `<div class="heat-n">${link(name)}</div>` + years.map(y => {
         const s = done.find(x => x.player === name && x.year === y);
         const st = state(s);
         const ast = name === 'Flanders' && y === flandersFirst;
@@ -725,7 +731,7 @@
   // ranked lists the rank (managers tied on a value share it).
   function rowHtml(i, k, v) {
     const state = rowState(v, k);
-    return `<div class="lr${state ? ' ' + state : ''}"><div class="lr-rk">${leftCol(v, i, k)}</div><div style="min-width:0">${i.name ? `<div class="lr-nm">${esc(i.name)}</div>` : ''}${i.sub ? `<div class="lr-sub">${esc(i.sub)}</div>` : ''}</div><div class="lr-v${i.tone ? ' ' + i.tone : ''}">${esc(i.val)}</div></div>`;
+    return `<div class="lr${state ? ' ' + state : ''}"><div class="lr-rk">${leftCol(v, i, k)}</div><div style="min-width:0">${i.name ? `<div class="lr-nm">${link(i.name)}</div>` : ''}${i.sub ? `<div class="lr-sub">${esc(i.sub)}</div>` : ''}</div><div class="lr-v${i.tone ? ' ' + i.tone : ''}">${esc(i.val)}</div></div>`;
   }
 
   function render() {

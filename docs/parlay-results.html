@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=22">
+<link rel="stylesheet" href="theme.css?v=23">
 <link rel="stylesheet" href="nav.css?v=6">
 <style>
   /* ---------- Week selector ----------
@@ -130,6 +130,14 @@
   .leg.live-up{ border-color: var(--win-line); background: var(--win-tint); }
   .leg.live-down{ border-color: var(--loss-line); background: var(--loss-tint); }
   .leg.missing{ cursor: default; }
+  /* Two columns on desktop (site audit #13): twelve legs one per row ran
+     ~950px wide and twice as tall as they needed to. Kickoff order reads
+     across, then down. align-items: start so opening a leg doesn't stretch
+     the one beside it. */
+  @media (min-width: 900px){
+    .legs-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+    .legs-grid .leg{ margin-top: 0; }
+  }
 
   .leg-head{ padding: 12px 14px 11px; }
   .leg-top{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
@@ -377,7 +385,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=21"></script>
+<script src="page-common.js?v=22"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -648,7 +656,7 @@
     return `${hero}
       <div class="glass" style="margin-top:14px">
         <div class="panel-title">Legs<span class="legs-actions">${share}${toggleAll}</span></div>
-        <div class="panel-body">${rows}</div>
+        <div class="panel-body legs-grid">${rows}</div>
       </div>`;
   }
 

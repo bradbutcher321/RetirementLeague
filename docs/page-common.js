@@ -111,8 +111,8 @@ const PLAYOFF_LINE = '<div class="po-line" role="separator" aria-label="Playoff 
 
 // ---------- Shareable views (site audit 21) ----------
 // Franchise (?m=Brad&tab=scoring), Head to Head (?a=Joe+G&b=Joe+K),
-// Standings (?year=2024&tab=reg) and Game Records (?year=2024) keep their
-// view in the query string so it can be sent as a link. urlParam reads it on
+// Standings (?year=2024&tab=reg), Game Records (?year=2024) and Draft Board
+// (?year=2019&view=team) keep their view in the query string so it can be sent as a link. urlParam reads it on
 // load, ahead of each page's localStorage fallback; setUrlParams writes
 // changes back with replaceState, so picks don't pile up in Back. A null
 // value drops the key; keys it isn't given (?recap, ?accent) stay put.
@@ -131,6 +131,13 @@ function setUrlParams(params) {
 // Goes through esc() like any other text when it lands in an href.
 function pageLink(page, params) {
   return page + '?' + new URLSearchParams(params);
+}
+// A manager's name as a link to their Franchise page (site audit #22). Given
+// the league's managers as `known`, anything else ("League", a player) stays
+// plain text. Inherits its row's color and type (theme.css a.mgr).
+function mgrLink(name, known) {
+  if (known && !known.has(name)) return esc(name);
+  return `<a class="mgr" href="${esc(pageLink('franchise.html', { m: name }))}">${esc(name)}</a>`;
 }
 // The real name for one typed into a URL by hand, ignoring case (?m=brad).
 function matchName(names, s) {
@@ -217,7 +224,7 @@ function weeklyLeaders(wf, key, names) {
 // A track with data-glide-panel also slides the content it switches in
 // from the side you moved toward: the value is the id of that container,
 // or "next" for the track's next sibling.
-const TRACK_SEL = '.tabs, .tab-row, .seg, .sup-seg, .scope-row, .board-toggle';
+const TRACK_SEL = '.tabs, .seg, .sup-seg, .scope-row, .board-toggle';
 const glideTap = { track: null, at: 0 };
 (() => {
   const items = track => [...track.children].filter(c => !c.classList.contains('glide-pill'));

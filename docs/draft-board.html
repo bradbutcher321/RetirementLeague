@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=22">
+<link rel="stylesheet" href="theme.css?v=23">
 <link rel="stylesheet" href="nav.css?v=6">
 <style>
   .wrap.wide{ max-width: 1180px; }
@@ -261,7 +261,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=21"></script>
+<script src="page-common.js?v=22"></script>
 <script>
   const POSITION_COLORS = {
     QB: '#E0644F', RB: '#4C9A6B', WR: '#4A90D9', TE: '#D9852F', K: '#9B6BC4', 'D/ST': '#8A8A85',
@@ -453,8 +453,18 @@
     goToTeam(track, Math.max(0, Math.min(track.children.length - 1, i)), true);
   });
 
-  let boardView = 'grid';
+  // Year and view ride in the URL (?year=2019&view=team, site audit II #20)
+  // so a board can be sent as a link. The view is also remembered here, since
+  // By Team is the better one on a phone; the URL wins over the saved one.
+  // The newest year leaves the URL bare. The view is always written, so a
+  // link opens on the sender's view rather than whatever the reader saved.
+  const VIEWS = { grid: 'grid', team: 'simple' };
+  const viewKey = v => Object.keys(VIEWS).find(k => VIEWS[k] === v);
+  let boardView = VIEWS[urlParam('view')]
+    || (() => { try { return VIEWS[localStorage.getItem('draft-board-view')]; } catch (e) { return null; } })()
+    || 'grid';
   const viewToggle = document.getElementById('view-toggle');
+  [...viewToggle.children].forEach(b => b.classList.toggle('on', b.dataset.view === boardView));
 
   fetch('data/draft-board.json', { cache: 'no-store' })
     .then(res => res.json())
@@ -464,6 +474,7 @@
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
 
       function show(year) {
+        setUrlParams({ year: String(year) === String(data.years[0]) ? null : year, view: viewKey(boardView) });
         const board = data.boards[year];
         // Legend is redrawn per year, not once at load -- which positions
         // exist changes with the era's roster rules.
@@ -480,7 +491,8 @@
           syncPager(track);
         }
       }
-      sel.value = data.years[0];
+      const y = Number(urlParam('year'));
+      sel.value = data.years.includes(y) ? y : data.years[0];
       show(sel.value);
       riseIn(document.getElementById('board-container').children);
       sel.addEventListener('change', () => show(sel.value));
@@ -511,6 +523,7 @@
         const btn = e.target.closest('[data-view]');
         if (!btn) return;
         boardView = btn.dataset.view;
+        try { localStorage.setItem('draft-board-view', viewKey(boardView)); } catch (err) {}
         [...viewToggle.children].forEach(b => b.classList.toggle('on', b === btn));
         show(sel.value);
       });

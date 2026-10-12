@@ -295,7 +295,7 @@ body{
 
    The group is a grey track; the selected item is solid gold. Pages keep
    only their own margins. */
-.tabs, .tab-row, .seg, .sup-seg, .scope-row, .board-toggle{
+.tabs, .seg, .sup-seg, .scope-row, .board-toggle{
   display: flex;
   flex-wrap: wrap;
   gap: var(--track-pad);
@@ -364,12 +364,11 @@ body{
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
 }
-.controls-row > .tabs, .controls-row > .tab-row, .controls-row > .seg,
+.controls-row > .tabs, .controls-row > .seg,
 .controls-row > .sup-seg, .controls-row > .scope-row, .controls-row > .board-toggle,
 .controls-row > .selector-row, .controls-row > .selector-group{ margin-bottom: 0; }
 
 .tabs .tab,
-.tab-row .year-tab,
 .seg button,
 .sup-seg button,
 .scope-row .scope-btn,
@@ -391,7 +390,7 @@ body{
   transition: background 0.12s, color 0.12s;
 }
 @media (prefers-reduced-motion: reduce){
-  .tabs .tab, .tab-row .year-tab, .seg button, .sup-seg button, .scope-row .scope-btn, .board-toggle button{ transition: none; }
+  .tabs .tab, .seg button, .sup-seg button, .scope-row .scope-btn, .board-toggle button{ transition: none; }
 }
 
 /* Tap targets. A pill is drawn --ctl-h tall (32px, 26px on Franchise's
@@ -402,8 +401,8 @@ body{
    phone .scroll track clips it at its own edge (overflow-y below), which
    still leaves the whole track height. .hit does the same for a lone pill
    button outside a track (Parlay's Expand all / Share). */
-.tabs .tab, .tab-row .year-tab, .seg button, .sup-seg button, .scope-row .scope-btn, .board-toggle button, .hit{ position: relative; }
-.tabs .tab::before, .tab-row .year-tab::before, .seg button::before, .sup-seg button::before,
+.tabs .tab, .seg button, .sup-seg button, .scope-row .scope-btn, .board-toggle button, .hit{ position: relative; }
+.tabs .tab::before::before, .seg button::before, .sup-seg button::before,
 .scope-row .scope-btn::before, .board-toggle button::before{
   content: ''; position: absolute;
   inset: min(0px, calc((var(--ctl-h) - 44px) / 2)) calc(var(--track-pad) / -2);
@@ -418,7 +417,6 @@ body{
    opens them, and the scrollbar thumb, which phones never draw. */
 @media (hover: hover){
   .tabs .tab:hover:not(.on),
-  .tab-row .year-tab:hover:not(.active),
   .seg button:hover:not(.on),
   .sup-seg button:hover:not(.on),
   .scope-row .scope-btn:hover:not(.on),
@@ -429,7 +427,6 @@ body{
 }
 
 .tabs .tab.on,
-.tab-row .year-tab.active,
 .seg button.on,
 .sup-seg button.on,
 .scope-row .scope-btn.on,
@@ -479,7 +476,7 @@ body{
    the stand-in sits in its scrolled content, and isolated so z-index -1
    puts it above the grey track but under the labels. Same overshoot curve
    as the Median Watch glide, at the pace the audit demo settled on. */
-.tabs, .tab-row, .seg, .sup-seg, .scope-row, .board-toggle{ position: relative; isolation: isolate; }
+.tabs, .seg, .sup-seg, .scope-row, .board-toggle{ position: relative; isolation: isolate; }
 .glide-pill{
   position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none;
   transition: transform .5s cubic-bezier(0.34, 1.56, 0.64, 1), width .5s cubic-bezier(0.34, 1.56, 0.64, 1), height .5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -505,11 +502,19 @@ body{
 @keyframes glide-in-l{ from{ opacity: 0; transform: translateX(-12px); } }
 
 .tabs .tab:focus-visible,
-.tab-row .year-tab:focus-visible,
 .seg button:focus-visible,
 .sup-seg button:focus-visible,
 .scope-row .scope-btn:focus-visible,
 .board-toggle button:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* A manager's name linking to their Franchise page (mgrLink in
+   page-common.js). It keeps the look of the text it replaced; only a mouse
+   gets an underline, since a phone has no hover to show it with. */
+a.mgr{ color: inherit; text-decoration: none; }
+@media (hover: hover){
+  a.mgr:hover{ text-decoration: underline; text-decoration-color: rgba(255,255,255,0.35); text-underline-offset: 3px; }
+}
+a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 3px; }
 
 /* The caption beside a dropdown. Deliberately NOT gold: it's static UI
    furniture, and the page already spends gold on the eyebrow, the hero
@@ -871,7 +876,7 @@ h2{
 /* A tab track that hasn't been filled yet would otherwise draw as a lone
    dot (its padding and border with nothing inside): hold its loaded height
    and shimmer like the cards below it. */
-.tabs:empty, .tab-row:empty, .seg:empty{ width: min(100%, 300px); height: var(--track-h);
+.tabs:empty, .seg:empty{ width: min(100%, 300px); height: var(--track-h);
   background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 45%, transparent 90%);
   background-size: 300% 100%; animation: sk-shimmer 1.25s linear infinite; }
 .sr-only{ position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -884,7 +889,7 @@ h2{
 .rise{ animation: rise-in .5s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(var(--rise-i, 0) * 90ms); }
 @keyframes rise-in{ from{ opacity: 0; transform: translateY(14px); } }
 @media (prefers-reduced-motion: reduce){
-  .sk i, .tabs:empty, .tab-row:empty, .seg:empty{ animation: none; }
+  .sk i, .tabs:empty, .seg:empty{ animation: none; }
   .rise{ animation: none; }
 }
 footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
