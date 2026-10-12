@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="Live scores, standings, records and history for the Retirement League.">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Retirement League">
+<meta property="og:title" content="Retirement League — Season Wrapped">
+<meta property="og:description" content="Live scores, standings, records and history for the Retirement League.">
+<meta property="og:url" content="https://bradbutcher321.github.io/RetirementLeague/wrapped.html">
+<meta property="og:image" content="https://bradbutcher321.github.io/RetirementLeague/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>html{background:#050505}</style>
+<title>Retirement League — Season Wrapped</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=25">
+<link rel="stylesheet" href="nav.css?v=7">
+<style>
+  /* ---------- Season Wrapped (site audit II #39) ----------
+     One manager's finished season as a short run of cards, then a picture
+     of it to drop in the group chat. The hero is Franchise's flat hero
+     (theme.css .fhero); every card below is the dashboard card shape: white
+     title top-left, chip top-right, one bordered box with the figure in
+     gold (red where it's a miss). */
+  .wr-pickers{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  .wr-pickers select{ min-width:0; }
+  .wr-logo{ position:relative; width:56px; height:56px; border-radius:50%; overflow:hidden; flex:none; border:2px solid var(--gold); background:var(--surface-raised); }
+  .wr-logo img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .wr-logo span{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:1.3rem; color:var(--gold); }
+  .wr-logo.ph span{ display:flex; }
+  .wr-logo.ph img{ display:none; }
+  .wr-finish{ display:inline-flex; margin-top:12px; }
+
+  .wr-grid{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; margin-top:14px; }
+  @media (min-width:721px){ .wr-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; } }
+  .wr-card{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius:14px; padding:16px 18px 18px; display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .wr-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .wr-title{ font-weight:700; font-size:0.92rem; }
+  .wr-box{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:12px 14px 13px; flex:1; }
+  .wr-v{ font-family:var(--scoreboard); font-weight:800; font-size:2rem; line-height:1; color:var(--gold); font-variant-numeric:tabular-nums; }
+  .wr-v.loss{ color:var(--loss); }
+  .wr-v.turf{ color:var(--turf); }
+  .wr-v small{ font-size:0.55em; color:var(--text-dim); font-weight:700; margin-left:4px; }
+  .wr-line{ font-size:0.86rem; line-height:1.45; margin-top:8px; }
+  .wr-line b{ font-weight:700; }
+  .wr-sub{ font-size:0.74rem; color:var(--text-dim); margin-top:4px; line-height:1.4; }
+  .wr-split{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; text-align:center; }
+  .wr-split .wr-v{ font-size:1.5rem; }
+  .wr-split .cap{ font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-dim); margin-top:4px; }
+
+  /* The share picture: drawn on a canvas (drawShare), shown here as the
+     image it will be, with one gold pill to share or save it. */
+  .wr-share{ margin-top:14px; display:grid; gap:14px; justify-items:center; padding:18px; }
+  .wr-share img{ width:min(100%, 360px); aspect-ratio:4/5; border-radius:12px; border:1px solid var(--line); display:block; }
+  .wr-share-btn{ min-height:44px; padding:0 22px; border-radius:999px; border:0; background:var(--gold); color:var(--ctl-on-ink); font:700 0.9rem/1 var(--body); cursor:pointer; }
+  .wr-share-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
+  .wr-empty{ margin-top:14px; }
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Season Wrapped</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- No captions: a manager's name and a year say what they pick. -->
+    <div class="wr-pickers">
+      <label class="sr-only" for="wr-m">Manager</label>
+      <select class="franchise-select" id="wr-m"></select>
+      <label class="sr-only" for="wr-y">Season</label>
+      <select class="lg-select" id="wr-y"></select>
+    </div>
+
+    <section id="wr-out"><div class="loading-row">Loading…</div></section>
+
+    <footer id="site-footer" data-note="Money is dues and prizes from that year's payout rules; parlays aren't counted"></footer>
+  </div>
+
+<script src="nav.js?v=6"></script>
+<script src="page-common.js?v=26"></script>
+<script src="league-common.js?v=4"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const f2 = n => Number(n).toFixed(2);
+  const ord = r => r + (['th', 'st', 'nd', 'rd'][(r % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][r % 100] || 'th');
+  const money = n => (n < 0 ? '−$' : '$') + Math.abs(Math.round(n)).toLocaleString();
+  const signed = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
+  const lineupCache = {};
+
+  let D = null, F = null, R = null;
+
+  // Payouts are "from this year on" snapshots (rule-changes.json), same
+  // lookup League History uses.
+  function rulesFor(year) {
+    const snap = R && R.snapshots ? [...R.snapshots].filter(s => s.year <= year).sort((a, b) => b.year - a.year)[0] : null;
+    return snap ? { buyIn: snap.buy_in || 0, pay: Object.fromEntries((snap.payouts || []).map(p => [p.label, p.amount])) } : null;
+  }
+
+  // ---------- The numbers ----------
+  function seasonFacts(m, y) {
+    const row = D.seasons.find(s => s.year === y && s.player === m);
+    const rows = D.seasons.filter(s => s.year === y);
+    const all = D.games.filter(g => g.year === y && g.type !== 'Bye' && g.p2 && g.winner !== 'In Progress');
+    const mine = all.filter(g => g.p1 === m || g.p2 === m).map(g => {
+      const a = g.p1 === m;
+      return { week: g.week, type: g.type, opp: a ? g.p2 : g.p1, s: a ? g.s1 : g.s2, o: a ? g.s2 : g.s1, won: g.winner === m, lost: g.winner === (a ? g.p2 : g.p1) };
+    });
+    const weekScores = w => all.filter(g => g.week === w).flatMap(g => [g.s1, g.s2]).filter(v => v > 0);
+
+    // Highs count every game, consolation included; lows leave consolation
+    // out (the prize rule, see League History).
+    const best = mine.reduce((a, g) => (!a || g.s > a.s ? g : a), null);
+    const worst = mine.filter(g => g.type !== 'Cons' && g.s > 0).reduce((a, g) => (!a || g.s < a.s ? g : a), null);
+    const rankIn = (g, desc) => { const list = weekScores(g.week); return { r: 1 + list.filter(v => (desc ? v > g.s : v < g.s)).length, n: list.length }; };
+
+    const yearHigh = Math.max(...all.flatMap(g => [g.s1, g.s2]));
+    const pfRank = 1 + rows.filter(s => s.tot_pf > row.tot_pf).length;
+    const wf = weeklyFinishes(all).by.get(m) || { stolen: 0, robbed: 0, beat: 0, lost: 0, weeks: 0 };
+
+    // Money: dues in, prizes out, by that year's rules.
+    const rules = rulesFor(y);
+    let won = 0;
+    const prizes = [];
+    if (rules) {
+      const place = { 1: '1st Place', 2: '2nd Place', 3: '3rd Place' }[row.final_rank];
+      if (place && rules.pay[place]) { won += rules.pay[place]; prizes.push(place.replace(' Place', '')); }
+      const weekHolders = new Set(all.flatMap(g => [[g.p1, g.s1], [g.p2, g.s2]]).filter(([, s]) => s === yearHigh).map(([p]) => p));
+      if (weekHolders.has(m) && rules.pay['Highest Points (Week)']) { won += rules.pay['Highest Points (Week)'] / weekHolders.size; prizes.push('top week'); }
+      const topPf = Math.max(...rows.map(s => s.tot_pf));
+      const pfHolders = rows.filter(s => s.tot_pf === topPf);
+      if (row.tot_pf === topPf && rules.pay['Highest Points (Season)']) { won += rules.pay['Highest Points (Season)'] / pfHolders.length; prizes.push('top season'); }
+    }
+    return { row, rows, mine, best, worst, bestRank: best && rankIn(best, true), worstRank: worst && rankIn(worst, false), yearHigh, pfRank, wf, rules, won, prizes };
+  }
+
+  // The rivalry moment: the season's biggest stage -- the title game, the
+  // Sacko game, the game that ended the playoff run, the 3rd-place game --
+  // and otherwise the closest game against the manager they've played most.
+  function rivalryMoment(m, y, facts) {
+    const pick = t => facts.mine.filter(g => g.type === t).sort((a, b) => b.week - a.week)[0];
+    const score = g => `${f2(g.s)}–${f2(g.o)}`;
+    const champ = pick('Champ'), sacko = pick('Sacko'), third = pick('3rd');
+    const playoff = facts.mine.filter(g => g.type === 'Play').sort((a, b) => b.week - a.week)[0];
+    if (champ) return { g: champ, chip: 'Final', text: champ.won ? `Won the title over <b>${esc(champ.opp)}</b>, ${score(champ)}.` : `Lost the title game to <b>${esc(champ.opp)}</b>, ${score(champ)}.` };
+    if (sacko) return { g: sacko, chip: 'Sacko game', text: sacko.won ? `Escaped the Sacko against <b>${esc(sacko.opp)}</b>, ${score(sacko)}.` : `Took the Sacko, losing to <b>${esc(sacko.opp)}</b>, ${score(sacko)}.` };
+    if (playoff && !playoff.won) return { g: playoff, chip: `Week ${playoff.week}`, text: `Knocked out of the playoffs by <b>${esc(playoff.opp)}</b>, ${score(playoff)}.` };
+    if (third) return { g: third, chip: '3rd place', text: third.won ? `Took 3rd over <b>${esc(third.opp)}</b>, ${score(third)}.` : `Lost the 3rd-place game to <b>${esc(third.opp)}</b>, ${score(third)}.` };
+
+    const upTo = D.games.filter(g => g.year <= y && g.type !== 'Bye' && g.p2 && g.winner !== 'In Progress' && (g.p1 === m || g.p2 === m));
+    const vs = o => upTo.filter(g => g.p1 === o || g.p2 === o);
+    const opps = [...new Set(facts.mine.filter(g => g.type === 'Reg').map(g => g.opp))];
+    if (!opps.length) return null;
+    const rival = opps.sort((a, b) => vs(b).length - vs(a).length)[0];
+    const g = facts.mine.filter(x => x.opp === rival).sort((a, b) => Math.abs(a.s - a.o) - Math.abs(b.s - b.o))[0];
+    const w = vs(rival).filter(x => x.winner === m).length, l = vs(rival).filter(x => x.winner === rival).length;
+    const series = w > l ? `you lead the all-time series ${w}-${l}` : w < l ? `${esc(rival)} leads the all-time series ${l}-${w}` : `the all-time series is tied ${w}-${l}`;
+    return { g, chip: `Week ${g.week}`, text: `${g.won ? 'Beat' : g.lost ? 'Lost to' : 'Tied'} <b>${esc(rival)}</b>, your most-played rival, ${score(g)}. After it, ${series}.` };
+  }
+
+  // The lineup call that cost the most: a bench player who outscored a
+  // starter he could have replaced. Bench rows don't say a position, so a
+  // player's position is the one he started at for anyone that season; one
+  // who only ever started at FLEX can still swap in there. Kickers and
+  // defenses aren't in the lineup files.
+  function worstCall(m, y, facts, lineups) {
+    if (!lineups || !lineups.weeks) return null;
+    const pos = new Map();
+    Object.values(lineups.weeks).forEach(wk => Object.values(wk).forEach(rows => rows.forEach(([name, , slot]) => {
+      if (slot === 'BE' || slot === 'IR') return;
+      if (slot === 'RB/WR/TE') { if (!pos.has(name)) pos.set(name, 'FLEX'); } else pos.set(name, slot);
+    })));
+    const fits = (p, slot) => p === slot || (slot === 'RB/WR/TE' && ['RB', 'WR', 'TE', 'FLEX'].includes(p));
+    let best = null;
+    Object.entries(lineups.weeks).forEach(([w, wk]) => {
+      const rows = wk[m];
+      if (!rows) return;
+      const starters = rows.filter(r => r[2] !== 'BE' && r[2] !== 'IR');
+      rows.filter(r => r[2] === 'BE').forEach(b => {
+        const p = pos.get(b[0]);
+        if (!p) return;
+        starters.filter(s => fits(p, s[2])).forEach(s => {
+          const d = b[3] - s[3];
+          if (d > 0 && (!best || d > best.d)) best = { week: Number(w), bench: b[0], bp: b[3], start: s[0], sp: s[3], d };
+        });
+      });
+    });
+    if (!best) return null;
+    const g = facts.mine.find(x => x.week === best.week);
+    if (g) {
+      best.opp = g.opp;
+      best.flips = g.lost && best.d > g.o - g.s;
+      best.won = g.won;
+      best.by = Math.abs(g.s - g.o);
+    }
+    return best;
+  }
+
+  // ---------- The page ----------
+  const card = (title, chip, body) => `<div class="wr-card"><div class="wr-head"><div class="wr-title">${title}</div>${chip ? `<span class="badge dim">${chip}</span>` : ''}</div><div class="wr-box">${body}</div></div>`;
+
+  function finishLabel(row, teams) {
+    if (row.champ > 0) return { text: 'Champion', tone: 'gold' };
+    if (row.sacko > 0) return { text: 'Sacko', tone: 'loss' };
+    if (row.final_rank === 2) return { text: 'Runner-up', tone: 'gold' };
+    if (row.playoff > 0) return { text: `Playoffs · ${ord(row.final_rank)}`, tone: 'dim' };
+    return { text: `Missed playoffs · ${ord(row.final_rank)}`, tone: 'dim' };
+  }
+
+  function seasonLogo(m, y) {
+    const p = F && F.players.find(x => x.name === m);
+    const h = p && p.season_history.find(s => s.year === y);
+    const team = (h && h.team_name) || '';
+    let url = '';
+    if (p) {
+      if (team && team === p.current_team_name) url = p.current_team_logo || '';
+      else if (team && p.previous_team_logos && p.previous_team_logos[team]) url = p.previous_team_logos[team].logo_url || '';
+      else url = p.current_team_logo || '';
+    }
+    return { team, url };
+  }
+
+  let shareData = null;
+
+  async function render() {
+    const m = $('wr-m').value, y = Number($('wr-y').value);
+    setUrlParams({ m, year: y });
+    const out = $('wr-out');
+    const facts = seasonFacts(m, y);
+    if (!facts.row) { out.innerHTML = '<div class="loading-row">No season on record.</div>'; return; }
+    if (!(y in lineupCache)) lineupCache[y] = fetch(`data/lineups/${y}.json`).then(r => (r.ok ? r.json() : null)).catch(() => null);
+    const lineups = await lineupCache[y];
+    if ($('wr-m').value !== m || Number($('wr-y').value) !== y) return;
+
+    const { row, rows, best, worst, bestRank, worstRank, wf, rules } = facts;
+    const fin = finishLabel(row, rows.length);
+    const rec = `${row.reg_w + row.med_w}-${row.reg_l + row.med_l}`;
+    const logo = seasonLogo(m, y);
+    const medianEra = y >= (D.median_era_start_year || 9999);
+
+    const side = [
+      ['Record', rec],
+      ['Finish', `${ord(row.final_rank)} of ${rows.length}`],
+      ['Points', row.tot_pf.toLocaleString(undefined, { maximumFractionDigits: 0 })],
+      ['Points Rank', ord(facts.pfRank)],
+    ].map(([l, v]) => `<div class="fs"><div class="fs-v">${v}</div><div class="fs-l">${l}</div></div>`).join('');
+    const hero = `
+      <div class="fhero">
+        <div class="fhero-main">
+          <div class="fhero-id">
+            <span class="wr-logo${logo.url ? '' : ' ph'}"><img src="${esc(logo.url)}" alt="" onerror="this.parentNode.classList.add('ph')"><span>${esc(monogram(m))}</span></span>
+            <div style="min-width:0">
+              <div class="fhero-name">${esc(logo.team || m)}</div>
+              <div class="fhero-sub">${mgrLink(m)} · ${y}</div>
+            </div>
+          </div>
+          <span class="badge ${fin.tone} wr-finish">${fin.text}</span>
+        </div>
+        <div class="fhero-stats">${side}</div>
+      </div>`;
+
+    const cards = [];
+    if (best) {
+      const top = best.s === facts.yearHigh;
+      cards.push(card('Best week', `Week ${best.week}`, `<div class="wr-v">${f2(best.s)}</div>
+        <div class="wr-line">${best.won ? 'Beat' : 'Lost to'} <b>${esc(best.opp)}</b>${best.type === 'Reg' ? '' : ` (${best.type === 'Cons' ? 'consolation' : best.type === 'Champ' ? 'title game' : best.type === 'Play' ? 'playoffs' : best.type})`}.</div>
+        <div class="wr-sub">${top ? "The league's top score of the season." : bestRank.r === 1 ? 'Top score in the league that week.' : `${ord(bestRank.r)} of ${bestRank.n} that week.`}</div>`));
+    }
+    if (worst) {
+      cards.push(card('Worst week', `Week ${worst.week}`, `<div class="wr-v loss">${f2(worst.s)}</div>
+        <div class="wr-line">${worst.won ? 'Still beat' : 'Lost to'} <b>${esc(worst.opp)}</b>${worst.won ? ' anyway' : ''}.</div>
+        <div class="wr-sub">${worstRank.r === 1 ? 'Bottom score in the league that week.' : `${ord(worstRank.n - worstRank.r + 1)} of ${worstRank.n} that week.`}</div>`));
+    }
+    const call = worstCall(m, y, facts, lineups);
+    if (call) {
+      const verdict = call.flips ? `Starting him wins the game against <b>${esc(call.opp)}</b>.`
+        : call.won ? `You beat ${esc(call.opp)} anyway.`
+        : call.opp ? `Still a loss to ${esc(call.opp)}, by ${f2(call.by)}.` : '';
+      cards.push(card('Worst lineup call', `Week ${call.week}`, `<div class="wr-v loss">−${f2(call.d)}</div>
+        <div class="wr-line">Benched <b>${esc(call.bench)}</b> (${f2(call.bp)}) and started <b>${esc(call.start)}</b> (${f2(call.sp)}).</div>
+        <div class="wr-sub">${verdict}</div>`));
+    }
+    if (wf.weeks) {
+      const luck = wf.stolen - wf.robbed;
+      const medRec = medianEra ? `${row.med_w}-${row.med_l}` : `${wf.beat}-${wf.lost}`;
+      cards.push(card('Bubble luck', medianEra ? `Median ${medRec}` : `Top half ${wf.beat} of ${wf.weeks}`, `
+        <div class="wr-split">
+          <div><div class="wr-v ${luck > 0 ? 'turf' : luck < 0 ? 'loss' : ''}">${signed(luck)}</div><div class="cap">Net luck</div></div>
+          <div><div class="wr-v">${wf.stolen}</div><div class="cap">Lucky wins</div></div>
+          <div><div class="wr-v">${wf.robbed}</div><div class="cap">Unlucky losses</div></div>
+        </div>
+        <div class="wr-sub" style="margin-top:10px">Won ${wf.stolen} game${wf.stolen === 1 ? '' : 's'} while scoring under that week's median, and lost ${wf.robbed} while scoring over it.</div>`));
+    }
+    const moment = rivalryMoment(m, y, facts);
+    if (moment) {
+      const g = moment.g;
+      cards.push(card('Rivalry moment', moment.chip, `<div class="wr-v ${g.won ? '' : 'loss'}">${g.won ? '+' : g.lost ? '−' : ''}${f2(Math.abs(g.s - g.o))}</div>
+        <div class="wr-line">${moment.text}</div>`));
+    }
+    if (rules) {
+      const net = facts.won - rules.buyIn;
+      cards.push(card('Money', facts.prizes.length ? facts.prizes.join(' · ') : '', `
+        <div class="wr-split">
+          <div><div class="wr-v">${money(rules.buyIn)}</div><div class="cap">Paid in</div></div>
+          <div><div class="wr-v">${money(facts.won)}</div><div class="cap">Won</div></div>
+          <div><div class="wr-v ${net > 0 ? 'turf' : net < 0 ? 'loss' : ''}">${net > 0 ? '+' : ''}${money(net)}</div><div class="cap">Net</div></div>
+        </div>`));
+    }
+
+    out.innerHTML = `${hero}<div class="wr-grid">${cards.join('')}</div>
+      <div class="glass wr-share"><img id="wr-img" alt="${esc(m)}'s ${y} season, as a picture to share"><button type="button" class="wr-share-btn" id="wr-share">Share</button></div>`;
+    riseIn(out.children);
+
+    shareData = { m, y, team: logo.team || m, logoUrl: logo.url, fin: fin.text, rec, best, call, luck: wf.weeks ? wf.stolen - wf.robbed : null, net: rules ? facts.won - rules.buyIn : null, pf: row.tot_pf, pfRank: facts.pfRank };
+    drawShare(shareData).then(blob => {
+      if (!blob || shareData.m !== m || shareData.y !== y) return;
+      shareData.blob = blob;
+      const img = $('wr-img');
+      if (img) img.src = URL.createObjectURL(blob);
+    });
+    $('wr-share').addEventListener('click', shareIt);
+  }
+
+  // ---------- The share picture ----------
+  // 1080x1350 (4:5, what a chat app shows uncropped): the page's own black,
+  // gold and Big Shoulders, the headline lines of the season, and the site
+  // address at the foot.
+  async function drawShare(s) {
+    try { await document.fonts.load('800 100px "Big Shoulders Display"'); await document.fonts.load('600 40px Inter'); } catch (e) {}
+    const W = 1080, H = 1350, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const css = getComputedStyle(document.documentElement);
+    const gold = css.getPropertyValue('--gold').trim() || '#D4B46A';
+    const dim = css.getPropertyValue('--text-dim').trim() || '#8E8E8C';
+    const text = css.getPropertyValue('--text').trim() || '#F5F5F3';
+    const loss = css.getPropertyValue('--loss').trim() || '#D6624F';
+    const turf = css.getPropertyValue('--turf').trim() || '#4FAE7A';
+    x.fillStyle = '#050505'; x.fillRect(0, 0, W, H);
+    const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#1b1b1b'); g.addColorStop(1, '#0e0e0e');
+    x.fillStyle = g; roundRect(x, 48, 48, W - 96, H - 96, 40); x.fill();
+    x.strokeStyle = 'rgba(255,255,255,0.08)'; x.lineWidth = 2; x.stroke();
+
+    const SB = '"Big Shoulders Display", sans-serif', IN = 'Inter, sans-serif';
+    x.textBaseline = 'alphabetic';
+    x.fillStyle = gold; x.font = `700 34px ${SB}`;
+    x.fillText(`RETIREMENT LEAGUE · ${s.y} WRAPPED`, 104, 138);
+
+    // Logo (or monogram) and the team name.
+    const lx = 104, ly = 180, ls = 132;
+    let drewLogo = false;
+    if (s.logoUrl) {
+      try {
+        const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = s.logoUrl; });
+        x.save(); x.beginPath(); x.arc(lx + ls / 2, ly + ls / 2, ls / 2, 0, Math.PI * 2); x.clip();
+        x.drawImage(im, lx, ly, ls, ls); x.restore(); drewLogo = true;
+      } catch (e) {}
+    }
+    if (!drewLogo) {
+      x.fillStyle = '#161616'; x.beginPath(); x.arc(lx + ls / 2, ly + ls / 2, ls / 2, 0, Math.PI * 2); x.fill();
+      x.fillStyle = gold; x.font = `800 56px ${SB}`; x.textAlign = 'center'; x.fillText(monogram(s.m), lx + ls / 2, ly + ls / 2 + 20); x.textAlign = 'left';
+    }
+    x.strokeStyle = gold; x.lineWidth = 4; x.beginPath(); x.arc(lx + ls / 2, ly + ls / 2, ls / 2, 0, Math.PI * 2); x.stroke();
+    x.fillStyle = text; x.font = `800 84px ${SB}`;
+    fitText(x, s.team.toUpperCase(), 270, 262, W - 104 - 270, 84, SB);
+    x.fillStyle = dim; x.font = `500 34px ${IN}`;
+    x.fillText(s.m, 270, 308);
+
+    // The finish, big.
+    x.fillStyle = /Sacko/.test(s.fin) ? loss : gold;
+    x.font = `800 150px ${SB}`;
+    fitText(x, s.fin.split(' · ')[0].toUpperCase(), 104, 520, W - 208, 150, SB);
+    x.fillStyle = dim; x.font = `500 36px ${IN}`;
+    x.fillText(`${s.rec} record · ${Math.round(s.pf).toLocaleString()} points (${ord(s.pfRank)})`, 104, 584);
+
+    // Stat rows: label left, figure right.
+    const rowsOut = [];
+    if (s.best) rowsOut.push(['Best week', `${f2(s.best.s)}`, gold, `Week ${s.best.week} vs ${s.best.opp}`]);
+    if (s.call) rowsOut.push(['Worst lineup call', `−${f2(s.call.d)}`, loss, `Benched ${s.call.bench}`]);
+    if (s.luck !== null) rowsOut.push(['Bubble luck', signed(s.luck), s.luck > 0 ? turf : s.luck < 0 ? loss : gold, 'Lucky wins minus unlucky losses']);
+    if (s.net !== null) rowsOut.push(['Money', `${s.net > 0 ? '+' : ''}${money(s.net)}`, s.net > 0 ? turf : s.net < 0 ? loss : gold, 'Prizes minus dues']);
+    let yy = 640;
+    rowsOut.slice(0, 4).forEach(([label, val, tone, sub]) => {
+      x.fillStyle = 'rgba(255,255,255,0.03)'; roundRect(x, 104, yy, W - 208, 128, 22); x.fill();
+      x.strokeStyle = 'rgba(255,255,255,0.08)'; x.lineWidth = 2; x.stroke();
+      x.fillStyle = text; x.font = `700 36px ${IN}`; x.fillText(label, 140, yy + 58);
+      x.fillStyle = dim; x.font = `500 26px ${IN}`;
+      fitText(x, sub, 140, yy + 98, W - 208 - 300, 26, IN, 500);
+      x.fillStyle = tone; x.font = `800 72px ${SB}`; x.textAlign = 'right'; x.fillText(val, W - 140, yy + 88); x.textAlign = 'left';
+      yy += 140;
+    });
+
+    x.fillStyle = dim; x.font = `500 28px ${IN}`; x.textAlign = 'center';
+    x.fillText('bradbutcher321.github.io/RetirementLeague', W / 2, H - 96);
+    x.textAlign = 'left';
+    return new Promise(res => c.toBlob(res, 'image/png'));
+  }
+  function roundRect(x, l, t, w, h, r) {
+    x.beginPath(); x.moveTo(l + r, t); x.arcTo(l + w, t, l + w, t + h, r); x.arcTo(l + w, t + h, l, t + h, r); x.arcTo(l, t + h, l, t, r); x.arcTo(l, t, l + w, t, r); x.closePath();
+  }
+  // Shrinks a line's font until it fits its width.
+  function fitText(x, s, left, base, maxW, size, family, weight = 800) {
+    let px = size;
+    x.font = `${weight} ${px}px ${family}`;
+    while (px > 18 && x.measureText(s).width > maxW) { px -= 2; x.font = `${weight} ${px}px ${family}`; }
+    x.fillText(s, left, base);
+  }
+
+  async function shareIt() {
+    const s = shareData;
+    if (!s || !s.blob) return;
+    const name = `${s.m.replace(/\s+/g, '-')}-${s.y}-wrapped.png`;
+    const file = new File([s.blob], name, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: `${s.m}'s ${s.y} season` }); } catch (e) {}
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(s.blob);
+    a.download = name;
+    a.click();
+  }
+
+  // ---------- Pickers ----------
+  // Finished seasons only: Wrapped is the story once it's over. A link
+  // (?m=&year=) first, then you (getMe), then whoever's first.
+  function fillYears(m) {
+    const done = new Set(D.completeYears);
+    const years = D.seasons.filter(s => s.player === m && done.has(s.year)).map(s => s.year).sort((a, b) => b - a);
+    const keep = Number($('wr-y').value);
+    $('wr-y').innerHTML = years.map(yr => `<option value="${yr}">${yr}</option>`).join('');
+    const want = Number(urlParam('year'));
+    $('wr-y').value = years.includes(keep) ? keep : years.includes(want) ? want : years[0];
+    return years.length > 0;
+  }
+
+  Promise.all([
+    LG.load(),
+    fetch('data/franchise.json').then(r => r.json()).catch(() => null),
+    fetch('data/rule-changes.json').then(r => r.json()).catch(() => null),
+  ]).then(([data, fr, rc]) => {
+    D = data; F = fr; R = rc;
+    const done = new Set(D.completeYears);
+    const names = [...new Set(D.seasons.filter(s => done.has(s.year)).map(s => s.player))].sort();
+    const active = names.filter(n => D.active.has(n)), former = names.filter(n => !D.active.has(n));
+    $('wr-m').innerHTML = `<optgroup label="Current teams">${active.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` +
+      (former.length ? `<optgroup label="Former teams">${former.map(n => `<option>${esc(n)}</option>`).join('')}</optgroup>` : '');
+    $('wr-m').value = matchName(names, urlParam('m')) || matchName(names, getMe()) || active[0] || names[0];
+    fillYears($('wr-m').value);
+    $('wr-m').addEventListener('change', () => { fillYears($('wr-m').value); render(); });
+    $('wr-y').addEventListener('change', render);
+    render();
+  }).catch(err => LG.showError('wr-out', err));
+</script>
+<script src="track.js?v=1" defer></script>
+</body>
+</html>

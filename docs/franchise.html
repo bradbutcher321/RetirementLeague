@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=24">
-<link rel="stylesheet" href="nav.css?v=6">
+<link rel="stylesheet" href="theme.css?v=25">
+<link rel="stylesheet" href="nav.css?v=7">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
      spacing and variants here. */
@@ -112,37 +112,6 @@
       z-index: 50;
     }
     .current-logo-preview{ top: anchor(bottom); margin-top: 8px; }
-  }
-
-  /* ---------- Hero ----------
-     Its own card rather than the shared .hero2: no gold glow behind the
-     name (the logo is the colour here), and not clipped, so the logo
-     previews can hang outside it. Phone: identity on top, a five-stat
-     strip underneath. Desktop: the strip turns into a column on the right. */
-  .fhero{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius:14px; display:grid; grid-template-columns:minmax(0,1fr); }
-  .fhero-main{ padding:18px 18px 16px; min-width:0; }
-  .fhero-id{ display:flex; align-items:center; gap:14px; }
-  .fhero-name{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.9rem, 8vw, 2.6rem); line-height:0.95; overflow-wrap:anywhere; }
-  .fhero-sub{ color:var(--text-dim); font-size:0.8rem; margin-top:5px; }
-  /* No dividers between stats. Cells hug their content and the leftover
-     width is shared evenly between them, so the visible gaps between
-     numbers come out equal ("3" doesn't sit in a cell as wide as "76-100"). */
-  .fhero-stats{ display:flex; justify-content:space-between; gap:8px; padding:0 20px; border-top:1px solid var(--line); background:rgba(0,0,0,0.22); border-radius:0 0 14px 14px; }
-  .fs{ padding:13px 0 12px; text-align:center; min-width:0; }
-  /* Each stat hugs its widest word, so a two-word label like "Weekly
-     Sackos" always wraps rather than only on narrower phones -- the strip
-     keeps one shape and even gaps at every width. */
-  .fs{ width:min-content; }
-  .fs-v{ justify-self:center; }
-  .fs-v{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.05rem, 5vw, 1.4rem); color:var(--gold); white-space:nowrap; font-variant-numeric:tabular-nums; }
-  .fs-l{ color:var(--text-dim); font-size:0.56rem; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; line-height:1.25; }
-  @media (min-width:721px){
-    .fhero{ grid-template-columns:minmax(0,1fr) auto; }
-    .fhero-main{ padding:26px 28px 24px; }
-    .fhero-stats{ display:flex; flex-direction:column; justify-content:center; gap:14px; border-top:none; border-left:1px solid var(--line); border-radius:0 14px 14px 0; padding:22px 26px; }
-    .fs{ display:flex; justify-content:space-between; align-items:center; gap:28px; padding:0; text-align:left; width:auto; }
-    .fs-v{ order:2; font-size:1.2rem; }
-    .fs-l{ order:1; font-size:0.76rem; text-transform:none; letter-spacing:0; margin:0; }
   }
 
   /* ---------- Panels ----------
@@ -276,6 +245,9 @@
   .season-fin span{ display:block; color:var(--text-dim); font-size:0.62rem; letter-spacing:0.05em; text-transform:uppercase; white-space:nowrap; margin-top:1px; }
   /* Title years are tinted gold, Sacko years red -- the two seasons that
      define a career. Everything else stays a plain row. */
+  a.season{ color:inherit; text-decoration:none; }
+  @media (hover:hover){ a.season:hover{ background:var(--item-hover); } }
+  a.season:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   .season.champion{ border-color:var(--lead-line); background:var(--lead-tint); }
   .season.sacko{ border-color:var(--loss-line); background:var(--loss-tint); }
   .season.champion .season-fin b, .season.runner-up .season-fin b{ color:var(--gold); }
@@ -408,8 +380,8 @@
     <footer id="site-footer" data-note="Money Tracker from the league sheet · Updates Tuesday &amp; Thursday mornings"></footer>
   </div>
 
-<script src="nav.js?v=5"></script>
-<script src="page-common.js?v=25"></script>
+<script src="nav.js?v=6"></script>
+<script src="page-common.js?v=26"></script>
 <script src="achievements.js?v=3"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
@@ -759,13 +731,15 @@
       const regRank = s.reg_standing ? ` · ${fmtOrdinal(s.reg_standing)}${state === 'progress' ? ' so far' : ' reg'}` : '';
       const po = s.playoff_record ? ` · Playoffs ${s.playoff_record}` : '';
       const place = state === 'progress' ? '' : `${fmtOrdinal(s.final_standing)} place`;
+      // A finished season opens its Season Wrapped (site audit II #39).
+      const tag = state === 'progress' ? 'div' : `a href="${esc(pageLink('wrapped.html', { m: p.name, year: s.year }))}"`;
       return `
-        <div class="season ${state}">
+        <${tag} class="season ${state}">
           <div class="season-yr">${s.year}</div>
           <div style="min-width:0"><div class="season-nm">${esc(s.team_name || p.current_team_name || '')}</div>
             <div class="season-sub">${esc(s.reg_record)}${regRank}${po}</div></div>
           <div class="season-fin"><b>${FINISH_LABELS[state]}</b>${place ? `<span>${place}</span>` : ''}</div>
-        </div>`;
+        </${state === 'progress' ? 'div' : 'a'}>`;
     }).join('');
     return summary + card('Season by Season', list, { chip: chip(`${hist.length} season${hist.length === 1 ? '' : 's'}`) });
   }
@@ -1332,7 +1306,8 @@
     sel.innerHTML = d.players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
     const names = d.players.map(p => p.name);
     const saved = (() => { try { return localStorage.getItem('franchise-selected'); } catch (e) { return null; } })();
-    sel.value = matchName(names, urlParam('m')) || (names.includes(saved) ? saved : names[0]);
+    // A link (?m=) first, then you (site audit II #36), then the last one looked at.
+    sel.value = matchName(names, urlParam('m')) || matchName(names, getMe()) || (names.includes(saved) ? saved : names[0]);
     show(sel.value);
     riseIn([...document.getElementById('hero-container').children, ...document.getElementById('tab-content').children]);
     sel.addEventListener('change', () => {

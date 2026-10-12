@@ -152,3 +152,110 @@
   }
   .nav-links a.active{ color: var(--gold); background: rgba(212,180,106,0.1); font-weight: 700; }
 }
+
+/* ---------- You (site audit II #36/#37) ----------
+   The round button at the right end of the bar (nav.js wireYou): your
+   monogram in gold once you've picked your team, a person outline before.
+   34px drawn like the menu button, 44px to tap. */
+.nav-me{
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  font: 700 0.72rem/1 var(--body);
+  letter-spacing: 0.02em;
+}
+.nav-me::before{ content: ''; position: absolute; inset: -6px; }
+.nav-me svg{ width: 18px; height: 18px; }
+.nav-me.set{ color: var(--gold); border-color: var(--lead-line); background: var(--lead-tint); }
+.nav-me:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (hover: hover){ .nav-me:hover{ color: var(--text); } .nav-me.set:hover{ color: var(--gold); } }
+@media (min-width: 1080px){
+  .nav-me{ position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
+  .nav-me::before{ inset: -5px; }
+}
+
+/* The sheet: theme.css's bottom sheet on a phone; above 720px a centred
+   card instead of a strip across the whole desktop. */
+.you-head{ display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 4px; }
+.you-title{ font-weight: 700; font-size: 1.02rem; }
+.you-sub{ color: var(--text-dim); font-size: 0.8rem; line-height: 1.4; padding: 0 4px 12px; }
+.you-picks{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.you-pick{
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--ctl-line);
+  background: var(--item);
+  color: var(--text);
+  font: 600 0.88rem/1.1 var(--body);
+  cursor: pointer;
+  padding: 0 8px;
+}
+.you-pick.none{ grid-column: 1 / -1; color: var(--text-dim); font-weight: 500; }
+.you-pick.on{ color: var(--gold); border-color: var(--gold); background: var(--lead-tint); }
+.you-pick:focus-visible, .you-test:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (hover: hover){ .you-pick:hover{ background: var(--item-hover); } }
+.you-sec{ margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.you-sec-t{ font-size: 0.62rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim); padding: 0 4px 6px; }
+.you-note{ color: var(--text-dim); font-size: 0.8rem; line-height: 1.45; padding: 6px 4px; }
+.you-row{ display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 0 4px; font-size: 0.9rem; cursor: pointer; }
+.you-row.dis{ color: var(--text-dim); cursor: default; }
+.you-types{ margin: 2px 0 0 0; padding-left: 10px; border-left: 1px solid var(--line); }
+.you-types .you-row{ font-size: 0.84rem; min-height: 40px; }
+/* An on/off switch: a pill track, gold when on. */
+.you-sw{
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--track-bg);
+  border: 1px solid var(--track-line);
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.you-sw::after{
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--text);
+  transition: transform .18s ease;
+}
+.you-sw:checked{ background: var(--gold); border-color: var(--gold); }
+.you-sw:checked::after{ transform: translateX(18px); background: var(--ctl-on-ink); }
+.you-sw:disabled{ opacity: 0.4; cursor: default; }
+.you-sw:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce){ .you-sw, .you-sw::after{ transition: none; } }
+.you-test{
+  margin: 10px 4px 2px;
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--lead-line);
+  background: transparent;
+  color: var(--gold);
+  font: 600 0.8rem/1 var(--body);
+  cursor: pointer;
+}
+@media (min-width: 721px){
+  .you-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: 440px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
+  .you-sheet .sheet-grab{ visibility: hidden; height: 8px; padding: 0; }
+  .you-sheet .sheet-body{ padding-bottom: 18px; }
+}

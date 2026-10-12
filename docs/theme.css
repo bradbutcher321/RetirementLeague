@@ -698,6 +698,7 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
 .badge.gold{ color:var(--gold); border-color:var(--gold); }
 .badge.turf{ color:var(--turf); border-color:var(--turf); }
 .badge.loss{ color:var(--loss); border-color:var(--loss); }
+.badge.dim{ color:var(--text-dim); border-color:var(--line); }
 
 /* ---------- Playoff line (site audit 29) ----------
    The cut between the last playoff spot and the first team out, in the
@@ -895,6 +896,44 @@ h2{
   .rise{ animation: none; }
 }
 footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
+
+/* ---------- Flat hero (.fhero) ----------
+   Franchise's hero, shared with Season Wrapped. Its own card rather than the shared .hero2: no gold glow behind the
+   name (the logo is the colour here), and not clipped, so the logo
+   previews can hang outside it. Phone: identity on top, a five-stat
+   strip underneath. Desktop: the strip turns into a column on the right. */
+.fhero{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius:14px; display:grid; grid-template-columns:minmax(0,1fr); }
+.fhero-main{ padding:18px 18px 16px; min-width:0; }
+.fhero-id{ display:flex; align-items:center; gap:14px; }
+.fhero-name{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.9rem, 8vw, 2.6rem); line-height:0.95; overflow-wrap:anywhere; }
+.fhero-sub{ color:var(--text-dim); font-size:0.8rem; margin-top:5px; }
+/* No dividers between stats. Cells hug their content and the leftover
+   width is shared evenly between them, so the visible gaps between
+   numbers come out equal ("3" doesn't sit in a cell as wide as "76-100"). */
+.fhero-stats{ display:flex; justify-content:space-between; gap:8px; padding:0 20px; border-top:1px solid var(--line); background:rgba(0,0,0,0.22); border-radius:0 0 14px 14px; }
+.fs{ padding:13px 0 12px; text-align:center; min-width:0; }
+/* Each stat hugs its widest word, so a two-word label like "Weekly
+   Sackos" always wraps rather than only on narrower phones -- the strip
+   keeps one shape and even gaps at every width. */
+.fs{ width:min-content; }
+.fs-v{ justify-self:center; }
+.fs-v{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.05rem, 5vw, 1.4rem); color:var(--gold); white-space:nowrap; font-variant-numeric:tabular-nums; }
+.fs-l{ color:var(--text-dim); font-size:0.56rem; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; line-height:1.25; }
+@media (min-width:721px){
+  .fhero{ grid-template-columns:minmax(0,1fr) auto; }
+  .fhero-main{ padding:26px 28px 24px; }
+  .fhero-stats{ display:flex; flex-direction:column; justify-content:center; gap:14px; border-top:none; border-left:1px solid var(--line); border-radius:0 14px 14px 0; padding:22px 26px; }
+  .fs{ display:flex; justify-content:space-between; align-items:center; gap:28px; padding:0; text-align:left; width:auto; }
+  .fs-v{ order:2; font-size:1.2rem; }
+  .fs-l{ order:1; font-size:0.76rem; text-transform:none; letter-spacing:0; margin:0; }
+}
+
+/* ---------- You (site audit II #36) ----------
+   The visitor's own card or row, once they've picked their team in the You
+   sheet (nav.js): a white ring just outside it. White because every border
+   colour on a card already means something (gold lead, green/red locks),
+   and outside the border so it stacks with whichever one is there. */
+.me{ outline: 1.5px solid rgba(245,245,243,0.72); outline-offset: 2px; }
 
 /* ---------- Detail panels: a bottom sheet on a phone, a popover on desktop ----------
    Shared by Game Records (a record's top 10) and the Dashboard's Median

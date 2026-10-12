@@ -11,3 +11,17 @@ CREATE TABLE IF NOT EXISTS seen (
   ts INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_seen_ts ON seen(ts);
+-- Home Screen app notifications (src/push.js, site audit II #37).
+CREATE TABLE IF NOT EXISTS push_subs (
+  endpoint TEXT PRIMARY KEY,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  me TEXT NOT NULL DEFAULT '',
+  prefs TEXT NOT NULL DEFAULT '{}',
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS push_sent (
+  k TEXT PRIMARY KEY,
+  ts INTEGER NOT NULL
+);

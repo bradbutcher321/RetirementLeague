@@ -66,11 +66,15 @@ crons = [
 ALLOWED_ORIGIN = "https://bradbutcher321.github.io"  # tighten this to your real site URL
 ESPN_LEAGUE_ID = "58101"
 ESPN_YEAR = "2026"
+# Web Push sender key (site audit II #37). The public half is also in
+# docs/nav.js; the private half is the VAPID_PRIVATE_JWK secret.
+VAPID_PUBLIC = "BPvPSYw_tyBqsI3ZwzWEn4QdhCrPs5r6SB1X-6p8UrJE5BMc4GZW9hiHRc2Vj2_l3zSZTfnLhHKRmg8QT9ADT6c"
 
 # Secrets — NOT set here. Run these once locally:
 #   wrangler secret put ESPN_SWID
 #   wrangler secret put ESPN_S2
 #   wrangler secret put GITHUB_PAT
+#   wrangler secret put VAPID_PRIVATE_JWK
 # (ESPN_SWID/S2 match the GitHub Actions secrets of the same name.
 # GITHUB_PAT is a fine-grained token scoped to just this repo, with
 # Actions: read/write and nothing else -- used only by /refresh-parlay

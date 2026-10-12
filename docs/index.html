@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=24">
-<link rel="stylesheet" href="nav.css?v=6">
+<link rel="stylesheet" href="theme.css?v=25">
+<link rel="stylesheet" href="nav.css?v=7">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -662,6 +662,22 @@
      name links from the sheet's head instead; a mouse can click either. */
   @media (max-width:720px){ .mb-card a.mgr{ pointer-events: none; } }
   .mb-card.sel{ border-color: var(--lead-line); background: var(--lead-tint); }
+
+  /* This is me (site audit II #36): your own matchup leads the page, at a
+     list card's width (centred on desktop, where the list runs two across).
+     Before you've picked, a one-line ask in the same spot. */
+  #me-section{ margin-bottom: 28px; }
+  #me-section .matchups{ grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px){ #me-section .matchups{ max-width: calc(50% - 7px); margin: 0 auto; } }
+  #me-section .matchups:empty{ display: none; }
+  .me-ask{ display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 4px; border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 14px; margin-bottom: 12px; }
+  .me-ask-go{ flex: 1; min-width: 0; min-height: 44px; text-align: left; background: none; border: 0; color: var(--text); font: 600 0.92rem/1.3 var(--body); padding: 6px 10px; cursor: pointer; }
+  .me-ask-go span{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.76rem; }
+  .me-ask .x{ background: rgba(255,255,255,0.06); border: none; color: var(--text-dim); border-radius: 999px; width: 30px; height: 30px; font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; flex: none; position: relative; }
+  .me-ask .x::before{ content: ''; position: absolute; inset: -7px; }
+  .me-ask-go:focus-visible, .me-ask .x:focus-visible, a.me-wrapped:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  a.me-wrapped{ color: inherit; text-decoration: none; padding-right: 16px; }
+  a.me-wrapped .chev{ color: var(--gold); font-size: 1.3rem; line-height: 1; }
   #mw-pop{ padding: 12px 14px 14px; }
   .mwp-line{ display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
   .mwp-line .mwp-label{ margin: 0; }
@@ -887,7 +903,6 @@
   .acc-team{ font-weight: 600; font-size: 0.86rem; color: var(--text-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .acc-qualifier{ font-size: 0.86rem; color: var(--text-dim); text-align: right; white-space: nowrap; }
   .acc-placeholder{ color: var(--text-dim); font-size: 0.85rem; }
-  .badge.dim{ color: var(--text-dim); border-color: var(--line); }
 
   /* Superlatives view toggle + race rows */
   /* Selector styling lives in theme.css -- only this page's spacing here. */
@@ -1019,6 +1034,12 @@
          matchups have nothing new to say. Hidden the rest of the week. -->
     <section id="recap-section" hidden></section>
 
+    <!-- This is me (site audit II #36): the visitor's own matchup leads the
+         page, ringed, and leaves the list below. Until they've picked a
+         team, a one-line prompt sits here instead; its ✕ hides it for good
+         (the You button in the bar still opens the same sheet). -->
+    <section id="me-section" hidden><div class="matchups" id="my-matchup"></div></section>
+
     <section>
       <div id="median-container">
         <span class="sr-only">Loading median splits…</span>
@@ -1138,8 +1159,8 @@
     <footer id="site-footer" data-note="Refreshes every 2 minutes"></footer>
   </div>
 
-<script src="nav.js?v=5"></script>
-<script src="page-common.js?v=25"></script>
+<script src="nav.js?v=6"></script>
+<script src="page-common.js?v=26"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -1359,7 +1380,7 @@
     const expanded = expandedMatchups.has(key);
 
     return `
-      <div class="matchup-card ${expanded ? 'expanded' : ''}" data-key="${encodeURIComponent(key)}">
+      <div class="matchup-card${expanded ? ' expanded' : ''}${isMe(m.awayManager) || isMe(m.homeManager) ? ' me' : ''}" data-key="${encodeURIComponent(key)}">
         <div class="mu-head">
           ${side('away', m.awayName, metaParts(m.awayManager, m.awayRecord, m.awayStreak), awayScore, homeScore, m.awayProjected, m.awayPlayers || [])}
           ${side('home', m.homeName, metaParts(m.homeManager, m.homeRecord, m.homeStreak).reverse(), homeScore, awayScore, m.homeProjected, m.homePlayers || [])}
@@ -1454,7 +1475,7 @@
     // Every card opens to its starters (see "a manager's starters" below).
     const can = true;
     const canAttrs = can ? ' role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false"' : '';
-    return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' + (t.lockedBelow ? ' locked-below' : '') : ''}${can ? ' can' : ''}" data-name="${t.name}"${canAttrs}>${mwAvgFlip(t.name)}
+    return `<div class="mb-card${isMe(t.name) ? ' me' : ''}${lines.some(l => l.cls === 'locked') ? ' locked' + (t.lockedBelow ? ' locked-below' : '') : ''}${can ? ' can' : ''}" data-name="${t.name}"${canAttrs}>${mwAvgFlip(t.name)}
       <div class="mw-top">
         <span class="mw-name">${mwNameHtml(t.name)}</span>
         <div class="mw-score" style="color:var(--${tone});">${fmtScore(t.score)}</div>
@@ -3480,7 +3501,7 @@
     const chipCls = hasPlayoffPct ? (t.playoffPct >= 50 ? 'high' : 'low') : '';
     const inPlayoffPosition = playoffTeamCount > 0 && rank <= playoffTeamCount;
     return `
-      <${lbRowTag(t.manager)} class="lb-row ${inPlayoffPosition ? 'playoff' : ''}" data-sf="${rank - 1}">
+      <${lbRowTag(t.manager)} class="lb-row${inPlayoffPosition ? ' playoff' : ''}${isMe(t.manager) ? ' me' : ''}" data-sf="${rank - 1}">
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${t.name}</div>
@@ -3997,7 +4018,7 @@
 
   function captureMatchupState() {
     const state = new Map();
-    document.querySelectorAll('#matchups-container .matchup-card').forEach(card => {
+    document.querySelectorAll('.matchups .matchup-card').forEach(card => {
       const sides = ['away', 'home'].map(s => {
         const sc = card.querySelector(`.mu-side.${s} .mu-score`);
         return {
@@ -4025,7 +4046,7 @@
       olds.push(() => { el.className = from; });
       news.push(() => { el.className = to; });
     };
-    document.querySelectorAll('#matchups-container .matchup-card').forEach(card => {
+    document.querySelectorAll('.matchups .matchup-card').forEach(card => {
       const was = prev.get(card.dataset.key);
       if (!was) return;
       ['away', 'home'].forEach((s, i) => {
@@ -4080,7 +4101,7 @@
     });
     if (!olds.length) return;
     olds.forEach(f => f());
-    void document.getElementById('matchups-container').offsetWidth;
+    void document.body.offsetWidth;
     news.forEach(f => f());
   }
 
@@ -4104,11 +4125,78 @@
     if (splitValueEl && moved(oldMedian, median)) tickMwNumber(splitValueEl, oldMedian, median);
   }
 
+  // Until a visitor has said which team is theirs (site audit II #36),
+  // the top slot asks once. The ✕ hides the ask for good; the You button in
+  // the bar opens the same sheet any time.
+  const ME_ASK_KEY = 'rl-me-ask-hidden';
+  function renderMePrompt(hasMine) {
+    const section = document.getElementById('me-section');
+    let hidden = false;
+    try { hidden = !!localStorage.getItem(ME_ASK_KEY); } catch (e) {}
+    const ask = !getMe() && !hidden;
+    // Once this season's title game is in, your Season Wrapped (site audit
+    // II #39) leads the page instead of a matchup that's long over.
+    const wrappedName = leagueGames && leagueGames.some(g => g.year === leagueYear && g.type === 'Champ')
+      ? [...new Set(leagueGames.filter(g => g.year === leagueYear).flatMap(g => [g.p1, g.p2]))].find(n => isMe(n)) : null;
+    const oldWrap = document.getElementById('me-wrapped');
+    if (oldWrap) oldWrap.remove();
+    if (wrappedName) {
+      section.insertAdjacentHTML('afterbegin', `<a class="me-ask me-wrapped" id="me-wrapped" href="${esc(pageLink('wrapped.html', { m: wrappedName, year: leagueYear }))}">
+          <span class="me-ask-go">Your ${leagueYear} Season Wrapped <span>Best week, worst lineup call, bubble luck and a picture for the chat.</span></span><span class="chev" aria-hidden="true">›</span>
+        </a>`);
+    }
+    section.hidden = !hasMine && !ask && !wrappedName;
+    const old = document.getElementById('me-ask');
+    if (!ask) { if (old) old.remove(); return; }
+    if (old) return;
+    section.insertAdjacentHTML('afterbegin', `<div class="me-ask" id="me-ask">
+        <button type="button" class="me-ask-go">Which team is yours? <span>Pick it once and your matchup leads the page.</span></button>
+        <button type="button" class="x" aria-label="Don't ask again">✕</button>
+      </div>`);
+    const el = document.getElementById('me-ask');
+    el.querySelector('.me-ask-go').addEventListener('click', () => window.openYou && openYou());
+    el.querySelector('.x').addEventListener('click', () => {
+      try { localStorage.setItem(ME_ASK_KEY, '1'); } catch (e) {}
+      el.remove();
+      section.hidden = !document.getElementById('my-matchup').children.length && !document.getElementById('me-wrapped');
+    });
+  }
+  // Picking (or changing) your team redraws from the numbers already here.
+  let lastDashboardData = null;
+  window.addEventListener('rl-me', () => { if (lastDashboardData) renderDashboard(lastDashboardData, false); });
+
   let dashboardShown = false;
   function loadDashboard() {
     Promise.all([fetch(WORKER_URL, { cache: 'no-store' }).then(res => res.json()), leagueReady])
-      .then(([data]) => {
+      .then(([data]) => renderDashboard(data, true))
+      .catch(err => {
+        console.error('Dashboard error:', err);
+        if (dashboardShown) return;
+        document.getElementById('matchups-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading league data.</div>';
+      });
+  }
+
+  // Instant opens (site audit II #38): the service worker (sw.js) keeps the
+  // Worker's last answer, so the page paints those numbers straight away
+  // and the fresh poll then counts every one of them up to where it is now,
+  // like any other refresh. Only a copy from the last day: older than that
+  // it's another week's games. The Updated stamp says how old it is.
+  function paintFromCache() {
+    if (!('caches' in window)) return Promise.resolve();
+    return caches.match(WORKER_URL, { ignoreVary: true })
+      .then(res => (res ? res.json() : null))
+      .then(data => {
+        if (!data || !data.teams || dashboardShown) return;
+        if (!(Date.now() - new Date(data.updatedAt).getTime() < 864e5)) return;
+        return leagueReady.then(() => { if (!dashboardShown) renderDashboard(data, false); });
+      })
+      .catch(() => {});
+  }
+
+  function renderDashboard(data, fresh) {
         if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
+        if (fresh) lastDashboardData = data;
+        else if (!lastDashboardData) lastDashboardData = data;
 
         const teams = data.teams || [];
         dashWeek = data.week || 1;
@@ -4138,9 +4226,15 @@
         }
         updatedEl.textContent = updatedText;
 
+        // Yours (getMe in page-common.js) comes out of the list and leads
+        // the page instead.
         const prevMatchups = animate ? captureMatchupState() : null;
+        const mine = matchups.find(m => isMe(m.awayManager) || isMe(m.homeManager));
+        const rest = matchups.filter(m => m !== mine);
+        document.getElementById('my-matchup').innerHTML = mine ? renderMatchupCard(mine) : '';
+        renderMePrompt(!!mine);
         document.getElementById('matchups-container').innerHTML =
-          matchups.length ? matchups.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
+          rest.length ? rest.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
         if (prevMatchups) animateMatchupRefresh(prevMatchups);
 
         // Team names stay right-aligned (matching every other short name)
@@ -4149,10 +4243,10 @@
         // from the end instead of the start. Reading scrollWidth here is a
         // synchronous layout read, but it's a couple dozen elements at most
         // and only runs on this periodic refresh, so the cost is negligible.
-        document.querySelectorAll('#matchups-container .team-name').forEach(el => {
+        document.querySelectorAll('.matchups .team-name').forEach(el => {
           if (el.scrollWidth > el.clientWidth) el.classList.add('truncate');
         });
-        markClippedNames(document.getElementById('matchups-container'));
+        markClippedNames(document);
 
         standingsData = data;
         renderRecap();
@@ -4184,20 +4278,15 @@
         if (!dashboardShown) {
           dashboardShown = true;
           if (!parlayData) document.getElementById('parlay-highlight-container').innerHTML = '';
-          riseIn(document.querySelectorAll('#recap-section:not([hidden]), #median-container > :not(.sr-only), .lore-row > div > *, #matchups-container > *, #season-section'));
+          riseIn(document.querySelectorAll('#recap-section:not([hidden]), #me-section:not([hidden]), #median-container > :not(.sr-only), .lore-row > div > *, #matchups-container > *, #season-section'));
         }
-      })
-      .catch(err => {
-        console.error('Dashboard error:', err);
-        document.getElementById('matchups-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading league data.</div>';
-      });
   }
 
   // Delegated once — click a card to expand/collapse its roster. The
   // expanded state itself lives in expandedMatchups (checked at render
   // time), so this just needs to flip the class on the clicked element and
   // keep that Set in sync for the next re-render.
-  document.getElementById('matchups-container').addEventListener('click', (e) => {
+  const onMatchupClick = (e) => {
     // The series line is a link to Head to Head on this pair instead.
     if (e.target.closest('.mu-series')) return;
     const card = e.target.closest('.matchup-card');
@@ -4207,7 +4296,9 @@
     else expandedMatchups.add(key);
     card.classList.toggle('expanded');
     markClippedNames(card);
-  });
+  };
+  document.getElementById('matchups-container').addEventListener('click', onMatchupClick);
+  document.getElementById('my-matchup').addEventListener('click', onMatchupClick);
 
   // Roster names hard-clip at the team badge; flag the ones that actually
   // overflow so CSS can fade their last few px. Collapsed rosters are
@@ -4221,10 +4312,10 @@
   let clipResizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(clipResizeTimer);
-    clipResizeTimer = setTimeout(() => markClippedNames(document.getElementById('matchups-container')), 150);
+    clipResizeTimer = setTimeout(() => markClippedNames(document), 150);
   });
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => markClippedNames(document.getElementById('matchups-container')));
+    document.fonts.ready.then(() => markClippedNames(document));
   }
 
   // Background tabs don't poll (each poll costs Worker/KV quota); coming
@@ -4233,6 +4324,7 @@
   loadActivity();
   setInterval(() => { if (!document.hidden) loadActivity(); }, 60 * 1000);
   const loadDashboardTracked = () => { lastLoadAt = Date.now(); loadDashboard(); };
+  paintFromCache();
   loadDashboardTracked();
   setInterval(() => { if (!document.hidden) loadDashboardTracked(); }, AUTO_REFRESH_MS);
   document.addEventListener('visibilitychange', () => {

@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=24">
-<link rel="stylesheet" href="nav.css?v=6">
+<link rel="stylesheet" href="theme.css?v=25">
+<link rel="stylesheet" href="nav.css?v=7">
 <style>
   /* ---------- Head to Head ----------
      Built phone-first around one idea: two sides, each with its own colour
@@ -242,8 +242,8 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=5"></script>
-<script src="page-common.js?v=25"></script>
+<script src="nav.js?v=6"></script>
+<script src="page-common.js?v=26"></script>
 <script src="league-common.js?v=4"></script>
 <script>
   let DATA, FR = null, NAMES = [];
@@ -489,10 +489,25 @@
     if (yrs) yrs.scrollLeft = yrs.scrollWidth;
   }
 
+  // You against this week's opponent (site audit II #36), when there's no
+  // pair in the link: the opponent is the first name in your schedule left
+  // on the live dashboard's Worker. Given 1.5s, then it opens without it.
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const me = getMe();
+  const linked = urlParam('a') && urlParam('b');
+  const opponent = !me || linked ? Promise.resolve(null) : Promise.race([
+    fetch(WORKER_URL).then(r => r.json()).then(d => {
+      const t = (d.teams || []).find(x => isMe(x.manager));
+      return (t && t.ahead && t.ahead[0]) || null;
+    }).catch(() => null),
+    new Promise(res => setTimeout(() => res(null), 1500)),
+  ]);
+
   Promise.all([
     LG.load(),
     fetch('data/franchise.json', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
-  ]).then(([data, franchise]) => {
+    opponent,
+  ]).then(([data, franchise, opp]) => {
     DATA = data; FR = franchise;
     const names = NAMES = [...new Set(data.games.flatMap(g => [g.p1, g.p2]).filter(Boolean))].sort();
     const active = names.filter(n => data.active.has(n));
@@ -506,7 +521,9 @@
     const ok = n => names.includes(n);
     // A shared link (?a=Joe+G&b=Joe+K) wins over the saved pair.
     const fromUrl = [matchName(names, urlParam('a')), matchName(names, urlParam('b'))];
-    const pair = fromUrl[0] && fromUrl[1] ? fromUrl : saved && ok(saved[0]) && ok(saved[1]) ? saved : ['Joe G', 'Joe K'];
+    const mine = matchName(names, me);
+    const vsMe = mine && (matchName(names, opp) || (saved && ok(saved[1]) && saved[1] !== mine ? saved[1] : names.find(n => n !== mine && data.active.has(n))));
+    const pair = fromUrl[0] && fromUrl[1] ? fromUrl : mine && vsMe ? [mine, vsMe] : saved && ok(saved[0]) && ok(saved[1]) ? saved : ['Joe G', 'Joe K'];
     $('p1').value = ok(pair[0]) ? pair[0] : active[0];
     $('p2').value = ok(pair[1]) ? pair[1] : active[1];
     $('p1').addEventListener('change', render);

@@ -30,6 +30,31 @@ function monogram(name) {
   return MONOGRAMS[name] || String(name ?? '').slice(0, 2).toUpperCase();
 }
 
+// ---------- This is me (audit II #36) ----------
+// The manager this phone belongs to, picked once in the You sheet (nav.js)
+// and kept in this browser. Pages read it to lead with your matchup, ring
+// your row and open on you; picking again fires 'rl-me' so an open page can
+// redraw. Empty when nobody's been picked (or "Not in the league").
+const ME_KEY = 'rl-me';
+function getMe() {
+  try { return localStorage.getItem(ME_KEY) || ''; } catch (e) { return ''; }
+}
+function setMe(name) {
+  try { if (name) localStorage.setItem(ME_KEY, name); else localStorage.removeItem(ME_KEY); } catch (e) {}
+  window.dispatchEvent(new CustomEvent('rl-me', { detail: name || '' }));
+}
+function isMe(name) {
+  const me = getMe();
+  return !!me && !!name && me.toLowerCase() === String(name).toLowerCase();
+}
+
+// Service worker (sw.js, audit II #37/#38): instant opens from the last
+// copy, and the Home Screen app's notifications. Real site only -- on the
+// localhost preview it would serve yesterday's edit -- unless ?sw is added.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || /[?&]sw\b/.test(location.search))) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
 // Record-type tile (audit II #5): the mark at the head of a record row says
 // what kind of record it is, never who holds it -- the holder's name is
 // printed right beside it. Game Records only needs hi/lo (every card is a

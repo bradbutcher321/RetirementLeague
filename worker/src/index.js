@@ -26,6 +26,8 @@
  *                      pushes it there -- same "no git commit needed" idea
  *                      as this whole file, just for parlay data instead
  *                      of the live dashboard).
+ * POST /push/subscribe, /push/unsubscribe, /push/test -> Home Screen app
+ *                      notifications (see push.js, site audit II #37).
  *
  * Required setup:
  *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT   (wrangler secret put ...)
@@ -36,6 +38,9 @@ import { buildDashboard } from "./dashboard.js";
 import { getStats, recordHit } from "./analytics.js";
 import { dispatchParlayRefresh } from "./parlayRefresh.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
+import { checkPushEvents, sendTest, subscribe, unsubscribe } from "./push.js";
+
+const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe, "/push/test": sendTest };
 
 const COOLDOWN_SECONDS = 120;
 // One key holds { fetchedAt, data } so a cache hit costs a single KV read and
@@ -98,6 +103,11 @@ export default {
       const url = new URL(request.url);
       return jsonResponse(await getMedianHistory(env, url).catch((err) => ({ error: String(err), points: [] })), headers);
     }
+    if (PUSH_ROUTES[path]) {
+      if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await PUSH_ROUTES[path](request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      return jsonResponse(result.body, headers, result.status);
+    }
     if (path === "/parlay-stats") {
       // Precomputed elsewhere (publish_parlay_stats.py, run on a schedule
       // or via /refresh-parlay) and pushed straight into this same KV
@@ -155,7 +165,8 @@ export default {
   // otherwise cadence. It reuses the cached dashboard when a visitor just
   // refreshed it and otherwise builds its own, without writing it back to
   // KV: KV's free tier allows 1k writes a day and visitors already spend
-  // those.
+  // those. The same build is what the notifications are checked against
+  // (push.js).
   async scheduled(event, env, ctx) {
     const [parlay, median] = await Promise.allSettled([
       dispatchParlayRefresh(env),
@@ -163,7 +174,9 @@ export default {
         const entry = await env.COOLDOWN_KV.get(CACHE_KEY, "json");
         const fresh = entry && Math.floor(Date.now() / 1000) - entry.fetchedAt < COOLDOWN_SECONDS;
         const dashboard = fresh ? entry.data : await buildDashboard(env, entry?.data);
-        return recordMedianSnapshot(env, dashboard);
+        const [snap, push] = await Promise.allSettled([recordMedianSnapshot(env, dashboard), checkPushEvents(env, dashboard)]);
+        if (push.status === "rejected") console.error("Push check failed:", push.reason);
+        if (snap.status === "rejected") throw snap.reason;
       })(),
     ]);
     if (parlay.status === "rejected" || parlay.value.status >= 400) {
