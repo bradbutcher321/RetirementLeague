@@ -114,7 +114,7 @@
   .pd.p1 .pd-n{ color:var(--gold); font-size:0.95rem; }
   .pd-a{ color:var(--text-dim); font-size:0.66rem; font-variant-numeric:tabular-nums; height:1.2em; }
 
-  .yr-sec .cap{ margin-bottom:5px; }
+  .yr-sec > .cap{ margin-bottom:5px; }
   .slots{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:5px; }
   .slot{ display:flex; align-items:center; gap:6px; height:26px; padding:0 9px; border-radius:999px; border:1px solid var(--item-line); font-size:0.74rem; min-width:0; }
   .slot b{ font-weight:700; font-size:0.7rem; font-variant-numeric:tabular-nums; flex:none; }
@@ -128,8 +128,8 @@
      show on hover, or on a tap (the pill is a button). */
   .sups{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
   .sup{ position:relative; display:flex; align-items:center; gap:8px; height:30px; padding:0 12px; border-radius:999px; border:1px solid var(--item-line); background:var(--item); color:var(--text); font:inherit; font-size:0.78rem; min-width:0; cursor:pointer; text-align:left; }
-  .sup .cap{ flex:none; }
-  .sup b{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sup .cap{ flex:none; margin:0; line-height:1; }
+  .sup b{ line-height:1; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .sup:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   .sup::after{ content:attr(data-pts); position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); padding:5px 10px; border-radius:8px; background:var(--ctl-bg-solid); border:1px solid var(--ctl-line); color:var(--gold); font-weight:700; font-size:0.78rem; white-space:nowrap; font-variant-numeric:tabular-nums; opacity:0; pointer-events:none; transition:opacity .12s; z-index:2; }
   .sup.show::after{ opacity:1; }
