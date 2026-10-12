@@ -732,6 +732,18 @@ body{
 @media (prefers-reduced-motion: reduce){ .chev{ transition: none; } }
 
 
+/* ---------- Record-type tile (Game Records, League History) ----------
+   Heads a record row in place of the old initials circle: a rounded square
+   holding a glyph for the kind of record (typeTile() in page-common.js).
+   Gold on the item fill, like any record; red for the Sacko. */
+.type-tile{
+  width: 36px; height: 36px; flex: none; border-radius: 10px; border: 1px solid var(--item-line);
+  background: var(--item); color: var(--gold); display: flex; align-items: center; justify-content: center;
+}
+.type-tile svg{ width: 18px; height: 18px; }
+.type-tile.loss{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
+
+
 /* ---------- Live pulse (Dashboard, Parlay) ---------- */
 .pulse-dot{ width:7px; height:7px; border-radius:50%; background:var(--loss); animation:pulse 1.6s ease-in-out infinite; display:inline-block; }
 @media (prefers-reduced-motion:reduce){ .pulse-dot{ animation:none; } }

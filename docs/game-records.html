@@ -37,14 +37,15 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=18">
+<link rel="stylesheet" href="theme.css?v=19">
 <link rel="stylesheet" href="nav.css?v=5">
 <link rel="stylesheet" href="league.css?v=7">
 <style>
   /* ---------- Game Records: one card per pair of records ----------
      Built phone-first. Each card holds a high-end and a low-end record as
-     two rows. A gold monogram anchors who holds each record, the record type
-     is a small dim caption, and every value is gold -- a low-end record is
+     two rows. A tile with an up or down arrow says which end of the pair a
+     row is (no initials: the name is right beside it), the record type is a
+     small dim caption, and every value is gold -- a low-end record is
      still a record, so neither side of a pair outranks the other. The
      holder's name is the one bright line of text in a row. Tapping a record
      opens its top 10: a bottom sheet on a phone, a popover under the whole
@@ -67,9 +68,6 @@
   .rec.open{ background:var(--lead-tint); border-color:var(--lead-line); }
   .rec.open::before, .rec.open + .rec::before{ display:none; }
   .rec.empty{ cursor:default; }
-  .mono{ width:36px; height:36px; border-radius:50%; border:1px solid rgba(212,180,106,0.4); background:rgba(212,180,106,0.07); color:var(--gold);
-         display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:0.95rem; letter-spacing:0.02em; }
-  .mono.many{ font-family:var(--body); font-size:0.66rem; font-weight:700; }
   .cap{ display:block; color:var(--text-dim); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
   .holder{ display:block; font-weight:600; font-size:0.88rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .own{ color:var(--text-dim); font-weight:500; }
@@ -193,7 +191,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=17"></script>
+<script src="page-common.js?v=18"></script>
 <script src="league-common.js?v=4"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -313,7 +311,7 @@
     { title: 'Median Bubble', hi: ['bubW', 'Most bubble wins'], lo: ['bubL', 'Most bubble losses'] },
   ];
 
-  // monogram() comes from page-common.js, shared with Franchise.
+  // typeTile() comes from page-common.js, shared with League History.
 
   // Rank by displayed value, so managers tied on a count share a rank (and
   // the record) instead of the sort order quietly picking one of them.
@@ -338,7 +336,7 @@
     const ctx = [versus(i), many ? 'Tied' : '', i.meta.replace(/ · Week (\d+)/, ' Wk $1')].filter(Boolean).join(' · ');
     const isOpen = open && open.panel === panel && open.side === side;
     return `<button type="button" class="rec${isOpen ? ' open' : ''}" data-panel="${panel}" data-side="${side}" aria-haspopup="dialog" aria-expanded="${!!isOpen}">` +
-      (many ? `<span class="mono many">${lead.length}&times;</span>` : `<span class="mono">${esc(monogram(i.m.a))}</span>`) +
+      typeTile(side) +
       `<span style="min-width:0"><span class="cap">${kind}</span><span class="holder">${holder}</span><span class="ctx">${ctx}</span></span>` +
       `<span class="rec-val">${shown(i)}</span><span class="chev" aria-hidden="true"></span></button>`;
   }

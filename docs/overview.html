@@ -37,13 +37,13 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=18">
+<link rel="stylesheet" href="theme.css?v=19">
 <link rel="stylesheet" href="nav.css?v=5">
 <style>
   /* ---------- League History ----------
      Same building blocks as Franchise and Game Records: one panel per
-     section (white title top-left, chip top-right), record rows with a gold
-     monogram and a gold value, and lists as divided rows inside one box.
+     section (white title top-left, chip top-right), record rows with a
+     record-type tile and a gold value, and lists as divided rows inside one box.
      A row only gets an outline + tint when it means something (the leader,
      a Sacko). Colours come from theme.css's tokens, never one-off rgba. */
   #overview{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
@@ -55,11 +55,6 @@
 
   /* View selector inside a list panel. */
   .seg{ margin:12px 12px 0; max-width:calc(100% - 24px); }
-
-  /* ---------- Monogram ---------- */
-  .mono{ width:34px; height:34px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; border:1px solid var(--lead-line); background:var(--lead-tint); color:var(--gold); font-family:var(--scoreboard); font-weight:800; font-size:0.9rem; letter-spacing:0.02em; }
-  .mono.many{ font-family:var(--body); font-size:0.64rem; font-weight:700; }
-  .mono.loss{ border-color:var(--loss-line); background:var(--loss-tint); color:var(--loss); }
 
   /* ---------- Summary ---------- */
   .reign{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -78,10 +73,10 @@
   .tile-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; line-height:1.15; margin-top:3px; }
   .tile-s{ color:var(--text-dim); font-size:0.66rem; margin-top:1px; }
 
-  /* Record rows: Game Records' shape -- monogram, caption, holder, value. */
+  /* Record rows: Game Records' shape -- type tile, caption, holder, value. */
   .recs{ display:grid; grid-template-columns:1fr; }
   @media (min-width:721px){ .recs{ grid-template-columns:1fr 1fr; column-gap:24px; } }
-  .rec-row{ display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 6px; border-top:1px solid var(--line); }
+  .rec-row{ display:grid; grid-template-columns:36px minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 6px; border-top:1px solid var(--line); }
   .rec-row:first-child{ border-top:none; }
   @media (min-width:721px){ .rec-row:nth-child(2){ border-top:none; } }
   .cap{ display:block; color:var(--text-dim); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
@@ -98,7 +93,6 @@
   .yr-y{ font-family:var(--scoreboard); font-weight:800; font-size:1.25rem; }
   .yr-champ{ display:flex; align-items:center; gap:8px; min-width:0; }
   .yr-champ .holder{ margin:0; color:var(--gold); font-weight:700; }
-  .yr-champ .mono{ width:28px; height:28px; font-size:0.74rem; }
   .yr-amt{ color:var(--text-dim); font-size:0.7rem; font-variant-numeric:tabular-nums; }
   .yr-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px 10px; padding:8px 2px 2px; }
   .yc{ min-width:0; }
@@ -191,19 +185,16 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=17"></script>
+<script src="page-common.js?v=18"></script>
 <script src="league-common.js?v=4"></script>
 <script src="achievements.js?v=2"></script>
 <script>
-  // esc() and monogram() are globals from page-common.js, not part of LG.
+  // esc() and typeTile() are globals from page-common.js, not part of LG.
   const { f1, f2, money } = LG;
   let TABS = [], tab = 0;
   const viewPick = {};
   const panel = (title, body, chip) => `<div class="panel">${title ? `<div class="p-head"><div class="p-title">${title}</div>${chip ? `<span class="chip">${chip}</span>` : ''}</div>` : ''}<div class="p-body">${body}</div></div>`;
   const nameList = names => names.length < 3 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
-  const monoFor = (names, cls) => names.length > 1
-    ? `<span class="mono many${cls ? ' ' + cls : ''}">${names.length}&times;</span>`
-    : `<span class="mono${cls ? ' ' + cls : ''}">${esc(monogram(names[0]))}</span>`;
 
   function build(D, F, R) {
     // Payouts are stored as sparse "effective from this year on" snapshots
@@ -454,19 +445,19 @@
       </div>`;
 
       // Every record names everyone tied at the top.
-      const row = (cap, names, ctx, value, cls) => `<div class="rec-row">${monoFor(names, cls)}<div style="min-width:0"><span class="cap">${cap}</span><span class="holder">${esc(nameList(names))}</span>${ctx ? `<span class="ctx">${ctx}</span>` : ''}</div><span class="rec-v${cls ? ' ' + cls : ''}">${value}</span></div>`;
+      const row = (icon, cap, names, ctx, value, cls) => `<div class="rec-row">${typeTile(icon, cls)}<div style="min-width:0"><span class="cap">${cap}</span><span class="holder">${esc(nameList(names))}</span>${ctx ? `<span class="ctx">${ctx}</span>` : ''}</div><span class="rec-v${cls ? ' ' + cls : ''}">${value}</span></div>`;
       const yrs = list => list.map(s => s.year).sort((a, b) => b - a).map(y => `'${String(y).slice(2)}`).join(', ');
       const rows = [];
-      { const t = topTied(champC, x => x.val); rows.push(row('Most titles', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', t.value)); }
-      { const t = topTied(sackC, x => x.val); rows.push(row('Most Sackos', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', t.value, 'loss')); }
-      { const t = topTied(done, s => s.tot_pf); rows.push(row('Best season, points', t.items.map(s => s.player), yrs(t.items), f2(t.value))); }
-      { const t = topTied(done, s => s.reg_w); const tt = topTied(t.items, s => -s.reg_l); rows.push(row('Best regular season', tt.items.map(s => s.player), yrs(tt.items), `${tt.items[0].reg_w}-${tt.items[0].reg_l}`)); }
+      { const t = topTied(champC, x => x.val); rows.push(row('trophy', 'Most titles', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', t.value)); }
+      { const t = topTied(sackC, x => x.val); rows.push(row('sacko', 'Most Sackos', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', t.value, 'loss')); }
+      { const t = topTied(done, s => s.tot_pf); rows.push(row('points', 'Best season, points', t.items.map(s => s.player), yrs(t.items), f2(t.value))); }
+      { const t = topTied(done, s => s.reg_w); const tt = topTied(t.items, s => -s.reg_l); rows.push(row('record', 'Best regular season', tt.items.map(s => s.player), yrs(tt.items), `${tt.items[0].reg_w}-${tt.items[0].reg_l}`)); }
       { let best = null; noBye.forEach(g => [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => { if (!best || s > best.s) best = { p, s, g }; }));
-        rows.push(row('Highest single week', [best.p], `${best.g.year} · Week ${best.g.week}`, f2(best.s))); }
-      if (F) { const act = F.players.filter(p => D.active.has(p.name)); const t = topTied(act, p => p.streaks.head_to_head.longest_win); rows.push(row('Longest win streak', t.items.map(p => p.name), '', `${t.value} straight`)); }
-      { const t = topTied(players.map(p => ({ p, n: doneOf(p).filter(s => s.playoff > 0).length })), x => x.n); rows.push(row('Most playoff trips', t.items.map(x => x.p), '', t.value)); }
-      { const t = topTied(finish, x => x.avg, -1); rows.push(row('Best average finish', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', f1(t.value))); }
-      { const t = topTied(earn, x => x.raw); rows.push(row('Most money won', t.items.map(x => x.name), 'After dues and parlays', money(t.value))); }
+        rows.push(row('hi', 'Highest single week', [best.p], `${best.g.year} · Week ${best.g.week}`, f2(best.s))); }
+      if (F) { const act = F.players.filter(p => D.active.has(p.name)); const t = topTied(act, p => p.streaks.head_to_head.longest_win); rows.push(row('streak', 'Longest win streak', t.items.map(p => p.name), '', `${t.value} straight`)); }
+      { const t = topTied(players.map(p => ({ p, n: doneOf(p).filter(s => s.playoff > 0).length })), x => x.n); rows.push(row('playoffs', 'Most playoff trips', t.items.map(x => x.p), '', t.value)); }
+      { const t = topTied(finish, x => x.avg, -1); rows.push(row('finish', 'Best average finish', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', f1(t.value))); }
+      { const t = topTied(earn, x => x.raw); rows.push(row('money', 'Most money won', t.items.map(x => x.name), 'After dues and parlays', money(t.value))); }
 
       return panel('', reign) + panel('All-Time Records', `<div class="recs">${rows.join('')}</div>`) + panel('The League', glance);
     }

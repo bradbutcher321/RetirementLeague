@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=18">
+<link rel="stylesheet" href="theme.css?v=19">
 <link rel="stylesheet" href="nav.css?v=5">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
@@ -291,9 +291,10 @@
   .rival-rec{ color:var(--text-dim); font-size:0.76rem; margin-top:2px; font-variant-numeric:tabular-nums; }
   .rival .empty-note{ padding:10px 4px; }
 
-  /* Head to head ledger: one row per opponent, best record to worst. The
-     initials circle carries the winning/even/losing colour so the record
-     itself can stay plain. Each row opens the Head to Head page with this
+  /* Head to head ledger: one row per opponent, best record to worst. A
+     small ring chart of the win rate leads each row (audit II #5, in place
+     of the old initials circle), and it and the record share the winning/
+     even/losing colour. Each row opens the Head to Head page with this
      matchup already picked. Two columns on desktop. */
   .ledger{ display:grid; grid-template-columns:1fr; }
   @media (min-width:721px){ .ledger{ grid-template-columns:1fr 1fr; column-gap:24px; } }
@@ -304,16 +305,18 @@
     .lrow:hover{ background:var(--item-hover); }
   }
   .lrow:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
-  .lmono{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:0.95rem; letter-spacing:0.02em; border:1px solid var(--line); background:var(--item); color:var(--text-dim); }
-  .lmono.win{ color:var(--turf); border-color:var(--win-line); background:var(--win-tint); }
-  .lmono.loss{ color:var(--loss); border-color:var(--loss-line); background:var(--loss-tint); }
+  .lring{ width:36px; height:36px; position:relative; }
+  .lring svg{ width:36px; height:36px; transform:rotate(-90deg); display:block; }
+  .lring circle{ fill:none; stroke-width:3.5; }
+  .lring .track{ stroke:rgba(255,255,255,0.09); }
+  .lring .arc{ stroke:var(--text-dim); stroke-linecap:round; }
+  .lring span{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:0.8rem; font-variant-numeric:tabular-nums; color:var(--text-dim); }
+  .lrow.win .arc{ stroke:var(--turf); } .lrow.win .lring span, .lrow.win .lrec{ color:var(--turf); }
+  .lrow.loss .arc{ stroke:var(--loss); } .lrow.loss .lring span, .lrow.loss .lrec{ color:var(--loss); }
   .lname{ font-weight:600; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .lsub{ color:var(--text-dim); font-size:0.72rem; margin-top:2px; }
-  /* Record and percentage centred on one shared axis, so the short one sits
-     squarely under the long one instead of both hugging the right edge. */
-  .lrec{ text-align:center; min-width:62px; }
-  .lrec b{ display:block; font-family:var(--scoreboard); font-weight:800; font-size:1.35rem; line-height:1; font-variant-numeric:tabular-nums; }
-  .lrec span{ display:block; color:var(--text-dim); font-size:0.68rem; margin-top:3px; }
+  /* The win rate is in the ring, so the record stands alone here. */
+  .lrec{ text-align:right; min-width:52px; font-family:var(--scoreboard); font-weight:800; font-size:1.35rem; line-height:1; font-variant-numeric:tabular-nums; }
   .lrow.former{ opacity:0.55; }
   @media (prefers-reduced-motion: reduce){ .lrow{ transition:none; } }
 
@@ -399,7 +402,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=17"></script>
+<script src="page-common.js?v=18"></script>
 <script src="achievements.js?v=2"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
@@ -1049,11 +1052,13 @@
     const sorted = [...all].sort((a, b) => b.win_pct - a.win_pct || games(b) - games(a));
     const body = `<div class="ledger">${sorted.map(r => {
       const former = !activeNames.has(r.opponent);
-      const tone = r.wins > r.losses ? 'win' : r.wins < r.losses ? 'loss' : '';
-      return `<a class="lrow${former ? ' former' : ''}" href="${esc(pageLink('head-to-head.html', { a: p.name, b: r.opponent }))}">
-        <div class="lmono ${tone}">${esc(monogram(r.opponent))}</div>
+      const tone = r.wins > r.losses ? ' win' : r.wins < r.losses ? ' loss' : '';
+      // r=15 on a 36 box: the arc's length is the win rate's share of 2πr.
+      const c = 2 * Math.PI * 15, arc = (r.win_pct / 100 * c).toFixed(1);
+      return `<a class="lrow${tone}${former ? ' former' : ''}" href="${esc(pageLink('head-to-head.html', { a: p.name, b: r.opponent }))}" aria-label="${esc(r.opponent)}: ${r.wins}-${r.losses}, ${esc(fmtPct(r.win_pct))}">
+        <div class="lring" aria-hidden="true"><svg viewBox="0 0 36 36"><circle class="track" cx="18" cy="18" r="15"/>${r.wins ? `<circle class="arc" cx="18" cy="18" r="15" stroke-dasharray="${arc} ${c.toFixed(1)}"/>` : ''}</svg><span>${Math.round(r.win_pct)}</span></div>
         <div style="min-width:0"><div class="lname">${esc(r.opponent)}</div><div class="lsub">${games(r)} games${former ? ' · Former member' : ''}</div></div>
-        <div class="lrec"><b>${r.wins}-${r.losses}</b><span>${fmtPct(r.win_pct)}</span></div>
+        <div class="lrec">${r.wins}-${r.losses}</div>
       </a>`;
     }).join('')}</div>`;
     return callouts + card('Head to Head', body, { chip: chip(`${all.length} opponents`) });

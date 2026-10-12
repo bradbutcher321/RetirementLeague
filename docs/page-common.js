@@ -30,6 +30,29 @@ function monogram(name) {
   return MONOGRAMS[name] || String(name ?? '').slice(0, 2).toUpperCase();
 }
 
+// Record-type tile (audit II #5): the mark at the head of a record row says
+// what kind of record it is, never who holds it -- the holder's name is
+// printed right beside it. Game Records only needs hi/lo (every card is a
+// high/low pair); League History names one per record. Styled as .type-tile
+// in theme.css; 'loss' tints it red (the Sacko).
+const TILE_STROKE = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+const TILE_TROPHY = '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 3 3.2M17 6h2.5a2.5 2.5 0 0 1-3 3.2"/><path d="M12 14v3.5M8.5 20.5h7"/>';
+const TYPE_ICONS = {
+  hi: `<path d="M12 19V5"/><path d="M5.5 11.5 12 5l6.5 6.5"/>`,
+  lo: `<path d="M12 5v14"/><path d="M5.5 12.5 12 19l6.5-6.5"/>`,
+  trophy: TILE_TROPHY,
+  sacko: `<g transform="rotate(180 12 12)">${TILE_TROPHY}</g>`,
+  points: `<path d="M4 20h16"/><path d="M7 16v-4M12 16V8M17 16V5"/>`,
+  record: `<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/><path d="m9 15 2 2 4-4"/>`,
+  streak: `<path d="M12 3c.6 3.2 4.5 5.3 4.5 9.6A4.5 4.5 0 0 1 12 17a4.5 4.5 0 0 1-4.5-4.4c0-2 1-3.2 2-4.1.1 1.6.9 2.6 1.8 2.6C11.3 8.5 11 5.6 12 3z"/><path d="M8 21h8"/>`,
+  playoffs: `<path d="M4 5h5v5H4M4 14h5v5H4"/><path d="M9 7.5h3v9H9M12 12h7"/>`,
+  finish: `<path d="M3 20h18"/><path d="M9.5 20V9h5v11M4 20v-6h5.5M14.5 20v-8H20v8"/>`,
+  money: `<path d="M12 3v18"/><path d="M16.5 7.5c-.8-1.3-2.4-2-4.5-2-2.6 0-4.3 1.2-4.3 3.1 0 4.4 9 2.3 9 6.8 0 2-1.9 3.1-4.7 3.1-2.2 0-4-.8-4.8-2.3"/>`,
+};
+function typeTile(kind, cls) {
+  return `<span class="type-tile${cls ? ' ' + cls : ''}" aria-hidden="true"><svg viewBox="0 0 24 24" ${TILE_STROKE}>${TYPE_ICONS[kind] || ''}</svg></span>`;
+}
+
 // Centre a scrolling selector track (.scroll, see theme.css) on its selected
 // item, so after a re-render the choice you just made isn't off-screen.
 // Measured from the two boxes rather than offsetLeft: tracks are positioned
