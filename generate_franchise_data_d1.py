@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
+from logo_mirror import mirror_player_logos
 from sheets_lib import authorize, load_games, load_money, SHEET_ID, longest_and_current_streak
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data", "franchise.json")
@@ -728,6 +729,9 @@ def main():
             "efficiency": compute_efficiency(team_week_efficiency, team_id_to_player_by_year, player),
             "all_play": all_play.get(player),
         })
+
+    # Serve every logo from the site's own copy (logo_mirror.py).
+    mirror_player_logos(players_out)
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
