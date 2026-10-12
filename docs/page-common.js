@@ -123,7 +123,8 @@ function scheduleLeft(ahead, recordOf) {
   return games ? { pct: won / games, n: ahead.length } : null;
 }
 // "SOS #3" after the race marker: where a team's schedule left ranks, #1
-// the hardest (the highest combined win %), equal schedules sharing a rank.
+// the hardest (the highest combined win %). Every team gets its own number:
+// equal schedules go in standings order, the higher team first.
 // The top quarter reads in the loss red, so the tough road stands out. `r`
 // is that team's entry from rankSchedules().
 function sosMark(s, r) {
@@ -132,15 +133,13 @@ function sosMark(s, r) {
   return `<span class="sos${r.hard ? ' hard' : ''}" title="${say}" aria-label="${say}">SOS #${r.rank}</span>`;
 }
 const sosOrdinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
-// sosMark's rank for every team at once: { rank, of, hard } or null.
+// sosMark's rank for every team at once: { rank, of, hard } or null. `list`
+// is in standings order, which a stable sort keeps for equal schedules.
 function rankSchedules(list) {
-  const vals = list.filter(Boolean).map(s => s.pct);
-  const of = vals.length, hardCut = Math.floor(of / 4);
-  return list.map(s => {
-    if (!s) return null;
-    const rank = 1 + vals.filter(v => v > s.pct + 1e-9).length;
-    return { rank, of, hard: of >= 4 && rank <= hardCut };
-  });
+  const order = list.map((s, i) => [s, i]).filter(([s]) => s).sort((a, b) => b[0].pct - a[0].pct);
+  const of = order.length, hardCut = Math.floor(of / 4), out = list.map(() => null);
+  order.forEach(([, i], k) => { out[i] = { rank: k + 1, of, hard: of >= 4 && k < hardCut }; });
+  return out;
 }
 
 // ---------- Shareable views (site audit 21) ----------
