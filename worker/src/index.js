@@ -18,6 +18,9 @@
  * POST /refresh-parlay -> dispatches the Parlay data refresh Action on
  *                      demand (see parlayRefresh.js); used by the "Refresh
  *                      Data" button on the Parlay Results page.
+ * GET /median-history -> the week's projected median over time, for Median
+ *                      Watch's chart (see medianHistory.js; the rows are
+ *                      written by scheduled() below).
  * GET /parlay-stats  -> the parlay stats payload, read straight from KV
  *                      (see publish_parlay_stats.py, which computes and
  *                      pushes it there -- same "no git commit needed" idea
@@ -32,6 +35,7 @@
 import { buildDashboard } from "./dashboard.js";
 import { getStats, recordHit } from "./analytics.js";
 import { dispatchParlayRefresh } from "./parlayRefresh.js";
+import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 
 const COOLDOWN_SECONDS = 120;
 // One key holds { fetchedAt, data } so a cache hit costs a single KV read and
@@ -89,6 +93,11 @@ export default {
       const result = await dispatchParlayRefresh(env).catch((err) => ({ status: 502, body: { error: String(err) } }));
       return jsonResponse(result.body, headers, result.status);
     }
+    if (path === "/median-history") {
+      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const url = new URL(request.url);
+      return jsonResponse(await getMedianHistory(env, url).catch((err) => ({ error: String(err), points: [] })), headers);
+    }
     if (path === "/parlay-stats") {
       // Precomputed elsewhere (publish_parlay_stats.py, run on a schedule
       // or via /refresh-parlay) and pushed straight into this same KV
@@ -140,10 +149,26 @@ export default {
   // during an actual game window) -- see the crons list in wrangler.toml
   // for the full schedule. Reuses the same dispatch the manual "Refresh
   // Data" button calls, cooldown and all.
+  //
+  // The same run also saves a projected-median snapshot (medianHistory.js),
+  // which is what gives that chart its 10-minutes-in-a-game, hourly-
+  // otherwise cadence. It reuses the cached dashboard when a visitor just
+  // refreshed it and otherwise builds its own, without writing it back to
+  // KV: KV's free tier allows 1k writes a day and visitors already spend
+  // those.
   async scheduled(event, env, ctx) {
-    const result = await dispatchParlayRefresh(env);
-    if (result.status >= 400) {
-      console.error("Scheduled parlay refresh dispatch failed:", result.status, result.body);
+    const [parlay, median] = await Promise.allSettled([
+      dispatchParlayRefresh(env),
+      (async () => {
+        const entry = await env.COOLDOWN_KV.get(CACHE_KEY, "json");
+        const fresh = entry && Math.floor(Date.now() / 1000) - entry.fetchedAt < COOLDOWN_SECONDS;
+        const dashboard = fresh ? entry.data : await buildDashboard(env, entry?.data);
+        return recordMedianSnapshot(env, dashboard);
+      })(),
+    ]);
+    if (parlay.status === "rejected" || parlay.value.status >= 400) {
+      console.error("Scheduled parlay refresh dispatch failed:", parlay.reason || parlay.value);
     }
+    if (median.status === "rejected") console.error("Median snapshot failed:", median.reason);
   },
 };

@@ -162,3 +162,14 @@ CREATE TABLE IF NOT EXISTS roster_entries (
 
 CREATE INDEX IF NOT EXISTS idx_roster_entries_player ON roster_entries (player_id, year, week);
 CREATE INDEX IF NOT EXISTS idx_matchups_team ON matchups (team_id, year, week);
+
+CREATE TABLE IF NOT EXISTS median_snapshots (
+    season INTEGER NOT NULL,
+    week INTEGER NOT NULL,
+    ts INTEGER NOT NULL,
+    projected_median REAL NOT NULL,
+    current_median REAL NOT NULL,
+    live INTEGER NOT NULL,
+    teams TEXT NOT NULL,
+    PRIMARY KEY (season, week, ts)
+);

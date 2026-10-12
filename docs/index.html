@@ -512,6 +512,44 @@
   .median-lock-line .up b{ color: var(--turf); }
   .median-lock-line .dn b{ color: var(--loss); }
   .median-lock-line .sep{ margin: 0 8px; opacity: 0.5; }
+  /* ---------- Median Watch: the projected median over the week ----------
+     In Projected mode the median label carries a sparkline of the week so
+     far (worker/src/medianHistory.js keeps the history). Tapping it opens
+     the full chart in the same sheet/popover the cards use, where managers
+     can be added to it. Current mode keeps the plain label: a current
+     median only ever climbs, so its history says nothing. */
+  button.median-split-label{ display: block; width: 100%; font: inherit; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.02em; color: var(--gold); background: none; border: 1px solid transparent; border-radius: 10px; padding: 6px 6px 4px; cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
+  @media (hover: hover){ button.median-split-label:hover{ background: var(--item-hover); border-color: var(--line); } }
+  button.median-split-label:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  button.median-split-label[aria-expanded="true"]{ border-color: var(--lead-line); background: var(--lead-tint); }
+  button.median-split-label .mh-chev{ color: var(--text-dim); font-weight: 600; margin-left: 5px; }
+  .mh-spark{ display: block; margin-top: 4px; }
+  .mh-spark svg, .mh-chart svg{ display: block; width: 100%; overflow: visible; }
+  .mh-chart{ position: relative; touch-action: pan-y; margin-top: 12px; }
+  .mh-tip{ position: absolute; top: 0; z-index: 2; pointer-events: none; background: #1c1c1c; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 6px 9px; font-size: 0.68rem; line-height: 1.5; white-space: nowrap; font-variant-numeric: tabular-nums; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .mh-tip .t{ color: var(--text-dim); font-weight: 600; }
+  .mh-tip .r{ display: flex; justify-content: space-between; gap: 12px; }
+  .mh-tip .r b{ font-weight: 700; }
+  .mh-tip .r.m{ color: var(--gold); }
+  .mh-mgr-head{ display: flex; justify-content: space-between; align-items: center; margin: 14px 0 8px; }
+  .mh-mgr-head .mwp-label{ margin: 0; }
+  .mh-allnone{ display: flex; gap: 4px; }
+  .mh-allnone button{ font: 600 0.74rem var(--body); color: var(--gold); background: none; border: 0; padding: 6px 8px; min-height: 32px; cursor: pointer; border-radius: 999px; }
+  .mh-allnone button:disabled{ color: var(--text-dim); opacity: 0.5; cursor: default; }
+  .mh-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
+  .mh-chip{ font: 600 0.78rem var(--body); color: var(--text-dim); background: var(--item); border: 1px solid var(--line); border-radius: 999px; padding: 0 12px; min-height: 32px; cursor: pointer; transition: background-color .15s ease, border-color .15s ease, color .15s ease; }
+  .mh-chip.on{ color: var(--gold); border-color: var(--lead-line); background: var(--lead-tint); }
+  @media (hover: hover){ .mh-chip:hover:not(.on){ color: var(--text); } }
+  .mh-chip:focus-visible, .mh-allnone button:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  #mh-pop{ padding: 12px 14px 14px; }
+  #mh-sheet .sheet-grab{ position: relative; }
+  #mh-sheet .sheet-head{ padding: 6px 18px 0; }
+  #mh-sheet .sheet-body{ padding: 0 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
+  #mh-sheet .mwp-name{ font-size: 1.3rem; }
+  #mh-sheet .mwp-score{ font-size: 2.3rem; }
+  @keyframes mh-pulse{ 0%{ r: 2.5px; opacity: .7; } 70%{ r: 9px; opacity: 0; } 100%{ r: 9px; opacity: 0; } }
+  .mh-pulse{ animation: mh-pulse 1.6s infinite; }
+  @media (prefers-reduced-motion: reduce){ .mh-pulse{ animation: none; opacity: 0; } button.median-split-label, .mh-chip{ transition: none; } }
   .mw-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
   @media (max-width: 420px){
     .mw-grid{ grid-template-columns: 1fr; }
@@ -1545,12 +1583,12 @@
   }
 
   // Drag the sheet down past 90px to dismiss it, like a native sheet.
-  function mwWireSwipe(sheet) {
+  function mwWireSwipe(sheet, close = mwHide) {
     let y0 = null, dy = 0;
     sheet.querySelectorAll('[data-grab]').forEach(el => {
       el.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; y0 = e.clientY; dy = 0; sheet.style.animation = 'none'; el.setPointerCapture(e.pointerId); });
       el.addEventListener('pointermove', e => { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sheet.style.transform = `translateY(${dy}px)`; });
-      el.addEventListener('pointerup', () => { if (y0 === null) return; y0 = null; if (dy > 90) mwHide(); else sheet.style.transform = ''; });
+      el.addEventListener('pointerup', () => { if (y0 === null) return; y0 = null; if (dy > 90) close(); else sheet.style.transform = ''; });
     });
   }
 
@@ -1560,6 +1598,7 @@
     const hint = document.getElementById('mw-hint');
     if (hint) hint.hidden = !document.querySelector('#median-container .mb-card.can');
     if (mwOpen) mwShow(mwOpen, false);
+    mhRefresh();
   }
 
   document.addEventListener('click', e => {
@@ -1573,6 +1612,321 @@
   addEventListener('resize', mwPlacePop);
   // Crossing 720px swaps sheet for popover: close whichever was open.
   mwOneColumn.addEventListener('change', mwHide);
+
+  // ---------- Median Watch: the projected median over the week ----------
+  // The Worker's scheduled run saves the projected median and every team's
+  // projection (10 minutes apart during games, hourly otherwise); this
+  // charts them, plus the live poll as the newest point. A sparkline sits
+  // in the median label; tapping it opens the full chart, where any number
+  // of managers -- none by default -- can be drawn against the median.
+  let mhHistory = null, mhFetchedAt = 0, mhIsOpen = false, mhResizeT;
+  let mhSel = new Set();
+  try { mhSel = new Set(JSON.parse(localStorage.getItem('mhManagers') || '[]')); } catch (e) {}
+  const mhSave = () => { try { localStorage.setItem('mhManagers', JSON.stringify([...mhSel])); } catch (e) {} };
+
+  function mhLoad() {
+    if (Date.now() - mhFetchedAt < 4 * 60 * 1000) return;
+    mhFetchedAt = Date.now();
+    fetch(WORKER_URL + '/median-history', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(d => {
+        if (!d || !Array.isArray(d.points)) return;
+        const had = mhSeries().length >= 2;
+        mhHistory = d;
+        // The card was built before the history arrived: swap the plain
+        // label for the sparkline version in place.
+        if (!had && medianViewMode === 'projected' && lastMedianData) {
+          const el = document.querySelector('#median-container .median-split-label');
+          if (el) el.outerHTML = medianSplitHtml('projected', lastMedianData.projectedMedian, el.id || undefined);
+        }
+        mhRefresh();
+      })
+      .catch(() => {});
+  }
+
+  // Saved snapshots for the week on screen, then the live poll if it's newer.
+  function mhSeries() {
+    const pts = mhHistory && mhHistory.week === dashWeek ? mhHistory.points.slice() : [];
+    if (lastMedianData && lastMedianTeams) {
+      const t = Math.floor(Date.parse(lastMedianData.updatedAt) / 1000);
+      if (t && (!pts.length || t > pts[pts.length - 1].t + 30)) {
+        const p = {};
+        let live = 0;
+        lastMedianTeams.forEach(x => { p[medianTeamName(x)] = x.projected; live += x.inPlay || 0; });
+        pts.push({ t, pm: lastMedianData.projectedMedian, live, p });
+      }
+    }
+    return pts;
+  }
+
+  function medianSplitHtml(mode, medianValue, id) {
+    const idAttr = id ? ` id="${id}"` : '';
+    const label = mode === 'current' ? 'Current Median' : 'Projected Median';
+    if (mode !== 'projected' || mhSeries().length < 2) {
+      return `<div class="median-split-label"${idAttr}>${label} <b>${fmtScore(medianValue)}</b></div>`;
+    }
+    return `<button type="button" class="median-split-label" data-mh-open${idAttr} aria-expanded="${mhIsOpen}" aria-label="${label} ${fmtScore(medianValue)}, open its chart for the week">${label} <b>${fmtScore(medianValue)}</b><span class="mh-chev" aria-hidden="true">›</span><span class="mh-spark" id="mh-spark"></span></button>`;
+  }
+
+  const mhFmtTime = t => new Date(t * 1000).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+  const mhDay = t => new Date(t * 1000).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' });
+  const mhSigned = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2);
+
+  // Game time gets its real width; a stretch with nobody playing shrinks to
+  // a twelfth (capped at 30 minutes' worth), or Friday and Saturday would
+  // take up more of the chart than Sunday does.
+  function mhXs(pts) {
+    const xs = [0];
+    for (let i = 1; i < pts.length; i++) {
+      const dt = Math.max(0, pts[i].t - pts[i - 1].t);
+      const live = pts[i].live > 0 || pts[i - 1].live > 0;
+      xs.push(xs[i - 1] + (live ? dt : Math.min(dt / 12, 1800)));
+    }
+    return xs;
+  }
+
+  function mhEl(tag, attrs, parent) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function mhDraw(host, compact) {
+    if (!host) return;
+    host.innerHTML = '';
+    const pts = mhSeries();
+    if (pts.length < 2) return;
+    const sel = compact ? [] : (lastMedianTeams || []).map(medianTeamName).filter(n => mhSel.has(n));
+    const W = Math.max(120, host.clientWidth), H = compact ? 30 : 220;
+    const pad = compact ? { l: 3, r: 3, t: 4, b: 4 } : { l: 28, r: sel.length ? 62 : 44, t: 8, b: 22 };
+    const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    const xs = mhXs(pts), xMax = xs[xs.length - 1] || 1;
+    let lo = Infinity, hi = -Infinity;
+    pts.forEach(p => {
+      lo = Math.min(lo, p.pm); hi = Math.max(hi, p.pm);
+      sel.forEach(n => { const v = p.p[n]; if (typeof v === 'number') { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
+    });
+    const padY = Math.max((hi - lo) * 0.1, 0.5); lo -= padY; hi += padY;
+    const X = i => pad.l + xs[i] / xMax * iw;
+    const Y = v => pad.t + (1 - (v - lo) / (hi - lo)) * ih;
+    const svg = mhEl('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' }, host);
+
+    // Shade the stretches with games on.
+    for (let i = 1; i < pts.length; i++) {
+      if (pts[i].live > 0 || pts[i - 1].live > 0) {
+        mhEl('rect', { x: X(i - 1), y: pad.t, width: Math.max(0, X(i) - X(i - 1) + 0.5), height: ih, style: 'fill:rgba(255,255,255,0.035)' }, svg);
+      }
+    }
+
+    if (!compact) {
+      const span = hi - lo, step = span > 40 ? 20 : span > 20 ? 10 : span > 8 ? 5 : span > 3 ? 2 : 1;
+      for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
+        mhEl('line', { x1: pad.l, x2: pad.l + iw, y1: Y(v), y2: Y(v), style: 'stroke:var(--line)' }, svg);
+        mhEl('text', { x: pad.l - 6, y: Y(v) + 3, 'text-anchor': 'end', 'font-size': 9, style: 'fill:var(--text-dim);font-variant-numeric:tabular-nums' }, svg).textContent = v;
+      }
+      // A day label at the first point of each day (Eastern), skipped when
+      // a short stretch would put two on top of each other.
+      let lastX = -Infinity, prevDay = null;
+      pts.forEach((p, i) => {
+        const d = mhDay(p.t);
+        if (d === prevDay) return;
+        prevDay = d;
+        const x = X(i);
+        if (i > 0) mhEl('line', { x1: x, x2: x, y1: pad.t, y2: pad.t + ih, style: 'stroke:var(--line);stroke-dasharray:2 3' }, svg);
+        if (x - lastX < 26) return;
+        lastX = x;
+        mhEl('text', { x: x + 2, y: H - 6, 'font-size': 9, 'font-weight': 600, style: 'fill:var(--text-dim)' }, svg).textContent = d;
+      });
+      // Where the week started.
+      mhEl('line', { x1: pad.l, x2: pad.l + iw, y1: Y(pts[0].pm), y2: Y(pts[0].pm), style: 'stroke:var(--gold-dim);stroke-dasharray:2 4' }, svg);
+    }
+
+    const path = f => pts.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(f(p)).toFixed(1)}`).join(' ');
+
+    // Managers: green while above the median, red while below.
+    sel.forEach(n => {
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1].p[n], b = pts[i].p[n];
+        if (typeof a !== 'number' || typeof b !== 'number') continue;
+        const above = (a - pts[i - 1].pm) + (b - pts[i].pm) >= 0;
+        mhEl('line', { x1: X(i - 1), y1: Y(a), x2: X(i), y2: Y(b), style: `stroke:var(--${above ? 'turf' : 'loss'});stroke-width:1.3;stroke-linecap:round;opacity:0.85` }, svg);
+      }
+    });
+
+    if (!compact && !sel.length) {
+      const g = mhEl('linearGradient', { id: 'mh-fill', x1: 0, x2: 0, y1: 0, y2: 1 }, mhEl('defs', {}, svg));
+      mhEl('stop', { offset: 0, style: 'stop-color:var(--gold);stop-opacity:0.16' }, g);
+      mhEl('stop', { offset: 1, style: 'stop-color:var(--gold);stop-opacity:0' }, g);
+      mhEl('path', { d: path(p => p.pm) + ` L${X(pts.length - 1)} ${pad.t + ih} L${X(0)} ${pad.t + ih} Z`, fill: 'url(#mh-fill)' }, svg);
+    }
+    mhEl('path', { d: path(p => p.pm), style: `fill:none;stroke:var(--gold);stroke-width:${compact ? 1.5 : 2};stroke-linejoin:round;stroke-linecap:round` }, svg);
+
+    const li = pts.length - 1, last = pts[li];
+    if (last.live > 0) mhEl('circle', { cx: X(li), cy: Y(last.pm), r: 2.5, class: 'mh-pulse', style: 'fill:var(--gold)' }, svg);
+    mhEl('circle', { cx: X(li), cy: Y(last.pm), r: compact ? 2.5 : 3.5, style: 'fill:var(--gold);stroke:var(--surface);stroke-width:1.5' }, svg);
+    if (compact) return;
+
+    // End labels: the median's value, then each manager's name, nudged
+    // apart so none overlap.
+    const labels = [{ y: Y(last.pm), text: fmtScore(last.pm), color: 'var(--gold)', bold: true }];
+    sel.forEach(n => { const v = last.p[n]; if (typeof v === 'number') labels.push({ y: Y(v), text: n, color: `var(--${v >= last.pm ? 'turf' : 'loss'})` }); });
+    labels.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < labels.length; i++) labels[i].y = Math.max(labels[i].y, labels[i - 1].y + 11);
+    const over = labels[labels.length - 1].y - (pad.t + ih + 4);
+    if (over > 0) labels.forEach(l => { l.y -= over; });
+    labels.forEach(l => {
+      mhEl('text', { x: X(li) + 7, y: l.y + 3.5, 'font-size': l.bold ? 11 : 9.5, 'font-weight': l.bold ? 700 : 600, style: `fill:${l.color};font-variant-numeric:tabular-nums${l.bold ? ';font-family:var(--scoreboard)' : ''}` }, svg).textContent = l.text;
+    });
+
+    // Scrub: crosshair plus a readout of every line at that moment.
+    const cross = mhEl('line', { y1: pad.t, y2: pad.t + ih, style: 'stroke:var(--text-dim);opacity:0' }, svg);
+    const dot = mhEl('circle', { r: 3.5, style: 'fill:var(--gold);stroke:var(--surface);stroke-width:1.5;opacity:0' }, svg);
+    const tip = document.createElement('div');
+    tip.className = 'mh-tip';
+    tip.hidden = true;
+    host.appendChild(tip);
+    const hide = () => { cross.style.opacity = 0; dot.style.opacity = 0; tip.hidden = true; };
+    const move = e => {
+      const r = svg.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width * W;
+      let best = 0;
+      pts.forEach((p, i) => { if (Math.abs(X(i) - px) < Math.abs(X(best) - px)) best = i; });
+      const p = pts[best], x = X(best);
+      cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.style.opacity = 0.6;
+      dot.setAttribute('cx', x); dot.setAttribute('cy', Y(p.pm)); dot.style.opacity = 1;
+      const rows = sel.filter(n => typeof p.p[n] === 'number').sort((a, b) => p.p[b] - p.p[a]).map(n => {
+        const v = p.p[n];
+        return `<div class="r"><span>${n}</span><span><b>${fmtScore(v)}</b> <span style="color:var(--${v >= p.pm ? 'turf' : 'loss'})">${mhSigned(v - p.pm)}</span></span></div>`;
+      }).join('');
+      tip.innerHTML = `<div class="t">${mhFmtTime(p.t)}</div><div class="r m"><span>Median</span><b>${fmtScore(p.pm)}</b></div>${rows}`;
+      tip.hidden = false;
+      const hostW = host.clientWidth, tw = tip.offsetWidth, sx = x / W * hostW;
+      tip.style.left = (sx > hostW / 2 ? Math.max(0, sx - tw - 10) : Math.min(hostW - tw, sx + 10)) + 'px';
+    };
+    svg.addEventListener('pointerdown', move);
+    svg.addEventListener('pointermove', move);
+    svg.addEventListener('pointerleave', hide);
+    svg.addEventListener('pointercancel', hide);
+  }
+
+  function mhHeadHtml() {
+    const pts = mhSeries();
+    const first = pts[0], last = pts[pts.length - 1];
+    const d = last.pm - first.pm;
+    return `<div class="mwp-head">
+      <div style="min-width:0"><div class="mwp-name">Projected Median</div>
+        <div class="mwp-sub">${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(2)} since ${mhFmtTime(first.t)}</div></div>
+      <div class="mwp-score" style="color:var(--gold)">${fmtScore(last.pm)}</div>
+    </div>`;
+  }
+
+  function mhChipsHtml() {
+    const names = (lastMedianTeams || []).slice().sort((a, b) => b.projected - a.projected).map(medianTeamName);
+    const on = names.filter(n => mhSel.has(n)).length;
+    return `<div class="mh-mgr-head"><span class="mwp-label">Managers</span>
+        <span class="mh-allnone"><button type="button" data-mh-all ${on === names.length ? 'disabled' : ''}>All</button><button type="button" data-mh-none ${on ? '' : 'disabled'}>None</button></span></div>
+      <div class="mh-chips">${names.map(n => `<button type="button" class="mh-chip${mhSel.has(n) ? ' on' : ''}" data-mh-m="${n}" aria-pressed="${mhSel.has(n)}">${n}</button>`).join('')}</div>`;
+  }
+
+  const mhAnchor = () => document.querySelector('#median-container button.median-split-label');
+
+  function mhOpen() {
+    if (mhSeries().length < 2) return;
+    mwHide();
+    mhIsOpen = true;
+    if (!mwOneColumn.matches) {
+      document.body.insertAdjacentHTML('beforeend', '<div class="pop" id="mh-pop" role="dialog" aria-label="Projected median this week"></div>');
+    } else {
+      document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="mh-scrim" data-mh-close></div>
+        <div class="sheet" id="mh-sheet" role="dialog" aria-modal="true" aria-label="Projected median this week">
+          <div class="sheet-grab" data-grab><span></span><button type="button" class="mwp-done" data-mh-close>Done</button></div>
+          <div class="sheet-head" data-grab data-head></div>
+          <div class="sheet-body" data-body></div></div>`);
+      mwWireSwipe(document.getElementById('mh-sheet'), mhClose);
+    }
+    mhRender();
+  }
+
+  function mhClose() {
+    mhIsOpen = false;
+    ['mh-pop', 'mh-sheet', 'mh-scrim'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
+    const a = mhAnchor();
+    if (a) a.setAttribute('aria-expanded', 'false');
+  }
+
+  // Fills whichever panel is open; the sheet keeps its scroll position.
+  function mhRender() {
+    const a = mhAnchor();
+    if (!a || mhSeries().length < 2) { mhClose(); return; }
+    a.setAttribute('aria-expanded', 'true');
+    const pop = document.getElementById('mh-pop'), sheet = document.getElementById('mh-sheet');
+    if (pop) {
+      pop.innerHTML = `<div class="mwp-line" style="justify-content:flex-end;margin-bottom:0"><span class="mwp-line-r"><button type="button" class="x" data-mh-close aria-label="Close">&times;</button></span></div>
+        ${mhHeadHtml()}<div class="mh-chart" id="mh-chart"></div>${mhChipsHtml()}`;
+      mhPlacePop();
+    } else if (sheet) {
+      sheet.querySelector('[data-head]').innerHTML = mhHeadHtml();
+      const body = sheet.querySelector('[data-body]');
+      const keep = body.scrollTop;
+      body.innerHTML = `<div class="mh-chart" id="mh-chart"></div>${mhChipsHtml()}`;
+      body.scrollTop = keep;
+    }
+    mhDraw(document.getElementById('mh-chart'), false);
+  }
+
+  // Under the median label, up to 560px wide, never off the side of the screen.
+  function mhPlacePop() {
+    const pop = document.getElementById('mh-pop'), a = mhAnchor();
+    if (!pop || !a) return;
+    for (let pass = 0; pass < 2; pass++) {
+      const r = a.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+      const w = Math.min(560, vw - 24);
+      const left = Math.min(Math.max(r.left + r.width / 2 - w / 2, 12), vw - w - 12);
+      pop.style.width = w + 'px';
+      pop.style.left = (left + scrollX) + 'px';
+      pop.style.top = (r.bottom + scrollY + 10) + 'px';
+      pop.style.setProperty('--arrow-x', (r.left + r.width / 2 - left) + 'px');
+    }
+  }
+
+  // After every card rebuild (and when new history lands).
+  function mhRefresh() {
+    mhDraw(document.getElementById('mh-spark'), true);
+    if (mhIsOpen) mhRender();
+  }
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-mh-close]')) { mhClose(); return; }
+    if (e.target.closest('[data-mh-open]')) { if (mhIsOpen) mhClose(); else mhOpen(); return; }
+    const chip = e.target.closest('[data-mh-m]');
+    const all = e.target.closest('[data-mh-all]'), none = e.target.closest('[data-mh-none]');
+    if (chip || all || none) {
+      const names = (lastMedianTeams || []).map(medianTeamName);
+      if (chip) { const n = chip.dataset.mhM; if (mhSel.has(n)) mhSel.delete(n); else mhSel.add(n); }
+      if (all) names.forEach(n => mhSel.add(n));
+      if (none) mhSel.clear();
+      mhSave();
+      document.querySelectorAll('[data-mh-m]').forEach(b => { const on = mhSel.has(b.dataset.mhM); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+      const on = names.filter(n => mhSel.has(n)).length;
+      document.querySelectorAll('[data-mh-all]').forEach(b => { b.disabled = on === names.length; });
+      document.querySelectorAll('[data-mh-none]').forEach(b => { b.disabled = !on; });
+      mhDraw(document.getElementById('mh-chart'), false);
+      return;
+    }
+    // Desktop: a click anywhere but the popover closes it.
+    if (mhIsOpen && !mwOneColumn.matches && !e.target.closest('#mh-pop')) mhClose();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && mhIsOpen) mhClose(); });
+  addEventListener('resize', () => {
+    mhPlacePop();
+    clearTimeout(mhResizeT);
+    mhResizeT = setTimeout(() => {
+      mhDraw(document.getElementById('mh-spark'), true);
+      if (mhIsOpen) mhDraw(document.getElementById('mh-chart'), false);
+    }, 120);
+  });
+  mwOneColumn.addEventListener('change', mhClose);
 
   // Whether the Worker could read NFL game states this refresh; without that
   // every team would look finished, so status and locks stay hidden.
@@ -1947,7 +2301,7 @@
         <div class="card-body">
           <div>
             <div id="median-above">${mwGridHtml(rows.above, 'turf', medianValue)}</div>
-            <div class="median-split-label">${label} <b>${fmtScore(medianValue)}</b></div>${mwLockLineHtml(rows.zones)}
+            ${medianSplitHtml(mode, medianValue)}${mwLockLineHtml(rows.zones)}
             <div id="median-below">${mwGridHtml(rows.below, 'loss', medianValue)}</div>
           </div>
           <div class="spread-col" id="median-spreadcol" style="width:88px;">
@@ -2867,7 +3221,7 @@
       <div class="card-body">
         <div>
           <div id="median-above"></div>
-          <div class="median-split-label" id="median-split">${label} <b>${fmtScore(medianValue)}</b></div>${mwLockLineHtml(rows.zones)}
+          ${medianSplitHtml(mode, medianValue, 'median-split')}${mwLockLineHtml(rows.zones)}
           <div id="median-below"></div>
         </div>
         <div class="spread-col" id="median-spreadcol" style="width:88px;">
@@ -3690,6 +4044,7 @@
         lastMedianData = data;
         renderMedianStatic(medianViewMode);
         if (animate) animateMedianRefresh(prevMedianTeams, prevMedianData);
+        mhLoad();
         renderParlayHighlight();
         renderStatOfMoment();
 
