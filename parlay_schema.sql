@@ -1,5 +1,5 @@
 -- Parlay pick data, synced from the "Auto Parlay Tracker" Google Sheet tab
--- (see PARLAY_DATA_MIGRATION.md) into its own Cloudflare D1 database --
+-- (see tools/PARLAY_DATA_MIGRATION.md) into its own Cloudflare D1 database --
 -- durable, queryable storage for the raw picks themselves, separate from
 -- the precomputed stats blob publish_parlay_stats.py pushes to KV (that
 -- blob is what the site actually reads; this table exists for durability

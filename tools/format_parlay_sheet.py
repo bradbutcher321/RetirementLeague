@@ -10,7 +10,7 @@ are static and purely mechanical -- computed from row position, not from
 reading any actual data -- covering the full range in one pass with no
 re-run needed after new weeks are added. Re-runnable -- safe to run again.
 
-Usage: python format_parlay_sheet.py
+Usage: python tools/format_parlay_sheet.py  (from the repo root)
 """
 import os
 import sys
@@ -18,7 +18,7 @@ import sys
 import gspread
 from google.oauth2.service_account import Credentials
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sheets_lib import SHEET_ID, CREDS_PATH
 
 TARGET_TAB = "Auto Parlay Tracker"

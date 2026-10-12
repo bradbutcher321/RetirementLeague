@@ -21,7 +21,7 @@ since anything else either sorts wrong silently or crashes a script that
 parses it strictly later. Blank is always allowed -- most rows haven't had
 a pick entered yet.
 
-Usage: python add_parlay_validation.py
+Usage: python tools/add_parlay_validation.py  (from the repo root)
 """
 import os
 import sys
@@ -29,7 +29,7 @@ import sys
 import gspread
 from google.oauth2.service_account import Credentials
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sheets_lib import SHEET_ID, CREDS_PATH
 import generate_parlay_data as gp
 

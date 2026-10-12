@@ -60,11 +60,11 @@ RESULTS = ["", "Pending", "Win", "Loss"]
 # (O) tags along as a data field with no visible widget: it's the original
 # note text a pick was parsed from, useful as an audit trail, but not
 # something meant to be hand-typed. ROW_FIELDS is the full save/load field
-# order matching migrate_parlay_tracker.py's HEADER for columns E..O.
+# order matching tools/migrate_parlay_tracker.py's HEADER for columns E..O.
 VISIBLE_ROW_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "odds", "gametime", "result"]
 ROW_FIELDS = VISIBLE_ROW_FIELDS + ["raw_pick"]
 # Which of the free-text fields actually apply to a given Bet Type -- same
-# breakdown as format_parlay_sheet.py's HEADER_NOTES, reused here to grey
+# breakdown as tools/format_parlay_sheet.py's HEADER_NOTES, reused here to grey
 # out (disable) the ones that don't, e.g. Player Prop/Side for a Spread
 # pick. A bet type not in this map (blank, or something new) leaves
 # everything enabled rather than guessing.
@@ -186,7 +186,7 @@ class SheetClient:
         with a space instead of "T", silently breaking both the strict
         format validation and every downstream string-sort that relies on
         the literal text). gspread's real default (effectively RAW) is
-        what migrate_parlay_tracker.py already relies on for the exact
+        what tools/migrate_parlay_tracker.py already relies on for the exact
         same reason -- it stores strings exactly as given. Genuinely
         numeric fields (Year/Week/Odds/Final Odds/Final Payout) still come
         through as real numbers because they're passed as actual Python

@@ -9,15 +9,16 @@
 # Task ("RetirementLeague Parlay Refresh") that ran this every 30 minutes
 # has been removed. Kept as a manual fallback: re-register that task the
 # same way if site.web.api.espn.com ever gets blocked too. Needs
-# google_secret.json in this same folder and an active `wrangler login`
+# google_secret.json in the repo root and an active `wrangler login`
 # session (both already set up on this machine) -- no env vars to
 # configure.
 
 $ErrorActionPreference = "Continue"
 $env:PATH = "C:\Program Files\nodejs;C:\Program Files\GitHub CLI;" + $env:PATH
-Set-Location $PSScriptRoot
+$repoRoot = Split-Path $PSScriptRoot -Parent
+Set-Location $repoRoot
 
-$logDir = Join-Path $PSScriptRoot "logs"
+$logDir = Join-Path $repoRoot "logs"
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir | Out-Null }
 $logFile = Join-Path $logDir "parlay_refresh.log"
 

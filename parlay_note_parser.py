@@ -1,7 +1,7 @@
 """
 Parses the informal shared-note format the league actually uses ("Brad:
 Spread: Panthers -3 vs. Browns (-115)") into the same structured fields
-migrate_parlay_tracker.py's parse_pick() produces from the sheet's own
+tools/migrate_parlay_tracker.py's parse_pick() produces from the sheet's own
 "{Bet Type}: {details}" convention -- but more lenient, since a fast group
 chat/notes-app entry is messier than something already sitting in a sheet:
 bet-type abbreviations (ML, Pass Yards, Rec Yards), reversed word order for
@@ -109,7 +109,7 @@ def parse_odds_token(text):
 
 
 def parse_bet_details(bet_type, details):
-    """Same shape as migrate_parlay_tracker.py's parse_pick, but the
+    """Same shape as tools/migrate_parlay_tracker.py's parse_pick, but the
     player-stat branch also tries the reversed "<player> o<line>" order."""
     row = {"team": "", "opponent": "", "player_prop": "", "line": "", "side": ""}
     details = details.strip()

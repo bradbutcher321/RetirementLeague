@@ -21,7 +21,7 @@ history (currently 228). Once new picks start being entered directly into
 whatever's sitting in those same row positions -- do not re-run it after
 that point without accounting for that.
 
-Usage: python migrate_parlay_tracker.py
+Usage: python tools/migrate_parlay_tracker.py  (from the repo root)
 """
 import os
 import re
@@ -30,7 +30,7 @@ import sys
 import gspread
 from google.oauth2.service_account import Credentials
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sheets_lib import SHEET_ID, CREDS_PATH
 import generate_parlay_data as gp
 from parlay_note_parser import TEAM_LINE_VS, VS_ONLY, TOTAL_VS, PLAYER_OU, PLAYER_ONLY

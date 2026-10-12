@@ -17,7 +17,7 @@ Requires every existing week to already be a full, correctly-ordered
 the Player formula assumes strict alignment and will silently mislabel
 players if that's ever violated again.
 
-Usage: python setup_player_autofill.py
+Usage: python tools/setup_player_autofill.py  (from the repo root)
 """
 import os
 import sys
@@ -25,7 +25,7 @@ import sys
 import gspread
 from google.oauth2.service_account import Credentials
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sheets_lib import SHEET_ID, CREDS_PATH
 import generate_parlay_data as gp
 

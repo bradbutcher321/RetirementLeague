@@ -1,7 +1,7 @@
 """
 Grades finished games against real ESPN data, filling in Result ("Win"/
 "Loss") for picks that are still Pending but whose Gametime has already
-passed -- Phase 2 of PARLAY_DATA_MIGRATION.md.
+passed -- Phase 2 of tools/PARLAY_DATA_MIGRATION.md.
 
 Every bet type in the sheet's validation list is auto-graded except Coin
 Toss, which ESPN's public API doesn't report anywhere (confirmed
@@ -28,7 +28,7 @@ depending what the bet actually needs to settle:
 A push (the score/stat lands exactly on the line) is reported for manual
 review rather than guessed -- the sheet's Result column only has
 Win/Loss/Pending today, and inventing a value for a push isn't this
-script's call to make (see PARLAY_DATA_MIGRATION.md's Phase 2 notes).
+script's call to make (see tools/PARLAY_DATA_MIGRATION.md's Phase 2 notes).
 
 Runs every 10 minutes as a step in the "Refresh Parlay Data" GitHub
 Action (.github/workflows/refresh_parlay_data.yml), right before that
@@ -52,7 +52,7 @@ blank/Pending cell -- and leaves a cell note on anything it grades
 box.
 
 Verified against 49 already-graded historical picks covering every prop
-bet type in real use (see PARLAY_DATA_MIGRATION.md): 38 confidently
+bet type in real use (see tools/PARLAY_DATA_MIGRATION.md): 38 confidently
 regraded, all 38 matching the sheet's existing Win/Loss exactly (0
 mismatches); the other 11 correctly came back "needs review" rather than
 a wrong guess -- genuine same-name ambiguity ESPN's own search couldn't
@@ -100,7 +100,7 @@ EASTERN = ZoneInfo("America/New_York")
 # Column S -- empty in the sheet until this was added, with T left as a
 # gap (matching how the sheet has made room for new columns before, e.g.
 # the "Player Order" helper list moving from Q to U -- see
-# PARLAY_DATA_MIGRATION.md). Holds the plain-text score/stat a pick's
+# tools/PARLAY_DATA_MIGRATION.md). Holds the plain-text score/stat a pick's
 # Result was actually graded from (e.g. "17-10 final" or "Matt Stafford:
 # 390"), so docs/parlay-results.html can show *why* a leg won or lost,
 # not just the Win/Loss pill -- see generate_parlay_data.py's load_tracker().

@@ -1,6 +1,6 @@
 """
 Reads the league sheet's "Auto Parlay Tracker" tab (the tidy one-row-per-pick
-layout -- see PARLAY_DATA_MIGRATION.md; this replaces reading the old
+layout -- see tools/PARLAY_DATA_MIGRATION.md; this replaces reading the old
 one-column-per-week "Parlay Tracker" tab, Phase 3 of that migration) and
 computes the parlay-results stats payload.
 
@@ -92,7 +92,7 @@ def reconstruct_pick_text(bet_type, team, opponent, player_prop, line, side):
     """Rebuilds the canonical "{Bet Type}: {details}" text compute_stats()
     parses (bet-type breakdown via pick.split(":")[0], over/under side via
     regex) from Auto Parlay Tracker's structured columns, matching the
-    exact shape migrate_parlay_tracker.py's historical rows already used --
+    exact shape tools/migrate_parlay_tracker.py's historical rows already used --
     so compute_stats() needed zero changes for the new tab. Deliberately
     not using the Raw Pick column for this: it holds whatever text a pick
     was actually entered from (clean for historically-migrated rows,
@@ -117,10 +117,10 @@ def reconstruct_pick_text(bet_type, team, opponent, player_prop, line, side):
 def load_tracker(spreadsheet):
     ws = spreadsheet.worksheet(TARGET_TAB)
     # Canonical 12-player order from the same named-range helper list the
-    # Player auto-fill formula reads (see setup_player_autofill.py) --
+    # Player auto-fill formula reads (see tools/setup_player_autofill.py) --
     # more robust than deriving the roster from which names happen to
     # appear in the data, since a short/gapped week (see the Chad/Jeff
-    # incident in PARLAY_DATA_MIGRATION.md) would otherwise misorder it.
+    # incident in tools/PARLAY_DATA_MIGRATION.md) would otherwise misorder it.
     players = [v[0] for v in ws.get_values("U2:U13") if v]
 
     rows = ws.get_values("A2:S3000")
@@ -141,7 +141,7 @@ def load_tracker(spreadsheet):
                 "picks": {},
                 # Split is computed here rather than read from column R --
                 # that column is itself just a sheet formula (Final Payout
-                # / 12, see setup_player_autofill.py), and computing it
+                # / 12, see tools/setup_player_autofill.py), and computing it
                 # directly avoids a real bug this had: the loader never
                 # read column R at all, so every week's Split silently
                 # showed "--" on the site (fmtMoney(undefined)) after the
