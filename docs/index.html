@@ -1763,14 +1763,20 @@
 
   // Game time gets its real width; a stretch with nobody playing shrinks to
   // a twelfth (capped at 30 minutes' worth), or Friday and Saturday would
-  // take up more of the chart than Sunday does.
+  // take up more of the chart than Sunday does. A segment with a live end
+  // only counts as game time up to the 20 minutes snapshots can be apart
+  // during games: the rest is the gap before the first kickoff or after
+  // the last whistle (Sunday night to Monday night, say).
+  const MH_LIVE_GAP = 1200;
   function mhXs(pts) {
-    const xs = [0];
+    const xs = [0], lw = [0];
     for (let i = 1; i < pts.length; i++) {
       const dt = Math.max(0, pts[i].t - pts[i - 1].t);
-      const live = pts[i].live > 0 || pts[i - 1].live > 0;
-      xs.push(xs[i - 1] + (live ? dt : Math.min(dt / 12, 1800)));
+      const ld = pts[i].live > 0 || pts[i - 1].live > 0 ? Math.min(dt, MH_LIVE_GAP) : 0;
+      lw.push(ld);
+      xs.push(xs[i - 1] + ld + Math.min((dt - ld) / 12, 1800));
     }
+    xs.live = lw;
     return xs;
   }
 
@@ -1801,11 +1807,13 @@
     const Y = v => pad.t + (1 - (v - lo) / (hi - lo)) * ih;
     const svg = mhEl('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' }, host);
 
-    // Shade the stretches with games on.
+    // Shade the stretches with games on: from a live point forward, or
+    // into one from the idle gap before it.
     for (let i = 1; i < pts.length; i++) {
-      if (pts[i].live > 0 || pts[i - 1].live > 0) {
-        mhEl('rect', { x: X(i - 1), y: pad.t, width: Math.max(0, X(i) - X(i - 1) + 0.5), height: ih, style: 'fill:rgba(255,255,255,0.035)' }, svg);
-      }
+      const lw = xs.live[i] / xMax * iw;
+      if (!lw) continue;
+      const x0 = pts[i - 1].live > 0 ? X(i - 1) : X(i) - lw;
+      mhEl('rect', { x: x0, y: pad.t, width: lw + 0.5, height: ih, style: 'fill:rgba(255,255,255,0.035)' }, svg);
     }
 
     if (!compact) {

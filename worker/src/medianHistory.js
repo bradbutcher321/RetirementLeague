@@ -26,12 +26,14 @@ export async function recordMedianSnapshot(env, dashboard) {
   const teamsJson = JSON.stringify(teams);
 
   // Overnight and midweek runs see the same numbers hour after hour; one
-  // row says it as well as ten.
+  // row says it as well as ten. The live count is compared too, or the
+  // last game ending with no score change goes unrecorded and the chart
+  // thinks games ran all night.
   const last = await env.HISTORY_DB.prepare(
-    "SELECT projected_median, current_median, teams FROM median_snapshots WHERE season = ? AND week = ? ORDER BY ts DESC LIMIT 1"
+    "SELECT projected_median, current_median, live, teams FROM median_snapshots WHERE season = ? AND week = ? ORDER BY ts DESC LIMIT 1"
   ).bind(season, week).first();
   if (last && last.teams === teamsJson && last.projected_median === dashboard.projectedMedian
-      && last.current_median === dashboard.currentMedian) return false;
+      && last.current_median === dashboard.currentMedian && last.live === live) return false;
 
   await env.HISTORY_DB.prepare(
     "INSERT OR REPLACE INTO median_snapshots (season, week, ts, projected_median, current_median, live, teams) VALUES (?, ?, ?, ?, ?, ?, ?)"
