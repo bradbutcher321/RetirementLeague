@@ -84,22 +84,56 @@
   .ctx{ display:block; color:var(--text-dim); font-size:0.7rem; margin-top:1px; }
   .rec-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.4rem; color:var(--gold); font-variant-numeric:tabular-nums; white-space:nowrap; }
 
-  /* ---------- Timeline: one card per season ---------- */
+  /* ---------- Timeline: one card per season (audit II #7) ----------
+     Every row has a fixed height, so every card is the same size and each
+     piece sits in the same place every year: year + Sacko on top, the
+     1st/2nd/3rd podium, the rest of the final standings (3x3, blank slots
+     in 8- and 10-team years), then the two superlatives. */
   .seasons{ display:grid; grid-template-columns:1fr; gap:8px; }
   @media (min-width:721px){ .seasons{ grid-template-columns:1fr 1fr; } }
-  .yr{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:10px 10px 8px; min-width:0; }
+  .yr{ background:var(--item); border:1px solid var(--item-line); border-radius:12px; padding:12px; min-width:0; display:grid; gap:10px; }
   .yr.live{ border-style:dashed; }
-  .yr-h{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:0 2px 8px; border-bottom:1px solid var(--line); }
-  .yr-y{ font-family:var(--scoreboard); font-weight:800; font-size:1.25rem; }
-  .yr-champ{ display:flex; align-items:center; gap:8px; min-width:0; }
-  .yr-champ .holder{ margin:0; color:var(--gold); font-weight:700; }
-  .yr-amt{ color:var(--text-dim); font-size:0.7rem; font-variant-numeric:tabular-nums; }
-  .yr-grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px 10px; padding:8px 2px 2px; }
-  .yc{ min-width:0; }
-  .yc .cap.loss{ color:var(--loss); }
-  .yc-n{ font-weight:600; font-size:0.8rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .yc-d{ color:var(--text-dim); font-size:0.66rem; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-variant-numeric:tabular-nums; }
-  .yr-live{ color:var(--text-dim); font-size:0.8rem; padding:8px 2px 4px; }
+  .yr-h{ display:flex; justify-content:space-between; align-items:center; gap:10px; height:26px; }
+  .yr-hl{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .yr-y{ font-family:var(--scoreboard); font-weight:800; font-size:1.4rem; line-height:1; }
+  .yr-sk{ display:inline-flex; align-items:center; gap:7px; height:26px; padding:0 11px; border-radius:999px; border:1px solid var(--loss-line); background:var(--loss-tint); min-width:0; }
+  .yr-sk span{ color:var(--loss); font-size:0.58rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; }
+  .yr-sk b{ font-size:0.78rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .podium{ display:grid; grid-template-columns:1.12fr 1fr 1fr; gap:6px; align-items:end; height:116px; }
+  .pd{ border-radius:9px 9px 4px 4px; text-align:center; padding:0 5px 7px; min-width:0; border:1px solid var(--item-line); background:var(--item); display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:1px; }
+  .pd.p1{ height:116px; border-color:var(--gold); background:var(--lead-tint); }
+  .pd.p2{ height:102px; } .pd.p3{ height:90px; }
+  .pd-lg{ position:relative; width:30px; height:30px; border-radius:50%; overflow:hidden; margin-bottom:4px; flex:none; background:var(--item); }
+  .pd.p1 .pd-lg{ width:36px; height:36px; box-shadow:0 0 0 2px var(--gold); }
+  .pd-lg img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .pd-lg .ph{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:0.8rem; color:var(--text-dim); }
+  .pd-r{ font-family:var(--scoreboard); font-weight:800; font-size:0.84rem; color:var(--text-dim); line-height:1.1; }
+  .pd.p1 .pd-r{ color:var(--gold); }
+  .pd-n{ font-weight:700; font-size:0.86rem; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pd.p1 .pd-n{ color:var(--gold); font-size:0.95rem; }
+  .pd-a{ color:var(--text-dim); font-size:0.66rem; font-variant-numeric:tabular-nums; height:1.2em; }
+
+  .yr-sec .cap{ margin-bottom:5px; }
+  .slots{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:5px; }
+  .slot{ display:flex; align-items:center; gap:6px; height:26px; padding:0 9px; border-radius:999px; border:1px solid var(--item-line); font-size:0.74rem; min-width:0; }
+  .slot b{ font-weight:700; font-size:0.7rem; font-variant-numeric:tabular-nums; flex:none; }
+  .slot span{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .slot.playoffs{ border-color:var(--win-line); background:var(--win-tint); } .slot.playoffs b{ color:var(--turf); }
+  .slot.missed{ border-color:var(--loss-line); background:var(--loss-tint); } .slot.missed b{ color:var(--loss); }
+  .slot.sacko{ border-color:var(--loss); background:color-mix(in srgb, var(--loss) 20%, transparent); } .slot.sacko b{ color:var(--loss); }
+  .slot.empty{ visibility:hidden; }
+
+  /* Superlatives: name only, so both fit one row on a phone. The points
+     show on hover, or on a tap (the pill is a button). */
+  .sups{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .sup{ position:relative; display:flex; align-items:center; gap:8px; height:30px; padding:0 12px; border-radius:999px; border:1px solid var(--item-line); background:var(--item); color:var(--text); font:inherit; font-size:0.78rem; min-width:0; cursor:pointer; text-align:left; }
+  .sup .cap{ flex:none; }
+  .sup b{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sup:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  .sup::after{ content:attr(data-pts); position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); padding:5px 10px; border-radius:8px; background:var(--ctl-bg-solid); border:1px solid var(--ctl-line); color:var(--gold); font-weight:700; font-size:0.78rem; white-space:nowrap; font-variant-numeric:tabular-nums; opacity:0; pointer-events:none; transition:opacity .12s; z-index:2; }
+  .sup.show::after{ opacity:1; }
+  @media (hover:hover){ .sup:hover::after{ opacity:1; } }
 
   /* ---------- Dynasty heatmap ----------
      Current members only, sorted by average finish. Columns share the
@@ -463,67 +497,81 @@
     }
 
     // ----- Season Timeline -----
+    // Audit II #7: one fixed-size card per season -- year and Sacko on top,
+    // a 1st/2nd/3rd podium with logos and payouts, the rest of the final
+    // standings, then the two superlatives (points on hover/tap).
     function timelineHtml() {
       const gameBy = type => { const o = {}; noBye.filter(g => g.type === type).forEach(g => o[g.year] = g); return o; };
       const champG = gameBy('Champ'), sackoG = gameBy('Sacko'), thirdG = gameBy('3rd');
-      const secondByYear = {}; done.filter(s => s.final_rank === 2).forEach(s => secondByYear[s.year] = s);
       const weeklyHighByYear = {}; weekly(true).forEach(w => weeklyHighByYear[w.rank] = w);
       const seasonHighByYear = {}; seasonPts(true).forEach(w => seasonHighByYear[w.rank] = w);
-      const amt = n => n ? money(n) : '';
-      const cell = (label, name, detail, cls) => `<div class="yc"><span class="cap${cls ? ' ' + cls : ''}">${label}</span><div class="yc-n">${name ? esc(name) : '—'}</div><div class="yc-d">${detail || '&nbsp;'}</div></div>`;
       const wl = g => g.s1 >= g.s2 ? [g.p1, g.p2] : [g.p2, g.p1];
+      const logoUrl = name => { const p = F && F.players.find(x => x.name === name); return (p && p.current_team_logo) || ''; };
+      const ord = r => r + (r === 1 ? 'st' : r === 2 ? 'nd' : r === 3 ? 'rd' : 'th');
 
-      // The season in progress (site audit 30): the same six-cell card as a
-      // finished year, filled with where things stand -- the regular-season
-      // leader, the last team in, the Sacko watch (last place), the top and
-      // low week so far and the points leader. Every manager tied at a top
-      // value is named. Dashed, like before, so it still reads as unfinished.
+      const head = (y, sackoLabel, sackoName, chip) => `<div class="yr-h"><div class="yr-hl"><div class="yr-y">${y}</div>${chip || ''}</div>${sackoName ? `<span class="yr-sk"><span>${sackoLabel}</span><b>${esc(sackoName)}</b></span>` : ''}</div>`;
+      const podium = places => `<div class="podium">${places.map((x, i) => {
+        const url = x.name ? esc(logoUrl(x.name)) : '';
+        const lg = x.name ? `<div class="pd-lg">${url ? `<img src="${url}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}<span class="ph" style="${url ? '' : 'display:flex'}">${esc(monogram(x.name))}</span></div>` : '';
+        return `<div class="pd p${i + 1}">${lg}<div class="pd-r">${ord(i + 1)}</div><div class="pd-n">${x.name ? esc(x.name) : '—'}</div><div class="pd-a">${x.sub || ''}</div></div>`;
+      }).join('')}</div>`;
+      // Nine slots (4th-12th) always, so an 8- or 10-team year is the same size.
+      const standings = (label, rest) => `<div class="yr-sec"><span class="cap">${label}</span><div class="slots">${[...Array(9)].map((_, i) => {
+        const x = rest[i];
+        return x ? `<div class="slot ${x.st}"><b>${x.r}</b><span>${esc(x.name)}</span></div>` : '<div class="slot empty"></div>';
+      }).join('')}</div></div>`;
+      // The title carries the prize: "$200 ea" when both pay the same, both
+      // amounts when they don't, nothing for the years before they paid.
+      const supTitle = pay => {
+        const w = pay['Highest Points (Week)'], s = pay['Highest Points (Season)'];
+        return 'Superlatives' + (w && w === s ? ` · ${money(w)} ea` : w || s ? ` · ${[w, s].map(n => money(n || 0)).join(' / ')}` : '');
+      };
+      const sup = (label, name, pts) => `<button type="button" class="sup" data-pts="${esc(pts)}" aria-label="${label}: ${esc(name)}, ${esc(pts)}"><span class="cap">${label}</span><b>${esc(name)}</b></button>`;
+      const sups = (pay, a, b) => `<div class="yr-sec"><span class="cap">${supTitle(pay)}</span><div class="sups">${a}${b}</div></div>`;
+
+      // The season in progress: the same card, filled with where things
+      // stand. Every manager tied at a top value is named.
       function liveYearHtml(y) {
         const rows = D.seasons.filter(s => s.year === y);
         const games = noBye.filter(g => g.year === y && g.type === 'Reg');
         const weeks = games.length ? Math.max(...games.map(g => g.week)) : 0;
         if (!rows.length || !weeks) {
-          return `<div class="yr live"><div class="yr-h"><div class="yr-y">${y}</div><span class="chip">In progress</span></div><div class="yr-live">Season under way.</div></div>`;
+          return `<div class="yr live">${head(y, '', '', '<span class="chip">In progress</span>')}</div>`;
         }
         const ranked = rows.slice().sort((a, b) => a.reg_rank - b.reg_rank);
         const spots = (D.settings && D.settings[y] && D.settings[y].playoff_teams) || 0;
-        const lastIn = spots && ranked[spots - 1];
         const scores = games.flatMap(g => [{ name: g.p1, s: g.s1, week: g.week }, { name: g.p2, s: g.s2, week: g.week }]);
         const tied = (list, f) => { const v = Math.max(...list.map(f)); return list.filter(x => f(x) === v); };
         const names = list => [...new Set(list.map(x => x.name || x.player))].join(' & ');
-        const weekOf = list => list.length === 1 ? ` · Wk ${list[0].week}` : '';
-        const hiW = tied(scores, x => x.s), loW = tied(scores, x => -x.s);
-        const pf = tied(rows, s => s.reg_pf);
+        const hiW = tied(scores, x => x.s), pf = tied(rows, s => s.reg_pf);
+        const rest = ranked.slice(3).map((s, i) => ({ r: i + 4, name: s.player, st: i + 4 <= spots ? 'playoffs' : i + 4 === ranked.length ? 'sacko' : 'missed' }));
         return `<div class="yr live">
-          <div class="yr-h"><div class="yr-y">${y}</div><span class="chip">Through Week ${weeks}</span></div>
-          <div class="yr-grid">
-            ${cell('Leader', ranked[0].player, regRec(ranked[0]))}
-            ${cell(spots ? `Last in · #${spots}` : 'Last in', lastIn && lastIn.player, lastIn && regRec(lastIn))}
-            ${cell('Sacko watch', ranked[ranked.length - 1].player, regRec(ranked[ranked.length - 1]), 'loss')}
-            ${cell('Top week', names(hiW), f2(hiW[0].s) + weekOf(hiW))}
-            ${cell('Points leader', names(pf), f2(pf[0].reg_pf))}
-            ${cell('Low week', names(loW), f2(loW[0].s) + weekOf(loW))}
-          </div>
+          ${head(y, 'Sacko watch', ranked[ranked.length - 1].player, `<span class="chip">Through Week ${weeks}</span>`)}
+          ${podium(ranked.slice(0, 3).map(s => ({ name: s.player, sub: regRec(s) })))}
+          ${standings('Standings', rest)}
+          ${sups(payoutsFor(y), sup('Top week', names(hiW), f2(hiW[0].s) + (hiW.length === 1 ? ` · Week ${hiW[0].week}` : '')), sup('Points', names(pf), f2(pf[0].reg_pf)))}
         </div>`;
       }
 
       const cards = D.years.slice().reverse().map(y => {
         if (!complete.has(y)) return liveYearHtml(y);
         const pay = payoutsFor(y);
-        const cg = champG[y], champ = cg ? wl(cg)[0] : null;
-        const tg = thirdG[y], sg = sackoG[y], wh = weeklyHighByYear[y], sh = seasonHighByYear[y];
-        const join = (...xs) => xs.filter(Boolean).join(' · ');
+        const rows = done.filter(s => s.year === y && s.final_rank).sort((a, b) => a.final_rank - b.final_rank);
+        const last = rows.length ? rows[rows.length - 1].final_rank : 0;
+        const cg = champG[y], tg = thirdG[y], sg = sackoG[y], wh = weeklyHighByYear[y], sh = seasonHighByYear[y];
+        const at = r => (rows.find(s => s.final_rank === r) || {}).player;
+        const places = [
+          { name: cg ? wl(cg)[0] : at(1), sub: pay['1st Place'] && money(pay['1st Place']) },
+          { name: cg ? wl(cg)[1] : at(2), sub: pay['2nd Place'] && money(pay['2nd Place']) },
+          { name: tg ? wl(tg)[0] : at(3), sub: pay['3rd Place'] && money(pay['3rd Place']) },
+        ];
+        const rest = rows.filter(s => s.final_rank > 3).map(s => ({ r: s.final_rank, name: s.player,
+          st: s.sacko > 0 || s.final_rank === last ? 'sacko' : s.playoff > 0 ? 'playoffs' : 'missed' }));
         return `<div class="yr">
-          <div class="yr-h"><div class="yr-y">${y}</div>${champ ? `<div class="yr-champ"><span class="holder">🏆 ${esc(champ)}</span>${pay['1st Place'] ? `<span class="yr-amt">${amt(pay['1st Place'])}</span>` : ''}</div>` : ''}</div>
-          <div class="yr-grid">
-            ${cell('Runner-up', secondByYear[y] && secondByYear[y].player, amt(pay['2nd Place']))}
-            ${cell('3rd', tg && wl(tg)[0], join(tg && `def. ${esc(wl(tg)[1])}`, amt(pay['3rd Place'])))}
-            ${cell('Sacko', sg && wl(sg)[1], sg && `lost to ${esc(wl(sg)[0])}`, 'loss')}
-            ${cell('Top week', wh && wh.name, join(wh && wh.val, amt(pay['Highest Points (Week)'])))}
-            ${cell('Top season', sh && sh.name, join(sh && sh.val, amt(pay['Highest Points (Season)'])))}
-            ${cell('Best record', (() => { const r = done.filter(s => s.year === y).sort((a, b) => b.reg_w - a.reg_w || a.reg_rank - b.reg_rank)[0]; return r && r.player; })(),
-                (() => { const r = done.filter(s => s.year === y).sort((a, b) => b.reg_w - a.reg_w || a.reg_rank - b.reg_rank)[0]; return r ? regRec(r) : ''; })())}
-          </div>
+          ${head(y, 'Sacko', sg ? wl(sg)[1] : at(last))}
+          ${podium(places)}
+          ${standings('Final standings', rest)}
+          ${sups(pay, wh ? sup('Top week', wh.name, `${wh.val} · ${wh.sub}`) : '', sh ? sup('Top season', sh.name, sh.val) : '')}
         </div>`;
       }).join('');
       return panel('Season Timeline', `<div class="seasons">${cards}</div>`, `${D.years.length} seasons`);
@@ -608,6 +656,10 @@
   }
 
   document.addEventListener('click', e => {
+    // Timeline superlatives: a tap shows that pill's points and closes any other.
+    const sp = e.target.closest('.sup');
+    document.querySelectorAll('.sup.show').forEach(x => { if (x !== sp) x.classList.remove('show'); });
+    if (sp) { sp.classList.toggle('show'); return; }
     const t = e.target.closest('.tab');
     if (t) { tab = Number(t.dataset.i); render(); return; }
     const s = e.target.closest('[data-v]');
