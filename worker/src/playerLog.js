@@ -7,7 +7,9 @@
  * The page lays this week's live numbers over the top, since it already has
  * them fresher than this cache.
  *
- * GET /player?id=<espn player id>&week=<live week>&last=<final week>
+ * GET /player?id=<espn player id>&week=<live week>&last=<final week>[&year=<season>]
+ * A past season (2019 on, as far back as ESPN keeps player weeks) passes
+ * week = its last week + 1, so every week reads as played.
  */
 import { fetchPlayerCards, fetchPlayerWeek, fetchProSchedules } from "./espn.js";
 import { DEFAULT_POSITION_MAP, formatStatLine } from "./dashboard.js";
@@ -16,6 +18,8 @@ import { cached } from "./cache.js";
 const LOG_MAX_AGE = 30 * 60;
 // The NFL schedule only changes when a game is flexed or moved.
 const SCHEDULE_MAX_AGE = 24 * 60 * 60;
+// The first season ESPN still serves player weeks for.
+const FIRST_LOG_YEAR = 2019;
 
 function round2(n) {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -30,7 +34,7 @@ async function proSchedule(env) {
     const games = new Map();
     for (const t of data.settings?.proTeams || []) {
       if (!t.id) continue; // id 0 is ESPN's "free agent" team
-      teams[t.id] = t.abbrev;
+      teams[t.id] = String(t.abbrev || "").toUpperCase(); // older seasons say "Den"
       for (const [week, list] of Object.entries(t.proGamesByScoringPeriod || {})) {
         for (const g of list) games.set(g.id, [Number(week), g.id, g.homeProTeamId, g.awayProTeamId, g.date]);
       }
@@ -113,9 +117,16 @@ export async function getPlayerLog(env, url) {
   const id = parseInt(url.searchParams.get("id"), 10);
   const liveWeek = parseInt(url.searchParams.get("week"), 10);
   const lastWeek = parseInt(url.searchParams.get("last"), 10) || 17;
-  if (!id || !(liveWeek >= 1 && liveWeek <= 18) || !(lastWeek >= liveWeek && lastWeek <= 18)) {
+  const current = Number(env.ESPN_YEAR);
+  const year = parseInt(url.searchParams.get("year"), 10) || current;
+  const past = year < current;
+  if (!id || !(year >= FIRST_LOG_YEAR && year <= current) || !(liveWeek >= 1 && liveWeek <= 19)
+    || !(lastWeek >= (past ? liveWeek - 1 : liveWeek) && lastWeek <= 18)) {
     return { status: 400, body: { error: "Need id, week and last" } };
   }
-  const body = await cached(env, `player:${id}:${liveWeek}:${lastWeek}`, LOG_MAX_AGE, () => buildPlayerLog(env, id, liveWeek, lastWeek));
+  // A finished season never changes, so it keeps for a week.
+  const maxAge = past ? 7 * 24 * 60 * 60 : LOG_MAX_AGE;
+  const seasonEnv = past ? { ...env, ESPN_YEAR: String(year) } : env;
+  const body = await cached(env, `player:${year}:${id}:${liveWeek}:${lastWeek}`, maxAge, () => buildPlayerLog(seasonEnv, id, liveWeek, lastWeek));
   return { status: 200, body };
 }

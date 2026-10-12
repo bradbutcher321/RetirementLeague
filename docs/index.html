@@ -317,6 +317,36 @@
   @media (hover: hover){ .wk-step button:not(:disabled):hover{ color: var(--gold); } }
   .wk-step button:focus-visible, .wk-live:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .wk-live{ font: inherit; color: var(--gold); background: none; border: 0; padding: 0; cursor: pointer; }
+  /* The title is the week picker's button: the h1's own type, plus a chevron. */
+  .wk-title{ font: inherit; color: inherit; letter-spacing: inherit; line-height: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
+  .wk-eyebrow{ font-family: inherit; background: none; border: 0; padding: 6px 0; margin: -6px 0 -6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .wk-eyebrow svg{ flex: none; width: 11px; height: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+  body.wp-open .wk-eyebrow svg{ transform: rotate(180deg); }
+  .wk-title:focus-visible, .wk-eyebrow:focus-visible{ outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 6px; }
+  @media (hover: hover){ .wk-title:hover, .wk-eyebrow:hover{ opacity: 0.85; } }
+
+  /* Week picker: seasons as a scrolling chip row, then that season's weeks. */
+  #wp-pop{ padding: 12px 14px 16px; }
+  #wp-sheet .sheet-head{ padding: 8px 18px 0; }
+  #wp-sheet .sheet-body{ padding: 0 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
+  #wp-sheet .sheet-grab{ position: relative; }
+  .wp-head{ margin: 10px 0 6px; }
+  .wp-top{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .wp-top .mwp-label{ margin: 0; }
+  .wp-years{ display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 1px 4px; margin: 0 -1px; }
+  .wp-years::-webkit-scrollbar{ display: none; }
+  .wp-yr{ flex: none; font: 600 0.84rem var(--body); font-variant-numeric: tabular-nums; color: var(--text-dim); background: rgba(255,255,255,0.05); border: 1px solid var(--line); border-radius: 999px; padding: 0 14px; min-height: 40px; cursor: pointer; }
+  .wp-yr.on{ color: var(--gold); border-color: var(--lead-line); background: var(--lead-tint); }
+  .wp-note{ font-size: 0.72rem; color: var(--text-dim); margin: 10px 2px 0; }
+  .wp-label{ font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); margin: 16px 2px 8px; }
+  .wp-grid{ display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 6px; }
+  .wp-wk{ position: relative; font-family: var(--scoreboard); font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; color: var(--text); background: rgba(255,255,255,0.05); border: 1px solid var(--line); border-radius: 10px; min-height: 44px; cursor: pointer; }
+  .wp-wk.on{ background: var(--gold); border-color: var(--gold); color: #111; }
+  .wp-live{ position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
+  @media (hover: hover){ .wp-yr:not(.on):hover, .wp-wk:not(.on):hover{ border-color: var(--lead-line); } }
+  .wp-yr:focus-visible, .wp-wk:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .mu-label{ color: var(--gold); font-weight: 600; }
+
   /* While a past week loads, what's on screen steps back. */
   body.wk-loading .wrap > section{ opacity: 0.45; transition: opacity .2s; pointer-events: none; }
 
@@ -1106,8 +1136,11 @@
     <header>
       <div class="header-row">
         <div>
-          <div class="eyebrow">Retirement League</div>
-          <h1 id="week-header">Live Dashboard</h1>
+          <!-- The season line and the title both open the week picker (any
+               week of any season). The chevron sits on the season line: on
+               the title it pushed the Updated column off the row at 430px. -->
+          <button type="button" class="eyebrow wk-eyebrow" data-wp-open aria-haspopup="dialog" aria-label="Pick a week"><span id="dash-eyebrow">Retirement League</span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 1.5L6 6l4.5-4.5"/></svg></button>
+          <h1><button type="button" class="wk-title" id="wk-title" data-wp-open aria-haspopup="dialog" aria-expanded="false"><span id="week-header">Live Dashboard</span></button></h1>
         </div>
         <!-- Week stepper: back through finished weeks (each rebuilt by the
              Worker's /?week=N), forward again to the live one. On a past
@@ -1296,6 +1329,7 @@
   // highest-attention moment), or over. Drives the roster cell's outline
   // and the card's starter pips via .mu-pc.* / .mu-pip.* -- colors live in CSS.
   function playerState(p) {
+    if (p && !p.game && p.done) return 'final'; // a past season: no game line, all over
     if (!p || !p.game) return null;
     if (p.game.state === 'pre') return 'pre';
     if (p.game.state === 'post') return 'final';
@@ -1332,7 +1366,8 @@
   function renderPlayerCell(p, side, state) {
     if (!p) return `<div class="mu-pc ${side}"></div>`;
     const hasLiveScore = p.livePoints !== null && p.livePoints !== undefined;
-    const teamTag = p.game && p.game.team ? `<span class="team-tag">${p.game.team}</span>` : '';
+    const proTeam = (p.game && p.game.team) || p.team;
+    const teamTag = proTeam ? `<span class="team-tag">${esc(proTeam)}</span>` : '';
     // Once the game is over the pre-game projection stops being the useful
     // number — how far the player beat or missed it is. ESPN keeps serving
     // the original projection after the final whistle, so this delta stays
@@ -1340,7 +1375,8 @@
     const delta = state === 'final' && hasLiveScore && p.projectedPoints !== null && p.projectedPoints !== undefined
       ? p.livePoints - p.projectedPoints
       : null;
-    const scoreSub = delta === null
+    const scoreSub = p.projectedPoints === null || p.projectedPoints === undefined ? ''
+      : delta === null
       ? `<div class="mu-sub">${fmtScore(p.projectedPoints)}</div>`
       : `<div class="mu-sub ${delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : ''}" title="Projected ${fmtScore(p.projectedPoints)}">${delta >= 0 ? '▲' : '▼'} ${fmtScore(Math.abs(delta))}</div>`;
     return `
@@ -1438,7 +1474,10 @@
     let oddsRow = '';
     if (isFinal) {
       const winner = awayScore > homeScore ? m.awayName : homeScore > awayScore ? m.homeName : null;
-      oddsRow = winner ? `<div class="mu-margin">${winner} by ${fmtScore(Math.abs(awayScore - homeScore))}</div>` : '';
+      // A past season's playoff games say which game they were.
+      const tag = m.label ? `<b class="mu-label">${esc(m.label)}</b> · ` : '';
+      oddsRow = winner ? `<div class="mu-margin">${tag}${winner} by ${fmtScore(Math.abs(awayScore - homeScore))}</div>`
+        : tag ? `<div class="mu-margin">${tag}Tied</div>` : '';
     } else if (awayWP !== null) {
       const a = Math.max(1, Math.min(99, Math.round(awayWP)));
       const h = 100 - a;
@@ -1499,7 +1538,7 @@
     const lead = s.a === s.b
       ? (s.a ? `Series tied <b>${s.a}-${s.b}</b>` : 'First meeting')
       : `<b>${esc(s.a > s.b ? a : b)}</b> leads the series <b>${Math.max(s.a, s.b)}-${Math.min(s.a, s.b)}</b>`;
-    const last = s.last ? `Last met ${s.last.year === leagueYear ? '' : s.last.year + ' · '}Wk ${s.last.week}` : '';
+    const last = s.last ? `Last met ${s.last.year === shownYear() ? '' : s.last.year + ' · '}Wk ${s.last.week}` : '';
     return `<a class="mu-series" href="${esc(pageLink('head-to-head.html', { a, b }))}">
         <span class="mu-series-lead">${lead}</span>
         <span class="mu-series-last">${last}<svg viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -1834,12 +1873,20 @@
 
   const plLiveWeek = () => (liveData && (liveData.liveWeek || liveData.week)) || (shownData && (shownData.liveWeek || shownData.week)) || 1;
 
+  // This season's log splits at the live week; a past season's (2019 on)
+  // has every week played, so its "live week" is the one after its last.
+  function plSource(id) {
+    const past = Boolean(shownData && shownData.pastSeason);
+    const last = past ? shownData.finalWeek : Math.max((shownData && shownData.finalWeek) || 17, plLiveWeek());
+    const live = past ? last + 1 : plLiveWeek();
+    const year = past ? shownData.year : leagueYear;
+    return { key: `${year}:${id}:${live}`, url: `${WORKER_URL}/player?id=${id}&week=${live}&last=${last}${past ? `&year=${year}` : ''}` };
+  }
+
   function plFetch(id) {
-    const live = plLiveWeek();
-    const last = Math.max((shownData && shownData.finalWeek) || 17, live);
-    const key = `${id}:${live}`;
+    const { key, url } = plSource(id);
     if (!plLogs.has(key)) {
-      plLogs.set(key, fetch(`${WORKER_URL}/player?id=${id}&week=${live}&last=${last}`)
+      plLogs.set(key, fetch(url)
         .then(res => res.json())
         .then(d => { if (!d || !Array.isArray(d.weeks)) throw new Error((d && d.error) || 'No game log'); return d; })
         .catch(err => { plLogs.delete(key); throw err; }));
@@ -1909,7 +1956,7 @@
         const cls = [r.barFut ? 'fut' : '', r.kind === 'cur' ? 'cur' : '', r.kind === 'bye' ? 'bye' : '', r.kind === 'dnp' ? 'dnp' : ''].filter(Boolean).join(' ');
         return `<button type="button" class="pl-bar ${cls}" data-pl-wk="${r.w}" title="Week ${r.w}: ${what}" aria-label="Week ${r.w}: ${what}"><i style="height:${h}px"></i><span>${r.w}</span></button>`;
       }).join('')}</div>
-      <div class="pl-key"><span><i></i>Scored</span><span><i class="fut"></i>Projected</span></div>`;
+      ${rows.some(r => r.barFut) ? '<div class="pl-key"><span><i></i>Scored</span><span><i class="fut"></i>Projected</span></div>' : ''}`;
   }
 
   function plRowHtml(r) {
@@ -2053,7 +2100,7 @@
     if (!plOpenId) return;
     if (!plFind(plOpenId)) { plHide(); return; }
     plMark();
-    const log = plLogs.get(`${plOpenId}:${plLiveWeek()}`);
+    const log = plLogs.get(plSource(plOpenId).key);
     if (log) log.then(l => { if (plOpenId === l.id) plRender(l); }).catch(() => {});
     else plPlace();
   }
@@ -2087,6 +2134,8 @@
   function mhLoad() {
     // A past week's chart never changes; the live one is polled.
     const archived = Boolean(lastMedianData && lastMedianData.archived);
+    // Snapshots only started in 2026, week 5.
+    if (lastMedianData && lastMedianData.pastSeason) { mhHistory = null; mhFetchedFor = null; return; }
     const want = archived ? dashWeek : 'live';
     if (want === mhFetchedFor && (archived || Date.now() - mhFetchedAt < 4 * 60 * 1000)) return;
     mhFetchedAt = Date.now();
@@ -2887,17 +2936,26 @@
   // The first dashboard render waits for it (it's a small static file that
   // usually lands before the live Worker fetch), so those parts appear with
   // the page instead of popping in one poll later. Without it, they're left out.
-  let leagueGames = null, leagueYear = null;
+  // Also every past season's team names, lengths and rules, for the week
+  // picker's past seasons (see "Past seasons" below).
+  let leagueGames = null, leagueYear = null, leagueSeasons = [], leagueSettings = {}, medianEraYear = 2025;
   const leagueReady = fetch('data/league.json', { cache: 'no-cache' })
     .then(res => res.json())
     .then(d => {
       leagueGames = d.games.map(g => ({ year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7], median: g[9] }));
       leagueYear = Math.max(...d.seasons.map(s => s.year));
+      leagueSeasons = d.seasons || [];
+      leagueSettings = d.settings || {};
+      if (d.median_era_start_year) medianEraYear = d.median_era_start_year;
     })
     .catch(() => {});
 
-  // This season's finished regular-season games for one week (byes have no p2).
-  const weekGames = week => (leagueGames || []).filter(g => g.year === leagueYear && g.week === week && g.type === 'Reg' && g.p2);
+  // The season on screen: this one, or a past one from the week picker.
+  let dashYear = null;
+  const shownYear = () => dashYear || leagueYear;
+
+  // The season on screen's finished regular-season games for one week (byes have no p2).
+  const weekGames = week => (leagueGames || []).filter(g => g.year === shownYear() && g.week === week && g.type === 'Reg' && g.p2);
   // Every week before `week` is in league.json. It's refreshed from a hand-
   // kept Game Tracker, so it can trail the Worker by a week; anything built
   // week by week is left out rather than shown with a week missing.
@@ -2912,7 +2970,7 @@
   function seriesFor(a, b, week) {
     if (!leagueGames || !a || !b) return null;
     const games = leagueGames.filter(g => g.p2 && ((g.p1 === a && g.p2 === b) || (g.p1 === b && g.p2 === a))
-      && (g.winner === a || g.winner === b) && !(g.year === leagueYear && g.week >= week));
+      && (g.winner === a || g.winner === b) && (g.year < shownYear() || (g.year === shownYear() && g.week < week)));
     const last = games.reduce((m, g) => (!m || g.year > m.year || (g.year === m.year && g.week > m.week) ? g : m), null);
     return { a: games.filter(g => g.winner === a).length, b: games.filter(g => g.winner === b).length, last };
   }
@@ -3675,6 +3733,7 @@
           <div class="rc-s">${list.length > 1 && !subForTies ? `${list.length}-way tie` : sub(list[0])}</div>
         </div>` : '';
 
+    const playoffRecap = Boolean(standingsData && standingsData.playoffWeek);
     const high = tops(sides, s => s.score);
     const low = tops(sides, s => -s.score);
     const blowout = tops(wins, s => s.margin);
@@ -3689,8 +3748,10 @@
       // The count is what's shared in a tie, so it's the value, and the
       // line under it holds for every tied manager.
       pod('Luckiest win', lucky, s => `${s.beat} of ${others}`, () => 'teams outscored', '', true),
-      pod('Just missed the median', missed, s => '−' + fmtScore(median - s.score), s => `scored ${fmtScore(s.score)}`, 'loss'),
-      pod('Sacko', low, s => fmtScore(s.score), result, 'loss'),
+      // A playoff week has no median game, and its Sacko is a game of its
+      // own (the card that says so), not the week's low score.
+      playoffRecap ? '' : pod('Just missed the median', missed, s => '−' + fmtScore(median - s.score), s => `scored ${fmtScore(s.score)}`, 'loss'),
+      pod(playoffRecap ? 'Low score' : 'Sacko', low, s => fmtScore(s.score), result, 'loss'),
     ].join('');
     section.innerHTML = `
       <div class="recap-card">
@@ -3914,6 +3975,8 @@
     const week = data.week || 1;
     const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
     const started = teams.some(t => (t.current || 0) > 0);
+    // A playoff week leaves the regular-season table as it ended.
+    if (data.playoffWeek) return [['through', 'Regular season']];
     // A past week is over: before it, and after it.
     if (data.archived) {
       return [
@@ -3969,7 +4032,8 @@
       let w = p.w, l = p.l, ties = p.t;
       if (mode !== 'through') {
         if (oppScore !== null) { if (own > oppScore) w++; else if (own < oppScore) l++; else ties++; }
-        if (medianWin.get(t.name)) w++; else l++;
+        // The median game, from the season the league started playing it.
+        if (data.medianGames !== false) { if (medianWin.get(t.name)) w++; else l++; }
       }
       return {
         name: t.name, manager: t.manager, w, l, ties,
@@ -3996,8 +4060,9 @@
     const week = data.week || 1;
     const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
     const spots = data.playoffTeamCount || 0;
-    // Every week is a head-to-head game plus a game against the median.
-    const totalGames = 2 * (data.regularSeasonWeeks || 0);
+    // Every week is a head-to-head game plus a game against the median
+    // (since the league started playing it).
+    const totalGames = (data.medianGames === false ? 1 : 2) * (data.regularSeasonWeeks || 0);
 
     if (!hasPrior) {
       // Week 1: no earlier week to compare against, and no games yet for
@@ -4274,7 +4339,10 @@
 
     let highExtra = '';
     if (m === 'through') {
-      highExtra = `<div class="sup-note">Record set in Week ${prevHigh.week}. Switch to a live or projected view to see how this week's scores stack up.</div>`;
+      // A past week's other view is its final; a playoff week has no other view.
+      const other = data.playoffWeek ? '' : data.archived ? ` Switch to Week ${week} final to see how that week's scores stack up.`
+        : " Switch to a live or projected view to see how this week's scores stack up.";
+      highExtra = `<div class="sup-note">Record set in Week ${prevHigh.week}.${other}</div>`;
     } else {
       const topTeams = [...teams].sort((a, b) => (m === 'proj' ? b.proj - a.proj : b.cur - a.cur)).slice(0, 3);
       const domainVals = topTeams.flatMap(r => [r.cur, r.proj]).concat(recordScore ? [recordScore] : []);
@@ -4547,71 +4615,112 @@
   let liveData = null, shownData = null;
   window.addEventListener('rl-me', () => { if (shownData) renderDashboard(shownData, false, true); });
 
-  // ---------- Week stepper ----------
-  // ‹ › in the header step back through finished weeks: the Worker rebuilds
-  // each one (/?week=N) the way the live dashboard looked once it was over,
-  // recap and standings included. null = the live week. The week is kept
-  // in the address (?week=N) so a past week can be shared or reloaded.
-  let viewWeek = null;
-  const pastWeeks = new Map(); // week -> Promise of that week's dashboard
+  // ---------- Week picker and stepper ----------
+  // Any week of any season. ‹ › step one week at a time, across seasons;
+  // the title opens a picker with every season and its weeks.
+  //   - This season's finished weeks: the Worker rebuilds them (/?week=N)
+  //     the way the live dashboard looked once they were over.
+  //   - Past seasons: built here from league.json and data/lineups/<year>.json
+  //     (see "Past seasons" below), with less detail the further back:
+  //     2019 on has rosters with stat lines and game logs, 2017-2018 rosters
+  //     with points only, 2015-2016 scores only.
+  // view === null is the live week. The address keeps ?year=&week= so a
+  // past week can be shared or reloaded.
+  let view = null; // { year, week }
+  const pastWeeks = new Map(); // "year:week" -> Promise of that week's dashboard
   const liveWeekNow = () => (liveData && (liveData.liveWeek || liveData.week)) || 0;
+  const viewKey = v => (v ? `${v.year}:${v.week}` : 'live');
+
+  // Weeks a season has: this one up to the live week, a past one all of them.
+  function seasonWeekCount(year) {
+    if (year === leagueYear) return liveWeekNow();
+    return Math.max(0, ...(leagueGames || []).filter(g => g.year === year).map(g => g.week));
+  }
+  function seasonYears() {
+    return [...new Set((leagueGames || []).map(g => g.year))].concat(leagueYear || []).filter((y, i, a) => a.indexOf(y) === i).sort((a, b) => b - a);
+  }
+  // Every week there is to show, oldest first.
+  function allWeeks() {
+    const out = [];
+    seasonYears().slice().reverse().forEach(y => {
+      for (let w = 1; w <= seasonWeekCount(y); w++) out.push({ year: y, week: w });
+    });
+    return out;
+  }
+  const onScreen = () => view || { year: leagueYear, week: liveWeekNow() };
 
   function renderWeekStep() {
     const step = document.getElementById('wk-step');
     const live = liveWeekNow();
-    step.hidden = !(live > 1);
-    const on = viewWeek || live;
-    step.querySelector('[data-wk="-1"]').disabled = on <= 1;
-    step.querySelector('[data-wk="1"]').disabled = viewWeek === null;
+    if (!live || !leagueGames) { step.hidden = true; return; }
+    step.hidden = false;
+    const list = allWeeks();
+    const at = onScreen();
+    const i = list.findIndex(v => v.year === at.year && v.week === at.week);
+    step.querySelector('[data-wk="-1"]').disabled = i <= 0;
+    step.querySelector('[data-wk="1"]').disabled = view === null;
   }
 
-  function setWeekParam(week) {
+  function setViewParams(v) {
     try {
       const url = new URL(location.href);
-      if (week) url.searchParams.set('week', week); else url.searchParams.delete('week');
+      url.searchParams.delete('week');
+      url.searchParams.delete('year');
+      if (v) {
+        if (v.year !== leagueYear) url.searchParams.set('year', v.year);
+        url.searchParams.set('week', v.week);
+      }
       history.replaceState(history.state, '', url);
     } catch (e) {}
   }
 
-  function showWeek(week) {
+  function fetchCurrentSeasonWeek(week) {
+    return fetch(`${WORKER_URL}/?week=${week}`)
+      .then(res => res.json())
+      .then(d => { if (!d || !d.teams || !d.archived) throw new Error((d && d.error) || 'No data for that week'); return d; });
+  }
+
+  function showView(year, week) {
     const live = liveWeekNow();
     if (!live) return;
     plHide();
     mwHide();
-    if (!(week >= 1 && week < live)) {
-      viewWeek = null;
-      setWeekParam(null);
+    wpHide();
+    const isLive = year === leagueYear && week >= live;
+    if (isLive || !(week >= 1 && week <= seasonWeekCount(year))) {
+      view = null;
+      setViewParams(null);
       document.body.classList.remove('wk-loading');
       renderDashboard(liveData, false, true);
       return;
     }
-    viewWeek = week;
-    setWeekParam(week);
+    view = { year, week };
+    const key = viewKey(view);
+    setViewParams(view);
     renderWeekStep();
-    if (!pastWeeks.has(week)) {
-      pastWeeks.set(week, fetch(`${WORKER_URL}/?week=${week}`)
-        .then(res => res.json())
-        .then(d => { if (!d || !d.teams || !d.archived) throw new Error((d && d.error) || 'No data for that week'); return d; })
-        .catch(err => { pastWeeks.delete(week); throw err; }));
+    if (!pastWeeks.has(key)) {
+      const p = year === leagueYear ? fetchCurrentSeasonWeek(week) : pastSeasonWeek(year, week);
+      pastWeeks.set(key, p.catch(err => { pastWeeks.delete(key); throw err; }));
     }
     document.body.classList.add('wk-loading');
-    pastWeeks.get(week)
+    pastWeeks.get(key)
       .then(d => {
-        if (viewWeek !== week) return;
+        if (viewKey(view) !== key) return;
         document.body.classList.remove('wk-loading');
         renderDashboard(d, false, true);
+        scrollTo({ top: 0, behavior: 'auto' });
       })
       .catch(() => {
-        if (viewWeek !== week) return;
+        if (viewKey(view) !== key) return;
         document.body.classList.remove('wk-loading');
-        viewWeek = null;
-        setWeekParam(null);
+        view = null;
+        setViewParams(null);
         renderWeekStep();
-        alertWeek(`Couldn’t load Week ${week}. Try again in a minute.`);
+        alertWeek(`Couldn’t load ${year === leagueYear ? '' : year + ' '}Week ${week}. Try again in a minute.`);
       });
   }
 
-  // A one-line note under the header when a past week fails to load.
+  // A one-line note under the header when a week fails to load.
   function alertWeek(text) {
     let el = document.getElementById('wk-note');
     if (!el) {
@@ -4623,25 +4732,283 @@
     alertWeek.t = setTimeout(() => el.remove(), 5000);
   }
 
-  // ?week=N on arrival opens that week once the live one says what's past.
-  let weekRequested = parseInt(new URLSearchParams(location.search).get('week'), 10) || null;
+  // ?year=&week= on arrival opens that week once the live one says what's past.
+  const requested = (() => {
+    const q = new URLSearchParams(location.search);
+    const week = parseInt(q.get('week'), 10);
+    return week ? { year: parseInt(q.get('year'), 10) || null, week } : null;
+  })();
+  let viewRequested = requested;
   function openRequestedWeek() {
-    if (!weekRequested) return;
-    const w = weekRequested;
-    weekRequested = null;
-    if (w < liveWeekNow()) showWeek(w);
-    else setWeekParam(null);
+    if (!viewRequested) return;
+    const r = viewRequested;
+    viewRequested = null;
+    const year = r.year || leagueYear;
+    if (year === leagueYear && r.week >= liveWeekNow()) setViewParams(null);
+    else showView(year, r.week);
   }
 
   document.getElementById('wk-step').addEventListener('click', e => {
     const b = e.target.closest('[data-wk]');
     if (!b || b.disabled) return;
-    const on = viewWeek || liveWeekNow();
-    showWeek(on + Number(b.dataset.wk));
+    const list = allWeeks();
+    const at = onScreen();
+    const i = list.findIndex(v => v.year === at.year && v.week === at.week);
+    const next = list[i + Number(b.dataset.wk)];
+    if (next) showView(next.year, next.week);
+    else if (Number(b.dataset.wk) > 0) showView(leagueYear, liveWeekNow());
   });
   document.addEventListener('click', e => {
-    if (e.target.closest('[data-wk-live]')) showWeek(null);
+    if (e.target.closest('[data-wk-live]')) showView(leagueYear, liveWeekNow());
   });
+
+  // ---------- The week picker panel ----------
+  // A sheet on a phone, a popover under the title on desktop: the seasons
+  // as a row of chips, then the chosen season's weeks, regular season and
+  // playoffs apart. It opens on the season on screen.
+  let wpYear = null;
+
+  function wpDetail(year) {
+    if (year < 2017) return 'Scores only: ESPN kept no lineups before 2017.';
+    if (year < 2019) return 'Rosters with points; no stat lines before 2019.';
+    return '';
+  }
+
+  function wpBodyHtml() {
+    const at = onScreen();
+    const years = seasonYears();
+    const year = wpYear || at.year;
+    const count = seasonWeekCount(year);
+    const reg = year === leagueYear ? Math.min(count, (leagueSettings[year] || {}).reg_weeks || count) : ((leagueSettings[year] || {}).reg_weeks || count);
+    const live = liveWeekNow();
+    const weekBtn = w => {
+      const on = at.year === year && at.week === w;
+      const isLive = year === leagueYear && w === live;
+      return `<button type="button" class="wp-wk${on ? ' on' : ''}" data-wp-week="${w}" aria-pressed="${on}"${isLive ? ' aria-label="Week ' + w + ', live"' : ''}>${w}${isLive ? '<i class="wp-live" aria-hidden="true"></i>' : ''}</button>`;
+    };
+    const range = (a, b) => { const o = []; for (let w = a; w <= b; w++) o.push(weekBtn(w)); return o.join(''); };
+    const note = wpDetail(year);
+    return `
+      <div class="wp-years edge-fade" role="group" aria-label="Season">${years.map(y => `<button type="button" class="wp-yr${y === year ? ' on' : ''}" data-wp-year="${y}" aria-pressed="${y === year}">${y}</button>`).join('')}</div>
+      ${note ? `<div class="wp-note">${note}</div>` : ''}
+      <div class="wp-label">Regular season</div>
+      <div class="wp-grid">${range(1, Math.min(reg, count))}</div>
+      ${count > reg ? `<div class="wp-label">Playoffs</div><div class="wp-grid">${range(reg + 1, count)}</div>` : ''}`;
+  }
+
+  function wpRender() {
+    const body = document.querySelector('#wp-sheet [data-body], #wp-pop [data-body]');
+    if (!body) return;
+    body.innerHTML = wpBodyHtml();
+    // The chosen season's chip scrolled into view.
+    const chip = body.querySelector('.wp-yr.on');
+    const track = body.querySelector('.wp-years');
+    if (chip && track) track.scrollLeft = chip.offsetLeft - track.clientWidth / 2 + chip.offsetWidth / 2;
+    wpPlace();
+  }
+
+  function wpOpen() {
+    if (!liveWeekNow() || !leagueGames) return;
+    mwHide();
+    plHide();
+    if (mhIsOpen) mhClose();
+    wpHide();
+    wpYear = onScreen().year;
+    if (!mwOneColumn.matches) {
+      document.body.insertAdjacentHTML('beforeend', `<div class="pop" id="wp-pop" role="dialog" aria-label="Pick a week">
+        <div class="wp-top"><span class="mwp-label">Pick a week</span><button type="button" class="x" data-wp-close aria-label="Close">&times;</button></div>
+        <div data-body></div></div>`);
+    } else {
+      document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="wp-scrim" data-wp-close></div>
+        <div class="sheet" id="wp-sheet" role="dialog" aria-modal="true" aria-label="Pick a week">
+          <div class="sheet-grab" data-grab><span></span><button type="button" class="mwp-done" data-wp-close>Done</button></div>
+          <div class="sheet-head" data-grab><div class="mwp-label wp-head">Pick a week</div></div>
+          <div class="sheet-body" data-body></div></div>`);
+      mwWireSwipe(document.getElementById('wp-sheet'), wpHide);
+    }
+    document.getElementById('wk-title').setAttribute('aria-expanded', 'true');
+    document.body.classList.add('wp-open');
+    wpRender();
+  }
+
+  function wpHide() {
+    ['wp-pop', 'wp-sheet', 'wp-scrim'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
+    const t = document.getElementById('wk-title');
+    if (t) t.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('wp-open');
+  }
+
+  // Under the title, never off the side of the screen.
+  function wpPlace() {
+    const pop = document.getElementById('wp-pop');
+    if (!pop) return;
+    const r = document.getElementById('wk-title').getBoundingClientRect(), vw = document.documentElement.clientWidth;
+    const w = Math.min(420, vw - 24);
+    const left = Math.min(Math.max(r.left, 12), vw - w - 12);
+    pop.style.width = w + 'px';
+    pop.style.left = (left + scrollX) + 'px';
+    pop.style.top = (r.bottom + scrollY + 12) + 'px';
+    pop.style.setProperty('--arrow-x', Math.min(r.left + 40, r.right - 20) - left + 'px');
+  }
+
+  document.querySelectorAll('[data-wp-open]').forEach(b => b.addEventListener('click', () => {
+    if (document.getElementById('wp-pop') || document.getElementById('wp-sheet')) wpHide(); else wpOpen();
+  }));
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-wp-close]')) { wpHide(); return; }
+    const yr = e.target.closest('[data-wp-year]');
+    if (yr) { wpYear = Number(yr.dataset.wpYear); wpRender(); return; }
+    const wk = e.target.closest('[data-wp-week]');
+    if (wk) { const y = wpYear || onScreen().year; wpHide(); showView(y, Number(wk.dataset.wpWeek)); return; }
+    if (document.getElementById('wp-pop') && !e.target.closest('#wp-pop') && !e.target.closest('[data-wp-open]')) wpHide();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') wpHide(); });
+  addEventListener('resize', wpPlace);
+  mwOneColumn.addEventListener('change', wpHide);
+
+  // ---------- Past seasons ----------
+  // A past season's week, in the same shape the Worker sends, built from
+  // league.json (every game, the week's median, each season's team names
+  // and rules) and that season's lineups file. Records count the median
+  // game only from the season the league started playing it.
+  const seasonLineups = new Map(); // year -> Promise of data/lineups/<year>.json (or null)
+  const GAME_LABELS = { Play: 'Playoffs', Champ: 'Championship', '3rd': '3rd place', '5th': '5th place', Cons: 'Consolation', Sacko: 'Sacko' };
+  const ROSTER_BENCH = new Set(['BE', 'IR']);
+
+  function lineupsFor(year) {
+    if (year < 2017) return Promise.resolve(null);
+    if (!seasonLineups.has(year)) {
+      seasonLineups.set(year, fetch(`data/lineups/${year}.json`, { cache: 'no-cache' })
+        .then(res => (res.ok ? res.json() : null))
+        .catch(() => null));
+    }
+    return seasonLineups.get(year);
+  }
+
+  function pastSeasonWeek(year, week) {
+    return lineupsFor(year).then(lu => buildSeasonWeek(year, week, lu));
+  }
+
+  function buildSeasonWeek(year, week, lu) {
+    const r2 = v => Math.round(v * 100) / 100;
+    const settings = leagueSettings[year] || leagueSettings[String(year)] || {};
+    const games = leagueGames.filter(g => g.year === year);
+    const lastWeek = Math.max(...games.map(g => g.week));
+    const regWeeks = settings.reg_weeks || lastWeek;
+    const playoffWeek = week > regWeeks;
+    const medianGames = year >= medianEraYear;
+    const rows = leagueSeasons.filter(s => s.year === year);
+    const teamOf = new Map(rows.map(s => [s.player, s.team || s.player]));
+    const managers = rows.map(s => s.player);
+
+    // Regular-season records over weeks before `upTo`.
+    const recordsBefore = upTo => {
+      const out = new Map(managers.map(m => [m, { w: 0, l: 0, t: 0, pf: 0, pa: 0 }]));
+      const get = m => { if (!out.has(m)) out.set(m, { w: 0, l: 0, t: 0, pf: 0, pa: 0 }); return out.get(m); };
+      games.filter(g => g.type === 'Reg' && g.p2 && g.week < upTo && g.week <= regWeeks).forEach(g => {
+        [[g.p1, g.s1, g.s2], [g.p2, g.s2, g.s1]].forEach(([m, own, opp]) => {
+          const r = get(m);
+          r.pf += own; r.pa += opp;
+          if (own > opp) r.w++; else if (own < opp) r.l++; else r.t++;
+          if (medianGames && typeof g.median === 'number') {
+            if (own > g.median) r.w++; else if (own < g.median) r.l++;
+          }
+        });
+      });
+      out.forEach(r => { r.pf = r2(r.pf); r.pa = r2(r.pa); });
+      return out;
+    };
+    const fmtRec = r => `${r.w}-${r.l}${r.t ? '-' + r.t : ''}`;
+    const before = recordsBefore(playoffWeek ? regWeeks + 1 : week);
+    const after = recordsBefore(playoffWeek ? regWeeks + 1 : week + 1);
+
+    const wkGames = games.filter(g => g.week === week && g.p2 && g.type !== 'Bye');
+    const scoreOf = new Map();
+    wkGames.forEach(g => { scoreOf.set(g.p1, g.s1); scoreOf.set(g.p2, g.s2); });
+
+    const roster = m => {
+      const list = lu && lu.weeks && lu.weeks[String(week)] && lu.weeks[String(week)][m];
+      if (!list) return [];
+      const starters = list.filter(p => !ROSTER_BENCH.has(p[2]));
+      // 2017 has no projections at all: none shown rather than all zeros.
+      const hasProj = starters.some(p => p[4] > 0);
+      return starters.map(p => ({
+        id: p[6] || null,
+        name: p[0],
+        team: p[1] || '',
+        slot: p[2] === 'RB/WR/TE' ? 'FLEX' : p[2],
+        livePoints: p[3],
+        projectedPoints: hasProj ? p[4] : null,
+        statLine: p[5] || '',
+        game: null,
+        done: true,
+      }));
+    };
+
+    const priorPointsOf = m => r2(games.filter(g => g.week < week && g.p2).reduce((sum, g) => sum + (g.p1 === m ? g.s1 : g.p2 === m ? g.s2 : 0), 0));
+    const aheadOf = m => games
+      .filter(g => g.type === 'Reg' && g.p2 && g.week >= week && g.week <= regWeeks && (g.p1 === m || g.p2 === m))
+      .sort((a, b) => a.week - b.week)
+      .map(g => (g.p1 === m ? g.p2 : g.p1));
+    const regRank = new Map(rows.map(s => [s.player, s.reg_rank || 99]));
+
+    const teams = managers
+      .map(m => {
+        const p = before.get(m), a = after.get(m);
+        const score = scoreOf.has(m) ? scoreOf.get(m) : 0;
+        return {
+          name: teamOf.get(m), manager: m, record: fmtRec(a),
+          current: score, projected: score, average: score,
+          remaining: 0, inPlay: 0,
+          priorPoints: priorPointsOf(m),
+          prior: { w: p.w, l: p.l, t: p.t, pf: p.pf, pa: p.pa },
+          ahead: aheadOf(m),
+          pointsFor: a.pf, pointsAgainst: a.pa, playoffPct: null,
+        };
+      })
+      .sort((x, y) => (playoffWeek
+        ? regRank.get(x.manager) - regRank.get(y.manager)
+        : y.prior.w - x.prior.w || y.prior.pf - x.prior.pf || after.get(y.manager).w - after.get(x.manager).w))
+      .map((t, i) => ({ ...t, standing: i + 1 }));
+    const teamBy = new Map(teams.map(t => [t.manager, t]));
+
+    const matchups = wkGames.map(g => ({
+      awayName: teamOf.get(g.p1) || g.p1, awayManager: g.p1, awayRecord: (teamBy.get(g.p1) || {}).record || '', awayStreak: null,
+      awayScore: g.s1, awayProjected: g.s1, awayWinProbability: null, awayRemaining: 0, awayInPlay: 0,
+      homeName: teamOf.get(g.p2) || g.p2, homeManager: g.p2, homeRecord: (teamBy.get(g.p2) || {}).record || '', homeStreak: null,
+      homeScore: g.s2, homeProjected: g.s2, homeWinProbability: null, homeRemaining: 0, homeInPlay: 0,
+      awayPlayers: roster(g.p1), homePlayers: roster(g.p2),
+      label: g.type === 'Reg' ? '' : (GAME_LABELS[g.type] || ''),
+    }));
+
+    const sorted = [...scoreOf.values()].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const computed = sorted.length ? (sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2) : 0;
+    const reg = wkGames.find(g => g.type === 'Reg' && typeof g.median === 'number');
+    const median = r2(reg ? reg.median : computed);
+
+    let high = null;
+    games.filter(g => g.week < week && g.p2).forEach(g => {
+      [[g.p1, g.s1], [g.p2, g.s2]].forEach(([m, s]) => { if (!high || s > high.score) high = { team: teamOf.get(m), manager: m, week: g.week, score: s }; });
+    });
+
+    return {
+      updatedAt: null,
+      year, week,
+      finalWeek: lastWeek,
+      archived: true,
+      pastSeason: true,
+      playoffWeek,
+      medianGames,
+      currentMedian: median, projectedMedian: median, averageMedian: median,
+      playoffTeamCount: settings.playoff_teams || 0,
+      regularSeasonWeeks: regWeeks,
+      medianStatusKnown: true,
+      teams,
+      matchups,
+      priorSeasonHigh: high,
+    };
+  }
 
   let dashboardShown = false;
   function loadDashboard() {
@@ -4649,7 +5016,7 @@
       .then(([data]) => {
         if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
         liveData = data;
-        if (viewWeek === null) renderDashboard(data, true);
+        if (view === null) renderDashboard(data, true);
         else { lastDashboardData = data; renderWeekStep(); }
         openRequestedWeek();
       })
@@ -4672,7 +5039,7 @@
       .then(data => {
         if (!data || !data.teams || dashboardShown) return;
         if (!(Date.now() - new Date(data.updatedAt).getTime() < 864e5)) return;
-        return leagueReady.then(() => { if (!dashboardShown && viewWeek === null) renderDashboard(data, false); });
+        return leagueReady.then(() => { if (!dashboardShown && view === null) renderDashboard(data, false); });
       })
       .catch(() => {});
   }
@@ -4685,6 +5052,7 @@
         else if (!lastDashboardData) lastDashboardData = data;
         shownData = data;
         const archived = Boolean(data.archived);
+        dashYear = data.year || leagueYear;
 
         const teams = data.teams || [];
         dashWeek = data.week || 1;
@@ -4703,8 +5071,12 @@
         // (see "Live refresh motion" above); the first load has its own rise.
         const animate = dashboardShown && !mwReduceMotion && !still;
 
+        // The line over the title names the season when it isn't this one.
         document.getElementById('week-header').textContent = archived ? `Week ${data.week} — Final`
           : data.week ? `Live Dashboard — Week ${data.week}` : 'Live Dashboard';
+        document.getElementById('dash-eyebrow').textContent = `Retirement League · ${data.year || leagueYear}`;
+        // Playoff weeks have no median to watch.
+        document.getElementById('median-container').style.display = data.playoffWeek ? 'none' : '';
         document.getElementById('matchups-h').textContent = archived ? 'Matchups' : "This week's matchups";
         // A past week's numbers are final, so the parlay and Lore cards
         // (both about right now) step aside.

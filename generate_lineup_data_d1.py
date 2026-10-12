@@ -9,8 +9,11 @@ only when someone opens a game. roster_entries only exists from 2019 on
 that, so earlier games simply have no file.
 
 Shape: {"weeks": {"<week>": {"<manager>": [[name, pro_team, slot, points,
-projected], ...]}}}, each list already in display order -- starters in
-lineup-slot order, then the bench by points, then IR.
+projected, stat_line, player_id], ...]}}}, each list already in display
+order -- starters in lineup-slot order, then the bench by points, then IR.
+stat_line and player_id are for the Dashboard's past-season view (its
+roster cells and game logs); generate_old_lineup_data.py's 2017-2018 files
+stop at projected, since there are no stats or ids for those years.
 
 Also writes docs/data/lineups/records.json, Game Records' player and
 projection records (audit II #9), from every year file on disk -- 2017 and
@@ -46,10 +49,63 @@ def sort_key(p):
     return (1 if slot == "BE" else 2, 0, -points)
 
 
+def stat_line(position, stats_json):
+    """The Dashboard's per-position stat line ("27/37, 247 YDS, 1 TD"), the
+    same one worker/src/dashboard.js formatStatLine() builds live. D1 keeps
+    espn_api's stat names, not ESPN's numeric ids."""
+    try:
+        s = (json.loads(stats_json or "{}") or {}).get("actual") or {}
+    except ValueError:
+        return ""
+    if not s:
+        return ""
+    n = lambda k: int(round(s.get(k) or 0))
+    rec, rec_yds = n("receivingReceptions"), n("receivingYards")
+    if position == "QB":
+        parts = [f"{n('passingCompletions')}/{n('passingAttempts')}, {n('passingYards')} YDS"]
+        if n("passingTouchdowns"):
+            parts.append(f"{n('passingTouchdowns')} TD")
+        if n("passingInterceptions"):
+            parts.append(f"{n('passingInterceptions')} INT")
+        if n("rushingYards"):
+            parts.append(f"{n('rushingYards')} RUSH YDS")
+        return ", ".join(parts)
+    if position == "RB":
+        rush = [f"{n('rushingAttempts')} CAR, {n('rushingYards')} YDS"]
+        if n("rushingTouchdowns"):
+            rush.append(f"{n('rushingTouchdowns')} TD")
+        if not rec:
+            return ", ".join(rush)
+        rec_parts = [f"{rec} REC, {rec_yds} YDS"]
+        if n("receivingTouchdowns"):
+            rec_parts.append(f"{n('receivingTouchdowns')} TD")
+        return f"{', '.join(rush)} · {', '.join(rec_parts)}"
+    if position in ("WR", "TE"):
+        parts = [f"{rec} REC, {rec_yds} YDS"]
+        if n("receivingTouchdowns"):
+            parts.append(f"{n('receivingTouchdowns')} TD")
+        return ", ".join(parts)
+    if position == "K":
+        return f"{n('madeFieldGoals')}/{n('attemptedFieldGoals')} FG, {n('madeExtraPoints')}/{n('attemptedExtraPoints')} XP"
+    if position == "D/ST":
+        parts = []
+        if n("defensiveSacks"):
+            parts.append(f"{n('defensiveSacks')} SACK")
+        if n("defensiveInterceptions"):
+            parts.append(f"{n('defensiveInterceptions')} INT")
+        if n("defensiveFumbles"):
+            parts.append(f"{n('defensiveFumbles')} FR")
+        td = n("defensivePlusSpecialTeamsTouchdowns") or n("defensiveTouchdowns")
+        if td:
+            parts.append(f"{td} TD")
+        return ", ".join(parts)
+    return ""
+
+
 def build_year(year, team_to_manager):
     rows = hl.d1_query(
-        "SELECT week, team_id, player_name, pro_team, lineup_slot, points, projected_points "
-        f"FROM roster_entries WHERE year = {int(year)}"
+        "SELECT week, team_id, player_id, player_name, pro_team, position, lineup_slot, points, "
+        f"projected_points, stats_json FROM roster_entries WHERE year = {int(year)}"
     )
     weeks = {}
     for r in rows:
@@ -59,6 +115,7 @@ def build_year(year, team_to_manager):
         weeks.setdefault(str(r["week"]), {}).setdefault(manager, []).append([
             r["player_name"], r["pro_team"], r["lineup_slot"],
             round(r["points"] or 0, 2), round(r["projected_points"] or 0, 2),
+            stat_line(r["position"], r["stats_json"]), r["player_id"],
         ])
     for teams in weeks.values():
         for players in teams.values():

@@ -52,7 +52,7 @@ def compact_games(games):
 
 def load_d1():
     teams = hl.d1_query(
-        "SELECT year, team_id, owner_espn_id, regular_season_standing, final_standing FROM teams"
+        "SELECT year, team_id, team_name, owner_espn_id, regular_season_standing, final_standing FROM teams"
     )
     matchups = hl.d1_query(
         "SELECT year, week, team_id, opponent_team_id, team_score, opponent_score, "
@@ -105,6 +105,8 @@ def compute_season_row(player, team, games_this_team_year, reg_median_by_year_we
     return {
         "year": year,
         "player": player,
+        # That season's team name, for the Dashboard's past seasons.
+        "team": team["team_name"],
         "reg_w": reg_w, "reg_l": reg_l, "reg_pf": reg_pf, "reg_pa": reg_pa,
         "tot_w": tot_w, "tot_l": tot_l, "tot_pf": tot_pf, "tot_pa": tot_pa,
         "med_w": med_w, "med_l": med_l,
