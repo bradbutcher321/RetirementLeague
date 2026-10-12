@@ -203,7 +203,7 @@
 }
 .you-pick.none{ grid-column: 1 / -1; color: var(--text-dim); font-weight: 500; }
 .you-pick.on{ color: var(--gold); border-color: var(--gold); background: var(--lead-tint); }
-.you-pick:focus-visible, .you-test:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+.you-pick:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (hover: hover){ .you-pick:hover{ background: var(--item-hover); } }
 .you-sec{ margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
 .you-sec-t{ font-size: 0.62rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim); padding: 0 4px 6px; }
@@ -243,17 +243,6 @@
 .you-sw:disabled{ opacity: 0.4; cursor: default; }
 .you-sw:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce){ .you-sw, .you-sw::after{ transition: none; } }
-.you-test{
-  margin: 10px 4px 2px;
-  min-height: 36px;
-  padding: 0 16px;
-  border-radius: 999px;
-  border: 1px solid var(--lead-line);
-  background: transparent;
-  color: var(--gold);
-  font: 600 0.8rem/1 var(--body);
-  cursor: pointer;
-}
 @media (min-width: 721px){
   .you-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: 440px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
   .you-sheet .sheet-grab{ visibility: hidden; height: 8px; padding: 0; }

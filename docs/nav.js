@@ -212,8 +212,7 @@
     const sw = (id, label, on, dis) => `<label class="you-row${dis ? ' dis' : ''}"><span>${label}</span><input type="checkbox" role="switch" class="you-sw" id="${id}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}></label>`;
     box.innerHTML = sw('you-push-on', 'Notify me', !!sub) + (sub ? `
       <div class="you-types">${PUSH_TYPES.map(([k, label, mine]) => sw('you-pt-' + k, label, prefs[k] && (!mine || !!me), mine && !me)).join('')}</div>
-      ${me ? '' : '<div class="you-note">Pick your team above for the ones about your games.</div>'}
-      <button type="button" class="you-test" id="you-test">Send a test</button>` : '');
+      ${me ? '' : '<div class="you-note">Pick your team above for the ones about your games.</div>'}` : '');
     box.querySelector('#you-push-on').addEventListener('change', e => togglePush(e.target));
     PUSH_TYPES.forEach(([k]) => {
       const el = box.querySelector('#you-pt-' + k);
@@ -223,15 +222,6 @@
         try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (err) {}
         syncSub();
       });
-    });
-    const test = box.querySelector('#you-test');
-    if (test) test.addEventListener('click', async () => {
-      test.disabled = true;
-      test.textContent = 'Sending…';
-      const s = await currentSub().catch(() => null);
-      const ok = s && await post('/push/test', { endpoint: s.endpoint }).then(r => r.ok).catch(() => false);
-      test.textContent = ok ? 'Sent' : "Couldn't send";
-      setTimeout(() => { test.disabled = false; test.textContent = 'Send a test'; }, 2500);
     });
   }
 

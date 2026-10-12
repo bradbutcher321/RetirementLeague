@@ -8,7 +8,6 @@
  *
  * POST /push/subscribe   { sub, me, prefs }  -> stores or updates the row
  * POST /push/unsubscribe { endpoint }        -> drops it
- * POST /push/test        { endpoint }        -> one test notification to that row
  *
  * checkPushEvents() runs from the cron (index.js scheduled()) on the same
  * dashboard build as the median snapshot, and sends:
@@ -60,21 +59,6 @@ export async function unsubscribe(request, env) {
   if (!body || !body.endpoint) return { status: 400, body: { error: "no endpoint" } };
   await env.DB.prepare("DELETE FROM push_subs WHERE endpoint = ?1").bind(body.endpoint).run();
   return { status: 200, body: { ok: true } };
-}
-
-export async function sendTest(request, env) {
-  const body = await request.json().catch(() => null);
-  if (!body || !body.endpoint) return { status: 400, body: { error: "no endpoint" } };
-  const sub = await env.DB.prepare("SELECT * FROM push_subs WHERE endpoint = ?1").bind(body.endpoint).first();
-  if (!sub) return { status: 404, body: { error: "not subscribed" } };
-  const status = await deliver(env, sub, {
-    title: "Notifications are on",
-    body: sub.me ? `You'll hear about ${sub.me}'s games here.` : "You'll hear when Week in Review is up.",
-    url: "index.html",
-    tag: "test",
-  });
-  const ok = status >= 200 && status < 300;
-  return { status: ok ? 200 : 502, body: { ok, pushStatus: status } };
 }
 
 /** Sends, and forgets a subscription the push service says is gone. */

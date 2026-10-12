@@ -26,7 +26,7 @@
  *                      pushes it there -- same "no git commit needed" idea
  *                      as this whole file, just for parlay data instead
  *                      of the live dashboard).
- * POST /push/subscribe, /push/unsubscribe, /push/test -> Home Screen app
+ * POST /push/subscribe, /push/unsubscribe -> Home Screen app
  *                      notifications (see push.js, site audit II #37).
  *
  * Required setup:
@@ -38,9 +38,9 @@ import { buildDashboard } from "./dashboard.js";
 import { getStats, recordHit } from "./analytics.js";
 import { dispatchParlayRefresh } from "./parlayRefresh.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
-import { checkPushEvents, sendTest, subscribe, unsubscribe } from "./push.js";
+import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
 
-const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe, "/push/test": sendTest };
+const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
 
 const COOLDOWN_SECONDS = 120;
 // One key holds { fetchedAt, data } so a cache hit costs a single KV read and
