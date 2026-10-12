@@ -2100,9 +2100,9 @@
         mhHistory = d;
         // The card was built before the history arrived: swap the plain
         // label for the sparkline version in place.
-        if (!had && medianViewMode === 'projected' && lastMedianData) {
+        if (!had && (medianViewMode === 'projected' || lastMedianData.archived) && lastMedianData) {
           const el = document.querySelector('#median-container .median-split-label');
-          if (el) el.outerHTML = medianSplitHtml('projected', lastMedianData.projectedMedian, el.id || undefined);
+          if (el) el.outerHTML = medianSplitHtml(medianViewMode, mwMedian(medianViewMode), el.id || undefined);
         }
         mhRefresh();
       })
@@ -2127,7 +2127,10 @@
   function medianSplitHtml(mode, medianValue, id) {
     const idAttr = id ? ` id="${id}"` : '';
     const label = lastMedianData && lastMedianData.archived ? 'Median' : MW_MODES[mode].label;
-    if (mode !== 'projected' || mhSeries().length < 2) {
+    // A past week's card shows final scores, but its chart (the projected
+    // median through that week) opens from the label all the same.
+    const charted = mode === 'projected' || (lastMedianData && lastMedianData.archived);
+    if (!charted || mhSeries().length < 2) {
       return `<div class="median-split-label"${idAttr}>${label} <b>${fmtScore(medianValue)}</b></div>`;
     }
     return `<button type="button" class="median-split-label" data-mh-open${idAttr} aria-expanded="${mhIsOpen}" aria-label="${label} ${fmtScore(medianValue)}, open its chart for the week">${label} <b>${fmtScore(medianValue)}</b><span class="mh-chev" aria-hidden="true">›</span><span class="mh-spark" id="mh-spark"></span></button>`;
