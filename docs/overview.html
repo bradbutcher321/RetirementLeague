@@ -53,9 +53,6 @@
   .p-body{ padding:12px; }
   .chip{ font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--text-dim); white-space:nowrap; }
 
-  /* View selector inside a list panel. */
-  .seg{ margin:12px 12px 0; max-width:calc(100% - 24px); }
-
   /* ---------- Summary ---------- */
   .reign{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .reign-c{ border:1px solid; border-radius:10px; padding:14px 10px 12px; text-align:center; min-width:0; }
@@ -161,14 +158,35 @@
   .legend .missed{ border-color:var(--loss-line); background:var(--loss-tint); }
   .legend .sacko{ border-color:var(--loss); background:color-mix(in srgb, var(--loss) 22%, transparent); box-shadow:0 0 5px color-mix(in srgb, var(--loss) 55%, transparent); }
 
-  /* ---------- List views: divided rows in one box ----------
+  /* ---------- Leaderboards (audit II #8) ----------
+     Every ranked list is a small card showing its top three, grouped in
+     one panel per subject. Tapping a card opens the whole list: a bottom
+     sheet on a phone, a popover under the card on desktop (the surfaces
+     are theme.css's "Detail panels", shared with Game Records). */
+  .lbg{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
+  @media (min-width:721px){ .lbg{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
+  .lb{ display:flex; flex-direction:column; min-width:0; width:100%; padding:10px 10px 8px; border-radius:10px; border:1px solid var(--item-line); background:var(--item); color:inherit; font:inherit; text-align:left; cursor:pointer; }
+  @media (hover:hover){ .lb:hover{ background:var(--item-hover); } }
+  .lb:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  .lb.open{ background:var(--lead-tint); border-color:var(--lead-line); }
+  .lb-t{ font-weight:700; font-size:0.78rem; margin-bottom:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb-r{ display:grid; grid-template-columns:14px minmax(0,1fr) auto; gap:6px; align-items:baseline; padding:2px 0; font-size:0.76rem; }
+  .lb.years .lb-r{ grid-template-columns:20px minmax(0,1fr) auto; }
+  .lb-r i{ font-style:normal; font-family:var(--scoreboard); font-weight:700; font-size:0.76rem; color:var(--text-dim); }
+  .lb-r span{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb-r b{ font-family:var(--scoreboard); font-weight:700; font-size:0.92rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .lb-r.lead i, .lb-r.lead b{ color:var(--gold); } .lb-r.low i, .lb-r.low b{ color:var(--loss); }
+  .lb-r b.up{ color:var(--turf); } .lb-r b.down{ color:var(--loss); }
+  .lb-f{ display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:auto; padding-top:5px; color:var(--text-dim); font-size:0.64rem; }
+  .lb.open .lb-f .chev{ color:var(--gold); }
+  .lb-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px; }
+  .lb-title{ font-weight:700; font-size:1.05rem; }
+
+  /* ---------- A whole list, in the sheet or popover ----------
      The leader (or, on a "worst" list, the bottom) gets the outline + tint;
      every other row is plain. Signed figures keep green/red by sign. */
-  .list{ display:grid; grid-template-columns:1fr; }
-  @media (min-width:721px){ .list{ grid-template-columns:1fr 1fr; column-gap:24px; } }
   .lr{ display:grid; grid-template-columns:38px minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px 8px; border-top:1px solid var(--line); }
   .lr:first-child{ border-top-color:transparent; }
-  @media (min-width:721px){ .lr:nth-child(2){ border-top-color:transparent; } }
   .lr.lead, .lr.low{ border-radius:8px; border-top-color:transparent; }
   .lr.lead + .lr, .lr.low + .lr{ border-top-color:transparent; }
   .lr.lead{ background:var(--lead-tint); box-shadow:inset 0 0 0 1px var(--lead-line); }
@@ -180,13 +198,6 @@
   .lr-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; font-variant-numeric:tabular-nums; white-space:nowrap; text-align:right; }
   .lr.lead .lr-v{ color:var(--gold); } .lr.low .lr-v{ color:var(--loss); }
   .lr .lr-v.up{ color:var(--turf); } .lr .lr-v.down{ color:var(--loss); }
-  .lr.nr{ grid-template-columns:minmax(0,1fr) auto; }
-  .lr-stats{ display:flex; gap:14px; }
-  .lr-stats div{ text-align:center; min-width:34px; }
-  .lr-stats b{ display:block; font-family:var(--scoreboard); font-weight:700; font-size:1.1rem; font-variant-numeric:tabular-nums; }
-  .lr-stats div > span{ display:block; color:var(--text-dim); font-size:0.56rem; letter-spacing:0.05em; text-transform:uppercase; }
-  .lr-stats em{ font-style:normal; }
-  .gold{ color:var(--gold); } .turf{ color:var(--turf); } .loss{ color:var(--loss); }
 </style>
 </head>
 <body>
@@ -225,8 +236,7 @@
 <script>
   // esc() and typeTile() are globals from page-common.js, not part of LG.
   const { f1, f2, money } = LG;
-  let TABS = [], tab = 0;
-  const viewPick = {};
+  let TABS = [], LB = [], LISTS = [], tab = 0;
   const panel = (title, body, chip) => `<div class="panel">${title ? `<div class="p-head"><div class="p-title">${title}</div>${chip ? `<span class="chip">${chip}</span>` : ''}</div>` : ''}<div class="p-body">${body}</div></div>`;
   const nameList = names => names.length < 3 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 
@@ -243,7 +253,6 @@
     };
     const complete = new Set(D.completeYears);
     const done = D.seasons.filter(s => complete.has(s.year));
-    const draftPos = (p, y) => (D.draft_order[p] || {})[y];
     const noBye = D.games.filter(g => g.type !== 'Bye' && g.p2 && g.winner !== 'In Progress');
     const yearsDesc = D.completeYears.slice().reverse();
     const champs = done.filter(s => s.champ > 0).sort((a, b) => b.year - a.year);
@@ -252,7 +261,6 @@
     const regRec = s => `${s.reg_w + s.med_w}-${s.reg_l + s.med_l}`;
     const players = [...D.active];
 
-    const byYear = (list, recFn) => list.map(s => ({ rank: s.year, name: s.player, sub: `Draft slot ${draftPos(s.player, s.year) ?? '—'}`, val: recFn(s) }));
     const counts = (list, key, label) => {
       const by = {};
       list.filter(s => s[key] > 0).forEach(s => { const e = by[s.player] || (by[s.player] = { n: 0, years: [] }); e.n++; e.years.push(s.year); });
@@ -265,8 +273,8 @@
       const g = noBye.find(x => x.year === y && x.type === type); if (!g) return null;
       const [w, ws, l, ls] = g.s1 >= g.s2 ? [g.p1, g.s1, g.p2, g.s2] : [g.p2, g.s2, g.p1, g.s1];
       return winnerFirst
-        ? { rank: y, name: `${w} def. ${l}`, sub: `${f2(ws)} – ${f2(ls)}`, val: '+' + f2(ws - ls) }
-        : { rank: y, name: `${l} lost to ${w}`, sub: `${f2(ls)} – ${f2(ws)}`, val: '−' + f2(ws - ls) };
+        ? { rank: y, name: `${w} def. ${l}`, short: w, sub: `${f2(ws)} – ${f2(ls)}`, val: '+' + f2(ws - ls) }
+        : { rank: y, name: `${l} lost to ${w}`, short: l, sub: `${f2(ls)} – ${f2(ws)}`, val: '−' + f2(ws - ls) };
     }).filter(Boolean);
 
     const seasonPts = max => yearsDesc.map(y => {
@@ -285,7 +293,9 @@
       return best && { rank: y, name: best.p, sub: `Week ${best.w}${best.t === 'Reg' ? '' : ' · ' + best.t}`, val: f2(best.s) };
     }).filter(Boolean);
     const avgMedian = D.years.slice().reverse().map(y => {
-      const m = D.games.filter(g => g.year === y && g.type === 'Reg' && g.median !== null).map(g => g.median);
+      // One median per week (every game row that week carries the same one).
+      const byWeek = new Map(D.games.filter(g => g.year === y && g.type === 'Reg' && g.median !== null).map(g => [g.week, g.median]));
+      const m = [...byWeek.values()];
       return m.length && { rank: y, val: f2(m.reduce((a, b) => a + b, 0) / m.length), sub: `${m.length} weeks` };
     }).filter(Boolean);
 
@@ -298,7 +308,7 @@
       .map(([name, t]) => ({ name, sub: `of ${t.weeks} weeks`, val: t[key] }));
 
     const winSeasons = high => done.slice().sort((a, b) => (high ? b.reg_w - a.reg_w : a.reg_w - b.reg_w) || a.year - b.year).slice(0, 12)
-      .map(s => ({ rank: s.year, name: s.player, sub: `Finished ${s.final_rank || '—'}${s.champ ? ' · Champion' : s.sacko ? ' · Sacko' : ''}`, val: `${s.reg_w}-${s.reg_l}` }));
+      .map(s => ({ name: s.player, sub: `${s.year} · finished ${s.final_rank || '—'}${s.champ ? ' · Champion' : s.sacko ? ' · Sacko' : ''}`, val: `${s.reg_w}-${s.reg_l}` }));
     const doneOf = p => done.filter(s => s.player === p);
     const rate = players.map(p => { const ss = doneOf(p), made = ss.filter(s => s.playoff > 0).length; return { name: p, r: ss.length ? made / ss.length : 0, sub: `${made} of ${ss.length} seasons` }; })
       .sort((a, b) => b.r - a.r).map(x => ({ name: x.name, sub: x.sub, val: Math.round(x.r * 100) + '%' }));
@@ -416,41 +426,53 @@
       }).sort((a, b) => parseFloat(b.val) - parseFloat(a.val));
     };
 
-    // Streak rows: best win run (gold where it's the league record), worst
-    // losing run (red where it's the league record), and the live streak.
-    // The league's longest live win streak takes the gold row tint and the
-    // longest live losing streak the red one.
-    const streakView = key => {
-      if (!F) return [];
-      const rows = F.players.filter(p => p.streaks && p.streaks[key] && D.active.has(p.name))
-        .sort((a, b) => b.streaks[key].current - a.streaks[key].current || b.streaks[key].longest_win - a.streaks[key].longest_win);
-      if (!rows.length) return [];
-      const maxWin = Math.max(...rows.map(p => p.streaks[key].longest_win));
-      const maxLoss = Math.max(...rows.map(p => p.streaks[key].longest_loss));
-      const curBest = Math.max(...rows.map(p => p.streaks[key].current));
-      const curWorst = Math.min(...rows.map(p => p.streaks[key].current));
-      return rows.map(p => {
-        const s = p.streaks[key];
-        const now = s.current > 0 ? `<em class="turf">W${s.current}</em>` : s.current < 0 ? `<em class="loss">L${-s.current}</em>` : '—';
-        const state = curBest > 0 && s.current === curBest ? 'lead' : curWorst < 0 && s.current === curWorst ? 'low' : '';
-        return { name: p.name, state, stats: [
-          [s.longest_win === maxWin ? `<em class="gold">${s.longest_win}</em>` : s.longest_win, 'Best W'],
-          [s.longest_loss === maxLoss ? `<em class="loss">${s.longest_loss}</em>` : s.longest_loss, 'Worst L'],
-          [now, 'Now']] };
-      });
-    };
+    // Streaks rank by head-to-head games and show the "with median" figure
+    // (which also counts the weekly median game, 2025 on) beside each one,
+    // so both rules the league uses stay on the page.
+    const streakFmt = n => n > 0 ? `W${n}` : n < 0 ? `L${-n}` : '—';
+    const streakList = (get, sub, fmt = n => n) => activeF().filter(p => p.streaks && p.streaks.head_to_head)
+      .map(p => { const n = get(p.streaks.head_to_head); return { name: p.name, n, val: fmt(n), sub: sub(p.streaks) }; })
+      .sort((a, b) => b.n - a.n);
+    const medianStreakView = () => activeF().filter(p => p.streaks && p.streaks.median)
+      .map(p => ({ name: p.name, n: p.streaks.median.longest_win, val: p.streaks.median.longest_win, sub: `Median games only · now ${streakFmt(p.streaks.median.current)}` }))
+      .sort((a, b) => b.n - a.n);
+
+    // All-time lists the per-year ones (now on the Timeline) don't give.
+    const TYPE = { Cons: 'Consolation', Play: 'Playoffs', Champ: 'Final', Sacko: 'Sacko', '3rd': '3rd place', '5th': '5th place' };
+    const bestSeasons = () => done.slice().sort((a, b) => b.tot_pf - a.tot_pf).slice(0, 12)
+      .map(s => ({ name: s.player, sub: `${s.year} · ${rec(s)}`, val: f2(s.tot_pf) }));
+    // Consolation games count for a high but never a low (the prize rule).
+    const weekScores = high => noBye.filter(g => high || g.type !== 'Cons')
+      .flatMap(g => [[g.p1, g.s1], [g.p2, g.s2]].map(([p, s]) => ({ p, s, g })))
+      .filter(x => x.s > 0).sort((a, b) => high ? b.s - a.s : a.s - b.s).slice(0, 10)
+      .map(x => ({ name: x.p, sub: `${x.g.year} · Week ${x.g.week}${x.g.type === 'Reg' ? '' : ' · ' + (TYPE[x.g.type] || x.g.type)}`, val: f2(x.s) }));
+    const avgPointsView = () => activeF().filter(p => p.career.points.avg_pf != null)
+      .map(p => ({ name: p.name, n: p.career.points.avg_pf, sub: `${f2(p.career.points.total_pf)} total`, val: f2(p.career.points.avg_pf) }))
+      .sort((a, b) => b.n - a.n);
+    const perfectView = () => activeF().filter(p => p.efficiency && p.efficiency.perfect_lineups != null)
+      .map(p => ({ name: p.name, n: p.efficiency.perfect_lineups, sub: `of ${p.efficiency.games_analyzed} games`, val: p.efficiency.perfect_lineups }))
+      .sort((a, b) => b.n - a.n);
+    const wonView = () => activeF().filter(p => p.money && p.money.total_earnings != null)
+      .map(p => ({ name: p.name, n: p.money.total_earnings, sub: `Paid in ${money(p.money.total_dues)}`, val: money(p.money.total_earnings) }))
+      .sort((a, b) => b.n - a.n);
+    const movesView = () => activeF().filter(p => p.moves)
+      .map(p => ({ name: p.name, n: p.moves.total, sub: `${p.moves.avg_per_season} a season`, val: p.moves.total }))
+      .sort((a, b) => b.n - a.n);
 
     // o.year: the left column is a year, not a rank. o.lead: which row takes
-    // the gold outline ('first', 'max', 'min'; default first). o.low: which
-    // row (if any) takes the red one. o.bad: a list of bad things (Sackos,
-    // lows), where the leader is marked red instead of gold.
+    // the gold outline ('first', 'max', 'min', 'none'; default first). o.low:
+    // which row (if any) takes the red one. o.bad: a list of bad things
+    // (Sackos, lows), where the leader is marked red instead of gold. A row's
+    // n, when set, is its number (a streak's "L3" is -3).
     const V = (label, items, o = {}) => {
-      const nums = items.map(it => parseFloat(String(it.val).replace(/[^0-9.\-]/g, '')));
+      const nums = items.map(it => it.n ?? parseFloat(String(it.val).replace(/[^0-9.\-]/g, '')));
       const idx = how => how === 'max' ? nums.indexOf(Math.max(...nums)) : how === 'min' ? nums.indexOf(Math.min(...nums)) : how === 'first' ? 0 : -1;
       const li = items.length ? idx(o.lead || 'first') : -1;
-      // Everyone tied with the leader shares the mark.
+      // Everyone tied with the leader shares the mark, and the rank.
       const leads = new Set(li < 0 ? [] : nums.map((n, i) => (n === nums[li] ? i : -1)).filter(i => i >= 0));
-      return { label, items, year: o.year, leads, low: idx(o.low), bad: o.bad };
+      const ranks = [];
+      items.forEach((it, k) => ranks.push(k > 0 && String(it.val) === String(items[k - 1].val) ? ranks[k - 1] : k + 1));
+      return { label, items, year: o.year, leads, low: idx(o.low), bad: o.bad, ranks };
     };
 
     // ----- Summary -----
@@ -611,48 +633,189 @@
       return panel('Dynasty', `<div class="heat" style="grid-template-columns:62px repeat(${years.length}, minmax(0,1fr))">${head}${body}</div>${legend}`, 'Final finish');
     }
 
+    // Audit II #8: the six list tabs (Champions, Sackos, Scoring, Rankings,
+    // Efficiency, Streaks) and their pill rows became one Leaderboards tab.
+    // The champion, Sacko, top week and top season of each year are on the
+    // Timeline, so they aren't repeated here.
+    const curStreaks = streakList(s => s.current, s => `With median ${s.combined ? streakFmt(s.combined.current) : '—'}`, streakFmt);
+    LB = [
+      { sec: 'Titles & Sackos', lists: [
+        V('Titles', champC),
+        V('Sackos', sackC, { bad: true }),
+        V('Title games', titleGames('Champ', true), { year: true, lead: 'max' }),
+        V('Sacko games', titleGames('Sacko', false), { year: true, lead: 'none' }),
+        V('Playoff rate', rate),
+        V('Average finish', finish),
+      ] },
+      { sec: 'Winning', lists: [
+        V('Best regular seasons', winSeasons(true)),
+        V('Worst regular seasons', winSeasons(false), { bad: true }),
+        V('Power ranking', powerRankingView()),
+        V('Power index', powerIndexView()),
+        V('Clutch factor', clutchDeltaView()),
+        V('Achievements', achievementsView()),
+      ] },
+      { sec: 'Scoring', lists: [
+        V('Best seasons', bestSeasons()),
+        V('Top weeks', weekScores(true)),
+        V('Lowest weeks', weekScores(false), { bad: true }),
+        V('Average points', avgPointsView()),
+        V('Weekly highs', weeklyCount('high')),
+        V('Weekly lows', weeklyCount('low'), { bad: true }),
+        V('Season low by year', seasonPts(false), { year: true, lead: 'none', low: 'min' }),
+        V('Weekly low by year', weekly(false), { year: true, lead: 'none', low: 'min' }),
+        V('Median by year', avgMedian, { year: true, lead: 'max', low: 'min' }),
+      ] },
+      { sec: 'Luck & the median', lists: [
+        V('Schedule luck', medianLuckView()),
+        V('Vs median', vsMedianView()),
+        V('Vs median, all-time', vsMedianAllTimeView()),
+        V('Bubble wins', weeklyCount('bubW')),
+        V('Bubble losses', weeklyCount('bubL'), { bad: true }),
+      ] },
+      { sec: 'Lineups', lists: [
+        V('Career efficiency', effView()),
+        V('Bench points a game', benchView()),
+        V('Wins left on the bench', extraWinsView(), { bad: true }),
+        V('Perfect lineups', perfectView()),
+      ] },
+      { sec: 'Money & draft', lists: [
+        V('Net earnings', earn),
+        V('Won before dues', wonView()),
+        V('Draft position', draftPosView()),
+        V('Roster moves', movesView()),
+      ] },
+      { sec: 'Streaks', lists: [
+        V('Longest win streak', streakList(s => s.longest_win, s => `With median ${s.combined ? s.combined.longest_win : '—'}`)),
+        V('Longest losing streak', streakList(s => s.longest_loss, s => `With median ${s.combined ? s.combined.longest_loss : '—'}`), { bad: true }),
+        V('Current streak', curStreaks, { lead: curStreaks.length && curStreaks[0].n > 0 ? 'first' : 'none', low: curStreaks.length && curStreaks[curStreaks.length - 1].n < 0 ? 'min' : undefined }),
+        V('Median streak', medianStreakView()),
+      ] },
+    ].map(g => ({ ...g, lists: g.lists.filter(l => l.items.length) })).filter(g => g.lists.length);
+    LISTS = LB.flatMap(g => g.lists);
+    LISTS.forEach((l, i) => { l.id = i; });
+
+    const leaderboardsHtml = () => LB.map(g => panel(g.sec, `<div class="lbg">${g.lists.map(cardHtml).join('')}</div>`)).join('');
+
     TABS = [
       { label: 'Summary', html: summaryHtml() },
       { label: 'Timeline', html: timelineHtml() },
       { label: 'Dynasty', html: dynastyHtml() },
-      { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true, lead: 'none' }), V('Title Count', champC), V('Title Games', titleGames('Champ', true), { year: true, lead: 'max' })] },
-      { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, lead: 'none' }), V('Sacko Count', sackC, { bad: true }), V('Sacko Games', titleGames('Sacko', false), { year: true, lead: 'none' })] },
-      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, lead: 'max' }), V('Season Low', seasonPts(false), { year: true, lead: 'none', low: 'min' }), V('Weekly High', weekly(true), { year: true, lead: 'max' }), V('Weekly Low', weekly(false), { year: true, lead: 'none', low: 'min' }), V('Average Median', avgMedian, { year: true, lead: 'max', low: 'min' }), V('Weekly High Count', weeklyCount('high')), V('Weekly Low Count', weeklyCount('low'), { bad: true }), V('Bubble Wins', weeklyCount('bubW')), V('Bubble Losses', weeklyCount('bubL'), { bad: true })] },
-      { label: 'Rankings', views: [V('Playoff Rate', rate), V('Average Finish', finish), V('Best Win Seasons', winSeasons(true)), V('Worst Win Seasons', winSeasons(false), { lead: 'none', low: 'first' }), V('Earnings', earn), V('Draft Position', draftPosView()), V('Schedule Luck', medianLuckView()), V('Vs Median', vsMedianView()), V('Vs Median All-Time', vsMedianAllTimeView()), V('Achievements', achievementsView()), V('Power Ranking', powerRankingView()), V('Power Index', powerIndexView()), V('Clutch Factor', clutchDeltaView())] },
-      { label: 'Efficiency', views: [V('Career Efficiency', effView()), V('Points Left on Bench', benchView()), V('Extra Wins Available', extraWinsView())] },
-      { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { lead: 'none' }), V('With Median', streakView('combined'), { lead: 'none' })] },
+      { label: 'Leaderboards', html: leaderboardsHtml() },
     ];
   }
 
-  // One list row. Year lists show the year in the left column, ranked lists
-  // the rank. Streak rows carry their own stat columns and state.
+  // A row's state: gold for the leader (and anyone tied with them), red for
+  // the leader of a bad list or the marked low row.
+  const rowState = (v, k) => v.leads.has(k) ? (v.bad ? 'low' : 'lead') : k === v.low ? 'low' : '';
+  const leftCol = (v, i, k) => v.year ? `'${String(i.rank).slice(2)}` : v.ranks[k];
+
+  // A card: the list's top three (the latest three years on a by-year list).
+  function cardHtml(v) {
+    const rows = v.items.slice(0, 3).map((i, k) => {
+      const st = rowState(v, k);
+      return `<span class="lb-r${st ? ' ' + st : ''}"><i>${leftCol(v, i, k)}</i><span>${esc(i.short || i.name || i.sub)}</span><b${i.tone ? ` class="${i.tone}"` : ''}>${esc(i.val)}</b></span>`;
+    }).join('');
+    const more = v.items.length > 3 ? `+${v.items.length - 3} more` : '';
+    return `<button type="button" class="lb${v.year ? ' years' : ''}" data-lb="${v.id}" aria-haspopup="dialog" aria-expanded="false">` +
+      `<span class="lb-t">${esc(v.label)}</span>${rows}<span class="lb-f"><span>${more}</span><span class="chev" aria-hidden="true"></span></span></button>`;
+  }
+
+  // One row of a whole list. Year lists show the year in the left column,
+  // ranked lists the rank (managers tied on a value share it).
   function rowHtml(i, k, v) {
-    let state = i.state || '';
-    if (!i.stats) state = v.leads.has(k) ? (v.bad ? 'low' : 'lead') : k === v.low ? 'low' : '';
-    const right = i.stats
-      ? `<div class="lr-stats">${i.stats.map(s => `<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`
-      : `<div class="lr-v${i.tone ? ' ' + i.tone : ''}">${esc(i.val)}</div>`;
-    const left = i.stats ? '' : `<div class="lr-rk">${v.year ? `'${String(i.rank).slice(2)}` : k + 1}</div>`;
-    return `<div class="lr${state ? ' ' + state : ''}${i.stats ? ' nr' : ''}">${left}<div style="min-width:0">${i.name ? `<div class="lr-nm">${esc(i.name)}</div>` : ''}${i.sub ? `<div class="lr-sub">${esc(i.sub)}</div>` : ''}</div>${right}</div>`;
+    const state = rowState(v, k);
+    return `<div class="lr${state ? ' ' + state : ''}"><div class="lr-rk">${leftCol(v, i, k)}</div><div style="min-width:0">${i.name ? `<div class="lr-nm">${esc(i.name)}</div>` : ''}${i.sub ? `<div class="lr-sub">${esc(i.sub)}</div>` : ''}</div><div class="lr-v${i.tone ? ' ' + i.tone : ''}">${esc(i.val)}</div></div>`;
   }
 
   function render() {
+    lbHide();
     document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
-    const T = TABS[tab], el = document.getElementById('overview');
+    document.getElementById('overview').innerHTML = TABS[tab].html;
     keepSelectedInView(document.getElementById('tabs'));
-    if (T.html) { el.innerHTML = T.html; keepSelectedInView(document.getElementById('tabs')); return; }
-    const vi = viewPick[tab] || 0, v = T.views[vi];
-    const seg = `<div class="seg scroll" data-glide-panel="next">${T.views.map((x, i) => `<button class="${i === vi ? 'on' : ''}" data-v="${i}">${x.label}</button>`).join('')}</div>`;
-    // Rows fill down the first column, then the second, on desktop.
-    const half = Math.ceil(v.items.length / 2);
-    const order = window.matchMedia('(min-width:721px)').matches
-      ? v.items.slice(0, half).flatMap((x, k) => [[x, k], ...(v.items[k + half] ? [[v.items[k + half], k + half]] : [])])
-      : v.items.map((x, k) => [x, k]);
-    const list = v.items.length ? `<div class="list">${order.map(([x, k]) => rowHtml(x, k, v)).join('')}</div>` : '<div class="empty-note">Nothing here yet.</div>';
-    // No panel title: the selected view's own pill already names it.
-    el.innerHTML = `<div class="panel">${seg}<div class="p-body">${list}</div></div>`;
-    keepSelectedInView(document.getElementById('tabs'));
-    keepSelectedInView(el.querySelector('.seg'));
+  }
+
+  // ---------- A whole list: bottom sheet on a phone, popover on desktop ----------
+  // Same surfaces and behaviour as Game Records' top 10s and the Dashboard's
+  // Median Watch (theme.css "Detail panels").
+  let lbOpen = null;
+  const lbOneColumn = matchMedia('(max-width:720px)');
+
+  function lbParts(v) {
+    const head = `<div class="lb-head"><div class="lb-title">${esc(v.label)}</div><button type="button" class="x" data-close aria-label="Close">&times;</button></div>`;
+    return { head, rows: v.items.map((i, k) => rowHtml(i, k, v)).join('') };
+  }
+
+  function lbMark() {
+    document.querySelectorAll('.lb[data-lb]').forEach(c => {
+      const on = lbOpen !== null && Number(c.dataset.lb) === lbOpen;
+      c.classList.toggle('open', on);
+      c.setAttribute('aria-expanded', on);
+    });
+  }
+
+  // Opens the list, or -- if one is already up -- swaps its contents in place.
+  function lbShow(id) {
+    lbOpen = id;
+    lbMark();
+    const v = LISTS[id], l = lbParts(v);
+    const existing = document.getElementById('lb-sheet') || document.getElementById('lb-pop');
+    if (existing) {
+      existing.querySelector('[data-head]').innerHTML = l.head;
+      const body = existing.querySelector('[data-body]');
+      body.innerHTML = l.rows;
+      body.scrollTop = 0;
+      existing.setAttribute('aria-label', v.label);
+      lbPlace();
+      return;
+    }
+    if (!lbOneColumn.matches) {
+      document.body.insertAdjacentHTML('beforeend', `<div class="pop" id="lb-pop" role="dialog" aria-label="${esc(v.label)}"><div data-head>${l.head}</div><div data-body>${l.rows}</div></div>`);
+      lbPlace();
+      return;
+    }
+    document.body.insertAdjacentHTML('beforeend', `<div class="scrim" data-close></div><div class="sheet" id="lb-sheet" role="dialog" aria-modal="true" aria-label="${esc(v.label)}">
+      <div class="sheet-grab" data-grab><span></span></div>
+      <div class="sheet-head" data-grab data-head>${l.head}</div>
+      <div class="sheet-body" data-body>${l.rows}</div></div>`);
+    lbWireSwipe();
+  }
+
+  function lbHide() {
+    lbOpen = null;
+    lbMark();
+    document.querySelectorAll('#lb-sheet, #lb-pop, .scrim').forEach(el => el.remove());
+  }
+
+  // Under the card, at least 360px wide and never off the side of the
+  // screen, with the arrow on the card's center. Two passes: placing it can
+  // add a scrollbar, which shifts the card.
+  function lbPlace() {
+    const pop = document.getElementById('lb-pop');
+    if (!pop) return;
+    const card = lbOpen !== null && document.querySelector(`.lb[data-lb="${lbOpen}"]`);
+    if (!card) { lbHide(); return; }
+    for (let pass = 0; pass < 2; pass++) {
+      const r = card.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+      const w = Math.min(Math.max(r.width, 360), vw - 24);
+      const left = Math.min(Math.max(r.left, 12), vw - w - 12);
+      pop.style.width = w + 'px';
+      pop.style.left = (left + scrollX) + 'px';
+      pop.style.top = (r.bottom + scrollY + 10) + 'px';
+      pop.style.setProperty('--arrow-x', (r.left + r.width / 2 - left) + 'px');
+    }
+  }
+
+  // Drag the sheet down past 90px to dismiss it, like a native sheet.
+  function lbWireSwipe() {
+    const sheet = document.getElementById('lb-sheet');
+    if (!sheet) return;
+    let y0 = null, dy = 0;
+    sheet.querySelectorAll('[data-grab]').forEach(el => {
+      el.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; y0 = e.clientY; dy = 0; sheet.style.animation = 'none'; el.setPointerCapture(e.pointerId); });
+      el.addEventListener('pointermove', e => { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sheet.style.transform = `translateY(${dy}px)`; });
+      el.addEventListener('pointerup', () => { if (y0 === null) return; y0 = null; if (dy > 90) lbHide(); else sheet.style.transform = ''; });
+    });
   }
 
   document.addEventListener('click', e => {
@@ -662,10 +825,16 @@
     if (sp) { sp.classList.toggle('show'); return; }
     const t = e.target.closest('.tab');
     if (t) { tab = Number(t.dataset.i); render(); return; }
-    const s = e.target.closest('[data-v]');
-    if (s) { viewPick[tab] = Number(s.dataset.v); render(); }
+    if (e.target.closest('[data-close]')) { lbHide(); return; }
+    const c = e.target.closest('.lb[data-lb]');
+    if (c) { const id = Number(c.dataset.lb); if (lbOpen === id) lbHide(); else lbShow(id); return; }
+    if (lbOpen !== null && !lbOneColumn.matches && !e.target.closest('#lb-pop')) lbHide();
   });
-  window.matchMedia('(min-width:721px)').addEventListener('change', () => { if (TABS.length) render(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && lbOpen !== null) lbHide(); });
+  addEventListener('resize', lbPlace);
+  // Crossing between one and two columns swaps sheet for popover: close it.
+  lbOneColumn.addEventListener('change', lbHide);
+
 
   Promise.all([
     LG.load(),
