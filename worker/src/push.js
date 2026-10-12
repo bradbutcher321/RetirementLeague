@@ -16,19 +16,25 @@
  *   median  you're locked above the median (Median Watch's own rule)
  *   recap   every game this week is over, so Week in Review is up (everyone)
  *   parlay  your parlay leg hit or died
+ *   parlayAll  every leg that hits while the parlay is alive, then one
+ *          "killed" when it dies (killed_by in the parlay data); legs
+ *          whose games start after the kill send nothing
  * Each event is sent once: its key goes in push_sent the first time it is
  * seen, whether or not anyone was subscribed, so a new subscriber never
  * gets a backlog of things that already happened.
  */
 import { sendPush } from "./webpush.js";
 
-const PREF_KEYS = ["final", "median", "recap", "parlay"];
+const PREF_KEYS = ["final", "median", "recap", "parlay", "parlayAll"];
+// Off unless asked for: everyone else's legs is a lot of buzzing, and it
+// came after people had already subscribed with the four above on.
+const PREF_OFF_BY_DEFAULT = new Set(["parlayAll"]);
 const SITE = "https://bradbutcher321.github.io/RetirementLeague/";
 const f2 = (n) => (Number(n) || 0).toFixed(2);
 
 function cleanPrefs(p) {
   const out = {};
-  for (const k of PREF_KEYS) out[k] = !p || p[k] !== false;
+  for (const k of PREF_KEYS) out[k] = PREF_OFF_BY_DEFAULT.has(k) ? !!(p && p[k] === true) : !p || p[k] !== false;
   return out;
 }
 
@@ -175,6 +181,45 @@ function currentEvents(year, dashboard, parlay) {
         },
       });
     }
+
+    // Everyone's legs until the parlay dies. The kill is the first loss by
+    // game time (the publisher's killed_by); a hit only counts if its game
+    // started before the killing game did, so a late hit graded in the same
+    // refresh as the kill stays quiet.
+    const killers = (pw.killed_by || []).filter((n) => pw.picks[n] && pw.picks[n].result === "Loss");
+    const killedAt = killers.length ? killers.map((n) => String(pw.picks[n].gametime || "")).sort()[0] : null;
+    for (const [name, p] of Object.entries(pw.picks)) {
+      if (p.result !== "Win") continue;
+      if (killedAt !== null && !(String(p.gametime || "") < killedAt)) continue;
+      // Legs in as of this one: hits whose games started no later than it.
+      const hits = Object.values(pw.picks).filter((q) => q.result === "Win" && String(q.gametime || "") <= String(p.gametime || "")).length;
+      out.push({
+        key: `parlayall:${pw.year}:${pw.week}:${name}`,
+        to: null,
+        about: name,
+        pref: "parlayAll",
+        message: {
+          title: `${name}'s leg hit`,
+          body: `${String(p.pick || "")} · ${hits} of ${Object.keys(pw.picks).length} in`,
+          url: "parlay-results.html",
+          tag: `parlayall-${pw.year}-${pw.week}-${name}`,
+        },
+      });
+    }
+    if (killers.length) {
+      const who = killers.join(" & ");
+      out.push({
+        key: `parlaykill:${pw.year}:${pw.week}`,
+        to: null,
+        pref: "parlayAll",
+        message: {
+          title: `${who} killed the parlay`,
+          body: killers.map((n) => String(pw.picks[n].pick || "")).join(" · "),
+          url: "parlay-results.html",
+          tag: `parlayall-${pw.year}-${pw.week}-kill`,
+        },
+      });
+    }
   }
   return out;
 }
@@ -207,6 +252,8 @@ export async function checkPushEvents(env, dashboard) {
       const prefs = cleanPrefs(JSON.parse(sub.prefs || "{}"));
       if (!prefs[e.pref]) continue;
       if (e.to && (sub.me || "").toLowerCase() !== e.to.toLowerCase()) continue;
+      // Your own leg already comes from "parlay" when that's on.
+      if (e.about && prefs.parlay && (sub.me || "").toLowerCase() === e.about.toLowerCase()) continue;
       sends.push(deliver(env, sub, e.message));
     }
   }
