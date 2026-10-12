@@ -231,7 +231,7 @@
 
 <script src="nav.js?v=8"></script>
 <script src="page-common.js?v=26"></script>
-<script src="league-common.js?v=4"></script>
+<script src="league-common.js?v=5"></script>
 <script src="achievements.js?v=3"></script>
 <script>
   // esc() and typeTile() are globals from page-common.js, not part of LG.
@@ -844,8 +844,8 @@
 
   Promise.all([
     LG.load(),
-    fetch('data/franchise.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
-    fetch('data/rule-changes.json', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+    fetch('data/franchise.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+    fetch('data/rule-changes.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
   ])
     .then(([D, F, R]) => { build(D, F, R); render(); riseIn(document.getElementById('overview').children); })
     .catch(err => LG.showError('overview', err));

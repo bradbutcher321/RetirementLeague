@@ -17,7 +17,7 @@
  *      the brief window before Thursday kickoff, when the page already
  *      shows the countdown card instead of real numbers anyway.
  */
-import { fetchLeague, fetchBoxScores, fetchNflScoreboard, findMatchupPeriod } from "./espn.js";
+import { fetchLeague, fetchRosters, fetchBoxScores, fetchNflScoreboard, findMatchupPeriod } from "./espn.js";
 import { buildManagerNames } from "./managerNames.js";
 
 const BENCH_SLOTS = new Set([20, 21]); // BE, IR — see espn_api football/constant.py POSITION_MAP
@@ -116,8 +116,8 @@ const GAMES_PLAYED_STAT = "210";
 const NOT_PLAYING = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
 
 /** playerId -> { avg, gp }: each rostered player's average over completed
- * weeks, for Median Watch's Average mode. The league fetch's mRoster view
- * carries the season line, which already includes this week's points for
+ * weeks, for Median Watch's Average mode. The mRoster view carries the
+ * season line, which already includes this week's points for
  * anyone whose game has started, so this week's line is taken back out --
  * otherwise a game in progress would drag the average around. */
 function buildSeasonAverages(league, season, week) {
@@ -127,7 +127,9 @@ function buildSeasonAverages(league, season, week) {
       const player = entry.playerPoolEntry?.player || {};
       const stats = player.stats || [];
       const seasonLine = stats.find((s) => s.seasonId === season && s.statSourceId === 0 && s.statSplitTypeId === 0 && s.scoringPeriodId === 0);
-      if (!seasonLine) continue;
+      // Listed even with no season line, so a player missing from the map
+      // means he joined a roster after it was built (see seasonAverages()).
+      if (!seasonLine) { out.set(player.id, { avg: null, gp: 0 }); continue; }
       const weekLine = stats.find((s) => s.statSourceId === 0 && s.statSplitTypeId === 1 && s.scoringPeriodId === week);
       const gp = (seasonLine.stats?.[GAMES_PLAYED_STAT] || 0) - (weekLine?.stats?.[GAMES_PLAYED_STAT] || 0);
       const total = (seasonLine.appliedTotal || 0) - (weekLine?.appliedTotal || 0);
@@ -135,6 +137,30 @@ function buildSeasonAverages(league, season, week) {
     }
   }
   return out;
+}
+
+// The averages only move when a week is completed, so the rosters behind
+// them are fetched once an hour rather than on every rebuild.
+const AVERAGES_MAX_AGE_MS = 60 * 60 * 1000;
+
+/** The season averages, reused from the previous build when they're for
+ * the same week, under an hour old, and cover every player on this week's
+ * box scores (a pickup since then forces a refetch). A failed roster fetch
+ * keeps the old map rather than failing the dashboard. */
+async function seasonAverages(env, previous, week, boxPlayerIds) {
+  const cached = previous?.averages;
+  const reusable = cached && cached.week === week;
+  if (reusable && Date.now() - cached.at < AVERAGES_MAX_AGE_MS) {
+    const map = new Map(cached.players);
+    if (boxPlayerIds.every((id) => map.has(id))) return { map, cache: cached };
+  }
+  try {
+    const map = buildSeasonAverages(await fetchRosters(env), Number(env.ESPN_YEAR), week);
+    return { map, cache: { week, at: Date.now(), players: [...map] } };
+  } catch (err) {
+    if (reusable) return { map: new Map(cached.players), cache: cached };
+    return { map: new Map(), cache: null };
+  }
 }
 
 /** Share of an in-progress game still to play, off the game clock:
@@ -394,7 +420,8 @@ function countGameStatus(entries, gameStateByProTeam) {
 /** `previous` is the last cached dashboard, if any. Its NFL game states
  * stand in for this build's when the public scoreboard comes back failed
  * or empty -- otherwise one blip blanks every player's team/opponent/
- * kickoff line and zeroes the to-play counts for a whole cache window. */
+ * kickoff line and zeroes the to-play counts for a whole cache window.
+ * Its season averages are reused for up to an hour (seasonAverages()). */
 export async function buildDashboard(env, previous = null) {
   const league = await fetchLeague(env);
 
@@ -415,7 +442,6 @@ export async function buildDashboard(env, previous = null) {
   const managerNames = buildManagerNames(teamsRaw);
   const regularPeriods = league.settings?.scheduleSettings?.matchupPeriodCount || 0;
   const aheadByTeam = opponentsAhead(schedule, matchupPeriod, regularPeriods);
-  const seasonAverages = buildSeasonAverages(league, Number(env.ESPN_YEAR), currentWeek);
 
   let nflScoreboardError = null;
   const [boxData, nflScoreboard] = await Promise.all([
@@ -430,6 +456,10 @@ export async function buildDashboard(env, previous = null) {
       return null;
     }),
   ]);
+  const boxPlayerIds = (boxData.schedule || []).flatMap((m) => [m.home, m.away])
+    .flatMap((side) => side?.rosterForCurrentScoringPeriod?.entries || [])
+    .map((e) => e.playerPoolEntry?.player?.id || e.playerId);
+  const averages = await seasonAverages(env, previous, currentWeek, boxPlayerIds);
   let gameStateByProTeam = buildGameStateMap(nflScoreboard);
   // A game's state only ever moves pre -> in -> post, so a few-minutes-old
   // copy can under-report progress but never claim a game is over early.
@@ -454,7 +484,7 @@ export async function buildDashboard(env, previous = null) {
     for (const side of [home, away]) {
       if (!side) continue;
       teamStatusById.set(side.teamId, countGameStatus(side.entries, gameStateByProTeam));
-      side.starters = buildStarters(side.entries, gameStateByProTeam, seasonAverages);
+      side.starters = buildStarters(side.entries, gameStateByProTeam, averages.map);
       const average = round2(side.starters.reduce((sum, p) => sum + p.avgPoints, 0));
       currentScores.push(side.score);
       projectedScores.push(side.projected);
@@ -562,8 +592,9 @@ export async function buildDashboard(env, previous = null) {
       : null,
     ...(nflScoreboardError ? { nflScoreboardError } : {}),
     ...(nflScoreboardStale ? { nflScoreboardStale } : {}),
-    // Carried in the cache for the next build's fallback; index.js strips it
-    // from the response.
+    // Carried in the cache for the next build (fallback game states, reused
+    // averages); index.js strips both from the response.
     gameStates: [...gameStateByProTeam],
+    averages: averages.cache,
   };
 }

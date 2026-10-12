@@ -28,7 +28,7 @@ self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(Promise.all(PAGES.map(path => {
     const url = new URL(path, self.registration.scope).href;
-    return fetch(url, { cache: 'no-store' }).then(async res => {
+    return fetch(url, { cache: 'no-cache' }).then(async res => {
       if (!path.endsWith('.html')) return put(url, res);
       const html = await res.clone().text();
       await put(url, res);

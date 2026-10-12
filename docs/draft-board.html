@@ -557,10 +557,10 @@
   [...viewToggle.children].forEach(b => b.classList.toggle('on', b.dataset.view === boardView));
 
   // Draft value is extra: if it fails, the board still shows, without points.
-  const valueReady = fetch('data/draft-value.json', { cache: 'no-store' })
+  const valueReady = fetch('data/draft-value.json', { cache: 'no-cache' })
     .then(res => res.json()).then(d => { VALUE = d.years || {}; })
     .catch(err => console.error('Draft value data error:', err));
-  Promise.all([fetch('data/draft-board.json', { cache: 'no-store' }).then(res => res.json()), valueReady])
+  Promise.all([fetch('data/draft-board.json', { cache: 'no-cache' }).then(res => res.json()), valueReady])
     .then(([data]) => {
       const sel = document.getElementById('year-select');
       sel.innerHTML = data.years.map(y => `<option value="${y}">${y}</option>`).join('');

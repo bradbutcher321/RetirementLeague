@@ -10,7 +10,7 @@ const LG = (() => {
   const money = n => (n < 0 ? '−$' : '$') + Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
 
   async function load() {
-    const res = await fetch('data/league.json', { cache: 'no-store' });
+    const res = await fetch('data/league.json', { cache: 'no-cache' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const el = document.getElementById('updated-at');

@@ -44,11 +44,19 @@ async function espnGet(url, env, extraHeaders) {
 /** Full league fetch: standings, records, points, playoff odds, team/owner
  * info, and (via the `schedule` array) every team's actual score for every
  * week played so far — everything except the current week's live/projected
- * score, which needs the separate box-score call below. */
+ * score, which needs the separate box-score call below. Rosters are their
+ * own call (fetchRosters): that one view is about 80% of the download and
+ * only feeds the season averages, which change once a week. */
 export async function fetchLeague(env) {
   const url = buildUrl(leagueEndpoint(env.ESPN_YEAR, env.ESPN_LEAGUE_ID), {
-    view: ["mTeam", "mRoster", "mMatchup", "mSettings", "mStandings"],
+    view: ["mTeam", "mMatchup", "mSettings", "mStandings"],
   });
+  return espnGet(url, env);
+}
+
+/** Every team's roster with each player's season stat lines. */
+export async function fetchRosters(env) {
+  const url = buildUrl(leagueEndpoint(env.ESPN_YEAR, env.ESPN_LEAGUE_ID), { view: "mRoster" });
   return espnGet(url, env);
 }
 

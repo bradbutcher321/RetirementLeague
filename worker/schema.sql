@@ -25,3 +25,11 @@ CREATE TABLE IF NOT EXISTS push_sent (
   k TEXT PRIMARY KEY,
   ts INTEGER NOT NULL
 );
+-- The Live Dashboard's two-minute cache (src/index.js readCache/writeCache,
+-- site audit II #25). One row per key; kv_at is when KV last got a copy.
+CREATE TABLE IF NOT EXISTS cache (
+  k TEXT PRIMARY KEY,
+  fetched_at INTEGER NOT NULL,
+  kv_at INTEGER NOT NULL,
+  data TEXT NOT NULL
+);

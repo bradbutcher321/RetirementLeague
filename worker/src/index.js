@@ -3,11 +3,11 @@
  *
  * Replaces the old "proxy that dispatches a GitHub Action to update a
  * Google Sheet" design. This Worker now talks to ESPN directly and caches
- * the result in KV, so the site reads straight from here — no Sheets, no
+ * the result (see readCache/writeCache), so the site reads straight from here — no Sheets, no
  * GitHub Actions, no CSV parsing, and no multi-minute lag between a visit
  * and fresh data (Workers cold-start in single-digit milliseconds; the
  * only real latency left is the ESPN call itself and, when the cooldown is
- * active, none at all since it's served straight from KV).
+ * active, none at all since it's served straight from the cache).
  *
  * GET /            -> cached data if fetched within the last 2 minutes,
  *                      otherwise fetches fresh from ESPN, caches it, and
@@ -33,6 +33,7 @@
  *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT   (wrangler secret put ...)
  *   - Plain vars:  ESPN_LEAGUE_ID, ESPN_YEAR, ALLOWED_ORIGIN
  *   - KV namespace bound as: COOLDOWN_KV (already existed for the old design)
+ *   - D1 table `cache` in DB (schema.sql)
  */
 import { buildDashboard } from "./dashboard.js";
 import { getStats, recordHit } from "./analytics.js";
@@ -43,9 +44,41 @@ import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
 
 const COOLDOWN_SECONDS = 120;
-// One key holds { fetchedAt, data } so a cache hit costs a single KV read and
-// a refresh costs a single KV write (free tier: 100k reads / 1k writes a day).
 const CACHE_KEY = "dashboard:v2";
+// The two-minute cache is a row in D1, whose free tier allows 100k row
+// writes a day. KV allows only 1k, and a game day of rebuilds every two
+// minutes plus the parlay publishes can use that up, so KV just gets a copy
+// every ten minutes, read only if D1 fails. (The Cache API would be the
+// other free option, but it does nothing on a *.workers.dev hostname.)
+const KV_COPY_SECONDS = 600;
+
+/** { fetchedAt, kvAt, data } for the last dashboard build, or null. */
+async function readCache(env) {
+  try {
+    const row = await env.DB.prepare("SELECT fetched_at, kv_at, data FROM cache WHERE k = ?1").bind(CACHE_KEY).first();
+    if (row) return { fetchedAt: row.fetched_at, kvAt: row.kv_at, data: JSON.parse(row.data) };
+  } catch (err) {
+    console.error("D1 cache read failed:", err);
+  }
+  const entry = await env.COOLDOWN_KV.get(CACHE_KEY, "json");
+  return entry && { ...entry, kvAt: entry.fetchedAt };
+}
+
+async function writeCache(env, now, data, previous) {
+  const json = JSON.stringify(data);
+  let kvDue = !previous?.kvAt || now - previous.kvAt >= KV_COPY_SECONDS;
+  const kvAt = kvDue ? now : previous.kvAt;
+  try {
+    await env.DB.prepare(
+      `INSERT INTO cache (k, fetched_at, kv_at, data) VALUES (?1, ?2, ?3, ?4)
+       ON CONFLICT(k) DO UPDATE SET fetched_at = excluded.fetched_at, kv_at = excluded.kv_at, data = excluded.data`
+    ).bind(CACHE_KEY, now, kvAt, json).run();
+  } catch (err) {
+    console.error("D1 cache write failed:", err);
+    kvDue = true; // KV is the only cache left, so keep it current
+  }
+  if (kvDue) await env.COOLDOWN_KV.put(CACHE_KEY, JSON.stringify({ fetchedAt: now, data }));
+}
 
 // Reflects the request's own Origin back when it's the production site or a
 // local dev server (any localhost/127.0.0.1 port -- covers whatever port a
@@ -128,10 +161,10 @@ export default {
     const url = new URL(request.url);
     const force = url.searchParams.get("force") === "1";
 
-    const entry = await env.COOLDOWN_KV.get(CACHE_KEY, "json");
+    const entry = await readCache(env);
 
-    // gameStates is the cache's own fallback copy, not for the page.
-    const publicView = ({ gameStates, ...rest }) => rest;
+    // gameStates and averages are for the next build, not for the page.
+    const publicView = ({ gameStates, averages, ...rest }) => rest;
 
     if (!force && entry && now - entry.fetchedAt < COOLDOWN_SECONDS) {
       return jsonResponse({ ...publicView(entry.data), cacheHit: true }, headers);
@@ -139,7 +172,7 @@ export default {
 
     try {
       const dashboard = await buildDashboard(env, entry?.data);
-      await env.COOLDOWN_KV.put(CACHE_KEY, JSON.stringify({ fetchedAt: now, data: dashboard }));
+      await writeCache(env, now, dashboard, entry);
       return jsonResponse({ ...publicView(dashboard), cacheHit: false }, headers);
     } catch (err) {
       // ESPN hiccup or bad credentials — better to serve stale data than
@@ -163,17 +196,20 @@ export default {
   // The same run also saves a projected-median snapshot (medianHistory.js),
   // which is what gives that chart its 10-minutes-in-a-game, hourly-
   // otherwise cadence. It reuses the cached dashboard when a visitor just
-  // refreshed it and otherwise builds its own, without writing it back to
-  // KV: KV's free tier allows 1k writes a day and visitors already spend
-  // those. The same build is what the notifications are checked against
-  // (push.js).
+  // refreshed it and otherwise builds its own and caches it, so the next
+  // visitor gets it for free. The same build is what the notifications are
+  // checked against (push.js).
   async scheduled(event, env, ctx) {
     const [parlay, median] = await Promise.allSettled([
       dispatchParlayRefresh(env),
       (async () => {
-        const entry = await env.COOLDOWN_KV.get(CACHE_KEY, "json");
-        const fresh = entry && Math.floor(Date.now() / 1000) - entry.fetchedAt < COOLDOWN_SECONDS;
-        const dashboard = fresh ? entry.data : await buildDashboard(env, entry?.data);
+        const entry = await readCache(env);
+        const now = Math.floor(Date.now() / 1000);
+        let dashboard = entry?.data;
+        if (!entry || now - entry.fetchedAt >= COOLDOWN_SECONDS) {
+          dashboard = await buildDashboard(env, entry?.data);
+          await writeCache(env, now, dashboard, entry);
+        }
         const [snap, push] = await Promise.allSettled([recordMedianSnapshot(env, dashboard), checkPushEvents(env, dashboard)]);
         if (push.status === "rejected") console.error("Push check failed:", push.reason);
         if (snap.status === "rejected") throw snap.reason;

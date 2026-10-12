@@ -283,7 +283,7 @@
       </div>`;
   }
 
-  fetch('data/rule-changes.json', { cache: 'no-store' })
+  fetch('data/rule-changes.json', { cache: 'no-cache' })
     .then(res => res.json())
     .then(data => {
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);

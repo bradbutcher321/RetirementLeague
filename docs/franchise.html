@@ -1280,7 +1280,7 @@
 
   // The Weekly tab's games. Only that tab waits for them; when they land
   // after the first render, it's redrawn if it's the one showing.
-  fetch('data/league.json', { cache: 'no-store' }).then(r => r.json()).then(d => {
+  fetch('data/league.json', { cache: 'no-cache' }).then(r => r.json()).then(d => {
     GAMES = d.games.map(g => ({ year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7] }));
     WEEKLY = weeklyFinishes(GAMES);
   }).catch(err => { console.error(err); WEEKLY = null; }).then(() => {
@@ -1288,13 +1288,13 @@
     if (p && TABS[tab].id === 'weekly') document.getElementById('tab-content').innerHTML = renderWeekly(p);
   });
 
-  fetch('data/draft-value.json', { cache: 'no-store' }).then(r => r.json()).then(d => { DRAFTV = d.years || {}; })
+  fetch('data/draft-value.json', { cache: 'no-cache' }).then(r => r.json()).then(d => { DRAFTV = d.years || {}; })
     .catch(err => { console.error(err); DRAFTV = null; }).then(() => {
       const p = data && data.players.find(x => x.name === document.getElementById('franchise-select').value);
       if (p && TABS[tab].id === 'money') document.getElementById('tab-content').innerHTML = renderMoney(p);
     });
 
-  fetch('data/franchise.json', { cache: 'no-store' }).then(r => r.json()).then(d => {
+  fetch('data/franchise.json', { cache: 'no-cache' }).then(r => r.json()).then(d => {
     data = d;
     const currentYear = leagueCurrentYear(d.players);
     CTX = {
