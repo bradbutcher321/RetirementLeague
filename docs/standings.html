@@ -171,7 +171,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=23"></script>
+<script src="page-common.js?v=24"></script>
 <script src="league-common.js?v=4"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -391,7 +391,7 @@
         const skip = have >= LIVE.week ? 1 : 0;
         const recOf = new Map(rows.map(r => [r.player, { w: r.s.reg_w + r.s.med_w, l: r.s.reg_l + r.s.med_l }]));
         sos = rows.map(r => scheduleLeft((LIVE.ahead.get(r.player) || []).slice(skip), nm => recOf.get(nm)));
-        hard = hardSchedules(sos);
+        hard = rankSchedules(sos);
       }
     }
     const legend = tab === 'reg' && complete

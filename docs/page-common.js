@@ -122,18 +122,25 @@ function scheduleLeft(ahead, recordOf) {
   });
   return games ? { pct: won / games, n: ahead.length } : null;
 }
-// "SOS .563" after the race marker; the hardest schedules left (the top
-// quarter of the league) read in the loss red, so the tough road stands out.
-function sosMark(s, hard) {
-  if (!s) return '';
-  const say = `Remaining schedule: opponents' combined win % across ${s.n} game${s.n === 1 ? '' : 's'} left`;
-  return `<span class="sos${hard ? ' hard' : ''}" title="${say}" aria-label="${say}, ${(s.pct * 100).toFixed(1)}%">SOS ${s.pct.toFixed(3).replace(/^0/, '')}</span>`;
+// "SOS #3" after the race marker: where a team's schedule left ranks, #1
+// the hardest (the highest combined win %), equal schedules sharing a rank.
+// The top quarter reads in the loss red, so the tough road stands out. `r`
+// is that team's entry from rankSchedules().
+function sosMark(s, r) {
+  if (!s || !r) return '';
+  const say = `Remaining schedule ${sosOrdinal(r.rank)} hardest of ${r.of}: opponents' combined win % ${(s.pct * 100).toFixed(1)}% across ${s.n} game${s.n === 1 ? '' : 's'} left`;
+  return `<span class="sos${r.hard ? ' hard' : ''}" title="${say}" aria-label="${say}">SOS #${r.rank}</span>`;
 }
-// sosMark's `hard` for every team at once: the top quarter by SOS.
-function hardSchedules(list) {
-  const vals = list.filter(Boolean).map(s => s.pct).sort((a, b) => b - a);
-  const cut = vals.length >= 4 ? vals[Math.floor(vals.length / 4) - 1] : Infinity;
-  return list.map(s => !!s && s.pct >= cut);
+const sosOrdinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
+// sosMark's rank for every team at once: { rank, of, hard } or null.
+function rankSchedules(list) {
+  const vals = list.filter(Boolean).map(s => s.pct);
+  const of = vals.length, hardCut = Math.floor(of / 4);
+  return list.map(s => {
+    if (!s) return null;
+    const rank = 1 + vals.filter(v => v > s.pct + 1e-9).length;
+    return { rank, of, hard: of >= 4 && rank <= hardCut };
+  });
 }
 
 // ---------- Shareable views (site audit 21) ----------
