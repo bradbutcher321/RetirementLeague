@@ -69,6 +69,9 @@
     .back-link:disabled:hover{ background: none; }
   }
   .back-link[hidden]{ display: none; }
+  /* Out to the Enter Picks page (site audit II #11), beside Refresh Data:
+     the other thing only the people who enter picks reach for. */
+  .enter-link{ text-decoration: none; }
 
   /* Only Jon's Table still uses scope chips (Stats switched to a Year
      dropdown beside its tabs). Inside .controls-row theme.css zeroes this. */
@@ -365,6 +368,7 @@
             <div class="scope-row" id="jt-scope-row"></div>
             <div class="jt-toolbar">
               <span class="jt-status" id="jt-refresh-status"></span>
+              <a class="back-link enter-link" href="parlay-entry.html">Enter Picks</a>
               <button type="button" class="back-link" id="jt-refresh-btn">Refresh Data</button>
               <button type="button" class="back-link" id="jt-copy-btn">Copy All</button>
             </div>

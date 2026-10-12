@@ -22,7 +22,7 @@ const FONTS = /^https:\/\/fonts\.(googleapis|gstatic)\.com\//;
 // you've never opened still opens in a dead spot. Each is kept by path
 // (keyFor), the same key a visit to it uses.
 const PAGES = ['index.html', 'franchise.html', 'head-to-head.html', 'overview.html', 'game-records.html', 'standings.html',
-  'parlay-results.html', 'draft-board.html', 'rule-changes.html', 'wrapped.html', 'data/league.json', 'data/franchise.json'];
+  'parlay-results.html', 'parlay-entry.html', 'draft-board.html', 'rule-changes.html', 'wrapped.html', 'data/league.json', 'data/franchise.json'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();

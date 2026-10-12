@@ -22,6 +22,9 @@
  * POST /refresh-parlay -> dispatches the Parlay data refresh Action on
  *                      demand (see parlayRefresh.js); used by the "Refresh
  *                      Data" button on the Parlay Results page.
+ * POST /parlay-entry -> the Enter Picks page's save: checks the PIN and
+ *                      dispatches the Action that writes the week to the
+ *                      sheet (see parlayEntry.js).
  * GET /median-history -> the week's projected median over time, for Median
  *                      Watch's chart (see medianHistory.js; the rows are
  *                      written by scheduled() below).
@@ -34,7 +37,7 @@
  *                      notifications (see push.js, site audit II #37).
  *
  * Required setup:
- *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT   (wrangler secret put ...)
+ *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT, PARLAY_PIN   (wrangler secret put ...)
  *   - Plain vars:  ESPN_LEAGUE_ID, ESPN_YEAR, ALLOWED_ORIGIN
  *   - KV namespace bound as: COOLDOWN_KV (already existed for the old design)
  *   - D1 table `cache` in DB (schema.sql)
@@ -42,6 +45,7 @@
 import { buildDashboard } from "./dashboard.js";
 import { getStats, recordHit } from "./analytics.js";
 import { dispatchParlayRefresh } from "./parlayRefresh.js";
+import { enterParlay } from "./parlayEntry.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
 import { getPlayerLog } from "./playerLog.js";
@@ -137,6 +141,11 @@ export default {
     if (path === "/refresh-parlay") {
       if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await dispatchParlayRefresh(env).catch((err) => ({ status: 502, body: { error: String(err) } }));
+      return jsonResponse(result.body, headers, result.status);
+    }
+    if (path === "/parlay-entry") {
+      if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await enterParlay(request, env).catch((err) => ({ status: 502, body: { error: String(err) } }));
       return jsonResponse(result.body, headers, result.status);
     }
     if (path === "/median-history") {

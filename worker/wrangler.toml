@@ -75,6 +75,7 @@ VAPID_PUBLIC = "BPvPSYw_tyBqsI3ZwzWEn4QdhCrPs5r6SB1X-6p8UrJE5BMc4GZW9hiHRc2Vj2_l
 #   wrangler secret put ESPN_S2
 #   wrangler secret put GITHUB_PAT
 #   wrangler secret put VAPID_PRIVATE_JWK
+#   wrangler secret put PARLAY_PIN   (the Enter Picks page's PIN)
 # (ESPN_SWID/S2 match the GitHub Actions secrets of the same name.
 # GITHUB_PAT is a fine-grained token scoped to just this repo, with
 # Actions: read/write and nothing else -- used only by /refresh-parlay
