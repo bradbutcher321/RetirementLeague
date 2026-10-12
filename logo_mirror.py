@@ -13,6 +13,11 @@ Files are named by a hash of the source URL, so a logo is downloaded once and
 then reused on every later run without touching the network. A URL that
 can't be fetched maps to None (the pages already fall back to a placeholder
 for a missing logo) and is simply tried again next run.
+
+Replacing a dead logo by hand: save the image as docs/icons/teams/<stem>.<ext>,
+where <stem> is _stem(dead_url). The job then uses it and never fetches the
+dead link, and a new logo uploaded on ESPN (a new URL) still takes over by
+itself. Kris's 284d3b914e532ccd.jpg is one (his thecoldwire.com link 404s).
 """
 
 import hashlib
