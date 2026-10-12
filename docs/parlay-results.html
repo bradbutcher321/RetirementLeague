@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=19">
-<link rel="stylesheet" href="nav.css?v=5">
+<link rel="stylesheet" href="theme.css?v=20">
+<link rel="stylesheet" href="nav.css?v=6">
 <style>
   /* ---------- Week selector ----------
      .selector-row and .parlay-select styling both live in theme.css. */
@@ -640,10 +640,10 @@
     const legKeys = legs.map(([name]) => `${week.year}:${week.week}:${name}`);
     const allOpen = legKeys.length > 0 && legKeys.every(k => expandedLegs.has(k));
     const toggleAll = legKeys.length
-      ? `<button type="button" class="leg-expand-toggle" id="leg-expand-toggle">${allOpen ? 'Collapse all' : 'Expand all'}</button>`
+      ? `<button type="button" class="leg-expand-toggle hit" id="leg-expand-toggle">${allOpen ? 'Collapse all' : 'Expand all'}</button>`
       : '';
     const share = legKeys.length
-      ? `<button type="button" class="leg-expand-toggle" id="leg-share">Share</button>`
+      ? `<button type="button" class="leg-expand-toggle hit" id="leg-share">Share</button>`
       : '';
     return `${hero}
       <div class="glass" style="margin-top:14px">

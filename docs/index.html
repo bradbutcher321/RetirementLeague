@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=19">
-<link rel="stylesheet" href="nav.css?v=5">
+<link rel="stylesheet" href="theme.css?v=20">
+<link rel="stylesheet" href="nav.css?v=6">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -2357,7 +2357,11 @@
   }
 
   function medianPendingBodyHtml() {
-    return `<div class="median-pending"><div class="pending-headline" id="kickoff-countdown">\u2014</div><div class="pending-sub">Until Thursday Night Kickoff</div></div>`;
+    // Named for the opener's day, so a Friday or Christmas opener doesn't
+    // still read "Thursday Night".
+    const day = getFirstKickoff().toLocaleDateString('en-US', { weekday: 'long' });
+    const label = day === 'Thursday' ? 'Thursday Night' : day;
+    return `<div class="median-pending"><div class="pending-headline" id="kickoff-countdown">\u2014</div><div class="pending-sub">Until ${label} Kickoff</div></div>`;
   }
 
   // Used for the initial load and every periodic refresh (new data, same or
@@ -3369,8 +3373,23 @@
     if (mwOpen === card.dataset.name) mwHide(); else mwShow(card.dataset.name, true);
   });
 
-  // Thursday Night Football kickoff is when this week's scores actually
-  // start moving off 0.00, so that's what the pending card counts down to.
+  // The first starter's kickoff is when this week's scores actually start
+  // moving off 0.00, so that's what the pending card counts down to. The
+  // Worker sends each starter's real game time, which covers viewers outside
+  // Eastern time and openers that aren't Thursday at 8:15 (Week 1's
+  // international game, a Christmas game). Thursday 8:15 PM local is only
+  // the fallback for when no starter has a game time.
+  function getFirstKickoff() {
+    let first = null;
+    for (const m of (lastMedianData && lastMedianData.matchups) || []) {
+      for (const p of [...(m.awayPlayers || []), ...(m.homePlayers || [])]) {
+        const d = p.game && p.game.date ? new Date(p.game.date) : null;
+        if (d && !isNaN(d) && (!first || d < first)) first = d;
+      }
+    }
+    return first || getNextThursdayKickoff();
+  }
+
   function getNextThursdayKickoff() {
     const now = new Date();
     const target = new Date(now);
@@ -3398,7 +3417,7 @@
   function updateKickoffCountdown() {
     const el = document.getElementById('kickoff-countdown');
     if (!el) return;
-    el.textContent = formatCountdown(getNextThursdayKickoff() - new Date());
+    el.textContent = formatCountdown(getFirstKickoff() - new Date());
   }
 
   // Shown for the Current Score card before Week 1 kicks off, when every

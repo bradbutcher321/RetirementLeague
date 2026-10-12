@@ -28,6 +28,7 @@
 @media (prefers-reduced-motion: reduce){ .nav-bar{ transition: none; } }
 
 .nav-toggle{
+  position: relative;
   flex-shrink: 0;
   width: 34px;
   height: 34px;
@@ -42,6 +43,10 @@
   cursor: pointer;
   padding: 0;
 }
+/* Drawn 34px, but tappable at 44x44: the invisible ::before reaches 5px
+   past the border on every side (insets start inside the 1px border),
+   within the bar's 14px padding, so nothing moves. */
+.nav-toggle::before{ content: ''; position: absolute; inset: -6px; }
 .nav-toggle span{
   width: 18px;
   height: 2px;

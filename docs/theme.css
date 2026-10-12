@@ -316,7 +316,7 @@ body{
    wraps -- with a mouse, a sideways scroller hides options. Pair it with
    keepSelectedInView() from page-common.js so the chosen item is visible. */
 @media (max-width: 720px){
-  .scroll{ flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .scroll{ flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
   .scroll::-webkit-scrollbar{ display: none; }
   .scroll > *{ flex: none; }
 }
@@ -393,6 +393,22 @@ body{
 @media (prefers-reduced-motion: reduce){
   .tabs .tab, .tab-row .year-tab, .seg button, .sup-seg button, .scope-row .scope-btn, .board-toggle button{ transition: none; }
 }
+
+/* Tap targets. A pill is drawn --ctl-h tall (32px, 26px on Franchise's
+   Graph/Grid switch), under the 44px a finger needs. Rather than make every
+   track taller, each button carries an invisible ::before that reaches 44px
+   tall and half the gap sideways, so a tap just above, below or between two
+   pills still lands on one. Nothing on screen moves or changes size. A
+   phone .scroll track clips it at its own edge (overflow-y below), which
+   still leaves the whole track height. .hit does the same for a lone pill
+   button outside a track (Parlay's Expand all / Share). */
+.tabs .tab, .tab-row .year-tab, .seg button, .sup-seg button, .scope-row .scope-btn, .board-toggle button, .hit{ position: relative; }
+.tabs .tab::before, .tab-row .year-tab::before, .seg button::before, .sup-seg button::before,
+.scope-row .scope-btn::before, .board-toggle button::before{
+  content: ''; position: absolute;
+  inset: min(0px, calc((var(--ctl-h) - 44px) / 2)) calc(var(--track-pad) / -2);
+}
+.hit::before{ content: ''; position: absolute; inset: -7px -4px; }
 
 /* Hover styles sit behind (hover: hover), here and in every page's styles.
    iOS applies :hover on a tap and keeps it until the next tap elsewhere, so

@@ -2,11 +2,13 @@
 // Overview (the league-wide Achievement Leaderboard), so both read the exact same badges
 // and unlock logic instead of two copies drifting apart.
 const ACHIEVEMENTS_LIB = (() => {
-  // A season counts as "in progress" below 10 games played, same cutoff Franchise's season
-  // arc/history badges use to avoid crediting a partial season as a finished one.
+  // A season is "in progress" until it has a final standing (franchise.json leaves it 0 for
+  // the current year), so a partial season is never credited as a finished one. The game
+  // count alone isn't enough: reg_record includes median games from 2025 on, so Week 5
+  // already reads as 10 games.
   function seasonState(season) {
     const games = (season.reg_record || '0-0').split('-').reduce((a, b) => a + (parseInt(b, 10) || 0), 0);
-    if (games < 10) return 'progress';
+    if (!season.final_standing || games < 10) return 'progress';
     if (season.champion) return 'champion';
     if (season.final_standing === 2) return 'runner-up';
     if (season.made_playoffs) return 'playoffs';
@@ -60,7 +62,12 @@ const ACHIEVEMENTS_LIB = (() => {
       sub: p => { const s = bestChampionshipStreak(p); return `Three straight titles, ${s.endYear - 2}-${s.endYear}`; } },
     { name: 'Iron Manager', icon: 'shield', desc: 'Make the playoffs in 75%+ of your seasons (min. 4)',
       test: p => everHitPlayoffRate(p, 4, 0.75),
-      sub: p => `Playoffs in ${p.career.standings.playoff_appearances} of ${p.seasons} seasons` },
+      sub: p => {
+        // Finished seasons only, like the unlock test and Career Arc: the
+        // season in progress hasn't had a playoff field yet.
+        const done = p.season_history.filter(s => seasonState(s) !== 'progress');
+        return `Playoffs in ${done.filter(s => s.made_playoffs).length} of ${done.length} seasons`;
+      } },
     { name: 'The Heater', icon: 'flame', desc: 'Win 5 games in a row',
       test: p => p.streaks.head_to_head.longest_win >= 5, sub: p => `${p.streaks.head_to_head.longest_win}-game win streak` },
     { name: 'Unstoppable', icon: 'flame', desc: 'Win 8 games in a row',
