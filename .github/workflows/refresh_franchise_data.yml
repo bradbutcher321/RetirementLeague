@@ -1,19 +1,45 @@
 name: Refresh Franchise Data
 
 on:
-  schedule:
-    # Tuesday and Thursday mornings. GitHub Actions cron always runs in UTC
-    # (there's no named-timezone option), so 12:00 UTC lands around 7-8am
-    # US Eastern depending on daylight saving — adjust the hour here if you
-    # want it to land at a more precise local time.
-    - cron: '0 12 * * 2,4'
+  # Chained to the nightly D1 refresh (update_history_d1.yml, 12:22am
+  # Eastern) instead of its own cron, so it always builds from that night's
+  # data -- GitHub's cron runs hours late, and the old fixed 12:00 UTC slot
+  # was landing mid-afternoon. The gate job below lets it through only on
+  # Tuesday (Monday Night Football results), Thursday (ESPN's stat
+  # corrections, usually applied Tue-Wed) and Friday (a backstop for late
+  # corrections). A Monday run would add nothing: this script drops
+  # matchups ESPN hasn't decided, and none are decided until MNF ends.
+  workflow_run:
+    workflows: ["Update League History (D1)"]
+    types: [completed]
   workflow_dispatch: # Manual button inside GitHub web console
 
 permissions:
   contents: write
 
 jobs:
+  gate:
+    # Only after a successful D1 refresh, and only on Tue/Thu/Fri (US
+    # Eastern, so a run GitHub starts late still counts as the right day).
+    # A manual run always goes ahead.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.day.outputs.go }}
+    steps:
+    - id: day
+      run: |
+        dow=$(TZ=America/New_York date +%u)
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$dow" = 2 ] || [ "$dow" = 4 ] || [ "$dow" = 5 ]; then
+          echo "go=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "Day $dow is not Tue/Thu/Fri -- skipping."
+          echo "go=false" >> "$GITHUB_OUTPUT"
+        fi
+
   build-and-commit:
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Code
