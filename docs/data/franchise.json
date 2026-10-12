@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-12T02:37:55.077206+00:00",
+  "generated_at": "2026-10-12T03:09:32.776797+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -5130,7 +5130,7 @@
           "total_pf": 2650.82,
           "total_pa": 3061.28,
           "avg_pf": 82.84,
-          "avg_pa": 95.67
+          "avg_pa": 95.66
         },
         "median": {
           "wins": 0,
