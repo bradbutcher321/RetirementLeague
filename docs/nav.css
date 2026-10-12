@@ -188,7 +188,18 @@
 /* The sheet: theme.css's bottom sheet on a phone; above 720px a centred
    card instead of a strip across the whole desktop. */
 .you-head{ display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 4px; }
-.you-title{ font-weight: 700; font-size: 1.02rem; }
+.you-tabs{ flex: 1; min-width: 0; flex-wrap: nowrap; }
+.you-tabs button{ flex: 1; justify-content: center; padding: 0 8px; }
+/* Panels differ in height; a floor keeps the slider from jumping around
+   as the sheet grows and shrinks under it. */
+#you-body{ min-height: 300px; padding-top: 12px; }
+.you-row small{ display: block; color: var(--text-dim); font-size: 0.74rem; margin-top: 2px; }
+.you-colors{ display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.you-color{ display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--text); font: 600 0.84rem var(--body); text-align: left; cursor: pointer; outline: 1.5px solid transparent; outline-offset: 2px; }
+.you-color.on{ outline-color: var(--ring); }
+.you-swatch{ flex: none; width: 18px; height: 18px; border-radius: 50%; background: var(--ring); }
+.you-color:focus-visible{ box-shadow: 0 0 0 2px var(--gold); }
+@media (hover: hover){ .you-color:hover{ background: var(--item-hover); } }
 .you-sub{ color: var(--text-dim); font-size: 0.8rem; line-height: 1.4; padding: 0 4px 12px; }
 .you-picks{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .you-pick{

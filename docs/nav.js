@@ -79,9 +79,11 @@
   // ---------- You (site audit II #36 and #37) ----------
   // The round button at the right of the bar: your monogram once you've
   // picked your team (getMe/setMe in page-common.js), a person outline
-  // before. It opens the You sheet: which team is yours, and the Home
-  // Screen app's notifications. Anything else on a page can open the same
-  // sheet with openYou() (the dashboard's first-visit prompt does).
+  // before. It opens the You sheet, three panels behind one slider: which
+  // team is yours, the Home Screen app's notifications, and your settings
+  // (getSettings/setSetting in page-common.js). Anything else on a page can
+  // open the same sheet with openYou(panel) (the dashboard's first-visit
+  // prompt does).
   const WORKER = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const VAPID_PUBLIC = 'BPvPSYw_tyBqsI3ZwzWEn4QdhCrPs5r6SB1X-6p8UrJE5BMc4GZW9hiHRc2Vj2_l3zSZTfnLhHKRmg8QT9ADT6c';
   const PREFS_KEY = 'rl-push-prefs';
@@ -155,23 +157,54 @@
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
-  window.openYou = async function openYou() {
+  const YOU_PANELS = [['you', 'You'], ['push', 'Notifications'], ['settings', 'Settings']];
+  let youPanel = 'you';
+  let youNames = [];
+
+  window.openYou = async function openYou(panel) {
     if (document.getElementById('you-sheet')) return;
     lastFocus = document.activeElement;
+    youPanel = YOU_PANELS.some(([k]) => k === panel) ? panel : 'you';
     document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="you-scrim"></div>
-      <div class="sheet you-sheet" id="you-sheet" role="dialog" aria-modal="true" aria-labelledby="you-title">
+      <div class="sheet you-sheet" id="you-sheet" role="dialog" aria-modal="true" aria-label="You">
         <div class="sheet-grab" aria-hidden="true"><span></span></div>
-        <div class="sheet-head you-head"><div class="you-title" id="you-title">Which team is yours?</div><button class="x" type="button" aria-label="Close">✕</button></div>
-        <div class="sheet-body"><div id="you-body"><div class="you-note">Loading…</div></div></div>
+        <div class="sheet-head you-head">
+          <div class="sup-seg you-tabs" role="tablist" aria-label="You">${YOU_PANELS.map(([k, label]) =>
+            `<button type="button" role="tab" data-you-panel="${k}" id="you-tab-${k}" aria-controls="you-body">${label}</button>`).join('')}</div>
+          <button class="x" type="button" aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-body"><div id="you-body" role="tabpanel"><div class="you-note">Loading…</div></div></div>
       </div>`);
     const sheet = document.getElementById('you-sheet');
     document.getElementById('you-scrim').addEventListener('click', closeYou);
     sheet.querySelector('.x').addEventListener('click', closeYou);
+    sheet.querySelectorAll('[data-you-panel]').forEach(b => b.addEventListener('click', () => {
+      youPanel = b.dataset.youPanel;
+      drawPanel();
+    }));
     document.addEventListener('keydown', onKey);
     sheet.querySelector('.x').focus();
-    const names = await loadManagers();
-    if (document.getElementById('you-sheet') === sheet) drawYou(names);
+    drawTabs();
+    youNames = await loadManagers();
+    if (document.getElementById('you-sheet') === sheet) drawPanel();
   };
+
+  function drawTabs() {
+    document.querySelectorAll('#you-sheet [data-you-panel]').forEach(b => {
+      const on = b.dataset.youPanel === youPanel;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', on);
+    });
+    const body = document.getElementById('you-body');
+    if (body) body.setAttribute('aria-labelledby', 'you-tab-' + youPanel);
+  }
+
+  function drawPanel() {
+    drawTabs();
+    if (youPanel === 'push') drawPushPanel();
+    else if (youPanel === 'settings') drawSettings();
+    else drawYou(youNames);
+  }
 
   function drawYou(names) {
     const body = document.getElementById('you-body');
@@ -179,18 +212,46 @@
     const me = getMe();
     const picks = names.map(n => `<button type="button" class="you-pick${n === me ? ' on' : ''}" data-me="${esc(n)}" aria-pressed="${n === me}">${esc(n)}</button>`).join('');
     body.innerHTML = `
-      <div class="you-sub">Your matchup leads the dashboard, your row is ringed, and Franchise and Head to Head open on you.</div>
-      <div class="you-picks">${picks}<button type="button" class="you-pick none${me ? '' : ' on'}" data-me="" aria-pressed="${!me}">Not in the league</button></div>
-      <div class="you-sec">
-        <div class="you-sec-t">Notifications</div>
-        <div id="you-push"></div>
-      </div>`;
+      <div class="you-sub">Your matchup comes first on the dashboard, your row is ringed, and Franchise and Head to Head open on you.</div>
+      <div class="you-picks">${picks}<button type="button" class="you-pick none${me ? '' : ' on'}" data-me="" aria-pressed="${!me}">Not in the league</button></div>`;
     body.querySelectorAll('[data-me]').forEach(b => b.addEventListener('click', () => {
       setMe(b.dataset.me);
       drawYou(names);
       syncSub();
     }));
+  }
+
+  function drawPushPanel() {
+    const body = document.getElementById('you-body');
+    if (!body) return;
+    body.innerHTML = '<div id="you-push"></div>';
     drawPush();
+  }
+
+  // Settings: where your matchup sits on the dashboard, and your ring's
+  // color -- each swatch drawn ringed, so the pick shows as it will look.
+  function drawSettings() {
+    const body = document.getElementById('you-body');
+    if (!body) return;
+    const set = getSettings();
+    const me = getMe();
+    const current = meColor()[0];
+    body.innerHTML = `
+      <label class="you-row"><span>Your matchup at the top of the dashboard<small>Off: it leads the matchups list instead</small></span><input type="checkbox" role="switch" class="you-sw" id="you-set-top"${set.meTop ? ' checked' : ''}></label>
+      <div class="you-sec">
+        <div class="you-sec-t">Your color</div>
+        <div class="you-sub">The ring around your matchup, cards and standings row.</div>
+        <div class="you-colors" role="radiogroup" aria-label="Your color">${ME_COLORS.map(([k, name, ring]) =>
+          `<button type="button" role="radio" class="you-color${k === current ? ' on' : ''}" data-color="${k}" aria-checked="${k === current}" style="--ring:${ring}"><span class="you-swatch" aria-hidden="true"></span>${esc(name)}</button>`).join('')}</div>
+        ${me ? '' : '<div class="you-note">Pick your team under You to see it on the site.</div>'}
+      </div>`;
+    body.querySelector('#you-set-top').addEventListener('change', e => setSetting('meTop', e.target.checked));
+    body.querySelectorAll('[data-color]').forEach(b => b.addEventListener('click', () => {
+      setSetting('meColor', b.dataset.color);
+      drawSettings();
+      const again = body.querySelector(`[data-color="${b.dataset.color}"]`);
+      if (again) again.focus();
+    }));
   }
 
   async function drawPush() {
@@ -212,7 +273,7 @@
     const sw = (id, label, on, dis) => `<label class="you-row${dis ? ' dis' : ''}"><span>${label}</span><input type="checkbox" role="switch" class="you-sw" id="${id}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}></label>`;
     box.innerHTML = sw('you-push-on', 'Notify me', !!sub) + (sub ? `
       <div class="you-types">${PUSH_TYPES.map(([k, label, mine]) => sw('you-pt-' + k, label, prefs[k] && (!mine || !!me), mine && !me)).join('')}</div>
-      ${me ? '' : '<div class="you-note">Pick your team above for the ones about your games.</div>'}` : '');
+      ${me ? '' : '<div class="you-note">Pick your team under You for the ones about your games.</div>'}` : '');
     box.querySelector('#you-push-on').addEventListener('change', e => togglePush(e.target));
     PUSH_TYPES.forEach(([k]) => {
       const el = box.querySelector('#you-pt-' + k);

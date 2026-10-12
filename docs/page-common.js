@@ -48,6 +48,41 @@ function isMe(name) {
   return !!me && !!name && me.toLowerCase() === String(name).toLowerCase();
 }
 
+// ---------- Your settings (You sheet › Settings, nav.js) ----------
+// Kept in this browser like the pick above. Changing one fires
+// 'rl-settings' so an open page can redraw.
+//   meTop:   the dashboard puts your matchup at the top of the page instead
+//            of first in its matchups list.
+//   meColor: the ring on your rows and cards (theme.css .me, --me-ring).
+const SETTINGS_KEY = 'rl-settings';
+// [key, name, ring]. No gold (it marks a leader), green or red (they mean
+// winning and losing) -- the ring only ever says "this one's yours".
+const ME_COLORS = [
+  ['white', 'White', 'rgba(245,245,243,0.72)'],
+  ['canaveral', 'Canaveral blue', '#7AAEDB'],
+  ['pink', 'Pink', '#F29BC4'],
+  ['lavender', 'Lavender', '#B7A4F2'],
+  ['orange', 'Orange', '#F0A35E'],
+  ['seafoam', 'Seafoam', '#86D9C6'],
+];
+function getSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (e) { return {}; }
+}
+function setSetting(key, value) {
+  const s = getSettings();
+  s[key] = value;
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) {}
+  applyMeColor();
+  window.dispatchEvent(new CustomEvent('rl-settings', { detail: s }));
+}
+function meColor() {
+  return ME_COLORS.find(c => c[0] === getSettings().meColor) || ME_COLORS[0];
+}
+function applyMeColor() {
+  document.documentElement.style.setProperty('--me-ring', meColor()[2]);
+}
+applyMeColor();
+
 // Service worker (sw.js, audit II #37/#38): instant opens from the last
 // copy, and the Home Screen app's notifications. Real site only -- on the
 // localhost preview it would serve yesterday's edit -- unless ?sw is added.

@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=25">
-<link rel="stylesheet" href="nav.css?v=8">
+<link rel="stylesheet" href="theme.css?v=26">
+<link rel="stylesheet" href="nav.css?v=9">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -781,9 +781,14 @@
   .mb-card.sel{ border-color: var(--lead-line); background: var(--lead-tint); }
 
   /* This is me (site audit II #36): your own matchup leads the matchups
-     list, ringed. Up here, only the one-line ask before you've picked, and
-     your Season Wrapped once the season's over. */
+     list, ringed -- or, with the You sheet's "top of the dashboard"
+     setting, sits up here at a list card's width (centred on desktop,
+     where the list runs two across). Also up here: the one-line ask before
+     you've picked, and your Season Wrapped once the season's over. */
   #me-section{ margin-bottom: 28px; }
+  #me-section .matchups{ grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px){ #me-section .matchups{ max-width: calc(50% - 7px); margin: 0 auto; } }
+  #me-section .matchups:empty{ display: none; }
   .me-ask{ display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 4px; border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 14px; margin-bottom: 12px; }
   .me-ask-go{ flex: 1; min-width: 0; min-height: 44px; text-align: left; background: none; border: 0; color: var(--text); font: 600 0.92rem/1.3 var(--body); padding: 6px 10px; cursor: pointer; }
   .me-ask-go span{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.76rem; }
@@ -1159,10 +1164,11 @@
     <section id="recap-section" hidden></section>
 
     <!-- This is me (site audit II #36): the visitor's own matchup leads the
-         matchups list below, ringed. Until they've picked a team, a
+         matchups list below, ringed, or sits here with the You sheet's
+         "top of the dashboard" setting on. Until they've picked a team, a
          one-line prompt sits here; its ✕ hides it for good (the You button
          in the bar still opens the same sheet). -->
-    <section id="me-section" hidden></section>
+    <section id="me-section" hidden><div class="matchups" id="my-matchup"></div></section>
 
     <section>
       <div id="median-container">
@@ -1283,8 +1289,8 @@
     <footer id="site-footer" data-note="Refreshes every 2 minutes"></footer>
   </div>
 
-<script src="nav.js?v=8"></script>
-<script src="page-common.js?v=26"></script>
+<script src="nav.js?v=9"></script>
+<script src="page-common.js?v=27"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -4573,7 +4579,7 @@
   // the top slot asks once. The ✕ hides the ask for good; the You button in
   // the bar opens the same sheet any time.
   const ME_ASK_KEY = 'rl-me-ask-hidden';
-  function renderMePrompt() {
+  function renderMePrompt(hasMine) {
     const section = document.getElementById('me-section');
     let hidden = false;
     try { hidden = !!localStorage.getItem(ME_ASK_KEY); } catch (e) {}
@@ -4589,7 +4595,7 @@
           <span class="me-ask-go">Your ${leagueYear} Season Wrapped <span>Best week, worst lineup call, bubble luck and a picture for the chat.</span></span><span class="chev" aria-hidden="true">›</span>
         </a>`);
     }
-    section.hidden = !ask && !wrappedName;
+    section.hidden = !hasMine && !ask && !wrappedName;
     const old = document.getElementById('me-ask');
     if (!ask) { if (old) old.remove(); return; }
     if (old) return;
@@ -4602,7 +4608,7 @@
     el.querySelector('.x').addEventListener('click', () => {
       try { localStorage.setItem(ME_ASK_KEY, '1'); } catch (e) {}
       el.remove();
-      section.hidden = !document.getElementById('me-wrapped');
+      section.hidden = !document.getElementById('my-matchup').children.length && !document.getElementById('me-wrapped');
     });
   }
   // Picking (or changing) your team redraws from the numbers already here.
@@ -4611,6 +4617,7 @@
   // screen -- the live week, or a past one picked with the week stepper.
   let liveData = null, shownData = null;
   window.addEventListener('rl-me', () => { if (shownData) renderDashboard(shownData, false, true); });
+  window.addEventListener('rl-settings', () => { if (shownData) renderDashboard(shownData, false, true); });
 
   // ---------- Week picker and stepper ----------
   // Any week of any season. ‹ › step one week at a time, across seasons;
@@ -5096,12 +5103,15 @@
         }
         renderWeekStep();
 
-        // Yours (getMe in page-common.js) leads the matchups, ringed; the
-        // rest of the page keeps its order.
+        // Yours (getMe in page-common.js) leads the matchups, ringed -- or
+        // the whole page, with the You sheet's meTop setting on.
         const prevMatchups = animate ? captureMatchupState() : null;
         const mine = matchups.find(m => isMe(m.awayManager) || isMe(m.homeManager));
-        const ordered = mine ? [mine, ...matchups.filter(m => m !== mine)] : matchups;
-        renderMePrompt();
+        const onTop = Boolean(mine && getSettings().meTop);
+        const rest = matchups.filter(m => m !== mine);
+        const ordered = onTop ? rest : mine ? [mine, ...rest] : matchups;
+        document.getElementById('my-matchup').innerHTML = onTop ? renderMatchupCard(mine) : '';
+        renderMePrompt(onTop);
         document.getElementById('matchups-container').innerHTML =
           ordered.length ? ordered.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
         if (prevMatchups) animateMatchupRefresh(prevMatchups);
@@ -5175,6 +5185,7 @@
     markClippedNames(card);
   };
   document.getElementById('matchups-container').addEventListener('click', onMatchupClick);
+  document.getElementById('my-matchup').addEventListener('click', onMatchupClick);
 
   // Roster names hard-clip at the team badge; flag the ones that actually
   // overflow so CSS can fade their last few px. Collapsed rosters are

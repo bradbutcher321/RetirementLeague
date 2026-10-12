@@ -933,7 +933,8 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
    sheet (nav.js): a white ring just outside it. White because every border
    colour on a card already means something (gold lead, green/red locks),
    and outside the border so it stacks with whichever one is there. */
-.me{ outline: 1.5px solid rgba(245,245,243,0.72); outline-offset: 2px; }
+/* Your ring; its color is your pick in the You sheet's Settings (page-common.js applyMeColor). */
+.me{ outline: 1.5px solid var(--me-ring, rgba(245,245,243,0.72)); outline-offset: 2px; }
 
 /* ---------- Detail panels: a bottom sheet on a phone, a popover on desktop ----------
    Shared by Game Records (a record's top 10) and the Dashboard's Median
