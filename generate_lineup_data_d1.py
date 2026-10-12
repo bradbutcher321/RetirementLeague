@@ -12,9 +12,16 @@ Shape: {"weeks": {"<week>": {"<manager>": [[name, pro_team, slot, points,
 projected], ...]}}}, each list already in display order -- starters in
 lineup-slot order, then the bench by points, then IR.
 
-Usage: python generate_lineup_data_d1.py [--check]
-  --check  also confirms each manager's starters add up to their game score
-           in league.json, and reports any game that doesn't.
+Also writes docs/data/lineups/records.json, Game Records' player and
+projection records (audit II #9), from every year file on disk -- 2017 and
+2018 included, which generate_old_lineup_data.py wrote -- and league.json
+for who played whom and in what kind of game. Each record keeps its top 10
+per season; the page merges seasons for All-Time.
+
+Usage: python generate_lineup_data_d1.py [--check] [--records-only]
+  --check         also confirms each manager's starters add up to their game
+                  score in league.json, and reports any game that doesn't.
+  --records-only  skips D1 and only rebuilds records.json from the files.
 """
 import json
 import os
@@ -82,7 +89,86 @@ def check(year, payload):
     return bad
 
 
+TOP = 10
+
+
+def team_projection(starters):
+    """A lineup's projected total, or None where ESPN's projections are
+    incomplete: a starter projected 0 who then scored. (One projected 0 who
+    scored 0 was simply out.) That leaves out 2017, which has none, and 2019,
+    where every kicker is missing one."""
+    if any(p[4] == 0 and p[3] != 0 for p in starters):
+        return None
+    return round(sum(p[4] for p in starters), 2)
+
+
+def build_records():
+    """Per season: the best and worst single starts, the biggest bench games,
+    the biggest upsets by projection, and the teams that beat their
+    projection by the most. Consolation games count toward the highs (best
+    start, bench game, beating a projection) and nothing else, as on the rest
+    of Game Records."""
+    with open(LEAGUE_PATH, encoding="utf-8") as f:
+        games = json.load(f)["games"]
+    out = {}
+    for name in sorted(os.listdir(OUTPUT_DIR)):
+        if not name[:4].isdigit() or not name.endswith(".json"):
+            continue
+        year = int(name[:4])
+        with open(os.path.join(OUTPUT_DIR, name), encoding="utf-8") as f:
+            weeks = json.load(f)["weeks"]
+        best, worst, bench, upsets, beat = [], [], [], [], []
+        for y, week, gtype, p1, p2, s1, s2, winner, *_ in games:
+            if y != year or gtype == "Bye" or not p2 or winner == "In Progress" or not s1 or not s2:
+                continue
+            wk = weeks.get(str(week), {})
+            if p1 not in wk or p2 not in wk:
+                continue
+            cons = gtype == "Cons"
+            proj = {}
+            for me, ms, opp, os_ in ((p1, s1, p2, s2), (p2, s2, p1, s1)):
+                game = {"m": me, "ms": ms, "o": opp, "os": os_, "y": year, "w": week, "t": gtype}
+                starters = [p for p in wk[me] if p[2] not in BENCH_SLOTS]
+                for p in starters:
+                    row = {**game, "p": p[0], "pos": p[2], "pts": p[3]}
+                    best.append(row)
+                    if not cons:
+                        worst.append(row)
+                for p in wk[me]:
+                    if p[2] == "BE":
+                        bench.append({**game, "p": p[0], "pos": p[2], "pts": p[3]})
+                proj[me] = team_projection(starters)
+                if proj[me] is not None:
+                    beat.append({**game, "proj": proj[me], "d": round(ms - proj[me], 2)})
+            if cons or proj[p1] is None or proj[p2] is None or winner not in (p1, p2):
+                continue
+            loser = p2 if winner == p1 else p1
+            gap = round(proj[loser] - proj[winner], 2)
+            if gap > 0:
+                ws, ls = (s1, s2) if winner == p1 else (s2, s1)
+                upsets.append({"m": winner, "ms": ws, "o": loser, "os": ls, "y": year, "w": week, "t": gtype,
+                               "pw": proj[winner], "pl": proj[loser], "gap": gap})
+        top = lambda rows, key, desc=True: sorted(rows, key=lambda r: -r[key] if desc else r[key])[:TOP]
+        out[str(year)] = {
+            "best": top(best, "pts"), "worst": top(worst, "pts", False), "bench": top(bench, "pts"),
+            "upset": top(upsets, "gap"), "beat": top(beat, "d"),
+        }
+    path = os.path.join(OUTPUT_DIR, "records.json")
+    text = json.dumps({"years": out}, separators=(",", ":"), ensure_ascii=False)
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            if f.read() == text:
+                print("records: no changes")
+                return
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    print(f"records: wrote {len(out)} seasons ({len(text) // 1024} KB)")
+
+
 def main():
+    if "--records-only" in sys.argv:
+        build_records()
+        return
     do_check = "--check" in sys.argv
     teams = hl.d1_query("SELECT year, team_id, owner_espn_id FROM teams")
     # Keyed by (year, team_id) -- a departed owner's team_id can be reassigned
@@ -114,6 +200,7 @@ def main():
         print(f"{year}: wrote {len(payload['weeks'])} weeks ({len(text) // 1024} KB)")
     if do_check:
         print(f"Check: {bad} mismatched or missing lineups")
+    build_records()
 
 
 if __name__ == "__main__":

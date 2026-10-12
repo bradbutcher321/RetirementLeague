@@ -41,15 +41,14 @@
 <link rel="stylesheet" href="nav.css?v=5">
 <link rel="stylesheet" href="league.css?v=7">
 <style>
-  /* ---------- Game Records: one card per pair of records ----------
-     Built phone-first. Each card holds a high-end and a low-end record as
-     two rows. A tile with an up or down arrow says which end of the pair a
-     row is (no initials: the name is right beside it), the record type is a
-     small dim caption, and every value is gold -- a low-end record is
-     still a record, so neither side of a pair outranks the other. The
-     holder's name is the one bright line of text in a row. Tapping a record
-     opens its top 10: a bottom sheet on a phone, a popover under the whole
-     card on desktop. */
+  /* ---------- Game Records: one card per group of records ----------
+     Built phone-first. Each card holds two or three related records as
+     rows. A tile with an up or down arrow says which end a row is (no
+     initials: the name is right beside it), the record type is a small dim
+     caption, and every value is gold -- a low-end record is still a
+     record, so no row of a card outranks another. The holder's name is the
+     one bright line of text in a row. Tapping a record opens its top 10: a
+     bottom sheet on a phone, a popover under the whole card on desktop. */
   .sections{ display:grid; grid-template-columns:1fr; gap:12px; align-items:start; }
   @media (min-width:721px){ .sections{ grid-template-columns:1fr 1fr; gap:14px; } }
   /* margin-bottom:0 -- theme.css gives every <section> 44px of bottom
@@ -80,7 +79,6 @@
   /* ---------- The top 10 (sheet and popover share it) ---------- */
   .list-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
   .list-title{ font-weight:700; font-size:1.05rem; }
-  .list-switch{ margin-bottom:6px; }
   /* Separators are drawn as a pseudo-line rather than a border-top, so an
      open row's gold outline isn't interrupted by the line above it. */
   .crow{ display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:10px; align-items:center; padding:9px 4px; position:relative; border:1px solid transparent; border-radius:10px; }
@@ -148,8 +146,7 @@
   @media (prefers-reduced-motion:reduce){ .lineup, .lineup > div{ transition:none; } }
 
   /* The list opens in a bottom sheet on a phone and a popover under the
-     whole card on desktop -- the same spot for either of its records, so
-     flipping the switch swaps the list without it moving. Both surfaces,
+     whole card on desktop -- the same spot for any of its records. Both surfaces,
      and their × button, are shared with the Dashboard's Median Watch: see
      "Detail panels" in theme.css. */
 </style>
@@ -268,10 +265,46 @@
     const tally = key => [...wf.by].filter(([, t]) => t[key] > 0).sort((a, b) => b[1][key] - a[1][key]).slice(0, 10)
       .map(([name, t]) => ({ v: t[key], label: String(t[key]), m: { a: name }, meta: `of ${wf.weeks} weeks` }));
 
+    // ----- Whole-league weeks: every team's score averaged, regular season
+    // only (every team plays), and only weeks with every game final. -----
+    const regWeeks = new Map();
+    D.games.filter(g => g.type === 'Reg' && g.p2 && (sel === 'all' || g.year === Number(sel))).forEach(g => {
+      const k = `${g.year}:${g.week}`;
+      if (!regWeeks.has(k)) regWeeks.set(k, { year: g.year, week: g.week, open: false, list: [] });
+      const w = regWeeks.get(k);
+      if (g.winner === 'In Progress' || !(g.s1 > 0 && g.s2 > 0)) w.open = true;
+      w.list.push({ p: g.p1, s: g.s1 }, { p: g.p2, s: g.s2 });
+    });
+    const leagueWeeks = [...regWeeks.values()].filter(w => !w.open).map(w => {
+      const top = w.list.reduce((a, b) => (b.s > a.s ? b : a));
+      return { v: w.list.reduce((t, x) => t + x.s, 0) / w.list.length, m: { a: `${w.year} · Week ${w.week}` }, meta: `High ${top.p} ${f2(top.s)} · ${w.list.length} teams` };
+    });
+
+    // ----- Player games and projections: data/lineups/records.json, each
+    // record's top 10 per season (generate_lineup_data_d1.py), so All-Time
+    // is the top 10 of every season's lists put together. -----
+    const pr = key => (PR ? Object.entries(PR.years).filter(([y]) => sel === 'all' || y === sel).flatMap(([, r]) => r[key] || []) : []);
+    const gameOf = r => ({ year: r.y, week: r.w, type: r.t });
+    const slot = s => (s === 'BE' ? 'Bench' : SLOT_LABEL[s] || s);
+    const vs = r => ({ a: r.m, as: r.ms, b: r.o, bs: r.os });
+    const noLineups = PR ? 'No lineups this season' : "Couldn't load lineups";
+    const noProj = PR ? 'No projections this season' : "Couldn't load projections";
+    const player = (title, key, desc, empty) => ({
+      title, empty,
+      items: by(pr(key), r => r.pts, desc).slice(0, 10).map(r => ({ v: r.pts, player: r.p, m: vs(r), meta: `${slot(r.pos)} · ${when(gameOf(r))}`, g: gameOf(r) })),
+    });
+    const gain = (title, key, meta) => ({
+      title, empty: noProj,
+      items: by(pr(key), r => r[key === 'upset' ? 'gap' : 'd'], true).slice(0, 10).map(r => {
+        const v = key === 'upset' ? r.gap : r.d;
+        return { v, label: '+' + f2(v), m: vs(r), meta: `${meta(r)} · ${when(gameOf(r))}`, g: gameOf(r) };
+      }),
+    });
+
     return {
-      topS: team('Top Scores', true), lowS: team('Lowest Scores', false),
-      hiM: match('Highest Victory Margins', decided, margin, true),
-      loM: match('Lowest Victory Margins', decided, margin, false),
+      topS: team('Highest Scores', true), lowS: team('Lowest Scores', false),
+      hiM: match('Biggest Victory Margins', decided, margin, true),
+      loM: match('Closest Victory Margins', decided, margin, false),
       hiC: match('Most Combined Points', games, total, true), loC: match('Least Combined Points', games, total, false),
       hiL: match('Highest Score in a Loss', allDecided, lS, true, loseFirst, true), loW: match('Lowest Score in a Win', decided, wS, false, winFirst, true),
       unl: { title: 'Unluckiest Losses', ownScore: true, items: unlucky.slice(0, 10).map(luckItem) },
@@ -284,6 +317,14 @@
       loWk: { title: 'Most Weekly Low Scores', ownScore: true, ties: true, items: tally('low') },
       bubW: { title: 'Most Bubble Wins', ownScore: true, ties: true, items: tally('bubW') },
       bubL: { title: 'Most Bubble Losses', ownScore: true, ties: true, items: tally('bubL') },
+      best: player('Best Individual Starts', 'best', true, noLineups),
+      worst: player('Worst Individual Starts', 'worst', false, noLineups),
+      // 2017's lineups are starters only.
+      bench: player('Biggest Bench Games', 'bench', true, PR && sel === '2017' ? 'No bench this season' : noLineups),
+      upset: gain('Biggest Upsets by Projection', 'upset', r => `Proj ${f2(r.pw)} to ${f2(r.pl)}`),
+      beat: gain('Beat Their Projection by the Most', 'beat', r => `Proj ${f2(r.proj)}`),
+      lgHi: { title: 'Highest-Scoring Weeks', items: by(leagueWeeks, x => x.v, true).slice(0, 10) },
+      lgLo: { title: 'Lowest-Scoring Weeks', items: by(leagueWeeks, x => x.v, false).slice(0, 10) },
     };
   }
 
@@ -293,22 +334,28 @@
   // The holder's own score always sits next to their name -- on the card and
   // in the top 10 alike -- even where it's also the record's value. A count
   // (weekly highs/lows) has no score of its own to show.
-  const withScore = (c, i) => `${esc(i.m.a)}${!c.ties && i.m.as != null ? ` <span class="own">${f2(i.m.as)}</span>` : ''}`;
+  // A player's game names the player, then whose lineup he was in.
+  const withScore = (c, i) => (i.player ? `${esc(i.player)} <span class="own">for ${esc(i.m.a)}</span>`
+    : `${esc(i.m.a)}${!c.ties && i.m.as != null ? ` <span class="own">${f2(i.m.as)}</span>` : ''}`);
 
-  // Each card pairs a high-end and a low-end record.
+  // Each card's records, as [key, caption, tile]: the tile's arrow says
+  // which end of the card's range a record is.
   const LEDGER = [
-    { title: 'Scores', hi: ['topS', 'Highest'], lo: ['lowS', 'Lowest'] },
-    { title: 'Victory Margins', hi: ['hiM', 'Biggest'], lo: ['loM', 'Closest'] },
-    { title: 'Combined Points', hi: ['hiC', 'Most'], lo: ['loC', 'Least'] },
-    // Both records are a score that didn't match the result.
-    { title: 'Scores vs. Results', hi: ['hiL', 'Highest in a loss'], lo: ['loW', 'Lowest in a win'] },
-    { title: 'Luck', hi: ['unl', 'Unluckiest loss'], lo: ['lck', 'Luckiest win'] },
-    { title: 'Title Games', hi: ['hiF', 'Highest score'], lo: ['loF', 'Closest finish'] },
-    { title: 'Against the Weekly Median', hi: ['upMed', 'Furthest above'], lo: ['dnMed', 'Furthest below'] },
-    { title: 'Weekly High & Low Scores', hi: ['hiWk', 'Most weekly highs'], lo: ['loWk', 'Most weekly lows'] },
+    { title: 'Scores', recs: [['topS', 'Highest', 'hi'], ['lowS', 'Lowest', 'lo']] },
+    { title: 'Victory Margins', recs: [['hiM', 'Biggest', 'hi'], ['loM', 'Closest', 'lo']] },
+    { title: 'Player Games', recs: [['best', 'Best start', 'hi'], ['worst', 'Worst start', 'lo'], ['bench', 'Biggest bench game', 'hi']] },
+    { title: 'Projections', recs: [['upset', 'Biggest upset', 'hi'], ['beat', 'Beat projection by', 'hi']] },
     // The lowest score that still beat the week's median, and the highest
     // that still lost to it.
-    { title: 'Median Bubble', hi: ['bubW', 'Most bubble wins'], lo: ['bubL', 'Most bubble losses'] },
+    { title: 'Median Bubble', recs: [['bubW', 'Most bubble wins', 'hi'], ['bubL', 'Most bubble losses', 'lo']] },
+    { title: 'Combined Points', recs: [['hiC', 'Most', 'hi'], ['loC', 'Least', 'lo']] },
+    // Both records are a score that didn't match the result.
+    { title: 'Scores vs. Results', recs: [['hiL', 'Highest in a loss', 'hi'], ['loW', 'Lowest in a win', 'lo']] },
+    { title: 'Luck', recs: [['unl', 'Unluckiest loss', 'hi'], ['lck', 'Luckiest win', 'lo']] },
+    { title: 'Title Games', recs: [['hiF', 'Highest score', 'hi'], ['loF', 'Closest finish', 'lo']] },
+    { title: 'Against the Weekly Median', recs: [['upMed', 'Furthest above', 'hi'], ['dnMed', 'Furthest below', 'lo']] },
+    { title: 'Weekly High & Low Scores', recs: [['hiWk', 'Most weekly highs', 'hi'], ['loWk', 'Most weekly lows', 'lo']] },
+    { title: 'Whole-League Weeks', recs: [['lgHi', 'Highest average', 'hi'], ['lgLo', 'Lowest average', 'lo']] },
   ];
 
   // typeTile() comes from page-common.js, shared with League History.
@@ -322,30 +369,29 @@
     return out;
   }
 
-  let C = null;
-  let open = null; // { panel, side }
+  let C = null, PR = null;
+  let open = null; // { panel, key }
   // One column means a phone-shaped screen: the top 10 opens as a sheet.
   const oneColumn = matchMedia('(max-width:720px)');
 
-  function recHtml(c, kind, panel, side) {
-    const i = c.items[0];
-    if (!i) return `<div class="rec empty"><span></span><span><span class="cap">${kind}</span><span class="ctx">No games yet</span></span><span class="rec-val">—</span><span></span></div>`;
+  function recHtml(key, kind, tile, panel) {
+    const c = C[key], i = c.items[0];
+    if (!i) return `<div class="rec empty"><span></span><span><span class="cap">${kind}</span><span class="ctx">${c.empty || 'No games yet'}</span></span><span class="rec-val">—</span><span></span></div>`;
     const lead = c.ties ? c.items.filter(x => shown(x) === shown(i)) : [i];
     const many = lead.length > 1;
     const holder = c.ties ? esc(nameList(lead.map(x => x.m.a))) : withScore(c, i);
     const ctx = [versus(i), many ? 'Tied' : '', i.meta.replace(/ · Week (\d+)/, ' Wk $1')].filter(Boolean).join(' · ');
-    const isOpen = open && open.panel === panel && open.side === side;
-    return `<button type="button" class="rec${isOpen ? ' open' : ''}" data-panel="${panel}" data-side="${side}" aria-haspopup="dialog" aria-expanded="${!!isOpen}">` +
-      typeTile(side) +
+    const isOpen = open && open.panel === panel && open.key === key;
+    return `<button type="button" class="rec${isOpen ? ' open' : ''}" data-panel="${panel}" data-rec="${key}" aria-haspopup="dialog" aria-expanded="${!!isOpen}">` +
+      typeTile(tile) +
       `<span style="min-width:0"><span class="cap">${kind}</span><span class="holder">${holder}</span><span class="ctx">${ctx}</span></span>` +
       `<span class="rec-val">${shown(i)}</span><span class="chev" aria-hidden="true"></span></button>`;
   }
 
-  // The card's own title heads the list, with its two records as the switch
-  // -- "Lowest Scores" above a Highest/Lowest switch under "Scores" only
-  // said the same thing again.
+  // The list is titled for the one record opened ("Highest Scores"), with no
+  // switch to the card's other records: they're the rows it was opened from.
   function listParts() {
-    const p = LEDGER[open.panel], c = C[p[open.side][0]];
+    const c = C[open.key];
     const r = rankOf(c.items);
     // A count's meta ("of 153 weeks") is the same on every row, so the list drops it.
     // A row that is one game opens that game's lineups underneath it.
@@ -359,8 +405,7 @@
         return `<button type="button" class="${cls}" data-lu="${g.year}|${g.week}|${esc(i.m.a)}|${esc(i.m.b)}|${i.m.as}|${i.m.bs}" aria-expanded="false">${inner}<span class="chev" aria-hidden="true"></span></button><div class="lineup"><div></div></div>`;
       }).join('')
       : '<div class="empty-note">No games yet for this season.</div>';
-    const head = `<div class="list-head"><div class="list-title">${p.title}</div><button type="button" class="x" data-close aria-label="Close">&times;</button></div>
-      <div class="seg list-switch"><button class="${open.side === 'hi' ? 'on' : ''}" data-switch="hi">${p.hi[1]}</button><button class="${open.side === 'lo' ? 'on' : ''}" data-switch="lo">${p.lo[1]}</button></div>`;
+    const head = `<div class="list-head"><div class="list-title">${c.title}</div><button type="button" class="x" data-close aria-label="Close">&times;</button></div>`;
     return { head, rows, label: c.title };
   }
 
@@ -441,21 +486,21 @@
     }).catch(() => { inner.innerHTML = `<div class="lu-body"><div class="lu-note">Couldn't load the lineups.</div></div>`; });
   }
 
-  // The cards are built once per year. Opening, closing and switching a list
+  // The cards are built once per year. Opening, closing and swapping a list
   // never rebuild them -- that would replay the sheet's slide-up on every
-  // switch and lose the reader's scroll position.
+  // swap and lose the reader's scroll position.
   function render() {
     const year = document.getElementById('year-select').value;
     C = categories(year);
     setUrlParams({ year: year === 'all' ? null : year });
     document.getElementById('records').innerHTML = `<div class="sections">${LEDGER.map((p, n) =>
-      `<section class="glass section" data-section="${n}"><div class="section-title">${p.title}</div>${recHtml(C[p.hi[0]], p.hi[1], n, 'hi')}${recHtml(C[p.lo[0]], p.lo[1], n, 'lo')}</section>`).join('')}</div>`;
+      `<section class="glass section" data-section="${n}"><div class="section-title">${p.title}</div>${p.recs.map(([k, cap, tile]) => recHtml(k, cap, tile, n)).join('')}</section>`).join('')}</div>`;
     if (open) showList(false);
   }
 
   function markRecs() {
     document.querySelectorAll('.rec[data-panel]').forEach(r => {
-      const on = !!open && Number(r.dataset.panel) === open.panel && r.dataset.side === open.side;
+      const on = !!open && Number(r.dataset.panel) === open.panel && r.dataset.rec === open.key;
       r.classList.toggle('open', on);
       r.setAttribute('aria-expanded', on);
     });
@@ -529,12 +574,10 @@
     if (e.target.closest('[data-close]')) { hideList(); return; }
     const lu = e.target.closest('button.crow[data-lu]');
     if (lu) { toggleLineup(lu); return; }
-    const sw = e.target.closest('[data-switch]');
-    if (sw && open) { if (sw.dataset.switch !== open.side) { open = { ...open, side: sw.dataset.switch }; showList(false); } return; }
     const b = e.target.closest('button.rec[data-panel]');
     if (b) {
-      const next = { panel: Number(b.dataset.panel), side: b.dataset.side };
-      if (open && open.panel === next.panel && open.side === next.side) { hideList(); return; }
+      const next = { panel: Number(b.dataset.panel), key: b.dataset.rec };
+      if (open && open.panel === next.panel && open.key === next.key) { hideList(); return; }
       open = next;
       showList(true);
       return;
@@ -546,8 +589,13 @@
   // Crossing between one and two columns swaps sheet for popover: close it.
   oneColumn.addEventListener('change', hideList);
 
-  LG.load().then(data => {
+  // Small (top 10s only), so it loads with the page rather than on demand.
+  // Without it the player and projection cards say so; the rest still work.
+  const records = fetch('data/lineups/records.json', { cache: 'no-cache' })
+    .then(res => (res.ok ? res.json() : null)).catch(() => null);
+  Promise.all([LG.load(), records]).then(([data, pr]) => {
     D = data;
+    PR = pr;
     const sel = document.getElementById('year-select');
     sel.innerHTML = '<option value="all">All-Time</option>' + data.years.slice().reverse().map(y => `<option value="${y}">${y}</option>`).join('');
     // A shared link's ?year=2024, where it names a real year.
