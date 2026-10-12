@@ -119,6 +119,28 @@
   .step.done i{ color: var(--gold); }
   .step.fail{ color: var(--loss); font-weight: 600; }
   .step a{ color: var(--gold); font-weight: 600; }
+
+  /* ---------- Edit Week ----------
+     A saved week's rows as the sheet has them. Results are one tap; the
+     rest of a pick opens under "Edit pick". A row you've changed is ringed
+     gold until it's saved. */
+  .mode-row{ margin-bottom: 18px; }
+  .leg.changed{ border-color: var(--lead-line); background: var(--lead-tint); }
+  .res-row{ display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+  .ed-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px 8px; margin-top: 12px; }
+  .ed-grid .full{ grid-column: 1 / -1; }
+  .ed-field{ display: grid; gap: 4px; min-width: 0; }
+  .ed-field span{ color: var(--text-dim); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .ed-in{
+    width: 100%; min-width: 0; height: 38px; padding: 0 12px; color-scheme: dark;
+    background: var(--ctl-bg); color: var(--text); border: 1px solid var(--ctl-line); border-radius: 10px;
+    font: 16px var(--body); user-select: text; -webkit-user-select: text;
+  }
+  .ed-in:focus{ outline: none; border-color: var(--gold); }
+  select.ed-in{ appearance: none; -webkit-appearance: none; padding-right: 28px;
+    background: var(--ctl-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238E8E8C' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center; }
+  .week-grid{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  @media (max-width: 560px){ .week-grid{ grid-template-columns: 1fr 1fr; } .week-grid .ed-field:first-child{ grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
@@ -133,6 +155,14 @@
       </div>
     </header>
 
+    <div class="selector-row mode-row">
+      <div class="seg" id="mode-seg">
+        <button type="button" class="on" data-mode="new">New Week</button>
+        <button type="button" data-mode="edit">Edit Week</button>
+      </div>
+    </div>
+
+    <div id="new-mode">
     <section>
       <div class="glass">
         <div class="panel-title">Note</div>
@@ -157,6 +187,21 @@
         </div>
       </div>
     </section>
+    </div>
+
+    <div id="edit-mode" hidden>
+      <div class="selector-row">
+        <div class="selector-group">
+          <label class="selector-label" for="ed-year">Year</label>
+          <select class="parlay-select" id="ed-year" autocomplete="off"></select>
+        </div>
+        <div class="selector-group">
+          <label class="selector-label" for="ed-week">Week</label>
+          <select class="parlay-select" id="ed-week" autocomplete="off"></select>
+        </div>
+      </div>
+      <section id="ed-body"></section>
+    </div>
 
     <section id="save" hidden>
       <div class="glass">
@@ -178,7 +223,7 @@
 
 <script src="nav.js?v=9"></script>
 <script src="page-common.js?v=27"></script>
-<script src="parlay-note.js?v=1"></script>
+<script src="parlay-note.js?v=2"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const PIN_KEY = 'rl-parlay-pin';
@@ -208,6 +253,9 @@
   const manual = new Map();
   const editing = new Set();
   let saving = false;
+  let mode = 'new';
+  // Edit Week: the week as loaded (orig) and as edited (cur), by player.
+  const ed = { year: null, week: null, orig: null, cur: null, open: new Set(), status: '' };
 
   const fmtOdds = o => o == null ? '—' : (o > 0 ? '+' : '') + Math.round(o).toLocaleString('en-US');
   const fmtMoney = n => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -265,6 +313,7 @@
   let renderHeld = false;
   legsEl.addEventListener('focusout', () => setTimeout(() => { if (renderHeld) render(); }, 0));
   function render() {
+    if (mode === 'edit') return renderEdit();
     renderHeld = legsEl.contains(document.activeElement) && document.activeElement.matches('input, select');
     if (renderHeld) return;
     const text = noteEl.value;
@@ -364,13 +413,18 @@
   });
   document.getElementById('paste-btn').addEventListener('click', async () => {
     try {
-      noteEl.value = await navigator.clipboard.readText();
+      noteEl.value = topWeek(await navigator.clipboard.readText());
       store.set(NOTE_KEY, noteEl.value);
       render();
     } catch {
       noteEl.focus(); // no clipboard access: paste by hand
     }
   });
+  noteEl.addEventListener('paste', () => setTimeout(() => {
+    const top = topWeek(noteEl.value);
+    if (top !== noteEl.value) { noteEl.value = top; store.set(NOTE_KEY, top); }
+    render();
+  }, 0));
   document.getElementById('clear-btn').addEventListener('click', () => {
     noteEl.value = '';
     store.set(NOTE_KEY, '');
@@ -433,19 +487,20 @@
 
   document.getElementById('save-form').addEventListener('submit', async e => {
     e.preventDefault();
-    if (!parsed || saveBtn.disabled) return;
+    if (saveBtn.disabled || (mode === 'new' ? !parsed : !ed.cur)) return;
     const pin = pinEl.value.trim();
     if (!pin) { pinEl.focus(); return; }
-    const wk = weekOf(parsed.final);
+    const editing = mode === 'edit';
+    const wk = editing ? { year: ed.year, week: ed.week } : weekOf(parsed.final);
     const body = {
       pin,
-      picks: {
+      picks: editing ? { year: ed.year, week: ed.week, mode: 'edit', ...editPayload() } : {
         year: wk.year, week: wk.week, sacko: parsed.final.sacko || '',
         final_odds: parsed.final.odds, final_payout: parsed.final.payout,
-        dry_run: new URLSearchParams(location.search).has('dry'),
         rows: rowsToSave(),
       },
     };
+    body.picks.dry_run = new URLSearchParams(location.search).has('dry');
     saving = true;
     saveBtn.disabled = true;
     saveBtn.textContent = 'Sending…';
@@ -483,11 +538,15 @@
         // can publish the old copy of a week being replaced in between.
         const w = Date.parse(data.generated_at) > sentAt && data.weeks.find(x => x.year === wk.year && x.week === wk.week);
         const sent = Object.entries(body.picks.rows);
-        if (w && sent.every(([n, r]) => w.picks[n] && (w.picks[n].odds ?? null) === (r.odds ?? null))) {
+        const same = ([n, r]) => !r.bet_type || (w.picks[n] && (w.picks[n].odds ?? null) === (r.odds ?? null)
+          && (!editing || w.picks[n].result === r.result));
+        if (w && sent.every(same)) {
           weeks = data.weeks;
-          store.set(NOTE_KEY, '');
+          if (editing) { ed.orig = JSON.parse(JSON.stringify(ed.cur)); ed.open.clear(); }
+          else store.set(NOTE_KEY, '');
           showSteps([['done', `Sent ${label}`], ['done', `Saved and published. <a href="parlay-results.html">See it on Parlay Results</a>`]]);
           saving = false;
+          if (editing) renderEdit();
           saveBtn.textContent = 'Saved';
           return;
         }
@@ -502,15 +561,256 @@
     setTimeout(poll, 30000);
   });
 
+  // ---------- Notes import ----------
+  // The league's note keeps every week, newest on top. Only the top week is
+  // wanted: from the first "2026 Week 7:" line to the next one. A top week
+  // typed without its own Week line (picks above the first one) is kept
+  // instead of jumping down to last week.
+  const WEEK_LINE = /^\s*\d{4}\s+week\s+\d+:?\s*$/i;
+  function topWeek(text) {
+    const lines = String(text).replace(/\u00a0/g, ' ').split(/\r\n|\r|\n|\u2028|\u2029/);
+    const heads = lines.map((l, i) => WEEK_LINE.test(l) ? i : -1).filter(i => i >= 0);
+    if (!heads.length) return lines.join('\n').trim();
+    const before = lines.slice(0, heads[0]);
+    if (before.some(l => /^[^:]+:\s*[^:]+:\s*\S/.test(l))) return before.join('\n').trim();
+    return lines.slice(heads[0], heads[1] ?? lines.length).join('\n').trim();
+  }
+
+  // ---------- Edit Week ----------
+  const BET_TYPES = ['Money Line', 'Spread', 'Alt Spread', '1st Half Spread', 'Anytime TD', 'Total Points', 'Total Goals',
+    'Total Rounds', 'Receiving Yards', 'Passing TD', 'Passing Yards', 'Receptions', 'Total Yards', 'Home Runs',
+    'Player Points', 'Interceptions', 'Coin Toss'];
+  // Which fields a bet type uses (parlay_gui.py's FIELD_RELEVANCE).
+  const FIELDS_FOR = {};
+  ['Spread', 'Alt Spread', '1st Half Spread'].forEach(b => { FIELDS_FOR[b] = ['team', 'opponent', 'line']; });
+  FIELDS_FOR['Money Line'] = ['team', 'opponent'];
+  ['Total Points', 'Total Goals', 'Total Rounds'].forEach(b => { FIELDS_FOR[b] = ['team', 'opponent', 'side', 'line']; });
+  ['Receiving Yards', 'Passing TD', 'Home Runs', 'Player Points', 'Interceptions', 'Total Yards', 'Receptions', 'Passing Yards']
+    .forEach(b => { FIELDS_FOR[b] = ['player_prop', 'side', 'line']; });
+  ['Anytime TD', 'Coin Toss'].forEach(b => { FIELDS_FOR[b] = ['player_prop']; });
+  const ALL_FIELDS = ['team', 'opponent', 'player_prop', 'line', 'side'];
+  const LABELS = { team: 'Team', opponent: 'Opponent', player_prop: 'Player', line: 'Line', side: 'Side' };
+  const RESULTS = ['Pending', 'Win', 'Loss'];
+
+  const edBody = document.getElementById('ed-body');
+  const edYear = document.getElementById('ed-year'), edWeek = document.getElementById('ed-week');
+  const oddsText = o => o == null || o === '' ? '' : (Number(o) > 0 ? '+' : '') + Math.round(Number(o));
+  const parseOdds = t => { const v = parseFloat(String(t).replace(/[,\s$+]/g, '')); return Number.isNaN(v) ? null : v; };
+
+  function blankRow() {
+    return { sport: '', bet_type: '', team: '', opponent: '', player_prop: '', line: '', side: '', odds: '', gametime: '', result: '', raw_pick: '' };
+  }
+  // Every field as the text its input holds; odds and kickoff in input form.
+  function fromServer(d) {
+    const rows = {};
+    for (const n of players) {
+      const r = d.rows[n] || {};
+      rows[n] = { ...blankRow(), ...Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v == null ? '' : String(v)])),
+        odds: oddsText(r.odds), gametime: (r.gametime || '').slice(0, 16) };
+    }
+    return { sacko: d.sacko || '', final_odds: oddsText(d.final_odds), final_payout: d.final_payout == null ? '' : String(d.final_payout), rows };
+  }
+  const isChanged = n => JSON.stringify(ed.cur.rows[n]) !== JSON.stringify(ed.orig.rows[n]);
+  const weekChanged = () => ['sacko', 'final_odds', 'final_payout'].some(k => ed.cur[k] !== ed.orig[k]);
+  const anyChange = () => !!ed.cur && (players.some(isChanged) || weekChanged());
+
+  function editPayload() {
+    const rows = {};
+    for (const n of players) {
+      const r = ed.cur.rows[n];
+      rows[n] = { ...r, odds: parseOdds(r.odds), gametime: r.gametime ? `${r.gametime}:00` : '',
+        result: r.bet_type ? (r.result || 'Pending') : '' };
+    }
+    const payout = parseFloat(String(ed.cur.final_payout).replace(/[$,\s]/g, ''));
+    return { sacko: ed.cur.sacko, final_odds: parseOdds(ed.cur.final_odds), final_payout: Number.isNaN(payout) ? null : payout, rows };
+  }
+
+  function fillEditWeeks(preferred) {
+    const inYear = weeks.filter(w => w.year === Number(edYear.value)).sort((a, b) => b.week - a.week);
+    edWeek.innerHTML = inYear.map(w => `<option value="${w.week}">Week ${w.week}</option>`).join('');
+    if (preferred && inYear.some(w => w.week === preferred)) edWeek.value = preferred;
+  }
+
+  async function loadEditWeek() {
+    const year = Number(edYear.value), week = Number(edWeek.value);
+    if (!year || !week) return;
+    if ((ed.year !== year || ed.week !== week) && anyChange()
+      && !confirm(`Drop your unsaved changes to ${ed.year} Week ${ed.week}?`)) {
+      edYear.value = ed.year;
+      fillEditWeeks(ed.week);
+      return;
+    }
+    Object.assign(ed, { year, week, orig: null, cur: null, status: 'Loading…' });
+    ed.open.clear();
+    stepsEl.hidden = true;
+    const dry = new URLSearchParams(location.search).has('dry') ? '&dry' : '';
+    history.replaceState(null, '', `?year=${year}&week=${week}${dry}`);
+    renderEdit();
+    try {
+      const res = await fetch(`${WORKER_URL}/parlay-week?year=${year}&week=${week}`, { cache: 'no-store' });
+      const d = await res.json();
+      if (ed.year !== year || ed.week !== week) return; // switched again meanwhile
+      if (!res.ok) throw new Error(d.error);
+      ed.orig = fromServer(d);
+      ed.cur = JSON.parse(JSON.stringify(ed.orig));
+      ed.status = '';
+    } catch (err) {
+      ed.status = err.message === 'no_week' ? 'That week has no rows in the sheet yet.' : "Couldn't load that week. Try again.";
+    }
+    renderEdit();
+  }
+
+  function editLeg(n) {
+    const r = ed.cur.rows[n];
+    const open = ed.open.has(n);
+    const fields = r.bet_type ? (FIELDS_FOR[r.bet_type] || ALL_FIELDS) : [];
+    const pick = { ...r, odds: parseOdds(r.odds), details: '' };
+    const game = r.gametime
+      ? `<span class="leg-when"><span class="sport">${esc(r.sport || '—')}</span> · ${esc(fmtKick(r.gametime + ':00'))}</span>`
+      : r.bet_type ? '<span class="leg-when" style="color:var(--loss);font-weight:600">No game time</span>' : '';
+    const withCur = (list, v) => v && !list.includes(v) ? [...list, v] : list;
+    const opt = (list, v) => list.map(x => `<option value="${esc(x)}"${x === v ? ' selected' : ''}>${esc(x || '—')}</option>`).join('');
+    const sel = (f, list) => `<select class="ed-in" data-p="${esc(n)}" data-f="${f}">${opt(withCur(list, r[f]), r[f])}</select>`;
+    const input = (f, extra = '') => `<input class="ed-in" data-p="${esc(n)}" data-f="${f}" value="${esc(r[f])}" ${extra}>`;
+    const field = (label, html, cls = '') => `<label class="ed-field ${cls}"><span>${label}</span>${html}</label>`;
+    const form = open ? `<div class="ed-grid">
+        ${field('Bet type', sel('bet_type', ['', ...BET_TYPES]))}
+        ${field('Sport', sel('sport', ['', ...ParlayNote.SPORTS]))}
+        ${fields.map(f => f === 'side' ? field('Side', sel('side', ['', 'Over', 'Under']))
+          : field(LABELS[f], input(f, f === 'line' ? 'inputmode="decimal"' : ''), f === 'player_prop' ? 'full' : '')).join('')}
+        ${field('Odds', input('odds', 'inputmode="numbers-and-punctuation" placeholder="-110"'))}
+        ${field('Kickoff (Eastern)', input('gametime', 'type="datetime-local" step="60"'), 'full')}
+      </div>` : '';
+    const res = r.bet_type ? `<div class="seg" data-res="${esc(n)}">${RESULTS.map(x =>
+      `<button type="button" data-v="${x}" class="${(r.result || 'Pending') === x ? 'on' : ''}">${x}</button>`).join('')}</div>` : '<span></span>';
+    return `
+      <div class="leg${isChanged(n) ? ' changed' : ''}${r.bet_type || open ? '' : ' missing'}">
+        <div class="leg-top"><span class="leg-name">${esc(n)}</span><span class="leg-odds">${fmtOdds(parseOdds(r.odds))}</span></div>
+        <div class="leg-bet">${r.bet_type ? betText(pick) : 'No pick'}</div>
+        ${game ? `<div class="leg-game">${game}</div>` : ''}
+        <div class="res-row">${res}<button type="button" class="link-btn" data-open="${esc(n)}">${open ? 'Done' : r.bet_type ? 'Edit pick' : 'Add a pick'}</button></div>
+        ${form}
+      </div>`;
+  }
+
+  // Same rule as the new-week legs: no redraw while you're in a field.
+  let edHeld = false;
+  edBody.addEventListener('focusout', () => setTimeout(() => { if (edHeld) renderEdit(); }, 0));
+  function renderEdit() {
+    edHeld = edBody.contains(document.activeElement) && document.activeElement.matches('input, select');
+    if (edHeld) return;
+    saveSec.hidden = !ed.cur;
+    if (!ed.cur) {
+      const bad = /Couldn|no rows/.test(ed.status);
+      edBody.innerHTML = `<div class="glass"><div class="empty-note"${bad ? ' style="color:var(--loss)"' : ''}>${esc(ed.status || 'Pick a week.')}</div></div>`;
+      return;
+    }
+    const changed = players.filter(isChanged).length + (weekChanged() ? 1 : 0);
+    const c = ed.cur;
+    edBody.innerHTML = `
+      <div class="glass">
+        <div class="panel-title"><span>Week</span>${weekChanged() ? '<span class="chip gold">Changed</span>' : ''}</div>
+        <div class="panel-body week-grid">
+          <label class="ed-field"><span>Sacko</span><select class="ed-in" data-w="sacko">${['', ...players].map(p => `<option value="${esc(p)}"${p === c.sacko ? ' selected' : ''}>${esc(p || '—')}</option>`).join('')}</select></label>
+          <label class="ed-field"><span>Final odds</span><input class="ed-in" data-w="final_odds" value="${esc(c.final_odds)}" inputmode="numbers-and-punctuation"></label>
+          <label class="ed-field"><span>Final payout</span><input class="ed-in" data-w="final_payout" value="${esc(c.final_payout)}" inputmode="decimal"></label>
+        </div>
+      </div>
+      <div class="glass" style="margin-top:14px">
+        <div class="panel-title"><span>Legs</span><span class="chip${changed ? ' gold' : ''}">${changed ? `${changed} change${changed === 1 ? '' : 's'}` : 'No changes'}</span></div>
+        <div class="panel-body legs-grid">${players.map(editLeg).join('')}</div>
+      </div>`;
+    document.getElementById('save-replace').hidden = true;
+    document.getElementById('save-warn').hidden = true;
+    if (!saving) {
+      saveBtn.disabled = !changed;
+      saveBtn.textContent = changed ? `Save Week ${ed.week}` : 'No changes to save';
+    }
+  }
+
+  edBody.addEventListener('click', e => {
+    const resBtn = e.target.closest('[data-res] button');
+    if (resBtn) {
+      ed.cur.rows[resBtn.parentElement.dataset.res].result = resBtn.dataset.v;
+      renderEdit();
+      return;
+    }
+    const openBtn = e.target.closest('[data-open]');
+    if (openBtn) {
+      const n = openBtn.dataset.open;
+      if (ed.open.has(n)) ed.open.delete(n); else ed.open.add(n);
+      renderEdit();
+    }
+  });
+  edBody.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.w) ed.cur[t.dataset.w] = t.value;
+    else if (t.dataset.f) ed.cur.rows[t.dataset.p][t.dataset.f] = t.value;
+  });
+  edBody.addEventListener('change', e => {
+    const t = e.target;
+    if (t.dataset.f === 'bet_type') {
+      // Clear the fields the new bet type doesn't use.
+      const r = ed.cur.rows[t.dataset.p], keep = FIELDS_FOR[t.value] || ALL_FIELDS;
+      ALL_FIELDS.forEach(f => { if (!keep.includes(f)) r[f] = ''; });
+      if (!t.value) Object.assign(r, blankRow());
+    }
+    if (t.dataset.f) ed.cur.rows[t.dataset.p][t.dataset.f] = t.value;
+    else if (t.dataset.w) ed.cur[t.dataset.w] = t.value;
+    if (t.matches('select')) t.blur(); // a pick from a list is finished; redraw now
+    renderEdit();
+  });
+  edYear.addEventListener('change', () => { fillEditWeeks(); loadEditWeek(); });
+  edWeek.addEventListener('change', loadEditWeek);
+  window.addEventListener('beforeunload', e => { if (mode === 'edit' && anyChange() && !saving) e.preventDefault(); });
+
+  function setMode(m, opts = {}) {
+    mode = m;
+    document.querySelectorAll('#mode-seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+    document.getElementById('new-mode').hidden = m !== 'new';
+    document.getElementById('edit-mode').hidden = m !== 'edit';
+    stepsEl.hidden = true;
+    if (m === 'edit') {
+      const years = [...new Set(weeks.map(w => w.year))].sort((a, b) => b - a);
+      edYear.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+      const last = weeks[weeks.length - 1];
+      edYear.value = opts.year || ed.year || (last && last.year);
+      fillEditWeeks(opts.week || ed.week || (last && last.week));
+      if (!ed.cur || ed.year !== Number(edYear.value) || ed.week !== Number(edWeek.value)) loadEditWeek();
+      else {
+        history.replaceState(null, '', `?year=${ed.year}&week=${ed.week}`);
+        renderEdit();
+      }
+    } else {
+      history.replaceState(null, '', location.pathname + (new URLSearchParams(location.search).has('dry') ? '?dry' : ''));
+      saveBtn.disabled = false;
+      render();
+    }
+  }
+  document.getElementById('mode-seg').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (b && b.dataset.mode !== mode && !saving) setMode(b.dataset.mode);
+  });
+
   // ---------- Start ----------
   pinEl.value = store.get(PIN_KEY);
   noteEl.value = store.get(NOTE_KEY);
+  // From the iPhone Shortcut: parlay-entry.html#note=<the note, URL-encoded>.
+  if (location.hash.startsWith('#note=')) {
+    try {
+      noteEl.value = topWeek(decodeURIComponent(location.hash.slice(6)));
+      store.set(NOTE_KEY, noteEl.value);
+    } catch { /* a mangled link: keep what was there */ }
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  const startQ = new URLSearchParams(location.search);
   fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
     .then(r => r.json())
     .then(data => {
       players = data.players || [];
       weeks = data.weeks || [];
-      render();
+      if (startQ.get('year') && startQ.get('week')) setMode('edit', { year: Number(startQ.get('year')), week: Number(startQ.get('week')) });
+      else render();
     })
     .catch(() => {
       preview.hidden = false;

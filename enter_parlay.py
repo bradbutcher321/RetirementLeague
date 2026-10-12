@@ -5,13 +5,15 @@ every game on ESPN in the browser, the Worker checks the PIN and dispatches
 enter_parlay.yml with the result as the PICKS input, and this writes it with
 the same SheetClient.save_week the desktop tool uses.
 
-PICKS is JSON: {year, week, sacko, final_odds, final_payout, dry_run,
+PICKS is JSON: {year, week, sacko, final_odds, final_payout, dry_run, mode,
 rows: {player: {sport, bet_type, team, opponent, player_prop, line, side,
-odds, gametime, raw_pick}}}.
+odds, gametime, raw_pick, result}}}.
 
-A week already in the sheet is overwritten in place, not added again. A
-player whose pick didn't change keeps the Result already graded for it;
-every new or changed pick starts at Pending.
+A week already in the sheet is overwritten in place, not added again. For a
+new week (mode "new", from a pasted note) a player whose pick didn't change
+keeps the Result already graded for it and every new or changed pick starts
+at Pending. The page's Edit Week view sends mode "edit", and each row's
+Result is saved as sent.
 
 Usage: PICKS='{...}' python enter_parlay.py
 """
@@ -25,6 +27,7 @@ from parlay_sheet import SheetClient, ROW_FIELDS, PLAYERS_PER_WEEK
 
 TEXT_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "gametime", "raw_pick"]
 GAMETIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$")
+RESULTS = {"", "Pending", "Win", "Loss"}
 
 
 def fail(msg):
@@ -32,7 +35,7 @@ def fail(msg):
     sys.exit(1)
 
 
-def clean_rows(rows, players):
+def clean_rows(rows, players, edit):
     unknown = [p for p in rows if p not in players]
     if unknown:
         fail(f"Not players in the sheet: {', '.join(unknown)}")
@@ -45,6 +48,11 @@ def clean_rows(rows, players):
         # save_week parses odds from text, the way the GUI's field hands it over.
         clean["odds"] = str(odds) if isinstance(odds, (int, float)) else ""
         clean["result"] = "Pending"
+        if edit:
+            result = str(row.get("result") or "").strip()
+            if result not in RESULTS:
+                fail(f"{player}: result {result!r} isn't one of Pending/Win/Loss")
+            clean["result"] = result if clean["bet_type"] else ""
         out[player] = clean
     return out
 
@@ -57,13 +65,16 @@ def main():
         fail("Year and Week must be numbers.")
     num = lambda v: float(v) if isinstance(v, (int, float)) else None
 
+    edit = payload.get("mode") == "edit"
     client = SheetClient()
-    rows = clean_rows(payload.get("rows") or {}, client.players)
+    rows = clean_rows(payload.get("rows") or {}, client.players, edit)
     if not rows:
         fail("No picks to save.")
 
     start_row, block = client.find_week(year, week)
-    if start_row:
+    if edit and not start_row:
+        fail(f"{year} Week {week} isn't in the sheet, so there's nothing to edit.")
+    if start_row and not edit:
         # Same pick as what's saved -> keep its graded Result.
         for i, player in enumerate(client.players[:PLAYERS_PER_WEEK]):
             old = block[i] if i < len(block) else []
@@ -73,7 +84,7 @@ def main():
                 row["result"] = old_result
     target = start_row or client.next_new_week_row()
 
-    print(f"{year} Week {week}: {len(rows)} picks -> row {target} ({'replacing' if start_row else 'new week'})")
+    print(f"{year} Week {week}: {len(rows)} picks -> row {target} ({'editing' if edit else 'replacing' if start_row else 'new week'})")
     for player in client.players:
         r = rows.get(player)
         print(f"  {player:8} " + (" | ".join(str(r[f]) for f in ROW_FIELDS) if r else "(no pick)"))

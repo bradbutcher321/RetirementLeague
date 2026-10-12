@@ -180,7 +180,7 @@
     ron: 'ronald', rich: 'richard', ricky: 'richard', dave: 'david', abe: 'abraham', vlad: 'vladimir',
   };
 
-  const fold = s => String(s || '').trim().toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '');
+  const fold = s => String(s || '').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   const foldName = s => fold(s).replace(/[^a-z0-9 ]/g, '').replace(/\s+(jr|sr|ii|iii|iv)$/, '').trim();
   const loose = s => s.replace(/[^a-z0-9 ]/g, '');
   const stripRank = s => String(s || '').replace(/^#\d+\s*/, '');

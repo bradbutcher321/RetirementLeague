@@ -25,6 +25,7 @@
  * POST /parlay-entry -> the Enter Picks page's save: checks the PIN and
  *                      dispatches the Action that writes the week to the
  *                      sheet (see parlayEntry.js).
+ * GET /parlay-week?year=&week= -> one week's raw rows, for Edit Week.
  * GET /median-history -> the week's projected median over time, for Median
  *                      Watch's chart (see medianHistory.js; the rows are
  *                      written by scheduled() below).
@@ -45,7 +46,7 @@
 import { buildDashboard } from "./dashboard.js";
 import { getStats, recordHit } from "./analytics.js";
 import { dispatchParlayRefresh } from "./parlayRefresh.js";
-import { enterParlay } from "./parlayEntry.js";
+import { enterParlay, getParlayWeek } from "./parlayEntry.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
 import { getPlayerLog } from "./playerLog.js";
@@ -146,6 +147,11 @@ export default {
     if (path === "/parlay-entry") {
       if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await enterParlay(request, env).catch((err) => ({ status: 502, body: { error: String(err) } }));
+      return jsonResponse(result.body, headers, result.status);
+    }
+    if (path === "/parlay-week") {
+      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await getParlayWeek(env, new URL(request.url)).catch((err) => ({ status: 502, body: { error: String(err) } }));
       return jsonResponse(result.body, headers, result.status);
     }
     if (path === "/median-history") {

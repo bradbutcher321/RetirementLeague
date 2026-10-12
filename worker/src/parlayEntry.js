@@ -5,7 +5,11 @@
  * writes it to Auto Parlay Tracker and then grades, publishes and syncs.
  *
  * Body: { pin, picks: {year, week, sacko, final_odds, final_payout,
- * dry_run, rows} } (see enter_parlay.py for the rows' fields).
+ * dry_run, mode, rows} } (see enter_parlay.py for the rows' fields;
+ * mode "edit" saves each row's Result as sent).
+ *
+ * GET /parlay-week?year=&week= -- one week's rows as the sheet has them,
+ * from the D1 mirror sync_parlay_to_d1.py keeps, for the Edit Week view.
  *
  * Requires:
  *   - Secret:  PARLAY_PIN  (wrangler secret put PARLAY_PIN)
@@ -75,4 +79,23 @@ export async function enterParlay(request, env) {
   }
   await env.COOLDOWN_KV.put(COOLDOWN_KEY, String(now), { expirationTtl: COOLDOWN_SECONDS + 10 });
   return { status: 202, body: { ok: true } };
+}
+
+export async function getParlayWeek(env, url) {
+  const year = Number(url.searchParams.get("year")), week = Number(url.searchParams.get("week"));
+  if (!year || !week) return { status: 400, body: { error: "missing_week" } };
+  const { results } = await env.PARLAY_DB.prepare(
+    `SELECT player, sacko, sport, bet_type, team, opponent, player_prop, line, side, odds, gametime,
+            result, raw_pick, final_odds, final_payout
+       FROM picks WHERE year = ?1 AND week = ?2`
+  ).bind(year, week).all();
+  if (!results.length) return { status: 404, body: { error: "no_week" } };
+  const first = results[0];
+  return {
+    status: 200,
+    body: {
+      year, week, sacko: first.sacko || "", final_odds: first.final_odds, final_payout: first.final_payout,
+      rows: Object.fromEntries(results.map(({ player, sacko, final_odds, final_payout, ...row }) => [player, row])),
+    },
+  };
 }
