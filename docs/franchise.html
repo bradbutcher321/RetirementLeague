@@ -331,20 +331,19 @@
   /* ---------- Weekly ---------- */
   .tiles.quad{ --n:4; }
   @media (max-width:520px){ .tiles.quad{ --n:2; } }
-  /* Where the week's scores put this manager, 1st to 12th: one cell per
-     place, gold getting stronger the more weeks landed there. The two
-     bubble places either side of the median carry the win/loss outline. */
-  .fstrip-wrap{ position:relative; padding-top:16px; }
-  .fstrip{ display:grid; grid-template-columns:repeat(12, minmax(0,1fr)); gap:3px; }
-  .fcell{ border:1px solid var(--item-line); border-radius:6px; text-align:center; padding:7px 0 6px; min-width:0; }
-  .fcell b{ display:block; font-family:var(--scoreboard); font-weight:800; font-size:1rem; line-height:1.1; font-variant-numeric:tabular-nums; }
-  .fcell span{ display:block; color:var(--text-dim); font-size:0.54rem; margin-top:1px; }
-  .fcell.dark b{ color:#0a0a08; }
-  .fcell.dark span{ color:rgba(10,10,8,0.7); }
-  .fcell.bw{ border-color:var(--turf); }
-  .fcell.bl{ border-color:var(--loss); }
-  .fmed{ position:absolute; top:0; left:50%; transform:translateX(-50%); color:var(--text-dim); font-size:0.58rem; letter-spacing:0.05em; text-transform:uppercase; white-space:nowrap; }
-  .fstrip-wrap::after{ content:''; position:absolute; left:50%; top:13px; bottom:-3px; width:1px; background:var(--text-dim); opacity:0.6; }
+  /* Where the week's scores put this manager, 1st to 12th: a small
+     histogram, one gold bar per place, with the median as its own grid
+     column so the line sits exactly between 6th and 7th. */
+  .fhist{ display:grid; grid-template-columns:repeat(6, minmax(0,1fr)) 11px repeat(6, minmax(0,1fr)); column-gap:4px; }
+  .fcol{ display:flex; flex-direction:column; align-items:stretch; min-width:0; text-align:center; }
+  .fcol b{ font-family:var(--scoreboard); font-weight:800; font-size:1.05rem; line-height:1; color:var(--text); font-variant-numeric:tabular-nums; margin-bottom:5px; }
+  .fcol.zero b{ color:var(--text-dim); }
+  .fbar{ position:relative; height:64px; border-radius:5px; background:rgba(255,255,255,0.025); border:1px solid var(--item-line); overflow:hidden; }
+  .fbar i{ position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg, var(--gold), #B39252); border-radius:4px 4px 0 0; }
+  .fcol span{ color:var(--text-dim); font-size:0.58rem; margin-top:5px; white-space:nowrap; }
+  .fmid{ position:relative; display:flex; justify-content:center; }
+  .fmid::before{ content:''; position:absolute; top:-2px; bottom:14px; left:50%; width:1px; transform:translateX(-50%); background:var(--text-dim); opacity:0.55; }
+  .fmed{ text-align:center; color:var(--text-dim); font-size:0.58rem; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:4px; }
   .flegend{ display:flex; justify-content:space-between; gap:10px; color:var(--text-dim); font-size:0.68rem; margin-top:8px; }
   .flegend b{ color:var(--text); }
   .wk-note{ color:var(--text-dim); font-size:0.68rem; line-height:1.45; padding:0 2px; }
@@ -1135,12 +1134,10 @@
     let strip = '';
     if (w.weeks12) {
       const max = Math.max(1, ...w.dist12);
-      const cells = w.dist12.map((c, i) => {
-        const a = c / max;
-        return `<div class="fcell${i === 5 ? ' bw' : i === 6 ? ' bl' : ''}${a > 0.55 ? ' dark' : ''}" style="background:rgba(212,180,106,${(0.06 + 0.6 * a).toFixed(3)})" title="${fmtOrdinal(i + 1)}: ${c} week${c === 1 ? '' : 's'}"><b>${c}</b><span>${fmtOrdinal(i + 1)}</span></div>`;
-      }).join('');
+      const col = (c, i) => `<div class="fcol${c ? '' : ' zero'}" title="${fmtOrdinal(i + 1)}: ${c} week${c === 1 ? '' : 's'}"><b>${c}</b><div class="fbar"><i style="height:${(c / max * 100).toFixed(1)}%"></i></div><span>${fmtOrdinal(i + 1)}</span></div>`;
+      const cells = w.dist12.slice(0, 6).map(col).join('') + '<div class="fmid"></div>' + w.dist12.slice(6).map((c, i) => col(c, i + 6)).join('');
       const topHalf = Math.round(w.dist12.slice(0, 6).reduce((a, b) => a + b, 0) / w.weeks12 * 100);
-      strip = card('Where You Finish Each Week', `<div class="fstrip-wrap"><span class="fmed">Median</span><div class="fstrip">${cells}</div></div>
+      strip = card('Where You Finish Each Week', `<div class="fmed">Median</div><div class="fhist">${cells}</div>
         <div class="flegend"><span>Top half <b>${topHalf}%</b></span><span>Bottom half <b>${100 - topHalf}%</b></span></div>`,
         { chip: chip(`${w.weeks12} 12-team weeks`) });
     }
