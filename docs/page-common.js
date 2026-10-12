@@ -404,7 +404,17 @@ const glideTap = { track: null, at: 0 };
     const run = async () => {
       if (update) await update();
       unname();
-      pillOn(track.isConnected ? track : document.querySelector(path));
+      const t = track.isConnected ? track : document.querySelector(path);
+      pillOn(t);
+      // Headed for the first or last choice, the overshoot would carry the
+      // pill past the track's end (the plain glide clips it there; a
+      // transition can't). Past the right end, on a phone, that is past the
+      // screen's edge too, and an iPhone dropped the pill for the whole
+      // slide whenever the third choice was picked. It eases in instead.
+      if (pill && on) {
+        const list = items(t);
+        if (on === list[0] || on === list[list.length - 1]) pill.style.viewTransitionClass = 'gp-edge';
+      }
     };
     const vt = nativeVT(typeof arg === 'object' && arg ? { ...arg, update: run } : run);
     const done = () => { unname(); glideTap.vt = false; };
