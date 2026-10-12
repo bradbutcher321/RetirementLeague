@@ -2571,7 +2571,9 @@
   // renders this card itself, so it appears in step with the rest of the
   // page instead of popping in alone while everything else is loading.
   let parlayData = null;
+  let parlayLoadAt = 0;
   function loadParlayHighlight() {
+    parlayLoadAt = Date.now();
     fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
       .then(res => res.json())
       .then(d => {
@@ -2582,8 +2584,14 @@
       })
       .catch(() => {});
   }
+  // Same rule as the main poll: hidden tabs skip it, and coming back
+  // catches up right away if the last fetch is stale.
+  const PARLAY_POLL_MS = 120000;
   loadParlayHighlight();
-  setInterval(loadParlayHighlight, 120000);
+  setInterval(() => { if (!document.hidden) loadParlayHighlight(); }, PARLAY_POLL_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Date.now() - parlayLoadAt >= PARLAY_POLL_MS) loadParlayHighlight();
+  });
 
   const PARLAY_TOTAL_BET_TYPES = new Set(['Total Points', 'Total Goals', 'Total Rounds']);
   function parlayBetType(p) { return String(p.pick || '').split(':')[0].trim(); }

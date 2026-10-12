@@ -1080,13 +1080,21 @@
       // year/week selection or the Stats section below. publish_parlay_stats.py
       // only refreshes this data every 10 minutes itself, but polling a
       // little faster here means a game that just went live (or just
-      // ended) shows up close to as soon as the backend has it.
-      setInterval(() => {
+      // ended) shows up close to as soon as the backend has it. Hidden
+      // tabs skip the poll; coming back catches up if it's gone stale.
+      const LIVE_POLL_MS = 120000;
+      let liveLoadAt = Date.now();
+      function pollLive() {
+        liveLoadAt = Date.now();
         fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
           .then(res => res.json())
           .then(fresh => { live = fresh.live || {}; showSelected(); })
           .catch(() => {}); // a missed poll just tries again next interval
-      }, 120000);
+      }
+      setInterval(() => { if (!document.hidden) pollLive(); }, LIVE_POLL_MS);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && Date.now() - liveLoadAt >= LIVE_POLL_MS) pollLive();
+      });
 
       // ---------- Stats: scope (Season-equivalent) > category tabs > subsections ----------
       let activeCategory = 0;
