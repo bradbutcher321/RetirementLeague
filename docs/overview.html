@@ -191,7 +191,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=16"></script>
+<script src="page-common.js?v=17"></script>
 <script src="league-common.js?v=4"></script>
 <script src="achievements.js"></script>
 <script>
@@ -261,6 +261,14 @@
       const m = D.games.filter(g => g.year === y && g.type === 'Reg' && g.median !== null).map(g => g.median);
       return m.length && { rank: y, val: f2(m.reduce((a, b) => a + b, 0) / m.length), sub: `${m.length} weeks` };
     }).filter(Boolean);
+
+    // How often each current member's score topped the week, finished last,
+    // or landed on the median bubble (regular season, every year), from the
+    // same weeklyFinishes() tally as Franchise's Weekly tab and Game Records.
+    const wf = weeklyFinishes(D.games);
+    const weeklyCount = key => [...wf.by].filter(([n]) => D.active.has(n))
+      .sort((a, b) => b[1][key] - a[1][key] || a[1].weeks - b[1].weeks)
+      .map(([name, t]) => ({ name, sub: `of ${t.weeks} weeks`, val: t[key] }));
 
     const winSeasons = high => done.slice().sort((a, b) => (high ? b.reg_w - a.reg_w : a.reg_w - b.reg_w) || a.year - b.year).slice(0, 12)
       .map(s => ({ rank: s.year, name: s.player, sub: `Finished ${s.final_rank || '—'}${s.champ ? ' · Champion' : s.sacko ? ' · Sacko' : ''}`, val: `${s.reg_w}-${s.reg_l}` }));
@@ -568,7 +576,7 @@
       { label: 'Dynasty', html: dynastyHtml() },
       { label: 'Champions', views: [V('By Year', byYear(champs, rec), { year: true, lead: 'none' }), V('Title Count', champC), V('Title Games', titleGames('Champ', true), { year: true, lead: 'max' })] },
       { label: 'Sackos', views: [V('By Year', byYear(sackos, regRec), { year: true, lead: 'none' }), V('Sacko Count', sackC, { bad: true }), V('Sacko Games', titleGames('Sacko', false), { year: true, lead: 'none' })] },
-      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, lead: 'max' }), V('Season Low', seasonPts(false), { year: true, lead: 'none', low: 'min' }), V('Weekly High', weekly(true), { year: true, lead: 'max' }), V('Weekly Low', weekly(false), { year: true, lead: 'none', low: 'min' }), V('Average Median', avgMedian, { year: true, lead: 'max', low: 'min' })] },
+      { label: 'Scoring', views: [V('Season High', seasonPts(true), { year: true, lead: 'max' }), V('Season Low', seasonPts(false), { year: true, lead: 'none', low: 'min' }), V('Weekly High', weekly(true), { year: true, lead: 'max' }), V('Weekly Low', weekly(false), { year: true, lead: 'none', low: 'min' }), V('Average Median', avgMedian, { year: true, lead: 'max', low: 'min' }), V('Weekly High Count', weeklyCount('high')), V('Weekly Low Count', weeklyCount('low'), { bad: true }), V('Bubble Wins', weeklyCount('bubW')), V('Bubble Losses', weeklyCount('bubL'), { bad: true })] },
       { label: 'Rankings', views: [V('Playoff Rate', rate), V('Average Finish', finish), V('Best Win Seasons', winSeasons(true)), V('Worst Win Seasons', winSeasons(false), { lead: 'none', low: 'first' }), V('Earnings', earn), V('Draft Position', draftPosView()), V('Schedule Luck', medianLuckView()), V('Vs Median', vsMedianView()), V('Vs Median All-Time', vsMedianAllTimeView()), V('Achievements', achievementsView()), V('Power Ranking', powerRankingView()), V('Power Index', powerIndexView()), V('Clutch Factor', clutchDeltaView())] },
       { label: 'Efficiency', views: [V('Career Efficiency', effView()), V('Points Left on Bench', benchView()), V('Extra Wins Available', extraWinsView())] },
       { label: 'Streaks', views: [V('Head-to-Head', streakView('head_to_head'), { lead: 'none' }), V('With Median', streakView('combined'), { lead: 'none' })] },

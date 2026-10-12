@@ -115,6 +115,71 @@ function matchName(names, s) {
   return (k && names.find(n => n.toLowerCase() === k)) || null;
 }
 
+// ---------- Weekly finishes (audit II #4) ----------
+// Where every manager's score landed each regular-season week, from
+// league.json's games ({ year, week, type, p1, p2, s1, s2, winner }), so
+// Franchise, Game Records, League History and League Lore all count the
+// same weeks the same way. The median is that week's own (the average of the
+// two middle scores), so it reaches back before the official median game
+// started in 2025. A week with any game unfinished is left out whole: a
+// missing score would move the median and the bubble.
+//   high / low     the week's top and bottom score
+//   bubW           the lowest score that still beat the median
+//   bubL           the highest score that still lost to it
+//   beat / lost    scored above / below the median; margin sums score - median
+//   stolen         won the matchup while scoring below the median
+//   robbed         lost it while scoring above
+//   boom / bust    scored 150+ / under 80
+//   dist12         finish counts (1st..12th) in 12-team weeks, weeks12 of them
+// Returns { weeks: number of weeks counted, by: Map(name -> tallies) }.
+const BOOM_PTS = 150, BUST_PTS = 80;
+function weeklyFinishes(games) {
+  const weeks = new Map(), broken = new Set();
+  games.forEach(g => {
+    if (g.type !== 'Reg' || !g.p2) return;
+    const k = `${g.year}:${g.week}`;
+    if (g.winner === 'In Progress' || !(g.s1 > 0) || !(g.s2 > 0)) { broken.add(k); return; }
+    if (!weeks.has(k)) weeks.set(k, []);
+    weeks.get(k).push({ p: g.p1, s: g.s1, won: g.winner === g.p1, lost: g.winner === g.p2 },
+      { p: g.p2, s: g.s2, won: g.winner === g.p2, lost: g.winner === g.p1 });
+  });
+  const by = new Map();
+  const of = p => by.get(p) || by.set(p, { weeks: 0, high: 0, low: 0, bubW: 0, bubL: 0, beat: 0, lost: 0, margin: 0,
+    stolen: 0, robbed: 0, boom: 0, bust: 0, dist12: Array(12).fill(0), weeks12: 0 }).get(p);
+  let counted = 0;
+  weeks.forEach((list, k) => {
+    if (broken.has(k) || list.length < 2) return;
+    counted++;
+    const s = list.map(x => x.s).sort((a, b) => b - a), n = s.length;
+    const med = n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+    const above = s.filter(v => v > med), below = s.filter(v => v < med);
+    const bubW = above.length ? above[above.length - 1] : null, bubL = below.length ? below[0] : null;
+    list.forEach(x => {
+      const t = of(x.p);
+      t.weeks++;
+      if (x.s === s[0]) t.high++;
+      if (x.s === s[n - 1]) t.low++;
+      if (x.s === bubW) t.bubW++;
+      if (x.s === bubL) t.bubL++;
+      if (x.s > med) t.beat++; else if (x.s < med) t.lost++;
+      t.margin += x.s - med;
+      if (x.won && x.s < med) t.stolen++;
+      if (x.lost && x.s > med) t.robbed++;
+      if (x.s >= BOOM_PTS) t.boom++;
+      if (x.s < BUST_PTS) t.bust++;
+      if (n === 12) { t.weeks12++; t.dist12[s.indexOf(x.s)]++; }
+    });
+  });
+  return { weeks: counted, by };
+}
+// Every name at the top of one weeklyFinishes() tally, for "most" claims
+// that have to name a tie rather than pick one. names may limit the pool.
+function weeklyLeaders(wf, key, names) {
+  const rows = [...wf.by].filter(([n]) => !names || names.has(n));
+  const value = Math.max(0, ...rows.map(([, t]) => t[key]));
+  return { value, names: value ? rows.filter(([, t]) => t[key] === value).map(([n]) => n) : [] };
+}
+
 // ---------- Gliding selection (site audit Motion B) ----------
 // Every selector track on the site (theme.css "Selectors") gets this with no
 // page wiring: a capture-phase click listener notes where the selected pill

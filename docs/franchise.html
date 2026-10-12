@@ -45,7 +45,11 @@
   .selector-row{ margin-bottom: 16px; }
 
 
+  /* Rank pills and past teams: each one row that swipes sideways on a
+     phone (theme.css .scroll, edge fades from page-common.js) instead of
+     wrapping into a block of pills three rows deep. Desktop still wraps. */
   .hero-pills{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  @media (max-width:720px){ .hero-pills.scroll{ flex-wrap:nowrap; margin-left:-18px; margin-right:-18px; padding:0 18px; scroll-padding:0 18px; } }
   .rank-badge{ background: rgba(212,180,106,0.14); border: 1px solid var(--gold); color: var(--gold); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
   .rank-badge.bad{ background: rgba(214,98,79,0.14); border-color: var(--loss); color: var(--loss); }
 
@@ -69,37 +73,37 @@
   .current-logo-preview img{ width: 100%; height: 100%; object-fit: cover; display: block; }
   .current-logo-tile:hover .current-logo-preview, .current-logo-tile:focus .current-logo-preview{ opacity: 1; }
   .past-logos-label{ position: relative; color: var(--text-dim); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; }
+  .past-logos-label + .hero-pills{ margin-top: 0; }
 
-  .aka-logo-tile{ position: relative; display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px 4px 4px; cursor: default; }
+  .aka-logo-tile{ position: relative; display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px 4px 4px; cursor: pointer; font: inherit; color: inherit; white-space: nowrap; }
+  .aka-logo-tile.on{ border-color: var(--lead-line); }
+  .aka-logo-tile:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .aka-logo-avatar{ position: relative; width: 22px; height: 22px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
   .aka-logo-avatar img{ width: 100%; height: 100%; object-fit: cover; display: block; }
   .aka-logo-text{ font-size: 0.74rem; color: var(--text-dim); }
   .aka-logo-text .yr{ opacity: 0.6; }
-  .aka-logo-preview{
-    position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-    width: 120px; height: 120px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
-    box-shadow: 0 14px 30px rgba(0,0,0,0.55); opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 6;
+  /* One shared big-logo pop-up for the past-team chips, outside the card.
+     The chips sit in a sideways scroller whose edge fade is a mask, and a
+     mask hides anything drawn past the element's own box, so a preview
+     inside the row could never show. Placed by showLogoPop() above the
+     tapped chip, or below it when there's no room. */
+  .logo-pop{
+    position: fixed; z-index: 50; width: 120px; height: 120px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.55); opacity: 0; pointer-events: none; transition: opacity 0.15s;
   }
-  .aka-logo-preview img{ width: 100%; height: 100%; object-fit: cover; display: block; }
-  .aka-logo-tile:hover .aka-logo-preview, .aka-logo-tile:focus .aka-logo-preview{ opacity: 1; }
+  .logo-pop.show{ opacity: 1; }
+  .logo-pop img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+  @media (prefers-reduced-motion: reduce){ .logo-pop{ transition: none; } }
 
-  /* ---------- Letting the previews out of the card ----------
-     Absolutely-positioned previews are clipped by every ancestor that hides
-     its overflow, and there are three: .hero2-main (the glow), .hero2 and
-     .glass (the card's rounded corners). Un-hiding all of them would let the
-     glow bleed and square off the card, so instead the previews switch to
-     position: fixed, which no ancestor's overflow can clip, and CSS anchor
-     positioning pins them back to their own tile. Past-team previews sit
-     centered above their chip; the current logo's sits below it, since it's
-     near the top of the card. position-try-fallbacks flips either one to the
-     other side when the viewport has no room.
-
-     Each element's position-anchor is set inline where it's rendered, since
-     the names have to be unique per tile. Browsers without anchor support
-     skip this block and keep the absolute version. */
+  /* ---------- Letting the current logo's preview out of the card ----------
+     An absolutely-positioned preview is clipped by any ancestor that hides
+     its overflow, so it switches to position: fixed, which no ancestor's
+     overflow can clip, and CSS anchor positioning pins it back below its
+     tile. position-try-fallbacks flips it above when the viewport has no
+     room. Browsers without anchor support keep the absolute version. */
   @supports (anchor-name: --x){
     .current-logo-tile{ anchor-name: --logo-current; }
-    .current-logo-preview, .aka-logo-preview{
+    .current-logo-preview{
       position: fixed;
       inset: auto;
       transform: none;
@@ -108,7 +112,6 @@
       z-index: 50;
     }
     .current-logo-preview{ top: anchor(bottom); margin-top: 8px; }
-    .aka-logo-preview{ bottom: anchor(top); margin-bottom: 8px; }
   }
 
   /* ---------- Hero ----------
@@ -314,6 +317,27 @@
   .lrow.former{ opacity:0.55; }
   @media (prefers-reduced-motion: reduce){ .lrow{ transition:none; } }
 
+  /* ---------- Weekly ---------- */
+  .tiles.quad{ --n:4; }
+  @media (max-width:520px){ .tiles.quad{ --n:2; } }
+  /* Where the week's scores put this manager, 1st to 12th: one cell per
+     place, gold getting stronger the more weeks landed there. The two
+     bubble places either side of the median carry the win/loss outline. */
+  .fstrip-wrap{ position:relative; padding-top:16px; }
+  .fstrip{ display:grid; grid-template-columns:repeat(12, minmax(0,1fr)); gap:3px; }
+  .fcell{ border:1px solid var(--item-line); border-radius:6px; text-align:center; padding:7px 0 6px; min-width:0; }
+  .fcell b{ display:block; font-family:var(--scoreboard); font-weight:800; font-size:1rem; line-height:1.1; font-variant-numeric:tabular-nums; }
+  .fcell span{ display:block; color:var(--text-dim); font-size:0.54rem; margin-top:1px; }
+  .fcell.dark b{ color:#0a0a08; }
+  .fcell.dark span{ color:rgba(10,10,8,0.7); }
+  .fcell.bw{ border-color:var(--turf); }
+  .fcell.bl{ border-color:var(--loss); }
+  .fmed{ position:absolute; top:0; left:50%; transform:translateX(-50%); color:var(--text-dim); font-size:0.58rem; letter-spacing:0.05em; text-transform:uppercase; white-space:nowrap; }
+  .fstrip-wrap::after{ content:''; position:absolute; left:50%; top:13px; bottom:-3px; width:1px; background:var(--text-dim); opacity:0.6; }
+  .flegend{ display:flex; justify-content:space-between; gap:10px; color:var(--text-dim); font-size:0.68rem; margin-top:8px; }
+  .flegend b{ color:var(--text); }
+  .wk-note{ color:var(--text-dim); font-size:0.68rem; line-height:1.45; padding:0 2px; }
+
   /* ---------- Achievement shelf ---------- */
   .shelf{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:8px; }
   .shelf:empty{ display:none; }
@@ -375,10 +399,10 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=16"></script>
+<script src="page-common.js?v=17"></script>
 <script src="achievements.js"></script>
 <script>
-  const { seasonState, bestChampionshipStreak, everHitPlayoffRate, EFFICIENCY_EXPERT_PCT, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
+  const { seasonState, bestChampionshipStreak, everHitPlayoffRate, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
   const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toFixed(d);
   const fmtPct = n => (n === null || n === undefined) ? '—' : `${Number(n).toFixed(1)}%`;
   const fmtSigned = (n, d = 1, unit = '%') => (n === null || n === undefined) ? '—' : `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n).toFixed(d)}${unit}`;
@@ -581,31 +605,70 @@
     if (ph) ph.style.display = 'flex';
   }
 
-  // Framed tile per past team, hover (or focus) for a bigger preview --
+  // A chip per past team, tap (or hover, or focus) for a bigger logo --
   // the shape picked over a polaroid grid when the two were compared on
-  // the real page rather than in isolation.
+  // the real page rather than in isolation. Same swipeable row as the rank
+  // pills above it.
   function pastLogosHtml(p) {
     const names = p.previous_team_names || [];
     if (!names.length) return '';
     const logos = p.previous_team_logos || {};
-    // Each tile gets its own anchor name so its preview can be positioned
-    // against it from outside the card (see the anchor-positioning block in
-    // the stylesheet). Anchor names have to be unique -- share one across
-    // the list and every preview would latch onto the last tile.
-    const tiles = names.map((n, i) => {
+    const tiles = names.map(n => {
       const meta = logos[n] || {};
       const url = esc(meta.logo_url || '');
       return `
-        <span class="aka-logo-tile" tabindex="0" style="anchor-name:--logo-past-${i}">
-          <span class="aka-logo-avatar"><img src="${url}" onerror="onImgError(this)">${logoPh(n, '0.58rem')}</span>
+        <button type="button" class="aka-logo-tile" data-logo="${url}" data-team="${esc(n)}" aria-label="${esc(n)}, ${meta.year || ''}: show logo">
+          <span class="aka-logo-avatar"><img src="${url}" alt="" onerror="onImgError(this)">${logoPh(n, '0.58rem')}</span>
           <span class="aka-logo-text">${esc(n)} <span class="yr">· ${meta.year || ''}</span></span>
-          <span class="aka-logo-preview" style="position-anchor:--logo-past-${i}"><img src="${url}" onerror="onImgError(this)">${logoPh(n, '2rem')}</span>
-        </span>`;
+        </button>`;
     }).join('');
     return `
       <div class="past-logos-label">Past Teams</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">${tiles}</div>`;
+      <div class="hero-pills scroll">${tiles}</div>`;
   }
+
+  // The big logo for one past-team chip, in the one .logo-pop on the page.
+  // Above the chip, centred on it and kept on screen; below it when the
+  // chip is too close to the top. Tapping the same chip again closes it.
+  let popTile = null;
+  function logoPopEl() {
+    let el = document.querySelector('.logo-pop');
+    if (!el) { el = document.createElement('div'); el.className = 'logo-pop'; el.setAttribute('aria-hidden', 'true'); document.body.appendChild(el); }
+    return el;
+  }
+  function showLogoPop(tile) {
+    const el = logoPopEl();
+    if (popTile !== tile) {
+      el.innerHTML = `<img src="${esc(tile.dataset.logo)}" alt="" onerror="onImgError(this)">${logoPh(tile.dataset.team, '2rem')}`;
+    }
+    if (popTile) popTile.classList.remove('on');
+    popTile = tile;
+    tile.classList.add('on');
+    const r = tile.getBoundingClientRect(), size = 120, gap = 8;
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - size / 2), document.documentElement.clientWidth - size - 8);
+    const top = r.top - gap - size >= 8 ? r.top - gap - size : r.bottom + gap;
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+    el.classList.add('show');
+  }
+  function hideLogoPop() {
+    if (!popTile) return;
+    popTile.classList.remove('on');
+    popTile = null;
+    const el = document.querySelector('.logo-pop');
+    if (el) el.classList.remove('show');
+  }
+  // Fixed to the screen, so any scroll (the page, or the chip row) would
+  // leave it hanging away from its chip: it closes instead.
+  addEventListener('scroll', hideLogoPop, { capture: true, passive: true });
+  addEventListener('resize', hideLogoPop);
+  addEventListener('keydown', e => { if (e.key === 'Escape') hideLogoPop(); });
+  if (matchMedia('(hover: hover)').matches) {
+    document.addEventListener('mouseover', e => { const t = e.target.closest('.aka-logo-tile'); if (t && t !== popTile) showLogoPop(t); });
+    document.addEventListener('mouseout', e => { const t = e.target.closest('.aka-logo-tile'); if (t && !t.contains(e.relatedTarget)) hideLogoPop(); });
+  }
+  document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('.aka-logo-tile'); if (t && t.matches(':focus-visible')) showLogoPop(t); });
+  document.addEventListener('focusout', e => { if (e.target.closest && e.target.closest('.aka-logo-tile') === popTile) hideLogoPop(); });
 
   function renderHero(p) {
     const r = p.career.record;
@@ -646,7 +709,7 @@
               <div class="fhero-sub">${esc(tenure)}${active ? '' : ' · Retired'}</div>
             </div>
           </div>
-          ${ranks ? `<div class="hero-pills">${ranks}</div>` : ''}
+          ${ranks ? `<div class="hero-pills scroll">${ranks}</div>` : ''}
           ${pastLogosHtml(p)}
         </div>
         <div class="fhero-stats">${side}</div>
@@ -933,8 +996,9 @@
       ['Avg Margin', fmtSigned(diff, 2, ''), { tone: signTone(diff), sub: 'per game' }],
     ], 3) + lines([
       ['Career Total', [[fmtNum(pts.total_pf, 2), 'For'], [fmtNum(pts.total_pa, 2), 'Against']]],
-      ['Single Game', [[fmt(ex.highest_score, 2), 'High'], [fmt(ex.lowest_score, 2), 'Low']]]
     ]));
+    // Single-game highs and lows moved to Weekly's Best and Worst Weeks,
+    // where they come with the opponent and the week.
     const recTone = (w, l) => w > l ? 'win' : w < l ? 'loss' : '';
     const margins = card('Margins', tiles([
       ['Close Games', rec(ex.close_wins, ex.close_losses), { tone: signTone(ex.close_wins - ex.close_losses), sub: 'Under 5 pts' }],
@@ -943,7 +1007,7 @@
       ['Win Margin', [[fmt(ex.biggest_win_margin, 2), 'Largest'], [fmt(ex.lowest_win_margin, 2), 'Smallest']]],
       ['Loss Margin', [[fmt(ex.biggest_loss_margin, 2), 'Largest'], [fmt(ex.lowest_loss_margin, 2), 'Smallest']]],
     ]));
-    return `<div class="pair">${points}${margins}</div>`;
+    return `<div class="pair">${points}${margins}</div>${renderLineups(p)}`;
   }
 
   // ---------- Rivalries ----------
@@ -1000,50 +1064,107 @@
   const bracketLabel = bt => BRACKET_LABELS[bt] || bt;
   const weekLabel = r => `${r.year} Week ${r.week}${r.bracket_type && r.bracket_type !== 'NONE' ? ' · ' + bracketLabel(r.bracket_type) : ''}`;
 
-  function renderEfficiency(p) {
+  // Part of Scoring now (audit II #2), as plain numbers: the season-by-
+  // season efficiency chart is gone, and the old tab's three cards are one.
+  function renderLineups(p) {
     const e = p.efficiency;
     const since = data.efficiency_start_year;
     if (!e) {
-      return card('Lineup Efficiency', `<div class="empty-note">No box-score data for this franchise since ${since} -- ESPN doesn't keep weekly rosters further back.</div>`);
+      return card('Lineups', `<div class="empty-note">No box-score data for this franchise since ${since} -- ESPN doesn't keep weekly rosters further back.</div>`);
     }
-    const headline = card('Lineup Efficiency', tiles([
+    const r = e.optimal_record, wg = e.worst_game, wb = e.worst_bench_miss;
+    const fmtRec = x => rec(x.w, x.l, x.t);
+    return card('Lineups', tiles([
       ['Efficiency', fmtPct(e.career_pct), { tone: topTone(p, x => x.efficiency && x.efficiency.career_pct), sub: rankSub(p, x => x.efficiency && x.efficiency.career_pct) }],
       ['Perfect Weeks', fmt(e.perfect_lineups), { sub: `of ${e.games_analyzed} games` }],
       ['Bench Pts / Gm', fmt(e.avg_points_left, 2), { sub: `${fmtNum(e.points_left_on_bench, 2)} total` }],
-    ], 3) + seasonEffChart(e), { note: `Points started as a share of the best possible lineup, since ${since}.` });
-
-    const r = e.optimal_record;
-    // Ranked by win rate, not raw wins, so a longer tenure doesn't win it.
-    const optimalPct = x => {
-      const o = x.efficiency && x.efficiency.optimal_record && x.efficiency.optimal_record.optimal;
-      const g = o ? o.w + o.l + (o.t || 0) : 0;
-      return g ? (o.w + (o.t || 0) / 2) / g : null;
-    };
-    const fmtRec = x => rec(x.w, x.l, x.t);
-    const recordCard = card('With Perfect Lineups', tiles([
-      ['Actual', fmtRec(r.actual)],
-      ['Optimal', fmtRec(r.optimal), { tone: topTone(p, optimalPct) }],
-      ['Wins Left', fmt(r.extra_wins), { tone: r.extra_wins > 0 ? 'loss' : null, sub: 'on the bench' }],
-    ], 3), { note: `Regular season, against each week's real opponent score · ${r.games} games.` });
-
-    const wg = e.worst_game, wb = e.worst_bench_miss;
-    const worst = card('Worst Calls', lines([
+    ], 3) + lines([
+      ['With Perfect Lineups', [[fmtRec(r.actual), 'Actual'], [fmtRec(r.optimal), 'Optimal'], [fmt(r.extra_wins), 'Wins Left', r.extra_wins > 0 ? 'loss' : '']],
+        `Regular season, same opponents · ${r.games} games`],
       wg ? ['Worst Lineup Week', [[`−${fmt(wg.diff, 2)}`, 'pts left', 'loss']], `Scored ${fmt(wg.actual, 2)} of a possible ${fmt(wg.optimal, 2)} · ${weekLabel(wg)}`]
         : ['Worst Lineup Week', [['—', '']], 'Every week was optimal, or close to it'],
       wb ? ['Worst Bench Miss', [[fmt(wb.points, 2), 'pts benched', 'loss']], `${esc(wb.player_name)} · ${weekLabel(wb)}`]
         : ['Worst Bench Miss', [['—', '']], 'No bench data yet'],
-    ]));
-    return headline + `<div class="pair">${recordCard}${worst}</div>`;
+    ]), { note: `Points started as a share of the best possible lineup, since ${since}.` });
   }
 
-  function seasonEffChart(e) {
-    const s = e.by_season;
-    if (s.length < 2) return '';
-    const vals = s.map(x => x.pct);
-    const lo = Math.floor((Math.min(...vals) - 3) / 5) * 5, hi = Math.min(100, Math.ceil((Math.max(...vals) + 3) / 5) * 5);
-    const pts = s.map(x => ({ x: `'${String(x.year).slice(2)}`, y: x.pct, cls: x.pct >= EFFICIENCY_EXPERT_PCT ? 'champion' : 'runner-up', label: Math.round(x.pct) }));
-    return `<div style="padding-top:8px">${dotChart(pts, { min: lo, max: hi, ticks: [lo, (lo + hi) / 2, hi], tickLabel: v => `${Math.round(v)}%`, height: 140 })}</div>
-      <div class="legend"><span><i class="lg-champion"></i>${EFFICIENCY_EXPERT_PCT}%+ season</span><span><i class="lg-runner-up"></i>Under ${EFFICIENCY_EXPERT_PCT}%</span></div>`;
+  // ---------- Weekly ----------
+  // Built from league.json's games (WEEKLY / GAMES, loaded beside
+  // franchise.json) with weeklyFinishes() from page-common.js -- the same
+  // tally Game Records, League History and League Lore count from.
+  const weeklyRankSub = (p, key, higherBetter = true) => rankSub(p, x => { const t = WEEKLY && WEEKLY.by.get(x.name); return t ? t[key] : null; }, higherBetter);
+  function weeklyTone(p, key, bad) {
+    const cy = CTX.currentYear;
+    if (!isActivePlayer(p, cy)) return null;
+    const pool = data.players.filter(x => isActivePlayer(x, cy));
+    const get = x => { const t = WEEKLY.by.get(x.name); return t ? t[key] : null; };
+    const r = computeRank(get(p), pool, get);
+    return r && r <= 3 && get(p) > 0 ? (bad ? 'loss' : 'lead') : null;
+  }
+
+  function renderWeekly(p) {
+    if (WEEKLY === undefined) return card('Weekly', '<div class="empty-note">Loading weekly results…</div>');
+    if (!WEEKLY) return card('Weekly', '<div class="empty-note">Couldn\'t load the weekly results.</div>');
+    const w = WEEKLY.by.get(p.name);
+    if (!w || !w.weeks) return card('Weekly', '<div class="empty-note">No finished regular-season weeks yet.</div>');
+
+    const first = Math.min(...GAMES.filter(g => g.type === 'Reg' && (g.p1 === p.name || g.p2 === p.name)).map(g => g.year));
+    const finishes = card('Weekly Finishes', `<div class="tiles quad">${[
+      ['Weekly Highs', 'high', false], ['Bubble Wins', 'bubW', false], ['Bubble Losses', 'bubL', true], ['Weekly Lows', 'low', true],
+    ].map(([label, key, bad]) => {
+      const tone = weeklyTone(p, key, bad), sub = weeklyRankSub(p, key);
+      return `<div class="tile${tone ? ' is-' + tone : ''}"><div class="tile-l">${label}</div><div class="tile-v">${fmt(w[key])}</div>${sub ? `<div class="tile-s">${sub}</div>` : ''}</div>`;
+    }).join('')}</div>
+      <div class="wk-note">A bubble win is the lowest score that still beat that week's median. A bubble loss is the highest score that still lost to it.</div>`,
+      { chip: chip(`${w.weeks} weeks since ${first}`) });
+
+    // 12-team weeks only: 8- and 10-team years have no 7th through 12th.
+    let strip = '';
+    if (w.weeks12) {
+      const max = Math.max(1, ...w.dist12);
+      const cells = w.dist12.map((c, i) => {
+        const a = c / max;
+        return `<div class="fcell${i === 5 ? ' bw' : i === 6 ? ' bl' : ''}${a > 0.55 ? ' dark' : ''}" style="background:rgba(212,180,106,${(0.06 + 0.6 * a).toFixed(3)})" title="${fmtOrdinal(i + 1)}: ${c} week${c === 1 ? '' : 's'}"><b>${c}</b><span>${fmtOrdinal(i + 1)}</span></div>`;
+      }).join('');
+      const topHalf = Math.round(w.dist12.slice(0, 6).reduce((a, b) => a + b, 0) / w.weeks12 * 100);
+      strip = card('Where You Finish Each Week', `<div class="fstrip-wrap"><span class="fmed">Median</span><div class="fstrip">${cells}</div></div>
+        <div class="flegend"><span>Top half <b>${topHalf}%</b></span><span>Bottom half <b>${100 - topHalf}%</b></span></div>`,
+        { chip: chip(`${w.weeks12} 12-team weeks`) });
+    }
+
+    const vsMed = w.beat + w.lost ? w.beat / (w.beat + w.lost) * 100 : null;
+    const avgM = w.margin / w.weeks;
+    const off = p.career.median || {};
+    const med = card('Against the Weekly Median', tiles([
+      ['Beat It', fmtPct(vsMed), { tone: rateTone(vsMed), sub: `${w.beat} of ${w.beat + w.lost} weeks` }],
+      ['Avg vs Median', fmtSigned(avgM, 2, ''), { tone: signTone(avgM), sub: 'per week' }],
+      ['Official', (off.wins || 0) + (off.losses || 0) ? rec(off.wins, off.losses) : '—', { sub: `Since ${data.median_era_start_year}` }],
+    ], 3) + lines([
+      ['Stolen Wins', [[fmt(w.stolen), '']], `Won while scoring below the median${weeklyRankSub(p, 'stolen') ? ` · ${weeklyRankSub(p, 'stolen')}` : ''}`],
+      ['Robbed Losses', [[fmt(w.robbed), '']], `Lost while scoring above it${weeklyRankSub(p, 'robbed') ? ` · ${weeklyRankSub(p, 'robbed')}` : ''}`],
+      ['Boom and Bust', [[fmt(w.boom), `${BOOM_PTS}+`, 'gold'], [fmt(w.bust), `Under ${BUST_PTS}`, 'loss']], `Weeks of ${BOOM_PTS}+ and weeks under ${BUST_PTS}`],
+    ]));
+
+    return `${finishes}<div class="pair">${strip}${med}</div>${renderBestWorst(p)}`;
+  }
+
+  // Every finished game this manager played, playoffs and consolation
+  // included -- the same games the old Single Game high and low came from.
+  function renderBestWorst(p) {
+    const mine = GAMES.filter(g => g.type !== 'Bye' && g.p2 && g.winner !== 'In Progress' && g.s1 > 0 && g.s2 > 0 && (g.p1 === p.name || g.p2 === p.name))
+      .map(g => g.p1 === p.name ? { s: g.s1, o: g.p2, os: g.s2, won: g.winner === g.p1, lost: g.winner === g.p2, g } : { s: g.s2, o: g.p1, os: g.s1, won: g.winner === g.p2, lost: g.winner === g.p1, g });
+    const pick = (list, better) => list.reduce((a, b) => (!a || better(b, a) ? b : a), null);
+    // Same game-type words as Head to Head's tags.
+    const TYPE = { Play: 'Playoffs', Champ: 'Final', Sacko: 'Sacko', Cons: 'Consolation', '3rd': '3rd place', '5th': '5th place' };
+    const when = x => `${x.g.year} Wk ${x.g.week}${x.g.type === 'Reg' ? '' : ' · ' + (TYPE[x.g.type] || x.g.type)}`;
+    const row = (label, x, cls) => x ? [label, [[fmt(x.s, 2), '', cls]], `vs ${esc(x.o)} ${fmt(x.os, 2)} · ${when(x)}`] : null;
+    const rows = [
+      row('Highest Score', pick(mine, (a, b) => a.s > b.s), 'gold'),
+      row('Lowest Score', pick(mine, (a, b) => a.s < b.s), 'loss'),
+      row('Most Points in a Loss', pick(mine.filter(x => x.lost), (a, b) => a.s > b.s)),
+      row('Fewest Points in a Win', pick(mine.filter(x => x.won), (a, b) => a.s < b.s)),
+    ].filter(Boolean);
+    return rows.length ? card('Best and Worst Weeks', lines(rows)) : '';
   }
 
   // ---------- Money & Draft ----------
@@ -1072,18 +1193,24 @@
   }
 
   // ---------- Tabs ----------
+  // Regrouped in audit II #2: Record became Results, History became
+  // Seasons, Lineups folded into Scoring, and Weekly is new.
   const TABS = [
-    { id: 'history', label: 'History', render: p => renderHistory(p) },
-    { id: 'record', label: 'Record', render: p => `<div class="pair">${renderStreaks(p)}${hasMedian(p) ? renderMedian(p) : ''}</div><div class="pair">${renderRegular(p)}${renderPlayoffs(p)}</div>` },
+    { id: 'seasons', label: 'Seasons', render: p => renderHistory(p) },
+    { id: 'results', label: 'Results', render: p => `<div class="pair">${renderStreaks(p)}${hasMedian(p) ? renderMedian(p) : ''}</div><div class="pair">${renderRegular(p)}${renderPlayoffs(p)}</div>` },
+    { id: 'weekly', label: 'Weekly', render: p => renderWeekly(p) },
     { id: 'scoring', label: 'Scoring', render: p => renderScoring(p) },
-    { id: 'rivals', label: 'Rivalries', render: p => renderRivalries(p) },
-    { id: 'lineups', label: 'Lineups', render: p => renderEfficiency(p) },
-    { id: 'money', label: 'Money & Draft', render: p => renderMoney(p) },
-    { id: 'achievements', label: 'Achievements', render: p => renderAchievements(p, CTX) },
+    { id: 'rivals', label: 'Rivals', render: p => renderRivalries(p) },
+    { id: 'money', label: 'Money', render: p => renderMoney(p) },
+    { id: 'badges', label: 'Badges', render: p => renderAchievements(p, CTX) },
   ];
+  // Old tab ids, from saved picks and links shared before the regroup.
+  const OLD_TABS = { history: 'seasons', record: 'results', lineups: 'scoring', achievements: 'badges' };
 
-  let data = null, CTX = null;
-  const tabIndex = id => TABS.findIndex(x => x.id === String(id ?? '').toLowerCase());
+  // WEEKLY: weeklyFinishes() over GAMES once league.json is in; undefined
+  // while it loads, null if it failed.
+  let data = null, CTX = null, GAMES = [], WEEKLY;
+  const tabIndex = id => { const k = String(id ?? '').toLowerCase(); return TABS.findIndex(x => x.id === (OLD_TABS[k] || k)); };
   // The URL's tab (?tab=scoring, from a shared link) wins over the saved one.
   let tab = (() => {
     const fromUrl = tabIndex(urlParam('tab'));
@@ -1095,10 +1222,11 @@
   function show(name, morph) {
     const p = data.players.find(x => x.name === name);
     if (!p) return;
+    hideLogoPop();
     document.getElementById('hero-container').innerHTML = renderHero(p);
     const tabsEl = document.getElementById('tabs');
     tabsEl.innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
-    const before = morph && !reduceMotion && TABS[tab].id === 'history' ? arcSnapshot() : null;
+    const before = morph && !reduceMotion && TABS[tab].id === 'seasons' ? arcSnapshot() : null;
     document.getElementById('tab-content').innerHTML = TABS[tab].render(p);
     if (before) morphArc(before);
     keepSelectedInView(tabsEl);
@@ -1122,8 +1250,25 @@
       document.querySelectorAll('[data-arc]').forEach(b => b.classList.toggle('on', b.dataset.arc === arcView));
       return;
     }
+    const logoTile = e.target.closest('.aka-logo-tile');
+    if (logoTile) {
+      // A mouse already opened it on hover; a tap toggles it.
+      if (logoTile === popTile && !matchMedia('(hover: hover)').matches) hideLogoPop(); else showLogoPop(logoTile);
+      return;
+    }
+    hideLogoPop();
     const ach = e.target.closest('.ach.flippable');
     if (ach) ach.classList.toggle('flipped');
+  });
+
+  // The Weekly tab's games. Only that tab waits for them; when they land
+  // after the first render, it's redrawn if it's the one showing.
+  fetch('data/league.json', { cache: 'no-store' }).then(r => r.json()).then(d => {
+    GAMES = d.games.map(g => ({ year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7] }));
+    WEEKLY = weeklyFinishes(GAMES);
+  }).catch(err => { console.error(err); WEEKLY = null; }).then(() => {
+    const p = data && data.players.find(x => x.name === document.getElementById('franchise-select').value);
+    if (p && TABS[tab].id === 'weekly') document.getElementById('tab-content').innerHTML = renderWeekly(p);
   });
 
   fetch('data/franchise.json', { cache: 'no-store' }).then(r => r.json()).then(d => {

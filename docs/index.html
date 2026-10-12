@@ -1138,7 +1138,7 @@
   </div>
 
 <script src="nav.js?v=5"></script>
-<script src="page-common.js?v=16"></script>
+<script src="page-common.js?v=17"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -2813,6 +2813,23 @@
     add(lowLow.names.length, lowLow.names.length > 1
       ? `${nameList(lowLow.names)} share the lowest single-week score in league history, just ${hi(fmtScore(-lowLow.value))}.`
       : `${lowLow.names[0]} is responsible for the lowest single-week score in league history, just ${hi(fmtScore(-lowLow.value))}.`);
+
+    // Weekly highs, lows and the median bubble, every regular-season week
+    // since 2015 (weeklyFinishes in page-common.js, the tally Franchise's
+    // Weekly tab shows). Needs league.json, which the first render waits for.
+    if (leagueGames) {
+      const wf = weeklyFinishes(leagueGames);
+      const pool = new Set(players.map(p => p.name));
+      [
+        ['high', (n, v) => `${n} has posted the week's top score ${v} times, more than anyone.`, (n, v) => `${n} are tied for the most weekly high scores, ${v} each.`],
+        ['low', (n, v) => `${n} has posted the week's lowest score ${v} times, more than anyone.`, (n, v) => `${n} are tied for the most weekly low scores, ${v} each.`],
+        ['bubW', (n, v) => `${n} has squeaked past the weekly median ${v} times, more than anyone.`, (n, v) => `${n} are tied for the most bubble wins, squeaking past the weekly median ${v} times each.`],
+        ['bubL', (n, v) => `${n} has missed the weekly median by one spot ${v} times, more than anyone.`, (n, v) => `${n} are tied for the most bubble losses, missing the weekly median by one spot ${v} times each.`],
+      ].forEach(([key, one, tied]) => {
+        const top = weeklyLeaders(wf, key, pool);
+        add(top.names.length, top.names.length > 1 ? tied(nameList(top.names), hi(top.value)) : one(top.names[0], hi(top.value)));
+      });
+    }
 
     const withWinMargin = players.filter(p => has(p, p => p.extremes && p.extremes.biggest_win_margin));
     const topWinMargin = maxBy(withWinMargin, p => p.extremes.biggest_win_margin);
