@@ -780,13 +780,10 @@
   @media (max-width:720px){ .mb-card a.mgr{ pointer-events: none; } }
   .mb-card.sel{ border-color: var(--lead-line); background: var(--lead-tint); }
 
-  /* This is me (site audit II #36): your own matchup leads the page, at a
-     list card's width (centred on desktop, where the list runs two across).
-     Before you've picked, a one-line ask in the same spot. */
+  /* This is me (site audit II #36): your own matchup leads the matchups
+     list, ringed. Up here, only the one-line ask before you've picked, and
+     your Season Wrapped once the season's over. */
   #me-section{ margin-bottom: 28px; }
-  #me-section .matchups{ grid-template-columns: minmax(0, 1fr); }
-  @media (min-width: 900px){ #me-section .matchups{ max-width: calc(50% - 7px); margin: 0 auto; } }
-  #me-section .matchups:empty{ display: none; }
   .me-ask{ display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 4px; border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 14px; margin-bottom: 12px; }
   .me-ask-go{ flex: 1; min-width: 0; min-height: 44px; text-align: left; background: none; border: 0; color: var(--text); font: 600 0.92rem/1.3 var(--body); padding: 6px 10px; cursor: pointer; }
   .me-ask-go span{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.76rem; }
@@ -1162,10 +1159,10 @@
     <section id="recap-section" hidden></section>
 
     <!-- This is me (site audit II #36): the visitor's own matchup leads the
-         page, ringed, and leaves the list below. Until they've picked a
-         team, a one-line prompt sits here instead; its ✕ hides it for good
-         (the You button in the bar still opens the same sheet). -->
-    <section id="me-section" hidden><div class="matchups" id="my-matchup"></div></section>
+         matchups list below, ringed. Until they've picked a team, a
+         one-line prompt sits here; its ✕ hides it for good (the You button
+         in the bar still opens the same sheet). -->
+    <section id="me-section" hidden></section>
 
     <section>
       <div id="median-container">
@@ -4576,13 +4573,13 @@
   // the top slot asks once. The ✕ hides the ask for good; the You button in
   // the bar opens the same sheet any time.
   const ME_ASK_KEY = 'rl-me-ask-hidden';
-  function renderMePrompt(hasMine) {
+  function renderMePrompt() {
     const section = document.getElementById('me-section');
     let hidden = false;
     try { hidden = !!localStorage.getItem(ME_ASK_KEY); } catch (e) {}
     const ask = !getMe() && !hidden;
     // Once this season's title game is in, your Season Wrapped (site audit
-    // II #39) leads the page instead of a matchup that's long over.
+    // II #39) sits here, at the top of the page.
     const wrappedName = leagueGames && leagueGames.some(g => g.year === leagueYear && g.type === 'Champ')
       ? [...new Set(leagueGames.filter(g => g.year === leagueYear).flatMap(g => [g.p1, g.p2]))].find(n => isMe(n)) : null;
     const oldWrap = document.getElementById('me-wrapped');
@@ -4592,12 +4589,12 @@
           <span class="me-ask-go">Your ${leagueYear} Season Wrapped <span>Best week, worst lineup call, bubble luck and a picture for the chat.</span></span><span class="chev" aria-hidden="true">›</span>
         </a>`);
     }
-    section.hidden = !hasMine && !ask && !wrappedName;
+    section.hidden = !ask && !wrappedName;
     const old = document.getElementById('me-ask');
     if (!ask) { if (old) old.remove(); return; }
     if (old) return;
     section.insertAdjacentHTML('afterbegin', `<div class="me-ask" id="me-ask">
-        <button type="button" class="me-ask-go">Which team is yours? <span>Pick it once and your matchup leads the page.</span></button>
+        <button type="button" class="me-ask-go">Which team is yours? <span>Pick it once and your matchup comes first.</span></button>
         <button type="button" class="x" aria-label="Don't ask again">✕</button>
       </div>`);
     const el = document.getElementById('me-ask');
@@ -4605,7 +4602,7 @@
     el.querySelector('.x').addEventListener('click', () => {
       try { localStorage.setItem(ME_ASK_KEY, '1'); } catch (e) {}
       el.remove();
-      section.hidden = !document.getElementById('my-matchup').children.length && !document.getElementById('me-wrapped');
+      section.hidden = !document.getElementById('me-wrapped');
     });
   }
   // Picking (or changing) your team redraws from the numbers already here.
@@ -5099,15 +5096,14 @@
         }
         renderWeekStep();
 
-        // Yours (getMe in page-common.js) comes out of the list and leads
-        // the page instead.
+        // Yours (getMe in page-common.js) leads the matchups, ringed; the
+        // rest of the page keeps its order.
         const prevMatchups = animate ? captureMatchupState() : null;
         const mine = matchups.find(m => isMe(m.awayManager) || isMe(m.homeManager));
-        const rest = matchups.filter(m => m !== mine);
-        document.getElementById('my-matchup').innerHTML = mine ? renderMatchupCard(mine) : '';
-        renderMePrompt(!!mine);
+        const ordered = mine ? [mine, ...matchups.filter(m => m !== mine)] : matchups;
+        renderMePrompt();
         document.getElementById('matchups-container').innerHTML =
-          rest.length ? rest.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
+          ordered.length ? ordered.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
         if (prevMatchups) animateMatchupRefresh(prevMatchups);
 
         // Team names stay right-aligned (matching every other short name)
@@ -5179,7 +5175,6 @@
     markClippedNames(card);
   };
   document.getElementById('matchups-container').addEventListener('click', onMatchupClick);
-  document.getElementById('my-matchup').addEventListener('click', onMatchupClick);
 
   // Roster names hard-clip at the team badge; flag the ones that actually
   // overflow so CSS can fade their last few px. Collapsed rosters are
