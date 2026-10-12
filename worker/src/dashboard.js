@@ -110,7 +110,61 @@ function buildGameStateMap(scoreboardData) {
   return map;
 }
 
-function buildPlayerCard(entry, gameStateByProTeam) {
+// Stat 210 in ESPN's raw stats is games played, on the season line and on
+// each week's line alike.
+const GAMES_PLAYED_STAT = "210";
+const NOT_PLAYING = new Set(["OUT", "INJURY_RESERVE", "SUSPENSION"]);
+
+/** playerId -> { avg, gp }: each rostered player's average over completed
+ * weeks, for Median Watch's Average mode. The league fetch's mRoster view
+ * carries the season line, which already includes this week's points for
+ * anyone whose game has started, so this week's line is taken back out --
+ * otherwise a game in progress would drag the average around. */
+function buildSeasonAverages(league, season, week) {
+  const out = new Map();
+  for (const team of league.teams || []) {
+    for (const entry of team.roster?.entries || []) {
+      const player = entry.playerPoolEntry?.player || {};
+      const stats = player.stats || [];
+      const seasonLine = stats.find((s) => s.seasonId === season && s.statSourceId === 0 && s.statSplitTypeId === 0 && s.scoringPeriodId === 0);
+      if (!seasonLine) continue;
+      const weekLine = stats.find((s) => s.statSourceId === 0 && s.statSplitTypeId === 1 && s.scoringPeriodId === week);
+      const gp = (seasonLine.stats?.[GAMES_PLAYED_STAT] || 0) - (weekLine?.stats?.[GAMES_PLAYED_STAT] || 0);
+      const total = (seasonLine.appliedTotal || 0) - (weekLine?.appliedTotal || 0);
+      out.set(player.id, { avg: gp > 0 ? round2(total / gp) : null, gp });
+    }
+  }
+  return out;
+}
+
+/** Share of an in-progress game still to play, off the game clock:
+ * 0.5 at halftime, 0 in overtime. */
+function shareLeft(game) {
+  if (game.period > 4) return 0;
+  if (game.period < 1) return 1;
+  const [m, s] = String(game.clock || "0:00").split(":").map((x) => parseInt(x, 10) || 0);
+  return Math.min(1, Math.max(0, ((4 - game.period) * 15 + m + s / 60) / 60));
+}
+
+/** What a starter counts for in Average mode, and where it came from:
+ *   final -- his game is over: actual points.
+ *   live  -- playing: points so far, plus his average (or ESPN's projection
+ *            when he has under two games) for the share of the game left.
+ *   avg   -- not kicked off: his average over completed weeks.
+ *   proj  -- not kicked off, under two games played: ESPN's projection.
+ *   out   -- ruled out, suspended or on IR before kickoff: 0.
+ *   bye   -- his team has no game this week: 0. */
+function averageValue(card, seasonAvg, gameKnown, injuryStatus) {
+  const base = seasonAvg && seasonAvg.gp >= 2 ? seasonAvg.avg : card.projectedPoints;
+  const state = card.game?.state;
+  if (state === "post") return { value: card.livePoints || 0, src: "final" };
+  if (state === "in") return { value: round2((card.livePoints || 0) + base * shareLeft(card.game)), src: "live" };
+  if (!card.game && gameKnown) return { value: 0, src: "bye" };
+  if (NOT_PLAYING.has(injuryStatus)) return { value: 0, src: "out" };
+  return { value: base, src: seasonAvg && seasonAvg.gp >= 2 ? "avg" : "proj" };
+}
+
+function buildPlayerCard(entry, gameStateByProTeam, seasonAverages) {
   const player = entry.playerPoolEntry?.player || entry.player || {};
   const slot = SLOT_LABELS[entry.lineupSlotId] || "";
   const position = slot === "FLEX" ? DEFAULT_POSITION_MAP[player.defaultPositionId] || "RB" : slot;
@@ -118,7 +172,7 @@ function buildPlayerCard(entry, gameStateByProTeam) {
   const actualStat = stats.find((s) => s.statSourceId === 0);
   const projStat = stats.find((s) => s.statSourceId === 1);
   const game = gameStateByProTeam.get(player.proTeamId) || null;
-  return {
+  const card = {
     name: player.fullName || "",
     slot,
     livePoints: actualStat ? round2(actualStat.appliedTotal) : null,
@@ -136,14 +190,21 @@ function buildPlayerCard(entry, gameStateByProTeam) {
       hasPossession: game.hasPossession,
     },
   };
+  const seasonAvg = seasonAverages.get(player.id || entry.playerId);
+  const a = averageValue(card, seasonAvg, gameStateByProTeam.size > 0, player.injuryStatus || entry.injuryStatus);
+  card.seasonAvg = seasonAvg ? seasonAvg.avg : null;
+  card.gamesPlayed = seasonAvg ? seasonAvg.gp : 0;
+  card.avgPoints = round2(a.value);
+  card.avgSource = a.src;
+  return card;
 }
 
 /** Starters only (bench/IR excluded), in standard lineup order. */
-function buildStarters(entries, gameStateByProTeam) {
+function buildStarters(entries, gameStateByProTeam, seasonAverages) {
   return entries
     .filter((e) => SLOT_ORDER.includes(e.lineupSlotId))
     .sort((a, b) => SLOT_ORDER.indexOf(a.lineupSlotId) - SLOT_ORDER.indexOf(b.lineupSlotId))
-    .map((e) => buildPlayerCard(e, gameStateByProTeam));
+    .map((e) => buildPlayerCard(e, gameStateByProTeam, seasonAverages));
 }
 
 function median(values) {
@@ -332,6 +393,7 @@ export async function buildDashboard(env, previous = null) {
   const priorByTeam = priorStandings(schedule, currentWeek);
   const weekScores = scoresByTeam(schedule);
   const managerNames = buildManagerNames(teamsRaw);
+  const seasonAverages = buildSeasonAverages(league, Number(env.ESPN_YEAR), currentWeek);
 
   let nflScoreboardError = null;
   const [boxData, nflScoreboard] = await Promise.all([
@@ -357,7 +419,8 @@ export async function buildDashboard(env, previous = null) {
 
   const currentScores = [];
   const projectedScores = [];
-  const teamCurrentById = new Map(); // teamId -> { current, projected }
+  const averageScores = [];
+  const teamCurrentById = new Map(); // teamId -> { current, projected, average }
   const teamStatusById = new Map(); // teamId -> { remaining, inPlay } starters left to play / in play
   const matchups = [];
 
@@ -369,9 +432,12 @@ export async function buildDashboard(env, previous = null) {
     for (const side of [home, away]) {
       if (!side) continue;
       teamStatusById.set(side.teamId, countGameStatus(side.entries, gameStateByProTeam));
+      side.starters = buildStarters(side.entries, gameStateByProTeam, seasonAverages);
+      const average = round2(side.starters.reduce((sum, p) => sum + p.avgPoints, 0));
       currentScores.push(side.score);
       projectedScores.push(side.projected);
-      teamCurrentById.set(side.teamId, { current: side.score, projected: side.projected });
+      averageScores.push(average);
+      teamCurrentById.set(side.teamId, { current: side.score, projected: side.projected, average });
     }
     if (!home || !away) continue; // bye week — no matchup card to show
 
@@ -400,14 +466,14 @@ export async function buildDashboard(env, previous = null) {
       homeWinProbability: home.winProbability,
       homeRemaining: homeStatus.remaining,
       homeInPlay: homeStatus.inPlay,
-      awayPlayers: buildStarters(away.entries, gameStateByProTeam),
-      homePlayers: buildStarters(home.entries, gameStateByProTeam),
+      awayPlayers: away.starters,
+      homePlayers: home.starters,
     });
   }
 
   const teams = teamsRaw
     .map((t) => {
-      const live = teamCurrentById.get(t.teamId) || { current: 0, projected: 0 };
+      const live = teamCurrentById.get(t.teamId) || { current: 0, projected: 0, average: 0 };
       const status = teamStatusById.get(t.teamId) || { remaining: 0, inPlay: 0 };
       // Points from weeks before the current one, straight from the schedule, so
       // the dashboard can add this week on top without double counting once ESPN
@@ -423,6 +489,8 @@ export async function buildDashboard(env, previous = null) {
         record: t.record,
         current: live.current,
         projected: live.projected,
+        // Median Watch's Average mode: see averageValue() above.
+        average: live.average,
         remaining: status.remaining,
         inPlay: status.inPlay,
         priorPoints,
@@ -440,6 +508,7 @@ export async function buildDashboard(env, previous = null) {
 
   const currentMedian = currentScores.length ? round2(median(currentScores)) : 0;
   const projectedMedian = projectedScores.length ? round2(median(projectedScores)) : 0;
+  const averageMedian = averageScores.length ? round2(median(averageScores)) : 0;
 
   const priorHigh = findWeeklyHigh(weekScores, Math.max(currentWeek - 1, 0));
   const anyPlayoffData = teamsRaw.some((t) => t.playoffPct);
@@ -449,6 +518,7 @@ export async function buildDashboard(env, previous = null) {
     week: currentWeek,
     currentMedian,
     projectedMedian,
+    averageMedian,
     playoffTeamCount: league.settings?.scheduleSettings?.playoffTeamCount || 0,
     // Regular-season weeks, for the standings' Clinched/Eliminated math.
     regularSeasonWeeks: league.settings?.scheduleSettings?.matchupPeriodCount || 0,

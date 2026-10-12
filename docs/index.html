@@ -546,7 +546,13 @@
   .mw-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
   @media (max-width: 420px){
     .mw-grid{ grid-template-columns: 1fr; }
-    .median-card:has(#median-toggle-seg) .median-card-header{ flex-wrap: wrap; gap: 8px; align-items: center; }
+  }
+  /* Three modes don't fit beside the title on a phone: the toggle drops
+     under it and spans the card. */
+  @media (max-width: 600px){
+    .median-card:has(#median-toggle-seg) .median-card-header{ flex-wrap: wrap; gap: 10px; align-items: center; }
+    #median-toggle-seg{ width: 100%; margin-bottom: 0; }
+    #median-toggle-seg button{ flex: 1; justify-content: center; }
   }
   /* Each team gets its own fully self-contained chip (background/border on
      .slot itself) instead of sharing one pill per cluster -- see the
@@ -573,7 +579,7 @@
      to play" -- and on a phone's two-up cards that squeezed every name down
      to "C." and ran the margin into the status. As rows, the name only has
      to share its line with the score. */
-  .mb-card{ background: rgba(255,255,255,0.03); border-radius: 8px; padding: 9px 10px; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; border: 1px solid var(--line); container-type: inline-size; }
+  .mb-card{ position: relative; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 9px 10px; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; border: 1px solid var(--line); container-type: inline-size; }
   /* Outline matches the chart's lock glow: green above, red below. The
      "Locked above/below" text stays gold (.mw-stat.locked). */
   .mb-card.locked{ border-color: var(--turf); }
@@ -620,8 +626,35 @@
     .mb-card .mw-margin{ font-size: 0.56rem; }
   }
 
-  /* ---------- Median Watch: a manager's players still to come ----------
-     A card with players left opens them -- in the shared bottom sheet on a
+  /* Average mode: on the other side of the median from ESPN's projection.
+     Sits on the card's top edge, so it costs the card no height. */
+  .mw-flip{ position: absolute; top: -7px; right: 6px; font-size: 0.54rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 1px 6px; border-radius: 999px; background: var(--surface); white-space: nowrap; line-height: 1.4; }
+  .mw-flip.up{ color: var(--turf); border: 1px solid var(--win-line); }
+  .mw-flip.dn{ color: var(--loss); border: 1px solid var(--loss-line); }
+  /* The panel a card opens: each starter, his number, and where it came
+     from. Gold numbers are still estimates (a projection or an average);
+     white ones are points scored. Finished players sit under a divider. */
+  .mwa-list{ display: flex; flex-direction: column; }
+  .mwa-row{ display: grid; grid-template-columns: 40px minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .mwa-row:first-child, .mwa-div + .mwa-row{ border-top: 0; }
+  .mwa-slot{ font-size: 0.62rem; font-weight: 700; color: var(--text-dim); letter-spacing: 0.04em; }
+  .mwa-main{ min-width: 0; }
+  .mwa-nm{ font-size: 0.84rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mwa-sub{ display: flex; align-items: center; gap: 5px; font-size: 0.64rem; font-weight: 500; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .mwa-sub.live{ color: var(--loss); }
+  .mwa-sub.live span{ color: var(--text-dim); }
+  .mwa-sub .ld{ flex: none; width: 5px; height: 5px; border-radius: 50%; background: var(--loss); animation: pulse 1.5s ease-in-out infinite; }
+  .mwa-sl{ display: block; font-size: 0.62rem; font-weight: 500; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mwa-r{ text-align: right; }
+  .mwa-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.15rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .mwa-val.gold{ color: var(--gold); }
+  .mwa-val.none{ color: var(--text-dim); }
+  .mwa-small{ font-size: 0.6rem; color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .mwa-div{ font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); padding: 12px 0 4px; border-top: 1px solid var(--line); }
+  .mwa-row.fin .mwa-nm, .mwa-row.fin .mwa-val{ color: #bdbdbb; }
+
+  /* ---------- Median Watch: a manager's starters ----------
+     Every card opens its starters -- in the shared bottom sheet on a
      phone, the shared popover under the card on desktop (theme.css "Detail
      panels", the same pair Game Records uses). Neither moves a card. */
   .mb-card.can{ cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
@@ -652,24 +685,11 @@
   #mw-sheet .mwp-name{ font-size: 1.3rem; }
   #mw-sheet .mwp-score{ font-size: 2.3rem; }
   .mwp-label{ font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); margin: 12px 0 8px; }
-  .mwp-pods{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-  .mwp-pod{ background: var(--item); border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px 11px; min-width: 0; }
-  .mwp-pod-top{ display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-  .mwp-st{ font-size: 0.6rem; color: var(--text-dim); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
-  .mwp-st.live{ color: var(--loss); }
-  .mwp-st .ld{ width: 5px; height: 5px; border-radius: 50%; background: var(--loss); animation: pulse 1.5s ease-in-out infinite; }
-  .mwp-game{ font-size: 0.6rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-variant-numeric: tabular-nums; }
-  .mwp-pts{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.95rem; line-height: 1; margin-top: 8px; font-variant-numeric: tabular-nums; }
-  .mwp-pts.none{ color: var(--text-dim); }
-  .mwp-proj{ font-size: 0.6rem; color: var(--text-dim); margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .mwp-nm{ font-size: 0.82rem; font-weight: 600; margin-top: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mwp-nm span{ color: var(--text-dim); font-weight: 500; font-size: 0.64rem; margin-left: 4px; }
-  .mwp-sline{ font-size: 0.66rem; color: var(--text-dim); margin-top: 3px; line-height: 1.35; min-height: 1.35em; }
   .mwp-nav{ display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
   .mwp-nav button{ font: 600 0.8rem var(--body); color: var(--text); background: rgba(255,255,255,0.06); border: 1px solid var(--line); border-radius: 999px; padding: 0 16px; min-height: 44px; cursor: pointer; }
   .mwp-nav button.gone{ visibility: hidden; }
   .mwp-nav button:focus-visible, .mwp-done:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
-  @media (prefers-reduced-motion: reduce){ .mwp-st .ld{ animation: none; } }
+  @media (prefers-reduced-motion: reduce){ .mwa-sub .ld{ animation: none; } }
   /* Same 0.68s/bounce-adjacent duration as cards+chart sliding into their
      new spot on toggle. */
   ::view-transition-group(*){ animation-duration: 0.68s; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -1404,6 +1424,17 @@
   // "−0.97" (a real minus sign, so it lines up with the plus).
   function fmtMwMargin(v) { return (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2); }
 
+  // Average mode flags a manager the season averages put on the other side
+  // of the median from ESPN's projection.
+  function mwAvgFlip(name) {
+    if (medianViewMode !== 'average' || !lastMedianTeams) return '';
+    const topHalf = key => new Set(lastMedianTeams.slice().sort((a, b) => b[key] - a[key])
+      .slice(0, Math.floor(lastMedianTeams.length / 2)).map(medianTeamName));
+    const avg = topHalf('average').has(name), proj = topHalf('projected').has(name);
+    if (avg === proj) return '';
+    return `<span class="mw-flip ${avg ? 'up' : 'dn'}">${avg ? 'Above' : 'Below'} on avg</span>`;
+  }
+
   function mwCardHtml(t, tone, median) {
     const lines = miniStatusLines(t);
     // One line per fact group, never wrapped. No live dot here -- the spread
@@ -1413,10 +1444,10 @@
       const lead = l.cls === 'locked' ? '\u2713 ' : '';
       return `<div class="mw-stat ${l.cls}">${lead}${parts.map((x, i) => `${i ? '<span class="sep">\u00b7</span>' : ''}<span>${x}</span>`).join('')}</div>`;
     };
-    // A card with anyone still to play opens them (see "players still to come" below).
-    const can = t.statusKnown && (t.inPlay + t.remaining) > 0;
+    // Every card opens to its starters (see "a manager's starters" below).
+    const can = true;
     const canAttrs = can ? ' role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false"' : '';
-    return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' + (t.lockedBelow ? ' locked-below' : '') : ''}${can ? ' can' : ''}" data-name="${t.name}"${canAttrs}>
+    return `<div class="mb-card${lines.some(l => l.cls === 'locked') ? ' locked' + (t.lockedBelow ? ' locked-below' : '') : ''}${can ? ' can' : ''}" data-name="${t.name}"${canAttrs}>${mwAvgFlip(t.name)}
       <div class="mw-top">
         <span class="mw-name">${t.name}</span>
         <div class="mw-score" style="color:var(--${tone});">${fmtScore(t.score)}</div>
@@ -1432,54 +1463,105 @@
     return `<div class="mw-grid">${list.map(t => mwCardHtml(t, tone, median)).join('')}</div>`;
   }
 
-  // ---------- Median Watch: a manager's players still to come ----------
-  // Tapping a card with players left lists them: a bottom sheet on a phone,
-  // a popover under the card on desktop -- the same two surfaces, and the
-  // same 720px switch, the Game Records page uses for its top 10s (theme.css
-  // "Detail panels"). Neither moves a card. The open panel is rebuilt on
-  // every refresh, so its scores stay live, and it closes itself once that
-  // manager has nobody left to play.
+  // ---------- Median Watch: a manager's starters ----------
+  // Tapping any card lists that manager's starters: a bottom sheet on a
+  // phone, a popover under the card on desktop -- the same two surfaces, and
+  // the same 720px switch, the Game Records page uses for its top 10s
+  // (theme.css "Detail panels"). Neither moves a card. The open panel is
+  // rebuilt on every refresh, so its scores stay live.
   const mwOneColumn = matchMedia('(max-width:720px)');
   let mwOpen = null;
 
   const mwCardEl = name => document.querySelector(`#median-container .mb-card[data-name="${CSS.escape(name)}"]`);
   const mwStillToCome = p => ['pre', 'live', 'possession'].includes(playerState(p));
+  const mwClock = g => `${g.period > 4 ? 'OT' : `Q${g.period}`} ${g.clock}`;
+  const mwGame = g => `${g.team} ${g.teamScore}–${g.opponentScore} ${g.opponent}`;
 
   function mwPlayersLeft(name) {
     const t = (lastMedianTeams || []).find(x => medianTeamName(x) === name);
     if (!t || !lastMedianData) return null;
     const m = (lastMedianData.matchups || []).find(x => x.awayName === t.name || x.homeName === t.name);
     const players = m ? (m.awayName === t.name ? m.awayPlayers : m.homePlayers) || [] : [];
-    return { t, players: players.filter(mwStillToCome) };
+    return { t, players };
   }
 
-  // One player: game clock (or kickoff), his NFL game's score, his points so
-  // far, his pregame projection, and his stat line. Points stay white -- a
-  // player beating his projection mid-game isn't a result yet.
-  function mwPodHtml(p) {
-    const g = p.game || {};
-    const live = playerState(p) !== 'pre';
-    const status = live ? `<i class="ld"></i>${g.period > 4 ? 'OT' : `Q${g.period}`} ${g.clock}` : fmtKickoff(g.date);
-    const game = live ? `${g.team} ${g.teamScore}–${g.opponentScore} ${g.opponent}` : `${g.team} vs ${g.opponent}`;
-    const has = live && p.livePoints !== null && p.livePoints !== undefined;
-    return `<div class="mwp-pod">
-      <div class="mwp-pod-top"><span class="mwp-st${live ? ' live' : ''}">${status}</span><span class="mwp-game">${game}</span></div>
-      <div class="mwp-pts${has ? '' : ' none'}">${has ? fmtScore(p.livePoints) : '—'}</div>
-      <div class="mwp-proj">proj ${fmtScore(p.projectedPoints)}</div>
-      <div class="mwp-nm">${p.name}<span>${p.slot || ''}</span></div>
-      <div class="mwp-sline">${p.statLine || ''}</div>
+  // One starter: slot, name, a status line, his stat line, and the number he
+  // counts for in this mode, with a smaller second number under it. Gold is
+  // a number still being estimated (a projection or an average); white is
+  // points he has scored.
+  function mwRowHtml(p, sub, val, small, cls) {
+    return `<div class="mwa-row${cls}">
+      <span class="mwa-slot">${p.slot || ''}</span>
+      <div class="mwa-main"><div class="mwa-nm">${p.name}</div>${sub}${p.statLine ? `<span class="mwa-sl">${p.statLine}</span>` : ''}</div>
+      <div class="mwa-r">${val}${small ? `<div class="mwa-small">${small}</div>` : ''}</div>
     </div>`;
   }
 
+  // Average mode: what each starter counts for and where it came from
+  // (avgSource, set by averageValue() in worker/src/dashboard.js).
+  function mwAvgRowHtml(p) {
+    const g = p.game || {};
+    const avg = p.seasonAvg === null || p.seasonAvg === undefined ? '' : fmtScore(p.seasonAvg);
+    const src = {
+      final: 'Final',
+      live: `${mwClock(g)} · ${fmtScore(p.livePoints || 0)} so far, rest at ${p.gamesPlayed >= 2 ? `avg ${avg}` : 'ESPN proj'}`,
+      avg: `Avg of ${p.gamesPlayed} games · ESPN ${fmtScore(p.projectedPoints)}`,
+      proj: `ESPN proj · ${p.gamesPlayed === 1 ? 'only 1 game' : 'no games'} yet`,
+      out: 'Ruled out',
+      bye: 'Bye week',
+    }[p.avgSource] || '';
+    const tone = ['avg', 'proj', 'live'].includes(p.avgSource) ? ' gold' : ['out', 'bye'].includes(p.avgSource) ? ' none' : '';
+    return mwRowHtml({ slot: p.slot, name: p.name }, `<div class="mwa-sub">${src}</div>`,
+      `<div class="mwa-val${tone}">${fmtScore(p.avgPoints || 0)}</div>`, '', '');
+  }
+
+  // Current and Projected: the game clock and NFL score (or kickoff, or the
+  // final), then his points so far (Current) or what ESPN counts him for
+  // (Projected: his projection until his game ends).
+  function mwLiveRowHtml(p, mode) {
+    const g = p.game || {};
+    const state = playerState(p);
+    const live = state === 'live' || state === 'possession';
+    const sub = live ? `<div class="mwa-sub live"><i class="ld"></i>${mwClock(g)} <span>· ${mwGame(g)}</span></div>`
+      : state === 'pre' ? `<div class="mwa-sub">${fmtKickoff(g.date)} · ${g.team} vs ${g.opponent}</div>`
+      : state === 'final' ? `<div class="mwa-sub">Final · ${mwGame(g)}</div>`
+      : '<div class="mwa-sub">Bye week</div>';
+    const done = state !== 'pre' && !live;
+    const num = (v, tone = '') => `<div class="mwa-val${tone}">${v}</div>`;
+    let val, small;
+    if (mode === 'current') {
+      val = state === 'pre' ? num('—', ' none') : num(fmtScore(p.livePoints || 0));
+      small = `proj ${fmtScore(p.projectedPoints)}`;
+    } else if (done) {
+      val = num(fmtScore(p.livePoints || 0));
+      small = `proj ${fmtScore(p.projectedPoints)}`;
+    } else {
+      val = num(fmtScore(p.projectedPoints), ' gold');
+      small = live ? `now ${fmtScore(p.livePoints || 0)}` : '';
+    }
+    return mwRowHtml(p, sub, val, small, done ? ' fin' : '');
+  }
+
+  // Players still to come first (live ones before those yet to kick off),
+  // then the finished ones under a divider.
+  function mwListHtml(players, mode) {
+    if (mode === 'average') return `<div class="mwa-list">${players.map(mwAvgRowHtml).join('')}</div>`;
+    const rank = p => ({ possession: 0, live: 0, pre: 1, final: 2 })[playerState(p)] ?? 3;
+    const sorted = players.slice().sort((a, b) => rank(a) - rank(b));
+    const up = sorted.filter(mwStillToCome), done = sorted.filter(p => !mwStillToCome(p));
+    return `<div class="mwa-list">${up.map(p => mwLiveRowHtml(p, mode)).join('')}${up.length && done.length ? '<div class="mwa-div">Finished</div>' : ''}${done.map(p => mwLiveRowHtml(p, mode)).join('')}</div>`;
+  }
+
   // The one number the card itself doesn't show: the other mode's total.
-  const mwOtherTotal = t => medianViewMode === 'current'
-    ? `proj<b>${fmtScore(t.projected)}</b>` : `now<b>${fmtScore(t.current)}</b>`;
+  const mwOtherTotal = t => medianViewMode === 'current' ? `proj<b>${fmtScore(t.projected)}</b>`
+    : medianViewMode === 'average' ? `proj<b>${fmtScore(t.projected)}</b> · now<b>${fmtScore(t.current)}</b>`
+    : `now<b>${fmtScore(t.current)}</b>`;
 
   // Phone only: the sheet covers the card, so it repeats the manager,
   // scored the way their card is right now (Current or Projected).
   function mwHeadHtml(t, name) {
     const mode = medianViewMode;
-    const median = mode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
+    const median = mwMedian(mode);
     const card = mwCardEl(name);
     const tone = card && card.closest('#median-below') ? 'loss' : 'turf';
     return `<div class="mwp-head">
@@ -1494,9 +1576,10 @@
     if (!info || !info.players.length || !mwCardEl(name)) { mwHide(); return; }
     mwOpen = name;
     mwMark();
-    const count = info.players.length;
-    const label = `${name}: ${count} still to play`;
-    const pods = `<div class="mwp-pods">${info.players.map(mwPodHtml).join('')}</div>`;
+    const count = info.players.length, left = info.players.filter(mwStillToCome).length;
+    const what = medianViewMode === 'average' ? 'Season averages' : `${count} starters · ${left ? `${left} still to play` : 'final'}`;
+    const label = `${name}: ${what}`;
+    const pods = mwListHtml(info.players, medianViewMode);
 
     // Desktop: the popover sits right under its card, so it doesn't repeat
     // the name, score or margin -- one line, then the players.
@@ -1507,12 +1590,12 @@
         pop = document.getElementById('mw-pop');
       }
       pop.setAttribute('aria-label', label);
-      pop.innerHTML = `<div class="mwp-line"><span class="mwp-label">${count} still to play</span>
+      pop.innerHTML = `<div class="mwp-line"><span class="mwp-label">${what}</span>
         <span class="mwp-line-r"><span>${mwOtherTotal(info.t)}</span><button type="button" class="x" data-mw-close aria-label="Close">&times;</button></span></div>${pods}`;
       mwPlacePop();
       return;
     }
-    const list = `<div class="mwp-label">${count} still to play</div>${pods}`;
+    const list = `<div class="mwp-label">${what}</div>${pods}`;
 
     // Phone: the sheet steps through managers itself, in card order.
     const order = [...document.querySelectorAll('#median-container .mb-card.can')].map(c => c.dataset.name);
@@ -1590,6 +1673,8 @@
   function mwRefresh() {
     const hint = document.getElementById('mw-hint');
     if (hint) hint.hidden = !document.querySelector('#median-container .mb-card.can');
+    const what = document.getElementById('mw-hint-what');
+    if (what) what.textContent = medianViewMode === 'average' ? 'where its number comes from' : 'its starters';
     if (mwOpen) mwShow(mwOpen, false);
     mhRefresh();
   }
@@ -1654,7 +1739,7 @@
 
   function medianSplitHtml(mode, medianValue, id) {
     const idAttr = id ? ` id="${id}"` : '';
-    const label = mode === 'current' ? 'Current Median' : 'Projected Median';
+    const label = MW_MODES[mode].label;
     if (mode !== 'projected' || mhSeries().length < 2) {
       return `<div class="median-split-label"${idAttr}>${label} <b>${fmtScore(medianValue)}</b></div>`;
     }
@@ -2184,8 +2269,19 @@
   let medianViewMode = 'projected';
   try {
     const saved = localStorage.getItem('medianViewMode');
-    if (saved === 'current' || saved === 'projected') medianViewMode = saved;
+    if (saved === 'current' || saved === 'projected' || saved === 'average') medianViewMode = saved;
   } catch (e) {}
+  // Average mode counts each starter's season average (see averageValue()
+  // in worker/src/dashboard.js) where Projected counts ESPN's projection.
+  const MW_MODES = {
+    current: { key: 'currentMedian', label: 'Current Median' },
+    projected: { key: 'projectedMedian', label: 'Projected Median' },
+    average: { key: 'averageMedian', label: 'Average Median' },
+  };
+  const mwMedian = (mode, data = lastMedianData) => data[MW_MODES[mode].key];
+  const mwToggleHtml = mode => `<div class="sup-seg" id="median-toggle-seg">
+      ${[['average', 'Average'], ['current', 'Current'], ['projected', 'Projected']].map(([k, l]) => `<button data-mode="${k}" class="${mode === k ? 'on' : ''}">${l}</button>`).join('')}
+    </div>`;
   let lastMedianTeams = null, lastMedianData = null;
   const mwSlug = name => 'mw-' + name.replace(/[^a-zA-Z0-9]/g, '-');
 
@@ -2271,16 +2367,12 @@
   // refresh landing mid-animation would be an awkward collision otherwise.
   function renderMedianStatic(mode) {
     const currentHasStarted = lastMedianTeams.some(t => t.current > 0);
-    const toggleHtml = `<div class="sup-seg" id="median-toggle-seg">
-      <button data-mode="current" class="${mode === 'current' ? 'on' : ''}">Current</button>
-      <button data-mode="projected" class="${mode === 'projected' ? 'on' : ''}">Projected</button>
-    </div>`;
+    const toggleHtml = mwToggleHtml(mode);
     let bodyHtml, rows = null, medianValue = null;
     if (mode === 'current' && !currentHasStarted) {
       bodyHtml = medianPendingBodyHtml();
     } else {
-      medianValue = mode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
-      const label = mode === 'current' ? 'Current Median' : 'Projected Median';
+      medianValue = mwMedian(mode);
       rows = computeMedianRows(lastMedianTeams, medianValue, mode);
       bodyHtml = `
         <div class="card-body">
@@ -2298,7 +2390,7 @@
       <div class="median-card">
         <div class="median-card-header">
           <div><span class="median-card-title">Median Watch</span>
-            <span class="mw-hint" id="mw-hint" hidden><span class="click">Click</span><span class="tap">Tap</span> a card to see who’s still to play</span></div>
+            <span class="mw-hint" id="mw-hint" hidden><span class="click">Click</span><span class="tap">Tap</span> a card to see <span id="mw-hint-what"></span></span></div>
           ${toggleHtml}
         </div>
         <div id="median-body">${bodyHtml}</div>
@@ -3190,17 +3282,16 @@
   }
   function applyMedianUpdate(mode) {
     const oldMode = medianViewMode;
+    setMedianViewMode(mode);
     document.querySelectorAll('#median-toggle-seg button').forEach(btn => btn.classList.toggle('on', btn.dataset.mode === mode));
     const currentHasStarted = lastMedianTeams.some(t => t.current > 0);
     if (mode === 'current' && !currentHasStarted) {
       document.getElementById('median-body').innerHTML = medianPendingBodyHtml();
       updateKickoffCountdown();
-      setMedianViewMode(mode);
       mwRefresh();
       return;
     }
-    const medianValue = mode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
-    const label = mode === 'current' ? 'Current Median' : 'Projected Median';
+    const medianValue = mwMedian(mode);
     const rows = computeMedianRows(lastMedianTeams, medianValue, mode);
     document.getElementById('median-body').innerHTML = `
       <div class="card-body">
@@ -3219,7 +3310,7 @@
     tagMedianTransitionNames();
 
     if (oldMode && oldMode !== mode) {
-      const oldMedianValue = oldMode === 'current' ? lastMedianData.currentMedian : lastMedianData.projectedMedian;
+      const oldMedianValue = mwMedian(oldMode);
       document.querySelectorAll('#median-above .mb-card, #median-below .mb-card').forEach(card => {
         const t = lastMedianTeams.find(x => medianTeamName(x) === card.dataset.name);
         if (!t) return;
@@ -3234,7 +3325,6 @@
       if (lowEl) tickMwNumber(lowEl, oldRows.all[oldRows.all.length - 1].score, rows.all[rows.all.length - 1].score);
       if (highEl) tickMwNumber(highEl, oldRows.all[0].score, rows.all[0].score);
     }
-    setMedianViewMode(mode);
     mwRefresh();
   }
 
@@ -3948,8 +4038,7 @@
   function animateMedianRefresh(prevTeams, prevData) {
     if (!prevTeams || !prevData) return;
     const mode = medianViewMode;
-    const key = mode === 'current' ? 'currentMedian' : 'projectedMedian';
-    const oldMedian = prevData[key], median = lastMedianData[key];
+    const oldMedian = mwMedian(mode, prevData), median = mwMedian(mode);
     const moved = (a, b) => typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) >= 0.005;
     document.querySelectorAll('#median-above .mb-card, #median-below .mb-card').forEach(card => {
       const t = lastMedianTeams.find(x => medianTeamName(x) === card.dataset.name);
