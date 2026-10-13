@@ -1,18 +1,44 @@
-// Shared hamburger navigation, injected into <div id="site-nav"></div> on
-// every page. The page list lives here in exactly one place, so adding a
-// new page to the site means adding one entry to PAGES rather than editing
-// a nav block copy-pasted across every HTML file.
+// Shared navigation (site audit III #10), injected into
+// <div id="site-nav"></div> on every page. Four places plus You: a tab bar
+// along the bottom of a phone, where the thumb already is, and the same
+// four as links in a top bar at 1080px and up, with search beside them
+// (⌘K or /). Every history page hangs off History, a hub with one search
+// box (history.html). The lists live here in exactly one place, so adding
+// a page means adding one entry to HISTORY rather than editing every file.
 (function () {
-  const PAGES = [
-    { href: 'index.html', label: 'Live Dashboard' },
-    { href: 'franchise.html', label: 'Franchise' },
-    { href: 'head-to-head.html', label: 'Head to Head' },
-    { href: 'overview.html', label: 'League History' },
-    { href: 'game-records.html', label: 'Game Records' },
-    { href: 'standings.html', label: 'Standings' },
-    { href: 'parlay-results.html', label: 'Parlay Results' },
-    { href: 'draft-board.html', label: 'Draft Board' },
-    { href: 'rule-changes.html', label: 'Rule Changes' },
+  const SVG = (body, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${extra}>${body}</svg>`;
+  const ICONS = {
+    live: SVG('<circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.3 5.3a9.5 9.5 0 0 0 0 13.4M18.7 5.3a9.5 9.5 0 0 1 0 13.4"/>'),
+    ticket: SVG('<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4V7z"/><path d="M14 7v10" stroke-dasharray="2 2.2"/>'),
+    list: SVG('<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/>'),
+    book: SVG('<path d="M12 6.5C10.3 5.2 7.6 4.6 4 4.8v13.4c3.6-.2 6.3.4 8 1.8 1.7-1.4 4.4-2 8-1.8V4.8c-3.6-.2-6.3.4-8 1.7z"/><path d="M12 6.5V20"/>'),
+    person: SVG('<circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/>'),
+    search: SVG('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>', ' stroke-width="2.2"'),
+    chart: SVG('<path d="M4 19h16"/><path d="m5 15 4-5 4 3 6-7"/>'),
+    people: SVG('<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.7-3.2 2.9-4.9 5.5-4.9s4.8 1.7 5.5 4.9"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M15.6 14.3c2.3.1 4.2 1.6 4.9 4.7"/>'),
+    shield: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.8 19 5.6v5.1c0 5.2-3.5 8.5-7 9.5-3.5-1-7-4.3-7-9.5V5.6l7-2.8z"/></svg>',
+    grid: SVG('<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'),
+    cal: SVG('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
+    spark: SVG('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>'),
+  };
+
+  // The tab bar, left to right. `pages` are the files that light a tab up;
+  // anything not listed (every history page) lights History.
+  const TABS = [
+    { key: 'live', href: 'index.html', label: 'Live', icon: ICONS.live, pages: ['index.html'] },
+    { key: 'parlay', href: 'parlay-results.html', label: 'Parlay', icon: ICONS.ticket, pages: ['parlay-results.html', 'parlay-entry.html'] },
+    { key: 'standings', href: 'standings.html', label: 'Standings', icon: ICONS.list, pages: ['standings.html'] },
+    { key: 'history', href: 'history.html', label: 'History', icon: ICONS.book, pages: [] },
+  ];
+  // The History hub's tiles (history.html), in its order.
+  const HISTORY = [
+    { href: 'overview.html', label: 'League History', sub: 'Champions, timeline, leaderboards', icon: ICONS.book },
+    { href: 'game-records.html', label: 'Game Records', sub: 'Every single-game record', icon: ICONS.chart },
+    { href: 'head-to-head.html', label: 'Head to Head', sub: 'Any two managers', icon: ICONS.people },
+    { href: 'franchise.html', label: 'Franchise', sub: 'One manager’s whole career', icon: ICONS.shield },
+    { href: 'wrapped.html', label: 'Season Wrapped', sub: 'Any manager’s season, told as a story', icon: ICONS.spark },
+    { href: 'draft-board.html', label: 'Draft Board', sub: 'Every draft since 2015', icon: ICONS.grid },
+    { href: 'rule-changes.html', label: 'Rule Changes', sub: 'How the league has changed', icon: ICONS.cal },
   ];
 
   function currentFile() {
@@ -24,56 +50,213 @@
     const mount = document.getElementById('site-nav');
     if (!mount) return;
 
-    // A page reached from inside another one (Season Wrapped, from
-    // Franchise) isn't in the menu: the bar names it from its own <h1>.
-    const h1 = document.querySelector('h1');
-    const current = PAGES.find(p => p.href === currentFile()) || { href: currentFile(), label: h1 ? h1.textContent : 'Retirement League' };
-    const links = PAGES.map(p => `<a class="nav-link${p.href === current.href ? ' active' : ''}" href="${p.href}">${p.label}</a>`).join('');
-    // The desktop row (nav.css shows it only when all nine fit across).
-    const inline = PAGES.map(p => `<a${p.href === current.href ? ' class="active" aria-current="page"' : ''} href="${p.href}">${p.label}</a>`).join('');
+    const file = currentFile();
+    const active = (TABS.find(t => t.pages.includes(file)) || TABS[3]).key;
+    // The page you're on is only "current" when it's the tab's own page:
+    // Franchise lights History but isn't the History page.
+    const cur = t => t.key === active ? ` class="on"${t.href === file ? ' aria-current="page"' : ''}` : '';
+    const links = TABS.map(t => `<a${cur(t)} href="${t.href}">${t.label}</a>`).join('');
+    const tabs = TABS.map(t => `<a${cur(t)} href="${t.href}" data-tab="${t.key}"><span class="tb-ic">${t.icon}</span>${t.label}</a>`).join('');
 
     mount.innerHTML = `
       <div class="nav-bar">
-        <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false">
-          <span></span><span></span><span></span>
-        </button>
-        <div class="nav-brand">${current.label}</div>
-        <nav class="nav-links" aria-label="Pages">${inline}</nav>
-        <button class="nav-me" id="nav-me" type="button" aria-haspopup="dialog"></button>
+        <a class="nav-brand" href="index.html">Retirement League</a>
+        <nav class="nav-links" aria-label="Pages">${links}</nav>
+        <div class="nav-end">
+          <button class="nav-search" id="nav-search" type="button" aria-label="Search" aria-keyshortcuts="Meta+K Control+K /">${ICONS.search}<kbd>${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl '}K</kbd></button>
+          <button class="nav-me" id="nav-me" type="button" aria-haspopup="dialog"></button>
+        </div>
       </div>
-      <div class="nav-backdrop" id="nav-backdrop"></div>
-      <nav class="nav-drawer" id="nav-drawer" aria-hidden="true">
-        <div class="nav-drawer-header">Retirement League</div>
-        ${links}
-      </nav>`;
+      <nav class="tabbar" aria-label="Pages">${tabs}<button type="button" class="tb-you" id="tb-you" aria-haspopup="dialog"><span class="tb-ic"></span>You</button></nav>`;
 
-    const toggle = mount.querySelector('#nav-toggle');
-    const drawer = mount.querySelector('#nav-drawer');
-    const backdrop = mount.querySelector('#nav-backdrop');
-
-    function openNav() {
-      drawer.classList.add('open');
-      backdrop.classList.add('open');
-      toggle.classList.add('open');
-      toggle.setAttribute('aria-expanded', 'true');
-      drawer.setAttribute('aria-hidden', 'false');
-    }
-    function closeNav() {
-      drawer.classList.remove('open');
-      backdrop.classList.remove('open');
-      toggle.classList.remove('open');
-      toggle.setAttribute('aria-expanded', 'false');
-      drawer.setAttribute('aria-hidden', 'true');
-    }
-
-    toggle.addEventListener('click', () => {
-      if (drawer.classList.contains('open')) closeNav(); else openNav();
+    // Tapping History while already on the hub goes to its search box.
+    const histTab = mount.querySelector('.tabbar [data-tab="history"]');
+    histTab.addEventListener('click', e => {
+      const q = document.getElementById('hub-q');
+      if (!q) return;
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      q.focus();
     });
-    backdrop.addEventListener('click', closeNav);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNav(); });
 
-    autoHide(mount.querySelector('.nav-bar'), drawer);
+    mount.querySelector('#nav-search').addEventListener('click', openSearch);
+    document.addEventListener('keydown', e => {
+      const typing = e.target.closest && e.target.closest('input, textarea, select, [contenteditable]');
+      if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openSearch(); }
+      else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); openSearch(); }
+    });
+
+    autoHide(mount.querySelector('.nav-bar'));
     wireYou(mount.querySelector('#nav-me'));
+    wireYouTab(mount.querySelector('#tb-you'));
+  }
+
+  // ---------- Search (site audit III #10) ----------
+  // One box over managers, every team name the league has had, every
+  // drafted player and every season. Built in the browser from the same
+  // data files the history pages read: league.json at once, and the much
+  // bigger draft-board.json (players) only once someone starts typing.
+  let idx = null, playersIdx = null, playersList = null;
+  const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/['’.]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const tidy = s => String(s ?? '').replace(/\s+/g, ' ').trim();
+  const span = ys => { const a = Math.min(...ys), b = Math.max(...ys); return a === b ? String(a) : `${a}–${b}`; };
+
+  function loadIndex() {
+    if (!idx) {
+      idx = fetch('data/league.json').then(r => r.json()).then(d => {
+        const last = Math.max(...d.seasons.map(s => s.year));
+        const byMgr = new Map(), byTeam = new Map(), byYear = new Map();
+        for (const s of d.seasons) {
+          const m = byMgr.get(s.player) || { years: [], titles: 0 };
+          m.years.push(s.year); m.titles += s.champ ? 1 : 0;
+          byMgr.set(s.player, m);
+          const name = tidy(s.team);
+          const k = name + '\u0000' + s.player;
+          const t = byTeam.get(k) || { name, mgr: s.player, years: [] };
+          t.years.push(s.year);
+          byTeam.set(k, t);
+          const y = byYear.get(s.year) || { champ: null };
+          if (s.champ) y.champ = s.player;
+          byYear.set(s.year, y);
+        }
+        const out = [];
+        for (const [name, m] of byMgr) {
+          const since = Math.min(...m.years), current = m.years.includes(last);
+          const titles = m.titles ? ` · ${m.titles} title${m.titles > 1 ? 's' : ''}` : '';
+          out.push({ kind: 'Manager', rank: 0, name, sub: (current ? `Since ${since}` : `Former · ${span(m.years)}`) + titles, href: pageLink('franchise.html', { m: name }) });
+        }
+        for (const t of byTeam.values()) {
+          out.push({ kind: 'Team', rank: 2, name: t.name, sub: `${t.mgr} · ${span(t.years)}`, href: t.years.length === 1 ? pageLink('wrapped.html', { m: t.mgr, year: t.years[0] }) : pageLink('franchise.html', { m: t.mgr }) });
+        }
+        for (const [year, y] of [...byYear].sort((a, b) => b[0] - a[0])) {
+          out.push({ kind: 'Season', rank: 1, name: String(year), sub: year === last ? 'This season' : y.champ ? `Won by ${y.champ}` : 'Standings', href: pageLink('standings.html', { year }) });
+        }
+        out.forEach(e => { e.key = norm(e.name); });
+        return out;
+      }).catch(() => { idx = null; return []; });
+    }
+    return idx;
+  }
+  function loadPlayers() {
+    if (!playersIdx) {
+      playersIdx = fetch('data/draft-board.json').then(r => r.json()).then(d => {
+        const by = new Map();
+        for (const y of d.years) {
+          const b = d.boards[y];
+          if (!b) continue;
+          const mgrOf = new Map(b.columns.map(c => [String(c.slot), c.manager]));
+          for (const round of Object.values(b.grid || {})) {
+            for (const [slot, p] of Object.entries(round)) {
+              if (!p || !p.player_name) continue;
+              const e = by.get(p.player_name) || { name: p.player_name, pos: p.position, n: 0, last: null };
+              e.n += 1;
+              // d.years runs newest first, so the first one seen is the latest.
+              if (!e.last) e.last = { year: y, mgr: mgrOf.get(slot) };
+              by.set(p.player_name, e);
+            }
+          }
+        }
+        return (playersList = [...by.values()].map(p => ({
+          kind: 'Player', rank: 3, name: p.name, key: norm(p.name), n: p.n,
+          sub: `${p.pos ? p.pos + ' · ' : ''}${p.n > 1 ? `Drafted ${p.n}× · last by ` : 'Drafted by '}${p.last.mgr}, ${p.last.year}`,
+          href: pageLink('draft-board.html', { year: p.last.year, view: 'grid', player: p.name }),
+        })));
+      }).catch(() => { playersIdx = null; return []; });
+    }
+    return playersIdx;
+  }
+
+  // Best first: the whole name, then a word that starts with what you
+  // typed, then the letters anywhere; managers before seasons before teams
+  // before players at the same strength, and oft-drafted players first.
+  function find(entries, q) {
+    const k = norm(q);
+    if (!k) return [];
+    const scored = [];
+    for (const e of entries) {
+      let s;
+      if (e.key === k) s = 0;
+      else if (e.key.startsWith(k)) s = 1;
+      else if ((' ' + e.key).includes(' ' + k)) s = 2;
+      else if (e.key.includes(k)) s = 3;
+      else continue;
+      scored.push([s, e]);
+    }
+    return scored.sort((a, b) => a[0] - b[0] || a[1].rank - b[1].rank || (b[1].n || 0) - (a[1].n || 0) || a[1].name.localeCompare(b[1].name)).map(x => x[1]);
+  }
+
+  const MAX_HITS = 12;
+  // Wires a search box to a results list. `onResults(has)` lets the page
+  // swap its other content out while results show (the hub hides its tiles).
+  function wireSearch(input, results, onResults) {
+    let seq = 0;
+    const draw = async () => {
+      const q = input.value;
+      const my = ++seq;
+      if (!norm(q)) { results.innerHTML = ''; results.hidden = true; onResults && onResults(false); return; }
+      const base = await loadIndex();
+      if (my !== seq) return;
+      let hits = find(base, q);
+      const players = playersList;
+      if (players) hits = hits.concat(find(players, q));
+      else loadPlayers().then(() => { if (my === seq) draw(); });
+      hits = hits.slice(0, MAX_HITS);
+      results.hidden = false;
+      results.innerHTML = hits.length
+        ? hits.map(h => `<a class="sr-hit" href="${esc(h.href)}"><span class="sr-k">${h.kind}</span><b>${esc(h.name)}</b><span class="sr-s">${esc(h.sub)}</span></a>`).join('')
+        : `<div class="sr-none">${players ? 'Nothing matches.' : 'Searching…'}</div>`;
+      onResults && onResults(true);
+    };
+    const clear = input.parentNode.querySelector('.sr-x');
+    const showClear = () => { clear.hidden = !input.value; };
+    input.addEventListener('input', () => { showClear(); draw(); });
+    clear.addEventListener('click', () => { input.value = ''; showClear(); draw(); input.focus(); });
+    input.addEventListener('focus', () => { loadIndex(); loadPlayers(); }, { once: true });
+    // Enter opens the top result.
+    input.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const first = results.querySelector('.sr-hit');
+      if (first) { e.preventDefault(); location.href = first.href; }
+    });
+    if (input.value) { showClear(); draw(); }
+  }
+
+  const searchBox = id => `<div class="sr-box"><span class="sr-ic">${ICONS.search}</span><input type="search" id="${id}" placeholder="Managers, teams, players, seasons" aria-label="Search the league" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"><button type="button" class="sr-x" aria-label="Clear search" hidden>✕</button></div>`;
+
+  // The History hub (history.html): the search box, then a tile per page.
+  window.renderHistoryHub = function renderHistoryHub(mount) {
+    mount.innerHTML = `${searchBox('hub-q')}
+      <div class="sr-results glass" id="hub-results" hidden></div>
+      <div class="hub-grid" id="hub-grid">${HISTORY.map(p => `<a class="hub-tile" href="${p.href}"><span class="hub-ic">${p.icon}</span><b>${p.label}</b><span>${p.sub}</span></a>`).join('')}</div>`;
+    const grid = mount.querySelector('#hub-grid');
+    wireSearch(mount.querySelector('#hub-q'), mount.querySelector('#hub-results'), has => { grid.hidden = has; });
+    loadIndex();
+  };
+
+  // Search from any page at 1080px and up: a card near the top of the
+  // screen, opened from the bar's button, ⌘K/Ctrl K or /.
+  function openSearch() {
+    if (document.getElementById('search-sheet')) return;
+    // On the hub the box is already on the page.
+    const hub = document.getElementById('hub-q');
+    if (hub) { hub.focus(); return; }
+    const back = document.activeElement;
+    document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="search-scrim"></div>
+      <div class="sheet search-sheet" id="search-sheet" role="dialog" aria-modal="true" aria-label="Search">
+        <div class="sheet-body">${searchBox('search-q')}<div class="sr-results" id="search-results" hidden></div></div>
+      </div>`);
+    const close = () => {
+      document.getElementById('search-sheet')?.remove();
+      document.getElementById('search-scrim')?.remove();
+      document.removeEventListener('keydown', onEsc);
+      if (back && back.focus) back.focus();
+    };
+    const onEsc = e => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onEsc);
+    document.getElementById('search-scrim').addEventListener('click', close);
+    const input = document.getElementById('search-q');
+    wireSearch(input, document.getElementById('search-results'));
+    input.focus();
   }
 
   // ---------- You (site audit II #36 and #37) ----------
@@ -146,6 +329,20 @@
     drawChip(btn);
     btn.addEventListener('click', () => openYou());
     window.addEventListener('rl-me', () => drawChip(btn));
+  }
+
+  // The tab bar's You: the same monogram in a ring once you've picked your
+  // team, the person outline before.
+  function wireYouTab(btn) {
+    if (!btn) return;
+    const draw = () => {
+      const me = getMe();
+      btn.querySelector('.tb-ic').innerHTML = me ? `<span class="tb-mono">${esc(monogram(me))}</span>` : ICONS.person;
+      btn.setAttribute('aria-label', me ? `You: ${me}` : 'You: pick your team');
+    };
+    draw();
+    btn.addEventListener('click', () => openYou());
+    window.addEventListener('rl-me', draw);
   }
 
   let lastFocus = null;
@@ -315,7 +512,7 @@
   // on any scroll up, so it costs no screen while reading but is one flick
   // away from the bottom of a long page. Movement under SLACK px is held
   // until it adds up, so a resting thumb's jitter doesn't flicker the bar.
-  function autoHide(bar, drawer) {
+  function autoHide(bar) {
     const SLACK = 6;
     let lastY = window.scrollY;
     let queued = false;
@@ -335,7 +532,7 @@
       const dy = y - lastY;
       if (Math.abs(dy) < SLACK) return;
       if (dy < 0) bar.classList.remove('tucked');
-      else if (!drawer.classList.contains('open')) bar.classList.add('tucked');
+      else bar.classList.add('tucked');
       lastY = y;
     }
 

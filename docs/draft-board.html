@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#050505">
 <meta name="description" content="Live scores, standings, records and history for the Retirement League.">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=26">
-<link rel="stylesheet" href="nav.css?v=9">
+<link rel="stylesheet" href="theme.css?v=27">
+<link rel="stylesheet" href="nav.css?v=10">
 <style>
   .wrap.wide{ max-width: 1180px; }
 
@@ -66,6 +66,7 @@
   .legend-clear{ height: 44px; padding: 0 6px; border: none; background: none; cursor: pointer; font: 600 0.74rem var(--body); color: var(--gold); }
   .pick-cell, .sb-pick, table.board thead th{ transition: opacity .25s ease; }
   .pick-cell.dim{ opacity: 0.16; }
+  .pick-cell.found{ outline: 2px solid var(--gold); outline-offset: 1px; }
   .sb-pick.dim{ opacity: 0.22; }
   table.board thead th.dim{ opacity: 0.4; }
 
@@ -304,8 +305,8 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=9"></script>
-<script src="page-common.js?v=27"></script>
+<script src="nav.js?v=10"></script>
+<script src="page-common.js?v=28"></script>
 <script>
   const POSITION_COLORS = {
     QB: '#E0644F', RB: '#4C9A6B', WR: '#4A90D9', TE: '#D9852F', K: '#9B6BC4', 'D/ST': '#8A8A85',
@@ -332,6 +333,10 @@
   // year or view. A pick stays lit when it matches every active filter.
   const posFilter = new Set();
   let mgrFilter = null;
+  // A player search result (nav.js, site audit III #10) links here with
+  // ?player=: that pick wears a gold ring in every year he was taken, and
+  // the first board shown scrolls to him.
+  const FOUND = urlParam('player');
 
   function renderLegend(board) {
     const seen = board ? positionsIn(board) : new Set(Object.keys(POSITION_COLORS));
@@ -389,7 +394,7 @@
     const [first, last] = splitName(pick.player_name);
     const pts = pv ? `<div class="pick-pts" title="${esc(valueTitle(pv))}">${f1(pv[0])}</div>` : '';
     return `
-      <td class="pick-cell ${posClass(pick.position)}" data-mgr="${esc(manager)}" data-pos="${esc(pick.position || '')}">
+      <td class="pick-cell ${posClass(pick.position)}${pick.player_name === FOUND ? ' found' : ''}" data-mgr="${esc(manager)}" data-pos="${esc(pick.position || '')}">
         ${pick.keeper ? '<div class="pick-keeper" title="Keeper"></div>' : ''}
         <div class="pick-top">
           <span class="pick-tag">
@@ -592,6 +597,8 @@
       sel.value = data.years.includes(y) ? y : data.years[0];
       show(sel.value);
       riseIn(document.getElementById('board-container').children);
+      const found = boardContainer.querySelector('.pick-cell.found');
+      if (found) requestAnimationFrame(() => found.scrollIntoView({ block: 'center', inline: 'center' }));
       sel.addEventListener('change', () => show(sel.value));
       // A filter change only re-dims the board in place; the legend redraws
       // for its on/off states and the Clear button.

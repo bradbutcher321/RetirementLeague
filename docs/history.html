@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="Live scores, standings, records and history for the Retirement League.">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Retirement League">
+<meta property="og:title" content="Retirement League — History">
+<meta property="og:description" content="Live scores, standings, records and history for the Retirement League.">
+<meta property="og:url" content="https://bradbutcher321.github.io/RetirementLeague/history.html">
+<meta property="og:image" content="https://bradbutcher321.github.io/RetirementLeague/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>html{background:#050505}</style>
+<title>Retirement League — History</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The two font-family's woff2 files Google serves for the latin subset
+     at the weights this site uses -- one variable-font file per family
+     covers every weight declared, confirmed directly by fetching the
+     stylesheet below and comparing each @font-face block's url(). Starts
+     the actual font downloads immediately, in parallel with that
+     stylesheet fetch, instead of waiting to discover these same URLs
+     only after the stylesheet loads and is parsed -- avoids the
+     fallback-to-webfont swap (FOUT) that otherwise shows on a slow or
+     uncached load. If Google ever changes these hashed URLs, this just
+     degrades to a wasted (unused) preload, not a correctness issue -- the
+     stylesheet's own @font-face still fetches whatever the new URL is. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=27">
+<link rel="stylesheet" href="nav.css?v=10">
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>History</h1>
+        </div>
+      </div>
+    </header>
+
+    <!-- The hub (site audit III #10): one search box, then a tile for each
+         history page. nav.js draws both, from the same list it keeps for
+         the tab bar, so a new history page is one entry there. -->
+    <section id="hub"></section>
+
+    <footer id="site-footer"></footer>
+  </div>
+<script src="nav.js?v=10"></script>
+<script src="page-common.js?v=28"></script>
+<script>
+  renderHistoryHub(document.getElementById('hub'));
+  riseIn(document.querySelectorAll('#hub-grid > a'));
+</script>
+<script src="track.js?v=1" defer></script>
+</body>
+</html>

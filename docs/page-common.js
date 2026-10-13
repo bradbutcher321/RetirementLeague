@@ -723,7 +723,7 @@ function riseIn(els, cap = 8) {
   if (!installed && !/[?&]ptr\b/.test(location.search)) return;
   const ARM = 72, MAX = 110;
   // Taps inside these scroll or close something of their own.
-  const SKIP = '.sheet, .scrim, .nav-drawer, .pop, .a2hs';
+  const SKIP = '.sheet, .scrim, .tabbar, .pop, .a2hs';
   let el = null, startX = 0, startY = 0, pull = 0, state = 'idle'; // idle | maybe | pulling | busy
 
   const chip = () => {
@@ -752,7 +752,7 @@ function riseIn(els, cap = 8) {
 
   addEventListener('touchstart', e => {
     if (state === 'busy' || e.touches.length !== 1 || window.scrollY > 0) return;
-    if (e.target.closest(SKIP) || document.querySelector('.nav-drawer.open, .sheet')) return;
+    if (e.target.closest(SKIP) || document.querySelector('.sheet')) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     pull = 0;

@@ -113,8 +113,12 @@ html{ user-select: none; }
    pills read as two different golds purely because one control sat higher
    on the page than the other. A flat fill can't do that to anything on
    any page, so no future component can hit this same bug either. */
+/* Every page's viewport is viewport-fit=cover, so the tab bar (nav.css)
+   can reach the screen's foot; these keep everything else out of the
+   notch, the status bar and the corners on an iPhone. All 0 elsewhere. */
 body{
   margin:0;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
   background: var(--bg);
   color: var(--text);
   font-family: var(--body);
@@ -974,7 +978,7 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
    iOS 26, bottom:0 is the top edge of Safari's floating toolbar, so 12px
    leaves the arrow just clear of it. Below the scrim (60) so an open sheet
    still covers it. */
-.a2hs{ position:fixed; left:12px; right:12px; bottom:12px; z-index:55; max-width:460px; margin:0 auto;
+.a2hs{ position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); z-index:55; max-width:460px; margin:0 auto;
        background:#151515; border:1px solid var(--lead-line); border-radius:14px; padding:14px;
        box-shadow:0 18px 50px -12px rgba(0,0,0,0.9); animation:a2hs-in .45s cubic-bezier(0.34,1.56,0.64,1) both; }
 .a2hs::after{ content:''; position:absolute; bottom:-7px; right:20px; width:12px; height:12px; background:#151515;
