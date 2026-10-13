@@ -324,74 +324,35 @@ function weeklyLeaders(wf, key, names) {
 const TRACK_SEL = '.tabs, .seg, .sup-seg, .scope-row, .board-toggle';
 
 // Haptics (audit III #25): a light tick for a tap that changes something.
-// Android has navigator.vibrate. iOS gives web pages no vibration API, but
-// Safari ticks when a switch control flips -- since iOS 26.5 only when a
-// finger flips it, not a script's click. So every tick-worthy choice wears
-// a clear label holding a hidden switch: the tap lands on the label, its
-// click bubbles to the choice's own handlers as before, and the label then
-// flips its switch with the tap's own trusted click. The switch sits inside
-// the label so this still works when the handler re-renders the choice
-// away. The labels are put in place as choices appear, never as a finger
-// lands: iOS takes a page that changes under a touch for a hover and drops
-// the tap. iOS pull-to-refresh can't tick: a pull ends in no click at all.
-const vibrates = typeof navigator.vibrate === 'function';
-const haptic = () => { if (vibrates) navigator.vibrate(8); };
-// A track's unselected choice, or a tab in the bottom bar. Checked before
-// the page's own handler marks it selected (Median Watch flips .on in place).
-const tickHost = el => {
-  const btn = el instanceof Element && el.closest('button, a');
-  if (!btn || btn.matches('.on, .active, [aria-current="page"]')) return null;
-  return btn.parentElement?.matches(TRACK_SEL) || btn.closest('.tabbar') ? btn : null;
-};
-if (vibrates) {
-  document.addEventListener('click', e => { if (tickHost(e.target)) haptic(); }, true);
-} else {
-  const HOST_SEL = `:is(${TRACK_SEL}) > :is(button, a), .tabbar :is(button, a)`;
-  // A selected choice lets taps through to itself: no tick for no change.
-  const css = document.createElement('style');
-  css.textContent = `.tick-lay{position:absolute;inset:0;margin:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
-.tick-lay input{position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
-:is(.on, .active, [aria-current="page"]) > .tick-lay{pointer-events:none}`;
-  document.head.appendChild(css);
-  const dress = host => {
-    if ([...host.children].some(c => c.classList.contains('tick-lay'))) return;
-    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
-    const lay = document.createElement('label');
-    lay.className = 'tick-lay';
-    lay.setAttribute('aria-hidden', 'true');
-    lay.innerHTML = '<input type="checkbox" switch tabindex="-1">';
-    host.appendChild(lay);
-  };
-  const scan = root => {
-    if (root.matches(HOST_SEL)) dress(root);
-    root.querySelectorAll(HOST_SEL).forEach(dress);
-  };
-  new MutationObserver(ms => {
-    for (const m of ms) if (m.target instanceof Element) scan(m.target);
-  }).observe(document.documentElement, { childList: true, subtree: true });
-  scan(document.documentElement);
-  // The switch's forwarded click would reach every click listener a second
-  // time, so it stops at the window before any of them sees it.
-  addEventListener('click', e => {
-    if (e.target instanceof Element && e.target.matches('.tick-lay input')) e.stopImmediatePropagation();
-  }, true);
-  // After the page's own handlers. The label's activation replaces a link's,
-  // so a bottom-bar tab is followed here, unless its own handler kept it
-  // (History on the hub). And WebKit only flips a label's switch while the
-  // label is in the page, so one whose card was just rebuilt is parked out
-  // of sight until the flip.
-  addEventListener('click', e => {
-    const lay = e.target instanceof Element && e.target.matches('.tick-lay') ? e.target : null;
-    if (!lay) return;
-    const a = lay.closest('a[href]');
-    if (a && !e.defaultPrevented) location.href = a.href;
-    if (!lay.isConnected) {
-      lay.style.cssText = 'position:fixed;left:-10px;top:0;width:1px;height:1px;pointer-events:none';
-      document.body.appendChild(lay);
-      setTimeout(() => lay.remove());
+// iOS gives web pages no vibration API, but since iOS 18 Safari ticks when
+// a switch control flips, so a hidden one is flipped instead; Android has
+// navigator.vibrate. Either only works inside the tap's own handler, so a
+// matchup going final on its own can't tick. The hidden switch's click is
+// kept from bubbling, so no page handler mistakes it for a tap elsewhere.
+const haptic = (() => {
+  let label = null;
+  return () => {
+    if (typeof navigator.vibrate === 'function') { navigator.vibrate(8); return; }
+    if (!label) {
+      label = document.createElement('label');
+      label.setAttribute('aria-hidden', 'true');
+      label.style.display = 'none';
+      label.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+      label.addEventListener('click', e => e.stopPropagation());
+      document.head.appendChild(label);
     }
-  });
-}
+    label.click();
+  };
+})();
+// A tap on a track's unselected choice, or a tab in the bottom bar.
+// Capture phase, so it sees the choice before the page's own handler marks
+// it selected (Median Watch flips .on in place).
+document.addEventListener('click', e => {
+  if (!(e.target instanceof Element)) return;
+  const btn = e.target.closest('button, a');
+  if (!btn || btn.matches('.on, .active, [aria-current="page"]')) return;
+  if (btn.parentElement?.matches(TRACK_SEL) || btn.closest('.tabbar')) haptic();
+}, true);
 const glideTap = { track: null, at: 0 };
 (() => {
   const items = track => [...track.children].filter(c => !c.classList.contains('glide-pill'));
