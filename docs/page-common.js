@@ -56,14 +56,16 @@ function isMe(name) {
 //   meColor: the ring on your rows and cards (theme.css .me, --me-ring).
 const SETTINGS_KEY = 'rl-settings';
 // [key, name, ring]. No gold (it marks a leader), green or red (they mean
-// winning and losing) -- the ring only ever says "this one's yours".
+// winning and losing) -- the ring only ever says "this one's yours". No
+// white either: the Feed marks your opponent's plays in white. The first is
+// the default, and what an old saved "white" pick falls back to.
 const ME_COLORS = [
-  ['white', 'White', 'rgba(245,245,243,0.72)'],
   ['canaveral', 'Canaveral blue', '#7AAEDB'],
   ['pink', 'Pink', '#F29BC4'],
   ['lavender', 'Lavender', '#B7A4F2'],
   ['orange', 'Orange', '#F0A35E'],
   ['seafoam', 'Seafoam', '#86D9C6'],
+  ['teal', 'Teal', '#3FC1C9'],
 ];
 function getSettings() {
   try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (e) { return {}; }

@@ -950,11 +950,12 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
 
 /* ---------- You (site audit II #36) ----------
    The visitor's own card or row, once they've picked their team in the You
-   sheet (nav.js): a white ring just outside it. White because every border
-   colour on a card already means something (gold lead, green/red locks),
-   and outside the border so it stacks with whichever one is there. */
+   sheet (nav.js): a ring just outside it, in the color picked in Settings
+   (Canaveral blue unless changed). Never gold, green or red, because every
+   border colour on a card already means something (gold lead, green/red
+   locks), and outside the border so it stacks with whichever one is there. */
 /* Your ring; its color is your pick in the You sheet's Settings (page-common.js applyMeColor). */
-.me{ outline: 1.5px solid var(--me-ring, rgba(245,245,243,0.72)); outline-offset: 2px; }
+.me{ outline: 1.5px solid var(--me-ring, #7AAEDB); outline-offset: 2px; }
 
 /* ---------- Detail panels: a bottom sheet on a phone, a popover on desktop ----------
    Shared by Game Records (a record's top 10) and the Dashboard's Median
