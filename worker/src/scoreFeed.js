@@ -16,8 +16,12 @@
  */
 
 /** Adds a row for every starter whose points differ from his last saved
- * row. `previous` is the cached build before this one; starters whose
- * points it already had are skipped without asking D1. The insert itself
+ * row. `previous` is the cached build before this one, and the baseline:
+ * with no earlier build of this week to compare against nothing is saved
+ * (the very first build would otherwise log every starter's whole week as
+ * one change), starters whose points it already had are skipped without
+ * asking D1, and a starter with no saved row yet starts from its numbers
+ * rather than from zero. The insert itself
  * re-reads the last saved row, so two builds racing each other can't save
  * the same change twice, and an older build finishing late can't save a
  * step backwards (its timestamp is behind the row already there). */
@@ -27,22 +31,23 @@ export async function recordScoreEvents(env, previous, dashboard) {
   const season = Number(env.ESPN_YEAR);
   const week = dashboard.week;
   const ts = Date.parse(dashboard.updatedAt) || Date.now();
-  const before = previous?.week === week && previous.scoreLines
-    ? new Map(previous.scoreLines.map((l) => [l.id, l.pts]))
-    : null;
-  const changed = lines.filter((l) => l.id && (before ? before.get(l.id) !== l.pts : l.pts !== 0));
+  if (previous?.week !== week || !previous.scoreLines) return 0;
+  const before = new Map(previous.scoreLines.map((l) => [l.id, l]));
+  const changed = lines.filter((l) => l.id && (before.get(l.id)?.pts ?? 0) !== l.pts);
   if (!changed.length) return 0;
 
   const sql = `INSERT INTO score_events
       (season, week, ts, player_id, manager, player, pos, prev, total, delta, stats, prev_stats, team, opp, period, clock)
-    SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, COALESCE(l.total, 0), ?8, ROUND(?8 - COALESCE(l.total, 0), 2), ?9, l.stats, ?10, ?11, ?12, ?13
+    SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, COALESCE(l.total, ?14), ?8, ROUND(?8 - COALESCE(l.total, ?14), 2), ?9, COALESCE(l.stats, ?15), ?10, ?11, ?12, ?13
     FROM (SELECT 1) AS one
     LEFT JOIN (SELECT total, stats, ts FROM score_events WHERE season = ?1 AND week = ?2 AND player_id = ?4 ORDER BY id DESC LIMIT 1) AS l ON 1
-    WHERE COALESCE(l.total, 0) <> ?8 AND (l.ts IS NULL OR l.ts < ?3)`;
+    WHERE COALESCE(l.total, ?14) <> ?8 AND (l.ts IS NULL OR l.ts < ?3)`;
   const stmt = env.HISTORY_DB.prepare(sql);
-  await env.HISTORY_DB.batch(changed.map((l) => stmt.bind(
-    season, week, ts, l.id, l.m, l.n, l.pos, l.pts, JSON.stringify(l.s), l.tm, l.op, l.q, l.clk
-  )));
+  await env.HISTORY_DB.batch(changed.map((l) => {
+    const was = before.get(l.id);
+    return stmt.bind(season, week, ts, l.id, l.m, l.n, l.pos, l.pts, JSON.stringify(l.s), l.tm, l.op, l.q, l.clk,
+      was?.pts ?? 0, JSON.stringify(was?.s || {}));
+  }));
   return changed.length;
 }
 
