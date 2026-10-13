@@ -6,7 +6,10 @@ games finish, without anyone re-running the backfill by hand.
 
 Always re-derives the WHOLE current season (not just "new" weeks) -- cheap
 (at most ~17 weeks), and it self-heals any stat correction ESPN makes after
-a game was first marked final, since every write is INSERT OR REPLACE.
+a game was first marked final, since every write is INSERT OR REPLACE. Only
+rows that differ from D1 get written (history_lib.changed_rows): a full
+rewrite every night costs ~3k rows-written at week 5 and ~10k by week 17,
+out of a 100k/day free budget the analytics and parlay databases share.
 
 Also fills in that season's Sacko (see history_lib.compute_season_sacko_row)
 the moment it's decided -- the matchup between the two worst regular-season
@@ -40,6 +43,12 @@ def run_sql(statements, label):
     print(f"  {label}: {len(statements)} statements written")
 
 
+def sync(table, columns, key_columns, rows, label, where="1=1"):
+    changed = hl.changed_rows(table, columns, key_columns, rows, where)
+    print(f"  {label}: {len(changed)} of {len(rows)} changed")
+    run_sql(hl.insert_or_replace_sql(table, columns, changed), label)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--year", type=int, default=hl.current_nfl_season_year())
@@ -54,14 +63,15 @@ def main():
     print(f"=== {year} ===")
     league = League(league_id=hl.LEAGUE_ID, year=year, espn_s2=espn_s2, swid=swid)
 
-    run_sql(hl.insert_or_replace_sql("managers", hl.MANAGER_COLUMNS, hl.manager_rows(league.teams)), "managers")
-    run_sql(hl.insert_or_replace_sql("teams", hl.TEAM_COLUMNS, hl.team_rows(year, league.teams)), "teams")
-    run_sql(hl.insert_or_replace_sql("draft_picks", hl.DRAFT_COLUMNS, hl.draft_rows(league)), "draft_picks")
-    run_sql(hl.insert_or_replace_sql("league_settings", hl.LEAGUE_SETTINGS_COLUMNS, [hl.league_settings_row(league)]), "league_settings")
+    this_year = f"year = {year}"
+    sync("managers", hl.MANAGER_COLUMNS, ("espn_id",), hl.manager_rows(league.teams), "managers")
+    sync("teams", hl.TEAM_COLUMNS, ("year", "team_id"), hl.team_rows(year, league.teams), "teams", this_year)
+    sync("draft_picks", hl.DRAFT_COLUMNS, ("year", "round_num", "round_pick"), hl.draft_rows(league), "draft_picks", this_year)
+    sync("league_settings", hl.LEAGUE_SETTINGS_COLUMNS, ("year",), [hl.league_settings_row(league)], "league_settings", this_year)
 
     if year < hl.BOX_SCORE_MIN_YEAR:
         rows = hl.season_only_matchup_rows(league)
-        run_sql(hl.insert_or_replace_sql("matchups", hl.MATCHUP_COLUMNS, rows), "matchups (season-level)")
+        sync("matchups", hl.MATCHUP_COLUMNS, ("year", "week", "team_id"), rows, "matchups (season-level)", this_year)
         return
 
     cache = {}
@@ -73,8 +83,8 @@ def main():
         all_roster_rows += roster_rows
         print(f"  week {week}: {len(matchup_rows)} matchup-sides, {len(roster_rows)} roster entries")
 
-    run_sql(hl.insert_or_replace_sql("matchups", hl.MATCHUP_COLUMNS, all_matchup_rows), "matchups")
-    run_sql(hl.insert_or_replace_sql("roster_entries", hl.ROSTER_COLUMNS, all_roster_rows), "roster_entries")
+    sync("matchups", hl.MATCHUP_COLUMNS, ("year", "week", "team_id"), all_matchup_rows, "matchups", this_year)
+    sync("roster_entries", hl.ROSTER_COLUMNS, ("year", "week", "team_id", "player_id"), all_roster_rows, "roster_entries", this_year)
 
     update_season_sacko(year)
 

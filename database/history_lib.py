@@ -387,6 +387,40 @@ def insert_or_replace_sql(table, columns, rows) -> list:
     return stmts
 
 
+def _comparable(v):
+    """One value as D1 hands it back: numbers as floats (a REAL column
+    returns 12.0 for 12, and True for 1), JSON text parsed so key order
+    doesn't count as a change."""
+    if isinstance(v, (bool, int, float)):
+        return float(v)
+    if isinstance(v, str) and v[:1] in "{[":
+        try:
+            return json.dumps(json.loads(v), sort_keys=True)
+        except ValueError:
+            pass
+    return v
+
+
+def changed_rows(table, columns, key_columns, rows, where="1=1", db_name=None) -> list:
+    """The rows (in `columns` order) that differ from what D1 already has
+    under `where`, or aren't there yet -- so a rerun only pays D1's
+    rows-written cost for what actually changed."""
+    if not rows:
+        return []
+    existing = d1_query(f"SELECT {', '.join(columns)} FROM {table} WHERE {where}", db_name=db_name)
+    key_idx = [columns.index(c) for c in key_columns]
+    have = {}
+    for r in existing:
+        row = tuple(_comparable(r[c]) for c in columns)
+        have[tuple(row[i] for i in key_idx)] = row
+    changed = []
+    for row in rows:
+        norm = tuple(_comparable(v) for v in row)
+        if have.get(tuple(norm[i] for i in key_idx)) != norm:
+            changed.append(row)
+    return changed
+
+
 def run_d1_sql(statements, label, db_name=None):
     """Writes `statements` to a temp .sql file and applies it to Cloudflare
     D1 via `wrangler d1 execute --remote`, raising SystemExit with the
