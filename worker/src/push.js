@@ -97,7 +97,7 @@ function currentEvents(year, dashboard, parlay) {
           to: me,
           pref: "final",
           message: {
-            title: `Week ${week} final: ${head} ${f2(mine)}â€“${f2(theirs)}`,
+            title: `Week ${week} final: ${head} ${f2(mine)}–${f2(theirs)}`,
             body: `You ${verb} ${opp}${mine !== theirs ? ` by ${f2(Math.abs(mine - theirs))}` : ""}.`,
             url: "index.html",
             tag: `final-${week}`,
