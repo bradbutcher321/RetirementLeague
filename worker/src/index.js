@@ -9,7 +9,7 @@
  * only real latency left is the ESPN call itself and, when the cooldown is
  * active, none at all since it's served straight from the cache).
  *
- * GET /            -> cached data if fetched within the last 2 minutes,
+ * GET /            -> cached data if fetched within the last 15 seconds,
  *                      otherwise fetches fresh from ESPN, caches it, and
  *                      returns it. Falls back to serving stale cache (with
  *                      an `error` field) if a fresh ESPN fetch fails.
@@ -54,13 +54,13 @@ import { cached } from "./cache.js";
 
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
 
-const COOLDOWN_SECONDS = 120;
+const COOLDOWN_SECONDS = 15;
 // A finished week only changes with ESPN's stat corrections.
 const PAST_WEEK_SECONDS = 3 * 60 * 60;
 const CACHE_KEY = "dashboard:v2";
-// The two-minute cache is a row in D1, whose free tier allows 100k row
-// writes a day. KV allows only 1k, and a game day of rebuilds every two
-// minutes plus the parlay publishes can use that up, so KV just gets a copy
+// The 15-second cache is a row in D1, whose free tier allows 100k row
+// writes a day (a rebuild every 15s all day is under 6k). KV allows only
+// 1k, which rebuilds that often would use up within hours, so KV just gets a copy
 // every ten minutes, read only if D1 fails. (The Cache API would be the
 // other free option, but it does nothing on a *.workers.dev hostname.)
 const KV_COPY_SECONDS = 600;

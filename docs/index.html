@@ -1286,7 +1286,7 @@
       </details>
     </section>
 
-    <footer id="site-footer" data-note="Refreshes every 2 minutes"></footer>
+    <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
 <script src="nav.js?v=9"></script>
@@ -1295,7 +1295,7 @@
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
   // Google Sheet or GitHub Action in the loop for this page. A GET here
-  // either returns data cached within the last 2 minutes instantly, or
+  // either returns data cached within the last 15 seconds instantly, or
   // fetches fresh from ESPN, caches it, and returns that.
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
 
@@ -2890,9 +2890,8 @@
 
   // ---------- Stat of the Moment ----------
   // A single hero fact under Median Watch, re-rolled on every data refresh
-  // (loadDashboard already runs every 2 minutes and on every manual
-  // reload, so this "cycles" along with it rather than needing its own
-  // timer). Always shows the manager, not the team name, per request.
+  // (loadDashboard runs every 15 seconds, so a poll only re-rolls it once
+  // STAT_REROLL_MS has passed; a manual reload always does). Always shows the manager, not the team name, per request.
   //
   // Deliberately never comments on an in-progress matchup (closest
   // game/blowout/upset watch used to, and reading "up by 2.5 right now"
@@ -3639,9 +3638,15 @@
     return `Will ${p.name} ever win a ship? Find out next time on Dragon Ball Z.`;
   }
 
-  function renderStatOfMoment() {
+  const STAT_REROLL_MS = 2 * 60 * 1000;
+  let statRolledAt = 0;
+  // `poll`: from the live refresh, which keeps the current fact until
+  // STAT_REROLL_MS is up instead of flipping it every 15 seconds.
+  function renderStatOfMoment(poll) {
     const container = document.getElementById('stat-of-moment-container');
     if (!container) return;
+    if (poll && container.innerHTML.trim() && Date.now() - statRolledAt < STAT_REROLL_MS) return;
+    statRolledAt = Date.now();
     const data = standingsData;
     let text, isEgg = false;
     const roll = Math.random();
@@ -4450,10 +4455,11 @@
       .catch(() => { document.getElementById('activity-section').hidden = true; });
   }
 
-  // Polling the Worker every 2 minutes is now cheap regardless of whether
-  // the cooldown is active — within it, the Worker just returns its KV
-  // cache instantly; only once it's expired does a real ESPN fetch happen.
-  const AUTO_REFRESH_MS = 2 * 60 * 1000;
+  // Polling every 15 seconds matches the Worker's own cache: within it the
+  // Worker returns its D1 copy instantly; only once it's expired does a
+  // real ESPN fetch happen, so builds stay at one per 15s however many
+  // tabs are open.
+  const AUTO_REFRESH_MS = 15 * 1000;
 
   // ---------- Live refresh motion ----------
   // Every poll rebuilds the matchup cards and Median Watch from scratch, so
@@ -5148,7 +5154,7 @@
         if (animate) animateMedianRefresh(prevMedianTeams, prevMedianData);
         mhLoad();
         renderParlayHighlight();
-        renderStatOfMoment();
+        renderStatOfMoment(true);
 
         superlativesData = data;
         renderSuperlatives();
