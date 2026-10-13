@@ -763,6 +763,7 @@
   .mwa-val.gold{ color: var(--gold); }
   .mwa-val.none{ color: var(--text-dim); }
   .mwa-small{ font-size: 0.6rem; color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .mwa-small .gold{ color: var(--gold); }
   .mwa-div{ font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); padding: 12px 0 4px; border-top: 1px solid var(--line); }
   .mwa-row.fin .mwa-nm, .mwa-row.fin .mwa-val{ color: #bdbdbb; }
 
@@ -1680,8 +1681,8 @@
   }
 
   // Current and Projected: the game clock and NFL score (or kickoff, or the
-  // final), then his points so far (Current) or what ESPN counts him for
-  // (Projected: his projection until his game ends).
+  // final), then his points so far, with his projection under it (gold in
+  // Projected while his game is still to finish, since that's what counts).
   function mwLiveRowHtml(p, mode) {
     const g = p.game || {};
     const state = playerState(p);
@@ -1700,8 +1701,8 @@
       val = num(fmtScore(p.livePoints || 0));
       small = `proj ${fmtScore(p.projectedPoints)}`;
     } else {
-      val = num(fmtScore(p.projectedPoints), ' gold');
-      small = live ? `now ${fmtScore(p.livePoints || 0)}` : '';
+      val = live ? num(fmtScore(p.livePoints || 0)) : num('—', ' none');
+      small = `<span class="gold">proj ${fmtScore(p.projectedPoints)}</span>`;
     }
     return mwRowHtml(p, sub, val, small, done ? ' fin' : '');
   }
