@@ -24,7 +24,8 @@ approach database/update_history_d1.py already uses for D1, so it inherits
 the same proven CI auth (CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID -- both
 already present as GitHub Actions secrets, no new secret needed).
 
-Usage: python publish_parlay_stats.py
+Usage: python publish_parlay_stats.py [--force]
+  --force  writes to KV even when nothing but generated_at changed.
 """
 import json
 import os
@@ -145,6 +146,23 @@ def build_live_scores(spreadsheet):
     return live, matchups
 
 
+def unchanged_in_kv(output):
+    """True when KV already holds this payload, generated_at aside. Any
+    trouble reading it counts as changed, so a failed read never blocks a
+    publish."""
+    result = subprocess.run(
+        [hl.NPX, "-y", "wrangler", "kv", "key", "get", KV_KEY,
+         "--namespace-id", KV_NAMESPACE_ID, "--remote"],
+        cwd=hl.WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    try:
+        existing = json.loads(result.stdout) if result.returncode == 0 else None
+    except json.JSONDecodeError:
+        return False
+    strip = lambda d: {k: v for k, v in d.items() if k != "generated_at"}
+    return isinstance(existing, dict) and strip(existing) == strip(output)
+
+
 def main():
     print("Connecting to Google Sheets API...")
     spreadsheet = authorize().open_by_key(SHEET_ID)
@@ -160,6 +178,14 @@ def main():
             matchup = matchups.get(f"{w['year']}:{w['week']}:{player}")
             if matchup:
                 pick["matchup"] = matchup
+
+    # KV allows only 1,000 writes a day, and a game-day Sunday runs this
+    # about 90 times; most of those find nothing new. --force (the Enter
+    # Picks workflow) always writes, since that page waits for a newer
+    # generated_at than its save.
+    if "--force" not in sys.argv and unchanged_in_kv(output):
+        print("No changes; KV left as is.")
+        return
 
     payload = json.dumps(output)
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
