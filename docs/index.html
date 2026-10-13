@@ -5120,6 +5120,14 @@
         shownData = data;
         const archived = Boolean(data.archived);
         dashYear = data.year || leagueYear;
+        // WebKit (Safari, every iPhone browser) moves the page when the
+        // matchup cards are swapped out below, even for identical HTML --
+        // up past the pinned Season So Far toggle, or with its scroll
+        // anchoring on, down to the bottom. A refresh puts it back.
+        const keepY = dashboardShown ? window.scrollY : null;
+        const holdScroll = () => {
+          if (keepY !== null && window.scrollY !== keepY) window.scrollTo({ top: keepY, behavior: 'instant' });
+        };
 
         const teams = data.teams || [];
         dashWeek = data.week || 1;
@@ -5177,6 +5185,7 @@
         renderMePrompt(onTop);
         document.getElementById('matchups-container').innerHTML =
           ordered.length ? ordered.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
+        holdScroll();
         if (prevMatchups) animateMatchupRefresh(prevMatchups);
 
         // Team names stay right-aligned (matching every other short name)
@@ -5217,6 +5226,7 @@
         renderSuperlatives();
         document.getElementById('season-section').hidden = false;
         plRefresh();
+        holdScroll();
 
         // First load: the skeleton has just been swapped out, so bring the
         // real cards up in reading order. The parlay card's skeleton is
