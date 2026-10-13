@@ -8,7 +8,9 @@
  * index.js) compares every starter with the last row saved for him and adds
  * a row to HISTORY_DB.score_events (database/migrations/007_score_events.sql)
  * when his points moved. Two plays inside one build's gap arrive as one
- * change.
+ * change. Each row also keeps what the change did to the matchup: the
+ * manager's projected total before and after, the opponent's after, and
+ * the projected median before and after (regular season only).
  *
  * GET /feed[?week=N][&since=ID][&big=1] -> { season, week, events: [...] },
  *   oldest first, only rows after `since` (the page polls for the new ones),
@@ -38,17 +40,33 @@ export async function recordScoreEvents(env, previous, dashboard) {
   const changed = lines.filter((l) => l.id && (before.get(l.id)?.pts ?? 0) !== l.pts);
   if (!changed.length) return 0;
 
+  // Projected totals by manager, this build and the one before it.
+  const proj = (d) => new Map((d.teams || []).map((t) => [t.manager || t.name, t.projected]));
+  const now = proj(dashboard), was = proj(previous);
+  const oppOf = new Map();
+  for (const m of dashboard.matchups || []) {
+    oppOf.set(m.awayManager, m.homeManager);
+    oppOf.set(m.homeManager, m.awayManager);
+  }
+  const regular = !dashboard.regularSeasonWeeks || week <= dashboard.regularSeasonWeeks;
+  const num = (v) => (typeof v === "number" ? v : null);
+
   const sql = `INSERT INTO score_events
-      (season, week, ts, player_id, manager, player, pos, prev, total, delta, stats, prev_stats, team, opp, period, clock)
-    SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, COALESCE(l.total, ?14), ?8, ROUND(?8 - COALESCE(l.total, ?14), 2), ?9, COALESCE(l.stats, ?15), ?10, ?11, ?12, ?13
+      (season, week, ts, player_id, manager, player, pos, prev, total, delta, stats, prev_stats, team, opp, period, clock,
+       proj_prev, proj, opp_manager, opp_proj, median_prev, median)
+    SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, COALESCE(l.total, ?14), ?8, ROUND(?8 - COALESCE(l.total, ?14), 2), ?9, COALESCE(l.stats, ?15), ?10, ?11, ?12, ?13,
+      ?16, ?17, ?18, ?19, ?20, ?21
     FROM (SELECT 1) AS one
     LEFT JOIN (SELECT total, stats, ts FROM score_events WHERE season = ?1 AND week = ?2 AND player_id = ?4 ORDER BY id DESC LIMIT 1) AS l ON 1
     WHERE COALESCE(l.total, ?14) <> ?8 AND (l.ts IS NULL OR l.ts < ?3)`;
   const stmt = env.HISTORY_DB.prepare(sql);
   await env.HISTORY_DB.batch(changed.map((l) => {
-    const was = before.get(l.id);
+    const last = before.get(l.id);
+    const opp = oppOf.get(l.m) || null;
     return stmt.bind(season, week, ts, l.id, l.m, l.n, l.pos, l.pts, JSON.stringify(l.s), l.tm, l.op, l.q, l.clk,
-      was?.pts ?? 0, JSON.stringify(was?.s || {}));
+      last?.pts ?? 0, JSON.stringify(last?.s || {}),
+      num(was.get(l.m)), num(now.get(l.m)), opp, opp ? num(now.get(opp)) : null,
+      regular ? num(previous.projectedMedian) : null, regular ? num(dashboard.projectedMedian) : null);
   }));
   return changed.length;
 }
@@ -65,7 +83,8 @@ export async function getFeed(env, url, maxWeek = 99) {
   }
   if (!week) return { season, week: null, events: [] };
   const { results } = await env.HISTORY_DB.prepare(
-    `SELECT id, ts, player_id, manager, player, pos, prev, total, delta, stats, prev_stats, team, opp, period, clock
+    `SELECT id, ts, player_id, manager, player, pos, prev, total, delta, stats, prev_stats, team, opp, period, clock,
+            proj_prev, proj, opp_manager, opp_proj, median_prev, median
      FROM score_events WHERE season = ? AND week = ? AND id > ?${big} ORDER BY id`
   ).bind(season, week, since).all();
   return {
@@ -88,6 +107,14 @@ export async function getFeed(env, url, maxWeek = 99) {
       op: r.opp || "",
       q: r.period || 0,
       clk: r.clock || "",
+      // The matchup around the change: this manager's projection before
+      // and after, the opponent and theirs, the median before and after.
+      pa: r.proj_prev,
+      pb: r.proj,
+      om: r.opp_manager,
+      oj: r.opp_proj,
+      ma: r.median_prev,
+      mb: r.median,
     })),
   };
 }

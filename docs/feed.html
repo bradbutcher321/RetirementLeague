@@ -45,8 +45,12 @@
      week in one list. The two selectors ride a band pinned under the top
      edge (the dashboard's Season So Far toggle does the same), so they stay
      in reach however far down the week you've scrolled. Your players carry
-     your ring color (You › Settings), your opponent's are red, everyone
-     else's are plain. */
+     your ring color (You › Settings), your opponent's are white, everyone
+     else's are plain with gold points. The scoring manager's name is the
+     highlighted one. Detailed (the default) adds what the play did to the
+     matchup: the scorer's projection before and after, the opponent's, and
+     the projected median when it moved; Compact is one line of who and
+     where. */
   .fd-band{
     position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px)); z-index: 20;
     margin: 0 -20px 10px; padding: 8px 20px; background: var(--bg);
@@ -65,13 +69,49 @@
   .fd-day{ color: var(--gold); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 4px 0; }
   .fd-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 12px 8px 10px; }
   .fd-row.mine{ border-color: color-mix(in srgb, var(--me-ring) 55%, transparent); background: color-mix(in srgb, var(--me-ring) 8%, transparent); }
+  .fd-row.opp{ border-color: rgba(245,245,243,0.42); background: rgba(245,245,243,0.05); }
+  .fd-row.det{ align-items: start; }
+  .fd-row.det .fd-t{ padding-top: 2px; }
   .fd-t{ color: var(--text-dim); font-size: 0.7rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .fd-m{ min-width: 0; font-size: 0.82rem; line-height: 1.35; }
   .fd-m b{ font-weight: 600; }
   .fd-m .what{ color: var(--text-dim); }
   .fd-s{ color: var(--text-dim); font-size: 0.68rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fd-p{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.08rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .fd-p.gold{ color: var(--gold); } .fd-p.loss{ color: var(--loss); } .fd-p.mc{ color: var(--me-ring); }
+  .fd-p.gold{ color: var(--gold); } .fd-p.loss{ color: var(--loss); } .fd-p.mc{ color: var(--me-ring); } .fd-p.wt{ color: var(--text); }
+  /* Whose name: yours in your color, your opponent's white, the scorer's
+     gold otherwise; the other name in a matchup stays dim. */
+  .hl{ font-weight: 700; }
+  .hl.mc{ color: var(--me-ring); } .hl.wt{ color: var(--text); } .hl.gold{ color: var(--gold); }
+  .fd-x{ grid-column: 2 / 4; display: grid; gap: 3px; margin-top: 4px; font-size: 0.76rem; color: var(--text-dim); }
+  .fd-xl{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .fd-xv{ font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fd-xv b{ font-weight: 600; color: var(--text); }
+  .fd-xv b.mc{ color: var(--me-ring); } .fd-xv b.gold{ color: var(--gold); }
+  .fd-xv i{ font-style: normal; margin: 0 4px; }
+  /* Wide: the matchup sits in its own column beside the play. */
+  @media (min-width: 700px){
+    .fd-row{ grid-template-columns: 64px minmax(0,1fr) auto; }
+    .fd-row.det{ grid-template-columns: 64px minmax(0,1fr) minmax(0,290px) 64px; align-items: center; }
+    .fd-row.det .fd-t{ padding-top: 0; }
+    .fd-row.det .fd-x{ grid-column: 3; grid-row: 1; margin-top: 0; }
+    .fd-row.det .fd-p{ grid-column: 4; grid-row: 1; text-align: right; }
+  }
+  .fd-head-r{ display: flex; align-items: flex-end; gap: 16px; }
+  @media (max-width: 600px){ .fd-head-r{ width: 100%; justify-content: space-between; } }
+  /* Before a team is picked, My matchup / Everyone sits greyed out on
+     Everyone; a tap on it opens the team picker. */
+  .scope-row.off{ opacity: 0.42; }
+  .scope-row.off .scope-btn{ cursor: pointer; }
+  .fd-head-r .seg button{ height: 30px; padding: 0 12px; font-size: 0.78rem; }
+
+  /* Until a visitor picks their team, one line says what it gets them
+     here (the dashboard's own ask, in the same shape). The ✕ hides it. */
+  .me-ask{ display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 4px; border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 14px; margin-bottom: 12px; }
+  .me-ask-go{ flex: 1; min-width: 0; min-height: 44px; text-align: left; background: none; border: 0; color: var(--text); font: 600 0.92rem/1.3 var(--body); padding: 6px 10px; cursor: pointer; }
+  .me-ask .x{ background: rgba(255,255,255,0.06); border: none; color: var(--text-dim); border-radius: 999px; width: 30px; height: 30px; font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; flex: none; position: relative; }
+  .me-ask .x::before{ content: ''; position: absolute; inset: -7px; }
+  .me-ask-go:focus-visible, .me-ask .x:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .fd-new{ animation: fd-in .5s cubic-bezier(.2,.8,.2,1); }
   @keyframes fd-in{ from{ opacity: 0; transform: translateY(-6px); } }
   @media (prefers-reduced-motion: reduce){ .fd-new{ animation: none; } .fd-band{ transition: none; } }
@@ -86,14 +126,18 @@
           <div class="eyebrow" id="fd-eyebrow">Retirement League</div>
           <h1>Feed</h1>
         </div>
-        <div class="updated-block">
-          <div class="updated-label">Updated</div>
-          <div class="updated-value" id="fd-updated">—</div>
+        <div class="fd-head-r">
+          <div class="seg" id="fd-view" role="group" aria-label="Row detail"></div>
+          <div class="updated-block">
+            <div class="updated-label">Updated</div>
+            <div class="updated-value" id="fd-updated">—</div>
+          </div>
         </div>
       </div>
     </header>
 
     <section>
+      <div id="fd-ask"></div>
       <div class="fd-band" id="fd-band"></div>
       <div class="glass fd-panel"><div class="fd" id="fd-list"><div class="empty-note">Loading…</div></div></div>
     </section>
@@ -111,8 +155,10 @@
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const REFRESH_MS = 15 * 1000;
   let week = null, events = [], maxId = 0, pairs = [], updatedAt = null, busy = false, seen = 0, loaded = false, lastAt = 0;
-  let scope = 'mine', filter = 'big';
+  let scope = 'mine', filter = 'big', view = 'detailed';
+  const ASK_KEY = 'rl-feed-me-ask-hidden';
   try {
+    view = localStorage.getItem('feedView') === 'compact' ? 'compact' : 'detailed';
     scope = localStorage.getItem('feedScope') === 'all' ? 'all' : 'mine';
     filter = localStorage.getItem('feedFilter') === 'all' ? 'all' : 'big';
   } catch (e) {}
@@ -149,8 +195,15 @@
 
     const btn = (attr, k, label, on) => `<button type="button" class="${attr === 'scope' ? 'scope-btn' : ''}${on ? ' on' : ''}" data-fd-${attr}="${k}" aria-pressed="${on}">${label}</button>`;
     document.getElementById('fd-band').innerHTML =
-      (me ? `<div class="scope-row" role="group" aria-label="Whose plays">${btn('scope', 'mine', 'My matchup', sc === 'mine')}${btn('scope', 'all', 'Everyone', sc === 'all')}</div>` : '<span></span>')
+      (me ? `<div class="scope-row" role="group" aria-label="Whose plays">${btn('scope', 'mine', 'My matchup', sc === 'mine')}${btn('scope', 'all', 'Everyone', sc === 'all')}</div>`
+        : `<div class="scope-row off" role="group" aria-label="Whose plays: pick your team first" data-fd-pick>${btn('scope', 'mine', 'My matchup', false)}${btn('scope', 'all', 'Everyone', true)}</div>`)
       + `<div class="seg" role="group" aria-label="Which plays">${btn('filter', 'big', 'Big plays', filter === 'big')}${btn('filter', 'all', 'All', filter === 'all')}</div>`;
+    document.getElementById('fd-view').innerHTML = btn('view', 'detailed', 'Detailed', view === 'detailed') + btn('view', 'compact', 'Compact', view === 'compact');
+    renderAsk();
+    // Yours in your color, your opponent white, anyone else's scorer gold.
+    const tone = (name, scorer) => (name === me ? 'mc' : opp && name === opp ? 'wt' : scorer ? 'gold' : '');
+    const nameHtml = (name, scorer) => { const t = tone(name, scorer); return t ? `<span class="hl ${t}">${esc(name)}</span>` : esc(name); };
+    const f2 = v => v.toFixed(2);
 
     let list = events;
     if (sc === 'mine') list = list.filter(e => e.m === me || (opp && e.m === opp));
@@ -161,15 +214,30 @@
       const head = day !== lastDay ? `<div class="fd-day">${day}</div>` : '';
       lastDay = day;
       const whose = e.m === me ? 'mine' : opp && e.m === opp ? 'opp' : '';
-      const rowTone = whose === 'mine' ? ' mine' : whose === 'opp' ? ' is-loss' : '';
-      const valTone = whose === 'mine' ? 'mc' : whose === 'opp' ? 'loss' : e.d > 0 ? 'gold' : 'loss';
+      const valTone = whose === 'mine' ? 'mc' : whose === 'opp' ? 'wt' : e.d > 0 ? 'gold' : 'loss';
       const clock = e.q ? (e.q > 4 ? 'OT' : `Q${e.q}`) + (e.clk ? ' ' + e.clk : '') : '';
       const game = e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
-      const who = sc === 'mine' ? e.m : `${e.m}${oppOf.get(e.m) ? ' vs ' + oppOf.get(e.m) : ''}`;
-      return `${head}<div class="fd-row item${rowTone}${seen && e.id > seen ? ' fd-new' : ''}" data-id="${e.id}">
+      const other = e.om || oppOf.get(e.m) || '';
+      const who = nameHtml(e.m, true) + (other ? ' vs ' + nameHtml(other, false) : '');
+      // Detailed needs the projections the Worker saved with the row; a
+      // row from before it kept them shows the compact line instead.
+      const detailed = view === 'detailed' && typeof e.pa === 'number' && typeof e.pb === 'number';
+      let x = '';
+      if (detailed) {
+        const st = tone(e.m, true), ot = tone(other, false);
+        x = `<div class="fd-x">
+            <div class="fd-xl"><span>${nameHtml(e.m, true)}</span><span class="fd-xv">${f2(e.pa)}<i>→</i><b class="${st === 'wt' ? '' : st}">${f2(e.pb)}</b></span></div>
+            ${other && typeof e.oj === 'number' ? `<div class="fd-xl"><span>${nameHtml(other, false)}</span><span class="fd-xv"><b class="${ot === 'wt' ? '' : ot}">${f2(e.oj)}</b></span></div>` : ''}
+            ${typeof e.ma === 'number' && typeof e.mb === 'number' && Math.abs(e.mb - e.ma) >= 0.005
+              ? `<div class="fd-xl"><span>Median</span><span class="fd-xv">${f2(e.ma)}<i>→</i><b>${f2(e.mb)}</b></span></div>` : ''}
+          </div>`;
+      }
+      const sub = detailed ? esc(game) : who + (game ? ' · ' + esc(game) : '');
+      return `${head}<div class="fd-row item${whose ? ' ' + whose : ''}${detailed ? ' det' : ''}${seen && e.id > seen ? ' fd-new' : ''}" data-id="${e.id}">
           <span class="fd-t">${fdTime(e.t)}</span>
-          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(feedWhat(e))}</span><div class="fd-s">${esc(who)}${game ? ' · ' + esc(game) : ''}</div></div>
+          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(feedWhat(e))}</span>${sub ? `<div class="fd-s">${sub}</div>` : ''}</div>
           <span class="fd-p ${valTone}">${e.d > 0 ? '+' : '−'}${Math.abs(e.d).toFixed(2)}</span>
+          ${x}
         </div>`;
     }).join('');
     const empty = !events.length ? 'Scoring plays show up here once games kick off.'
@@ -191,7 +259,34 @@
     markStuck();
   }
 
+  // The ask: shown until a team is picked, or until its ✕ is tapped.
+  function renderAsk() {
+    const host = document.getElementById('fd-ask');
+    let hidden = false;
+    try { hidden = !!localStorage.getItem(ASK_KEY); } catch (e) {}
+    if (getMe() || hidden) { host.innerHTML = ''; return; }
+    if (host.firstChild) return;
+    host.innerHTML = `<div class="me-ask">
+        <button type="button" class="me-ask-go">Pick your team to just see your matchup.</button>
+        <button type="button" class="x" aria-label="Don't ask again">✕</button>
+      </div>`;
+    host.querySelector('.me-ask-go').addEventListener('click', () => window.openYou && openYou());
+    host.querySelector('.x').addEventListener('click', () => {
+      try { localStorage.setItem(ASK_KEY, '1'); } catch (e) {}
+      host.innerHTML = '';
+    });
+  }
+
+  document.getElementById('fd-view').addEventListener('click', e => {
+    const v = e.target.closest('[data-fd-view]');
+    if (!v) return;
+    view = v.dataset.fdView;
+    try { localStorage.setItem('feedView', view); } catch (err) {}
+    seen = 0;
+    render();
+  });
   document.getElementById('fd-band').addEventListener('click', e => {
+    if (e.target.closest('[data-fd-pick]')) { if (window.openYou) openYou(); return; }
     const s = e.target.closest('[data-fd-scope]'), f = e.target.closest('[data-fd-filter]');
     if (s) { scope = s.dataset.fdScope; try { localStorage.setItem('feedScope', scope); } catch (err) {} }
     if (f) { filter = f.dataset.fdFilter; try { localStorage.setItem('feedFilter', filter); } catch (err) {} }
@@ -212,6 +307,7 @@
   addEventListener('resize', markStuck);
 
   // Background tabs don't poll; coming back refreshes right away if stale.
+  renderAsk();
   load();
   setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
   document.addEventListener('visibilitychange', () => {
