@@ -29,10 +29,13 @@
  * GET /median-history -> the week's projected median over time, for Median
  *                      Watch's chart (see medianHistory.js; the rows are
  *                      written by scheduled() below).
- * GET /feed?week=&since= -> every change to a starter's points this week,
- *                      for the dashboard's Feed (see scoreFeed.js; the rows
- *                      are written after each live build, here and in
- *                      scheduled()).
+ * GET /feed?week=&since=&big=&live= -> every change to a starter's points
+ *                      in a week, for the Feed page and the dashboard's Flow
+ *                      captions (see scoreFeed.js; the rows are written after
+ *                      each live build, here and in scheduled()). live=1 (the
+ *                      Feed page's poll) also refreshes the live dashboard on
+ *                      the same 15-second rule as GET /, so that page needs
+ *                      no second request, and adds who plays whom.
  * GET /parlay-stats  -> the parlay stats payload, read straight from KV
  *                      (see publish_parlay_stats.py, which computes and
  *                      pushes it there -- same "no git commit needed" idea
@@ -96,6 +99,43 @@ async function writeCache(env, now, data, previous) {
     kvDue = true; // KV is the only cache left, so keep it current
   }
   if (kvDue) await env.COOLDOWN_KV.put(CACHE_KEY, JSON.stringify({ fetchedAt: now, data }));
+}
+
+/** The live dashboard: the cached build if it's under COOLDOWN_SECONDS old
+ * (unless `force`), otherwise a fresh one, cached, with the Feed's score
+ * changes saved after the response. A failed build falls back to the
+ * cache. -> { data, cacheHit, error?, entry } */
+async function liveDashboard(env, ctx, entry, force) {
+  const now = Math.floor(Date.now() / 1000);
+  if (!force && entry && now - entry.fetchedAt < COOLDOWN_SECONDS) return { data: entry.data, cacheHit: true };
+  try {
+    const dashboard = await buildDashboard(env, entry?.data);
+    await writeCache(env, now, dashboard, entry);
+    ctx.waitUntil(recordScoreEvents(env, entry?.data, dashboard).catch((err) => console.error("Feed write failed:", err)));
+    return { data: dashboard, cacheHit: false };
+  } catch (err) {
+    if (entry) return { data: entry.data, cacheHit: true, error: String(err) };
+    throw err;
+  }
+}
+
+const pastWeekDashboard = (env, week) =>
+  cached(env, `dashboard:week:${env.ESPN_YEAR}:${week}`, PAST_WEEK_SECONDS, () => buildDashboard(env, null, { week }));
+
+/** The Feed page's poll: the week's new rows, plus each manager's opponent
+ * that week (from the live dashboard, or a finished week's cached rebuild
+ * on the days between the live week turning over and its first score). */
+async function liveFeed(env, ctx, url) {
+  const entry = await readCache(env);
+  const live = await liveDashboard(env, ctx, entry, false).catch(() => null);
+  const liveWeek = live?.data?.week || null;
+  const body = await getFeed(env, url, liveWeek);
+  let matchups = live?.data?.matchups;
+  if (body.week && liveWeek && body.week < liveWeek) matchups = (await pastWeekDashboard(env, body.week).catch(() => null))?.matchups;
+  body.liveWeek = liveWeek;
+  body.updatedAt = live?.data?.updatedAt || null;
+  body.pairs = (matchups || []).map((m) => [m.awayManager, m.homeManager]);
+  return body;
 }
 
 // Reflects the request's own Origin back when it's the production site or a
@@ -166,7 +206,10 @@ export default {
     }
     if (path === "/feed") {
       if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
-      return jsonResponse(await getFeed(env, new URL(request.url)).catch((err) => ({ error: String(err), events: [] })), headers);
+      const url = new URL(request.url);
+      const body = await (url.searchParams.get("live") === "1" ? liveFeed(env, ctx, url) : getFeed(env, url))
+        .catch((err) => ({ error: String(err), events: [] }));
+      return jsonResponse(body, headers);
     }
     if (path === "/player") {
       if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
@@ -194,7 +237,6 @@ export default {
       return jsonResponse({ error: "Method not allowed" }, headers, 405);
     }
 
-    const now = Math.floor(Date.now() / 1000);
     const url = new URL(request.url);
     const force = url.searchParams.get("force") === "1";
 
@@ -208,28 +250,19 @@ export default {
     const liveWeek = entry?.data?.liveWeek || entry?.data?.week;
     if (week >= 1 && liveWeek && week < liveWeek) {
       try {
-        const past = await cached(env, `dashboard:week:${env.ESPN_YEAR}:${week}`, PAST_WEEK_SECONDS, () => buildDashboard(env, null, { week }));
+        const past = await pastWeekDashboard(env, week);
         return jsonResponse(publicView(past), headers);
       } catch (err) {
         return jsonResponse({ error: String(err) }, headers, 502);
       }
     }
 
-    if (!force && entry && now - entry.fetchedAt < COOLDOWN_SECONDS) {
-      return jsonResponse({ ...publicView(entry.data), cacheHit: true }, headers);
-    }
-
+    // An ESPN hiccup or bad credentials serves the stale cache, with an
+    // `error` field, rather than nothing.
     try {
-      const dashboard = await buildDashboard(env, entry?.data);
-      await writeCache(env, now, dashboard, entry);
-      ctx.waitUntil(recordScoreEvents(env, entry?.data, dashboard).catch((err) => console.error("Feed write failed:", err)));
-      return jsonResponse({ ...publicView(dashboard), cacheHit: false }, headers);
+      const { data, cacheHit, error } = await liveDashboard(env, ctx, entry, force);
+      return jsonResponse({ ...publicView(data), cacheHit, ...(error ? { error } : {}) }, headers);
     } catch (err) {
-      // ESPN hiccup or bad credentials — better to serve stale data than
-      // nothing, if we have it.
-      if (entry) {
-        return jsonResponse({ ...publicView(entry.data), cacheHit: true, error: String(err) }, headers);
-      }
       return jsonResponse({ error: String(err) }, headers, 502);
     }
   },

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="Live scores, standings, records and history for the Retirement League.">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Retirement League">
+<meta property="og:title" content="Retirement League — Feed">
+<meta property="og:description" content="Live scores, standings, records and history for the Retirement League.">
+<meta property="og:url" content="https://bradbutcher321.github.io/RetirementLeague/feed.html">
+<meta property="og:image" content="https://bradbutcher321.github.io/RetirementLeague/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>html{background:#050505}</style>
+<title>Retirement League — Feed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The two font-family's woff2 files Google serves for the latin subset
+     at the weights this site uses -- one variable-font file per family
+     covers every weight declared, confirmed directly by fetching the
+     stylesheet below and comparing each @font-face block's url(). Starts
+     the actual font downloads immediately, in parallel with that
+     stylesheet fetch, instead of waiting to discover these same URLs
+     only after the stylesheet loads and is parsed -- avoids the
+     fallback-to-webfont swap (FOUT) that otherwise shows on a slow or
+     uncached load. If Google ever changes these hashed URLs, this just
+     degrades to a wasted (unused) preload, not a correctness issue -- the
+     stylesheet's own @font-face still fetches whatever the new URL is. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=28">
+<link rel="stylesheet" href="nav.css?v=11">
+<style>
+  /* ---------- Feed (site audit III #7) ----------
+     Every change to a starter's points this week, newest first, the whole
+     week in one list. The two selectors ride a band pinned under the top
+     edge (the dashboard's Season So Far toggle does the same), so they stay
+     in reach however far down the week you've scrolled. Your players carry
+     your ring color (You › Settings), your opponent's are red, everyone
+     else's are plain. */
+  .fd-band{
+    position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px)); z-index: 20;
+    margin: 0 -20px 10px; padding: 8px 20px; background: var(--bg);
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;
+    transition: box-shadow .2s ease, top .25s ease;
+  }
+  /* Under the desktop top bar while it's showing (it tucks away as you
+     scroll down); a phone has no top bar. */
+  body:has(.nav-bar:not(.tucked)) .fd-band{ --nav-shown: var(--nav-h, 0px); }
+  .fd-band.stuck{ box-shadow: 0 1px 0 var(--line), 0 12px 18px -14px rgba(0,0,0,0.9); }
+  .fd-band .scope-row, .fd-band .seg{ margin: 0; }
+  @media (max-width: 480px){ .fd-band{ margin-inline: -14px; padding-inline: 14px; } }
+
+  .fd-panel{ padding: 6px 12px 12px; }
+  .fd{ display: grid; gap: 6px; }
+  .fd-day{ color: var(--gold); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 4px 0; }
+  .fd-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 12px 8px 10px; }
+  .fd-row.mine{ border-color: color-mix(in srgb, var(--me-ring) 55%, transparent); background: color-mix(in srgb, var(--me-ring) 8%, transparent); }
+  .fd-t{ color: var(--text-dim); font-size: 0.7rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fd-m{ min-width: 0; font-size: 0.82rem; line-height: 1.35; }
+  .fd-m b{ font-weight: 600; }
+  .fd-m .what{ color: var(--text-dim); }
+  .fd-s{ color: var(--text-dim); font-size: 0.68rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fd-p{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.08rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fd-p.gold{ color: var(--gold); } .fd-p.loss{ color: var(--loss); } .fd-p.mc{ color: var(--me-ring); }
+  .fd-new{ animation: fd-in .5s cubic-bezier(.2,.8,.2,1); }
+  @keyframes fd-in{ from{ opacity: 0; transform: translateY(-6px); } }
+  @media (prefers-reduced-motion: reduce){ .fd-new{ animation: none; } .fd-band{ transition: none; } }
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow" id="fd-eyebrow">Retirement League</div>
+          <h1>Feed</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="fd-updated">—</div>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <div class="fd-band" id="fd-band"></div>
+      <div class="glass fd-panel"><div class="fd" id="fd-list"><div class="empty-note">Loading…</div></div></div>
+    </section>
+
+    <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
+  </div>
+<script src="nav.js?v=12"></script>
+<script src="page-common.js?v=31"></script>
+<script>
+  // The Worker saves a row each time a starter's points move
+  // (worker/src/scoreFeed.js). Each poll asks only for the rows after the
+  // newest one here (live=1 also keeps the live dashboard fresh on the
+  // Worker and says who plays whom), so a quiet poll is a few hundred
+  // bytes. The week shown is the newest with any rows.
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const REFRESH_MS = 15 * 1000;
+  let week = null, events = [], maxId = 0, pairs = [], updatedAt = null, busy = false, seen = 0, loaded = false, lastAt = 0;
+  let scope = 'mine', filter = 'big';
+  try {
+    scope = localStorage.getItem('feedScope') === 'all' ? 'all' : 'mine';
+    filter = localStorage.getItem('feedFilter') === 'all' ? 'all' : 'big';
+  } catch (e) {}
+  const fdTime = ms => new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+
+  function load() {
+    if (busy) return;
+    busy = true;
+    lastAt = Date.now();
+    fetch(`${WORKER_URL}/feed?live=1&since=${maxId}`, { cache: 'no-store' })
+      .then(res => res.json())
+      .then(d => {
+        if (!d || !Array.isArray(d.events)) return;
+        // A new week's first rows replace the last week's.
+        if (d.week !== week) { week = d.week; events = []; maxId = 0; seen = 0; }
+        d.events.forEach(e => { if (e.id > maxId) { events.push(e); maxId = e.id; } });
+        if (Array.isArray(d.pairs)) pairs = d.pairs;
+        if (d.updatedAt) updatedAt = d.updatedAt;
+        loaded = true;
+        render();
+      })
+      .catch(() => {})
+      .finally(() => { busy = false; });
+  }
+
+  function render() {
+    document.getElementById('fd-eyebrow').textContent = week ? `Retirement League · Week ${week}` : 'Retirement League';
+    document.getElementById('fd-updated').textContent = updatedAt ? formatUpdated(updatedAt) : '—';
+    const oppOf = new Map();
+    pairs.forEach(([a, b]) => { oppOf.set(a, b); oppOf.set(b, a); });
+    const me = [...oppOf.keys(), ...events.map(e => e.m)].find(n => isMe(n)) || null;
+    const opp = me ? oppOf.get(me) || null : null;
+    const sc = me ? scope : 'all';
+
+    const btn = (attr, k, label, on) => `<button type="button" class="${attr === 'scope' ? 'scope-btn' : ''}${on ? ' on' : ''}" data-fd-${attr}="${k}" aria-pressed="${on}">${label}</button>`;
+    document.getElementById('fd-band').innerHTML =
+      (me ? `<div class="scope-row" role="group" aria-label="Whose plays">${btn('scope', 'mine', 'My matchup', sc === 'mine')}${btn('scope', 'all', 'Everyone', sc === 'all')}</div>` : '<span></span>')
+      + `<div class="seg" role="group" aria-label="Which plays">${btn('filter', 'big', 'Big plays', filter === 'big')}${btn('filter', 'all', 'All', filter === 'all')}</div>`;
+
+    let list = events;
+    if (sc === 'mine') list = list.filter(e => e.m === me || (opp && e.m === opp));
+    if (filter === 'big') list = list.filter(e => Math.abs(e.d) > 3);
+    let lastDay = '';
+    const rows = list.slice().reverse().map(e => {
+      const day = new Date(e.t).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/New_York' });
+      const head = day !== lastDay ? `<div class="fd-day">${day}</div>` : '';
+      lastDay = day;
+      const whose = e.m === me ? 'mine' : opp && e.m === opp ? 'opp' : '';
+      const rowTone = whose === 'mine' ? ' mine' : whose === 'opp' ? ' is-loss' : '';
+      const valTone = whose === 'mine' ? 'mc' : whose === 'opp' ? 'loss' : e.d > 0 ? 'gold' : 'loss';
+      const clock = e.q ? (e.q > 4 ? 'OT' : `Q${e.q}`) + (e.clk ? ' ' + e.clk : '') : '';
+      const game = e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
+      const who = sc === 'mine' ? e.m : `${e.m}${oppOf.get(e.m) ? ' vs ' + oppOf.get(e.m) : ''}`;
+      return `${head}<div class="fd-row item${rowTone}${seen && e.id > seen ? ' fd-new' : ''}" data-id="${e.id}">
+          <span class="fd-t">${fdTime(e.t)}</span>
+          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(feedWhat(e))}</span><div class="fd-s">${esc(who)}${game ? ' · ' + esc(game) : ''}</div></div>
+          <span class="fd-p ${valTone}">${e.d > 0 ? '+' : '−'}${Math.abs(e.d).toFixed(2)}</span>
+        </div>`;
+    }).join('');
+    const empty = !events.length ? 'Scoring plays show up here once games kick off.'
+      : filter === 'big' ? (sc === 'mine' ? 'No big plays in your matchup yet.' : 'No big plays yet.')
+      : 'Nothing has scored in your matchup yet.';
+
+    // New rows land at the top. Scrolled down into the list, the row you
+    // were reading stays where it is on screen instead of being pushed down.
+    const listEl = document.getElementById('fd-list');
+    const band = document.getElementById('fd-band').getBoundingClientRect().bottom;
+    const anchor = [...listEl.querySelectorAll('.fd-row')].find(r => r.getBoundingClientRect().bottom > band);
+    const keep = anchor && listEl.getBoundingClientRect().top < band ? { id: anchor.dataset.id, top: anchor.getBoundingClientRect().top } : null;
+    listEl.innerHTML = loaded ? rows || `<div class="empty-note">${empty}</div>` : '<div class="empty-note">Loading…</div>';
+    if (keep) {
+      const same = listEl.querySelector(`.fd-row[data-id="${keep.id}"]`);
+      if (same) window.scrollBy({ top: same.getBoundingClientRect().top - keep.top, behavior: 'instant' });
+    }
+    seen = maxId;
+    markStuck();
+  }
+
+  document.getElementById('fd-band').addEventListener('click', e => {
+    const s = e.target.closest('[data-fd-scope]'), f = e.target.closest('[data-fd-filter]');
+    if (s) { scope = s.dataset.fdScope; try { localStorage.setItem('feedScope', scope); } catch (err) {} }
+    if (f) { filter = f.dataset.fdFilter; try { localStorage.setItem('feedFilter', filter); } catch (err) {} }
+    if (s || f) { seen = 0; render(); }
+  });
+  addEventListener('rl-me', render);
+  addEventListener('rl-settings', render);
+
+  // The band's shadow shows only once it's pinned over the list.
+  const bandEl = document.getElementById('fd-band');
+  function markStuck() {
+    const bar = document.querySelector('.nav-bar');
+    if (bar) document.documentElement.style.setProperty('--nav-h', bar.offsetHeight + 'px');
+    const top = parseFloat(getComputedStyle(bandEl).top) || 0;
+    bandEl.classList.toggle('stuck', window.scrollY > 0 && bandEl.getBoundingClientRect().top <= top + 0.5);
+  }
+  addEventListener('scroll', markStuck, { passive: true });
+  addEventListener('resize', markStuck);
+
+  // Background tabs don't poll; coming back refreshes right away if stale.
+  load();
+  setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Date.now() - lastAt >= REFRESH_MS) load();
+  });
+</script>
+<script src="track.js?v=1" defer></script>
+</body>
+</html>

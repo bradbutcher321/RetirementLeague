@@ -781,12 +781,12 @@
   @media (max-width:720px){ .mb-card a.mgr{ pointer-events: none; } }
   .mb-card.sel{ border-color: var(--lead-line); background: var(--lead-tint); }
 
-  /* ---------- Flow and Feed (site audit III #7) ----------
-     Flow: a matchup's two projected totals through the week, from Median
-     Watch's own snapshots, with the projected median dashed behind them.
-     Left side gold and right side Canaveral blue, as on Head to Head. Your
-     matchup carries it on the card; every other one at the top of its open
-     roster. Feed: every change to a starter's points, newest first. */
+  /* ---------- Flow (site audit III #7) ----------
+     A matchup's two projected totals through the week, from Median Watch's
+     own snapshots, with the projected median dashed behind them. Left side
+     gold and right side Canaveral blue, as on Head to Head. Your matchup
+     carries it on the card; every other one at the top of its open roster.
+     The Feed itself is its own page (feed.html). */
   .fl-wrap{ cursor: default; }
   .matchup-card > .fl-wrap{ border-top: 1px solid var(--line); padding: 10px 14px 12px; }
   .mu-det-body .fl-wrap{ padding: 10px 10px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
@@ -807,26 +807,7 @@
   @keyframes fl-pulse{ 0%{ r: 2.5px; opacity: .7; } 70%{ r: 9px; opacity: 0; } 100%{ r: 9px; opacity: 0; } }
   .fl-pulse{ animation: fl-pulse 1.6s infinite; }
 
-  .feed-card{ padding: 16px 14px 14px; }
-  .feed-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0 4px; }
-  .feed-title{ font-weight: 700; font-size: 0.95rem; }
-  .feed-ctl{ display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin: 12px 0 4px; }
-  .fd{ display: grid; gap: 6px; }
-  .fd-day{ color: var(--gold); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 4px 0; }
-  .fd-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 12px 8px 10px; }
-  .fd-t{ color: var(--text-dim); font-size: 0.7rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .fd-m{ min-width: 0; font-size: 0.82rem; line-height: 1.35; }
-  .fd-m b{ font-weight: 600; }
-  .fd-m .what{ color: var(--text-dim); }
-  .fd-s{ color: var(--text-dim); font-size: 0.68rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .fd-p{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.08rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .fd-p.gold{ color: var(--gold); } .fd-p.turf{ color: var(--turf); } .fd-p.loss{ color: var(--loss); }
-  .fd-new{ animation: fd-in .5s cubic-bezier(.2,.8,.2,1); }
-  @keyframes fd-in{ from{ opacity: 0; transform: translateY(-6px); } }
-  .fd-more{ display: block; margin: 12px auto 2px; height: 34px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--lead-line); background: transparent; color: var(--gold); font: 700 0.78rem var(--body); cursor: pointer; }
-  @media (hover: hover){ .fd-more:hover{ background: var(--lead-tint); } }
-  .fd-more:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
-  @media (prefers-reduced-motion: reduce){ .fl-pulse{ animation: none; opacity: 0; } .fd-new{ animation: none; } }
+  @media (prefers-reduced-motion: reduce){ .fl-pulse{ animation: none; opacity: 0; } }
 
   /* This is me (site audit II #36): your own matchup leads the matchups
      list, ringed -- or, with the You sheet's "top of the dashboard"
@@ -1300,16 +1281,6 @@
       </div>
     </section>
 
-    <!-- Feed (site audit III #7): every change to a starter's points this
-         week, from the Worker's /feed. Hidden for a week with none. -->
-    <section id="feed-section" hidden>
-      <div class="glass feed-card">
-        <div class="feed-head"><span class="feed-title">Feed</span></div>
-        <div class="feed-ctl" id="feed-ctl"></div>
-        <div class="fd" id="feed-list"></div>
-      </div>
-    </section>
-
     <!-- hidden until loadDashboard's first render, same as Current Parlay and
          League Lore: without it the standings card and accolade
          placeholders drew on their own while the rest of the page was still
@@ -1350,8 +1321,8 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=11"></script>
-<script src="page-common.js?v=30"></script>
+<script src="nav.js?v=12"></script>
+<script src="page-common.js?v=31"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -2615,155 +2586,36 @@
   let flResizeT;
   addEventListener('resize', () => { clearTimeout(flResizeT); flResizeT = setTimeout(flDrawAll, 150); });
 
-  // ---------- Feed: every change to a starter's points ----------
-  // Site audit III #7. The Worker saves one row each time a starter's
-  // points move (scoreFeed.js); this keeps the week's rows and asks only
-  // for the new ones on each poll. Newest first, your matchup or everyone's,
-  // big plays (more than 3 points either way) or every change. In your
-  // matchup a row is green when it helps you and red when it helps them.
-  const FEED_PAGE = 30;
-  let feed = { key: null, events: [], maxId: 0, done: false, busy: false };
-  let feedScope = 'mine', feedFilter = 'big', feedShown = FEED_PAGE, feedSeen = 0, feedMissing = false;
-  try {
-    feedScope = localStorage.getItem('feedScope') === 'all' ? 'all' : 'mine';
-    feedFilter = localStorage.getItem('feedFilter') === 'all' ? 'all' : 'big';
-  } catch (e) {}
+  // ---------- The Feed's big plays, for the Flow captions ----------
+  // The Feed is its own page (feed.html); the dashboard only needs the
+  // week's changes of more than 3 points to say what a swing was, so it
+  // asks for just those (big=1), new rows only, at most once a minute.
+  let feed = { key: null, events: [], maxId: 0, at: 0, busy: false, missing: false };
   const fdTime = ms => new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
   const feedFor = week => (feed.key === `${dashYear}:${week}` ? feed.events : []);
 
   function feedLoad() {
     const data = shownData;
-    if (!data || data.pastSeason) { feed = { key: null, events: [], maxId: 0, done: false, busy: false }; renderFeed(); return; }
+    if (!data || data.pastSeason) return;
     const key = `${dashYear}:${dashWeek}`;
-    if (feed.key !== key) {
-      feed = { key, events: [], maxId: 0, done: false, busy: false };
-      feedShown = FEED_PAGE;
-      feedSeen = 0;
-    }
-    // A finished week's rows never change once read; a Worker without the
-    // route answers with the whole dashboard, so that's asked once only.
-    if (feed.busy || feedMissing || (feed.done && data.archived)) { renderFeed(); return; }
+    if (feed.key !== key) feed = { key, events: [], maxId: 0, at: 0, busy: false, missing: feed.missing };
+    // A Worker without the route answers with the whole dashboard, so that
+    // is asked once only; a finished week's rows never change once read.
+    if (feed.busy || feed.missing || Date.now() - feed.at < 60 * 1000 || (feed.at && data.archived)) return;
     const want = feed, week = dashWeek;
     want.busy = true;
-    fetch(`${WORKER_URL}/feed?week=${week}&since=${want.maxId}`, { cache: 'no-store' })
+    want.at = Date.now();
+    fetch(`${WORKER_URL}/feed?week=${week}&since=${want.maxId}&big=1`, { cache: 'no-store' })
       .then(res => res.json())
       .then(d => {
-        if (d && !Array.isArray(d.events)) feedMissing = true;
-        const evs = d && d.week === week && Array.isArray(d.events) ? d.events : [];
+        if (d && !Array.isArray(d.events)) { feed.missing = true; return; }
+        const evs = d && d.week === week ? d.events : [];
         evs.forEach(e => { if (e.id > want.maxId) { want.events.push(e); want.maxId = e.id; } });
-        want.done = true;
+        if (evs.length && feed === want) flDrawAll();
       })
       .catch(() => {})
-      .finally(() => {
-        want.busy = false;
-        if (feed !== want) return;
-        renderFeed();
-        flDrawAll();
-      });
+      .finally(() => { want.busy = false; });
   }
-
-  // What changed, from the stats before and after: "23-yd TD catch",
-  // "3 catches, 41 yds", "sack", "14 pts allowed".
-  function feedWhat(e) {
-    const s = e.s || {}, ps = e.ps || {};
-    const v = (o, ...ids) => { for (const id of ids) if (o[id]) return o[id]; return 0; };
-    const dd = (...ids) => v(s, ...ids) - v(ps, ...ids);
-    const num = (k, one, many) => (k === 1 ? one : `${k} ${many}`);
-    const parts = [];
-    const passTd = dd(4), rushTd = dd(25), recTd = dd(43);
-    const cmp = dd(1), pyd = dd(3), car = dd(23), ryd = dd(24), rec = dd(41, 53), cyd = dd(42, 61);
-    const passOne = passTd === 1 && cmp === 1, rushOne = rushTd === 1 && car === 1, recOne = recTd === 1 && rec === 1;
-    if (passTd > 0) parts.push(passOne ? `${pyd}-yd TD pass` : num(passTd, 'TD pass', 'TD passes'));
-    if (rushTd > 0) parts.push(rushOne ? `${ryd}-yd TD run` : num(rushTd, 'TD run', 'TD runs'));
-    if (recTd > 0) parts.push(recOne ? `${cyd}-yd TD catch` : num(recTd, 'TD catch', 'TD catches'));
-    if (e.pos === 'D/ST') {
-      if (dd(105) > 0) parts.push(num(dd(105), 'defensive TD', 'defensive TDs'));
-    } else if (dd(101) + dd(102) > 0) parts.push('return TD');
-    if (dd(19) + dd(26) + dd(44) > 0) parts.push('2-pt conversion');
-    if (dd(20) > 0) parts.push(num(dd(20), 'INT thrown', 'INTs thrown'));
-    if (dd(72) > 0) parts.push('fumble lost');
-    if (pyd && !passOne) parts.push(cmp === 1 ? `${pyd}-yd completion` : `${pyd} pass yds`);
-    if ((ryd || car > 0) && !rushOne) {
-      parts.push(car === 1 ? (ryd > 0 ? `${ryd}-yd run` : ryd < 0 ? `${-ryd}-yd loss` : 'no gain')
-        : car > 1 ? `${car} carries, ${ryd} yds` : `${ryd} rush yds`);
-    }
-    if ((cyd || rec > 0) && !recOne) parts.push(rec === 1 ? `${cyd}-yd catch` : rec > 1 ? `${rec} catches, ${cyd} yds` : `${cyd} rec yds`);
-    // Kicking: made field goals by distance (what's left of all makes is 60+).
-    let fgSaid = 0;
-    [[74, '50+ yd FG'], [77, '40–49 yd FG'], [80, 'FG']].forEach(([id, label]) => {
-      const k = dd(id);
-      if (k > 0) { parts.push(num(k, label, label + 's')); fgSaid += k; }
-    });
-    if (dd(83) > fgSaid) parts.push('60+ yd FG');
-    if (dd(85) > 0) parts.push('missed FG');
-    if (dd(86) > 0) parts.push(num(dd(86), 'extra point', 'extra points'));
-    if (dd(88) > 0) parts.push('missed extra point');
-    // Defense.
-    if (dd(99) > 0) parts.push(num(dd(99), 'sack', 'sacks'));
-    if (dd(95) > 0) parts.push(num(dd(95), 'INT', 'INTs'));
-    if (dd(96) > 0) parts.push('fumble recovery');
-    if (dd(98) > 0) parts.push('safety');
-    if (dd(97) > 0) parts.push('blocked kick');
-    if (e.pos === 'D/ST' && (dd(120) !== 0 || !parts.length)) parts.push(`${v(s, 120)} pts allowed`);
-    return parts.length ? parts.join(', ') : 'points adjusted';
-  }
-
-  function renderFeed() {
-    const section = document.getElementById('feed-section');
-    const data = shownData;
-    if (!data || !feedFor(dashWeek).length) { section.hidden = true; return; }
-    section.hidden = false;
-    const matchups = data.matchups || [];
-    const mineM = matchups.find(m => isMe(m.awayManager) || isMe(m.homeManager));
-    const me = mineM ? (isMe(mineM.awayManager) ? mineM.awayManager : mineM.homeManager)
-      : (data.teams || []).map(t => t.manager).find(n => n && isMe(n));
-    const opp = mineM ? (mineM.awayManager === me ? mineM.homeManager : mineM.awayManager) : null;
-    const scope = me ? feedScope : 'all';
-    const oppOf = new Map();
-    matchups.forEach(m => { oppOf.set(m.awayManager, m.homeManager); oppOf.set(m.homeManager, m.awayManager); });
-
-    const btn = (attr, k, label, on) => `<button type="button" class="${attr === 'scope' ? 'scope-btn' : ''}${on ? ' on' : ''}" data-feed-${attr}="${k}" aria-pressed="${on}">${label}</button>`;
-    document.getElementById('feed-ctl').innerHTML =
-      (me ? `<div class="scope-row" role="group" aria-label="Whose plays">${btn('scope', 'mine', 'My matchup', scope === 'mine')}${btn('scope', 'all', 'Everyone', scope === 'all')}</div>` : '')
-      + `<div class="seg" role="group" aria-label="Which plays">${btn('filter', 'big', 'Big plays', feedFilter === 'big')}${btn('filter', 'all', 'All', feedFilter === 'all')}</div>`;
-
-    let list = feedFor(dashWeek);
-    if (scope === 'mine') list = list.filter(e => e.m === me || (opp && e.m === opp));
-    if (feedFilter === 'big') list = list.filter(e => Math.abs(e.d) > 3);
-    list = list.slice().reverse();
-    let lastDay = '';
-    const rows = list.slice(0, feedShown).map(e => {
-      const day = new Date(e.t).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/New_York' });
-      const head = day !== lastDay ? `<div class="fd-day">${day}</div>` : '';
-      lastDay = day;
-      const helps = (e.m === me) === (e.d > 0);
-      const tone = scope === 'mine' ? (helps ? ' is-win' : ' is-loss') : '';
-      const valTone = scope === 'mine' ? (helps ? 'turf' : 'loss') : (e.d > 0 ? 'gold' : 'loss');
-      const clock = e.q ? (e.q > 4 ? 'OT' : `Q${e.q}`) + (e.clk ? ' ' + e.clk : '') : '';
-      const game = e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
-      const who = scope === 'mine' ? e.m : `${e.m}${oppOf.get(e.m) ? ' vs ' + oppOf.get(e.m) : ''}`;
-      return `${head}<div class="fd-row item${tone}${feedSeen && e.id > feedSeen ? ' fd-new' : ''}">
-          <span class="fd-t">${fdTime(e.t)}</span>
-          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(feedWhat(e))}</span><div class="fd-s">${esc(who)}${game ? ' · ' + esc(game) : ''}</div></div>
-          <span class="fd-p ${valTone}">${e.d > 0 ? '+' : '−'}${Math.abs(e.d).toFixed(2)}</span>
-        </div>`;
-    }).join('');
-    const empty = feedFilter === 'big'
-      ? (scope === 'mine' ? 'No big plays in your matchup yet.' : 'No big plays yet.')
-      : (scope === 'mine' ? 'Nothing has scored in your matchup yet.' : 'Nothing has scored yet.');
-    document.getElementById('feed-list').innerHTML = (rows || `<div class="empty-note">${empty}</div>`)
-      + (list.length > feedShown ? '<button type="button" class="fd-more" data-feed-more>Show more</button>' : '');
-    feedSeen = feed.maxId;
-  }
-
-  document.getElementById('feed-section').addEventListener('click', e => {
-    const s = e.target.closest('[data-feed-scope]'), f = e.target.closest('[data-feed-filter]'), more = e.target.closest('[data-feed-more]');
-    if (s) { feedScope = s.dataset.feedScope; try { localStorage.setItem('feedScope', feedScope); } catch (err) {} }
-    if (f) { feedFilter = f.dataset.feedFilter; try { localStorage.setItem('feedFilter', feedFilter); } catch (err) {} }
-    if (s || f) feedShown = FEED_PAGE;
-    if (more) feedShown += FEED_PAGE;
-    if (s || f || more) renderFeed();
-  });
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-mh-close]')) { mhClose(); return; }

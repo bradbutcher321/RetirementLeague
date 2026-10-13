@@ -10,9 +10,11 @@
  * when his points moved. Two plays inside one build's gap arrive as one
  * change.
  *
- * GET /feed[?week=N][&since=ID] -> { season, week, events: [...] }, oldest
- *   first, only rows after `since` (the page polls for the new ones).
- *   Defaults to the latest week recorded.
+ * GET /feed[?week=N][&since=ID][&big=1] -> { season, week, events: [...] },
+ *   oldest first, only rows after `since` (the page polls for the new ones),
+ *   only changes of more than 3 points either way with big=1 (the
+ *   dashboard's Flow captions). Defaults to the latest week recorded, never
+ *   past `maxWeek` (the live week).
  */
 
 /** Adds a row for every starter whose points differ from his last saved
@@ -51,18 +53,20 @@ export async function recordScoreEvents(env, previous, dashboard) {
   return changed.length;
 }
 
-export async function getFeed(env, url) {
+export async function getFeed(env, url, maxWeek = 99) {
   const season = Number(env.ESPN_YEAR);
   let week = Number(url.searchParams.get("week")) || null;
   const since = Math.max(0, parseInt(url.searchParams.get("since"), 10) || 0);
+  const big = url.searchParams.get("big") === "1" ? " AND ABS(delta) > 3" : "";
   if (!week) {
-    const row = await env.HISTORY_DB.prepare("SELECT MAX(week) AS week FROM score_events WHERE season = ?").bind(season).first();
+    const row = await env.HISTORY_DB.prepare("SELECT MAX(week) AS week FROM score_events WHERE season = ? AND week <= ?")
+      .bind(season, maxWeek || 99).first();
     week = row && row.week;
   }
   if (!week) return { season, week: null, events: [] };
   const { results } = await env.HISTORY_DB.prepare(
     `SELECT id, ts, player_id, manager, player, pos, prev, total, delta, stats, prev_stats, team, opp, period, clock
-     FROM score_events WHERE season = ? AND week = ? AND id > ? ORDER BY id`
+     FROM score_events WHERE season = ? AND week = ? AND id > ?${big} ORDER BY id`
   ).bind(season, week, since).all();
   return {
     season,

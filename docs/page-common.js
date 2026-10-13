@@ -823,3 +823,52 @@ function riseIn(els, cap = 8) {
   // Coming back to a page from the back/forward cache, drop a spinning chip.
   addEventListener('pageshow', e => { if (e.persisted && el) { el.classList.remove('busy'); reset(); } });
 })();
+
+// ---------- What a Feed row says (audit III #7) ----------
+// One change to a starter's points, from his stats before (e.ps) and after
+// (e.s), keyed by ESPN stat id (worker/src/dashboard.js FEED_STATS):
+// "23-yd TD catch", "3 catches, 41 yds", "sack", "14 pts allowed". Shared
+// by the Feed page and the dashboard's Flow captions.
+function feedWhat(e) {
+  const s = e.s || {}, ps = e.ps || {};
+  const v = (o, ...ids) => { for (const id of ids) if (o[id]) return o[id]; return 0; };
+  const dd = (...ids) => v(s, ...ids) - v(ps, ...ids);
+  const num = (k, one, many) => (k === 1 ? one : `${k} ${many}`);
+  const parts = [];
+  const passTd = dd(4), rushTd = dd(25), recTd = dd(43);
+  const cmp = dd(1), pyd = dd(3), car = dd(23), ryd = dd(24), rec = dd(41, 53), cyd = dd(42, 61);
+  const passOne = passTd === 1 && cmp === 1, rushOne = rushTd === 1 && car === 1, recOne = recTd === 1 && rec === 1;
+  if (passTd > 0) parts.push(passOne ? `${pyd}-yd TD pass` : num(passTd, 'TD pass', 'TD passes'));
+  if (rushTd > 0) parts.push(rushOne ? `${ryd}-yd TD run` : num(rushTd, 'TD run', 'TD runs'));
+  if (recTd > 0) parts.push(recOne ? `${cyd}-yd TD catch` : num(recTd, 'TD catch', 'TD catches'));
+  if (e.pos === 'D/ST') {
+    if (dd(105) > 0) parts.push(num(dd(105), 'defensive TD', 'defensive TDs'));
+  } else if (dd(101) + dd(102) > 0) parts.push('return TD');
+  if (dd(19) + dd(26) + dd(44) > 0) parts.push('2-pt conversion');
+  if (dd(20) > 0) parts.push(num(dd(20), 'INT thrown', 'INTs thrown'));
+  if (dd(72) > 0) parts.push('fumble lost');
+  if (pyd && !passOne) parts.push(cmp === 1 ? `${pyd}-yd completion` : `${pyd} pass yds`);
+  if ((ryd || car > 0) && !rushOne) {
+    parts.push(car === 1 ? (ryd > 0 ? `${ryd}-yd run` : ryd < 0 ? `${-ryd}-yd loss` : 'no gain')
+      : car > 1 ? `${car} carries, ${ryd} yds` : `${ryd} rush yds`);
+  }
+  if ((cyd || rec > 0) && !recOne) parts.push(rec === 1 ? `${cyd}-yd catch` : rec > 1 ? `${rec} catches, ${cyd} yds` : `${cyd} rec yds`);
+  // Kicking: made field goals by distance (what's left of all makes is 60+).
+  let fgSaid = 0;
+  [[74, '50+ yd FG'], [77, '40–49 yd FG'], [80, 'FG']].forEach(([id, label]) => {
+    const k = dd(id);
+    if (k > 0) { parts.push(num(k, label, label + 's')); fgSaid += k; }
+  });
+  if (dd(83) > fgSaid) parts.push('60+ yd FG');
+  if (dd(85) > 0) parts.push('missed FG');
+  if (dd(86) > 0) parts.push(num(dd(86), 'extra point', 'extra points'));
+  if (dd(88) > 0) parts.push('missed extra point');
+  // Defense.
+  if (dd(99) > 0) parts.push(num(dd(99), 'sack', 'sacks'));
+  if (dd(95) > 0) parts.push(num(dd(95), 'INT', 'INTs'));
+  if (dd(96) > 0) parts.push('fumble recovery');
+  if (dd(98) > 0) parts.push('safety');
+  if (dd(97) > 0) parts.push('blocked kick');
+  if (e.pos === 'D/ST' && (dd(120) !== 0 || !parts.length)) parts.push(`${v(s, 120)} pts allowed`);
+  return parts.length ? parts.join(', ') : 'points adjusted';
+}

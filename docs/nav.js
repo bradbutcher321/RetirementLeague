@@ -1,13 +1,14 @@
 // Shared navigation (site audit III #10), injected into
-// <div id="site-nav"></div> on every page. Four places plus You: a tab bar
+// <div id="site-nav"></div> on every page. Five places plus You: a tab bar
 // along the bottom of a phone, where the thumb already is, and the same
-// four as links in a top bar at 1080px and up, with search beside them
+// five as links in a top bar at 1080px and up, with search beside them
 // (⌘K or /). Every history page hangs off History, a hub with one search
 // box (history.html). The lists live here in exactly one place, so adding
 // a page means adding one entry to HISTORY rather than editing every file.
 (function () {
   const SVG = (body, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${extra}>${body}</svg>`;
   const ICONS = {
+    feed: SVG('<path d="M3 12h4l3-7 4 14 3-7h4"/>'),
     live: SVG('<circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.3 5.3a9.5 9.5 0 0 0 0 13.4M18.7 5.3a9.5 9.5 0 0 1 0 13.4"/>'),
     ticket: SVG('<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4V7z"/><path d="M14 7v10" stroke-dasharray="2 2.2"/>'),
     list: SVG('<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/>'),
@@ -26,6 +27,7 @@
   // anything not listed (every history page) lights History.
   const TABS = [
     { key: 'live', href: 'index.html', label: 'Live', icon: ICONS.live, pages: ['index.html'] },
+    { key: 'feed', href: 'feed.html', label: 'Feed', icon: ICONS.feed, pages: ['feed.html'] },
     { key: 'parlay', href: 'parlay-results.html', label: 'Parlay', icon: ICONS.ticket, pages: ['parlay-results.html', 'parlay-entry.html'] },
     { key: 'standings', href: 'standings.html', label: 'Standings', icon: ICONS.list, pages: ['standings.html'] },
     { key: 'history', href: 'history.html', label: 'History', icon: ICONS.book, pages: [] },
@@ -51,7 +53,7 @@
     if (!mount) return;
 
     const file = currentFile();
-    const active = (TABS.find(t => t.pages.includes(file)) || TABS[3]).key;
+    const active = (TABS.find(t => t.pages.includes(file)) || TABS.find(t => t.key === 'history')).key;
     // The page you're on is only "current" when it's the tab's own page:
     // Franchise lights History but isn't the History page.
     const cur = t => t.key === active ? ` class="on"${t.href === file ? ' aria-current="page"' : ''}` : '';
