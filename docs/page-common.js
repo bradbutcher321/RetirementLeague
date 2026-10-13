@@ -345,12 +345,14 @@ const haptic = (() => {
   };
 })();
 // A tap on a track's unselected choice, or a tab in the bottom bar.
+// Capture phase, so it sees the choice before the page's own handler marks
+// it selected (Median Watch flips .on in place).
 document.addEventListener('click', e => {
   if (!(e.target instanceof Element)) return;
   const btn = e.target.closest('button, a');
   if (!btn || btn.matches('.on, .active, [aria-current="page"]')) return;
   if (btn.parentElement?.matches(TRACK_SEL) || btn.closest('.tabbar')) haptic();
-});
+}, true);
 const glideTap = { track: null, at: 0 };
 (() => {
   const items = track => [...track.children].filter(c => !c.classList.contains('glide-pill'));

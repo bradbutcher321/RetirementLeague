@@ -22,13 +22,27 @@
   right: 0;
   bottom: 0;
   z-index: 45;
+}
+/* The bar's look sits on an inner .tb-in, which is named for view
+   transitions: a dashboard toggle lifts its cards into a layer over the
+   whole page, and the bar needs a layer of its own to stay above them.
+   Named on the inner box, never the fixed bar, because Safari drew a
+   captured pinned element nowhere (index.html's .sf-band, same reason). */
+.tb-in{
   display: flex;
   padding: 4px max(6px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(6px, env(safe-area-inset-left, 0px));
   background: rgba(17,17,17,0.94);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   border-top: 1px solid var(--line);
+  view-transition-name: tabbar;
 }
+/* Chrome stacks transition layers by paint order, Safari by page order,
+   where the bar comes first; lift it above every card either way. It
+   doesn't move or change, so it holds still rather than cross-fading. */
+::view-transition-group(tabbar){ z-index: 100; animation: none; }
+::view-transition-old(tabbar){ display: none; }
+::view-transition-new(tabbar){ animation: none; }
 .tabbar a, .tabbar button{
   flex: 1 1 0;
   min-width: 0;

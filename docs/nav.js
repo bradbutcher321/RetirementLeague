@@ -67,7 +67,7 @@
           <button class="nav-me" id="nav-me" type="button" aria-haspopup="dialog"></button>
         </div>
       </div>
-      <nav class="tabbar" aria-label="Pages">${tabs}<button type="button" class="tb-you" id="tb-you" aria-haspopup="dialog"><span class="tb-ic"></span>You</button></nav>`;
+      <nav class="tabbar" aria-label="Pages"><div class="tb-in">${tabs}<button type="button" class="tb-you" id="tb-you" aria-haspopup="dialog"><span class="tb-ic"></span>You</button></div></nav>`;
 
     // Tapping History while already on the hub goes to its search box.
     const histTab = mount.querySelector('.tabbar [data-tab="history"]');
