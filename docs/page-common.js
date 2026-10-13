@@ -322,6 +322,35 @@ function weeklyLeaders(wf, key, names) {
 // from the side you moved toward: the value is the id of that container,
 // or "next" for the track's next sibling.
 const TRACK_SEL = '.tabs, .seg, .sup-seg, .scope-row, .board-toggle';
+
+// Haptics (audit III #25): a light tick for a tap that changes something.
+// iOS gives web pages no vibration API, but since iOS 18 Safari ticks when
+// a switch control flips, so a hidden one is flipped instead; Android has
+// navigator.vibrate. Either only works inside the tap's own handler, so a
+// matchup going final on its own can't tick. The hidden switch's click is
+// kept from bubbling, so no page handler mistakes it for a tap elsewhere.
+const haptic = (() => {
+  let label = null;
+  return () => {
+    if (typeof navigator.vibrate === 'function') { navigator.vibrate(8); return; }
+    if (!label) {
+      label = document.createElement('label');
+      label.setAttribute('aria-hidden', 'true');
+      label.style.display = 'none';
+      label.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+      label.addEventListener('click', e => e.stopPropagation());
+      document.head.appendChild(label);
+    }
+    label.click();
+  };
+})();
+// A tap on a track's unselected choice, or a tab in the bottom bar.
+document.addEventListener('click', e => {
+  if (!(e.target instanceof Element)) return;
+  const btn = e.target.closest('button, a');
+  if (!btn || btn.matches('.on, .active, [aria-current="page"]')) return;
+  if (btn.parentElement?.matches(TRACK_SEL) || btn.closest('.tabbar')) haptic();
+});
 const glideTap = { track: null, at: 0 };
 (() => {
   const items = track => [...track.children].filter(c => !c.classList.contains('glide-pill'));
@@ -781,6 +810,7 @@ function riseIn(els, cap = 8) {
     if (state !== 'pulling') return;
     if (pull < ARM) { reset(); return; }
     state = 'busy';
+    haptic();
     el.classList.add('settle', 'busy');
     draw(ARM);
     // Long enough to see the spin start, so the reload reads as an answer.
