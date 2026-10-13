@@ -29,6 +29,10 @@
  * GET /median-history -> the week's projected median over time, for Median
  *                      Watch's chart (see medianHistory.js; the rows are
  *                      written by scheduled() below).
+ * GET /feed?week=&since= -> every change to a starter's points this week,
+ *                      for the dashboard's Feed (see scoreFeed.js; the rows
+ *                      are written after each live build, here and in
+ *                      scheduled()).
  * GET /parlay-stats  -> the parlay stats payload, read straight from KV
  *                      (see publish_parlay_stats.py, which computes and
  *                      pushes it there -- same "no git commit needed" idea
@@ -50,6 +54,7 @@ import { enterParlay, getParlayWeek } from "./parlayEntry.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
 import { getPlayerLog } from "./playerLog.js";
+import { getFeed, recordScoreEvents } from "./scoreFeed.js";
 import { cached } from "./cache.js";
 
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
@@ -123,7 +128,7 @@ function jsonResponse(data, headers, status = 200) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const headers = corsHeaders(env, request);
 
     if (request.method === "OPTIONS") {
@@ -159,6 +164,10 @@ export default {
       const url = new URL(request.url);
       return jsonResponse(await getMedianHistory(env, url).catch((err) => ({ error: String(err), points: [] })), headers);
     }
+    if (path === "/feed") {
+      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      return jsonResponse(await getFeed(env, new URL(request.url)).catch((err) => ({ error: String(err), events: [] })), headers);
+    }
     if (path === "/player") {
       if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await getPlayerLog(env, new URL(request.url)).catch((err) => ({ status: 502, body: { error: String(err) } }));
@@ -191,8 +200,8 @@ export default {
 
     const entry = await readCache(env);
 
-    // gameStates and averages are for the next build, not for the page.
-    const publicView = ({ gameStates, averages, ...rest }) => rest;
+    // gameStates, averages and scoreLines are for the next build, not for the page.
+    const publicView = ({ gameStates, averages, scoreLines, ...rest }) => rest;
 
     // The live cache knows which week is live; a week before it is history.
     const week = parseInt(url.searchParams.get("week"), 10);
@@ -213,6 +222,7 @@ export default {
     try {
       const dashboard = await buildDashboard(env, entry?.data);
       await writeCache(env, now, dashboard, entry);
+      ctx.waitUntil(recordScoreEvents(env, entry?.data, dashboard).catch((err) => console.error("Feed write failed:", err)));
       return jsonResponse({ ...publicView(dashboard), cacheHit: false }, headers);
     } catch (err) {
       // ESPN hiccup or bad credentials — better to serve stale data than
@@ -228,7 +238,7 @@ export default {
   // refresh_parlay_data.yml on a real schedule, since GitHub's own
   // `schedule:` trigger is best-effort and was observed firing every
   // 2.5-5.5 hours instead of the configured cadence. The cadence itself
-  // varies by day/time (off midweek, hourly on a game day, every 10 min
+  // varies by day/time (off midweek, hourly on a game day, every minute
   // during an actual game window) -- see the crons list in wrangler.toml
   // for the full schedule. Reuses the same dispatch the manual "Refresh
   // Data" button calls, cooldown and all.
@@ -238,19 +248,32 @@ export default {
   // otherwise cadence. It reuses the cached dashboard when a visitor just
   // refreshed it and otherwise builds its own and caches it, so the next
   // visitor gets it for free. The same build is what the notifications are
-  // checked against (push.js).
+  // checked against (push.js), and what the Feed's score changes are read
+  // from (scoreFeed.js).
+  //
+  // Game windows fire every minute so the Feed sees each score change on
+  // its own even with nobody on the dashboard. The parlay refresh and the
+  // median snapshot keep their 10-minute pace: they run only on a run whose
+  // minute ends in 0 (every hourly run does).
   async scheduled(event, env, ctx) {
+    const tenth = new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 0;
     const [parlay, median] = await Promise.allSettled([
-      dispatchParlayRefresh(env),
+      tenth ? dispatchParlayRefresh(env) : { status: 204 },
       (async () => {
         const entry = await readCache(env);
         const now = Math.floor(Date.now() / 1000);
         let dashboard = entry?.data;
+        let feed = null;
         if (!entry || now - entry.fetchedAt >= COOLDOWN_SECONDS) {
           dashboard = await buildDashboard(env, entry?.data);
           await writeCache(env, now, dashboard, entry);
+          feed = recordScoreEvents(env, entry?.data, dashboard).catch((err) => console.error("Feed write failed:", err));
         }
-        const [snap, push] = await Promise.allSettled([recordMedianSnapshot(env, dashboard), checkPushEvents(env, dashboard)]);
+        const [snap, push] = await Promise.allSettled([
+          tenth ? recordMedianSnapshot(env, dashboard) : null,
+          checkPushEvents(env, dashboard),
+          feed,
+        ]);
         if (push.status === "rejected") console.error("Push check failed:", push.reason);
         if (snap.status === "rejected") throw snap.reason;
       })(),

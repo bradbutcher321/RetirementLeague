@@ -173,3 +173,25 @@ CREATE TABLE IF NOT EXISTS median_snapshots (
     teams TEXT NOT NULL,
     PRIMARY KEY (season, week, ts)
 );
+
+CREATE TABLE IF NOT EXISTS score_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    season INTEGER NOT NULL,
+    week INTEGER NOT NULL,
+    ts INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
+    manager TEXT NOT NULL,
+    player TEXT NOT NULL,
+    pos TEXT NOT NULL,
+    prev REAL NOT NULL,
+    total REAL NOT NULL,
+    delta REAL NOT NULL,
+    stats TEXT NOT NULL,
+    prev_stats TEXT,
+    team TEXT,
+    opp TEXT,
+    period INTEGER,
+    clock TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_score_events_week ON score_events (season, week, id);
+CREATE INDEX IF NOT EXISTS idx_score_events_player ON score_events (season, week, player_id, id);

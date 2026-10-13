@@ -227,6 +227,38 @@ function buildPlayerCard(entry, gameStateByProTeam, seasonAverages) {
   return card;
 }
 
+// The stats the Feed describes a change with (scoreFeed.js), by ESPN stat
+// id: passing, rushing, receiving, fumbles, kicking and defense.
+const FEED_STATS = [1, 3, 4, 19, 20, 23, 24, 25, 26, 41, 42, 43, 44, 53, 61, 63, 72,
+  74, 77, 80, 83, 85, 86, 88, 95, 96, 97, 98, 99, 101, 102, 105, 120];
+
+/** Each starter's points right now, for the Feed (scoreFeed.js): who has
+ * him, his points and the stats behind them, and where his game is. */
+function starterLines(entries, manager, gameStateByProTeam) {
+  return entries.filter((e) => SLOT_ORDER.includes(e.lineupSlotId)).map((e) => {
+    const player = e.playerPoolEntry?.player || e.player || {};
+    const actual = (player.stats || []).find((s) => s.statSourceId === 0);
+    const s = {};
+    for (const id of FEED_STATS) {
+      const v = actual?.stats?.[id];
+      if (v) s[id] = v;
+    }
+    const game = gameStateByProTeam.get(player.proTeamId);
+    return {
+      id: player.id || e.playerId,
+      m: manager,
+      n: player.fullName || "",
+      pos: DEFAULT_POSITION_MAP[player.defaultPositionId] || "",
+      pts: actual ? round2(actual.appliedTotal || 0) : 0,
+      s,
+      tm: game?.ownAbbrev || "",
+      op: game?.opponentAbbrev || "",
+      q: game?.period || 0,
+      clk: game?.displayClock || "",
+    };
+  });
+}
+
 /** Starters only (bench/IR excluded), in standard lineup order. */
 function buildStarters(entries, gameStateByProTeam, seasonAverages) {
   return entries
@@ -539,6 +571,7 @@ export async function buildDashboard(env, previous = null, opts = {}) {
   const teamCurrentById = new Map(); // teamId -> { current, projected, average }
   const teamStatusById = new Map(); // teamId -> { remaining, inPlay } starters left to play / in play
   const matchups = [];
+  const scoreLines = [];
 
   for (const boxMatchup of boxData.schedule || []) {
     const home = parseBoxSide(boxMatchup.home);
@@ -551,6 +584,7 @@ export async function buildDashboard(env, previous = null, opts = {}) {
       teamStatusById.set(side.teamId, countGameStatus(side.entries, gameStateByProTeam));
       side.starters = buildStarters(side.entries, gameStateByProTeam, averages.map);
       side.best = bestLineupPoints(side.entries, slotCounts);
+      if (!archived) scoreLines.push(...starterLines(side.entries, managerNames.get(side.teamId) || "", gameStateByProTeam));
       const average = round2(side.starters.reduce((sum, p) => sum + p.avgPoints, 0));
       currentScores.push(side.score);
       projectedScores.push(side.projected);
@@ -666,8 +700,10 @@ export async function buildDashboard(env, previous = null, opts = {}) {
     ...(nflScoreboardError ? { nflScoreboardError } : {}),
     ...(nflScoreboardStale ? { nflScoreboardStale } : {}),
     // Carried in the cache for the next build (fallback game states, reused
-    // averages); index.js strips both from the response.
+    // averages, the Feed's last look at every starter); index.js strips
+    // them from the response.
     gameStates: [...gameStateByProTeam],
     averages: averages.cache,
+    ...(archived ? {} : { scoreLines }),
   };
 }

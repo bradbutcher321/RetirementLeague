@@ -781,6 +781,53 @@
   @media (max-width:720px){ .mb-card a.mgr{ pointer-events: none; } }
   .mb-card.sel{ border-color: var(--lead-line); background: var(--lead-tint); }
 
+  /* ---------- Flow and Feed (site audit III #7) ----------
+     Flow: a matchup's two projected totals through the week, from Median
+     Watch's own snapshots, with the projected median dashed behind them.
+     Left side gold and right side Canaveral blue, as on Head to Head. Your
+     matchup carries it on the card; every other one at the top of its open
+     roster. Feed: every change to a starter's points, newest first. */
+  .fl-wrap{ cursor: default; }
+  .matchup-card > .fl-wrap{ border-top: 1px solid var(--line); padding: 10px 14px 12px; }
+  .mu-det-body .fl-wrap{ padding: 10px 10px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .fl-h{ color: var(--text-dim); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .fl-chart{ position: relative; height: 150px; touch-action: pan-y; }
+  .fl-chart svg{ display: block; width: 100%; overflow: visible; }
+  .fl-key{ display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.72rem; font-weight: 600; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .fl-key .a{ color: var(--gold); }
+  .fl-key .b{ color: #7AAEDB; }
+  .fl-key .md{ color: var(--text-dim); display: inline-flex; align-items: center; gap: 5px; }
+  .fl-key .md i{ width: 14px; border-top: 1.5px dashed rgba(245,245,243,0.5); }
+  .fl-key .note{ color: var(--text-dim); font-weight: 500; }
+  .fl-swing{ margin-top: 8px; font-size: 0.76rem; color: var(--text-dim); line-height: 1.45; background: var(--item); border: 1px solid var(--item-line); border-radius: 8px; padding: 7px 10px; }
+  .fl-swing b{ color: var(--text); font-weight: 600; }
+  .mh-tip .r.a{ color: var(--gold); }
+  .mh-tip .r.b{ color: #7AAEDB; }
+  .mh-tip .r.md{ color: var(--text-dim); }
+  @keyframes fl-pulse{ 0%{ r: 2.5px; opacity: .7; } 70%{ r: 9px; opacity: 0; } 100%{ r: 9px; opacity: 0; } }
+  .fl-pulse{ animation: fl-pulse 1.6s infinite; }
+
+  .feed-card{ padding: 16px 14px 14px; }
+  .feed-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0 4px; }
+  .feed-title{ font-weight: 700; font-size: 0.95rem; }
+  .feed-ctl{ display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin: 12px 0 4px; }
+  .fd{ display: grid; gap: 6px; }
+  .fd-day{ color: var(--gold); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 4px 0; }
+  .fd-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 12px 8px 10px; }
+  .fd-t{ color: var(--text-dim); font-size: 0.7rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fd-m{ min-width: 0; font-size: 0.82rem; line-height: 1.35; }
+  .fd-m b{ font-weight: 600; }
+  .fd-m .what{ color: var(--text-dim); }
+  .fd-s{ color: var(--text-dim); font-size: 0.68rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fd-p{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.08rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fd-p.gold{ color: var(--gold); } .fd-p.turf{ color: var(--turf); } .fd-p.loss{ color: var(--loss); }
+  .fd-new{ animation: fd-in .5s cubic-bezier(.2,.8,.2,1); }
+  @keyframes fd-in{ from{ opacity: 0; transform: translateY(-6px); } }
+  .fd-more{ display: block; margin: 12px auto 2px; height: 34px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--lead-line); background: transparent; color: var(--gold); font: 700 0.78rem var(--body); cursor: pointer; }
+  @media (hover: hover){ .fd-more:hover{ background: var(--lead-tint); } }
+  .fd-more:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ .fl-pulse{ animation: none; opacity: 0; } .fd-new{ animation: none; } }
+
   /* This is me (site audit II #36): your own matchup leads the matchups
      list, ringed -- or, with the You sheet's "top of the dashboard"
      setting, sits up here at a list card's width (centred on desktop,
@@ -1253,6 +1300,16 @@
       </div>
     </section>
 
+    <!-- Feed (site audit III #7): every change to a starter's points this
+         week, from the Worker's /feed. Hidden for a week with none. -->
+    <section id="feed-section" hidden>
+      <div class="glass feed-card">
+        <div class="feed-head"><span class="feed-title">Feed</span></div>
+        <div class="feed-ctl" id="feed-ctl"></div>
+        <div class="fd" id="feed-list"></div>
+      </div>
+    </section>
+
     <!-- hidden until loadDashboard's first render, same as Current Parlay and
          League Lore: without it the standings card and accolade
          placeholders drew on their own while the rest of the page was still
@@ -1400,7 +1457,7 @@
       </div>`;
   }
 
-  function renderMatchupDetails(m) {
+  function renderMatchupDetails(m, top = '') {
     const awayPlayers = m.awayPlayers || [];
     const homePlayers = m.homePlayers || [];
     const rowCount = Math.max(awayPlayers.length, homePlayers.length);
@@ -1415,7 +1472,7 @@
           ${renderPlayerCell(h, 'home', playerState(h))}
         </div>`);
     }
-    return `<div class="matchup-details"><div class="mu-det-in"><div class="mu-det-body">${rows.join('')}</div></div></div>`;
+    return `<div class="matchup-details"><div class="mu-det-in"><div class="mu-det-body">${top}${rows.join('')}</div></div></div>`;
   }
 
   // A matchup is decided (FINAL, sinks to the bottom) once nobody is left to
@@ -1518,9 +1575,10 @@
 
     const key = matchupKey(m);
     const expanded = expandedMatchups.has(key);
+    const mine = isMe(m.awayManager) || isMe(m.homeManager);
 
     return `
-      <div class="matchup-card${expanded ? ' expanded' : ''}${isMe(m.awayManager) || isMe(m.homeManager) ? ' me' : ''}" data-key="${encodeURIComponent(key)}">
+      <div class="matchup-card${expanded ? ' expanded' : ''}${mine ? ' me' : ''}" data-key="${encodeURIComponent(key)}">
         <div class="mu-head">
           ${side('away', m.awayName, metaParts(m.awayManager, m.awayRecord, m.awayStreak), awayScore, homeScore, m.awayProjected, m.awayPlayers || [])}
           ${side('home', m.homeName, metaParts(m.homeManager, m.homeRecord, m.homeStreak).reverse(), homeScore, awayScore, m.homeProjected, m.homePlayers || [])}
@@ -1531,8 +1589,9 @@
           ${status}
           ${pips(m.homePlayers || [], homeInPlay, homeRemaining, 'home')}
         </div>
+        ${mine ? flowHtml(m) : ''}
         ${seriesHtml(m)}
-        ${renderMatchupDetails(m)}
+        ${renderMatchupDetails(m, mine ? '' : flowHtml(m))}
       </div>`;
   }
   // The pair's all-time series before this week (site audit 27), as a link
@@ -2426,7 +2485,285 @@
   function mhRefresh() {
     mhDraw(document.getElementById('mh-spark'), true);
     if (mhIsOpen) mhRender();
+    flDrawAll();
   }
+
+  // ---------- Flow: one matchup's projections through the week ----------
+  // Site audit III #7. Both sides' projected totals from the snapshots
+  // Median Watch charts (mhSeries, so the live poll is the newest point and
+  // idle stretches shrink the same way), left side gold and right side
+  // blue as on Head to Head, the projected median dashed behind them.
+  // Your matchup carries it on the card; every other one at the top of its
+  // open roster. The cards are drawn as HTML first, so each chart is a
+  // placeholder filled in by flDrawAll() once it's on the page.
+  const FL_B = '#7AAEDB';
+  function flowHtml(m) {
+    if (!m.awayManager || !m.homeManager || (shownData && shownData.pastSeason)) return '';
+    return `<div class="fl-wrap" data-fl="${encodeURIComponent(matchupKey(m))}" hidden>
+        <div class="fl-h">Flow</div><div class="fl-chart"></div><div class="fl-key"></div><div class="fl-swing" hidden></div></div>`;
+  }
+  function flDrawAll() {
+    const ms = (shownData && shownData.matchups) || [];
+    document.querySelectorAll('.fl-wrap[data-fl]').forEach(wrap => {
+      const key = decodeURIComponent(wrap.dataset.fl);
+      flDraw(wrap, ms.find(x => matchupKey(x) === key));
+    });
+  }
+  function flDraw(wrap, m) {
+    const A = m && m.awayManager, B = m && m.homeManager;
+    const pts = m ? mhSeries().filter(p => typeof p.p[A] === 'number' && typeof p.p[B] === 'number') : [];
+    wrap.hidden = pts.length < 2;
+    if (wrap.hidden) return;
+    const host = wrap.querySelector('.fl-chart');
+    host.innerHTML = '';
+    // Playoff weeks have no median to play against.
+    const withMedian = !(shownData && shownData.playoffWeek);
+    const W = Math.max(160, host.clientWidth), H = host.clientHeight || 150;
+    const pad = { l: 28, r: 6, t: 8, b: 20 };
+    const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    const xs = mhXs(pts), xMax = xs[xs.length - 1] || 1;
+    let lo = Infinity, hi = -Infinity;
+    pts.forEach(p => [p.p[A], p.p[B], withMedian ? p.pm : null].forEach(v => {
+      if (typeof v === 'number') { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+    }));
+    const padY = Math.max((hi - lo) * 0.08, 1); lo -= padY; hi += padY;
+    const X = i => pad.l + xs[i] / xMax * iw;
+    const Y = v => pad.t + (1 - (v - lo) / (hi - lo)) * ih;
+    const svg = mhEl('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' }, host);
+
+    const span = hi - lo, step = span > 80 ? 20 : span > 40 ? 10 : span > 16 ? 5 : 2;
+    for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
+      mhEl('line', { x1: pad.l, x2: pad.l + iw, y1: Y(v), y2: Y(v), style: 'stroke:var(--line)' }, svg);
+      mhEl('text', { x: pad.l - 6, y: Y(v) + 3, 'text-anchor': 'end', 'font-size': 9, style: 'fill:var(--text-dim);font-variant-numeric:tabular-nums' }, svg).textContent = v;
+    }
+    let lastX = -Infinity, prevDay = null;
+    pts.forEach((p, i) => {
+      const d = mhDay(p.t);
+      if (d === prevDay) return;
+      prevDay = d;
+      const x = X(i);
+      if (i > 0) mhEl('line', { x1: x, x2: x, y1: pad.t, y2: pad.t + ih, style: 'stroke:var(--line);stroke-dasharray:2 3' }, svg);
+      if (x - lastX < 26) return;
+      lastX = x;
+      mhEl('text', { x: x + 2, y: H - 5, 'font-size': 9, 'font-weight': 600, style: 'fill:var(--text-dim)' }, svg).textContent = d;
+    });
+
+    const path = f => pts.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(f(p)).toFixed(1)}`).join(' ');
+    const line = 'fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round';
+    if (withMedian) mhEl('path', { d: path(p => p.pm), style: 'fill:none;stroke:rgba(245,245,243,0.42);stroke-width:1.3;stroke-dasharray:4 3' }, svg);
+    mhEl('path', { d: path(p => p.p[B]), style: `${line};stroke:${FL_B}` }, svg);
+    mhEl('path', { d: path(p => p.p[A]), style: `${line};stroke:var(--gold)` }, svg);
+
+    // The biggest single jump either side made, ringed on its line.
+    let best = null;
+    for (let i = 1; i < pts.length; i++) [A, B].forEach(who => {
+      const d = pts[i].p[who] - pts[i - 1].p[who];
+      if (!best || Math.abs(d) > Math.abs(best.d)) best = { i, who, d };
+    });
+    if (best && Math.abs(best.d) < 3) best = null;
+    const colorOf = who => (who === A ? 'var(--gold)' : FL_B);
+    if (best) mhEl('circle', { cx: X(best.i), cy: Y(pts[best.i].p[best.who]), r: 4.5, style: `fill:none;stroke:${colorOf(best.who)};stroke-width:1.5` }, svg);
+
+    const li = pts.length - 1, last = pts[li];
+    [[B, FL_B], [A, 'var(--gold)']].forEach(([who, c]) => {
+      if (last.live > 0) mhEl('circle', { cx: X(li), cy: Y(last.p[who]), r: 2.5, class: 'fl-pulse', style: `fill:${c}` }, svg);
+      mhEl('circle', { cx: X(li), cy: Y(last.p[who]), r: 3.5, style: `fill:${c};stroke:var(--surface);stroke-width:1.5` }, svg);
+    });
+
+    wrap.querySelector('.fl-key').innerHTML = `<span class="a">${esc(A)} ${fmtScore(last.p[A])}</span><span class="b">${esc(B)} ${fmtScore(last.p[B])}</span>`
+      + (withMedian ? `<span class="md"><i></i>Median ${fmtScore(last.pm)}</span>` : '') + '<span class="note">projected</span>';
+
+    // What the biggest jump was, from the Feed when it saw the play.
+    const swing = wrap.querySelector('.fl-swing');
+    swing.hidden = !best;
+    if (best) {
+      const t0 = pts[best.i - 1].t - 60, t1 = pts[best.i].t + 60;
+      const ev = feedFor(dashWeek).filter(e => e.m === best.who && e.t / 1000 > t0 && e.t / 1000 <= t1)
+        .sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0];
+      swing.innerHTML = ev
+        ? `<b>${esc(mhDay(ev.t / 1000))} ${esc(fdTime(ev.t))}</b> ${esc(ev.n)}’s ${esc(feedWhat(ev))} moved ${esc(best.who)}’s projection ${mhSigned(best.d)}.`
+        : `<b>Biggest swing</b> ${esc(best.who)}’s projection ${mhSigned(best.d)}, ${esc(mhFmtTime(pts[best.i].t))}.`;
+    }
+
+    // Scrub: crosshair and every line's value at that moment.
+    const cross = mhEl('line', { y1: pad.t, y2: pad.t + ih, style: 'stroke:var(--text-dim);opacity:0' }, svg);
+    const tip = document.createElement('div');
+    tip.className = 'mh-tip';
+    tip.hidden = true;
+    host.appendChild(tip);
+    const hide = () => { cross.style.opacity = 0; tip.hidden = true; };
+    const move = e => {
+      const r = svg.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width * W;
+      let k = 0;
+      pts.forEach((p, i) => { if (Math.abs(X(i) - px) < Math.abs(X(k) - px)) k = i; });
+      const p = pts[k], x = X(k);
+      cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.style.opacity = 0.6;
+      tip.innerHTML = `<div class="t">${mhFmtTime(p.t)}</div>`
+        + `<div class="r a"><span>${esc(A)}</span><b>${fmtScore(p.p[A])}</b></div>`
+        + `<div class="r b"><span>${esc(B)}</span><b>${fmtScore(p.p[B])}</b></div>`
+        + (withMedian ? `<div class="r md"><span>Median</span><b>${fmtScore(p.pm)}</b></div>` : '');
+      tip.hidden = false;
+      const hostW = host.clientWidth, tw = tip.offsetWidth, sx = x / W * hostW;
+      tip.style.left = (sx > hostW / 2 ? Math.max(0, sx - tw - 10) : Math.min(hostW - tw, sx + 10)) + 'px';
+    };
+    svg.addEventListener('pointerdown', move);
+    svg.addEventListener('pointermove', move);
+    svg.addEventListener('pointerleave', hide);
+    svg.addEventListener('pointercancel', hide);
+  }
+  let flResizeT;
+  addEventListener('resize', () => { clearTimeout(flResizeT); flResizeT = setTimeout(flDrawAll, 150); });
+
+  // ---------- Feed: every change to a starter's points ----------
+  // Site audit III #7. The Worker saves one row each time a starter's
+  // points move (scoreFeed.js); this keeps the week's rows and asks only
+  // for the new ones on each poll. Newest first, your matchup or everyone's,
+  // big plays (more than 3 points either way) or every change. In your
+  // matchup a row is green when it helps you and red when it helps them.
+  const FEED_PAGE = 30;
+  let feed = { key: null, events: [], maxId: 0, done: false, busy: false };
+  let feedScope = 'mine', feedFilter = 'big', feedShown = FEED_PAGE, feedSeen = 0, feedMissing = false;
+  try {
+    feedScope = localStorage.getItem('feedScope') === 'all' ? 'all' : 'mine';
+    feedFilter = localStorage.getItem('feedFilter') === 'all' ? 'all' : 'big';
+  } catch (e) {}
+  const fdTime = ms => new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+  const feedFor = week => (feed.key === `${dashYear}:${week}` ? feed.events : []);
+
+  function feedLoad() {
+    const data = shownData;
+    if (!data || data.pastSeason) { feed = { key: null, events: [], maxId: 0, done: false, busy: false }; renderFeed(); return; }
+    const key = `${dashYear}:${dashWeek}`;
+    if (feed.key !== key) {
+      feed = { key, events: [], maxId: 0, done: false, busy: false };
+      feedShown = FEED_PAGE;
+      feedSeen = 0;
+    }
+    // A finished week's rows never change once read; a Worker without the
+    // route answers with the whole dashboard, so that's asked once only.
+    if (feed.busy || feedMissing || (feed.done && data.archived)) { renderFeed(); return; }
+    const want = feed, week = dashWeek;
+    want.busy = true;
+    fetch(`${WORKER_URL}/feed?week=${week}&since=${want.maxId}`, { cache: 'no-store' })
+      .then(res => res.json())
+      .then(d => {
+        if (d && !Array.isArray(d.events)) feedMissing = true;
+        const evs = d && d.week === week && Array.isArray(d.events) ? d.events : [];
+        evs.forEach(e => { if (e.id > want.maxId) { want.events.push(e); want.maxId = e.id; } });
+        want.done = true;
+      })
+      .catch(() => {})
+      .finally(() => {
+        want.busy = false;
+        if (feed !== want) return;
+        renderFeed();
+        flDrawAll();
+      });
+  }
+
+  // What changed, from the stats before and after: "23-yd TD catch",
+  // "3 catches, 41 yds", "sack", "14 pts allowed".
+  function feedWhat(e) {
+    const s = e.s || {}, ps = e.ps || {};
+    const v = (o, ...ids) => { for (const id of ids) if (o[id]) return o[id]; return 0; };
+    const dd = (...ids) => v(s, ...ids) - v(ps, ...ids);
+    const num = (k, one, many) => (k === 1 ? one : `${k} ${many}`);
+    const parts = [];
+    const passTd = dd(4), rushTd = dd(25), recTd = dd(43);
+    const cmp = dd(1), pyd = dd(3), car = dd(23), ryd = dd(24), rec = dd(41, 53), cyd = dd(42, 61);
+    const passOne = passTd === 1 && cmp === 1, rushOne = rushTd === 1 && car === 1, recOne = recTd === 1 && rec === 1;
+    if (passTd > 0) parts.push(passOne ? `${pyd}-yd TD pass` : num(passTd, 'TD pass', 'TD passes'));
+    if (rushTd > 0) parts.push(rushOne ? `${ryd}-yd TD run` : num(rushTd, 'TD run', 'TD runs'));
+    if (recTd > 0) parts.push(recOne ? `${cyd}-yd TD catch` : num(recTd, 'TD catch', 'TD catches'));
+    if (e.pos === 'D/ST') {
+      if (dd(105) > 0) parts.push(num(dd(105), 'defensive TD', 'defensive TDs'));
+    } else if (dd(101) + dd(102) > 0) parts.push('return TD');
+    if (dd(19) + dd(26) + dd(44) > 0) parts.push('2-pt conversion');
+    if (dd(20) > 0) parts.push(num(dd(20), 'INT thrown', 'INTs thrown'));
+    if (dd(72) > 0) parts.push('fumble lost');
+    if (pyd && !passOne) parts.push(cmp === 1 ? `${pyd}-yd completion` : `${pyd} pass yds`);
+    if ((ryd || car > 0) && !rushOne) {
+      parts.push(car === 1 ? (ryd > 0 ? `${ryd}-yd run` : ryd < 0 ? `${-ryd}-yd loss` : 'no gain')
+        : car > 1 ? `${car} carries, ${ryd} yds` : `${ryd} rush yds`);
+    }
+    if ((cyd || rec > 0) && !recOne) parts.push(rec === 1 ? `${cyd}-yd catch` : rec > 1 ? `${rec} catches, ${cyd} yds` : `${cyd} rec yds`);
+    // Kicking: made field goals by distance (what's left of all makes is 60+).
+    let fgSaid = 0;
+    [[74, '50+ yd FG'], [77, '40–49 yd FG'], [80, 'FG']].forEach(([id, label]) => {
+      const k = dd(id);
+      if (k > 0) { parts.push(num(k, label, label + 's')); fgSaid += k; }
+    });
+    if (dd(83) > fgSaid) parts.push('60+ yd FG');
+    if (dd(85) > 0) parts.push('missed FG');
+    if (dd(86) > 0) parts.push(num(dd(86), 'extra point', 'extra points'));
+    if (dd(88) > 0) parts.push('missed extra point');
+    // Defense.
+    if (dd(99) > 0) parts.push(num(dd(99), 'sack', 'sacks'));
+    if (dd(95) > 0) parts.push(num(dd(95), 'INT', 'INTs'));
+    if (dd(96) > 0) parts.push('fumble recovery');
+    if (dd(98) > 0) parts.push('safety');
+    if (dd(97) > 0) parts.push('blocked kick');
+    if (e.pos === 'D/ST' && (dd(120) !== 0 || !parts.length)) parts.push(`${v(s, 120)} pts allowed`);
+    return parts.length ? parts.join(', ') : 'points adjusted';
+  }
+
+  function renderFeed() {
+    const section = document.getElementById('feed-section');
+    const data = shownData;
+    if (!data || !feedFor(dashWeek).length) { section.hidden = true; return; }
+    section.hidden = false;
+    const matchups = data.matchups || [];
+    const mineM = matchups.find(m => isMe(m.awayManager) || isMe(m.homeManager));
+    const me = mineM ? (isMe(mineM.awayManager) ? mineM.awayManager : mineM.homeManager)
+      : (data.teams || []).map(t => t.manager).find(n => n && isMe(n));
+    const opp = mineM ? (mineM.awayManager === me ? mineM.homeManager : mineM.awayManager) : null;
+    const scope = me ? feedScope : 'all';
+    const oppOf = new Map();
+    matchups.forEach(m => { oppOf.set(m.awayManager, m.homeManager); oppOf.set(m.homeManager, m.awayManager); });
+
+    const btn = (attr, k, label, on) => `<button type="button" class="${attr === 'scope' ? 'scope-btn' : ''}${on ? ' on' : ''}" data-feed-${attr}="${k}" aria-pressed="${on}">${label}</button>`;
+    document.getElementById('feed-ctl').innerHTML =
+      (me ? `<div class="scope-row" role="group" aria-label="Whose plays">${btn('scope', 'mine', 'My matchup', scope === 'mine')}${btn('scope', 'all', 'Everyone', scope === 'all')}</div>` : '')
+      + `<div class="seg" role="group" aria-label="Which plays">${btn('filter', 'big', 'Big plays', feedFilter === 'big')}${btn('filter', 'all', 'All', feedFilter === 'all')}</div>`;
+
+    let list = feedFor(dashWeek);
+    if (scope === 'mine') list = list.filter(e => e.m === me || (opp && e.m === opp));
+    if (feedFilter === 'big') list = list.filter(e => Math.abs(e.d) > 3);
+    list = list.slice().reverse();
+    let lastDay = '';
+    const rows = list.slice(0, feedShown).map(e => {
+      const day = new Date(e.t).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/New_York' });
+      const head = day !== lastDay ? `<div class="fd-day">${day}</div>` : '';
+      lastDay = day;
+      const helps = (e.m === me) === (e.d > 0);
+      const tone = scope === 'mine' ? (helps ? ' is-win' : ' is-loss') : '';
+      const valTone = scope === 'mine' ? (helps ? 'turf' : 'loss') : (e.d > 0 ? 'gold' : 'loss');
+      const clock = e.q ? (e.q > 4 ? 'OT' : `Q${e.q}`) + (e.clk ? ' ' + e.clk : '') : '';
+      const game = e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
+      const who = scope === 'mine' ? e.m : `${e.m}${oppOf.get(e.m) ? ' vs ' + oppOf.get(e.m) : ''}`;
+      return `${head}<div class="fd-row item${tone}${feedSeen && e.id > feedSeen ? ' fd-new' : ''}">
+          <span class="fd-t">${fdTime(e.t)}</span>
+          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(feedWhat(e))}</span><div class="fd-s">${esc(who)}${game ? ' · ' + esc(game) : ''}</div></div>
+          <span class="fd-p ${valTone}">${e.d > 0 ? '+' : '−'}${Math.abs(e.d).toFixed(2)}</span>
+        </div>`;
+    }).join('');
+    const empty = feedFilter === 'big'
+      ? (scope === 'mine' ? 'No big plays in your matchup yet.' : 'No big plays yet.')
+      : (scope === 'mine' ? 'Nothing has scored in your matchup yet.' : 'Nothing has scored yet.');
+    document.getElementById('feed-list').innerHTML = (rows || `<div class="empty-note">${empty}</div>`)
+      + (list.length > feedShown ? '<button type="button" class="fd-more" data-feed-more>Show more</button>' : '');
+    feedSeen = feed.maxId;
+  }
+
+  document.getElementById('feed-section').addEventListener('click', e => {
+    const s = e.target.closest('[data-feed-scope]'), f = e.target.closest('[data-feed-filter]'), more = e.target.closest('[data-feed-more]');
+    if (s) { feedScope = s.dataset.feedScope; try { localStorage.setItem('feedScope', feedScope); } catch (err) {} }
+    if (f) { feedFilter = f.dataset.feedFilter; try { localStorage.setItem('feedFilter', feedFilter); } catch (err) {} }
+    if (s || f) feedShown = FEED_PAGE;
+    if (more) feedShown += FEED_PAGE;
+    if (s || f || more) renderFeed();
+  });
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-mh-close]')) { mhClose(); return; }
@@ -5219,6 +5556,8 @@
         renderMedianStatic(medianViewMode);
         if (animate) animateMedianRefresh(prevMedianTeams, prevMedianData);
         mhLoad();
+        flDrawAll();
+        feedLoad();
         renderParlayHighlight();
         renderStatOfMoment(true);
 
@@ -5244,8 +5583,9 @@
   // time), so this just needs to flip the class on the clicked element and
   // keep that Set in sync for the next re-render.
   const onMatchupClick = (e) => {
-    // The series line is a link to Head to Head on this pair instead.
-    if (e.target.closest('.mu-series')) return;
+    // The series line is a link to Head to Head on this pair instead, and
+    // a tap on the Flow chart reads it.
+    if (e.target.closest('.mu-series') || e.target.closest('.fl-wrap')) return;
     const card = e.target.closest('.matchup-card');
     if (!card) return;
     // An open card's starters open their game logs instead of closing it.
