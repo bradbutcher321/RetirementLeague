@@ -112,12 +112,25 @@ def manager_rows(teams) -> list:
     return list(seen.values())
 
 
+def fix_mojibake(s):
+    """ESPN still returns some old team names (Jeff's 2016 "Run EZE 🤑") as
+    UTF-8 bytes that were read as Latin-1 when saved. Undo that when the
+    round trip decodes cleanly; leave every other string alone."""
+    if not s:
+        return s
+    try:
+        fixed = s.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return s
+    return fixed
+
+
 def team_rows(year, teams) -> list:
     rows = []
     for team in teams:
         primary_owner = team.owners[0]["id"] if team.owners else None
         rows.append((
-            year, team.team_id, team.team_name, team.team_abbrev, primary_owner,
+            year, team.team_id, fix_mojibake(team.team_name), fix_mojibake(team.team_abbrev), primary_owner,
             team.division_id, team.division_name, team.wins, team.losses, team.ties,
             team.points_for, team.points_against, team.standing, team.final_standing,
             team.playoff_pct, team.streak_length, team.streak_type, team.waiver_rank,

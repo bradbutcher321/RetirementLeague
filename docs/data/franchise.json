@@ -2652,7 +2652,7 @@
       "current_team_logo": "icons/teams/1e3bf3c9c52b353d.svg",
       "previous_team_names": [
         "Football Maniel",
-        "Run EZE \u00f0\u009f\u00a4\u0091",
+        "Run EZE \ud83e\udd11",
         "Chappy's Asset Management",
         "Lock Up Corrupt Commish",
         "RIP Zyzz",
@@ -2665,7 +2665,7 @@
           "year": 2015,
           "logo_url": "icons/teams/bf45b3a88d884152.jpg"
         },
-        "Run EZE \u00f0\u009f\u00a4\u0091": {
+        "Run EZE \ud83e\udd11": {
           "year": 2016,
           "logo_url": "icons/teams/3cb0f293f48ef662.gif"
         },
@@ -2890,7 +2890,7 @@
         },
         {
           "year": 2016,
-          "team_name": "Run EZE \u00f0\u009f\u00a4\u0091",
+          "team_name": "Run EZE \ud83e\udd11",
           "reg_record": "8-6",
           "reg_standing": 5,
           "made_playoffs": false,
