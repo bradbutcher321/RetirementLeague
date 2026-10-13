@@ -159,7 +159,7 @@ def year_value(year, board, league):
         if int(wk) > last:
             continue
         for manager, players in teams.items():
-            for name, _team, slot, points, _proj in players:
+            for name, _team, slot, points, *_ in players:
                 if slot in BENCH_SLOTS:
                     continue
                 t = totals.setdefault((manager, name), [0.0, 0])
