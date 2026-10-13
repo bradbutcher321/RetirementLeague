@@ -993,6 +993,9 @@
   .rc-v.loss{ color: var(--loss); }
   .rc-n{ font-weight: 700; font-size: 0.88rem; margin-top: 2px; }
   .rc-s{ font-size: 0.72rem; color: var(--text-dim); margin-top: 1px; }
+  /* Left the win on the bench: a row of its own, names allowed to wrap. */
+  .rc-wide{ grid-column: 1 / -1; }
+  .rc-wide .rc-n, .rc-wide .rc-s{ white-space: normal; }
 
   /* Top-aligned: Season Points Leader carries the points race, so making
      the two cards match heights left Season High Score half empty. */
@@ -3696,7 +3699,7 @@
     if (allDone && matchups.length) {
       return {
         week,
-        games: matchups.map(m => ({ a: m.awayManager || m.awayName, b: m.homeManager || m.homeName, sa: parseFloat(m.awayScore) || 0, sb: parseFloat(m.homeScore) || 0 })),
+        games: matchups.map(m => ({ a: m.awayManager || m.awayName, b: m.homeManager || m.homeName, sa: parseFloat(m.awayScore) || 0, sb: parseFloat(m.homeScore) || 0, ba: m.awayBest, bb: m.homeBest })),
       };
     }
     if (scored && !FORCE_RECAP) return null;
@@ -3710,14 +3713,47 @@
     return null;
   }
 
+  // Each team's best possible lineup (the Worker's awayBest/homeBest), for
+  // "Left the win on the bench". The live path carries it; a week read from
+  // league.json borrows the Worker's rebuild of that week (the week
+  // stepper's own cache) and renders again once it's in.
+  const recapBestByWeek = new Map(); // week -> { manager: best } | null while loading
+  function recapBest(rw) {
+    const fromGames = list => {
+      const out = {};
+      list.forEach(g => {
+        if (typeof g.ba === 'number') out[g.a] = g.ba;
+        if (typeof g.bb === 'number') out[g.b] = g.bb;
+      });
+      return Object.keys(out).length ? out : null;
+    };
+    const live = fromGames(rw.games);
+    if (live || !leagueYear) return live;
+    if (!recapBestByWeek.has(rw.week)) {
+      recapBestByWeek.set(rw.week, null);
+      const key = `${leagueYear}:${rw.week}`;
+      if (!pastWeeks.has(key)) {
+        pastWeeks.set(key, fetchCurrentSeasonWeek(rw.week).catch(err => { pastWeeks.delete(key); throw err; }));
+      }
+      pastWeeks.get(key)
+        .then(d => {
+          const best = fromGames((d.matchups || []).map(m => ({ a: m.awayManager || m.awayName, b: m.homeManager || m.homeName, ba: m.awayBest, bb: m.homeBest })));
+          if (best) { recapBestByWeek.set(rw.week, best); renderRecap(); }
+        })
+        .catch(() => {});
+    }
+    return recapBestByWeek.get(rw.week);
+  }
+
   function renderRecap() {
     const section = document.getElementById('recap-section');
     const rw = standingsData && recapWeek(standingsData);
     if (!rw || !rw.games.length) { section.hidden = true; section.innerHTML = ''; return; }
     const r2 = v => Math.round(v * 100) / 100;
+    const bestBy = recapBest(rw) || {};
     const sides = rw.games.flatMap(g => [
-      { name: g.a, score: g.sa, opp: g.b, oppScore: g.sb },
-      { name: g.b, score: g.sb, opp: g.a, oppScore: g.sa },
+      { name: g.a, score: g.sa, opp: g.b, oppScore: g.sb, best: bestBy[g.a] },
+      { name: g.b, score: g.sb, opp: g.a, oppScore: g.sa, best: bestBy[g.b] },
     ]);
     const sorted = sides.map(s => s.score).sort((x, y) => x - y);
     const mid = sorted.length / 2;
@@ -3742,6 +3778,25 @@
           <div class="rc-s">${list.length > 1 && !subForTies ? `${list.length}-way tie` : sub(list[0])}</div>
         </div>` : '';
 
+    // Losers whose best lineup would have beaten what their opponent
+    // scored, most points left first. Full width under the six pods so a
+    // long list of names has room.
+    const benchPod = () => {
+      const losers = sides.filter(s => s.score < s.oppScore);
+      const benched = losers.filter(s => typeof s.best === 'number' && r2(s.best) > r2(s.oppScore))
+        .sort((x, y) => (y.best - y.score) - (x.best - x.score));
+      if (!benched.length) return '';
+      const top = benched[0];
+      const who = benched.map(s => s.name);
+      const list = who.length > 1 ? `${who.slice(0, -1).join(', ')} & ${who[who.length - 1]}` : who[0];
+      return `
+        <div class="rc-pod rc-wide">
+          <div class="rc-l">Left the win on the bench</div>
+          <div class="rc-v loss">${benched.length} of ${losers.length}</div>
+          <div class="rc-n">${esc(list)}</div>
+          <div class="rc-s">${benched.length > 1 ? `${esc(top.name)} left the most, ${fmtScore(top.best - top.score)} points` : `best lineup ${fmtScore(top.best)} vs ${esc(top.opp)}’s ${fmtScore(top.oppScore)}`}</div>
+        </div>`;
+    };
     const playoffRecap = Boolean(standingsData && standingsData.playoffWeek);
     const high = tops(sides, s => s.score);
     const low = tops(sides, s => -s.score);
@@ -3761,6 +3816,7 @@
       // own (the card that says so), not the week's low score.
       playoffRecap ? '' : pod('Just missed the median', missed, s => '−' + fmtScore(median - s.score), s => `scored ${fmtScore(s.score)}`, 'loss'),
       pod(playoffRecap ? 'Low score' : 'Sacko', low, s => fmtScore(s.score), result, 'loss'),
+      benchPod(),
     ].join('');
     section.innerHTML = `
       <div class="recap-card">

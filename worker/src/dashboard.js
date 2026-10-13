@@ -419,6 +419,43 @@ function countGameStatus(entries, gameStateByProTeam) {
   return { remaining, inPlay };
 }
 
+// ESPN slot id per position, for the best-lineup math below; 23 is FLEX.
+const POSITION_SLOT = { QB: 0, RB: 2, WR: 4, TE: 6, "D/ST": 16, K: 17 };
+const FLEX_POSITIONS = new Set(["RB", "WR", "TE"]);
+
+/** The most a legal lineup could have scored from this side's whole roster
+ * (bench and IR included), the Week in Review's "left the win on the bench"
+ * figure. Same greedy fill as generate_franchise_data_d1.py's
+ * optimal_lineup_points: each strict slot takes its best players, then
+ * FLEX the best RB/WR/TE left over. */
+function bestLineupPoints(entries, slotCounts) {
+  const players = entries.map((entry) => {
+    const player = entry.playerPoolEntry?.player || entry.player || {};
+    const actual = (player.stats || []).find((s) => s.statSourceId === 0);
+    return { position: DEFAULT_POSITION_MAP[player.defaultPositionId] || "", points: actual ? actual.appliedTotal || 0 : 0 };
+  }).sort((a, b) => b.points - a.points);
+  const used = new Set();
+  let total = 0;
+  for (const [position, slotId] of Object.entries(POSITION_SLOT)) {
+    let need = slotCounts[slotId] || 0;
+    for (const p of players) {
+      if (!need) break;
+      if (p.position !== position) continue;
+      used.add(p);
+      total += p.points;
+      need--;
+    }
+  }
+  let flex = slotCounts[23] || 0;
+  for (const p of players) {
+    if (!flex) break;
+    if (used.has(p) || !FLEX_POSITIONS.has(p.position)) continue;
+    total += p.points;
+    flex--;
+  }
+  return round2(total);
+}
+
 /** `previous` is the last cached dashboard, if any. Its NFL game states
  * stand in for this build's when the public scoreboard comes back failed
  * or empty -- otherwise one blip blanks every player's team/opponent/
@@ -467,6 +504,7 @@ export async function buildDashboard(env, previous = null, opts = {}) {
   const managerNames = buildManagerNames(teamsRaw);
   const regularPeriods = league.settings?.scheduleSettings?.matchupPeriodCount || 0;
   const aheadByTeam = opponentsAhead(schedule, matchupPeriod, regularPeriods);
+  const slotCounts = league.settings?.rosterSettings?.lineupSlotCounts || {};
 
   let nflScoreboardError = null;
   const [boxData, nflScoreboard] = await Promise.all([
@@ -512,6 +550,7 @@ export async function buildDashboard(env, previous = null, opts = {}) {
       if (archived) side.projected = side.score; // a finished week's projection is its final
       teamStatusById.set(side.teamId, countGameStatus(side.entries, gameStateByProTeam));
       side.starters = buildStarters(side.entries, gameStateByProTeam, averages.map);
+      side.best = bestLineupPoints(side.entries, slotCounts);
       const average = round2(side.starters.reduce((sum, p) => sum + p.avgPoints, 0));
       currentScores.push(side.score);
       projectedScores.push(side.projected);
@@ -545,6 +584,8 @@ export async function buildDashboard(env, previous = null, opts = {}) {
       homeWinProbability: home.winProbability,
       homeRemaining: homeStatus.remaining,
       homeInPlay: homeStatus.inPlay,
+      awayBest: away.best,
+      homeBest: home.best,
       awayPlayers: away.starters,
       homePlayers: home.starters,
     });
