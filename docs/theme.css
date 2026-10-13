@@ -505,6 +505,22 @@ body{
 @keyframes glide-in-r{ from{ opacity: 0; transform: translateX(12px); } }
 @keyframes glide-in-l{ from{ opacity: 0; transform: translateX(-12px); } }
 
+/* Page to page (audit III #20): the old page fades into the new one rather
+   than the screen going blank between them (Safari 18.2+, Chrome 126+;
+   anything older just loads the page as before). The bars match on both
+   pages, so they read as staying put. Typed "page" so these rules outrank
+   the dashboard's own root rule, which turns the root fade off for its
+   toggles; a browser without types arrives at the dashboard unfaded.
+   The new page fades in over the old one, which holds still underneath:
+   two half-faded pictures on black would dim the screen mid-way. */
+@media (prefers-reduced-motion: no-preference){
+  @view-transition{ navigation: auto; types: page; }
+}
+html:active-view-transition-type(page)::view-transition-group(root){ animation-duration: .22s; animation-timing-function: ease; }
+html:active-view-transition-type(page)::view-transition-old(root){ animation: none; mix-blend-mode: normal; }
+html:active-view-transition-type(page)::view-transition-new(root){ animation: page-in .22s ease both; mix-blend-mode: normal; }
+@keyframes page-in{ from{ opacity: 0; } }
+
 .tabs .tab:focus-visible,
 .seg button:focus-visible,
 .sup-seg button:focus-visible,
