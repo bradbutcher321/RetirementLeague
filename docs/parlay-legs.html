@@ -31,7 +31,22 @@
   .chip.loss{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); font-weight: 600; }
   .cols{ display: grid; gap: 14px; align-items: start; }
   .cols > *{ min-width: 0; }
-  @media (min-width: 900px){ .cols{ grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); } }
+  .col{ display: grid; gap: 14px; min-width: 0; }
+  .col > section{ margin: 0; }
+  /* Desktop: the games board needs the wide column while you build a leg;
+     otherwise the week's legs get it, two across. */
+  @media (min-width: 900px){
+    .cols{ grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); }
+    .cols.building{ grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); }
+    .cols:not(.building) #board{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+    .cols:not(.building) #board .leg{ margin-top: 0; }
+  }
+  .meta-grid{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .meta-grid .field{ margin-top: 0; }
+  @media (max-width: 560px){ .meta-grid{ grid-template-columns: 1fr 1fr; } .meta-grid .field:first-child{ grid-column: 1 / -1; } }
+  select.in{ appearance: none; -webkit-appearance: none; padding-right: 28px; color-scheme: dark;
+    background: var(--ctl-bg-solid) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238E8E8C' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center; }
+  .acts a.gold-btn{ display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
   .panel-body{ padding: 12px 14px 16px; }
   .fine{ color: var(--text-dim); font-size: 0.8rem; margin: 10px 0 0; }
   .fine b{ color: var(--text); font-weight: 600; }
@@ -129,8 +144,11 @@
       <h1 style="margin-bottom:12px">Parlay Legs</h1>
     </header>
     <div class="chips" id="chips"></div>
-    <div class="cols">
+    <div class="cols" id="cols">
+      <div class="col">
       <section class="glass"><div class="panel-title" id="mine-title">Your leg</div><div class="panel-body" id="mine"><p class="empty">Loading…</p></div></section>
+      <section class="glass" id="commish" hidden><div class="panel-title" id="commish-title">Commissioner</div><div class="panel-body" id="commish-body"></div></section>
+      </div>
       <section class="glass"><div class="panel-title" id="board-title">This week</div><div class="panel-body" id="board"></div></section>
     </div>
     <footer id="site-footer" data-source="Lines from Hard Rock Bet · Games from ESPN"></footer>
@@ -551,6 +569,8 @@
     held = mineEl.contains(document.activeElement) && document.activeElement.matches('input, textarea');
     if (held) { refreshSlip(); return; }
     mineEl.innerHTML = drawMine();
+    document.getElementById('cols').classList.toggle('building', !!mineEl.querySelector('.gm, #f-text'));
+    drawCommish();
     if (board && board.open && me() && (editing || !mine()) && !st.typed) loadGames(st.sport);
   }
 
@@ -640,6 +660,39 @@
       const g = byId(st.gid), box = document.getElementById('plist');
       if (g && box){ const tmp = document.createElement('div'); tmp.innerHTML = propPanel(g, PROPS[g.sport] || []); box.replaceWith(tmp.querySelector('#plist')); }
     }
+  });
+
+  // ---------- Commissioner: the week's Sacko and final numbers ----------
+  const commishEl = document.getElementById('commish-body');
+  let metaMsg = '', metaSaving = false;
+  function drawCommish(){
+    const box = document.getElementById('commish');
+    box.hidden = !(board && board.commish);
+    if (box.hidden || (commishEl.contains(document.activeElement) && document.activeElement.matches('input'))) return;
+    const m = board.meta || {};
+    document.getElementById('commish-title').textContent = `Commissioner · Week ${board.week}`;
+    commishEl.innerHTML = `<div class="meta-grid">
+        <label class="field"><span>Sacko</span><select class="in" id="m-sacko">${['', ...board.players].map(p => `<option value="${esc(p)}"${p === (m.sacko || '') ? ' selected' : ''}>${esc(p || '—')}</option>`).join('')}</select></label>
+        <label class="field"><span>Final odds</span><input class="in" id="m-odds" inputmode="numbers-and-punctuation" autocomplete="off" placeholder="+478887" value="${esc(fmtOdds(m.final_odds))}"></label>
+        <label class="field"><span>Final payout</span><input class="in" id="m-payout" inputmode="decimal" autocomplete="off" placeholder="95797.48" value="${esc(m.final_payout ?? '')}"></label>
+      </div>
+      <div class="acts"><button type="button" class="gold-btn solid" id="m-save"${metaSaving ? ' disabled' : ''}>${metaSaving ? 'Saving…' : 'Save week'}</button><a class="gold-btn" href="parlay-entry.html?year=${board.year}&week=${board.week}">Enter Picks</a></div>
+      ${metaMsg ? `<p class="fine">${esc(metaMsg)}</p>` : ''}`;
+  }
+  commishEl.addEventListener('click', async e => {
+    if (!e.target.closest('#m-save') || metaSaving) return;
+    const body = { sacko: document.getElementById('m-sacko').value, final_odds: document.getElementById('m-odds').value.trim(), final_payout: document.getElementById('m-payout').value.trim() };
+    metaSaving = true; metaMsg = ''; drawCommish();
+    let res = null, out = {};
+    try {
+      res = await fetch(WORKER_URL + '/legs/week', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(body) });
+      out = await res.json().catch(() => ({}));
+    } catch { /* no connection */ }
+    metaSaving = false;
+    if (out.legs) board = { ...board, ...out };
+    metaMsg = res && res.ok ? 'Saved. It reaches the sheet in a minute or two.'
+      : out.error === 'bad_number' ? 'Odds and payout need to be numbers.' : `Couldn't save it (${res ? out.error || res.status : 'no connection'}).`;
+    render();
   });
 
   function enterFor(p){

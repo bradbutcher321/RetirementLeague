@@ -26,6 +26,10 @@
  *                              (Thu-Mon); the page matches them to ESPN's
  *                              schedule, which it reads itself
  * GET  /legs/props?sport=&event= -> { odds: {player: price} } for Anytime TD
+ * POST /legs/week { sacko, final_odds, final_payout } -> a commissioner sets
+ *                              the week's Sacko and final numbers (locked or
+ *                              not: the final odds only exist once the
+ *                              parlay is placed)
  *
  * Lines come from Hard Rock Bet through The Odds API (secret ODDS_API_KEY):
  * the Florida book first, then Hard Rock's main book, which also has
@@ -161,9 +165,10 @@ const LEG_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "lin
  * the sheet already has under the same Raw Pick reads from the sheet, so a
  * commissioner's fix shows. */
 async function weekLegs(env, wk, win) {
-  const [entries, sheet] = await env.PARLAY_DB.batch([
+  const [entries, sheet, meta] = await env.PARLAY_DB.batch([
     env.PARLAY_DB.prepare("SELECT * FROM leg_entries WHERE year = ?1 AND week = ?2").bind(wk.year, wk.week),
     env.PARLAY_DB.prepare(`SELECT player, ${LEG_FIELDS.join(", ")} FROM picks WHERE year = ?1 AND week = ?2 AND bet_type IS NOT NULL AND bet_type != ''`).bind(wk.year, wk.week),
+    env.PARLAY_DB.prepare("SELECT sacko, final_odds, final_payout, gametime FROM picks WHERE year = ?1 AND week = ?2 AND bet_type IS NOT NULL AND bet_type != '' LIMIT 1").bind(wk.year, wk.week),
   ]);
   // A sheet row from before this window's Tuesday isn't this week's leg (the
   // mirror keeps rows the sheet has since dropped).
@@ -178,8 +183,15 @@ async function weekLegs(env, wk, win) {
     out.push({ ...pickFields(base), player: e.player, game_id: e.game_id || "", updated: e.updated });
   }
   for (const s of Object.values(fromSheet)) out.push({ ...pickFields(s), player: s.player, game_id: "", sheet: true });
+  // The week's Sacko and final numbers: what a commissioner just saved here
+  // (kept an hour, until the sheet's copy catches up), else the sheet's.
+  const m = meta.results[0];
+  const sheetMeta = m && (!m.gametime || m.gametime >= since)
+    ? { sacko: m.sacko || "", final_odds: m.final_odds, final_payout: m.final_payout } : { sacko: "", final_odds: null, final_payout: null };
+  out.meta = (await env.COOLDOWN_KV.get(metaKey(wk), "json")) || sheetMeta;
   return out;
 }
+const metaKey = (wk) => `legs:meta:${wk.year}:${wk.week}`;
 const pickFields = (r) => Object.fromEntries(LEG_FIELDS.map((f) => [f, f === "odds" ? r.odds : r[f] || ""]));
 
 /** A leg from the page, checked, with its Raw Pick -- or {error}. */
@@ -222,7 +234,7 @@ async function board(env, request) {
     _wk: wk, _win: win,
   };
 }
-const publicBoard = ({ _wk, _win, ...rest }) => rest;
+const publicBoard = ({ _wk, _win, ...rest }) => ({ ...rest, meta: rest.legs.meta });
 
 async function getLegs(request, env) {
   return { status: 200, body: publicBoard(await board(env, request)) };
@@ -264,15 +276,33 @@ async function saveLeg(request, env) {
   return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
 }
 
-/** Hands the week's legs to sync_legs.yml. false when it couldn't. */
-async function dispatchSync(env, wk) {
+/** A commissioner sets the week's Sacko, final odds and final payout. */
+async function saveWeek(request, env) {
+  const who = await sessionManager(request, env);
+  if (!who) return { status: 401, body: { error: "signed_out" } };
+  if (!COMMISSIONERS.includes(who.manager)) return { status: 403, body: { error: "not_commissioner" } };
+  const body = await request.json().catch(() => null);
+  if (!body) return { status: 400, body: { error: "bad_json" } };
+  const b = await board(env, null);
+  const num = (v) => (v === "" || v == null ? null : Number(String(v).replace(/[$,\s+]/g, "")));
+  const meta = { sacko: String(body.sacko || ""), final_odds: num(body.final_odds), final_payout: num(body.final_payout) };
+  if (meta.sacko && !b.players.includes(meta.sacko)) return { status: 400, body: { error: "bad_sacko" } };
+  if ([meta.final_odds, meta.final_payout].some((v) => v != null && !Number.isFinite(v))) return { status: 400, body: { error: "bad_number" } };
+  await env.COOLDOWN_KV.put(metaKey(b._wk), JSON.stringify(meta), { expirationTtl: 3600 });
+  const synced = await dispatchSync(env, b._wk, meta).catch((err) => { console.error("Week sync dispatch failed:", err); return false; });
+  return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager, commish: true } };
+}
+
+/** Hands the week's legs (and, from saveWeek, its Sacko and final numbers)
+ * to sync_legs.yml. false when it couldn't. */
+async function dispatchSync(env, wk, meta = null) {
   if (!env.GITHUB_PAT) return false;
   const { results } = await env.PARLAY_DB.prepare("SELECT * FROM leg_entries WHERE year = ?1 AND week = ?2").bind(wk.year, wk.week).all();
   const rows = Object.fromEntries(results.map((r) => [r.player, r.removed ? { removed: true, raw_pick: r.raw_pick } : pickFields(r)]));
   const res = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${SYNC_WORKFLOW}/dispatches`, {
     method: "POST",
     headers: { "Authorization": `Bearer ${env.GITHUB_PAT}`, "Accept": "application/vnd.github+json", "User-Agent": "retirement-league-worker", "Content-Type": "application/json" },
-    body: JSON.stringify({ ref: "main", inputs: { picks: JSON.stringify({ year: wk.year, week: wk.week, mode: "legs", rows }) } }),
+    body: JSON.stringify({ ref: "main", inputs: { picks: JSON.stringify({ year: wk.year, week: wk.week, mode: "legs", rows, ...(meta ? { meta } : {}) }) } }),
   });
   if (!res.ok) console.error("Leg sync dispatch:", res.status, await res.text().catch(() => ""));
   return res.ok;
@@ -340,4 +370,5 @@ export const LEG_ROUTES = {
   "/legs": { GET: getLegs, POST: saveLeg },
   "/legs/games": { GET: getGames },
   "/legs/props": { GET: getProps },
+  "/legs/week": { POST: saveWeek },
 };
