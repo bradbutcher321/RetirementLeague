@@ -518,10 +518,10 @@
     if (m && !editing) return legRow(m) + `<div class="acts"><button type="button" class="gold-btn" data-act="change">Change</button>${m.sheet ? '' : '<button type="button" class="gold-btn quiet" data-act="remove">Remove</button>'}</div>
       <p class="fine">${saveMsg ? `<b>${esc(saveMsg)}</b> ` : ''}Everyone can see it. You can change it until <b>${esc(etWhen(board.locksAt))}</b>.</p>`;
     if (st.typed) return typedForm();
-    return sportChips()
+    return `<div style="margin:-12px 0 4px"><button type="button" class="link-btn" data-act="type">Can't find it? Type it in</button></div>`
+      + sportChips()
       + `<div style="margin-top:12px">${Array.isArray(games[st.sport]) && games[st.sport].length > 16 ? `<input class="in" id="f-q" data-q type="search" autocomplete="off" placeholder="Find a team" value="${esc(st.q)}" aria-label="Find a team" style="margin-bottom:10px">` : ''}
-        <div id="glist">${gameList()}</div></div>
-        <div><button type="button" class="link-btn" data-act="type">Can't find it? Type it in</button></div>`
+        <div id="glist">${gameList()}</div></div>`
       + (m ? '<button type="button" class="link-btn" data-act="cancel">Keep the leg I have</button>' : '');
   }
 
