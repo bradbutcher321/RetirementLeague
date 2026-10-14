@@ -30,10 +30,11 @@
   .vlist{ display: grid; }
   .vrow{ display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 6px 16px; width: 100%; background: none; border: 0; border-top: 1px solid var(--line); color: var(--text); font: 600 0.92rem var(--body); text-align: left; cursor: pointer; }
   .vrow:first-child{ border-top: 0; }
-  .vrow .n{ flex: none; width: 26px; font-family: var(--scoreboard); font-weight: 700; font-size: 1.05rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  /* An empty spacer where the video's number was, so titles keep their indent. */
+  .vrow .n{ flex: none; width: 26px; }
   .vrow .t{ min-width: 0; overflow-wrap: anywhere; }
   .vrow.on{ background: var(--lead-tint); }
-  .vrow.on .n, .vrow.on .t{ color: var(--gold); }
+  .vrow.on .t{ color: var(--gold); }
   .vrow:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
   .note{ padding: 22px 18px; color: var(--text-dim); font-size: 0.9rem; margin: 0; }
   .note.bad{ color: var(--loss); font-weight: 600; }
@@ -75,7 +76,7 @@
     const v = data.videos[current];
     return `<div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?rel=0&playsinline=1${autoplay ? '&autoplay=1' : ''}" title="${esc(v.title)}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
   }
-  const rows = () => data.videos.map((v, i) => `<button type="button" class="vrow${i === current ? ' on' : ''}" data-i="${i}"><span class="n">${i + 1}</span><span class="t">${esc(v.title)}</span></button>`).join('');
+  const rows = () => data.videos.map((v, i) => `<button type="button" class="vrow${i === current ? ' on' : ''}" data-i="${i}"><span class="n" aria-hidden="true"></span><span class="t">${esc(v.title)}</span></button>`).join('');
 
   function draw(autoplay){
     if (!data.videos.length) return note('No videos in this season yet.');
