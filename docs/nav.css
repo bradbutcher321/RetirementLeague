@@ -315,6 +315,11 @@
 .you-txt{ flex: none; min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--text-dim); font: 600 0.8rem var(--body); cursor: pointer; }
 .you-txt:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
 @media (hover: hover){ .you-txt:hover{ color: var(--text); } }
+/* The commissioners' way to their page: a row under who they are. */
+.you-link{ display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; margin-top: 8px; padding: 0 12px 0 14px; color: var(--text); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+.you-link svg{ flex: none; width: 18px; height: 18px; color: var(--text-dim); }
+.you-link:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (hover: hover){ .you-link:hover{ background: var(--item-hover); } }
 .you-sec-h{ font-weight: 700; font-size: 0.9rem; padding: 0 4px 4px; }
 .you-copy{ display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 52px; padding: 0 8px 0 16px; border-radius: 999px; border: 1px solid var(--lead-line); background: var(--lead-tint); color: var(--gold); cursor: pointer; }
 .you-copy:disabled{ cursor: default; }
