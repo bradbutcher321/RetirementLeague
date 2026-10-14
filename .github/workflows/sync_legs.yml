@@ -1,0 +1,75 @@
+name: Sync Parlay Legs
+
+# Dispatched by the Worker's POST /legs (worker/src/legs.js) every time a
+# manager saves or removes their own leg on Parlay Legs. The input is every
+# leg entered for the week, so enter_parlay.py (mode "legs") writes only
+# the rows that changed, then this grades, publishes and syncs the same way
+# enter_parlay.yml does so the week shows on Parlay Results.
+on:
+  workflow_dispatch:
+    inputs:
+      picks:
+        description: "The week's legs as JSON (see enter_parlay.py, mode legs)"
+        required: true
+
+permissions:
+  contents: read
+
+# One at a time. A save that comes in while another waits replaces it,
+# which loses nothing: every dispatch carries the whole week's legs.
+concurrency:
+  group: sync-legs
+  cancel-in-progress: false
+
+jobs:
+  enter:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install gspread google-auth
+
+    - name: Create Google Secret File
+      run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > google_secret.json
+
+    # The input goes through env, never pasted into the script, so nothing
+    # typed on the page can run as shell.
+    - name: Write the Legs to the Sheet
+      env:
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        PICKS: ${{ inputs.picks }}
+      run: python enter_parlay.py
+
+    - name: Grade Finished Games
+      env:
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+      run: python auto_grade_results.py
+
+    - name: Publish Parlay Stats to Cloudflare KV
+      if: ${{ !cancelled() }}
+      env:
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: f53f8e388e691eca52769f9f586713df
+      run: python publish_parlay_stats.py --force
+
+    - name: Sync Picks to D1
+      if: ${{ !cancelled() }}
+      env:
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: f53f8e388e691eca52769f9f586713df
+      run: python sync_parlay_to_d1.py
+
+    - name: Remove Google Secret File
+      if: always()
+      run: rm -f google_secret.json

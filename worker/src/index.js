@@ -45,9 +45,12 @@
  *                      notifications (see push.js, site audit II #37).
  * POST /auth/claim, GET /auth/me, POST /auth/signout, POST /auth/admin ->
  *                      manager sign-in (see auth.js, site audit III #24).
+ * GET/POST /legs, GET /legs/games, GET /legs/props -> Parlay Legs, each
+ *                      manager entering their own leg (see legs.js).
  *
  * Required setup:
- *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT, PARLAY_PIN, AUTH_SECRET   (wrangler secret put ...)
+ *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT, PARLAY_PIN, AUTH_SECRET,
+ *                  ODDS_API_KEY   (wrangler secret put ...)
  *   - Plain vars:  ESPN_LEAGUE_ID, ESPN_YEAR, ALLOWED_ORIGIN
  *   - KV namespace bound as: COOLDOWN_KV (already existed for the old design)
  *   - D1 table `cache` in DB (schema.sql)
@@ -62,6 +65,7 @@ import { getPlayerLog } from "./playerLog.js";
 import { getFeed, recordScoreEvents } from "./scoreFeed.js";
 import { cached } from "./cache.js";
 import { AUTH_ROUTES } from "./auth.js";
+import { LEG_ROUTES } from "./legs.js";
 
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
 
@@ -227,6 +231,12 @@ export default {
     if (AUTH_ROUTES[path]) {
       const [method, route] = AUTH_ROUTES[path];
       if (request.method !== method) return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
+    }
+    if (LEG_ROUTES[path]) {
+      const route = LEG_ROUTES[path][request.method];
+      if (!route) return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
       return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
     }

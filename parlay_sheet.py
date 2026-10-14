@@ -132,20 +132,32 @@ class SheetClient:
         self.ws.update([[final_payout if final_payout is not None else ""]], f"Q{start_row}")
 
         for i, player in enumerate(self.players):
-            row_num = start_row + i
-            data = player_rows.get(player, {})
-            row_values = []
-            for f in ROW_FIELDS:
-                v = data.get(f, "")
-                if f == "odds" and v != "":
-                    v = parse_signed_number(v)
-                    v = v if v is not None else ""
-                elif f == "gametime" and v != "":
-                    # Converted here too (not just in WeekGrid.player_rows)
-                    # so save_week is correct regardless of what shape of
-                    # dict a caller hands it -- confirmed directly this
-                    # matters: a human-readable display string written
-                    # as-is would fail the sheet's strict ISO validation.
-                    v = _gametime_to_iso(v)
-                row_values.append(v)
-            self.ws.update([row_values], f"E{row_num}:O{row_num}")
+            self.ws.update([_row_values(player_rows.get(player, {}))], f"E{start_row + i}:O{start_row + i}")
+
+    def save_rows(self, start_row, player_rows):
+        """Rewrites only the given players' rows of a week already in the
+        sheet (Parlay Legs' sync), leaving everyone else's, and the week's
+        Sacko and final odds, alone."""
+        assert (start_row - 2) % PLAYERS_PER_WEEK == 0, f"start_row {start_row} isn't aligned to a 12-row week block"
+        for player, data in player_rows.items():
+            row_num = start_row + self.players.index(player)
+            self.ws.update([_row_values(data)], f"E{row_num}:O{row_num}")
+
+
+def _row_values(data):
+    """One player's E..O cells, in ROW_FIELDS order."""
+    row_values = []
+    for f in ROW_FIELDS:
+        v = data.get(f, "")
+        if f == "odds" and v != "":
+            v = parse_signed_number(v)
+            v = v if v is not None else ""
+        elif f == "gametime" and v != "":
+            # Converted here too (not just in WeekGrid.player_rows)
+            # so save_week is correct regardless of what shape of
+            # dict a caller hands it -- confirmed directly this
+            # matters: a human-readable display string written
+            # as-is would fail the sheet's strict ISO validation.
+            v = _gametime_to_iso(v)
+        row_values.append(v)
+    return row_values

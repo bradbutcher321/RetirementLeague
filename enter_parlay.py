@@ -15,6 +15,14 @@ keeps the Result already graded for it and every new or changed pick starts
 at Pending. The page's Edit Week view sends mode "edit", and each row's
 Result is saved as sent.
 
+Mode "legs" is Parlay Legs (docs/parlay-legs.html), run by sync_legs.yml:
+rows holds every leg the managers have entered for the week, or
+{removed: true, raw_pick} for one taken back. Only a row whose Raw Pick
+differs from the sheet's is written (as Pending), so a pick a commissioner
+fixed on Enter Picks, which keeps its Raw Pick, is left alone; a removed
+leg's row is cleared only if it still holds that leg. Sacko and the final
+odds and payout are never touched.
+
 Usage: PICKS='{...}' python enter_parlay.py
 """
 import json
@@ -57,6 +65,38 @@ def clean_rows(rows, players, edit):
     return out
 
 
+def save_legs(client, year, week, rows, dry_run):
+    removed = {p for p, r in rows.items() if r.get("removed")}
+    unknown = [p for p in rows if p not in client.players]
+    if unknown:
+        fail(f"Not players in the sheet: {', '.join(unknown)}")
+    legs = clean_rows({p: r for p, r in rows.items() if p not in removed}, client.players, False)
+
+    start_row, block = client.find_week(year, week)
+    old_raw = {}
+    if start_row:
+        for i, player in enumerate(client.players[:PLAYERS_PER_WEEK]):
+            old = block[i] if i < len(block) else []
+            old_raw[player] = old[14] if len(old) > 14 else ""
+    writes = {p: r for p, r in legs.items() if old_raw.get(p, "") != r["raw_pick"]}
+    for p in removed:
+        if old_raw.get(p) and old_raw[p] == str(rows[p].get("raw_pick") or ""):
+            writes[p] = {}
+
+    print(f"{year} Week {week}: {len(legs)} legs entered, {len(removed)} removed; "
+          f"{len(writes)} row(s) to write ({'existing week, row ' + str(start_row) if start_row else 'new week'})")
+    for player, r in writes.items():
+        print(f"  {player:8} " + (" | ".join(str(r[f]) for f in ROW_FIELDS) if r else "(cleared)"))
+    if dry_run or not writes:
+        print("Dry run: nothing written." if dry_run else "Sheet already matches.")
+        return
+    if start_row:
+        client.save_rows(start_row, writes)
+    else:
+        client.save_week(client.next_new_week_row(), year, week, "", None, None, writes)
+    print("Saved.")
+
+
 def main():
     payload = json.loads(os.environ["PICKS"])
     try:
@@ -64,6 +104,9 @@ def main():
     except (KeyError, TypeError, ValueError):
         fail("Year and Week must be numbers.")
     num = lambda v: float(v) if isinstance(v, (int, float)) else None
+
+    if payload.get("mode") == "legs":
+        return save_legs(SheetClient(), year, week, payload.get("rows") or {}, payload.get("dry_run"))
 
     edit = payload.get("mode") == "edit"
     client = SheetClient()

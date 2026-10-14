@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<style>html{background:#050505}</style>
+<title>Retirement League — Parlay Legs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=29">
+<link rel="stylesheet" href="nav.css?v=14">
+<style>
+  /* ---------- Parlay Legs ----------
+     Each manager enters their own leg for the coming week (worker/src/legs.js).
+     Laid out like a sportsbook: every game shows its spread, total and winner,
+     so one tap picks the game, the bet and the side. A leg someone already
+     has, and its opposite, carry their initials before you tap. */
+  .chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); white-space: nowrap; }
+  .chip.gold{ color: var(--gold); border-color: var(--lead-line); background: var(--lead-tint); font-weight: 600; }
+  .chip.loss{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); font-weight: 600; }
+  .cols{ display: grid; gap: 14px; align-items: start; }
+  .cols > *{ min-width: 0; }
+  @media (min-width: 900px){ .cols{ grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); } }
+  .panel-body{ padding: 12px 14px 16px; }
+  .fine{ color: var(--text-dim); font-size: 0.8rem; margin: 10px 0 0; }
+  .fine b{ color: var(--text); font-weight: 600; }
+  .empty{ color: var(--text-dim); font-size: 0.86rem; padding: 6px 2px; margin: 0; }
+  .empty.bad{ color: var(--loss); font-weight: 600; }
+
+  .leg{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 11px 13px 10px; margin-top: 8px; }
+  .leg:first-child{ margin-top: 0; }
+  .leg.out{ padding-block: 9px; }
+  .leg-top{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .leg-name{ font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .leg.out .leg-name{ color: var(--text-dim); font-weight: 600; }
+  .leg-odds{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .leg.out .leg-odds{ font-family: var(--body); font-weight: 500; font-size: 0.78rem; color: var(--text-dim); }
+  .leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 3px; overflow-wrap: anywhere; }
+  .leg-bet b{ color: var(--text); font-weight: 600; }
+  .leg-game{ display: flex; align-items: center; gap: 10px; margin-top: 7px; font-size: 0.8rem; color: var(--text-dim); }
+  .leg-game .sport{ color: var(--gold); font-weight: 700; }
+  .badge.gold{ background: none; }
+
+  .gold-btn{ background: none; border: 1px solid var(--gold); color: var(--gold); font-family: var(--body); font-weight: 600; font-size: 0.86rem; border-radius: 999px; padding: 0 16px; height: 44px; cursor: pointer; }
+  .gold-btn.solid{ background: var(--gold); color: var(--ctl-on-ink); font-weight: 700; }
+  .gold-btn.quiet{ border-color: var(--ctl-line); color: var(--text); }
+  .gold-btn:disabled{ opacity: 0.4; cursor: default; }
+  .gold-btn:focus-visible, .pick:focus-visible, .cell:focus-visible, .pbtn:focus-visible, .link-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .acts{ display: flex; gap: 8px; margin-top: 12px; }
+  .acts .gold-btn{ flex: 1 1 0; }
+  .link-btn{ background: none; border: 0; color: var(--gold); font: 600 0.82rem var(--body); cursor: pointer; padding: 12px 0; min-height: 44px; text-align: left; }
+
+  /* Fields you type in get text selection back (theme.css turns it off);
+     16px keeps iPhone Safari from zooming in. */
+  .field{ display: grid; gap: 4px; min-width: 0; margin-top: 10px; }
+  .field > span{ color: var(--text-dim); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .in{ width: 100%; min-width: 0; height: 44px; padding: 0 12px; background: var(--ctl-bg-solid); color: var(--text); border: 1px solid var(--ctl-line); border-radius: 10px; font: 16px var(--body); user-select: text; -webkit-user-select: text; }
+  .in:focus{ outline: none; border-color: var(--gold); }
+  textarea.in{ height: auto; min-height: 92px; padding: 10px 12px; resize: vertical; line-height: 1.4; }
+  .two{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .picks{ display: flex; flex-wrap: wrap; gap: 6px; }
+  .pick{ height: 44px; padding: 0 15px; border-radius: 22px; border: 1px solid var(--ctl-line); background: var(--ctl-bg); color: var(--text); font: 600 0.86rem var(--body); cursor: pointer; white-space: nowrap; }
+  .pick.on{ background: var(--gold); border-color: var(--gold); color: var(--ctl-on-ink); font-weight: 700; }
+  .big2{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .big{ min-height: 50px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--ctl-line); background: var(--ctl-bg); color: var(--text); cursor: pointer; font: 700 0.9rem var(--body); }
+  .big.on{ border-color: var(--gold); background: var(--lead-tint); }
+
+  .day{ color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 16px 0 6px; }
+  .day:first-child{ margin-top: 0; }
+  .monos{ display: inline-flex; gap: 4px; }
+  .mono{ font-size: 0.62rem; font-weight: 700; padding: 3px 6px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); line-height: 1; }
+
+  /* A game: away row over home row; spread, total, winner. */
+  .gm{ border: 1px solid var(--item-line); background: var(--item); border-radius: 12px; padding: 10px 10px 4px; margin-top: 8px; }
+  .gm.open{ border-color: var(--lead-line); }
+  .gm-top{ display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 20px; }
+  .gm-top .t{ color: var(--text-dim); font-size: 0.76rem; font-weight: 600; }
+  .gm-grid{ display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 74px); gap: 5px; align-items: center; margin-top: 6px; }
+  @media (min-width: 900px){ .gm-grid{ grid-template-columns: minmax(0, 1fr) repeat(3, 96px); } }
+  .gm-grid .hd{ color: var(--text-dim); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; }
+  .gm-grid .tm{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
+  .cell{ position: relative; height: 46px; border-radius: 8px; border: 1px solid var(--ctl-line); background: var(--ctl-bg); color: var(--text); cursor: pointer; display: grid; align-content: center; justify-items: center; padding: 0; min-width: 0; font-family: var(--body); }
+  .cell b{ font-weight: 700; font-size: 0.82rem; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .cell span{ color: var(--gold); font-size: 0.72rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .cell.on{ border-color: var(--gold); background: var(--lead-tint); }
+  .cell.taken{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .cell.taken b, .cell.taken span{ color: var(--text-dim); }
+  .cell .who{ position: absolute; top: -7px; right: -4px; color: var(--loss); background: #2A1512; border: 1px solid var(--loss-line); border-radius: 999px; padding: 2px 5px; line-height: 1; font-size: 0.62rem; font-weight: 700; }
+  .cell.none{ opacity: 0.35; cursor: default; }
+  .more{ border-top: 1px solid var(--line); margin-top: 8px; padding: 10px 0 8px; }
+  .plist{ display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; margin-top: 10px; }
+  .pcol{ display: grid; gap: 6px; align-content: start; min-width: 0; }
+  .pcol > span{ color: var(--text-dim); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; overflow-wrap: anywhere; }
+  .pbtn{ min-height: 44px; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--item-line); background: var(--item); color: var(--text); cursor: pointer; text-align: left; font: 600 0.84rem var(--body); display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 0; }
+  .pbtn > span{ min-width: 0; overflow-wrap: anywhere; }
+  .pbtn i{ font-style: normal; color: var(--text-dim); font-size: 0.68rem; font-weight: 700; flex: none; }
+  .pbtn i.price{ color: var(--gold); }
+  .pbtn i.who{ color: var(--loss); }
+  .pbtn.on{ border-color: var(--gold); background: var(--lead-tint); }
+
+  /* The leg as it will be saved, with the line and odds still editable. */
+  .slip{ margin: 8px 0 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--lead-line); background: var(--lead-tint); }
+  .slip-text{ font-weight: 700; font-size: 0.98rem; overflow-wrap: anywhere; }
+  .slip-sub{ color: var(--text-dim); font-size: 0.8rem; margin-top: 2px; }
+  .slip-sub .sport{ color: var(--gold); font-weight: 700; }
+  .slip .gold-btn{ width: 100%; margin-top: 12px; }
+  .msg{ font-size: 0.82rem; margin-top: 10px; color: var(--text-dim); }
+  .msg.bad{ color: var(--loss); font-weight: 600; }
+  .msg b{ color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">Retirement League</div>
+      <h1 style="margin-bottom:12px">Parlay Legs</h1>
+    </header>
+    <div class="chips" id="chips"></div>
+    <div class="cols">
+      <section class="glass"><div class="panel-title">Your leg</div><div class="panel-body" id="mine"><p class="empty">Loading…</p></div></section>
+      <section class="glass"><div class="panel-title" id="board-title">This week</div><div class="panel-body" id="board"></div></section>
+    </div>
+    <footer id="site-footer" data-source="Lines from Hard Rock Bet · Games from ESPN"></footer>
+  </div>
+
+<script src="nav.js?v=16"></script>
+<script src="page-common.js?v=33"></script>
+<script>
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const ESPN = 'https://site.web.api.espn.com/apis/site/v2/sports';
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  // The sports the board covers, in the sheet's own names.
+  const SPORTS = ['NFL', 'NCAAF', 'NBA', 'NCAAM', 'NHL', 'MLB', 'Futbol'];
+  const TOTAL = { NHL: 'Total Goals', Futbol: 'Total Goals' };
+  const PROPS = {
+    NFL: ['Anytime TD', 'Receiving Yards', 'Receptions', 'Passing Yards', 'Passing TD'],
+    NCAAF: ['Anytime TD', 'Receiving Yards', 'Passing Yards'],
+    NBA: ['Player Points'], NCAAM: ['Player Points'], MLB: ['Home Runs'],
+  };
+  const ROSTER = { NFL: 'football/nfl', NCAAF: 'football/college-football', NBA: 'basketball/nba', NCAAM: 'basketball/mens-college-basketball', MLB: 'baseball/mlb' };
+  const FOOTBALL_POS = ['WR', 'RB', 'TE', 'QB', 'FB'];
+
+  let board = null;           // GET /legs
+  let loadError = '';
+  const games = {};           // sport -> [games] | 'loading' | 'error'
+  const rosters = {};         // team id -> [[name, pos]] | 'loading'
+  const tdOdds = {};          // game id -> {player: price} | 'loading'
+  let editing = false, saving = false, saveMsg = '';
+  const blank = () => ({ sport: 'NFL', gid: null, bet: null, side: null, player: null, line: '', odds: '', q: '', pq: '', more: false, typed: false, text: '' });
+  let st = blank();
+
+  const fmtOdds = o => o == null || o === '' || Number.isNaN(Number(o)) ? '' : (Number(o) > 0 ? '+' : '') + Math.round(Number(o));
+  const num = t => { const v = parseFloat(String(t).replace(/[,\s+]/g, '')); return Number.isNaN(v) ? null : v; };
+  function parts(iso){
+    const [d, t] = iso.split('T'), [y, m, day] = d.split('-').map(Number), [h, min] = t.split(':').map(Number);
+    return { day: `${DAYS[new Date(Date.UTC(y, m - 1, day)).getUTCDay()]} ${m}/${day}`, time: `${h % 12 || 12}:${String(min).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}` };
+  }
+  const kick = iso => { const p = parts(iso); return `${p.day} · ${p.time}`; };
+  // An epoch ms as Eastern "Thu 1:00 PM".
+  const etWhen = ms => new Date(ms).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }).replace(',', '');
+  const fold = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/^#\d+\s*/, '').replace(/[^a-z0-9]/g, '');
+  const totalName = sport => TOTAL[sport] || 'Total Points';
+  const isProp = b => !['Money Line', 'Spread', 'Alt Spread', 'Total Points', 'Total Goals', 'Total Rounds'].includes(b);
+  const tm = (g, i) => i ? g.h : g.a;
+  const byId = id => (games[st.sport] || []).find?.(g => g.id === id);
+
+  // ---------- Legs (kept in step with worker/src/legs.js) ----------
+  function pickText(l){
+    if (['Spread', 'Alt Spread', '1st Half Spread'].includes(l.bet_type)) return `${l.bet_type}: ${l.team} ${l.line} vs. ${l.opponent}`;
+    if (l.bet_type === 'Money Line') return `${l.bet_type}: ${l.team} vs. ${l.opponent}`;
+    if (['Total Points', 'Total Goals', 'Total Rounds'].includes(l.bet_type)) return `${l.bet_type}: ${l.side} ${l.line} ${l.team} vs. ${l.opponent}`;
+    if (l.bet_type === 'Other') return l.player_prop;
+    if (['Anytime TD', 'Coin Toss'].includes(l.bet_type)) return `${l.bet_type}: ${l.player_prop}`;
+    return `${l.bet_type}: ${l.side} ${l.line} ${l.player_prop}`;
+  }
+  function betHtml(l){
+    if (l.bet_type === 'Other') return esc(l.player_prop);
+    const t = pickText(l), i = t.indexOf(':');
+    return `<b>${esc(t.slice(0, i))}</b> ·${esc(t.slice(i + 1))}`;
+  }
+  const FAMILY = { 'Money Line': 'ml', Spread: 'spread', 'Alt Spread': 'spread', 'Total Points': 'total', 'Total Goals': 'total', 'Total Rounds': 'total' };
+  const gameKey = l => l.team && l.opponent && l.gametime ? `${l.gametime.slice(0, 10)}|${[fold(l.team), fold(l.opponent)].sort().join('|')}` : '';
+  /** 'same', 'opposite', 'also' (another bet on the same game) or null. */
+  function clash(a, b){
+    if (a.bet_type === 'Other' || b.bet_type === 'Other') return null;
+    const fa = FAMILY[a.bet_type], fb = FAMILY[b.bet_type];
+    if (!fa && a.bet_type === b.bet_type && a.player_prop && fold(a.player_prop) === fold(b.player_prop)) {
+      return !a.side || !b.side || a.side === b.side ? 'same' : 'opposite';
+    }
+    const sameGame = (a.game_id && a.game_id === b.game_id) || (gameKey(a) && gameKey(a) === gameKey(b));
+    if (!sameGame) return null;
+    if (fa && fa === fb) return fa === 'total' ? (a.side === b.side ? 'same' : 'opposite') : (fold(a.team) === fold(b.team) ? 'same' : 'opposite');
+    return 'also';
+  }
+  const me = () => board && board.me;
+  const others = () => board ? board.legs.filter(l => l.player !== me()) : [];
+  const mine = () => board && board.legs.find(l => l.player === me());
+  const monos = list => list.length ? `<span class="monos">${list.map(l => `<span class="mono" title="${esc(l.player)}">${esc(monogram(l.player))}</span>`).join('')}</span>` : '';
+
+  /** The leg a tap or a typed field describes, as the Worker takes it. */
+  function legFor(g, bet, side, player){
+    const leg = { sport: g.sport, game_id: g.id, gametime: g.t, bet_type: bet, team: '', opponent: '', player_prop: '', line: '', side: '' };
+    if (bet === 'Money Line' || bet === 'Spread') Object.assign(leg, { team: tm(g, side), opponent: tm(g, 1 - side) });
+    else if (FAMILY[bet] === 'total') Object.assign(leg, { team: g.a, opponent: g.h, side });
+    else Object.assign(leg, { player_prop: player || '', side: bet === 'Anytime TD' ? '' : side || '' });
+    return leg;
+  }
+  const blocker = leg => {
+    const hits = others().map(o => [o, clash(leg, o)]).filter(x => x[1]);
+    return hits.find(x => x[1] === 'same') || hits.find(x => x[1] === 'opposite') || null;
+  };
+
+  // ---------- The leg being built ----------
+  function setPick(g, bet, side){
+    Object.assign(st, { gid: g.id, bet, side, player: null, line: '', odds: '' });
+    const o = g.odds;
+    if (!o) return;
+    const i = side === 'Under' ? 1 : side === 'Over' ? 0 : side;
+    if (bet === 'Money Line') st.odds = o.ml[i] ?? '';
+    else if (bet === 'Spread') [st.line, st.odds] = [o.sp[i][0] || '', o.sp[i][1] ?? ''];
+    else if (FAMILY[bet] === 'total') [st.line, st.odds] = [o.tot[i][0] || '', o.tot[i][1] ?? ''];
+  }
+  const needsLine = () => st.bet && st.bet !== 'Money Line' && st.bet !== 'Anytime TD';
+  function draft(){
+    if (st.typed) return st.text.trim() ? { typed: st.text.trim(), odds: num(st.odds) } : null;
+    const g = byId(st.gid);
+    if (!g || !st.bet) return null;
+    if (isProp(st.bet) && (!st.player || (st.bet !== 'Anytime TD' && !st.side))) return null;
+    if (!isProp(st.bet) && st.side == null) return null;
+    return { ...legFor(g, st.bet, st.side, st.player), line: needsLine() ? String(st.line).trim() : '', odds: num(st.odds) };
+  }
+  function verdict(){
+    const d = draft();
+    if (!d) return { d: null, ok: false, html: '' };
+    const bad = saveMsg ? `<div class="msg bad">${esc(saveMsg)}</div>` : '';
+    if (d.typed) return { d, ok: d.odds != null, html: bad + `<div class="msg">${d.odds == null ? 'Add the odds. ' : ''}Everyone sees it as you typed it. A commissioner fits it into the sheet later.</div>` };
+    const stop = blocker(d);
+    if (stop) return { d, ok: false, html: `<div class="msg bad">${esc(stop[0].player)} ${stop[1] === 'same' ? 'already has this leg' : 'has the other side of this'}: ${esc(pickText(stop[0]))}. Pick something else.</div>` };
+    const also = others().filter(o => clash(d, o) === 'also');
+    const alsoHtml = also.length ? `<div class="msg">Also on this game: ${also.map(o => `<b>${esc(o.player)}</b> · ${esc(pickText(o))}`).join('; ')}</div>` : '';
+    const miss = needsLine() && !/^[+-]?\d+(\.\d+)?$/.test(d.line) ? 'Add the line.' : d.odds == null || Math.abs(d.odds) < 100 ? 'Add the odds, like -110 or +150.' : '';
+    return { d, ok: !miss, html: bad + alsoHtml + (miss ? `<div class="msg">${miss}</div>` : '') };
+  }
+  function slip(g){
+    const v = verdict();
+    if (!v.d) return '';
+    const src = g.odds && g.odds.src === 'HR' ? 'Hard Rock line' : g.odds ? 'DraftKings line (Hard Rock doesn\'t list this game)' : 'No line from Hard Rock or DraftKings';
+    const propLine = isProp(st.bet) && !(st.bet === 'Anytime TD' && st.odds !== '');
+    return `<div class="slip">
+      <div class="slip-text" id="slip-text">${esc(pickText(v.d))}</div>
+      <div class="slip-sub"><span class="sport">${esc(g.sport)}</span> · ${esc(kick(g.t))}${isProp(st.bet) ? ` · ${esc(g.a)} @ ${esc(g.h)}` : ''} · ${propLine ? 'type the line and odds from your book' : src}</div>
+      <div class="two">
+        ${needsLine() ? `<label class="field"><span>Line</span><input class="in" id="f-line" data-f="line" inputmode="decimal" autocomplete="off" value="${esc(st.line)}" placeholder="${st.bet === 'Spread' ? '-3.5' : '75.5'}"></label>` : ''}
+        <label class="field"><span>Odds</span><input class="in" id="f-odds" data-f="odds" inputmode="numbers-and-punctuation" autocomplete="off" value="${esc(fmtOdds(st.odds) || st.odds)}" placeholder="-110"></label>
+      </div>
+      <div id="slip-msg">${v.html}</div>
+      <button type="button" class="gold-btn solid" id="save" data-act="save"${v.ok && !saving ? '' : ' disabled'}>${saving ? 'Saving…' : 'Save my leg'}</button>
+    </div>`;
+  }
+  function refreshSlip(){
+    const v = verdict(), t = document.getElementById('slip-text'), m = document.getElementById('slip-msg'), b = document.getElementById('save');
+    if (t && v.d && !v.d.typed) t.textContent = pickText(v.d);
+    if (m) m.innerHTML = v.html;
+    if (b) b.disabled = !v.ok || saving;
+  }
+
+  // ---------- Loading ----------
+  async function loadGames(sport){
+    if (games[sport] && games[sport] !== 'error') return;
+    games[sport] = 'loading';
+    try {
+      const r = await fetch(`${WORKER_URL}/legs/games?sport=${encodeURIComponent(sport)}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error();
+      games[sport] = (await r.json()).games;
+    } catch { games[sport] = 'error'; }
+    render();
+  }
+  async function loadRoster(sport, teamId){
+    if (rosters[teamId]) return;
+    rosters[teamId] = 'loading';
+    try {
+      const d = await fetch(`${ESPN}/${ROSTER[sport]}/teams/${teamId}/roster`).then(r => r.json());
+      const all = (d.athletes || []).flatMap(a => a.items ? a.items : [a]);
+      let list = all.map(a => [a.fullName || a.displayName, (a.position && a.position.abbreviation) || '']).filter(x => x[0]);
+      if (sport === 'NFL' || sport === 'NCAAF') list = list.filter(x => FOOTBALL_POS.includes(x[1]));
+      rosters[teamId] = list;
+    } catch { rosters[teamId] = []; }
+    render();
+  }
+  async function loadTd(g){
+    if (tdOdds[g.id]) return;
+    tdOdds[g.id] = 'loading';
+    try {
+      const d = await fetch(`${WORKER_URL}/legs/props?sport=${encodeURIComponent(g.sport)}&game=${encodeURIComponent(g.id)}`).then(r => r.json());
+      tdOdds[g.id] = Object.fromEntries(Object.entries(d.odds || {}).map(([n, p]) => [fold(n), p]));
+    } catch { tdOdds[g.id] = {}; }
+    render();
+  }
+  async function loadBoard(){
+    try {
+      const r = await fetch(WORKER_URL + '/legs', { cache: 'no-store', headers: authHeaders() });
+      if (!r.ok) throw new Error();
+      board = await r.json();
+      loadError = '';
+    } catch { if (!board) loadError = "Couldn't load this week's legs. Pull down or reload to try again."; }
+    render();
+  }
+
+  // ---------- Drawing ----------
+  function legRow(l){
+    const when = l.bet_type === 'Other' ? '<span class="badge gold">Typed in</span>'
+      : l.gametime ? `<span><span class="sport">${esc(l.sport)}</span> · ${esc(kick(l.gametime))}</span>` : '';
+    return `<div class="leg${l.player === me() ? ' me' : ''}">
+      <div class="leg-top"><span class="leg-name">${esc(l.player)}</span><span class="leg-odds">${fmtOdds(l.odds) || '—'}</span></div>
+      <div class="leg-bet">${betHtml(l)}</div>${when ? `<div class="leg-game">${when}</div>` : ''}</div>`;
+  }
+  function drawBoard(){
+    if (!board) return loadError ? `<p class="empty bad">${esc(loadError)}</p>` : '<p class="empty">Loading…</p>';
+    const inn = board.legs.slice().sort((a, b) => (a.gametime || '9').localeCompare(b.gametime || '9') || a.player.localeCompare(b.player));
+    const out = board.players.filter(p => !board.legs.some(l => l.player === p));
+    return inn.map(legRow).join('') + out.map(p => `<div class="leg out${p === me() ? ' me' : ''}"><div class="leg-top"><span class="leg-name">${esc(p)}</span><span class="leg-odds">Not in yet</span></div></div>`).join('');
+  }
+
+  const sportChips = () => `<div class="picks">${SPORTS.map(k => `<button type="button" class="pick${st.sport === k ? ' on' : ''}" data-sport="${k}">${k}</button>`).join('')}</div>`;
+  function shownGames(){
+    const list = games[st.sport];
+    if (!Array.isArray(list)) return list;
+    const q = fold(st.q);
+    return q ? list.filter(g => fold(g.a + g.h).includes(q) || fold(g.a).includes(q) || fold(g.h).includes(q)) : list;
+  }
+  function gameList(){
+    const list = shownGames();
+    if (list === 'loading' || list == null) return '<p class="empty">Finding this week\'s games…</p>';
+    if (list === 'error') return `<p class="empty bad">Couldn't load the games. <button type="button" class="link-btn" data-sport="${st.sport}">Try again</button></p>`;
+    if (!list.length) return `<p class="empty">${st.q ? 'No game by that name this week.' : `No ${esc(st.sport)} games Thursday through Monday.`}</p>`;
+    let last = '', h = '';
+    for (const g of list){
+      const d = parts(g.t).day;
+      if (d !== last){ h += `<div class="day">${d}</div>`; last = d; }
+      h += gameCard(g);
+    }
+    return h;
+  }
+  function cell(g, bet, side, top, odds){
+    if (!top && odds == null) return '<button type="button" class="cell none" disabled aria-label="No line"><b>—</b></button>';
+    const stop = blocker(legFor(g, bet, side));
+    const on = st.gid === g.id && st.bet === bet && st.side === side;
+    const label = `${bet === 'Money Line' ? `${tm(g, side)} to win` : bet === 'Spread' ? `${tm(g, side)} ${top}` : `${side} ${g.odds.tot[side === 'Over' ? 0 : 1][0]}`} ${fmtOdds(odds)}${stop ? `, ${stop[0].player} has ${stop[1] === 'same' ? 'it' : 'the other side'}` : ''}`;
+    return `<button type="button" class="cell${on ? ' on' : ''}${stop ? ' taken' : ''}" data-cell="${g.id}|${bet}|${side}" aria-label="${esc(label)}">
+      <b>${esc(top)}</b>${bet === 'Money Line' ? '' : `<span>${fmtOdds(odds) || '—'}</span>`}${stop ? `<i class="who">${esc(monogram(stop[0].player))}</i>` : ''}</button>`;
+  }
+  function gameCard(g){
+    const open = st.gid === g.id, o = g.odds || { ml: [null, null], sp: [['', null], ['', null]], tot: [['', null], ['', null]] };
+    const tot = totalName(g.sport);
+    const row = i => `<span class="tm">${esc(tm(g, i))}</span>
+      ${cell(g, 'Spread', i, o.sp[i][0], o.sp[i][1])}
+      ${cell(g, tot, i ? 'Under' : 'Over', o.tot[i][0] ? `${i ? 'U' : 'O'} ${o.tot[i][0]}` : '', o.tot[i][1])}
+      ${cell(g, 'Money Line', i, fmtOdds(o.ml[i]), o.ml[i])}`;
+    const props = PROPS[g.sport] || [];
+    const on = others().filter(l => l.game_id === g.id || (l.gametime && gameKey(l) === gameKey({ team: g.a, opponent: g.h, gametime: g.t })));
+    return `<div class="gm${open ? ' open' : ''}">
+      <div class="gm-top"><span class="t">${parts(g.t).time}${g.odds && g.odds.src === 'DK' ? ' · DraftKings line' : ''}</span>${monos(on)}</div>
+      <div class="gm-grid"><span></span><span class="hd">Spread</span><span class="hd">Total</span><span class="hd">Winner</span>${row(0)}${row(1)}</div>
+      ${props.length ? `<button type="button" class="link-btn" data-more="${g.id}">${open && st.more ? 'Hide player bets' : props.includes('Anytime TD') ? 'Touchdown scorer and player bets' : 'Player bets'}</button>` : '<div style="height:8px"></div>'}
+      ${open && st.more ? propPanel(g, props) : ''}
+      ${open && (!isProp(st.bet) || st.more) ? slip(g) : ''}
+    </div>`;
+  }
+  function propPanel(g, props){
+    let h = `<div class="more"><div class="picks">${props.map(b => `<button type="button" class="pick${st.bet === b ? ' on' : ''}" data-bet="${b}">${b}</button>`).join('')}</div>`;
+    if (!isProp(st.bet || '')) return h + '</div>';
+    if (!st.bet) return h + '</div>';
+    const ids = [g.aid, g.hid];
+    ids.forEach(id => { if (!rosters[id]) loadRoster(g.sport, id); });
+    if (st.bet === 'Anytime TD' && !tdOdds[g.id]) loadTd(g);
+    const prices = st.bet === 'Anytime TD' && typeof tdOdds[g.id] === 'object' ? tdOdds[g.id] : {};
+    const q = fold(st.pq);
+    const col = (team, id) => {
+      const list = rosters[id];
+      if (!Array.isArray(list)) return `<div class="pcol"><span>${esc(team)}</span><p class="empty">Loading…</p></div>`;
+      const order = st.bet.startsWith('Passing') ? ['QB', 'RB', 'WR', 'TE', 'FB'] : FOOTBALL_POS;
+      // Touchdown scorers by Hard Rock's price, likeliest first, the way a
+      // sportsbook lists them; anyone without a price after, by position.
+      const price = n => prices[fold(n)] ?? 1e9;
+      const sorted = list.slice().sort((a, b) => (price(a[0]) - price(b[0]))
+        || ((order.indexOf(a[1]) + 1 || 9) - (order.indexOf(b[1]) + 1 || 9)) || a[0].localeCompare(b[0]));
+      const shown = sorted.filter(([n]) => !q || fold(n).includes(q));
+      return `<div class="pcol"><span>${esc(team)}</span>${shown.map(([n, pos]) => {
+        const stop = blocker(legFor(g, st.bet, st.side || '', n));
+        const price = prices[fold(n)];
+        const tag = stop ? `<i class="who">${esc(monogram(stop[0].player))}</i>` : price != null ? `<i class="price">${fmtOdds(price)}</i>` : `<i>${esc(pos)}</i>`;
+        return `<button type="button" class="pbtn${st.player === n ? ' on' : ''}" data-player="${esc(n)}"><span>${esc(n)}</span>${tag}</button>`;
+      }).join('') || '<p class="empty">No match.</p>'}</div>`;
+    };
+    h += `<input class="in" id="f-pq" data-pq type="search" autocomplete="off" placeholder="Find a player" value="${esc(st.pq)}" aria-label="Find a player" style="margin-top:10px">
+      <div class="plist" id="plist">${col(g.a, g.aid)}${col(g.h, g.hid)}</div>`;
+    if (st.player && st.bet !== 'Anytime TD') h += `<div class="big2">${['Over', 'Under'].map(s => `<button type="button" class="big${st.side === s ? ' on' : ''}" data-side="${s}">${s}</button>`).join('')}</div>`;
+    return h + '</div>';
+  }
+  const typedForm = () => `
+    <label class="field"><span>Your leg, the way you'd text it</span>
+      <textarea class="in" id="f-text" data-f="text" autocomplete="off" placeholder="Golf: Scheffler to finish top 5">${esc(st.text)}</textarea></label>
+    <label class="field" style="max-width:160px"><span>Odds</span><input class="in" id="f-odds" data-f="odds" inputmode="numbers-and-punctuation" autocomplete="off" value="${esc(st.odds)}" placeholder="+150"></label>
+    <div id="slip-msg">${verdict().html}</div>
+    <div class="acts"><button type="button" class="gold-btn quiet" data-act="untype">Back to the games</button><button type="button" class="gold-btn solid" id="save" data-act="save"${verdict().ok && !saving ? '' : ' disabled'}>${saving ? 'Saving…' : 'Save as typed'}</button></div>`;
+
+  function drawMine(){
+    if (!board) return loadError ? '' : '<p class="empty">Loading…</p>';
+    const auth = getAuth(), m = mine();
+    if (!auth) return '<p class="empty">Sign in to enter your leg: open the link the commissioner texted you, or tap You and sign in with your code.</p>';
+    if (!me()) return '<p class="empty bad">Your sign-in has run out. Tap You and sign in again.</p>';
+    if (!board.players.includes(me())) return '<p class="empty">Only the twelve managers in this year\'s parlay enter legs.</p>';
+    if (!board.open) return m ? legRow(m) + `<p class="fine">Locked ${esc(etWhen(board.locksAt))}. Text the group chat if it needs a fix.</p>`
+      : `<p class="empty">Legs locked ${esc(etWhen(board.locksAt))} and yours isn't in. Text it to the group chat.</p>`;
+    if (m && !editing) return legRow(m) + `<div class="acts"><button type="button" class="gold-btn" data-act="change">Change</button>${m.sheet ? '' : '<button type="button" class="gold-btn quiet" data-act="remove">Remove</button>'}</div>
+      <p class="fine">${saveMsg ? `<b>${esc(saveMsg)}</b> ` : ''}Everyone can see it. You can change it until <b>${esc(etWhen(board.locksAt))}</b>.</p>`;
+    if (st.typed) return typedForm();
+    return sportChips()
+      + `<div style="margin-top:12px">${Array.isArray(games[st.sport]) && games[st.sport].length > 16 ? `<input class="in" id="f-q" data-q type="search" autocomplete="off" placeholder="Find a team" value="${esc(st.q)}" aria-label="Find a team" style="margin-bottom:10px">` : ''}
+        <div id="glist">${gameList()}</div></div>
+        <div><button type="button" class="link-btn" data-act="type">Can't find it? Type it in</button></div>`
+      + (m ? '<button type="button" class="link-btn" data-act="cancel">Keep the leg I have</button>' : '');
+  }
+
+  // A poll landing while you type would rebuild the field under you, so the
+  // redraw waits until you leave it.
+  let held = false;
+  const mineEl = document.getElementById('mine');
+  mineEl.addEventListener('focusout', () => setTimeout(() => { if (held) render(); }, 0));
+  function render(){
+    const wk = board ? `Week ${board.week}` : 'This week';
+    document.getElementById('board-title').textContent = wk;
+    document.getElementById('chips').innerHTML = board ? `<span class="chip gold">${board.year} · Week ${board.week}</span>
+      <span class="chip${board.open ? '' : ' loss'}">${board.open ? `Locks ${esc(etWhen(board.locksAt))}` : `Locked · opens ${esc(etWhen(board.opensAt))}`}</span>
+      <span class="chip">${board.legs.length} of ${board.players.length} in</span>` : '';
+    document.getElementById('board').innerHTML = drawBoard();
+    held = mineEl.contains(document.activeElement) && document.activeElement.matches('input, textarea');
+    if (held) { refreshSlip(); return; }
+    mineEl.innerHTML = drawMine();
+    if (board && board.open && me() && (editing || !mine()) && !st.typed) loadGames(st.sport);
+  }
+
+  // ---------- Saving ----------
+  const ERRORS = {
+    same: b => `${b.by} already has this leg: ${b.pick}. Pick something else.`,
+    opposite: b => `${b.by} has the other side of this: ${b.pick}. Pick something else.`,
+    locked: () => 'Legs are locked for the week.',
+    signed_out: () => 'Your sign-in has run out. Tap You and sign in again.',
+    bad_odds: () => 'Those odds don\'t look right. Use American odds, like -110 or +150.',
+    bad_line: () => 'That line doesn\'t look right. Use a number, like -3.5 or 47.5.',
+    not_a_player: () => 'Only the twelve managers in this year\'s parlay enter legs.',
+  };
+  async function send(body){
+    saving = true; saveMsg = '';
+    render();
+    let res = null, out = {};
+    try {
+      res = await fetch(WORKER_URL + '/legs', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(body) });
+      out = await res.json().catch(() => ({}));
+    } catch { /* no connection */ }
+    saving = false;
+    if (out.legs) board = { ...board, ...out };
+    if (res && res.ok) {
+      editing = false;
+      st = { ...blank(), sport: st.sport };
+      saveMsg = body.remove ? '' : 'Saved.';
+      if (navigator.vibrate) navigator.vibrate(10);
+    } else {
+      saveMsg = ERRORS[out.error] ? ERRORS[out.error](out) : `Couldn't save it (${res ? out.error || res.status : 'no connection'}). Try again.`;
+    }
+    render();
+  }
+
+  // ---------- Taps and typing ----------
+  mineEl.addEventListener('click', e => {
+    const t = e.target.closest('button');
+    if (!t || t.disabled || saving) return;
+    const d = t.dataset;
+    const g = byId(st.gid);
+    saveMsg = d.act === 'save' ? saveMsg : '';
+    if (d.sport){ st = { ...blank(), sport: d.sport }; if (games[d.sport] === 'error') delete games[d.sport]; }
+    else if (d.cell){
+      const [id, bet, side] = d.cell.split('|');
+      const game = byId(id);
+      if (st.gid === id && st.bet === bet && String(st.side) === side && !st.more) Object.assign(st, { gid: null, bet: null, side: null });
+      else { setPick(game, bet, /^\d$/.test(side) ? Number(side) : side); st.more = false; }
+    }
+    else if (d.more){ const was = st.gid === d.more && st.more; Object.assign(st, { gid: d.more, bet: null, side: null, player: null, line: '', odds: '', pq: '', more: !was }); if (!was) st.bet = (PROPS[byId(d.more).sport] || [])[0] || null; }
+    else if (d.bet) Object.assign(st, { bet: d.bet, side: null, player: null, line: '', odds: '' });
+    else if (d.player){
+      st.player = d.player;
+      const p = st.bet === 'Anytime TD' && g && typeof tdOdds[g.id] === 'object' ? tdOdds[g.id][fold(d.player)] : null;
+      st.odds = p != null ? p : '';
+    }
+    else if (d.side) st.side = d.side;
+    else if (d.act === 'save'){
+      const v = verdict();
+      if (!v.ok) return;
+      send({ leg: v.d });
+      return;
+    }
+    else if (d.act === 'type') Object.assign(st, { typed: true, odds: '' });
+    else if (d.act === 'untype') st.typed = false;
+    else if (d.act === 'change'){ editing = true; st = blank(); }
+    else if (d.act === 'cancel'){ editing = false; st = blank(); }
+    else if (d.act === 'remove'){ if (confirmRemove(t)) send({ remove: true }); return; }
+    else return;
+    render();
+  });
+  // Remove asks once, on the button itself: a second tap within 4s does it.
+  let removeArmed = 0;
+  function confirmRemove(btn){
+    if (Date.now() - removeArmed < 4000) return true;
+    removeArmed = Date.now();
+    btn.textContent = 'Tap again to remove';
+    setTimeout(() => { if (btn.isConnected) btn.textContent = 'Remove'; }, 4000);
+    return false;
+  }
+  mineEl.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.f){ st[t.dataset.f] = t.value; saveMsg = ''; refreshSlip(); }
+    else if ('q' in t.dataset){ st.q = t.value; document.getElementById('glist').innerHTML = gameList(); }
+    else if ('pq' in t.dataset){
+      st.pq = t.value;
+      const g = byId(st.gid), box = document.getElementById('plist');
+      if (g && box){ const tmp = document.createElement('div'); tmp.innerHTML = propPanel(g, PROPS[g.sport] || []); box.replaceWith(tmp.querySelector('#plist')); }
+    }
+  });
+
+  // ---------- Start ----------
+  addEventListener('rl-auth', loadBoard);
+  // Everyone else's legs land while you look: every 45 seconds, and on return.
+  setInterval(() => { if (document.visibilityState === 'visible' && !saving) loadBoard(); }, 45000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadBoard(); });
+  loadBoard();
+</script>
+<script src="track.js?v=1" defer></script>
+</body>
+</html>

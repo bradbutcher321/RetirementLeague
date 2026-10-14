@@ -35,3 +35,31 @@ CREATE TABLE IF NOT EXISTS picks (
 );
 
 CREATE INDEX IF NOT EXISTS idx_picks_player ON picks (player, year, week);
+
+-- Legs the managers enter themselves on Parlay Legs (worker/src/legs.js).
+-- Written by the Worker, not the sheet: a leg lands here the moment it's
+-- saved, then sync_legs.yml copies the week into the sheet. win is the
+-- entry window's Tuesday (YYYY-MM-DD), so a window keeps the week it began
+-- with. A removed leg keeps its row (removed = 1) so the sync knows which
+-- sheet row to clear. game_id is ESPN's event id ('' for a typed-in leg).
+CREATE TABLE IF NOT EXISTS leg_entries (
+    year INTEGER NOT NULL,
+    week INTEGER NOT NULL,
+    player TEXT NOT NULL,
+    win TEXT NOT NULL,
+    sport TEXT,
+    bet_type TEXT,
+    team TEXT,
+    opponent TEXT,
+    player_prop TEXT,
+    line TEXT,
+    side TEXT,
+    odds REAL,
+    gametime TEXT,
+    raw_pick TEXT NOT NULL,
+    game_id TEXT,
+    removed INTEGER NOT NULL DEFAULT 0,
+    updated INTEGER NOT NULL,
+    PRIMARY KEY (year, week, player)
+);
+CREATE INDEX IF NOT EXISTS idx_leg_entries_win ON leg_entries (win);

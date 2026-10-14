@@ -28,7 +28,7 @@
   const TABS = [
     { key: 'live', href: 'index.html', label: 'Live', icon: ICONS.live, pages: ['index.html'] },
     { key: 'feed', href: 'feed.html', label: 'Feed', icon: ICONS.feed, pages: ['feed.html'] },
-    { key: 'parlay', href: 'parlay-results.html', label: 'Parlay', icon: ICONS.ticket, pages: ['parlay-results.html', 'parlay-entry.html'] },
+    { key: 'parlay', href: 'parlay-results.html', label: 'Parlay', icon: ICONS.ticket, pages: ['parlay-results.html', 'parlay-legs.html', 'parlay-entry.html'] },
     { key: 'standings', href: 'standings.html', label: 'Standings', icon: ICONS.list, pages: ['standings.html'] },
     { key: 'history', href: 'history.html', label: 'History', icon: ICONS.book, pages: [] },
   ];

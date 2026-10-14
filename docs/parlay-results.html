@@ -73,6 +73,19 @@
      the other thing only the people who enter picks reach for. */
   .enter-link{ text-decoration: none; }
 
+  /* Tuesday to Thursday 1 PM: the way in to Parlay Legs, where each
+     manager enters their own leg. Gone once legs lock. */
+  .legs-banner{
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    min-height: 52px; padding: 10px 16px; margin-bottom: 18px; border-radius: 12px;
+    border: 1px solid var(--lead-line); background: var(--lead-tint); color: var(--text); text-decoration: none;
+  }
+  .legs-banner[hidden]{ display: none; }
+  .legs-banner .lb-text{ min-width: 0; font-size: 0.86rem; color: var(--text-dim); }
+  .legs-banner .lb-text b{ color: var(--text); font-weight: 700; }
+  .legs-banner .lb-go{ flex: none; color: var(--gold); font-weight: 700; font-size: 0.86rem; white-space: nowrap; }
+  .legs-banner:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+
   /* Only Jon's Table still uses scope chips (Stats switched to a Year
      dropdown beside its tabs). Inside .controls-row theme.css zeroes this. */
   .scope-row{ margin-bottom: 18px; }
@@ -314,6 +327,8 @@
       </div>
     </header>
 
+    <a class="legs-banner" id="legs-banner" href="parlay-legs.html" hidden></a>
+
     <section>
       <!-- No section heading: the Year/Week controls below already say which
            parlay is on screen, and the card itself carries a "2026 · Week 4"
@@ -388,7 +403,7 @@
     <footer id="site-footer" data-source="Data from the league sheet" data-note="Refreshes every 10 minutes"></footer>
   </div>
 
-<script src="nav.js?v=15"></script>
+<script src="nav.js?v=16"></script>
 <script src="page-common.js?v=33"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
@@ -956,6 +971,20 @@
       ],
     },
   ];
+
+  // ---------- Parlay Legs banner ----------
+  fetch(WORKER_URL + '/legs', { cache: 'no-store', headers: authHeaders() })
+    .then(r => r.ok ? r.json() : null)
+    .then(b => {
+      if (!b || !b.open) return;
+      const el = document.getElementById('legs-banner');
+      const locks = new Date(b.locksAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }).replace(',', '');
+      const mineIn = b.me && b.legs.some(l => l.player === b.me);
+      el.innerHTML = `<span class="lb-text"><b>Week ${b.week} legs are open.</b> ${b.legs.length} of ${b.players.length} in · locks ${esc(locks)}</span>
+        <span class="lb-go">${mineIn ? 'See the legs' : 'Enter your leg'} ›</span>`;
+      el.hidden = false;
+    })
+    .catch(() => {});
 
   // ---------- Wiring ----------
   // Reads straight from the Worker/KV now instead of a committed static
