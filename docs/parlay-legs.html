@@ -175,7 +175,7 @@
   // A commissioner entering someone else's leg (from the board, or Enter
   // Picks' Edit Week via ?for=Name); null is your own.
   let target = new URLSearchParams(location.search).get('for') || null;
-  const blank = () => ({ sport: 'NFL', gid: null, bet: null, side: null, player: null, line: '', odds: '', q: '', pq: '', more: false, typed: false, text: '' });
+  const blank = () => ({ sport: 'NFL', gid: null, bet: null, side: null, player: null, tds: 1, line: '', odds: '', q: '', pq: '', more: false, typed: false, text: '' });
   let st = blank();
 
   const fmtOdds = o => o == null || o === '' || Number.isNaN(Number(o)) ? '' : (Number(o) > 0 ? '+' : '') + Math.round(Number(o));
@@ -232,7 +232,7 @@
     const leg = { sport: g.sport, game_id: g.id, gametime: g.t, bet_type: bet, team: '', opponent: '', player_prop: '', line: '', side: '' };
     if (bet === 'Money Line' || bet === 'Spread') Object.assign(leg, { team: tm(g, side), opponent: tm(g, 1 - side) });
     else if (FAMILY[bet] === 'total') Object.assign(leg, { team: g.a, opponent: g.h, side });
-    else Object.assign(leg, { player_prop: player || '', side: bet === 'Anytime TD' ? '' : side || '' });
+    else Object.assign(leg, { player_prop: bet === 'Anytime TD' && st.tds > 1 && player === st.player ? `${st.tds}x ${player}` : player || '', side: bet === 'Anytime TD' ? '' : side || '' });
     return leg;
   }
   const blocker = leg => {
@@ -242,7 +242,7 @@
 
   // ---------- The leg being built ----------
   function setPick(g, bet, side){
-    Object.assign(st, { gid: g.id, bet, side, player: null, line: '', odds: '' });
+    Object.assign(st, { gid: g.id, bet, side, player: null, tds: 1, line: '', odds: '' });
     const o = g.odds;
     if (!o) return;
     const i = side === 'Under' ? 1 : side === 'Over' ? 0 : side;
@@ -276,9 +276,10 @@
     if (!v.d) return '';
     const src = g.odds && g.odds.src === 'HR' ? 'Hard Rock line' : g.odds ? 'DraftKings line (Hard Rock doesn\'t list this game)' : 'No line from Hard Rock or DraftKings';
     const propLine = isProp(st.bet) && !(st.bet === 'Anytime TD' && st.odds !== '');
+    const multiTd = st.bet === 'Anytime TD' && st.tds > 1;
     return `<div class="slip">
       <div class="slip-text" id="slip-text">${esc(pickText(v.d))}</div>
-      <div class="slip-sub"><span class="sport">${esc(g.sport)}</span> · ${esc(kick(g.t))}${isProp(st.bet) ? ` · ${esc(g.a)} @ ${esc(g.h)}` : ''} · ${propLine ? 'type the line and odds from your book' : src}</div>
+      <div class="slip-sub"><span class="sport">${esc(g.sport)}</span> · ${esc(kick(g.t))}${isProp(st.bet) ? ` · ${esc(g.a)} @ ${esc(g.h)}` : ''} · ${multiTd ? 'type the odds from your book (Hard Rock prices 1+ only)' : propLine ? 'type the line and odds from your book' : src}</div>
       <div class="two">
         ${needsLine() ? `<label class="field"><span>Line</span><input class="in" id="f-line" data-f="line" inputmode="numbers-and-punctuation" autocomplete="off" value="${esc(st.line)}" placeholder="${st.bet === 'Spread' ? '-3.5' : '75.5'}"></label>` : ''}
         <label class="field"><span>Odds</span><input class="in" id="f-odds" data-f="odds" inputmode="numbers-and-punctuation" autocomplete="off" value="${esc(fmtOdds(st.odds) || st.odds)}" placeholder="-110"></label>
@@ -519,6 +520,7 @@
     h += `<input class="in" id="f-pq" data-pq type="search" autocomplete="off" placeholder="Find a player" value="${esc(st.pq)}" aria-label="Find a player" style="margin-top:10px">
       <div class="plist" id="plist">${col(g.a, g.aid)}${col(g.h, g.hid)}</div>`;
     if (st.player && st.bet !== 'Anytime TD') h += `<div class="big2">${['Over', 'Under'].map(s => `<button type="button" class="big${st.side === s ? ' on' : ''}" data-side="${s}">${s}</button>`).join('')}</div>`;
+    if (st.player && st.bet === 'Anytime TD') h += `<div class="big2" style="grid-template-columns:repeat(3,1fr)">${[1, 2, 3].map(n => `<button type="button" class="big${st.tds === n ? ' on' : ''}" data-tds="${n}">${n}+ TD${n > 1 ? 's' : ''}</button>`).join('')}</div>`;
     return h + '</div>';
   }
   const typedForm = () => `
@@ -614,11 +616,16 @@
       if (st.gid === id && st.bet === bet && String(st.side) === side && !st.more) Object.assign(st, { gid: null, bet: null, side: null });
       else { setPick(game, bet, /^\d$/.test(side) ? Number(side) : side); st.more = false; }
     }
-    else if (d.more){ const was = st.gid === d.more && st.more; Object.assign(st, { gid: d.more, bet: null, side: null, player: null, line: '', odds: '', pq: '', more: !was }); if (!was) st.bet = (PROPS[byId(d.more).sport] || [])[0] || null; }
-    else if (d.bet) Object.assign(st, { bet: d.bet, side: null, player: null, line: '', odds: '' });
+    else if (d.more){ const was = st.gid === d.more && st.more; Object.assign(st, { gid: d.more, bet: null, side: null, player: null, tds: 1, line: '', odds: '', pq: '', more: !was }); if (!was) st.bet = (PROPS[byId(d.more).sport] || [])[0] || null; }
+    else if (d.bet) Object.assign(st, { bet: d.bet, side: null, player: null, tds: 1, line: '', odds: '' });
     else if (d.player){
-      st.player = d.player;
+      st.player = d.player; st.tds = 1;
       const p = st.bet === 'Anytime TD' && g && typeof tdOdds[g.id] === 'object' ? tdOdds[g.id][fold(d.player)] : null;
+      st.odds = p != null ? p : '';
+    }
+    else if (d.tds){
+      st.tds = Number(d.tds);
+      const g = byId(st.gid), p = st.tds === 1 && g && typeof tdOdds[g.id] === 'object' ? tdOdds[g.id][fold(st.player)] : null;
       st.odds = p != null ? p : '';
     }
     else if (d.side) st.side = d.side;
