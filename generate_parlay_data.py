@@ -300,7 +300,10 @@ def compute_stats(players, weeks):
 
     for week in weeks:
         payout = week["final"]["payout"] or 0
-        if week["sacko"] in sackos:
+        # A week with nothing graded yet is still upcoming -- its sacko
+        # hasn't been served, so it doesn't count toward the totals.
+        started = any(p["result"] in GRADED for p in week["picks"].values())
+        if started and week["sacko"] in sackos:
             sackos[week["sacko"]] += 1
 
         killers, chance_names = kill_info(week, players)

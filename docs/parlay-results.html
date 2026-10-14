@@ -304,7 +304,8 @@
   .jt-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
   .jt-table th, .jt-table td{ padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .jt-table th{ color: var(--text-dim); font-weight: 700; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--surface-raised); }
-  .jt-table th:first-child, .jt-table td:first-child{ text-align: left; font-weight: 600; }
+  .jt-table sup{ font-size: 0.7em; line-height: 0; margin-left: 1px; }
+  .jt-table th:first-child,.jt-table td:first-child{ text-align: left; font-weight: 600; }
   @media (hover: hover){
     .jt-table tbody tr:hover{ background: var(--surface-raised); }
   }
@@ -391,7 +392,7 @@
           <div class="table-wrap">
             <table class="jt-table">
               <thead>
-                <tr><th>Team</th><th>W-L</th><th>Win %</th><th>Avg Odds</th><th>Kills</th><th>Sackos</th></tr>
+                <tr><th>Team</th><th>Avg Odds</th><th>W - L</th><th>Win %</th></tr>
               </thead>
               <tbody id="jt-tbody"></tbody>
             </table>
@@ -1180,8 +1181,11 @@
       const jtScopeRow = document.getElementById('jt-scope-row');
       const jtTbody = document.getElementById('jt-tbody');
       const jtCopyBtn = document.getElementById('jt-copy-btn');
-      const JT_HEADER = ['Team', 'W-L', 'Win %', 'Avg Odds', 'Kills', 'Sackos'];
+      const JT_HEADER = ['Team', 'Avg Odds', 'W - L', 'Win %'];
       let jtScope = String(current.year);
+
+      // Copied text can't carry <sup>, so use Unicode superscript digits.
+      const toSuperscript = n => String(n).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
 
       function jonsRows(scope) {
         const s = stats[scope];
@@ -1201,12 +1205,10 @@
       function renderJonsTable() {
         jtTbody.innerHTML = jonsRows(jtScope).map(r => `
           <tr>
-            <td>${esc(r.player)}</td>
-            <td>${r.w}-${r.l}</td>
-            <td>${fmtPct(r.win_pct)}</td>
+            <td>${esc(r.player)}${r.sackos ? `<sup>${r.sackos}</sup>` : ''}</td>
             <td>${fmtOdds(r.avgOdds)}</td>
-            <td>${r.kills.toFixed(1)}</td>
-            <td>${r.sackos}</td>
+            <td>${r.w} - ${r.l}</td>
+            <td>${fmtPct(r.win_pct)}</td>
           </tr>`).join('');
       }
 
@@ -1268,10 +1270,10 @@
       }
       jtCopyBtn.addEventListener('click', () => {
         const lines = [JT_HEADER.join('\t')].concat(jonsRows(jtScope).map(r => [
-          r.player, `${r.w}-${r.l}`,
-          r.win_pct === null || r.win_pct === undefined ? '' : r.win_pct.toFixed(1) + '%',
+          r.sackos ? `${r.player}${toSuperscript(r.sackos)}` : r.player,
           r.avgOdds === null || r.avgOdds === undefined ? '' : fmtOdds(r.avgOdds),
-          r.kills.toFixed(1), r.sackos,
+          `${r.w} - ${r.l}`,
+          r.win_pct === null || r.win_pct === undefined ? '' : r.win_pct.toFixed(1) + '%',
         ].join('\t')));
         const text = lines.join('\n');
         const done = () => {
