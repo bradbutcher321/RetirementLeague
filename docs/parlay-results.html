@@ -69,10 +69,6 @@
     .back-link:disabled:hover{ background: none; }
   }
   .back-link[hidden]{ display: none; }
-  /* Out to the Enter Picks page (site audit II #11), beside Refresh Data:
-     the other thing only the people who enter picks reach for. */
-  .enter-link{ text-decoration: none; }
-
   /* Tuesday to Thursday 1 PM: the way in to Parlay Legs, where each
      manager enters their own leg. Gone once legs lock. */
   .legs-banner{
@@ -300,6 +296,11 @@
   /* Always a .controls-row child now, so the row owns the bottom margin. */
   .jt-toolbar{ display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; }
   .jt-status{ color: var(--text-dim); font-size: 0.78rem; }
+  /* The status ("Refresh started -- reloading in 47s...") sits on its own
+     line above the buttons, so it can't push them off a phone screen. */
+  .jt-status{ flex: 1 0 100%; order: -1; text-align: right; }
+  .jt-status:empty{ display: none; }
+  .controls-row > .jt-toolbar{ flex: 0 1 auto; min-width: 0; }
   .table-wrap{ overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
   .jt-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
   .jt-table th, .jt-table td{ padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -384,7 +385,6 @@
             <div class="scope-row" id="jt-scope-row"></div>
             <div class="jt-toolbar">
               <span class="jt-status" id="jt-refresh-status"></span>
-              <a class="back-link enter-link" href="parlay-entry.html">Enter Picks</a>
               <button type="button" class="back-link" id="jt-refresh-btn">Refresh Data</button>
               <button type="button" class="back-link" id="jt-copy-btn">Copy All</button>
             </div>
