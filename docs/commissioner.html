@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<style>html{background:#050505}</style>
+<title>Retirement League — Commissioner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=29">
+<link rel="stylesheet" href="nav.css?v=12">
+<style>
+  /* ---------- Commissioner: sign-in texts (site audit III #24) ----------
+     One row per manager. Send opens the share sheet with their text already
+     written: a link that signs them in (nav.js claimFromLink). Reset
+     replaces a manager's link and app code and signs them out everywhere.
+     Behind the same PIN as Enter Picks; the Worker (worker/src/auth.js)
+     keeps who has signed in and works out each link. */
+  .gold-btn{
+    background: none; border: 1px solid var(--gold); color: var(--gold);
+    font-family: var(--body); font-weight: 600; font-size: 0.8rem;
+    border-radius: 999px; padding: 8px 14px; cursor: pointer; text-decoration: none;
+  }
+  .gold-btn.solid{ background: var(--gold); color: var(--ctl-on-ink); }
+  @media (hover: hover){
+    .gold-btn:hover{ background: rgba(212,180,106,0.1); }
+    .gold-btn.solid:hover{ background: #E0C47F; }
+  }
+  .gold-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .gold-btn:disabled{ opacity: 0.45; cursor: default; }
+
+  .cm-count{ font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .cm-note{ color: var(--text-dim); font-size: 0.78rem; line-height: 1.45; padding: 4px 22px 0; }
+  .cm-note.warn{ color: var(--loss); font-weight: 600; }
+
+  .cm-rows{ display: grid; gap: 6px; }
+  @media (min-width: 721px){ .cm-rows{ grid-template-columns: 1fr 1fr; gap: 8px; } }
+  .cm-rows .loading-row{ grid-column: 1 / -1; }
+  .cm-row{ display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; padding: 8px 10px 8px 12px; min-width: 0; }
+  .cm-main{ min-width: 0; }
+  .cm-name{ font-weight: 600; font-size: 0.9rem; }
+  .cm-sub{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; }
+  .cm-sub.in{ color: var(--text); }
+  .cm-btns{ display: flex; gap: 6px; flex: none; }
+  /* 36px drawn, 44px to tap. */
+  .cm-btn{ position: relative; height: 36px; padding: 0 15px; border-radius: 999px; border: 1px solid var(--lead-line); background: transparent; color: var(--gold); font: 700 0.78rem var(--body); white-space: nowrap; cursor: pointer; }
+  .cm-btn::before{ content: ''; position: absolute; inset: -4px -2px; }
+  .cm-btn.dim{ border-color: var(--ctl-line); color: var(--text); }
+  .cm-btn.danger{ border-color: var(--loss-line); color: var(--loss); }
+  .cm-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .cm-btn:disabled{ opacity: 0.45; cursor: default; }
+  @media (hover: hover){ .cm-btn:hover:not(:disabled){ background: var(--item-hover); } }
+
+  /* The PIN, asked once per browser (Enter Picks keeps the same one). */
+  .pin-row{ display: flex; gap: 8px; align-items: center; }
+  .pin-row[hidden]{ display: none; }
+  .pin-box{
+    width: 120px; height: 40px; padding: 0 14px; background: var(--item); color: var(--text);
+    border: 1px solid var(--item-line); border-radius: 999px; font: 16px var(--body); letter-spacing: 0.2em;
+    user-select: text; -webkit-user-select: text;
+  }
+  .pin-box:focus{ outline: none; border-color: var(--gold); }
+  .pin-row .gold-btn{ height: 40px; font-size: 0.86rem; padding: 0 18px; }
+  .pin-msg{ color: var(--loss); font-size: 0.82rem; font-weight: 600; margin: 10px 0 0; }
+  .pin-msg[hidden]{ display: none; }
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Commissioner</h1>
+        </div>
+        <a class="gold-btn" href="parlay-entry.html">Enter Picks</a>
+      </div>
+    </header>
+
+    <section>
+      <div class="glass">
+        <div class="panel-title"><span>Sign-in texts</span><span class="cm-count" id="cm-count" hidden></span></div>
+        <div class="cm-note" id="cm-note">Send opens your share sheet with that manager's text already written.</div>
+        <div class="panel-body">
+          <form class="pin-row" id="pin-form" autocomplete="off" hidden>
+            <input class="pin-box" id="pin" type="password" inputmode="numeric" placeholder="PIN" aria-label="PIN" autocomplete="off">
+            <button type="submit" class="gold-btn solid" id="pin-btn">Unlock</button>
+          </form>
+          <p class="pin-msg" id="pin-msg" role="status" hidden></p>
+          <div class="cm-rows" id="cm-rows"><div class="loading-row">Loading…</div></div>
+        </div>
+      </div>
+    </section>
+
+    <footer id="site-footer" data-source="Sign-ins kept by the league's Worker"></footer>
+  </div>
+
+<script src="nav.js?v=13"></script>
+<script src="page-common.js?v=33"></script>
+<script>
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  // The same key Enter Picks keeps the PIN under, so one entry covers both.
+  const PIN_KEY = 'rl-parlay-pin';
+  const store = {
+    get: k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
+    set: (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* private mode */ } },
+  };
+
+  const rowsEl = document.getElementById('cm-rows');
+  const countEl = document.getElementById('cm-count');
+  const pinForm = document.getElementById('pin-form');
+  const pinEl = document.getElementById('pin');
+  const pinMsg = document.getElementById('pin-msg');
+
+  let names = [];
+  let managers = [];   // [{ manager, key, sentAt, web, app }]
+  let asking = '';     // the manager whose Reset is waiting on a yes
+  let copied = '';     // the manager whose text was just copied (no share sheet here)
+
+  const ERRORS = {
+    wrong_pin: b => `Wrong PIN. ${b.triesLeft} tr${b.triesLeft === 1 ? 'y' : 'ies'} left before it locks for an hour.`,
+    locked: () => 'Too many wrong PINs. Locked for an hour.',
+    not_configured: () => "Signing in isn't set up on the Worker yet.",
+  };
+
+  async function call(body) {
+    let res, out = {};
+    try {
+      res = await fetch(WORKER_URL + '/auth/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: store.get(PIN_KEY), ...body }) });
+      out = await res.json().catch(() => ({}));
+    } catch {
+      res = null;
+    }
+    if (res && res.ok) return out;
+    throw { ...out, message: res && ERRORS[out.error] ? ERRORS[out.error](out) : `Couldn't reach the Worker (${res ? out.error || res.status : 'no connection'}). Try again.` };
+  }
+
+  // This season's managers, from the same league.json the history pages read.
+  async function loadNames() {
+    const d = await fetch('data/league.json').then(r => r.json());
+    const year = Math.max(...d.seasons.map(s => s.year));
+    return [...new Set(d.seasons.filter(s => s.year === year).map(s => s.player))].sort((a, b) => a.localeCompare(b));
+  }
+
+  function askPin(msg) {
+    rowsEl.innerHTML = '';
+    countEl.hidden = true;
+    pinForm.hidden = false;
+    pinMsg.hidden = !msg;
+    pinMsg.textContent = msg || '';
+    pinEl.focus();
+  }
+
+  async function load() {
+    if (!store.get(PIN_KEY)) { askPin(''); return; }
+    try {
+      if (!names.length) names = await loadNames();
+      managers = (await call({ action: 'list', names })).managers.sort((a, b) => a.manager.localeCompare(b.manager));
+    } catch (err) {
+      if (err.error === 'wrong_pin') store.set(PIN_KEY, '');
+      askPin(err.message || "Couldn't load the managers. Try again.");
+      return;
+    }
+    pinForm.hidden = true;
+    pinMsg.hidden = true;
+    draw();
+  }
+
+  const signedIn = m => m.web + m.app > 0;
+  const linkFor = m => new URL('./', location.href).href + '#k=' + m.key;
+  const textFor = m => `${m.manager}, tap to sign in to Retirement League:\n${linkFor(m)}\n\nIt only works for you, so keep it to yourself.`;
+  const day = ts => new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+  function draw() {
+    countEl.hidden = false;
+    countEl.textContent = `${managers.filter(signedIn).length} of ${managers.length} signed in`;
+    rowsEl.innerHTML = managers.map(m => {
+      const name = esc(m.manager);
+      if (asking === m.manager) {
+        return `<div class="cm-row item is-loss"><div class="cm-main"><div class="cm-name">Reset ${name}?</div>
+          <div class="cm-sub">Their link and code stop working and they're signed out everywhere.</div></div>
+          <div class="cm-btns"><button type="button" class="cm-btn dim" data-act="no">Cancel</button><button type="button" class="cm-btn danger" data-act="yes" data-who="${name}">Reset</button></div></div>`;
+      }
+      const where = m.web && m.app ? 'website and app' : m.app ? 'app' : 'website';
+      const sub = signedIn(m) ? `<div class="cm-sub in">Signed in: ${where}</div>`
+        : `<div class="cm-sub">${m.sentAt ? 'Sent ' + day(m.sentAt) : 'Not sent'}</div>`;
+      const send = copied === m.manager ? 'Copied' : m.sentAt || signedIn(m) ? 'Resend' : 'Send';
+      return `<div class="cm-row item"><div class="cm-main"><div class="cm-name">${name}</div>${sub}</div>
+        <div class="cm-btns">${m.sentAt || signedIn(m) ? `<button type="button" class="cm-btn dim" data-act="ask" data-who="${name}">Reset</button>` : ''}<button type="button" class="cm-btn" data-act="send" data-who="${name}">${send}</button></div></div>`;
+    }).join('');
+  }
+
+  async function markSent(m) {
+    m.sentAt = Date.now();
+    draw();
+    await call({ action: 'sent', manager: m.manager }).catch(() => {});
+  }
+
+  // Straight from the tap, with nothing awaited first: Safari only opens
+  // the share sheet while it still counts the tap as the reason.
+  function send(m) {
+    const text = textFor(m);
+    const copy = () => navigator.clipboard.writeText(text).then(() => {
+      copied = m.manager;
+      markSent(m);
+      setTimeout(() => { if (copied === m.manager) { copied = ''; draw(); } }, 2000);
+    }).catch(() => {});
+    if (!navigator.share) { copy(); return; }
+    navigator.share({ text }).then(() => markSent(m)).catch(err => { if (!err || err.name !== 'AbortError') copy(); });
+  }
+
+  rowsEl.addEventListener('click', async e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const m = managers.find(x => x.manager === btn.dataset.who);
+    const act = btn.dataset.act;
+    if (act === 'send' && m) send(m);
+    else if (act === 'ask') { asking = btn.dataset.who; draw(); }
+    else if (act === 'no') { asking = ''; draw(); }
+    else if (act === 'yes' && m) {
+      btn.disabled = true;
+      try {
+        const fresh = (await call({ action: 'reset', manager: m.manager })).manager;
+        managers = managers.map(x => x.manager === fresh.manager ? fresh : x);
+      } catch (err) {
+        if (err.error === 'wrong_pin') { store.set(PIN_KEY, ''); asking = ''; askPin(err.message); return; }
+      }
+      asking = '';
+      draw();
+    }
+  });
+
+  pinForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const pin = pinEl.value.trim();
+    if (!pin) { pinEl.focus(); return; }
+    store.set(PIN_KEY, pin);
+    pinEl.value = '';
+    pinForm.hidden = true;
+    pinMsg.hidden = true;
+    rowsEl.innerHTML = '<div class="loading-row">Loading…</div>';
+    load();
+  });
+
+  load();
+</script>
+</body>
+</html>

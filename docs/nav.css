@@ -279,6 +279,50 @@
 .you-sec{ margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
 .you-sec-t{ font-size: 0.62rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim); padding: 0 4px 6px; }
 .you-note{ color: var(--text-dim); font-size: 0.8rem; line-height: 1.45; padding: 6px 4px; }
+/* Signing in (site audit III #24). Signed out: a code box and Paste at the
+   top of You, the team picker under them. Signed in: who you are, and on
+   the website the code for the Home Screen app with its Copy button. */
+.you-note.err{ color: var(--loss); }
+.you-signin{ display: flex; gap: 8px; }
+.you-code{
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  border-radius: 23px;
+  border: 1px solid var(--ctl-line);
+  background: #1A1A1A;
+  color: var(--text);
+  padding: 0 16px;
+  font: 500 1rem var(--body); /* 16px, or iOS zooms the page on focus */
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  /* theme.css turns text selection off site-wide; a field needs it back. */
+  user-select: text;
+  -webkit-user-select: text;
+}
+.you-code::placeholder{ color: var(--text-dim); }
+.you-code:focus{ border-color: var(--lead-line); }
+.you-code.err{ border-color: var(--loss); }
+.you-code:disabled{ opacity: 0.6; }
+.you-btn{ flex: none; height: 46px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--gold); background: var(--gold); color: var(--ctl-on-ink); font: 700 0.86rem var(--body); cursor: pointer; }
+.you-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+.you-acct{ display: flex; align-items: center; gap: 12px; padding: 12px; }
+.you-mono{ flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--me-ring); font: 800 0.8rem/1 var(--body); letter-spacing: 0.02em; }
+.you-acct-t{ flex: 1; min-width: 0; }
+.you-acct-t b{ display: block; font-size: 0.98rem; }
+.you-acct-t span{ display: block; color: var(--text-dim); font-size: 0.76rem; }
+.you-txt{ flex: none; min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--text-dim); font: 600 0.8rem var(--body); cursor: pointer; }
+.you-txt:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
+@media (hover: hover){ .you-txt:hover{ color: var(--text); } }
+.you-sec-h{ font-weight: 700; font-size: 0.9rem; padding: 0 4px 4px; }
+.you-copy{ display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 52px; padding: 0 8px 0 16px; border-radius: 999px; border: 1px solid var(--lead-line); background: var(--lead-tint); color: var(--gold); cursor: pointer; }
+.you-copy:disabled{ cursor: default; }
+.you-copy:disabled .you-copy-lab{ opacity: 0.4; }
+.you-copy:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+.you-copy-code{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.35rem; letter-spacing: 0.08em; }
+.you-copy-lab{ display: flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--gold); color: var(--ctl-on-ink); font: 700 0.8rem var(--body); }
+.you-copy.done .you-copy-lab{ background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--lead-line); }
 .you-row{ display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 0 4px; font-size: 0.9rem; cursor: pointer; }
 .you-row.dis{ color: var(--text-dim); cursor: default; }
 .you-types{ margin: 2px 0 0 0; padding-left: 10px; border-left: 1px solid var(--line); }

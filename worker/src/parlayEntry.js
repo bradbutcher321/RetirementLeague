@@ -35,6 +35,20 @@ function samePin(a, b) {
   return diff === 0;
 }
 
+/** null when `pin` is the commissioner's PIN, otherwise the response to
+ * send back. Shared with the Commissioner page (auth.js), so both count
+ * toward the one lockout. */
+export async function checkPin(env, pin) {
+  if (!env.PARLAY_PIN) return { status: 503, body: { error: "not_configured" } };
+  const fails = Number(await env.COOLDOWN_KV.get(FAIL_KEY)) || 0;
+  if (fails >= MAX_FAILS) return { status: 429, body: { error: "locked" } };
+  if (!samePin(pin || "", env.PARLAY_PIN)) {
+    await env.COOLDOWN_KV.put(FAIL_KEY, String(fails + 1), { expirationTtl: LOCK_SECONDS });
+    return { status: 403, body: { error: "wrong_pin", triesLeft: MAX_FAILS - fails - 1 } };
+  }
+  return null;
+}
+
 export async function enterParlay(request, env) {
   if (!env.PARLAY_PIN) return { status: 503, body: { error: "not_configured" } };
   let body;
@@ -44,12 +58,8 @@ export async function enterParlay(request, env) {
     return { status: 400, body: { error: "bad_json" } };
   }
 
-  const fails = Number(await env.COOLDOWN_KV.get(FAIL_KEY)) || 0;
-  if (fails >= MAX_FAILS) return { status: 429, body: { error: "locked" } };
-  if (!samePin(body.pin || "", env.PARLAY_PIN)) {
-    await env.COOLDOWN_KV.put(FAIL_KEY, String(fails + 1), { expirationTtl: LOCK_SECONDS });
-    return { status: 403, body: { error: "wrong_pin", triesLeft: MAX_FAILS - fails - 1 } };
-  }
+  const denied = await checkPin(env, body.pin);
+  if (denied) return denied;
 
   const picks = body.picks;
   if (!picks || !picks.rows || !Number(picks.year) || !Number(picks.week)) {

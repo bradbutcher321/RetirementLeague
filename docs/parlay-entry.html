@@ -18,7 +18,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=29">
-<link rel="stylesheet" href="nav.css?v=11">
+<link rel="stylesheet" href="nav.css?v=12">
 <style>
   /* ---------- Enter Picks (site audit II #11) ----------
      Paste the week's note, see every leg with the game ESPN found for it
@@ -29,7 +29,7 @@
   .gold-btn{
     background: none; border: 1px solid var(--gold); color: var(--gold);
     font-family: var(--body); font-weight: 600; font-size: 0.8rem;
-    border-radius: 999px; padding: 8px 14px; cursor: pointer;
+    border-radius: 999px; padding: 8px 14px; cursor: pointer; text-decoration: none;
   }
   .gold-btn.solid{ background: var(--gold); color: var(--ctl-on-ink); }
   @media (hover: hover){
@@ -152,6 +152,8 @@
           <div class="eyebrow">Retirement League</div>
           <h1>Enter Picks</h1>
         </div>
+        <!-- The commissioner's other page (site audit III #24). -->
+        <a class="gold-btn" href="commissioner.html">Sign-in texts</a>
       </div>
     </header>
 
@@ -221,8 +223,8 @@
     <footer id="site-footer" data-source="Games from ESPN"></footer>
   </div>
 
-<script src="nav.js?v=12"></script>
-<script src="page-common.js?v=32"></script>
+<script src="nav.js?v=13"></script>
+<script src="page-common.js?v=33"></script>
 <script src="parlay-note.js?v=2"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';

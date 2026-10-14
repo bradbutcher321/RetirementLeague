@@ -32,6 +32,8 @@
     { key: 'standings', href: 'standings.html', label: 'Standings', icon: ICONS.list, pages: ['standings.html'] },
     { key: 'history', href: 'history.html', label: 'History', icon: ICONS.book, pages: [] },
   ];
+  // Pages that belong to no tab, so none lights up.
+  const NO_TAB = ['commissioner.html'];
   // The History hub's tiles (history.html), in its order.
   const HISTORY = [
     { href: 'overview.html', label: 'League History', sub: 'Champions, timeline, leaderboards', icon: ICONS.book },
@@ -53,7 +55,7 @@
     if (!mount) return;
 
     const file = currentFile();
-    const active = (TABS.find(t => t.pages.includes(file)) || TABS.find(t => t.key === 'history')).key;
+    const active = NO_TAB.includes(file) ? '' : (TABS.find(t => t.pages.includes(file)) || TABS.find(t => t.key === 'history')).key;
     // The page you're on is only "current" when it's the tab's own page:
     // Franchise lights History but isn't the History page.
     const cur = t => t.key === active ? ` class="on"${t.href === file ? ' aria-current="page"' : ''}` : '';
@@ -405,19 +407,184 @@
     else drawYou(youNames);
   }
 
+  // ---------- Signing in (site audit III #24) ----------
+  // The commissioner texts each manager a link. Opening it signs that
+  // browser in (claimFromLink). The Home Screen app keeps its own storage
+  // and a link can't open it, so the website shows a signed-in manager a
+  // code to paste into the app's You sheet instead. getAuth/setAuth in
+  // page-common.js keep the result; worker/src/auth.js is the other end.
+  const COMMISH = 'Brad';
+  // What a sign-in box was given: the texted link (or a whole text with it
+  // in), or the eight-character code. '' while it's neither.
+  function codeIn(text) {
+    const t = String(text || '');
+    const link = t.match(/#k=([A-Za-z0-9]{16})(?![A-Za-z0-9])/);
+    if (link) return link[1].toUpperCase();
+    const bare = t.replace(/[\s-]/g, '').toUpperCase();
+    return /^[A-HJKMNP-Z2-9]{8}$/.test(bare) ? bare : '';
+  }
+  const fmtCode = c => c.slice(0, 4) + '-' + c.slice(4);
+  const SIGNIN_HELP = `Tap the link in ${COMMISH}'s text. The website shows your code to paste here.`;
+  const SIGNIN_ERRORS = {
+    wrong_code: b => `That code didn't work. Tap the link in ${COMMISH}'s text to see your code again.${b.triesLeft >= 0 ? ` ${b.triesLeft} ${b.triesLeft === 1 ? 'try' : 'tries'} left.` : ''}`,
+    wrong_link: () => `That link has been replaced. Ask ${COMMISH} for a new one.`,
+    locked: () => 'Too many wrong codes. Signing in is locked for an hour.',
+    not_configured: () => "Signing in isn't set up yet.",
+  };
+  const signInError = (err, fromLink) => {
+    const kind = err && err.error === 'wrong_code' && fromLink ? 'wrong_link' : err && err.error;
+    return SIGNIN_ERRORS[kind] ? SIGNIN_ERRORS[kind](err) : "Couldn't reach the league. Try again.";
+  };
+  // What went wrong last, for the sign-in box to say when it's next drawn.
+  let signinNote = '';
+  // The signed-in manager's app code once fetched: { token, code }.
+  let appCode = null;
+
+  async function signIn(code) {
+    const res = await fetch(WORKER + '/auth/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, kind: installed() ? 'app' : 'web' }) });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw out;
+    const old = getAuth();
+    setAuth({ token: out.token, manager: out.manager });
+    // The key this browser held before, if any, is no use to anyone now.
+    if (old) fetch(WORKER + '/auth/signout', { method: 'POST', headers: { Authorization: 'Bearer ' + old.token }, keepalive: true }).catch(() => {});
+    syncSub();
+  }
+
+  // Arriving from the texted link: sign in, take the key out of the address
+  // bar so it isn't left in the history or a screenshot, and open You on
+  // the result.
+  async function claimFromLink() {
+    const m = location.hash.match(/^#k=([A-Za-z0-9]{16})$/);
+    if (!m) return;
+    history.replaceState(null, '', location.pathname + location.search);
+    signinNote = '';
+    try { await signIn(m[1].toUpperCase()); } catch (err) { signinNote = signInError(err, true); }
+    youPanel = 'you';
+    if (document.getElementById('you-sheet')) drawPanel(); else openYou('you');
+  }
+
   function drawYou(names) {
     const body = document.getElementById('you-body');
     if (!body) return;
+    const auth = getAuth();
+    if (auth) { signinNote = ''; drawSignedIn(body, auth); return; }
     const me = getMe();
     const picks = names.map(n => `<button type="button" class="you-pick${n === me ? ' on' : ''}" data-me="${esc(n)}" aria-pressed="${n === me}">${esc(n)}</button>`).join('');
+    // Signing in comes first; the picker under it is for anyone who only
+    // follows along (it sets the ring and nothing else).
     body.innerHTML = `
-      <div class="you-sub">Your matchup comes first on the dashboard, your row is ringed, and Franchise and Head to Head open on you.</div>
-      <div class="you-picks">${picks}<button type="button" class="you-pick none${me ? '' : ' on'}" data-me="" aria-pressed="${!me}">Not in the league</button></div>`;
+      <form class="you-signin" id="you-signin">
+        <input class="you-code${signinNote ? ' err' : ''}" id="you-code" type="text" placeholder="Your code" aria-label="Your sign-in code" aria-describedby="you-signin-note" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="go">
+        <button type="button" class="you-btn" id="you-paste">Paste</button>
+      </form>
+      <div class="you-note${signinNote ? ' err' : ''}" id="you-signin-note" role="status">${esc(signinNote || SIGNIN_HELP)}</div>
+      <div class="you-sec">
+        <div class="you-sub">Just following along? Pick a team to see it ringed across the site.</div>
+        <div class="you-picks">${picks}<button type="button" class="you-pick none${me ? '' : ' on'}" data-me="" aria-pressed="${!me}">Not in the league</button></div>
+      </div>`;
     body.querySelectorAll('[data-me]').forEach(b => b.addEventListener('click', () => {
       setMe(b.dataset.me);
       drawYou(names);
       syncSub();
     }));
+
+    const input = body.querySelector('#you-code');
+    const note = body.querySelector('#you-signin-note');
+    const say = (text, err) => {
+      note.textContent = text;
+      note.classList.toggle('err', !!err);
+      input.classList.toggle('err', !!err);
+    };
+    let busy = false;
+    async function submit(text) {
+      if (busy) return;
+      const code = codeIn(text);
+      if (!code) { say("That isn't a code. Yours is eight letters and numbers.", true); return; }
+      busy = true;
+      input.disabled = true;
+      say('Checking your code…');
+      try {
+        await signIn(code);
+        if (document.body.contains(body)) drawPanel();
+      } catch (err) {
+        busy = false;
+        input.disabled = false;
+        signinNote = signInError(err, code.length > 8);
+        say(signinNote, true);
+        input.select();
+      }
+    }
+    // Typed or pasted by hand: goes as soon as a whole code is in the box.
+    input.addEventListener('input', () => {
+      signinNote = '';
+      say(SIGNIN_HELP);
+      if (codeIn(input.value)) submit(input.value);
+    });
+    body.querySelector('#you-signin').addEventListener('submit', e => { e.preventDefault(); submit(input.value); });
+    body.querySelector('#you-paste').addEventListener('click', async () => {
+      let text = '';
+      try { text = await navigator.clipboard.readText(); } catch (e) {}
+      // No clipboard to read (or nothing on it): the box is theirs to type in.
+      if (!text.trim()) { input.focus(); return; }
+      const code = codeIn(text);
+      input.value = code.length === 8 ? fmtCode(code) : '';
+      submit(text);
+    });
+  }
+
+  function drawSignedIn(body, auth) {
+    // The app can't be opened by a link, so the website hands over a code
+    // for it. Inside the app there's nobody left to hand it to.
+    const web = !installed();
+    const known = appCode && appCode.token === auth.token ? appCode.code : '';
+    body.innerHTML = `
+      <div class="you-acct item">
+        <span class="you-mono" aria-hidden="true">${esc(monogram(auth.manager))}</span>
+        <div class="you-acct-t"><b>${esc(auth.manager)}</b><span>Signed in on this ${web ? 'browser' : 'phone'}</span></div>
+        <button type="button" class="you-txt" id="you-signout">Sign out</button>
+      </div>
+      ${web ? `<div class="you-sec" id="you-handoff">
+        <div class="you-sec-h">Use the app on your home screen?</div>
+        <div class="you-sub">It signs in on its own. Copy your code, open the app, tap You and paste.</div>
+        <button type="button" class="you-copy" id="you-copy"${known ? '' : ' disabled'}><span class="you-copy-code">${known ? fmtCode(known) : '····-····'}</span><span class="you-copy-lab">Copy</span></button>
+      </div>` : ''}`;
+    body.querySelector('#you-signout').addEventListener('click', () => {
+      fetch(WORKER + '/auth/signout', { method: 'POST', headers: authHeaders(), keepalive: true }).catch(() => {});
+      setAuth(null);
+      drawPanel();
+    });
+    const copy = body.querySelector('#you-copy');
+    if (copy) copy.addEventListener('click', async () => {
+      const lab = copy.querySelector('.you-copy-lab');
+      if (!appCode) return;
+      try {
+        await navigator.clipboard.writeText(fmtCode(appCode.code));
+        lab.textContent = 'Copied';
+        copy.classList.add('done');
+        setTimeout(() => { lab.textContent = 'Copy'; copy.classList.remove('done'); }, 2000);
+      } catch (e) {
+        lab.textContent = 'Type it in';
+      }
+    });
+    // Asks the Worker whether this browser's key is still good (a reset
+    // signs every phone out) and, on the website, for the code to show.
+    const still = () => youPanel === 'you' && document.body.contains(body) && (getAuth() || {}).token === auth.token;
+    fetch(WORKER + '/auth/me' + (web ? '?code=1' : ''), { headers: { Authorization: 'Bearer ' + auth.token } }).then(async res => {
+      if (res.status === 401) {
+        if ((getAuth() || {}).token !== auth.token) return;
+        setAuth(null);
+        signinNote = `You were signed out. Tap the link in ${COMMISH}'s text to sign back in.`;
+        if (youPanel === 'you' && document.body.contains(body)) drawPanel();
+        return;
+      }
+      const out = await res.json();
+      if (!web || !out.code) return;
+      appCode = { token: auth.token, code: out.code };
+      if (!still() || !copy) return;
+      copy.querySelector('.you-copy-code').textContent = fmtCode(out.code);
+      copy.disabled = false;
+    }).catch(() => {});
   }
 
   function drawPushPanel() {
@@ -556,7 +723,9 @@
     foot.textContent = parts.join(' · ');
   }
 
-  function render() { renderNav(); renderFooter(); }
+  function render() { renderNav(); renderFooter(); claimFromLink(); }
+  // The link tapped again while the site is already open in this tab.
+  window.addEventListener('hashchange', claimFromLink);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', render);

@@ -43,9 +43,11 @@
  *                      of the live dashboard).
  * POST /push/subscribe, /push/unsubscribe -> Home Screen app
  *                      notifications (see push.js, site audit II #37).
+ * POST /auth/claim, GET /auth/me, POST /auth/signout, POST /auth/admin ->
+ *                      manager sign-in (see auth.js, site audit III #24).
  *
  * Required setup:
- *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT, PARLAY_PIN   (wrangler secret put ...)
+ *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT, PARLAY_PIN, AUTH_SECRET   (wrangler secret put ...)
  *   - Plain vars:  ESPN_LEAGUE_ID, ESPN_YEAR, ALLOWED_ORIGIN
  *   - KV namespace bound as: COOLDOWN_KV (already existed for the old design)
  *   - D1 table `cache` in DB (schema.sql)
@@ -59,6 +61,7 @@ import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
 import { getPlayerLog } from "./playerLog.js";
 import { getFeed, recordScoreEvents } from "./scoreFeed.js";
 import { cached } from "./cache.js";
+import { AUTH_ROUTES } from "./auth.js";
 
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
 
@@ -155,7 +158,7 @@ function corsHeaders(env, request) {
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Vary": "Origin",
   };
 }
@@ -220,6 +223,12 @@ export default {
       if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await PUSH_ROUTES[path](request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
       return jsonResponse(result.body, headers, result.status);
+    }
+    if (AUTH_ROUTES[path]) {
+      const [method, route] = AUTH_ROUTES[path];
+      if (request.method !== method) return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
     }
     if (path === "/parlay-stats") {
       // Precomputed elsewhere (publish_parlay_stats.py, run on a schedule

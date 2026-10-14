@@ -48,6 +48,30 @@ function isMe(name) {
   return !!me && !!name && me.toLowerCase() === String(name).toLowerCase();
 }
 
+// ---------- Signed in (audit III #24) ----------
+// "This is me" above is only a setting. Signing in proves it: the link the
+// commissioner texts (or the code the website shows for the Home Screen
+// app) is swapped by the Worker for a key kept in this browser, and the
+// Worker reads who you are from that key (worker/src/auth.js). The You
+// sheet (nav.js) does the signing in and out; a page that saves something
+// in your name sends authHeaders() with it. setAuth fires 'rl-auth'.
+const AUTH_KEY = 'rl-auth';
+function getAuth() {
+  try {
+    const a = JSON.parse(localStorage.getItem(AUTH_KEY));
+    return a && a.token && a.manager ? a : null;
+  } catch (e) { return null; }
+}
+function setAuth(auth) {
+  try { if (auth) localStorage.setItem(AUTH_KEY, JSON.stringify(auth)); else localStorage.removeItem(AUTH_KEY); } catch (e) {}
+  if (auth) setMe(auth.manager);
+  window.dispatchEvent(new CustomEvent('rl-auth', { detail: auth || null }));
+}
+function authHeaders() {
+  const a = getAuth();
+  return a ? { Authorization: 'Bearer ' + a.token } : {};
+}
+
 // ---------- Your settings (You sheet › Settings, nav.js) ----------
 // Kept in this browser like the pick above. Changing one fires
 // 'rl-settings' so an open page can redraw.
