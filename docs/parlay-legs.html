@@ -33,13 +33,9 @@
   .cols > *{ min-width: 0; }
   .col{ display: grid; gap: 14px; min-width: 0; }
   .col > section{ margin: 0; }
-  /* One column at every width, like the phone: the panels never change
-     size under you. On desktop the week's legs sit two across, the way
-     Parlay Results lays out its legs. */
-  @media (min-width: 900px){
-    #board{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
-    #board .leg{ margin-top: 0; }
-  }
+  /* One column at every width, like the phone, and no wider than about
+     a phone column on desktop, so cards never stretch across the screen. */
+  .wrap{ max-width: 640px; }
   .meta-grid{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .meta-grid .field{ margin-top: 0; }
   @media (max-width: 560px){ .meta-grid{ grid-template-columns: 1fr 1fr; } .meta-grid .field:first-child{ grid-column: 1 / -1; } }
@@ -674,7 +670,7 @@
         <label class="field"><span>Final odds</span><input class="in" id="m-odds" inputmode="numbers-and-punctuation" autocomplete="off" placeholder="+478887" value="${esc(fmtOdds(m.final_odds))}"></label>
         <label class="field"><span>Final payout</span><input class="in" id="m-payout" inputmode="decimal" autocomplete="off" placeholder="95797.48" value="${esc(m.final_payout ?? '')}"></label>
       </div>
-      <div class="acts"><button type="button" class="gold-btn solid" id="m-save"${metaSaving ? ' disabled' : ''}>${metaSaving ? 'Saving…' : 'Save week'}</button><a class="gold-btn" href="parlay-entry.html?year=${board.year}&week=${board.week}">Enter Picks</a></div>
+      <div class="acts"><button type="button" class="gold-btn solid" id="m-save"${metaSaving ? ' disabled' : ''}>${metaSaving ? 'Saving…' : 'Save week'}</button><a class="gold-btn" href="parlay-entry.html?year=${board.year}&week=${board.week}">Commish View</a></div>
       ${metaMsg ? `<p class="fine">${esc(metaMsg)}</p>` : ''}`;
   }
   commishEl.addEventListener('click', async e => {
