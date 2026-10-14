@@ -46,6 +46,8 @@ const ODDS_API = "https://api.the-odds-api.com/v4/sports";
 const BOOKS = ["hardrockbet_fl", "hardrockbet"];
 const ODDS_RESERVE = 30;
 const ODDS_LEFT_KEY = "legs:odds-left";
+// Who may enter any manager's leg, not just their own (COMMISSIONERS in nav.js).
+const COMMISSIONERS = ["Brad", "Jon"];
 
 // The sheet's Bet Type list (tools/add_parlay_validation.py), plus "Other"
 // for a typed-in leg.
@@ -216,6 +218,7 @@ async function board(env, request) {
   return {
     year: wk.year, week: wk.week, open: win.open, locksAt: win.locksAt, opensAt: win.opensAt,
     days: win.days, players: stats?.players || [], legs: await weekLegs(env, wk, win), me: me ? me.manager : null,
+    commish: !!me && COMMISSIONERS.includes(me.manager),
     _wk: wk, _win: win,
   };
 }
@@ -231,19 +234,22 @@ async function saveLeg(request, env) {
   const body = await request.json().catch(() => null);
   if (!body) return { status: 400, body: { error: "bad_json" } };
   const b = await board(env, null);
-  if (!b.open) return { status: 403, body: { error: "locked", ...publicBoard(b), me: who.manager } };
-  if (!b.players.includes(who.manager)) return { status: 403, body: { error: "not_a_player" } };
+  if (!b.open) return { status: 403, body: { error: "locked", ...publicBoard(b), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
+  // A commissioner may save for anyone; everyone else only for themselves.
+  const player = typeof body.player === "string" && body.player ? body.player : who.manager;
+  if (player !== who.manager && !COMMISSIONERS.includes(who.manager)) return { status: 403, body: { error: "not_commissioner" } };
+  if (!b.players.includes(player)) return { status: 403, body: { error: "not_a_player" } };
   const now = Date.now();
 
   if (body.remove) {
     await env.PARLAY_DB.prepare("UPDATE leg_entries SET removed = 1, updated = ?1 WHERE year = ?2 AND week = ?3 AND player = ?4")
-      .bind(now, b.year, b.week, who.manager).run();
+      .bind(now, b.year, b.week, player).run();
   } else {
     const leg = cleanLeg(body.leg);
     if (leg.error) return { status: 400, body: { error: leg.error } };
-    const hits = b.legs.filter((l) => l.player !== who.manager).map((l) => [l, clash(leg, l)]);
+    const hits = b.legs.filter((l) => l.player !== player).map((l) => [l, clash(leg, l)]);
     const stop = hits.find((h) => h[1] === "same") || hits.find((h) => h[1] === "opposite");
-    if (stop) return { status: 409, body: { error: stop[1], by: stop[0].player, pick: pickText(stop[0]), ...publicBoard(b), me: who.manager } };
+    if (stop) return { status: 409, body: { error: stop[1], by: stop[0].player, pick: pickText(stop[0]), ...publicBoard(b), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
     await env.PARLAY_DB.prepare(
       `INSERT INTO leg_entries (year, week, player, win, sport, bet_type, team, opponent, player_prop, line, side, odds, gametime, raw_pick, game_id, removed, updated)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, 0, ?16)
@@ -251,11 +257,11 @@ async function saveLeg(request, env) {
          team = excluded.team, opponent = excluded.opponent, player_prop = excluded.player_prop, line = excluded.line,
          side = excluded.side, odds = excluded.odds, gametime = excluded.gametime, raw_pick = excluded.raw_pick,
          game_id = excluded.game_id, removed = 0, updated = excluded.updated`
-    ).bind(b.year, b.week, who.manager, b._win.tue, leg.sport, leg.bet_type, leg.team, leg.opponent, leg.player_prop,
+    ).bind(b.year, b.week, player, b._win.tue, leg.sport, leg.bet_type, leg.team, leg.opponent, leg.player_prop,
       leg.line, leg.side, leg.odds, leg.gametime, leg.raw_pick, leg.game_id, now).run();
   }
   const synced = await dispatchSync(env, b._wk).catch((err) => { console.error("Leg sync dispatch failed:", err); return false; });
-  return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager } };
+  return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
 }
 
 /** Hands the week's legs to sync_legs.yml. false when it couldn't. */

@@ -137,6 +137,11 @@
     font: 16px var(--body); user-select: text; -webkit-user-select: text;
   }
   .ed-in:focus{ outline: none; border-color: var(--gold); }
+  /* iPhone Safari gives a date-time field a fixed width wider than half a
+     card and ignores width: 100% until the field drops its native look;
+     the value then left-aligns like every other field. */
+  input.ed-in[type="datetime-local"], .fix-time{ -webkit-appearance: none; appearance: none; display: block; max-width: 100%; }
+  .ed-in::-webkit-date-and-time-value, .fix-time::-webkit-date-and-time-value{ text-align: left; }
   select.ed-in{ appearance: none; -webkit-appearance: none; padding-right: 28px;
     background: var(--ctl-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238E8E8C' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center; }
   .week-grid{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -677,7 +682,7 @@
         ${field('Bet type', sel('bet_type', ['', ...BET_TYPES]))}
         ${field('Sport', sel('sport', ['', ...ParlayNote.SPORTS]))}
         ${fields.map(f => f === 'side' ? field('Side', sel('side', ['', 'Over', 'Under']))
-          : field(LABELS[f], input(f, f === 'line' ? 'inputmode="decimal"' : ''), f === 'player_prop' ? 'full' : '')).join('')}
+          : field(LABELS[f], input(f, f === 'line' ? 'inputmode="numbers-and-punctuation"' : ''), f === 'player_prop' ? 'full' : '')).join('')}
         ${field('Odds', input('odds', 'inputmode="numbers-and-punctuation" placeholder="-110"'))}
         ${field('Kickoff (Eastern)', input('gametime', 'type="datetime-local" step="60"'), 'full')}
       </div>` : '';
@@ -688,7 +693,9 @@
         <div class="leg-top"><span class="leg-name">${esc(n)}</span><span class="leg-odds">${fmtOdds(parseOdds(r.odds))}</span></div>
         <div class="leg-bet">${r.bet_type ? betText(pick) : 'No pick'}</div>
         ${game ? `<div class="leg-game">${game}</div>` : ''}
-        <div class="res-row">${res}<button type="button" class="link-btn" data-open="${esc(n)}">${open ? 'Done' : r.bet_type ? 'Edit pick' : 'Add a pick'}</button></div>
+        <div class="res-row">${res}${!r.bet_type && !open && boardOpen()
+          ? `<a class="link-btn" style="text-decoration:none" href="parlay-legs.html?for=${encodeURIComponent(n)}">Add a pick</a>`
+          : `<button type="button" class="link-btn" data-open="${esc(n)}">${open ? 'Done' : r.bet_type ? 'Edit pick' : 'Add a pick'}</button>`}</div>
         ${form}
       </div>`;
   }
@@ -791,6 +798,13 @@
     const b = e.target.closest('button');
     if (b && b.dataset.mode !== mode && !saving) setMode(b.dataset.mode);
   });
+
+  // The week Parlay Legs has open, if any: adding a pick to it goes through
+  // that page's board (games, lines, and the same-leg checks).
+  let legsOpen = null;
+  const boardOpen = () => legsOpen && legsOpen.year === ed.year && legsOpen.week === ed.week;
+  fetch(WORKER_URL + '/legs', { cache: 'no-store' }).then(r => r.json())
+    .then(b => { if (b.open) { legsOpen = { year: b.year, week: b.week }; if (mode === 'edit') renderEdit(); } }).catch(() => {});
 
   // ---------- Start ----------
   pinEl.value = store.get(PIN_KEY);
