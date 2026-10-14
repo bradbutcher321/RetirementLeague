@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<style>html{background:#050505}</style>
+<title>Retirement League — League Videos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=29">
+<link rel="stylesheet" href="nav.css?v=14">
+<style>
+  /* ---------- League Videos ----------
+     The weekly recaps, signed-in managers only (worker/src/videos.js). The
+     Worker sends the video ids only to a valid sign-in, so nothing here
+     names a video or a playlist. One column at every width, like the phone. */
+  .wrap{ max-width: 640px; }
+  .player{ position: relative; aspect-ratio: 16 / 9; background: #000; }
+  .player iframe{ position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .vlist{ display: grid; }
+  .vrow{ display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 6px 16px; width: 100%; background: none; border: 0; border-top: 1px solid var(--line); color: var(--text); font: 600 0.92rem var(--body); text-align: left; cursor: pointer; }
+  .vrow:first-child{ border-top: 0; }
+  .vrow .n{ flex: none; width: 26px; font-family: var(--scoreboard); font-weight: 700; font-size: 1.05rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .vrow .t{ min-width: 0; overflow-wrap: anywhere; }
+  .vrow.on{ background: var(--lead-tint); }
+  .vrow.on .n, .vrow.on .t{ color: var(--gold); }
+  .vrow:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  .note{ padding: 22px 18px; color: var(--text-dim); font-size: 0.9rem; margin: 0; }
+  .note.bad{ color: var(--loss); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">Retirement League</div>
+      <h1>League Videos</h1>
+    </header>
+
+    <div class="controls-row" id="controls" hidden>
+      <div class="selector-group">
+        <label class="selector-label" for="season-select">Season</label>
+        <select class="board-select" id="season-select" autocomplete="off"></select>
+      </div>
+    </div>
+
+    <section class="glass" id="card"><p class="note">Loading…</p></section>
+
+    <footer id="site-footer"></footer>
+  </div>
+<script src="nav.js?v=17"></script>
+<script src="page-common.js?v=33"></script>
+<script>
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const card = document.getElementById('card');
+  const controls = document.getElementById('controls');
+  const select = document.getElementById('season-select');
+  let data = null;      // GET /videos
+  let current = 0;      // index of the video in the player
+  let busy = 0;         // bumps on each load so a slow answer can't overwrite a newer one
+
+  const note = (html, bad) => { controls.hidden = true; card.innerHTML = `<p class="note${bad ? ' bad' : ''}">${html}</p>`; };
+
+  function playerHtml(autoplay){
+    const v = data.videos[current];
+    return `<div class="player"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?rel=0&playsinline=1${autoplay ? '&autoplay=1' : ''}" title="${esc(v.title)}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+  }
+  const rows = () => data.videos.map((v, i) => `<button type="button" class="vrow${i === current ? ' on' : ''}" data-i="${i}"><span class="n">${i + 1}</span><span class="t">${esc(v.title)}</span></button>`).join('');
+
+  function draw(autoplay){
+    if (!data.videos.length) return note('No videos in this season yet.');
+    controls.hidden = false;
+    select.innerHTML = data.seasons.map(y => `<option value="${y}"${y === data.season ? ' selected' : ''}>${y}</option>`).join('');
+    card.innerHTML = `<div id="stage">${playerHtml(autoplay)}</div><div class="vlist" id="vlist">${rows()}</div>`;
+  }
+
+  async function load(season){
+    if (!getAuth()) return note('Sign in to watch: open the link the commissioner texted you, or tap You and sign in with your code.');
+    const mine = ++busy;
+    let res = null, out = {};
+    try {
+      res = await fetch(WORKER_URL + '/videos' + (season ? '?season=' + season : ''), { cache: 'no-store', headers: authHeaders() });
+      out = await res.json().catch(() => ({}));
+    } catch { /* no connection */ }
+    if (mine !== busy) return;
+    if (res && res.status === 401) return note('Your sign-in has run out. Tap You and sign in again.', true);
+    if (!res || !res.ok || !out.videos) return note("Couldn't load the videos. Pull down or reload to try again.", true);
+    data = out; current = 0;
+    draw(false);
+  }
+
+  card.addEventListener('click', e => {
+    const b = e.target.closest('.vrow');
+    if (!b || !data) return;
+    current = Number(b.dataset.i);
+    document.getElementById('stage').innerHTML = playerHtml(true);
+    document.querySelectorAll('.vrow').forEach((r, i) => r.classList.toggle('on', i === current));
+    document.getElementById('stage').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+  select.addEventListener('change', () => load(Number(select.value)));
+  addEventListener('rl-auth', () => load());
+  load();
+</script>
+<script src="track.js?v=1" defer></script>
+</body>
+</html>
