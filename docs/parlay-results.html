@@ -391,7 +391,7 @@
           <div class="table-wrap">
             <table class="jt-table">
               <thead>
-                <tr><th>Team</th><th>W</th><th>L</th><th>Win %</th><th>Avg Odds</th><th>Kills</th><th>Sackos</th></tr>
+                <tr><th>Team</th><th>W-L</th><th>Win %</th><th>Avg Odds</th><th>Kills</th><th>Sackos</th></tr>
               </thead>
               <tbody id="jt-tbody"></tbody>
             </table>
@@ -1180,7 +1180,7 @@
       const jtScopeRow = document.getElementById('jt-scope-row');
       const jtTbody = document.getElementById('jt-tbody');
       const jtCopyBtn = document.getElementById('jt-copy-btn');
-      const JT_HEADER = ['Team', 'W', 'L', 'Win %', 'Avg Odds', 'Kills', 'Sackos'];
+      const JT_HEADER = ['Team', 'W-L', 'Win %', 'Avg Odds', 'Kills', 'Sackos'];
       let jtScope = String(current.year);
 
       function jonsRows(scope) {
@@ -1202,8 +1202,7 @@
         jtTbody.innerHTML = jonsRows(jtScope).map(r => `
           <tr>
             <td>${esc(r.player)}</td>
-            <td>${r.w}</td>
-            <td>${r.l}</td>
+            <td>${r.w}-${r.l}</td>
             <td>${fmtPct(r.win_pct)}</td>
             <td>${fmtOdds(r.avgOdds)}</td>
             <td>${r.kills.toFixed(1)}</td>
@@ -1269,7 +1268,7 @@
       }
       jtCopyBtn.addEventListener('click', () => {
         const lines = [JT_HEADER.join('\t')].concat(jonsRows(jtScope).map(r => [
-          r.player, r.w, r.l,
+          r.player, `${r.w}-${r.l}`,
           r.win_pct === null || r.win_pct === undefined ? '' : r.win_pct.toFixed(1) + '%',
           r.avgOdds === null || r.avgOdds === undefined ? '' : fmtOdds(r.avgOdds),
           r.kills.toFixed(1), r.sackos,

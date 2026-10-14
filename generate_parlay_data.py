@@ -312,7 +312,7 @@ def compute_stats(players, weeks):
             positions[n].append(pos)
 
         for name, p in week["picks"].items():
-            if p["odds"]:
+            if p["odds"] and p["result"] in GRADED:
                 odds_lists[name].append(p["odds"])
             sport = sports.setdefault(p["sport"], [0, 0]) if p["sport"] else None
             btype = bet_types.setdefault(p["pick"].split(":")[0].strip(), [0, 0]) if ":" in p["pick"] else None
