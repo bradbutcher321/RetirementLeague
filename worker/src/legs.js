@@ -22,13 +22,17 @@
  * GET  /legs                -> { year, week, open, locksAt, opensAt, players,
  *                                legs, me } (me only with a signed-in key)
  * POST /legs  { leg } | { remove: true }   Authorization: Bearer <key>
- * GET  /legs/games?sport=   -> this window's games (Thu-Mon) with lines
- * GET  /legs/props?sport=&game= -> { odds: {player: price} } for Anytime TD
+ * GET  /legs/games?sport=   -> { events } Hard Rock's lines for the window
+ *                              (Thu-Mon); the page matches them to ESPN's
+ *                              schedule, which it reads itself
+ * GET  /legs/props?sport=&event= -> { odds: {player: price} } for Anytime TD
  *
  * Lines come from Hard Rock Bet through The Odds API (secret ODDS_API_KEY):
  * the Florida book first, then Hard Rock's main book, which also has
  * college football; Florida's doesn't. A game neither lists keeps the
- * DraftKings line ESPN's scoreboard carries. The free plan is 500 credits a
+ * DraftKings line ESPN's scoreboard carries. The schedule itself is read
+ * by the page: ESPN's site API turns away requests from Cloudflare's
+ * servers (see fetchNflScoreboard in espn.js), never a browser's. The free plan is 500 credits a
  * month; a sport's lines cost 3 and are kept 4 hours, a game's touchdown
  * odds cost 1 and are kept 6, and nothing is fetched once fewer than
  * ODDS_RESERVE credits are left.
@@ -38,7 +42,6 @@ import { cached } from "./cache.js";
 
 const REPO = "bradbutcher321/RetirementLeague";
 const SYNC_WORKFLOW = "sync_legs.yml";
-const ESPN = "https://site.web.api.espn.com/apis/site/v2/sports";
 const ODDS_API = "https://api.the-odds-api.com/v4/sports";
 const BOOKS = ["hardrockbet_fl", "hardrockbet"];
 const ODDS_RESERVE = 30;
@@ -53,17 +56,12 @@ const TEAM_LINE_VS = ["Spread", "Alt Spread", "1st Half Spread"];
 const TOTAL_VS = ["Total Points", "Total Goals", "Total Rounds"];
 const PLAYER_ONLY = ["Anytime TD", "Coin Toss"];
 
-// Board sports: ESPN scoreboards, and The Odds API's key where Hard Rock
-// has lines worth the credits. Futbol stays on DraftKings: six leagues
-// would cost 18 credits a look.
-const SPORTS = {
-  NFL: { paths: ["football/nfl"], odds: "americanfootball_nfl" },
-  NCAAF: { paths: ["football/college-football"], q: "&groups=80&limit=300", odds: "americanfootball_ncaaf" },
-  NBA: { paths: ["basketball/nba"], odds: "basketball_nba" },
-  NCAAM: { paths: ["basketball/mens-college-basketball"], q: "&groups=50&limit=300", odds: "basketball_ncaab" },
-  NHL: { paths: ["hockey/nhl"], odds: "icehockey_nhl" },
-  MLB: { paths: ["baseball/mlb"], odds: "baseball_mlb" },
-  Futbol: { paths: ["soccer/eng.1", "soccer/uefa.champions", "soccer/esp.1", "soccer/usa.1", "soccer/ger.1", "soccer/ita.1"] },
+// The Odds API's key for each board sport Hard Rock has lines worth the
+// credits for. Futbol stays on DraftKings: six leagues would cost 18
+// credits a look.
+const ODDS_KEYS = {
+  NFL: "americanfootball_nfl", NCAAF: "americanfootball_ncaaf", NBA: "basketball_nba",
+  NCAAM: "basketball_ncaab", NHL: "icehockey_nhl", MLB: "baseball_mlb",
 };
 
 // ---------- Eastern time ----------
@@ -160,12 +158,15 @@ const LEG_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "lin
  * for them (the commissioner entered it, or fixed a typed-in one). An entry
  * the sheet already has under the same Raw Pick reads from the sheet, so a
  * commissioner's fix shows. */
-async function weekLegs(env, wk) {
+async function weekLegs(env, wk, win) {
   const [entries, sheet] = await env.PARLAY_DB.batch([
     env.PARLAY_DB.prepare("SELECT * FROM leg_entries WHERE year = ?1 AND week = ?2").bind(wk.year, wk.week),
     env.PARLAY_DB.prepare(`SELECT player, ${LEG_FIELDS.join(", ")} FROM picks WHERE year = ?1 AND week = ?2 AND bet_type IS NOT NULL AND bet_type != ''`).bind(wk.year, wk.week),
   ]);
-  const fromSheet = Object.fromEntries(sheet.results.map((r) => [r.player, r]));
+  // A sheet row from before this window's Tuesday isn't this week's leg (the
+  // mirror keeps rows the sheet has since dropped).
+  const since = `${win.tue}T00:00:00`;
+  const fromSheet = Object.fromEntries(sheet.results.filter((r) => !r.gametime || r.gametime >= since).map((r) => [r.player, r]));
   const out = [];
   for (const e of entries.results) {
     const s = fromSheet[e.player];
@@ -214,7 +215,7 @@ async function board(env, request) {
   const me = request ? await sessionManager(request, env) : null;
   return {
     year: wk.year, week: wk.week, open: win.open, locksAt: win.locksAt, opensAt: win.opensAt,
-    players: stats?.players || [], legs: await weekLegs(env, wk), me: me ? me.manager : null,
+    days: win.days, players: stats?.players || [], legs: await weekLegs(env, wk, win), me: me ? me.manager : null,
     _wk: wk, _win: win,
   };
 }
@@ -254,7 +255,7 @@ async function saveLeg(request, env) {
       leg.line, leg.side, leg.odds, leg.gametime, leg.raw_pick, leg.game_id, now).run();
   }
   const synced = await dispatchSync(env, b._wk).catch((err) => { console.error("Leg sync dispatch failed:", err); return false; });
-  return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk) }), me: who.manager } };
+  return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager } };
 }
 
 /** Hands the week's legs to sync_legs.yml. false when it couldn't. */
@@ -271,72 +272,14 @@ async function dispatchSync(env, wk) {
   return res.ok;
 }
 
-// ---------- Games and lines ----------
-const canonical = (c) => {
-  const name = c.team.shortDisplayName || c.team.displayName || "";
-  const rank = c.curatedRank && c.curatedRank.current;
-  return rank && rank <= 25 ? `#${rank} ${name}` : name;
-};
-const americanNum = (v) => {
-  if (v == null || v === "") return null;
-  if (/^even$/i.test(String(v))) return 100;
-  const n = Number(String(v).replace("+", ""));
-  return Number.isFinite(n) && n !== 0 ? n : null;
-};
-const signed = (n) => (n > 0 ? "+" : "") + n;
-
-/** ESPN's DraftKings line, in the shape the page reads. */
-function espnOdds(comp) {
-  const o = (comp.odds || [])[0];
-  if (!o) return null;
-  const side = (m, k) => o[m]?.[k]?.close || o[m]?.[k]?.open || {};
-  const ln = (s) => (s && s.line ? String(s.line).replace(/^[ou]/, "") : "");
-  const out = {
-    src: "DK",
-    ml: [americanNum(side("moneyline", "away").odds), americanNum(side("moneyline", "home").odds)],
-    sp: [[ln(side("pointSpread", "away")), americanNum(side("pointSpread", "away").odds)], [ln(side("pointSpread", "home")), americanNum(side("pointSpread", "home").odds)]],
-    tot: [[ln(side("total", "over")), americanNum(side("total", "over").odds)], [ln(side("total", "under")), americanNum(side("total", "under").odds)]],
-  };
-  if (!out.tot[0][0] && o.overUnder != null) out.tot = [[String(o.overUnder), null], [String(o.overUnder), null]];
-  return out;
-}
-
-async function espnDay(path, q, day) {
-  const res = await fetch(`${ESPN}/${path}/scoreboard?dates=${day}${q || ""}`);
-  if (!res.ok) throw new Error(`ESPN ${path} ${day}: ${res.status}`);
-  return (await res.json()).events || [];
-}
-
-/** The window's games for a sport, ESPN's schedule and DraftKings lines. */
-function schedule(env, sport, win) {
-  const cfg = SPORTS[sport];
-  return cached(env, `legs:games:${sport}:${win.days[0]}`, 15 * 60, async () => {
-    const lists = await Promise.all(win.days.flatMap((day) => cfg.paths.map((p) => espnDay(p, cfg.q, day).catch(() => []))));
-    const seen = new Map();
-    for (const ev of lists.flat()) {
-      const comp = ev.competitions?.[0];
-      const cs = comp?.competitors || [];
-      const away = cs.find((c) => c.homeAway === "away"), home = cs.find((c) => c.homeAway === "home");
-      if (!away || !home || !away.team || !home.team || seen.has(ev.id)) continue;
-      if (comp.status?.type?.state && comp.status.type.state !== "pre") continue; // started or over
-      seen.set(ev.id, {
-        id: ev.id, sport, t: easternIso(new Date(comp.date)), at: Date.parse(comp.date),
-        a: canonical(away), h: canonical(home), aid: away.team.id, hid: home.team.id,
-        am: [away.team.displayName, away.team.location, away.team.name], hm: [home.team.displayName, home.team.location, home.team.name],
-        odds: espnOdds(comp),
-      });
-    }
-    return [...seen.values()].sort((x, y) => x.t.localeCompare(y.t) || x.a.localeCompare(y.a));
-  });
-}
-
+// ---------- Hard Rock lines ----------
 /** One Odds API call, unless the month's credits are nearly gone. */
 async function oddsApi(env, url) {
   const left = await env.COOLDOWN_KV.get(ODDS_LEFT_KEY);
   if (left != null && Number(left) < ODDS_RESERVE) throw new Error("odds_budget");
   const res = await fetch(`${url}${url.includes("?") ? "&" : "?"}apiKey=${env.ODDS_API_KEY}`);
   const remaining = res.headers.get("x-requests-remaining");
-  // Kept a month at most: the plan resets monthly, and a stale low count
+  // Kept a week at most: the plan resets monthly, and a stale low count
   // would otherwise keep Hard Rock off for good.
   if (remaining != null) await env.COOLDOWN_KV.put(ODDS_LEFT_KEY, remaining, { expirationTtl: 7 * 24 * 3600 });
   if (!res.ok) throw new Error(`Odds API ${res.status}`);
@@ -349,82 +292,36 @@ const oddsWindow = (win) => {
   return `commenceTimeFrom=${iso(etMs(`${thu}T00:00:00`))}&commenceTimeTo=${iso(etMs(`${addDays(thu, 5)}T06:00:00`))}`;
 };
 
-/** Hard Rock's lines for a sport's window: [{id, at, home, away, book, markets}]. */
+/** Hard Rock's lines for a sport's window: [{id, at, home, away, markets}],
+ * Florida's book where it has the game, Hard Rock's main book otherwise. */
 function hardRock(env, sport, win) {
-  const key = SPORTS[sport].odds;
+  const key = ODDS_KEYS[sport];
   if (!env.ODDS_API_KEY || !key) return Promise.resolve([]);
   return cached(env, `legs:hr:${sport}:${win.days[0]}`, 4 * 3600, async () => {
     const events = await oddsApi(env, `${ODDS_API}/${key}/odds?bookmakers=${BOOKS.join(",")}&markets=h2h,spreads,totals&oddsFormat=american&${oddsWindow(win)}`);
     return events.map((e) => {
       const book = BOOKS.map((k) => e.bookmakers.find((b) => b.key === k)).find(Boolean);
       return { id: e.id, at: Date.parse(e.commence_time), home: e.home_team, away: e.away_team, markets: book ? book.markets : [] };
-    });
+    }).filter((e) => e.markets.length);
   }).catch((err) => { console.error("Hard Rock lines:", String(err)); return []; });
-}
-
-const sameTeam = (name, [display, location, nick]) => {
-  const n = fold(name);
-  return n === fold(display) || (fold(location) && n.startsWith(fold(location)) && n.endsWith(fold(nick))) || n === fold(location);
-};
-/** g's event among Hard Rock's: both teams by name, or, when ESPN and the
- * book spell one school differently ("App State"), the only event that
- * hour with the other team in it. */
-function matchEvent(g, events) {
-  const near = events.filter((e) => Math.abs(e.at - g.at) < 3 * 3600 * 1000);
-  const both = near.find((e) => (sameTeam(e.away, g.am) && sameTeam(e.home, g.hm)) || (sameTeam(e.away, g.hm) && sameTeam(e.home, g.am)));
-  if (both) return both;
-  const one = near.filter((e) => [e.away, e.home].some((n) => sameTeam(n, g.am) || sameTeam(n, g.hm)));
-  return one.length === 1 ? one[0] : null;
-}
-
-/** A Hard Rock event's markets in the page's shape, or null. */
-function hrOdds(g, e) {
-  if (!e || !e.markets.length) return null;
-  const m = Object.fromEntries(e.markets.map((x) => [x.key, x.outcomes]));
-  // Away then home. A two-way market whose one side didn't match by name
-  // takes the outcome that isn't the other team's.
-  const pair = (list) => {
-    list = (list || []).filter((o) => o.name !== "Draw");
-    let a = list.find((o) => sameTeam(o.name, g.am)), h = list.find((o) => sameTeam(o.name, g.hm));
-    if (list.length === 2) { if (a && !h) h = list.find((o) => o !== a); if (h && !a) a = list.find((o) => o !== h); }
-    return [a, h];
-  };
-  const tot = ["Over", "Under"].map((s) => (m.totals || []).find((o) => o.name === s));
-  return {
-    src: "HR",
-    ml: pair(m.h2h).map((o) => (o ? o.price : null)),
-    sp: pair(m.spreads).map((o) => (o && o.point != null ? [signed(o.point), o.price] : ["", null])),
-    tot: tot.map((o) => (o && o.point != null ? [String(o.point), o.price] : ["", null])),
-  };
 }
 
 async function getGames(request, env) {
   const sport = new URL(request.url).searchParams.get("sport");
-  if (!SPORTS[sport]) return { status: 400, body: { error: "bad_sport" } };
-  const win = legWindow();
-  const games = await schedule(env, sport, win);
-  const events = games.length ? await hardRock(env, sport, win) : [];
-  return {
-    status: 200,
-    body: {
-      sport,
-      games: games.map(({ am, hm, at, ...g }) => ({ ...g, odds: hrOdds({ am, hm }, matchEvent({ am, hm, at }, events)) || g.odds })),
-    },
-  };
+  if (!ODDS_KEYS[sport] && sport !== "Futbol") return { status: 400, body: { error: "bad_sport" } };
+  return { status: 200, body: { sport, events: await hardRock(env, sport, legWindow()) } };
 }
 
-/** Hard Rock's Anytime TD prices for one game: {player: price}. */
+/** Hard Rock's Anytime TD prices for one game: {player: price}. Only for an
+ * event in the window's lines, so a made-up id can't spend credits. */
 async function getProps(request, env) {
   const url = new URL(request.url);
-  const sport = url.searchParams.get("sport"), id = url.searchParams.get("game");
-  if (!SPORTS[sport] || !id) return { status: 400, body: { error: "bad_game" } };
-  const win = legWindow();
-  const g = (await schedule(env, sport, win)).find((x) => x.id === id);
-  if (!g || !env.ODDS_API_KEY || !SPORTS[sport].odds) return { status: 200, body: { odds: {} } };
-  const e = matchEvent(g, await hardRock(env, sport, win));
+  const sport = url.searchParams.get("sport"), id = url.searchParams.get("event");
+  if (!ODDS_KEYS[sport] || !id) return { status: 400, body: { error: "bad_game" } };
+  const e = (await hardRock(env, sport, legWindow())).find((x) => x.id === id);
   if (!e) return { status: 200, body: { odds: {} } };
   const odds = await cached(env, `legs:td:${e.id}`, 6 * 3600, async () => {
-    const data = await oddsApi(env, `${ODDS_API}/${SPORTS[sport].odds}/events/${e.id}/odds?bookmakers=${BOOKS.join(",")}&markets=player_anytime_td&oddsFormat=american`);
+    const data = await oddsApi(env, `${ODDS_API}/${ODDS_KEYS[sport]}/events/${e.id}/odds?bookmakers=${BOOKS.join(",")}&markets=player_anytime_td&oddsFormat=american`);
     const book = BOOKS.map((k) => (data.bookmakers || []).find((b) => b.key === k)).find(Boolean);
     const out = {};
     for (const o of book?.markets?.[0]?.outcomes || []) if (o.name === "Yes" && o.description) out[o.description] = o.price;
