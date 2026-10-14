@@ -4364,7 +4364,7 @@
       const chipText = move > 0 ? `▲ ${move}` : move < 0 ? `▼ ${-move}` : '–';
       const inPlayoffPosition = spots > 0 && rank <= spots;
       return `
-      <${lbRowTag(r.manager)} class="lb-row ${inPlayoffPosition ? 'playoff' : ''}" data-sf="${r.espnRank - 1}">
+      <${lbRowTag(r.manager)} class="lb-row ${inPlayoffPosition ? 'playoff' : ''}${isMe(r.manager) ? ' me' : ''}" data-sf="${r.espnRank - 1}">
         <div class="lb-rank">${rank}</div>
         <div class="lb-identity">
           <div class="lb-name">${r.name}</div>
