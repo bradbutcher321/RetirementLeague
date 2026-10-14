@@ -1192,7 +1192,7 @@
         if (!s) return [];
         const oddsMap = Object.fromEntries(s.average_odds.map(r => [r.player, r.avg_odds]));
         const killMap = Object.fromEntries(s.parlays_killed.map(r => [r.player, r.kills]));
-        const sackoMap = Object.fromEntries(s.weekly_sackos.map(r => [r.player, r.sackos]));
+        const sackoMap = s.table_sackos || {};
         // individual_wl is already ordered by win % with ties broken on
         // average odds (harder bets rank first) -- follow that order rather
         // than re-deriving a separate, potentially inconsistent one here.

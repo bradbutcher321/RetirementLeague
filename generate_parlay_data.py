@@ -291,6 +291,7 @@ def compute_stats(players, weeks):
     winnings = {p: 0.0 for p in players}
     losses_amt = {p: 0.0 for p in players}
     sackos = {p: 0 for p in players}
+    served_sackos = {p: 0 for p in players}
     biggest_hit = {}
     safest_loss = {}
     flat = {p: {"profit": 0.0, "bets": 0} for p in players}
@@ -300,11 +301,12 @@ def compute_stats(players, weeks):
 
     for week in weeks:
         payout = week["final"]["payout"] or 0
-        # A week with nothing graded yet is still upcoming -- its sacko
-        # hasn't been served, so it doesn't count toward the totals.
-        started = any(p["result"] in GRADED for p in week["picks"].values())
-        if started and week["sacko"] in sackos:
+        if week["sacko"] in sackos:
             sackos[week["sacko"]] += 1
+            # Jon's Table only counts sackos from weeks that have started
+            # (something graded); an upcoming week's sacko isn't served yet.
+            if any(p["result"] in GRADED for p in week["picks"].values()):
+                served_sackos[week["sacko"]] += 1
 
         killers, chance_names = kill_info(week, players)
         for k in killers:
@@ -387,6 +389,7 @@ def compute_stats(players, weeks):
     avg_odds_by_player = {a["player"]: a["avg_odds"] for a in avg_odds}
 
     return {
+        "table_sackos": {n: served_sackos[n] for n in players},
         "weekly_sackos": by_desc([{"player": n, "sackos": sackos[n], "cost": sackos[n] * SACKO_COST} for n in players], "sackos"),
         "individual_wl": sorted(
             [{"player": n, "w": w, "l": l, "win_pct": round(w / (w + l) * 100, 1) if w + l else 0} for n, (w, l) in leg.items()],
