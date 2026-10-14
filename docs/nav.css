@@ -250,6 +250,15 @@
 .you-head{ display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 4px; }
 .you-tabs{ flex: 1; min-width: 0; flex-wrap: nowrap; }
 .you-tabs button{ flex: 1; justify-content: center; padding: 0 8px; }
+/* On a phone Done sits in the grab row, like the dashboard's sheets, and
+   the slider gets the whole row; the desktop card keeps its ✕ beside it. */
+.you-done{ display: none; position: absolute; right: 4px; top: 0; font: 600 0.82rem var(--body); color: var(--gold); background: none; border: 0; padding: 0 12px; min-height: 44px; cursor: pointer; }
+.you-done:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+@media (max-width: 720px){
+  .you-sheet .sheet-grab{ position: relative; min-height: 38px; align-items: flex-start; }
+  .you-done{ display: block; }
+  .you-head .x{ display: none; }
+}
 /* Panels differ in height; a floor keeps the slider from jumping around
    as the sheet grows and shrinks under it. */
 #you-body{ min-height: 300px; padding-top: 12px; }

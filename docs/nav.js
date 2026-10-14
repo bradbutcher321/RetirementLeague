@@ -368,8 +368,8 @@
     youPanel = YOU_PANELS.some(([k]) => k === panel) ? panel : 'you';
     document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="you-scrim"></div>
       <div class="sheet you-sheet" id="you-sheet" role="dialog" aria-modal="true" aria-label="You">
-        <div class="sheet-grab" aria-hidden="true"><span></span></div>
-        <div class="sheet-head you-head">
+        <div class="sheet-grab" data-grab><span></span><button type="button" class="you-done">Done</button></div>
+        <div class="sheet-head you-head" data-grab>
           <div class="sup-seg you-tabs" role="tablist" aria-label="You">${YOU_PANELS.map(([k, label]) =>
             `<button type="button" role="tab" data-you-panel="${k}" id="you-tab-${k}" aria-controls="you-body">${label}</button>`).join('')}</div>
           <button class="x" type="button" aria-label="Close">✕</button>
@@ -378,17 +378,33 @@
       </div>`);
     const sheet = document.getElementById('you-sheet');
     document.getElementById('you-scrim').addEventListener('click', closeYou);
-    sheet.querySelector('.x').addEventListener('click', closeYou);
+    // Done on the phone's sheet, ✕ on the desktop card (nav.css shows one).
+    const closers = [...sheet.querySelectorAll('.you-done, .x')];
+    closers.forEach(b => b.addEventListener('click', closeYou));
     sheet.querySelectorAll('[data-you-panel]').forEach(b => b.addEventListener('click', () => {
       youPanel = b.dataset.youPanel;
       drawPanel();
     }));
+    wireYouSwipe(sheet);
     document.addEventListener('keydown', onKey);
-    sheet.querySelector('.x').focus();
+    (closers.find(b => b.offsetParent) || closers[0]).focus();
     drawTabs();
     youNames = await loadManagers();
     if (document.getElementById('you-sheet') === sheet) drawPanel();
   };
+
+  // Drag the sheet down past 90px to dismiss it, like the dashboard's
+  // sheets. Only the phone's bottom sheet; the desktop card stays put.
+  const youIsSheet = matchMedia('(max-width: 720px)');
+  function wireYouSwipe(sheet) {
+    let y0 = null, dy = 0;
+    sheet.querySelectorAll('[data-grab]').forEach(el => {
+      el.addEventListener('pointerdown', e => { if (!youIsSheet.matches || e.target.closest('button')) return; y0 = e.clientY; dy = 0; sheet.style.animation = 'none'; el.setPointerCapture(e.pointerId); });
+      el.addEventListener('pointermove', e => { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sheet.style.transform = `translateY(${dy}px)`; });
+      el.addEventListener('pointerup', () => { if (y0 === null) return; y0 = null; if (dy > 90) closeYou(); else sheet.style.transform = ''; });
+      el.addEventListener('pointercancel', () => { y0 = null; sheet.style.transform = ''; });
+    });
+  }
 
   function drawTabs() {
     document.querySelectorAll('#you-sheet [data-you-panel]').forEach(b => {
