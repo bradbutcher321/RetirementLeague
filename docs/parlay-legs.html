@@ -33,13 +33,12 @@
   .cols > *{ min-width: 0; }
   .col{ display: grid; gap: 14px; min-width: 0; }
   .col > section{ margin: 0; }
-  /* Desktop: the games board needs the wide column while you build a leg;
-     otherwise the week's legs get it, two across. */
+  /* One column at every width, like the phone: the panels never change
+     size under you. On desktop the week's legs sit two across, the way
+     Parlay Results lays out its legs. */
   @media (min-width: 900px){
-    .cols{ grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); }
-    .cols.building{ grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); }
-    .cols:not(.building) #board{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
-    .cols:not(.building) #board .leg{ margin-top: 0; }
+    #board{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+    #board .leg{ margin-top: 0; }
   }
   .meta-grid{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .meta-grid .field{ margin-top: 0; }
@@ -569,7 +568,6 @@
     held = mineEl.contains(document.activeElement) && document.activeElement.matches('input, textarea');
     if (held) { refreshSlip(); return; }
     mineEl.innerHTML = drawMine();
-    document.getElementById('cols').classList.toggle('building', !!mineEl.querySelector('.gm, #f-text'));
     drawCommish();
     if (board && board.open && me() && (editing || !mine()) && !st.typed) loadGames(st.sport);
   }
