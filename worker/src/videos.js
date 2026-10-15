@@ -49,8 +49,8 @@ function pageVideos(html) {
   return out;
 }
 
-/** "2023 Retirement League - Week 4" -> "Week 4". */
-const shortTitle = (t) => t.replace(/^\s*\d{4}\s+Retirement League\s*[-–:]?\s*/i, "").trim() || t;
+/** "2023 Retirement League - Week 4" or "2020 Week 3 - The Beginning" -> "Week 4" / "Week 3 - The Beginning". */
+const shortTitle = (t) => t.replace(/^\s*\d{4}\s+(?:Retirement League\s*)?[-–:]?\s*/i, "").trim() || t;
 
 async function fetchPlaylist(listId) {
   const res = await fetch(`https://www.youtube.com/playlist?list=${listId}&hl=en`, {

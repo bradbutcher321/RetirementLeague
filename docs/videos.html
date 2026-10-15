@@ -37,6 +37,7 @@
   .vrow.on .t{ color: var(--gold); }
   .vrow:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
   .commish{ display: grid; gap: 2px; min-width: 0; }
+  .commish[hidden]{ display: none; }
   .commish b{ font: 700 1.05rem var(--body); overflow-wrap: anywhere; }
   .note{ padding: 22px 18px; color: var(--text-dim); font-size: 0.9rem; margin: 0; }
   .note.bad{ color: var(--loss); font-weight: 600; }
@@ -75,7 +76,7 @@
 
   // Who ran the league, by the first season they ran it, newest last. A
   // season before the first entry shows no commissioner until one is added.
-  const COMMISSIONERS = [{ from: 2022, name: 'Collin' }, { from: 2023, name: 'Jon' }];
+  const COMMISSIONERS = [{ from: 2020, name: 'Joe K' }, { from: 2022, name: 'Collin' }, { from: 2023, name: 'Jon' }];
   const commissionerFor = y => (COMMISSIONERS.filter(c => y >= c.from).pop() || {}).name || '';
 
   const note = (html, bad) => { controls.hidden = true; card.innerHTML = `<p class="note${bad ? ' bad' : ''}">${html}</p>`; };
