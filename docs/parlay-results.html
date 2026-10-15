@@ -1203,6 +1203,9 @@
       // Copied text can't carry <sup>, so use Unicode superscript digits.
       const toSuperscript = n => String(n).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
 
+      // A leading apostrophe keeps Excel from dropping the + off pasted odds.
+      const xlOdds = o => String(o).startsWith('+') ? "'" + o : o;
+
       function jonsRows(scope) {
         const s = stats[scope];
         if (!s) return [];
@@ -1266,7 +1269,7 @@
         [name, ptBet(p), fmtOdds(p.odds), ptGameTime(p.gametime), p.result || 'Pending']);
       ptTbody.innerHTML = ptRows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
       ptCopyBtn.addEventListener('click', () => {
-        const text = [PT_HEADER].concat(ptRows).map(r => r.join('\t')).join('\n');
+        const text = [PT_HEADER].concat(ptRows.map(r => r.map((c, i) => i === 2 ? xlOdds(c) : c))).map(r => r.join('\t')).join('\n');
         const done = () => {
           const original = ptCopyBtn.textContent;
           ptCopyBtn.textContent = 'Copied!';
@@ -1328,7 +1331,7 @@
       jtCopyBtn.addEventListener('click', () => {
         const lines = [JT_HEADER.join('\t')].concat(jonsRows(jtScope).map(r => [
           r.sackos ? `${r.player}${toSuperscript(r.sackos)}` : r.player,
-          r.avgOdds === null || r.avgOdds === undefined ? '' : fmtOdds(r.avgOdds),
+          r.avgOdds === null || r.avgOdds === undefined ? '' : xlOdds(fmtOdds(r.avgOdds)),
           `${r.w} - ${r.l}`,
           r.win_pct === null || r.win_pct === undefined ? '' : r.win_pct.toFixed(1) + '%',
         ].join('\t')));
