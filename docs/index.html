@@ -790,7 +790,13 @@
   .fl-wrap{ cursor: default; }
   .matchup-card > .fl-wrap{ border-top: 1px solid var(--line); padding: 10px 14px 12px; }
   .mu-det-body .fl-wrap{ padding: 10px 10px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
-  .fl-h{ color: var(--text-dim); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .fl-top{ display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; min-height: 28px; }
+  .fl-h{ color: var(--text-dim); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  /* Projected / Current: one small switch per matchup, in the Flow header. */
+  .sup-seg.fl-seg{ margin: 0; flex: none; flex-wrap: nowrap; }
+  .sup-seg.fl-seg[hidden]{ display: none; }
+  .sup-seg.fl-seg button{ height: 24px; padding: 0 10px; font-size: 0.66rem; position: relative; }
+  .sup-seg.fl-seg button::after{ content: ''; position: absolute; inset: -10px -2px; }
   .fl-chart{ position: relative; height: 150px; touch-action: pan-y; }
   .fl-chart svg{ display: block; width: 100%; overflow: visible; }
   .fl-key{ display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.72rem; font-weight: 600; margin-top: 6px; font-variant-numeric: tabular-nums; }
@@ -2188,11 +2194,11 @@
       .then(res => res.json())
       .then(d => {
         if (!d || !Array.isArray(d.points) || week !== dashWeek) return;
-        const had = mhSeries().length >= 2;
+        const had = mhHas();
         mhHistory = d;
         // The card was built before the history arrived: swap the plain
         // label for the sparkline version in place.
-        if (!had && (medianViewMode === 'projected' || lastMedianData.archived) && lastMedianData) {
+        if (!had && lastMedianData && mhHas()) {
           const el = document.querySelector('#median-container .median-split-label');
           if (el) el.outerHTML = medianSplitHtml(medianViewMode, mwMedian(medianViewMode), el.id || undefined);
         }
@@ -2207,22 +2213,32 @@
     if (lastMedianData && lastMedianTeams && !lastMedianData.archived) {
       const t = Math.floor(Date.parse(lastMedianData.updatedAt) / 1000);
       if (t && (!pts.length || t > pts[pts.length - 1].t + 30)) {
-        const p = {};
+        const p = {}, c = {};
         let live = 0;
-        lastMedianTeams.forEach(x => { p[medianTeamName(x)] = x.projected; live += x.inPlay || 0; });
-        pts.push({ t, pm: lastMedianData.projectedMedian, live, p });
+        lastMedianTeams.forEach(x => { p[medianTeamName(x)] = x.projected; c[medianTeamName(x)] = x.current; live += x.inPlay || 0; });
+        pts.push({ t, pm: lastMedianData.projectedMedian, cm: lastMedianData.currentMedian, live, p, c });
       }
     }
     return pts;
   }
+
+  // What the median chart is showing: the projected median (also a past
+  // week's, which has no current history), the current one, or nothing for
+  // Average mode. A snapshot from before current totals were kept still
+  // has the current median (cm), just no team lines.
+  const mhMetric = () => ((lastMedianData && lastMedianData.archived) || medianViewMode === 'projected' ? 'projected'
+    : medianViewMode === 'current' ? 'current' : null);
+  const mhPts = metric => (metric === 'current' ? mhSeries().filter(p => typeof p.cm === 'number') : mhSeries());
+  const mhMed = (p, metric) => (metric === 'current' ? p.cm : p.pm);
+  const mhVal = (p, n, metric) => (metric === 'current' ? (p.c || {})[n] : p.p[n]);
+  const mhHas = () => { const m = mhMetric(); return Boolean(m) && mhPts(m).length >= 2; };
 
   function medianSplitHtml(mode, medianValue, id) {
     const idAttr = id ? ` id="${id}"` : '';
     const label = lastMedianData && lastMedianData.archived ? 'Median' : MW_MODES[mode].label;
     // A past week's card shows final scores, but its chart (the projected
     // median through that week) opens from the label all the same.
-    const charted = mode === 'projected' || (lastMedianData && lastMedianData.archived);
-    if (!charted || mhSeries().length < 2) {
+    if (!mhHas()) {
       return `<div class="median-split-label"${idAttr}>${label} <b>${fmtScore(medianValue)}</b></div>`;
     }
     return `<button type="button" class="median-split-label" data-mh-open${idAttr} aria-expanded="${mhIsOpen}" aria-label="${label} ${fmtScore(medianValue)}, open its chart for the week">${label} <b>${fmtScore(medianValue)}</b><span class="mh-chev" aria-hidden="true">›</span><span class="mh-spark" id="mh-spark"></span></button>`;
@@ -2261,7 +2277,9 @@
   function mhDraw(host, compact) {
     if (!host) return;
     host.innerHTML = '';
-    const pts = mhSeries();
+    const metric = mhMetric() || 'projected';
+    const med = p => mhMed(p, metric), val = (p, n) => mhVal(p, n, metric);
+    const pts = mhPts(metric);
     if (pts.length < 2) return;
     const sel = compact ? [] : (lastMedianTeams || []).map(medianTeamName).filter(n => mhSel.has(n));
     const W = Math.max(120, host.clientWidth), H = compact ? 30 : 220;
@@ -2270,8 +2288,8 @@
     const xs = mhXs(pts), xMax = xs[xs.length - 1] || 1;
     let lo = Infinity, hi = -Infinity;
     pts.forEach(p => {
-      lo = Math.min(lo, p.pm); hi = Math.max(hi, p.pm);
-      sel.forEach(n => { const v = p.p[n]; if (typeof v === 'number') { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
+      lo = Math.min(lo, med(p)); hi = Math.max(hi, med(p));
+      sel.forEach(n => { const v = val(p, n); if (typeof v === 'number') { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
     });
     const padY = Math.max((hi - lo) * 0.1, 0.5); lo -= padY; hi += padY;
     const X = i => pad.l + xs[i] / xMax * iw;
@@ -2307,7 +2325,7 @@
         mhEl('text', { x: x + 2, y: H - 6, 'font-size': 9, 'font-weight': 600, style: 'fill:var(--text-dim)' }, svg).textContent = d;
       });
       // Where the week started.
-      mhEl('line', { x1: pad.l, x2: pad.l + iw, y1: Y(pts[0].pm), y2: Y(pts[0].pm), style: 'stroke:var(--gold-dim);stroke-dasharray:2 4' }, svg);
+      mhEl('line', { x1: pad.l, x2: pad.l + iw, y1: Y(med(pts[0])), y2: Y(med(pts[0])), style: 'stroke:var(--gold-dim);stroke-dasharray:2 4' }, svg);
     }
 
     const path = f => pts.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(f(p)).toFixed(1)}`).join(' ');
@@ -2315,9 +2333,9 @@
     // Managers: green while above the median, red while below.
     sel.forEach(n => {
       for (let i = 1; i < pts.length; i++) {
-        const a = pts[i - 1].p[n], b = pts[i].p[n];
+        const a = val(pts[i - 1], n), b = val(pts[i], n);
         if (typeof a !== 'number' || typeof b !== 'number') continue;
-        const above = (a - pts[i - 1].pm) + (b - pts[i].pm) >= 0;
+        const above = (a - med(pts[i - 1])) + (b - med(pts[i])) >= 0;
         mhEl('line', { x1: X(i - 1), y1: Y(a), x2: X(i), y2: Y(b), style: `stroke:var(--${above ? 'turf' : 'loss'});stroke-width:1.3;stroke-linecap:round;opacity:0.85` }, svg);
       }
     });
@@ -2326,19 +2344,19 @@
       const g = mhEl('linearGradient', { id: 'mh-fill', x1: 0, x2: 0, y1: 0, y2: 1 }, mhEl('defs', {}, svg));
       mhEl('stop', { offset: 0, style: 'stop-color:var(--gold);stop-opacity:0.16' }, g);
       mhEl('stop', { offset: 1, style: 'stop-color:var(--gold);stop-opacity:0' }, g);
-      mhEl('path', { d: path(p => p.pm) + ` L${X(pts.length - 1)} ${pad.t + ih} L${X(0)} ${pad.t + ih} Z`, fill: 'url(#mh-fill)' }, svg);
+      mhEl('path', { d: path(p => med(p)) + ` L${X(pts.length - 1)} ${pad.t + ih} L${X(0)} ${pad.t + ih} Z`, fill: 'url(#mh-fill)' }, svg);
     }
-    mhEl('path', { d: path(p => p.pm), style: `fill:none;stroke:var(--gold);stroke-width:${compact ? 1.5 : 2};stroke-linejoin:round;stroke-linecap:round` }, svg);
+    mhEl('path', { d: path(p => med(p)), style: `fill:none;stroke:var(--gold);stroke-width:${compact ? 1.5 : 2};stroke-linejoin:round;stroke-linecap:round` }, svg);
 
     const li = pts.length - 1, last = pts[li];
-    if (last.live > 0) mhEl('circle', { cx: X(li), cy: Y(last.pm), r: 2.5, class: 'mh-pulse', style: 'fill:var(--gold)' }, svg);
-    mhEl('circle', { cx: X(li), cy: Y(last.pm), r: compact ? 2.5 : 3.5, style: 'fill:var(--gold);stroke:var(--surface);stroke-width:1.5' }, svg);
+    if (last.live > 0) mhEl('circle', { cx: X(li), cy: Y(med(last)), r: 2.5, class: 'mh-pulse', style: 'fill:var(--gold)' }, svg);
+    mhEl('circle', { cx: X(li), cy: Y(med(last)), r: compact ? 2.5 : 3.5, style: 'fill:var(--gold);stroke:var(--surface);stroke-width:1.5' }, svg);
     if (compact) return;
 
     // End labels: the median's value, then each manager's name, nudged
     // apart so none overlap.
-    const labels = [{ y: Y(last.pm), text: fmtScore(last.pm), color: 'var(--gold)', bold: true }];
-    sel.forEach(n => { const v = last.p[n]; if (typeof v === 'number') labels.push({ y: Y(v), text: n, color: `var(--${v >= last.pm ? 'turf' : 'loss'})` }); });
+    const labels = [{ y: Y(med(last)), text: fmtScore(med(last)), color: 'var(--gold)', bold: true }];
+    sel.forEach(n => { const v = val(last, n); if (typeof v === 'number') labels.push({ y: Y(v), text: n, color: `var(--${v >= med(last) ? 'turf' : 'loss'})` }); });
     labels.sort((a, b) => a.y - b.y);
     for (let i = 1; i < labels.length; i++) labels[i].y = Math.max(labels[i].y, labels[i - 1].y + 11);
     const over = labels[labels.length - 1].y - (pad.t + ih + 4);
@@ -2362,12 +2380,12 @@
       pts.forEach((p, i) => { if (Math.abs(X(i) - px) < Math.abs(X(best) - px)) best = i; });
       const p = pts[best], x = X(best);
       cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.style.opacity = 0.6;
-      dot.setAttribute('cx', x); dot.setAttribute('cy', Y(p.pm)); dot.style.opacity = 1;
-      const rows = sel.filter(n => typeof p.p[n] === 'number').sort((a, b) => p.p[b] - p.p[a]).map(n => {
-        const v = p.p[n];
-        return `<div class="r"><span>${n}</span><span><b>${fmtScore(v)}</b> <span style="color:var(--${v >= p.pm ? 'turf' : 'loss'})">${mhSigned(v - p.pm)}</span></span></div>`;
+      dot.setAttribute('cx', x); dot.setAttribute('cy', Y(med(p))); dot.style.opacity = 1;
+      const rows = sel.filter(n => typeof val(p, n) === 'number').sort((a, b) => val(p, b) - val(p, a)).map(n => {
+        const v = val(p, n);
+        return `<div class="r"><span>${n}</span><span><b>${fmtScore(v)}</b> <span style="color:var(--${v >= med(p) ? 'turf' : 'loss'})">${mhSigned(v - med(p))}</span></span></div>`;
       }).join('');
-      tip.innerHTML = `<div class="t">${mhFmtTime(p.t)}</div><div class="r m"><span>Median</span><b>${fmtScore(p.pm)}</b></div>${rows}`;
+      tip.innerHTML = `<div class="t">${mhFmtTime(p.t)}</div><div class="r m"><span>Median</span><b>${fmtScore(med(p))}</b></div>${rows}`;
       tip.hidden = false;
       const hostW = host.clientWidth, tw = tip.offsetWidth, sx = x / W * hostW;
       tip.style.left = (sx > hostW / 2 ? Math.max(0, sx - tw - 10) : Math.min(hostW - tw, sx + 10)) + 'px';
@@ -2379,18 +2397,20 @@
   }
 
   function mhHeadHtml() {
-    const pts = mhSeries();
+    const metric = mhMetric() || 'projected';
+    const pts = mhPts(metric);
     const first = pts[0], last = pts[pts.length - 1];
-    const d = last.pm - first.pm;
+    const d = mhMed(last, metric) - mhMed(first, metric);
     return `<div class="mwp-head">
-      <div style="min-width:0"><div class="mwp-name">Projected Median</div>
+      <div style="min-width:0"><div class="mwp-name">${metric === 'current' ? 'Current' : 'Projected'} Median</div>
         <div class="mwp-sub">${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(2)} since ${mhFmtTime(first.t)}</div></div>
-      <div class="mwp-score" style="color:var(--gold)">${fmtScore(last.pm)}</div>
+      <div class="mwp-score" style="color:var(--gold)">${fmtScore(mhMed(last, metric))}</div>
     </div>`;
   }
 
   function mhChipsHtml() {
-    const names = (lastMedianTeams || []).slice().sort((a, b) => b.projected - a.projected).map(medianTeamName);
+    const key = mhMetric() === 'current' ? 'current' : 'projected';
+    const names = (lastMedianTeams || []).slice().sort((a, b) => b[key] - a[key]).map(medianTeamName);
     const on = names.filter(n => mhSel.has(n)).length;
     return `<div class="mh-mgr-head"><span class="mwp-label">Managers</span>
         <span class="mh-allnone"><button type="button" data-mh-all ${on === names.length ? 'disabled' : ''}>All</button><button type="button" data-mh-none ${on ? '' : 'disabled'}>None</button></span></div>
@@ -2400,14 +2420,14 @@
   const mhAnchor = () => document.querySelector('#median-container button.median-split-label');
 
   function mhOpen() {
-    if (mhSeries().length < 2) return;
+    if (!mhHas()) return;
     mwHide();
     mhIsOpen = true;
     if (!mwOneColumn.matches) {
-      document.body.insertAdjacentHTML('beforeend', '<div class="pop" id="mh-pop" role="dialog" aria-label="Projected median this week"></div>');
+      document.body.insertAdjacentHTML('beforeend', '<div class="pop" id="mh-pop" role="dialog" aria-label="Median this week"></div>');
     } else {
       document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="mh-scrim" data-mh-close></div>
-        <div class="sheet" id="mh-sheet" role="dialog" aria-modal="true" aria-label="Projected median this week">
+        <div class="sheet" id="mh-sheet" role="dialog" aria-modal="true" aria-label="Median this week">
           <div class="sheet-grab" data-grab><span></span><button type="button" class="mwp-done" data-mh-close>Done</button></div>
           <div class="sheet-head" data-grab data-head></div>
           <div class="sheet-body" data-body></div></div>`);
@@ -2426,7 +2446,7 @@
   // Fills whichever panel is open; the sheet keeps its scroll position.
   function mhRender() {
     const a = mhAnchor();
-    if (!a || mhSeries().length < 2) { mhClose(); return; }
+    if (!a || !mhHas()) { mhClose(); return; }
     a.setAttribute('aria-expanded', 'true');
     const pop = document.getElementById('mh-pop'), sheet = document.getElementById('mh-sheet');
     if (pop) {
@@ -2477,7 +2497,7 @@
   function flowHtml(m) {
     if (!m.awayManager || !m.homeManager || (shownData && shownData.pastSeason)) return '';
     return `<div class="fl-wrap" data-fl="${encodeURIComponent(matchupKey(m))}" hidden>
-        <div class="fl-h">Flow</div><div class="fl-chart"></div><div class="fl-key"></div><div class="fl-swing" hidden></div></div>`;
+        <div class="fl-top"><div class="fl-h">Flow</div><div class="sup-seg fl-seg" role="group" aria-label="Flow shows" hidden><button type="button" data-fl-m="projected">Projected</button><button type="button" data-fl-m="current">Current</button></div></div><div class="fl-chart"></div><div class="fl-key"></div><div class="fl-swing" hidden></div></div>`;
   }
   function flDrawAll() {
     const ms = (shownData && shownData.matchups) || [];
@@ -2488,9 +2508,18 @@
   }
   function flDraw(wrap, m) {
     const A = m && m.awayManager, B = m && m.homeManager;
-    const pts = m ? mhSeries().filter(p => typeof p.p[A] === 'number' && typeof p.p[B] === 'number') : [];
+    const has = metric => (m ? mhPts(metric).filter(p => typeof mhVal(p, A, metric) === 'number' && typeof mhVal(p, B, metric) === 'number') : []);
+    const projPts = has('projected'), curPts = has('current');
+    // Each matchup remembers its own choice; Current needs snapshots that
+    // kept the teams' current totals, so older weeks only offer Projected.
+    const metric = flMode.get(wrap.dataset.fl) === 'current' && curPts.length >= 2 ? 'current' : 'projected';
+    const pts = metric === 'current' ? curPts : projPts;
     wrap.hidden = pts.length < 2;
     if (wrap.hidden) return;
+    const seg = wrap.querySelector('.fl-seg');
+    seg.hidden = !(projPts.length >= 2 && curPts.length >= 2);
+    seg.querySelectorAll('button').forEach(btn => { const on = btn.dataset.flM === metric; btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', on); });
+    const val = (p, n) => mhVal(p, n, metric), md = p => mhMed(p, metric);
     const host = wrap.querySelector('.fl-chart');
     host.innerHTML = '';
     // Playoff weeks have no median to play against.
@@ -2500,7 +2529,7 @@
     const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
     const xs = mhXs(pts), xMax = xs[xs.length - 1] || 1;
     let lo = Infinity, hi = -Infinity;
-    pts.forEach(p => [p.p[A], p.p[B], withMedian ? p.pm : null].forEach(v => {
+    pts.forEach(p => [val(p, A), val(p, B), withMedian ? md(p) : null].forEach(v => {
       if (typeof v === 'number') { lo = Math.min(lo, v); hi = Math.max(hi, v); }
     }));
     const padY = Math.max((hi - lo) * 0.08, 1); lo -= padY; hi += padY;
@@ -2527,39 +2556,39 @@
 
     const path = f => pts.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(f(p)).toFixed(1)}`).join(' ');
     const line = 'fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round';
-    if (withMedian) mhEl('path', { d: path(p => p.pm), style: 'fill:none;stroke:rgba(245,245,243,0.42);stroke-width:1.3;stroke-dasharray:4 3' }, svg);
-    mhEl('path', { d: path(p => p.p[B]), style: `${line};stroke:${FL_B}` }, svg);
-    mhEl('path', { d: path(p => p.p[A]), style: `${line};stroke:var(--gold)` }, svg);
+    if (withMedian) mhEl('path', { d: path(p => md(p)), style: 'fill:none;stroke:rgba(245,245,243,0.42);stroke-width:1.3;stroke-dasharray:4 3' }, svg);
+    mhEl('path', { d: path(p => val(p, B)), style: `${line};stroke:${FL_B}` }, svg);
+    mhEl('path', { d: path(p => val(p, A)), style: `${line};stroke:var(--gold)` }, svg);
 
     // The biggest single jump either side made, ringed on its line.
     let best = null;
     for (let i = 1; i < pts.length; i++) [A, B].forEach(who => {
-      const d = pts[i].p[who] - pts[i - 1].p[who];
+      const d = val(pts[i], who) - val(pts[i - 1], who);
       if (!best || Math.abs(d) > Math.abs(best.d)) best = { i, who, d };
     });
     if (best && Math.abs(best.d) < 3) best = null;
     const colorOf = who => (who === A ? 'var(--gold)' : FL_B);
-    if (best) mhEl('circle', { cx: X(best.i), cy: Y(pts[best.i].p[best.who]), r: 4.5, style: `fill:none;stroke:${colorOf(best.who)};stroke-width:1.5` }, svg);
+    if (best) mhEl('circle', { cx: X(best.i), cy: Y(val(pts[best.i], best.who)), r: 4.5, style: `fill:none;stroke:${colorOf(best.who)};stroke-width:1.5` }, svg);
 
     const li = pts.length - 1, last = pts[li];
     [[B, FL_B], [A, 'var(--gold)']].forEach(([who, c]) => {
-      if (last.live > 0) mhEl('circle', { cx: X(li), cy: Y(last.p[who]), r: 2.5, class: 'fl-pulse', style: `fill:${c}` }, svg);
-      mhEl('circle', { cx: X(li), cy: Y(last.p[who]), r: 3.5, style: `fill:${c};stroke:var(--surface);stroke-width:1.5` }, svg);
+      if (last.live > 0) mhEl('circle', { cx: X(li), cy: Y(val(last, who)), r: 2.5, class: 'fl-pulse', style: `fill:${c}` }, svg);
+      mhEl('circle', { cx: X(li), cy: Y(val(last, who)), r: 3.5, style: `fill:${c};stroke:var(--surface);stroke-width:1.5` }, svg);
     });
 
-    wrap.querySelector('.fl-key').innerHTML = `<span class="a">${esc(A)} ${fmtScore(last.p[A])}</span><span class="b">${esc(B)} ${fmtScore(last.p[B])}</span>`
-      + (withMedian ? `<span class="md"><i></i>Median ${fmtScore(last.pm)}</span>` : '') + '<span class="note">projected</span>';
+    wrap.querySelector('.fl-key').innerHTML = `<span class="a">${esc(A)} ${fmtScore(val(last, A))}</span><span class="b">${esc(B)} ${fmtScore(val(last, B))}</span>`
+      + (withMedian ? `<span class="md"><i></i>Median ${fmtScore(md(last))}</span>` : '') + `<span class="note">${metric}</span>`;
 
     // What the biggest jump was, from the Feed when it saw the play.
     const swing = wrap.querySelector('.fl-swing');
     swing.hidden = !best;
     if (best) {
       const t0 = pts[best.i - 1].t - 60, t1 = pts[best.i].t + 60;
-      const ev = feedFor(dashWeek).filter(e => e.m === best.who && e.t / 1000 > t0 && e.t / 1000 <= t1)
+      const ev = metric === 'current' ? null : feedFor(dashWeek).filter(e => e.m === best.who && e.t / 1000 > t0 && e.t / 1000 <= t1)
         .sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0];
       swing.innerHTML = ev
         ? `<b>${esc(mhDay(ev.t / 1000))} ${esc(fdTime(ev.t))}</b> ${esc(ev.n)}’s ${esc(feedWhat(ev))} moved ${esc(best.who)}’s projection ${mhSigned(best.d)}.`
-        : `<b>Biggest swing</b> ${esc(best.who)}’s projection ${mhSigned(best.d)}, ${esc(mhFmtTime(pts[best.i].t))}.`;
+        : `<b>Biggest swing</b> ${esc(best.who)}’s ${metric === 'current' ? 'score' : 'projection'} ${mhSigned(best.d)}, ${esc(mhFmtTime(pts[best.i].t))}.`;
     }
 
     // Scrub: crosshair and every line's value at that moment.
@@ -2577,9 +2606,9 @@
       const p = pts[k], x = X(k);
       cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.style.opacity = 0.6;
       tip.innerHTML = `<div class="t">${mhFmtTime(p.t)}</div>`
-        + `<div class="r a"><span>${esc(A)}</span><b>${fmtScore(p.p[A])}</b></div>`
-        + `<div class="r b"><span>${esc(B)}</span><b>${fmtScore(p.p[B])}</b></div>`
-        + (withMedian ? `<div class="r md"><span>Median</span><b>${fmtScore(p.pm)}</b></div>` : '');
+        + `<div class="r a"><span>${esc(A)}</span><b>${fmtScore(val(p, A))}</b></div>`
+        + `<div class="r b"><span>${esc(B)}</span><b>${fmtScore(val(p, B))}</b></div>`
+        + (withMedian ? `<div class="r md"><span>Median</span><b>${fmtScore(md(p))}</b></div>` : '');
       tip.hidden = false;
       const hostW = host.clientWidth, tw = tip.offsetWidth, sx = x / W * hostW;
       tip.style.left = (sx > hostW / 2 ? Math.max(0, sx - tw - 10) : Math.min(hostW - tw, sx + 10)) + 'px';
@@ -2589,6 +2618,15 @@
     svg.addEventListener('pointerleave', hide);
     svg.addEventListener('pointercancel', hide);
   }
+  const flMode = new Map();
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.fl-seg [data-fl-m]');
+    if (!btn) return;
+    const wrap = btn.closest('.fl-wrap');
+    flMode.set(wrap.dataset.fl, btn.dataset.flM);
+    const key = decodeURIComponent(wrap.dataset.fl);
+    flDraw(wrap, ((shownData && shownData.matchups) || []).find(x => matchupKey(x) === key));
+  });
   let flResizeT;
   addEventListener('resize', () => { clearTimeout(flResizeT); flResizeT = setTimeout(flDrawAll, 150); });
 

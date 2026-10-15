@@ -171,6 +171,7 @@ CREATE TABLE IF NOT EXISTS median_snapshots (
     current_median REAL NOT NULL,
     live INTEGER NOT NULL,
     teams TEXT NOT NULL,
+    current_teams TEXT,
     PRIMARY KEY (season, week, ts)
 );
 
