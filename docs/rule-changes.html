@@ -100,6 +100,9 @@
     background: var(--item); border: 1px solid var(--item-line); color: var(--text);
     font-size: 0.82rem; font-weight: 600; padding: 4px 11px; border-radius: 999px;
   }
+  .commish-row{ flex: 0 0 100%; margin-top: 4px; align-items: center; }
+  .rules-chips > .manager-chips:first-child{ flex: 0 0 100%; }
+  .commish-label{ color: var(--text-dim); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-right: 2px; }
   .manager-chip.added{ background: var(--win-tint); border-color: var(--win-line); color: var(--turf); }
   .manager-chip.removed{ background: var(--loss-tint); border-color: var(--loss-line); color: var(--loss); }
 
@@ -233,11 +236,22 @@
     return section('Money', lines, footnote);
   }
 
+  // The commissioner, on its own row under the manager chips: plain when
+  // unchanged, +added / -removed when the year changed hands.
+  function commissionerLine(rec, prev) {
+    const now = rec.commissioner || '', was = prev ? prev.commissioner || '' : now;
+    if (!now && !was) return '';
+    const chips = now === was ? `<span class="manager-chip">${esc(now)}</span>`
+      : (now ? `<span class="manager-chip added">+${esc(now)}</span>` : '') + (was ? `<span class="manager-chip removed">-${esc(was)}</span>` : '');
+    return `<div class="manager-chips commish-row"><span class="commish-label">Commissioner</span>${chips}</div>`;
+  }
+
   function managersSection(rec, prev) {
+    const commish = commissionerLine(rec, prev);
     if (!rec.managers.length) return '';
     if (!prev) {
       const chips = rec.managers.map(m => `<span class="manager-chip">${esc(m)}</span>`).join('');
-      return section(`Managers (${rec.managers.length})`, [`<div class="manager-chips">${chips}</div>`]);
+      return section(`Managers (${rec.managers.length})`, [`<div class="manager-chips">${chips}</div>`, commish]);
     }
     const prevSet = new Set(prev.managers);
     const currSet = new Set(rec.managers);
@@ -247,7 +261,7 @@
       if (currSet.has(m)) return `<span class="manager-chip added">+${esc(m)}</span>`;
       return `<span class="manager-chip removed">-${esc(m)}</span>`;
     }).join('');
-    return section(`Managers (${rec.managers.length})`, [`<div class="manager-chips">${chips}</div>`]);
+    return section(`Managers (${rec.managers.length})`, [`<div class="manager-chips">${chips}</div>`, commish].filter(Boolean));
   }
 
   function yearCard(rec, prev, isCurrent) {
@@ -263,13 +277,13 @@
   }
 
   function changeChip(text) {
-    const m = text.match(/^Managers: (.+)$/);
+    const m = text.match(/^(Managers|Commissioner): (.+)$/);
     if (!m) return `<div class="change-chip">${esc(text)}</div>`;
-    const pills = m[1].split(', ').map(p => {
+    const pills = m[2].split(', ').map(p => {
       const out = p.startsWith('-');
       return `<span class="manager-delta ${out ? 'out' : 'in'}">${esc(p)}</span>`;
     }).join('');
-    return `<div class="change-chip"><span class="change-chip-label">Managers:</span>${pills}</div>`;
+    return `<div class="change-chip"><span class="change-chip-label">${m[1]}:</span>${pills}</div>`;
   }
 
   function timelineItem(entry) {

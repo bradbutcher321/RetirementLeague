@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-13T12:21:04.773943+00:00",
+  "generated_at": "2026-10-15T01:26:15.611420+00:00",
   "snapshots": [
     {
       "year": 2015,
@@ -49,6 +49,7 @@
         "Joe G",
         "Joe K"
       ],
+      "commissioner": null,
       "buy_in": 50,
       "payouts": [
         {
@@ -111,6 +112,7 @@
         "Joe K",
         "Kris"
       ],
+      "commissioner": null,
       "buy_in": 50,
       "payouts": [
         {
@@ -173,6 +175,7 @@
         "Joe K",
         "Kris"
       ],
+      "commissioner": null,
       "buy_in": 100,
       "payouts": [
         {
@@ -235,6 +238,7 @@
         "Joe K",
         "Kris"
       ],
+      "commissioner": null,
       "buy_in": 100,
       "payouts": [
         {
@@ -293,6 +297,7 @@
         "Joe K",
         "Kris"
       ],
+      "commissioner": null,
       "buy_in": 100,
       "payouts": [
         {
@@ -351,6 +356,7 @@
         "Joe K",
         "Kris"
       ],
+      "commissioner": null,
       "buy_in": 150,
       "payouts": [
         {
@@ -419,6 +425,7 @@
         "Kris",
         "TJ"
       ],
+      "commissioner": "Collin",
       "buy_in": 200,
       "payouts": [
         {
@@ -487,6 +494,7 @@
         "Kris",
         "TJ"
       ],
+      "commissioner": "Jon",
       "buy_in": 200,
       "payouts": [
         {
@@ -555,6 +563,7 @@
         "Kris",
         "TJ"
       ],
+      "commissioner": "Jon",
       "buy_in": 200,
       "payouts": [
         {
@@ -624,6 +633,7 @@
       "Kris",
       "TJ"
     ],
+    "commissioner": "Jon",
     "buy_in": 200,
     "payouts": [
       {
@@ -688,13 +698,15 @@
         "Teams: 10 \u2192 12",
         "Roster: FLEX 2 \u2192 1",
         "Buy-in: $150 \u2192 $200",
-        "Managers: +Jon, +TJ"
+        "Managers: +Jon, +TJ",
+        "Commissioner: +Collin"
       ]
     },
     {
       "year": 2023,
       "changes": [
-        "Roster: FLEX 1 \u2192 2, dropped D/ST"
+        "Roster: FLEX 1 \u2192 2, dropped D/ST",
+        "Commissioner: +Jon, -Collin"
       ]
     },
     {

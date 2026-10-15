@@ -239,6 +239,23 @@ def roster_diff(prev_list, curr_list):
     return f"Roster: {', '.join(parts)}" if parts else None
 
 
+# Who has been commissioner, by the first season they held it. The earlier
+# commissioners aren't recorded yet; a season before the first entry has none.
+COMMISSIONER_FROM = {2022: "Collin", 2023: "Jon"}
+
+
+def commissioner_for(year):
+    started = [y for y in COMMISSIONER_FROM if y <= year]
+    return COMMISSIONER_FROM[max(started)] if started else None
+
+
+def commissioner_diff(prev_name, curr_name):
+    if prev_name == curr_name:
+        return None
+    parts = ([f"+{curr_name}"] if curr_name else []) + ([f"-{prev_name}"] if prev_name else [])
+    return f"Commissioner: {', '.join(parts)}"
+
+
 def managers_diff(prev_managers, curr_managers):
     prev, curr = set(prev_managers or []), set(curr_managers or [])
     added = sorted(curr - prev)
@@ -269,6 +286,9 @@ def diff_entry(prev, curr, prev_money, curr_money):
     managers = managers_diff(prev.get("managers"), curr.get("managers"))
     if managers:
         changes.append(managers)
+    commissioner = commissioner_diff(prev.get("commissioner"), curr.get("commissioner"))
+    if commissioner:
+        changes.append(commissioner)
     return changes
 
 
@@ -293,6 +313,7 @@ def main():
     def full_record(year):
         rec = rule_year(year, settings_by_year[year])
         rec["managers"] = managers_by_year.get(year, [])
+        rec["commissioner"] = commissioner_for(year)
         buy_in, payouts = resolve_payouts(year, money_by_year, categories_by_year)
         rec["buy_in"] = buy_in
         rec["payouts"] = payouts
