@@ -239,9 +239,10 @@ def roster_diff(prev_list, curr_list):
     return f"Roster: {', '.join(parts)}" if parts else None
 
 
-# Who has been commissioner, by the first season they held it. The earlier
+# Who has been commissioner, by the first season they held it (a season with no
+# entry of its own carries the last one forward). The earlier
 # commissioners aren't recorded yet; a season before the first entry has none.
-COMMISSIONER_FROM = {2022: "Collin", 2023: "Jon"}
+COMMISSIONER_FROM = {2020: "Joe K", 2022: "Collin", 2023: "Jon"}
 
 
 def commissioner_for(year):

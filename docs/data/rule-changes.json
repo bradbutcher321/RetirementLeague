@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-15T01:26:15.611420+00:00",
+  "generated_at": "2026-10-15T03:08:28.213313+00:00",
   "snapshots": [
     {
       "year": 2015,
@@ -297,7 +297,7 @@
         "Joe K",
         "Kris"
       ],
-      "commissioner": null,
+      "commissioner": "Joe K",
       "buy_in": 100,
       "payouts": [
         {
@@ -356,7 +356,7 @@
         "Joe K",
         "Kris"
       ],
-      "commissioner": null,
+      "commissioner": "Joe K",
       "buy_in": 150,
       "payouts": [
         {
@@ -683,7 +683,8 @@
     {
       "year": 2020,
       "changes": [
-        "Roster: FLEX 1 \u2192 2, dropped K"
+        "Roster: FLEX 1 \u2192 2, dropped K",
+        "Commissioner: +Joe K"
       ]
     },
     {
@@ -699,7 +700,7 @@
         "Roster: FLEX 2 \u2192 1",
         "Buy-in: $150 \u2192 $200",
         "Managers: +Jon, +TJ",
-        "Commissioner: +Collin"
+        "Commissioner: +Collin, -Joe K"
       ]
     },
     {
