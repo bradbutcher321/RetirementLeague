@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-15T03:08:28.213313+00:00",
+  "generated_at": "2026-10-15T04:14:58.824459+00:00",
   "snapshots": [
     {
       "year": 2015,
@@ -49,7 +49,7 @@
         "Joe G",
         "Joe K"
       ],
-      "commissioner": null,
+      "commissioner": "Brad",
       "buy_in": 50,
       "payouts": [
         {
@@ -60,7 +60,8 @@
           "label": "2nd Place",
           "amount": 50
         }
-      ]
+      ],
+      "previous_commissioner": "Joe K"
     },
     {
       "year": 2017,
@@ -112,7 +113,7 @@
         "Joe K",
         "Kris"
       ],
-      "commissioner": null,
+      "commissioner": "Brad",
       "buy_in": 50,
       "payouts": [
         {
@@ -175,7 +176,7 @@
         "Joe K",
         "Kris"
       ],
-      "commissioner": null,
+      "commissioner": "Jared",
       "buy_in": 100,
       "payouts": [
         {
@@ -238,7 +239,7 @@
         "Joe K",
         "Kris"
       ],
-      "commissioner": null,
+      "commissioner": "Joe G",
       "buy_in": 100,
       "payouts": [
         {
@@ -356,7 +357,7 @@
         "Joe K",
         "Kris"
       ],
-      "commissioner": "Joe K",
+      "commissioner": "Chad",
       "buy_in": 150,
       "payouts": [
         {
@@ -670,27 +671,30 @@
     {
       "year": 2018,
       "changes": [
-        "Buy-in: $50 \u2192 $100"
+        "Buy-in: $50 \u2192 $100",
+        "Commissioner: +Jared, -Brad"
       ]
     },
     {
       "year": 2019,
       "changes": [
         "Scoring: No reception scoring \u2192 0.5 PPR",
-        "Managers: +Collin, -Corey"
+        "Managers: +Collin, -Corey",
+        "Commissioner: +Joe G, -Jared"
       ]
     },
     {
       "year": 2020,
       "changes": [
         "Roster: FLEX 1 \u2192 2, dropped K",
-        "Commissioner: +Joe K"
+        "Commissioner: +Joe K, -Joe G"
       ]
     },
     {
       "year": 2021,
       "changes": [
-        "Buy-in: $100 \u2192 $150"
+        "Buy-in: $100 \u2192 $150",
+        "Commissioner: +Chad, -Joe K"
       ]
     },
     {
@@ -700,7 +704,7 @@
         "Roster: FLEX 2 \u2192 1",
         "Buy-in: $150 \u2192 $200",
         "Managers: +Jon, +TJ",
-        "Commissioner: +Collin, -Joe K"
+        "Commissioner: +Collin, -Chad"
       ]
     },
     {

@@ -76,7 +76,7 @@
 
   // Who ran the league, by the first season they ran it, newest last. A
   // season before the first entry shows no commissioner until one is added.
-  const COMMISSIONERS = [{ from: 2020, name: 'Joe K' }, { from: 2022, name: 'Collin' }, { from: 2023, name: 'Jon' }];
+  const COMMISSIONERS = [{ from: 2015, name: 'Brad' }, { from: 2018, name: 'Jared' }, { from: 2019, name: 'Joe G' }, { from: 2020, name: 'Joe K' }, { from: 2021, name: 'Chad' }, { from: 2022, name: 'Collin' }, { from: 2023, name: 'Jon' }];
   const commissionerFor = y => (COMMISSIONERS.filter(c => y >= c.from).pop() || {}).name || '';
 
   const note = (html, bad) => { controls.hidden = true; card.innerHTML = `<p class="note${bad ? ' bad' : ''}">${html}</p>`; };

@@ -239,7 +239,7 @@
   // The commissioner, on its own row under the manager chips: plain when
   // unchanged, +added / -removed when the year changed hands.
   function commissionerLine(rec, prev) {
-    const now = rec.commissioner || '', was = prev ? prev.commissioner || '' : now;
+    const now = rec.commissioner || '', was = prev ? prev.commissioner || '' : (rec.previous_commissioner || now);
     if (!now && !was) return '';
     const chips = now === was ? `<span class="manager-chip">${esc(now)}</span>`
       : (now ? `<span class="manager-chip added">+${esc(now)}</span>` : '') + (was ? `<span class="manager-chip removed">-${esc(was)}</span>` : '');

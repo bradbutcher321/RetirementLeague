@@ -240,9 +240,9 @@ def roster_diff(prev_list, curr_list):
 
 
 # Who has been commissioner, by the first season they held it (a season with no
-# entry of its own carries the last one forward). The earlier
-# commissioners aren't recorded yet; a season before the first entry has none.
-COMMISSIONER_FROM = {2020: "Joe K", 2022: "Collin", 2023: "Jon"}
+# entry of its own carries the last one forward). 2014 isn't in the data, but
+# Joe K ran it, so he shows as removed on the first rule set.
+COMMISSIONER_FROM = {2014: "Joe K", 2015: "Brad", 2018: "Jared", 2019: "Joe G", 2020: "Joe K", 2021: "Chad", 2022: "Collin", 2023: "Jon"}
 
 
 def commissioner_for(year):
@@ -322,6 +322,9 @@ def main():
 
     records = {y: full_record(y) for y in years}
     current_year = years[-1]
+    # The first rule set has no earlier year to diff against, so it carries the
+    # prior commissioner itself for the page's +/- chips.
+    records[years[0]]["previous_commissioner"] = commissioner_for(years[0] - 1)
 
     # A year gets its own snapshot (and a change entry) whenever the diff
     # against the year before is non-empty; the very first year always
