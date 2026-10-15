@@ -36,6 +36,8 @@
   .vrow.on{ background: var(--lead-tint); }
   .vrow.on .t{ color: var(--gold); }
   .vrow:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  .commish{ display: grid; gap: 2px; min-width: 0; }
+  .commish b{ font: 700 1.05rem var(--body); overflow-wrap: anywhere; }
   .note{ padding: 22px 18px; color: var(--text-dim); font-size: 0.9rem; margin: 0; }
   .note.bad{ color: var(--loss); font-weight: 600; }
 </style>
@@ -49,6 +51,7 @@
     </header>
 
     <div class="controls-row" id="controls" hidden>
+      <div class="commish" id="commish" hidden><span class="selector-label">Commissioner</span><b id="commish-name"></b></div>
       <div class="selector-group">
         <label class="selector-label" for="season-select">Season</label>
         <select class="board-select" id="season-select" autocomplete="off"></select>
@@ -70,6 +73,11 @@
   let current = 0;      // index of the video in the player
   let busy = 0;         // bumps on each load so a slow answer can't overwrite a newer one
 
+  // Who ran the league, by the first season they ran it, newest last. A
+  // season before the first entry shows no commissioner until one is added.
+  const COMMISSIONERS = [{ from: 2023, name: 'Jon' }];
+  const commissionerFor = y => (COMMISSIONERS.filter(c => y >= c.from).pop() || {}).name || '';
+
   const note = (html, bad) => { controls.hidden = true; card.innerHTML = `<p class="note${bad ? ' bad' : ''}">${html}</p>`; };
 
   function playerHtml(autoplay){
@@ -82,6 +90,9 @@
     if (!data.videos.length) return note('No videos in this season yet.');
     controls.hidden = false;
     select.innerHTML = data.seasons.map(y => `<option value="${y}"${y === data.season ? ' selected' : ''}>${y}</option>`).join('');
+    const who = commissionerFor(data.season);
+    document.getElementById('commish').hidden = !who;
+    document.getElementById('commish-name').textContent = who;
     card.innerHTML = `<div id="stage">${playerHtml(autoplay)}</div><div class="vlist" id="vlist">${rows()}</div>`;
   }
 
