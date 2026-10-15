@@ -26,6 +26,9 @@
  *                              (Thu-Mon); the page matches them to ESPN's
  *                              schedule, which it reads itself
  * GET  /legs/props?sport=&event= -> { odds: {player: price} } for Anytime TD
+ * POST /legs/lock { locked } -> a commissioner locks the week's legs for
+ *                              everyone else once the bet is live (or unlocks
+ *                              them); commissioners can still edit
  * POST /legs/week { sacko, final_odds, final_payout } -> a commissioner sets
  *                              the week's Sacko and final numbers (locked or
  *                              not: the final odds only exist once the
@@ -191,6 +194,7 @@ async function weekLegs(env, wk, win) {
   out.meta = (await env.COOLDOWN_KV.get(metaKey(wk), "json")) || sheetMeta;
   return out;
 }
+const lockKey = (wk) => `legs:locked:${wk.year}:${wk.week}`;
 const metaKey = (wk) => `legs:meta:${wk.year}:${wk.week}`;
 const pickFields = (r) => Object.fromEntries(LEG_FIELDS.map((f) => [f, f === "odds" ? r.odds : r[f] || ""]));
 
@@ -227,10 +231,14 @@ async function board(env, request) {
   const stats = await readStats(env);
   const wk = await targetWeek(env, win, stats);
   const me = request ? await sessionManager(request, env) : null;
+  const commish = !!me && COMMISSIONERS.includes(me.manager);
+  // A commissioner's Lock legs button shuts the week to everyone else once
+  // the bet is live; a commissioner can still edit (open stays true for them).
+  const locked = !!(await env.COOLDOWN_KV.get(lockKey(wk)));
   return {
-    year: wk.year, week: wk.week, open: win.open, locksAt: win.locksAt, opensAt: win.opensAt,
+    year: wk.year, week: wk.week, open: win.open && (!locked || commish), locked: win.open && locked, locksAt: win.locksAt, opensAt: win.opensAt,
     days: win.days, players: stats?.players || [], legs: await weekLegs(env, wk, win), me: me ? me.manager : null,
-    commish: !!me && COMMISSIONERS.includes(me.manager),
+    commish,
     _wk: wk, _win: win,
   };
 }
@@ -245,7 +253,7 @@ async function saveLeg(request, env) {
   if (!who) return { status: 401, body: { error: "signed_out" } };
   const body = await request.json().catch(() => null);
   if (!body) return { status: 400, body: { error: "bad_json" } };
-  const b = await board(env, null);
+  const b = await board(env, request);
   if (!b.open) return { status: 403, body: { error: "locked", ...publicBoard(b), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
   // A commissioner may save for anyone; everyone else only for themselves.
   const player = typeof body.player === "string" && body.player ? body.player : who.manager;
@@ -274,6 +282,19 @@ async function saveLeg(request, env) {
   }
   const synced = await dispatchSync(env, b._wk).catch((err) => { console.error("Leg sync dispatch failed:", err); return false; });
   return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
+}
+
+/** A commissioner locks (or unlocks) the week's legs for everyone else. */
+async function saveLock(request, env) {
+  const who = await sessionManager(request, env);
+  if (!who) return { status: 401, body: { error: "signed_out" } };
+  if (!COMMISSIONERS.includes(who.manager)) return { status: 403, body: { error: "not_commissioner" } };
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body.locked !== "boolean") return { status: 400, body: { error: "bad_json" } };
+  const b = await board(env, null);
+  if (body.locked) await env.COOLDOWN_KV.put(lockKey(b._wk), "1", { expirationTtl: 14 * 24 * 3600 });
+  else await env.COOLDOWN_KV.delete(lockKey(b._wk));
+  return { status: 200, body: { ok: true, ...publicBoard(await board(env, request)), me: who.manager } };
 }
 
 /** A commissioner sets the week's Sacko, final odds and final payout. */
@@ -371,4 +392,5 @@ export const LEG_ROUTES = {
   "/legs/games": { GET: getGames },
   "/legs/props": { GET: getProps },
   "/legs/week": { POST: saveWeek },
+  "/legs/lock": { POST: saveLock },
 };

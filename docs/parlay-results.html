@@ -993,7 +993,7 @@
   fetch(WORKER_URL + '/legs', { cache: 'no-store', headers: authHeaders() })
     .then(r => r.ok ? r.json() : null)
     .then(b => {
-      if (!b || !b.open) return;
+      if (!b || !b.open || b.locked) return;
       const el = document.getElementById('legs-banner');
       const locks = new Date(b.locksAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }).replace(',', '');
       const mineIn = b.me && b.legs.some(l => l.player === b.me);

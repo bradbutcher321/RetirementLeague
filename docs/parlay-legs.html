@@ -536,8 +536,9 @@
     if (!auth) return '<p class="empty">Sign in to enter your leg: open the link the commissioner texted you, or tap You and sign in with your code.</p>';
     if (!me()) return '<p class="empty bad">Your sign-in has run out. Tap You and sign in again.</p>';
     if (!board.players.includes(forWhom())) return '<p class="empty">Only the twelve managers in this year\'s parlay enter legs.</p>';
-    if (!board.open) return m ? legRow(m) + `<p class="fine">Locked ${esc(etWhen(board.locksAt))}. Text the group chat if it needs a fix.</p>`
-      : `<p class="empty">Legs locked ${esc(etWhen(board.locksAt))} and yours isn't in. Text it to the group chat.</p>`;
+    const lockedAt = board.locked ? 'The legs are locked in' : `Locked ${etWhen(board.locksAt)}`;
+    if (!board.open) return m ? legRow(m) + `<p class="fine">${esc(lockedAt)}. Text the group chat if it needs a fix.</p>`
+      : `<p class="empty">${esc(board.locked ? 'The legs are locked in' : `Legs locked ${etWhen(board.locksAt)}`)} and yours isn't in. Text it to the group chat.</p>`;
     if (m && !editing) return legRow(m) + `<div class="acts"><button type="button" class="gold-btn" data-act="change">Change</button>${m.sheet ? '' : '<button type="button" class="gold-btn quiet" data-act="remove">Remove</button>'}</div>
       <p class="fine">${saveMsg ? `<b>${esc(saveMsg)}</b> ` : ''}Everyone can see it. You can change it until <b>${esc(etWhen(board.locksAt))}</b>.</p>`;
     if (st.typed) return typedForm();
@@ -560,7 +561,7 @@
     document.getElementById('mine-title').innerHTML = other
       ? `<span>${esc(forWhom())}'s leg</span><button type="button" class="link-btn" id="back-mine" style="padding:0;min-height:32px">Back to mine</button>` : 'Your leg';
     document.getElementById('chips').innerHTML = board ? `<span class="chip gold">${board.year} · Week ${board.week}</span>
-      <span class="chip${board.open ? '' : ' loss'}">${board.open ? `Locks ${esc(etWhen(board.locksAt))}` : `Locked · opens ${esc(etWhen(board.opensAt))}`}</span>
+      <span class="chip${board.open && !board.locked ? '' : ' loss'}">${board.locked ? 'Locked · legs confirmed' : board.open ? `Locks ${esc(etWhen(board.locksAt))}` : `Locked · opens ${esc(etWhen(board.opensAt))}`}</span>
       <span class="chip">${board.legs.length} of ${board.players.length} in</span>` : '';
     document.getElementById('board').innerHTML = drawBoard();
     held = mineEl.contains(document.activeElement) && document.activeElement.matches('input, textarea');
@@ -677,10 +678,24 @@
         <label class="field"><span>Final odds</span><input class="in" id="m-odds" inputmode="numbers-and-punctuation" autocomplete="off" placeholder="+478887" value="${esc(fmtOdds(m.final_odds))}"></label>
         <label class="field"><span>Final payout</span><input class="in" id="m-payout" inputmode="decimal" autocomplete="off" placeholder="95797.48" value="${esc(m.final_payout ?? '')}"></label>
       </div>
-      <div class="acts"><button type="button" class="gold-btn solid" id="m-save"${metaSaving ? ' disabled' : ''}>${metaSaving ? 'Saving…' : 'Save week'}</button><a class="gold-btn" href="parlay-entry.html?year=${board.year}&week=${board.week}">Commish View</a></div>
+      <div class="acts"><button type="button" class="gold-btn solid" id="m-save"${metaSaving ? ' disabled' : ''}>${metaSaving ? 'Saving…' : 'Save week'}</button><button type="button" class="gold-btn" id="m-lock"${metaSaving ? ' disabled' : ''}>${board.locked ? 'Unlock legs' : 'Lock legs'}</button><a class="gold-btn" href="parlay-entry.html?year=${board.year}&week=${board.week}">Commish View</a></div>
       ${metaMsg ? `<p class="fine">${esc(metaMsg)}</p>` : ''}`;
   }
   commishEl.addEventListener('click', async e => {
+    if (e.target.closest('#m-lock') && !metaSaving) {
+      metaSaving = true; metaMsg = ''; drawCommish();
+      let res = null, out = {};
+      try {
+        res = await fetch(WORKER_URL + '/legs/lock', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ locked: !board.locked }) });
+        out = await res.json().catch(() => ({}));
+      } catch { /* no connection */ }
+      metaSaving = false;
+      if (out.legs) board = { ...board, ...out };
+      metaMsg = res && res.ok ? (board.locked ? 'Legs locked. Only commissioners can change them now.' : 'Legs unlocked.')
+        : `Couldn't change the lock (${res ? out.error || res.status : 'no connection'}).`;
+      render();
+      return;
+    }
     if (!e.target.closest('#m-save') || metaSaving) return;
     const body = { sacko: document.getElementById('m-sacko').value, final_odds: document.getElementById('m-odds').value.trim(), final_payout: document.getElementById('m-payout').value.trim() };
     metaSaving = true; metaMsg = ''; drawCommish();
