@@ -24,10 +24,11 @@
  */
 import { sendPush } from "./webpush.js";
 
-const PREF_KEYS = ["final", "median", "recap", "parlay", "parlayAll"];
+const PREF_KEYS = ["final", "median", "recap", "parlay", "parlayAll", "health"];
 // Off unless asked for: everyone else's legs is a lot of buzzing, and it
-// came after people had already subscribed with the four above on.
-const PREF_OFF_BY_DEFAULT = new Set(["parlayAll"]);
+// came after people had already subscribed with the four above on. "health"
+// is the commissioner's daily site check (healthCheck.js).
+const PREF_OFF_BY_DEFAULT = new Set(["parlayAll", "health"]);
 const SITE = "https://bradbutcher321.github.io/RetirementLeague/";
 const f2 = (n) => (Number(n) || 0).toFixed(2);
 
@@ -242,4 +243,12 @@ export async function checkPushEvents(env, dashboard) {
     }
   }
   await Promise.allSettled(sends);
+}
+
+/** Sends one message to every subscriber with `pref` on (no per-manager
+ * targeting, no once-only key: the caller decides when to call). */
+export async function notifyPref(env, pref, message) {
+  if (!env.VAPID_PRIVATE_JWK) return;
+  const { results: subs } = await env.DB.prepare("SELECT * FROM push_subs").all();
+  await Promise.allSettled(subs.filter((s) => cleanPrefs(JSON.parse(s.prefs || "{}"))[pref]).map((s) => deliver(env, s, message)));
 }

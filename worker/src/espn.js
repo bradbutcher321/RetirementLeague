@@ -41,6 +41,14 @@ async function espnGet(url, env, extraHeaders) {
   return res.json();
 }
 
+/** Cheapest authenticated call (just the league's settings), for the daily
+ * health check -- throws like any other ESPN call when the cookies are bad. */
+export async function pingEspn(env) {
+  const url = buildUrl(leagueEndpoint(env.ESPN_YEAR, env.ESPN_LEAGUE_ID), { view: "mSettings" });
+  const data = await espnGet(url, env);
+  if (!data || !data.settings) throw new Error("ESPN request failed (200): no settings in the response");
+}
+
 /** Full league fetch: standings, records, points, playoff odds, team/owner
  * info, and (via the `schedule` array) every team's actual score for every
  * week played so far — everything except the current week's live/projected

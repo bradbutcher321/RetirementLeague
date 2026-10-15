@@ -41,6 +41,7 @@
  *                      pushes it there -- same "no git commit needed" idea
  *                      as this whole file, just for parlay data instead
  *                      of the live dashboard).
+ * (scheduled() also runs healthCheck.js once a day; site audit III #26.)
  * POST /push/subscribe, /push/unsubscribe -> Home Screen app
  *                      notifications (see push.js, site audit II #37).
  * POST /auth/claim, GET /auth/me, POST /auth/signout, POST /auth/admin ->
@@ -69,6 +70,7 @@ import { cached } from "./cache.js";
 import { AUTH_ROUTES } from "./auth.js";
 import { LEG_ROUTES } from "./legs.js";
 import { VIDEO_ROUTES } from "./videos.js";
+import { runHealthCheck } from "./healthCheck.js";
 
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
 
@@ -317,7 +319,12 @@ export default {
   // median snapshot keep their 10-minute pace: they run only on a run whose
   // minute ends in 0 (every hourly run does).
   async scheduled(event, env, ctx) {
-    const tenth = new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 0;
+    const at = new Date(event.scheduledTime || Date.now());
+    const tenth = at.getUTCMinutes() % 10 === 0;
+    // Daily site health check (healthCheck.js): the 13:00 UTC run, on days a cron fires then.
+    if (at.getUTCHours() === 13 && at.getUTCMinutes() === 0) {
+      ctx.waitUntil(runHealthCheck(env).catch((err) => console.error("Health check failed:", err)));
+    }
     const [parlay, median] = await Promise.allSettled([
       tenth ? dispatchParlayRefresh(env) : { status: 204 },
       (async () => {
