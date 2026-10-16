@@ -121,13 +121,22 @@ self.addEventListener('fetch', e => {
 self.addEventListener('push', e => {
   let m = {};
   try { m = e.data ? e.data.json() : {}; } catch (err) { m = { title: 'Retirement League', body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(m.title || 'Retirement League', {
+  const tasks = [self.registration.showNotification(m.title || 'Retirement League', {
     body: m.body || '',
     tag: m.tag,
     icon: 'icons/icon-192.png',
     badge: 'icons/favicon-32.png',
     data: { url: m.url || './' },
-  }));
+  })];
+  // The icon's badge (audit III #21): the Worker says whether your matchup
+  // is close and still live (page-common.js closeMatchupBadge), so the 1
+  // is right even while the app is closed. A message without it leaves the
+  // badge alone.
+  const nav = self.navigator;
+  if (typeof m.badge === 'number' && nav && 'setAppBadge' in nav) {
+    tasks.push((m.badge > 0 ? nav.setAppBadge(m.badge) : nav.clearAppBadge()).catch(() => {}));
+  }
+  e.waitUntil(Promise.all(tasks));
 });
 
 self.addEventListener('notificationclick', e => {

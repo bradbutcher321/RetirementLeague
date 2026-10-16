@@ -129,6 +129,8 @@
   .form-l{ color:var(--text-dim); font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; text-align:center; margin-bottom:8px; }
   .form-row{ display:flex; justify-content:center; gap:5px; flex-wrap:wrap; }
   .form-row .mono.po{ box-shadow:0 0 0 2px var(--surface), 0 0 0 3px var(--gold); }
+  /* Share (share.js) sits under the card and isn't in the picture. */
+  .share-row{ display:flex; justify-content:flex-end; padding:0 12px 12px; }
 
   /* ---------- Who's been on top ---------- */
   .mo{ position:relative; padding:4px 4px 0; }
@@ -243,7 +245,8 @@
   </div>
 
 <script src="nav.js?v=17"></script>
-<script src="page-common.js?v=33"></script>
+<script src="page-common.js?v=34"></script>
+<script src="share.js?v=1"></script>
 <script src="league-common.js?v=5"></script>
 <script>
   let DATA, FR = null, NAMES = [];
@@ -332,7 +335,7 @@
       return `<span class="mono ${s}${g.type !== 'Reg' ? ' po' : ''}" title="${when(g)}: ${esc(g.winner)} ${f2(sc(g, g.winner))}-${f2(sc(g, g.winner === a ? b : a))}">${esc(monogram(g.winner))}</span>`;
     }).join('');
 
-    return `<div class="panel">
+    return `<div class="panel" data-shot>
       <div class="vs-top">
         <div class="vs-side a" style="view-transition-name:${vt(a)}">${logo(a, 'a')}<div class="vs-name">${esc(a)}</div><div class="vs-team">${team(a)}</div></div>
         <div class="vs-score"><b class="ca" style="view-transition-name:${vt(a)}-w">${A.wins}</b><i>–</i><b class="cb" style="view-transition-name:${vt(b)}-w">${B.wins}</b></div>
@@ -346,6 +349,7 @@
         ${aheadFact}
       </div>
       <div class="form"><div class="form-l">Last ${Math.min(10, all.length)} meetings · oldest to newest</div><div class="form-row">${form}</div></div>
+      <div class="share-row">${RLShare.BUTTON}</div>
     </div>`;
   }
 
@@ -471,6 +475,20 @@
     return panel('Every Game', `<div class="glist-head"><div></div><div class="pair2"><span class="ca">${esc(a)}</span><span></span><span class="cb">${esc(b)}</span></div><div style="text-align:right" class="cd">Winner</div></div>${rows}`, `<span class="chip">${all.length} games</span>`);
   }
 
+  // The Share button's picture (share.js): the series card and The Edge --
+  // what gets argued about -- not the whole page.
+  const shot = RLShare.make({
+    eager: true,
+    nodes: () => [...document.querySelectorAll('#compare [data-shot]')],
+    eyebrow: 'Retirement League · Head to Head',
+    name: () => `${$('p1').value}-vs-${$('p2').value}.png`.replace(/\s+/g, '-'),
+    prep: wrap => { wrap.style.display = 'grid'; wrap.style.gap = '12px'; wrap.firstElementChild.style.marginBottom = '0'; },
+  });
+  $('compare').addEventListener('click', e => {
+    const b = e.target.closest('[data-share]');
+    if (b) shot.share(b);
+  });
+
   function render() {
     const a = $('p1').value, b = $('p2').value;
     try { localStorage.setItem('h2h-pair', JSON.stringify([a, b])); } catch (e) {}
@@ -480,11 +498,12 @@
     // cancels the whole transition.
     $('p1').style.viewTransitionName = a === b ? '' : `${vt(a)}-pick`;
     $('p2').style.viewTransitionName = a === b ? '' : `${vt(b)}-pick`;
-    if (a === b) { $('compare').innerHTML = '<div class="loading-row">Pick two different managers.</div>'; return; }
+    if (a === b) { shot.queue(); $('compare').innerHTML = '<div class="loading-row">Pick two different managers.</div>'; return; }
     const all = pairGames(a, b);
-    if (!all.length) { $('compare').innerHTML = `<div class="loading-row">${esc(a)} and ${esc(b)} have never played each other.</div>`; return; }
+    if (!all.length) { shot.queue(); $('compare').innerHTML = `<div class="loading-row">${esc(a)} and ${esc(b)} have never played each other.</div>`; return; }
     const A = side(all, a, b), B = side(all, b, a);
-    $('compare').innerHTML = matchup(all, a, b, A, B) + momentum(all, a, b) + seasons(all, a, b) + edges(all, a, b, A, B) + tape(a, b) + gameLog(all, a, b);
+    $('compare').innerHTML = matchup(all, a, b, A, B) + momentum(all, a, b) + seasons(all, a, b) + edges(all, a, b, A, B).replace('<div class="panel">', '<div class="panel" data-shot>') + tape(a, b) + gameLog(all, a, b);
+    shot.queue();
     const yrs = document.querySelector('.yrs');
     if (yrs) yrs.scrollLeft = yrs.scrollWidth;
   }

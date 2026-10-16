@@ -116,6 +116,50 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || /[?&]sw\b
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
 
+// ---------- App icon badge (audit III #21) ----------
+// The red 1 on the Home Screen icon (navigator.setAppBadge: iOS 16.4+, Home
+// Screen app only, and only once notifications are allowed). It says "your
+// matchup is close and still live": within BADGE_MARGIN points with players
+// left on either side. It clears when the app opens and comes back as you
+// leave it, so it only ever shows on the icon. The same rule is in
+// worker/src/push.js, which sends the number along with each notification
+// so the icon stays right while the app is closed (sw.js).
+const BADGE_MARGIN = 10;
+function closeMatchupBadge(data, name) {
+  if (!name || !data || !Array.isArray(data.matchups)) return 0;
+  const me = String(name).toLowerCase();
+  const m = data.matchups.find(x => [x.awayManager, x.homeManager].some(n => String(n || '').toLowerCase() === me));
+  if (!m) return 0;
+  const n = v => parseFloat(v) || 0, left = (r, i) => (parseInt(r, 10) || 0) + (parseInt(i, 10) || 0);
+  const aLeft = left(m.awayRemaining, m.awayInPlay), hLeft = left(m.homeRemaining, m.homeInPlay);
+  const as = n(m.awayScore), hs = n(m.homeScore);
+  // Nobody left, or kickoff not yet, or one side finished behind: no contest.
+  if ((!aLeft && !hLeft) || as + hs === 0) return 0;
+  if (data.medianStatusKnown && ((!hLeft && hs < as) || (!aLeft && as < hs))) return 0;
+  return Math.abs(as - hs) <= BADGE_MARGIN ? 1 : 0;
+}
+const appBadge = (() => {
+  // Kept in this browser, so leaving the app from any page badges what the
+  // dashboard last saw -- but not a count from a week ago.
+  const KEY = 'rl-badge', FRESH_MS = 6 * 36e5;
+  const saved = () => {
+    try { const b = JSON.parse(localStorage.getItem(KEY)); return b && Date.now() - b.at < FRESH_MS ? b.n : 0; } catch (e) { return 0; }
+  };
+  const show = n => {
+    if (!('setAppBadge' in navigator)) return;
+    try { (n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {}); } catch (e) {}
+  };
+  // Open on screen: nothing to badge. Leaving: put the last count on the icon.
+  document.addEventListener('visibilitychange', () => show(document.hidden ? saved() : 0));
+  show(0);
+  return {
+    set(n) {
+      try { localStorage.setItem(KEY, JSON.stringify({ n, at: Date.now() })); } catch (e) {}
+      show(document.hidden ? n : 0);
+    },
+  };
+})();
+
 // Record-type tile (audit II #5): the mark at the head of a record row says
 // what kind of record it is, never who holds it -- the holder's name is
 // printed right beside it. Game Records only needs hi/lo (every card is a
