@@ -104,6 +104,7 @@ function buildGameStateMap(scoreboardData) {
         displayClock: status.displayClock || "",
         state: status.type?.state || "pre", // "pre" | "in" | "post"
         hasPossession: possessionTeamId === teamId,
+        home: c.homeAway === "home",
       });
     }
   }
@@ -220,6 +221,7 @@ function buildPlayerCard(entry, gameStateByProTeam, seasonAverages) {
       clock: game.displayClock,
       state: game.state,
       hasPossession: game.hasPossession,
+      home: !!game.home,
     },
   };
   const seasonAvg = seasonAverages.get(player.id || entry.playerId);

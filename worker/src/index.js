@@ -35,7 +35,8 @@
  *                      each live build, here and in scheduled()). live=1 (the
  *                      Feed page's poll) also refreshes the live dashboard on
  *                      the same 15-second rule as GET /, so that page needs
- *                      no second request, and adds who plays whom.
+ *                      no second request, and adds who plays whom and the
+ *                      live board (scores and NFL games; scoreFeed.js feedBoard).
  * GET /parlay-stats  -> the parlay stats payload, read straight from KV
  *                      (see publish_parlay_stats.py, which computes and
  *                      pushes it there -- same "no git commit needed" idea
@@ -66,7 +67,7 @@ import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
 import { getPlayerLog } from "./playerLog.js";
 import { getDraft } from "./draft.js";
-import { getFeed, recordScoreEvents } from "./scoreFeed.js";
+import { feedBoard, getFeed, recordScoreEvents } from "./scoreFeed.js";
 import { cached } from "./cache.js";
 import { AUTH_ROUTES } from "./auth.js";
 import { LEG_ROUTES } from "./legs.js";
@@ -136,18 +137,20 @@ const pastWeekDashboard = (env, week) =>
   cached(env, `dashboard:week:${env.ESPN_YEAR}:${week}`, PAST_WEEK_SECONDS, () => buildDashboard(env, null, { week }));
 
 /** The Feed page's poll: the week's new rows, plus each manager's opponent
- * that week (from the live dashboard, or a finished week's cached rebuild
- * on the days between the live week turning over and its first score). */
+ * that week and the live board (feedBoard: the ticker's scores and Live
+ * now's games), from the live dashboard, or a finished week's cached rebuild
+ * on the days between the live week turning over and its first score. */
 async function liveFeed(env, ctx, url) {
   const entry = await readCache(env);
   const live = await liveDashboard(env, ctx, entry, false).catch(() => null);
   const liveWeek = live?.data?.week || null;
   const body = await getFeed(env, url, liveWeek);
-  let matchups = live?.data?.matchups;
-  if (body.week && liveWeek && body.week < liveWeek) matchups = (await pastWeekDashboard(env, body.week).catch(() => null))?.matchups;
+  let dash = live?.data;
+  if (body.week && liveWeek && body.week < liveWeek) dash = await pastWeekDashboard(env, body.week).catch(() => null);
   body.liveWeek = liveWeek;
   body.updatedAt = live?.data?.updatedAt || null;
-  body.pairs = (matchups || []).map((m) => [m.awayManager, m.homeManager]);
+  body.pairs = (dash?.matchups || []).map((m) => [m.awayManager, m.homeManager]);
+  body.board = feedBoard(dash);
   return body;
 }
 

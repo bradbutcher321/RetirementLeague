@@ -71,6 +71,38 @@ export async function recordScoreEvents(env, previous, dashboard) {
   return changed.length;
 }
 
+/** The Feed page's live board, from a dashboard build: each team's score
+ * now and projected (the ticker), and every NFL game of the week that has a
+ * league starter in it, with its score, clock, who has the ball and those
+ * starters' points (Live now). Away team first in `teams` and `score`. */
+export function feedBoard(dashboard) {
+  if (!dashboard?.matchups) return null;
+  const teams = (dashboard.teams || []).map((t) => ({ m: t.manager, cur: t.current, proj: t.projected }));
+  const games = new Map();
+  for (const mu of dashboard.matchups) {
+    for (const [side, m] of [["away", mu.awayManager], ["home", mu.homeManager]]) {
+      for (const p of mu[side + "Players"] || []) {
+        const g = p.game;
+        if (!g || !g.team) continue;
+        const key = [g.team, g.opponent].sort().join("-");
+        let x = games.get(key);
+        if (!x) {
+          const [a, h] = g.home ? [g.opponent, g.team] : [g.team, g.opponent];
+          const [as, hs] = g.home ? [g.opponentScore, g.teamScore] : [g.teamScore, g.opponentScore];
+          x = { key, ko: g.date, state: g.state, q: g.period, clk: g.clock, teams: [a, h], score: [as, hs], poss: null, players: [] };
+          games.set(key, x);
+        }
+        if (g.hasPossession) x.poss = g.team;
+        x.players.push({ n: p.name, m, tm: g.team, pts: p.livePoints ?? 0 });
+      }
+    }
+  }
+  // A game not started yet is only a kickoff time and a starter count on the
+  // page (the "Later" tile), so it travels as that.
+  const list = [...games.values()].map((g) => (g.state === "pre" ? { key: g.key, ko: g.ko, state: "pre", count: g.players.length } : g));
+  return { teams, games: list };
+}
+
 export async function getFeed(env, url, maxWeek = 99) {
   const season = Number(env.ESPN_YEAR);
   let week = Number(url.searchParams.get("week")) || null;

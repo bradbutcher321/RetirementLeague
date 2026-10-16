@@ -40,69 +40,182 @@
 <link rel="stylesheet" href="theme.css?v=30">
 <link rel="stylesheet" href="nav.css?v=14">
 <style>
-  /* ---------- Feed (site audit III #7) ----------
+  /* ---------- Feed (site audit III #7; redesigned 2026-10-16) ----------
      Every change to a starter's points this week, newest first, the whole
-     week in one list. The two selectors ride a band pinned under the top
-     edge (the dashboard's Season So Far toggle does the same), so they stay
-     in reach however far down the week you've scrolled. Your players carry
-     your ring color (You › Settings), your opponent's are white, everyone
-     else's are plain with gold points. The scoring manager's name is the
-     highlighted one. Detailed (the default) adds what the play did to the
-     matchup: the scorer's projection before and after, the opponent's, and
-     the projected median when it moved; Compact is one line of who and
-     where. */
+     week in one list. Mocked up and picked in the Feed Redesign artifact:
+     A Lines rows, polish 1 (day play counts), 3, 4, 5 and 6.
+
+     A band pinned under the top edge holds the score ticker (Everyone, then
+     the six matchups, yours first: tapping one shows just its plays) and the
+     Big plays / All and Detailed / Compact switches. Under it, Live now: the
+     NFL games in progress with the league's starters in them (on a matchup,
+     only its games and starters), beside the list on a wide screen.
+
+     Whose is whose: you in your ring color (You › Settings), your opponent
+     white, anyone else's scorer gold; numbers that are only context (other
+     matchups, the median) grey. */
+  .fd-wrap{ --fd-soft: #C9C9C5; }
+  body:has(.nav-bar:not(.tucked)){ --nav-shown: var(--nav-h, 0px); }
   .fd-band{
     position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px)); z-index: 20;
-    margin: 0 -20px 10px; padding: 8px 20px; background: var(--bg);
-    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;
-    transition: box-shadow .2s ease, top .25s ease;
+    margin: 0 -20px 12px; padding: 8px 20px 9px; background: var(--bg);
+    display: grid; gap: 8px;
+    transition: box-shadow .2s ease, top .25s ease, background-color .2s ease;
   }
-  /* Under the desktop top bar while it's showing (it tucks away as you
-     scroll down); a phone has no top bar. */
-  body:has(.nav-bar:not(.tucked)) .fd-band{ --nav-shown: var(--nav-h, 0px); }
-  .fd-band.stuck{ box-shadow: 0 1px 0 var(--line), 0 12px 18px -14px rgba(0,0,0,0.9); }
+  /* Polish 6: once pinned, the band frosts over the plays under it. */
+  .fd-band.stuck{
+    background: rgba(14,14,14,0.84);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
+    box-shadow: 0 1px 0 var(--line), 0 12px 18px -14px rgba(0,0,0,0.9);
+  }
   .fd-band .seg{ margin: 0; }
+  .fd-row2{ display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .fd-row2 .seg button{ padding: 0 12px; }
   @media (max-width: 480px){ .fd-band{ margin-inline: -14px; padding-inline: 14px; } }
 
+  /* The ticker: one tile per matchup, both current scores with each
+     projection beside it. Tiles size to their content so no name is ever
+     cut; a phone scrolls them sideways, a wide screen stretches them. */
+  .tk{ display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; scroll-padding-inline: 20px; }
+  .tk::-webkit-scrollbar{ display: none; }
+  @media (max-width: 480px){ .tk{ margin-inline: -14px; padding-inline: 14px; scroll-padding-inline: 14px; } }
+  .tk-t{
+    position: relative; flex: none; min-width: 146px; min-height: 50px;
+    display: grid; align-content: center; gap: 2px; padding: 6px 10px;
+    border-radius: 12px; border: 1px solid var(--line);
+    background: linear-gradient(165deg, var(--surface-2), var(--surface));
+    color: var(--text); font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .tk-t.all{ min-width: 88px; }
+  /* Polish 5: your matchup's tile in your ring color. */
+  .tk-t.mine{ border-color: color-mix(in srgb, var(--me-ring) 55%, transparent); background: linear-gradient(165deg, color-mix(in srgb, var(--me-ring) 11%, var(--surface-2)), var(--surface)); }
+  /* The selected tile: the outlined gold chip the site uses for an outer
+     filter, so the solid gold below stays the strongest mark in the band. */
+  .tk-t.on{ border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); background: linear-gradient(165deg, rgba(212,180,106,0.13), rgba(212,180,106,0.05)); }
+  .tk-t:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .tk-all{ font-weight: 700; font-size: 0.8rem; }
+  .tk-t.on .tk-all{ color: var(--gold); }
+  .tk-sub{ font-size: 0.62rem; color: var(--text-dim); white-space: nowrap; }
+  .tk-r{ display: grid; grid-template-columns: minmax(max-content, 1fr) auto 28px; align-items: baseline; column-gap: 6px; }
+  .tk-n{ font-size: 0.74rem; font-weight: 600; color: var(--fd-soft); white-space: nowrap; }
+  .tk-n.mc{ color: var(--me-ring); } .tk-n.wt{ color: var(--text); }
+  .tk-s{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.02rem; line-height: 1.05; font-variant-numeric: tabular-nums; text-align: right; }
+  .tk-s.trail{ color: var(--text-dim); }
+  .tk-p{ font-size: 0.6rem; color: var(--text-dim); font-variant-numeric: tabular-nums; text-align: right; }
+  .tk-live{ position: absolute; top: 5px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--loss); animation: fd-pulse 1.6s ease-in-out infinite; }
+  .tk-s.bump{ animation: fd-bump .9s ease-out; }
+  @keyframes fd-bump{ 0%{ color: var(--gold); text-shadow: 0 0 14px rgba(212,180,106,0.7); } }
+  @keyframes fd-pulse{ 0%, 100%{ opacity: 1; transform: scale(1); } 50%{ opacity: .45; transform: scale(1.35); } }
+  @media (min-width: 900px){
+    .tk{ margin: 0; padding: 0; gap: 5px; }
+    .tk-t{ flex: 1 0 auto; min-width: 0; padding: 6px 8px; }
+    .tk-t.all{ flex: 0 0 auto; }
+    .tk-r{ column-gap: 5px; } .tk-n{ font-size: 0.72rem; } .tk-s{ font-size: 0.98rem; }
+  }
+
+  /* ---------- Live now, and the list beside it on a wide screen ---------- */
+  .fd-side:empty{ display: none; }
+  .fd-side{ margin-bottom: 12px; min-width: 0; }
+  .fd-main{ min-width: 0; }
+  @media (min-width: 900px){
+    .fd-grid.has-side{ display: grid; grid-template-columns: minmax(0,1fr) 320px; gap: 18px; align-items: start; }
+    .fd-grid.has-side .fd-side{
+      grid-column: 2; grid-row: 1; margin: 0;
+      position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px) + var(--band-h, 0px) + 4px);
+      max-height: calc(100vh - var(--nav-shown, 0px) - var(--band-h, 0px) - 24px); overflow-y: auto; scrollbar-width: none;
+      transition: top .25s ease;
+    }
+    .fd-grid.has-side .fd-side::-webkit-scrollbar{ display: none; }
+    .fd-grid.has-side .fd-main{ grid-column: 1; grid-row: 1; }
+  }
+  .ln-h{ display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 2px 8px; }
+  .ln-cap{ color: var(--text); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .ln-sub{ font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; }
+  .ln-strip{ display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px 2px; scroll-padding-inline: 20px; align-items: flex-start; }
+  .ln-strip::-webkit-scrollbar{ display: none; }
+  @media (max-width: 480px){ .ln-strip{ margin-inline: -14px; padding-inline: 14px; scroll-padding-inline: 14px; } }
+  @media (min-width: 900px){ .fd-grid.has-side .ln-strip{ display: grid; gap: 8px; margin: 0; padding: 0; overflow: visible; } .fd-grid.has-side .gt{ width: auto; } }
+  .gt{
+    flex: none; width: 204px; padding: 9px 11px 8px; border-radius: 14px; border: 1px solid var(--line);
+    background: linear-gradient(165deg, var(--surface-2), var(--surface));
+    color: var(--text); font: inherit; text-align: left; display: grid; gap: 6px;
+  }
+  button.gt{ cursor: pointer; }
+  .gt.on{ border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+  .gt:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .gt-top{ display: flex; justify-content: space-between; align-items: center; font-family: var(--scoreboard); font-weight: 800; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--loss); }
+  .gt-top span{ display: inline-flex; align-items: center; gap: 6px; }
+  .gt-top em{ font-style: normal; color: var(--text-dim); letter-spacing: 0.02em; }
+  .gt-top.done{ color: var(--text); }
+  .gt-dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); animation: fd-pulse 1.6s ease-in-out infinite; flex: none; }
+  .gt-sc{ display: grid; gap: 1px; }
+  .gt-row{ display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: baseline; }
+  .gt-tm{ font-weight: 700; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 6px; }
+  .gt-tm i{ width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px rgba(212,180,106,0.8); }
+  .gt-row b{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.18rem; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .gt-row.trail b, .gt-row.trail .gt-tm{ color: var(--text-dim); }
+  .gt-pl{ display: grid; gap: 3px; padding-top: 6px; border-top: 1px solid var(--line); }
+  .pl{ display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 7px; align-items: center; font-size: 0.74rem; }
+  .pl-m{ width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font: 800 0.5rem/1 var(--body); letter-spacing: 0.02em; border: 1.5px solid rgba(255,255,255,0.22); color: var(--fd-soft); }
+  .pl-m.mc{ border-color: var(--me-ring); color: var(--me-ring); } .pl-m.wt{ border-color: var(--text); color: var(--text); }
+  .pl-n{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--fd-soft); }
+  .pl-n.mc{ color: var(--me-ring); font-weight: 600; } .pl-n.wt{ color: var(--text); font-weight: 600; }
+  .pl b{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+  .pl b.mc{ color: var(--me-ring); }
+  .gt-more{ font-size: 0.66rem; color: var(--text-dim); }
+  .gt.later{ width: 150px; gap: 5px; }
+  .lt{ display: grid; gap: 3px; font-size: 0.72rem; color: var(--fd-soft); }
+  .lt span{ display: flex; justify-content: space-between; gap: 6px; white-space: nowrap; }
+  .lt em{ font-style: normal; color: var(--text-dim); }
+  .fd-gpill{
+    display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 6px 0 14px; margin-bottom: 10px;
+    border-radius: 999px; border: 1px solid var(--gold); background: var(--lead-tint); color: var(--gold);
+    font: 700 0.8rem/1 var(--body); cursor: pointer; position: relative;
+  }
+  .fd-gpill::before{ content: ''; position: absolute; inset: -5px 0; }
+  .fd-gpill i{ font-style: normal; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: rgba(212,180,106,0.18); font-size: 0.75rem; }
+
+  /* ---------- The list ---------- */
   .fd-panel{ padding: 6px 12px 12px; }
   .fd{ display: grid; gap: 6px; }
-  .fd-day{ color: var(--gold); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 4px 0; }
-  .fd-row{ display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 12px 8px 10px; }
+  /* Polish 1: each day says how many plays it has. */
+  .fd-day{ display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--gold); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 4px 0; }
+  .fd-day .dc{ color: var(--text-dim); font-weight: 600; letter-spacing: 0.02em; text-transform: none; font-size: 0.66rem; }
+  .fd-row{ display: grid; grid-template-columns: 52px minmax(0,1fr) auto; column-gap: 10px; align-items: start; padding: 9px 12px 10px 10px; }
   .fd-row.mine{ border-color: color-mix(in srgb, var(--me-ring) 55%, transparent); background: color-mix(in srgb, var(--me-ring) 8%, transparent); }
   .fd-row.opp{ border-color: rgba(245,245,243,0.42); background: rgba(245,245,243,0.05); }
-  .fd-row.det{ align-items: start; }
-  .fd-row.det .fd-t{ padding-top: 2px; }
-  .fd-t{ color: var(--text-dim); font-size: 0.7rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* Polish 3: a touchdown is ringed in gold (yours and your opponent's keep
+     their own ring) and its points glow. */
+  .fd-row.td:not(.mine):not(.opp){ border-color: var(--lead-line); background: var(--lead-tint); }
+  .fd-row.td .fd-p{ text-shadow: 0 0 16px color-mix(in srgb, currentColor 55%, transparent); }
+  .fd-row.compact{ align-items: center; }
+  .fd-t{ color: var(--text-dim); font-size: 0.7rem; padding-top: 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .fd-row.compact .fd-t{ padding-top: 0; }
   .fd-m{ min-width: 0; font-size: 0.82rem; line-height: 1.35; }
   .fd-m b{ font-weight: 600; }
   .fd-m .what{ color: var(--text-dim); }
   .fd-s{ color: var(--text-dim); font-size: 0.68rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .fd-p{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.08rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fd-p{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.08rem; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+  .fd-p.big{ font-size: 1.3rem; }
   .fd-p.gold{ color: var(--gold); } .fd-p.loss{ color: var(--loss); } .fd-p.mc{ color: var(--me-ring); } .fd-p.wt{ color: var(--text); }
-  /* Whose name: yours in your color, your opponent's white, the scorer's
-     gold otherwise; the other name in a matchup stays dim. */
+  .fd-row.over .fd-p{ color: var(--text-dim); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .tag{ display: inline-block; font: 800 0.56rem/1 var(--body); letter-spacing: 0.06em; padding: 3px 5px 2px; border-radius: 5px; color: var(--gold); border: 1px solid var(--lead-line); background: var(--lead-tint); vertical-align: 1px; margin-left: 5px; }
+  .tag.over{ color: var(--fd-soft); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+  .fd-note{ grid-column: 2 / 4; margin-top: 5px; font-size: 0.72rem; color: var(--text-dim); }
   .hl{ font-weight: 700; }
-  .hl.mc{ color: var(--me-ring); } .hl.wt{ color: var(--text); } .hl.gold{ color: var(--gold); }
-  .fd-x{ grid-column: 2 / 4; display: grid; gap: 3px; margin-top: 4px; font-size: 0.76rem; color: var(--text-dim); }
-  .fd-xl{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-  .fd-xv{ font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .fd-xv b{ font-weight: 600; color: var(--text); }
-  .fd-xv b.mc{ color: var(--me-ring); } .fd-xv b.gold{ color: var(--gold); }
-  .fd-xv i{ font-style: normal; margin: 0 4px; }
-  /* Wide: the matchup sits in its own column beside the play. */
-  @media (min-width: 700px){
-    .fd-row{ grid-template-columns: 64px minmax(0,1fr) auto; }
-    .fd-row.det{ grid-template-columns: 64px minmax(0,1fr) minmax(0,290px) 64px; align-items: center; }
-    .fd-row.det .fd-t{ padding-top: 0; }
-    .fd-row.det .fd-x{ grid-column: 3; grid-row: 1; margin-top: 0; }
-    .fd-row.det .fd-p{ grid-column: 4; grid-row: 1; text-align: right; }
-  }
-  .fd-head-r{ display: flex; align-items: flex-end; gap: 16px; }
-  @media (max-width: 600px){ .fd-head-r{ width: 100%; justify-content: space-between; } }
-  /* Before a team is picked, My matchup / Everyone sits greyed out on
-     Everyone; a tap on it opens the team picker. */
-  .seg.off{ opacity: 0.42; }
-  .fd-head-r .seg button{ height: 30px; padding: 0 12px; font-size: 0.78rem; }
+  .mc{ color: var(--me-ring); } .wt{ color: var(--text); } .gold{ color: var(--gold); } .soft{ color: var(--fd-soft); }
+
+  /* The matchup under each play: scorer, opponent, median, each with a Now
+     and a Proj column. Each column is three cells (before, arrow, after) so
+     the befores, the arrows and the afters each line up down the rows. */
+  .fd-x{ grid-column: 2 / 4; margin-top: 7px; min-width: 0; }
+  .xa{ display: grid; grid-template-columns: minmax(0,1fr) auto auto auto 22px auto auto auto; row-gap: 3px; font-size: 0.76rem; color: var(--text-dim); align-items: baseline; max-width: 380px; }
+  .xa .h{ grid-column: span 3; font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-align: right; margin-bottom: -1px; }
+  .xa .nm{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem; }
+  .xa .v{ font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .xa .ar{ padding: 0 5px; opacity: .7; }
+  /* Polish 4: the new numbers in the scoreboard face; the old ones stay small. */
+  .xa .af{ font-family: var(--scoreboard); font-size: 1.04rem; font-weight: 700; line-height: 1.1; }
 
   /* Until a visitor picks their team, one line says what it gets them
      here (the dashboard's own ask, in the same shape). The ✕ hides it. */
@@ -110,27 +223,27 @@
   .me-ask-go{ flex: 1; min-width: 0; min-height: 44px; text-align: left; background: none; border: 0; color: var(--text); font: 600 0.92rem/1.3 var(--body); padding: 6px 10px; cursor: pointer; }
   .me-ask .x{ background: rgba(255,255,255,0.06); border: none; color: var(--text-dim); border-radius: 999px; width: 30px; height: 30px; font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; flex: none; position: relative; }
   .me-ask .x::before{ content: ''; position: absolute; inset: -7px; }
-  .me-ask-go:focus-visible, .me-ask .x:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .me-ask-go:focus-visible, .me-ask .x:focus-visible, .fd-gpill:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .fd-new{ animation: fd-in .5s cubic-bezier(.2,.8,.2,1); }
   @keyframes fd-in{ from{ opacity: 0; transform: translateY(-6px); } }
-  @media (prefers-reduced-motion: reduce){ .fd-new{ animation: none; } .fd-band{ transition: none; } }
+  @media (prefers-reduced-motion: reduce){
+    .fd-new, .tk-s.bump, .tk-live, .gt-dot{ animation: none; }
+    .fd-band, .fd-grid.has-side .fd-side{ transition: none; }
+  }
 </style>
 </head>
 <body>
   <div id="site-nav"></div>
-  <div class="wrap">
+  <div class="wrap fd-wrap">
     <header>
       <div class="header-row">
         <div>
           <div class="eyebrow" id="fd-eyebrow">Retirement League</div>
           <h1>Feed</h1>
         </div>
-        <div class="fd-head-r">
-          <div class="seg" id="fd-view" role="group" aria-label="Row detail"></div>
-          <div class="updated-block">
-            <div class="updated-label">Updated</div>
-            <div class="updated-value" id="fd-updated">—</div>
-          </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="fd-updated">—</div>
         </div>
       </div>
     </header>
@@ -138,7 +251,13 @@
     <section>
       <div id="fd-ask"></div>
       <div class="fd-band" id="fd-band"></div>
-      <div class="glass fd-panel"><div class="fd" id="fd-list"><div class="empty-note">Loading…</div></div></div>
+      <div class="fd-grid" id="fd-grid">
+        <aside class="fd-side" id="fd-side"></aside>
+        <div class="fd-main">
+          <div id="fd-gpill"></div>
+          <div class="glass fd-panel"><div class="fd" id="fd-list"><div class="empty-note">Loading…</div></div></div>
+        </div>
+      </div>
     </section>
 
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
@@ -148,20 +267,32 @@
 <script>
   // The Worker saves a row each time a starter's points move
   // (worker/src/scoreFeed.js). Each poll asks only for the rows after the
-  // newest one here (live=1 also keeps the live dashboard fresh on the
-  // Worker and says who plays whom), so a quiet poll is a few hundred
-  // bytes. The week shown is the newest with any rows.
+  // newest one here; live=1 also keeps the live dashboard fresh on the
+  // Worker and returns who plays whom (pairs) and the live board (each
+  // team's score now and projected, and the week's NFL games with their
+  // league starters). The week shown is the newest with any rows.
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const REFRESH_MS = 15 * 1000;
-  let week = null, events = [], maxId = 0, pairs = [], updatedAt = null, busy = false, seen = 0, loaded = false, lastAt = 0;
-  let scope = 'mine', filter = 'big', view = 'detailed';
+  let week = null, events = [], maxId = 0, pairs = [], board = null, updatedAt = null, busy = false, seen = 0, loaded = false, lastAt = 0;
+  // scope: 'all', 'mine' (your matchup) or 'm:<manager>' (that manager's
+  // matchup this week; a week without it falls back to Everyone).
+  let scope = 'mine', filter = 'big', view = 'detailed', game = null;
+  const prevCur = new Map();
   const ASK_KEY = 'rl-feed-me-ask-hidden';
   try {
     view = localStorage.getItem('feedView') === 'compact' ? 'compact' : 'detailed';
-    scope = localStorage.getItem('feedScope') === 'all' ? 'all' : 'mine';
+    scope = localStorage.getItem('feedScope') || 'mine';
     filter = localStorage.getItem('feedFilter') === 'all' ? 'all' : 'big';
   } catch (e) {}
-  const fdTime = ms => new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+  const ET = 'America/New_York';
+  const fdTime = ms => new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: ET });
+  const fdDay = ms => new Date(ms).toLocaleDateString('en-US', { weekday: 'long', timeZone: ET });
+  const f2 = v => (Math.round((v + Number.EPSILON) * 100) / 100).toFixed(2);
+  const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+  const median = a => { const s = [...a].sort((x, y) => x - y), k = s.length >> 1; return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2; };
+  // "J. Smith-Njigba", but RJ Harvey, J.K. Dobbins and DK Metcalf stay whole.
+  const shortName = n => { const p = String(n).split(' '); return p.length > 1 && p[0].length > 2 && !p[0].includes('.') ? p[0][0] + '. ' + p.slice(1).join(' ') : n; };
+  const gameKey = (a, b) => [a, b].sort().join('-');
 
   function load() {
     if (busy) return;
@@ -172,9 +303,10 @@
       .then(d => {
         if (!d || !Array.isArray(d.events)) return;
         // A new week's first rows replace the last week's.
-        if (d.week !== week) { week = d.week; events = []; maxId = 0; seen = 0; }
+        if (d.week !== week) { week = d.week; events = []; maxId = 0; seen = 0; prevCur.clear(); }
         d.events.forEach(e => { if (e.id > maxId) { events.push(e); maxId = e.id; } });
         if (Array.isArray(d.pairs)) pairs = d.pairs;
+        if (d.board) board = d.board;
         if (d.updatedAt) updatedAt = d.updatedAt;
         loaded = true;
         render();
@@ -183,70 +315,138 @@
       .finally(() => { busy = false; });
   }
 
+  // Each row's current scores, rebuilt from the rows: a team's score at any
+  // point is the sum of its starters' latest totals, and the current median
+  // is the middle of all twelve. A play taken straight back within five
+  // minutes (same player, equal and opposite) folds into the original row.
+  function enrich(managers) {
+    const pts = new Map(), cur = new Map(managers.map(m => [m, 0])), last = new Map();
+    for (const e of events) {
+      const key = e.pid || e.n;
+      if (!cur.has(e.m)) cur.set(e.m, 0);
+      e.ca = cur.get(e.m); e.mca = median([...cur.values()]);
+      cur.set(e.m, cur.get(e.m) - (pts.get(key) || 0) + e.b);
+      pts.set(key, e.b);
+      e.cb = cur.get(e.m); e.mcb = median([...cur.values()]);
+      e.oc = e.om != null ? cur.get(e.om) ?? 0 : null;
+      e.what = feedWhat(e);
+      e.td = /TD/.test(e.what);
+      const p = last.get(key);
+      e.over = false; e.undo = false;
+      if (p && !p.over && !p.undo && e.t - p.t < 5 * 60000 && Math.abs(p.d + e.d) < 0.005 && Math.abs(p.d) >= 1) { p.over = e.t - p.t; e.undo = true; }
+      last.set(key, e);
+    }
+    return cur;
+  }
+
   function render() {
     document.getElementById('fd-eyebrow').textContent = week ? `Retirement League · Week ${week}` : 'Retirement League';
     document.getElementById('fd-updated').textContent = updatedAt ? formatUpdated(updatedAt) : '—';
     const oppOf = new Map();
     pairs.forEach(([a, b]) => { oppOf.set(a, b); oppOf.set(b, a); });
-    const me = [...oppOf.keys(), ...events.map(e => e.m)].find(n => isMe(n)) || null;
+    events.forEach(e => { if (!e.om) e.om = oppOf.get(e.m) || null; });
+    const managers = pairs.length ? pairs.flat() : [...new Set(events.map(e => e.m))];
+    const rebuilt = enrich(managers);
+    const me = managers.find(n => isMe(n)) || null;
     const opp = me ? oppOf.get(me) || null : null;
-    const sc = me ? scope : 'all';
+    // Yours first, you on top; the rest as ESPN lists them.
+    const mineP = me && pairs.find(p => p.includes(me));
+    const order = (mineP ? [[me, opp]] : []).concat(pairs.filter(p => p !== mineP));
+    const pair = scope === 'all' ? null
+      : scope === 'mine' ? (mineP ? [me, opp] : null)
+      : order.find(p => p.includes(scope.slice(2))) || null;
+    const tone = m => (m === me ? 'mc' : opp && m === opp ? 'wt' : '');
+    const sTone = m => tone(m) || 'gold', oTone = m => tone(m) || 'soft';
+    const name = (m, t) => `<span class="hl ${t}">${esc(m)}</span>`;
 
+    // ----- Now, from the board (or the rows, before the board arrives) -----
+    const cur = new Map(), proj = new Map();
+    managers.forEach(m => cur.set(m, rebuilt.get(m) || 0));
+    events.forEach(e => { if (typeof e.pb === 'number') proj.set(e.m, e.pb); if (e.om && typeof e.oj === 'number') proj.set(e.om, e.oj); });
+    (board?.teams || []).forEach(t => { cur.set(t.m, t.cur); proj.set(t.m, t.proj); });
+    const games = board?.games || [];
+    const live = games.filter(g => g.state === 'in');
+    const livePlayers = new Set();
+    live.forEach(g => g.players.forEach(p => livePlayers.add(p.m)));
+
+    // ----- The band: ticker, then Big plays / All and Detailed / Compact -----
     const btn = (attr, k, label, on) => `<button type="button"${on ? ' class="on"' : ''} data-fd-${attr}="${k}" aria-pressed="${on}">${label}</button>`;
+    const tile = (p, key) => {
+      const [a, b] = p, on = !!pair && pair.includes(a);
+      const ca = cur.get(a) || 0, cb = cur.get(b) || 0;
+      const lead = ca > cb + 0.005 ? a : cb > ca + 0.005 ? b : null;
+      const row = m => `<span class="tk-r"><span class="tk-n ${tone(m)}">${esc(m)}</span><span class="tk-s${lead && lead !== m ? ' trail' : ''}" data-tk="${esc(m)}">${f2(cur.get(m) || 0)}</span><span class="tk-p">${proj.has(m) ? f1(proj.get(m)) : ''}</span></span>`;
+      return `<button type="button" class="tk-t${p === order[0] && mineP ? ' mine' : ''}${on ? ' on' : ''}" data-fd-scope="${esc(key)}" aria-pressed="${on}" aria-label="${esc(a)} vs ${esc(b)}">${row(a)}${row(b)}${livePlayers.has(a) || livePlayers.has(b) ? '<i class="tk-live" aria-hidden="true"></i>' : ''}</button>`;
+    };
+    const tk = document.getElementById('fd-tk');
+    const tkLeft = tk ? tk.scrollLeft : 0;
     document.getElementById('fd-band').innerHTML =
-      (me ? `<div class="seg" role="group" aria-label="Whose plays">${btn('scope', 'mine', 'My matchup', sc === 'mine')}${btn('scope', 'all', 'Everyone', sc === 'all')}</div>`
-        : `<div class="seg off" role="group" aria-label="Whose plays: pick your team first" data-fd-pick>${btn('scope', 'mine', 'My matchup', false)}${btn('scope', 'all', 'Everyone', true)}</div>`)
-      + `<div class="seg" role="group" aria-label="Which plays">${btn('filter', 'big', 'Big plays', filter === 'big')}${btn('filter', 'all', 'All', filter === 'all')}</div>`;
-    document.getElementById('fd-view').innerHTML = btn('view', 'detailed', 'Detailed', view === 'detailed') + btn('view', 'compact', 'Compact', view === 'compact');
+      `<div class="tk" id="fd-tk" role="group" aria-label="Whose plays">
+        <button type="button" class="tk-t all${pair ? '' : ' on'}" data-fd-scope="all" aria-pressed="${!pair}"><span class="tk-all">Everyone</span><span class="tk-sub">${live.length ? `${live.length} game${live.length === 1 ? '' : 's'} live` : `${order.length} matchups`}</span></button>
+        ${order.map((p, i) => tile(p, i === 0 && mineP ? 'mine' : 'm:' + p[0])).join('')}
+      </div>
+      <div class="fd-row2">
+        <div class="seg" role="group" aria-label="Which plays">${btn('filter', 'big', 'Big plays', filter === 'big')}${btn('filter', 'all', 'All', filter === 'all')}</div>
+        <div class="seg" role="group" aria-label="Row detail">${btn('view', 'detailed', 'Detailed', view === 'detailed')}${btn('view', 'compact', 'Compact', view === 'compact')}</div>
+      </div>`;
+    document.getElementById('fd-tk').scrollLeft = tkLeft;
+    // Whose score moved since the last poll: their ticker number flashes gold.
+    managers.forEach(m => {
+      const was = prevCur.get(m), now = cur.get(m) || 0;
+      if (was != null && Math.abs(was - now) >= 0.005) document.querySelectorAll(`#fd-band [data-tk="${CSS.escape(m)}"]`).forEach(el => el.classList.add('bump'));
+      prevCur.set(m, now);
+    });
     renderAsk();
-    // Yours in your color, your opponent white, anyone else's scorer gold.
-    const tone = (name, scorer) => (name === me ? 'mc' : opp && name === opp ? 'wt' : scorer ? 'gold' : '');
-    const nameHtml = (name, scorer) => { const t = tone(name, scorer); return t ? `<span class="hl ${t}">${esc(name)}</span>` : esc(name); };
-    const f2 = v => v.toFixed(2);
+    renderSide(pair, me, opp, tone);
 
-    let list = events;
-    if (sc === 'mine') list = list.filter(e => e.m === me || (opp && e.m === opp));
+    // ----- The list -----
+    if (game && !games.some(g => g.key === game) && !events.some(e => gameKey(e.tm, e.op) === game)) game = null;
+    let list = events.filter(e => !e.undo);
+    if (pair) list = list.filter(e => pair.includes(e.m));
+    if (game) list = list.filter(e => gameKey(e.tm, e.op) === game);
     if (filter === 'big') list = list.filter(e => Math.abs(e.d) > 3);
+    list = list.slice().reverse();
+    const gp = game ? (games.find(g => g.key === game)?.teams || game.split('-')) : null;
+    document.getElementById('fd-gpill').innerHTML = gp ? `<button type="button" class="fd-gpill" data-fd-cleargame>${esc(gp.join(' vs '))} plays<i aria-hidden="true">✕</i></button>` : '';
+
+    const perDay = new Map();
+    list.forEach(e => { const d = fdDay(e.t); perDay.set(d, (perDay.get(d) || 0) + 1); });
     let lastDay = '';
-    const rows = list.slice().reverse().map(e => {
-      const day = new Date(e.t).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/New_York' });
-      const head = day !== lastDay ? `<div class="fd-day">${day}</div>` : '';
+    const rows = list.map(e => {
+      const day = fdDay(e.t), n = perDay.get(day);
+      const head = day !== lastDay ? `<div class="fd-day"><span>${day}</span><span class="dc">${n} play${n === 1 ? '' : 's'}</span></div>` : '';
       lastDay = day;
       const whose = e.m === me ? 'mine' : opp && e.m === opp ? 'opp' : '';
       const valTone = whose === 'mine' ? 'mc' : whose === 'opp' ? 'wt' : e.d > 0 ? 'gold' : 'loss';
       const clock = e.q ? (e.q > 4 ? 'OT' : `Q${e.q}`) + (e.clk ? ' ' + e.clk : '') : '';
-      const game = e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
-      const other = e.om || oppOf.get(e.m) || '';
-      const who = nameHtml(e.m, true) + (other ? ' vs ' + nameHtml(other, false) : '');
+      const gameLine = e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
+      const other = e.om || '';
       // Detailed needs the projections the Worker saved with the row; a
       // row from before it kept them shows the compact line instead.
-      const detailed = view === 'detailed' && typeof e.pa === 'number' && typeof e.pb === 'number';
-      let x = '';
-      if (detailed) {
-        const st = tone(e.m, true), ot = tone(other, false);
-        x = `<div class="fd-x">
-            <div class="fd-xl"><span>${nameHtml(e.m, true)}</span><span class="fd-xv">${f2(e.pa)}<i>→</i><b class="${st === 'wt' ? '' : st}">${f2(e.pb)}</b></span></div>
-            ${other && typeof e.oj === 'number' ? `<div class="fd-xl"><span>${nameHtml(other, false)}</span><span class="fd-xv"><b class="${ot === 'wt' ? '' : ot}">${f2(e.oj)}</b></span></div>` : ''}
-            ${typeof e.ma === 'number' && typeof e.mb === 'number' && Math.abs(e.mb - e.ma) >= 0.005
-              ? `<div class="fd-xl"><span>Median</span><span class="fd-xv">${f2(e.ma)}<i>→</i><b>${f2(e.mb)}</b></span></div>` : ''}
-          </div>`;
-      }
-      const sub = detailed ? esc(game) : who + (game ? ' · ' + esc(game) : '');
-      return `${head}<div class="fd-row item${whose ? ' ' + whose : ''}${detailed ? ' det' : ''}${seen && e.id > seen ? ' fd-new' : ''}" data-id="${e.id}">
+      const detailed = view === 'detailed' && !e.over && typeof e.pa === 'number' && typeof e.pb === 'number';
+      const who = name(e.m, sTone(e.m)) + (other ? ' vs ' + name(other, oTone(other)) : '');
+      const sub = detailed ? esc(gameLine) : who + (gameLine ? ' · ' + esc(gameLine) : '');
+      const tags = (e.td ? '<span class="tag">TD</span>' : '') + (e.over ? '<span class="tag over">Overturned</span>' : '');
+      const x = detailed ? `<div class="fd-x">${lines(e, other, sTone(e.m), oTone(other), name)}</div>` : '';
+      const mins = e.over ? Math.max(1, Math.round(e.over / 60000)) : 0;
+      const note = e.over && view === 'detailed' ? `<div class="fd-note">Taken back ${mins === 1 ? 'a minute' : mins + ' minutes'} later, so it didn't count.</div>` : '';
+      return `${head}<div class="fd-row item${whose ? ' ' + whose : ''}${detailed ? '' : ' compact'}${e.td && !e.over ? ' td' : ''}${e.over ? ' over' : ''}${seen && e.id > seen ? ' fd-new' : ''}" data-id="${e.id}">
           <span class="fd-t">${fdTime(e.t)}</span>
-          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(feedWhat(e))}</span>${sub ? `<div class="fd-s">${sub}</div>` : ''}</div>
-          <span class="fd-p ${valTone}">${e.d > 0 ? '+' : '−'}${Math.abs(e.d).toFixed(2)}</span>
-          ${x}
+          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${tags}${sub ? `<div class="fd-s">${sub}</div>` : ''}</div>
+          <span class="fd-p ${valTone}${Math.abs(e.d) >= 6 ? ' big' : ''}">${e.d > 0 ? '+' : '−'}${f2(Math.abs(e.d))}</span>
+          ${x}${note}
         </div>`;
     }).join('');
     const empty = !events.length ? 'Scoring plays show up here once games kick off.'
-      : filter === 'big' ? (sc === 'mine' ? 'No big plays in your matchup yet.' : 'No big plays yet.')
-      : 'Nothing has scored in your matchup yet.';
+      : game ? 'Nothing from this game here yet.'
+      : filter === 'big' ? (pair ? 'No big plays in this matchup yet.' : 'No big plays yet.')
+      : 'Nothing has scored in this matchup yet.';
 
     // New rows land at the top. Scrolled down into the list, the row you
     // were reading stays where it is on screen instead of being pushed down.
     const listEl = document.getElementById('fd-list');
-    const band = document.getElementById('fd-band').getBoundingClientRect().bottom;
+    const bandEl = document.getElementById('fd-band');
+    const band = bandEl.getBoundingClientRect().bottom;
     const anchor = [...listEl.querySelectorAll('.fd-row')].find(r => r.getBoundingClientRect().bottom > band);
     const keep = anchor && listEl.getBoundingClientRect().top < band ? { id: anchor.dataset.id, top: anchor.getBoundingClientRect().top } : null;
     listEl.innerHTML = loaded ? rows || `<div class="empty-note">${empty}</div>` : '<div class="empty-note">Loading…</div>';
@@ -255,7 +455,74 @@
       if (same) window.scrollBy({ top: same.getBoundingClientRect().top - keep.top, behavior: 'instant' });
     }
     seen = maxId;
+    document.documentElement.style.setProperty('--band-h', bandEl.offsetHeight + 'px');
     markStuck();
+  }
+
+  // Scorer, opponent and median, each with Now and Proj. The scorer's
+  // numbers (and the median's, when the play moved it) read old → new.
+  function lines(e, other, st, ot, name) {
+    const step = (x, y, c) => typeof x === 'number' && Math.abs(y - x) >= 0.005
+      ? `<span class="v">${f2(x)}</span><span class="ar">→</span><span class="v af"><b class="${c}">${f2(y)}</b></span>`
+      : `<span></span><span></span><span class="v af">${c === 'soft' ? f2(y) : `<b class="${c}">${f2(y)}</b>`}</span>`;
+    const one = (y, c) => `<span></span><span></span><span class="v af">${typeof y === 'number' ? `<b class="${c}">${f2(y)}</b>` : '—'}</span>`;
+    const med = typeof e.mb === 'number';
+    return `<div class="xa"><span></span><span class="h">Now</span><span></span><span class="h">Proj</span>
+      <span class="nm">${name(e.m, st)}</span>${step(e.ca, e.cb, st)}<span></span>${step(e.pa, e.pb, st)}
+      ${other ? `<span class="nm">${name(other, ot)}</span>${one(e.oc, ot)}<span></span>${one(e.oj, ot)}` : ''}
+      ${med ? `<span class="nm">Median</span>${step(e.mca, e.mcb, 'soft')}<span></span>${step(e.ma, e.mb, 'soft')}` : ''}</div>`;
+  }
+
+  // Live now. Everyone: the games in progress, then today's finals and the
+  // kickoffs still to come. A matchup: only the games in progress with its
+  // starters, listing just them, and nothing while none of them are playing.
+  // On a wide screen the same tiles stack beside the list.
+  function renderSide(pair, me, opp, tone) {
+    const side = document.getElementById('fd-side');
+    const strip = document.getElementById('fd-lns');
+    const left = strip ? strip.scrollLeft : 0;
+    const games = board?.games || [];
+    const inScope = g => !pair || (g.players || []).some(p => pair.includes(p.m));
+    const ours = g => (g.players || []).filter(p => p.m === me || (opp && p.m === opp)).length;
+    const live = games.filter(g => g.state === 'in' && inScope(g)).sort((x, y) => ours(y) - ours(x) || y.players.length - x.players.length);
+    const scoped = g => g.players.filter(p => !pair || pair.includes(p.m)).sort((x, y) => (y.m === me) - (x.m === me) || (y.m === opp) - (x.m === opp) || y.pts - x.pts);
+    const nLive = live.reduce((s, g) => s + scoped(g).length, 0);
+    const clockOf = g => g.q === 2 && g.clk === '0:00' ? 'Half' : (g.q > 4 ? 'OT' : 'Q' + g.q) + ' ' + g.clk;
+    const tileOf = g => {
+      const sc = g.score, lead = sc[0] > sc[1] ? 0 : sc[1] > sc[0] ? 1 : -1;
+      const pl = scoped(g), shown = pl.slice(0, pl.length === 5 ? 5 : 4);
+      const top = g.state === 'post' ? '<div class="gt-top done"><span>Final</span></div>'
+        : `<div class="gt-top"><span><i class="gt-dot"></i>${esc(clockOf(g))}</span><em>${pl.length} starter${pl.length === 1 ? '' : 's'}</em></div>`;
+      return `<button type="button" class="gt${game === g.key ? ' on' : ''}" data-fd-game="${esc(g.key)}" aria-pressed="${game === g.key}" aria-label="${esc(g.teams.join(' vs '))}: show just its plays">
+        ${top}
+        <div class="gt-sc">${[0, 1].map(i => `<div class="gt-row${lead >= 0 && lead !== i ? ' trail' : ''}"><span class="gt-tm">${esc(g.teams[i])}${g.poss === g.teams[i] ? '<i title="Has the ball"></i>' : ''}</span><b>${sc[i]}</b></div>`).join('')}</div>
+        <div class="gt-pl">${shown.map(p => `<div class="pl"><span class="pl-m ${tone(p.m)}">${esc(monogram(p.m))}</span><span class="pl-n ${tone(p.m)}">${esc(shortName(p.n))}</span><b class="${tone(p.m)}">${f2(p.pts)}</b></div>`).join('')}
+          ${pl.length > shown.length ? `<div class="gt-more">+${pl.length - shown.length} more</div>` : ''}</div>
+      </button>`;
+    };
+    let html = '';
+    if (pair) {
+      if (live.length) html = `<div class="ln-h"><span class="ln-cap">Live now</span><span class="ln-sub">${live.length} game${live.length === 1 ? '' : 's'} · ${nLive} starter${nLive === 1 ? '' : 's'}</span></div>
+        <div class="ln-strip" id="fd-lns">${live.map(tileOf).join('')}</div>`;
+    } else if (games.length) {
+      const today = fdDay(Date.now());
+      const done = games.filter(g => g.state === 'post' && fdDay(Date.parse(g.ko)) === today);
+      const later = games.filter(g => g.state === 'pre').sort((x, y) => Date.parse(x.ko) - Date.parse(y.ko));
+      const byKo = new Map();
+      later.forEach(g => {
+        const t = Date.parse(g.ko), k = (fdDay(t) === today ? '' : fdDay(t).slice(0, 3) + ' ') + fdTime(t);
+        byKo.set(k, (byKo.get(k) || 0) + (g.count || 0));
+      });
+      const laterTile = byKo.size ? `<div class="gt later"><div class="gt-top done"><span>Later</span></div><div class="lt">${[...byKo].slice(0, 5).map(([k, n]) => `<span>${esc(k)}<em>${n} starter${n === 1 ? '' : 's'}</em></span>`).join('')}</div></div>` : '';
+      const head = live.length ? 'Live now' : done.length ? 'Today' : 'Up next';
+      const sub = live.length ? `${live.length} game${live.length === 1 ? '' : 's'} · ${nLive} starter${nLive === 1 ? '' : 's'}` : done.length ? `${done.length} final` : '';
+      if (live.length || done.length || laterTile) html = `<div class="ln-h"><span class="ln-cap">${head}</span><span class="ln-sub">${sub}</span></div>
+        <div class="ln-strip" id="fd-lns">${live.map(tileOf).join('')}${done.map(tileOf).join('')}${laterTile}</div>`;
+    }
+    side.innerHTML = html;
+    document.getElementById('fd-grid').classList.toggle('has-side', !!html);
+    const s = document.getElementById('fd-lns');
+    if (s) s.scrollLeft = left;
   }
 
   // The ask: shown until a team is picked, or until its ✕ is tapped.
@@ -266,7 +533,7 @@
     if (getMe() || hidden) { host.innerHTML = ''; return; }
     if (host.firstChild) return;
     host.innerHTML = `<div class="me-ask">
-        <button type="button" class="me-ask-go">Pick your team to just see your matchup.</button>
+        <button type="button" class="me-ask-go">Pick your team to put your matchup first.</button>
         <button type="button" class="x" aria-label="Don't ask again">✕</button>
       </div>`;
     host.querySelector('.me-ask-go').addEventListener('click', () => window.openYou && openYou());
@@ -276,25 +543,27 @@
     });
   }
 
-  document.getElementById('fd-view').addEventListener('click', e => {
-    const v = e.target.closest('[data-fd-view]');
-    if (!v) return;
-    view = v.dataset.fdView;
-    try { localStorage.setItem('feedView', view); } catch (err) {}
-    seen = 0;
-    render();
-  });
   document.getElementById('fd-band').addEventListener('click', e => {
-    if (e.target.closest('[data-fd-pick]')) { if (window.openYou) openYou(); return; }
-    const s = e.target.closest('[data-fd-scope]'), f = e.target.closest('[data-fd-filter]');
-    if (s) { scope = s.dataset.fdScope; try { localStorage.setItem('feedScope', scope); } catch (err) {} }
+    const s = e.target.closest('[data-fd-scope]'), f = e.target.closest('[data-fd-filter]'), v = e.target.closest('[data-fd-view]');
+    if (s) { scope = s.dataset.fdScope; game = null; try { localStorage.setItem('feedScope', scope); } catch (err) {} }
     if (f) { filter = f.dataset.fdFilter; try { localStorage.setItem('feedFilter', filter); } catch (err) {} }
-    if (s || f) { seen = 0; render(); }
+    if (v) { view = v.dataset.fdView; try { localStorage.setItem('feedView', view); } catch (err) {} }
+    if (s || f || v) { seen = 0; render(); }
+  });
+  document.getElementById('fd-side').addEventListener('click', e => {
+    const g = e.target.closest('[data-fd-game]');
+    if (!g) return;
+    game = game === g.dataset.fdGame ? null : g.dataset.fdGame;
+    seen = 0; render();
+  });
+  document.getElementById('fd-gpill').addEventListener('click', e => {
+    if (!e.target.closest('[data-fd-cleargame]')) return;
+    game = null; seen = 0; render();
   });
   addEventListener('rl-me', render);
   addEventListener('rl-settings', render);
 
-  // The band's shadow shows only once it's pinned over the list.
+  // The band's shadow and frost show only once it's pinned over the list.
   const bandEl = document.getElementById('fd-band');
   function markStuck() {
     const bar = document.querySelector('.nav-bar');
@@ -303,7 +572,7 @@
     bandEl.classList.toggle('stuck', window.scrollY > 0 && bandEl.getBoundingClientRect().top <= top + 0.5);
   }
   addEventListener('scroll', markStuck, { passive: true });
-  addEventListener('resize', markStuck);
+  addEventListener('resize', () => { document.documentElement.style.setProperty('--band-h', bandEl.offsetHeight + 'px'); markStuck(); });
 
   // Background tabs don't poll; coming back refreshes right away if stale.
   renderAsk();
