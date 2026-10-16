@@ -283,6 +283,7 @@
     ['parlay', 'My parlay leg hits or dies', true],
     ['parlayAll', "Every leg that hits, until it's killed", false],
     ['recap', 'Week in Review is up', false],
+    ['record', 'A league scoring record falls', false],
     ['health', 'Site health alerts (daily check)', false],
   ];
   const PERSON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg>';
