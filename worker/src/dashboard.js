@@ -198,11 +198,15 @@ function buildPlayerCard(entry, gameStateByProTeam, seasonAverages) {
   const actualStat = stats.find((s) => s.statSourceId === 0);
   const projStat = stats.find((s) => s.statSourceId === 1);
   const game = gameStateByProTeam.get(player.proTeamId) || null;
+  const injuryStatus = player.injuryStatus || entry.injuryStatus;
   const card = {
     // ESPN's player id, for the game log (playerLog.js).
     id: player.id || entry.playerId,
     name: player.fullName || "",
     slot,
+    // ESPN's report (QUESTIONABLE, OUT, ...), only when there is one: the
+    // Lineup Check box on your matchup card reads it (docs/index.html).
+    ...(injuryStatus && injuryStatus !== "ACTIVE" ? { injury: injuryStatus } : {}),
     livePoints: actualStat ? round2(actualStat.appliedTotal) : null,
     projectedPoints: projStat ? round2(projStat.appliedTotal) : 0,
     statLine: actualStat ? formatStatLine(position, actualStat.stats) : "",
@@ -219,7 +223,7 @@ function buildPlayerCard(entry, gameStateByProTeam, seasonAverages) {
     },
   };
   const seasonAvg = seasonAverages.get(player.id || entry.playerId);
-  const a = averageValue(card, seasonAvg, gameStateByProTeam.size > 0, player.injuryStatus || entry.injuryStatus);
+  const a = averageValue(card, seasonAvg, gameStateByProTeam.size > 0, injuryStatus);
   card.seasonAvg = seasonAvg ? seasonAvg.avg : null;
   card.gamesPlayed = seasonAvg ? seasonAvg.gp : 0;
   card.avgPoints = round2(a.value);
@@ -257,6 +261,14 @@ function starterLines(entries, manager, gameStateByProTeam) {
       clk: game?.displayClock || "",
     };
   });
+}
+
+/** { firstKickoff, lastKickoff } (ISO) over the week's NFL games, or {} when
+ * the scoreboard gave none. */
+function weekKickoffs(gameStateByProTeam) {
+  const times = [...gameStateByProTeam.values()].map((g) => Date.parse(g.date)).filter(Number.isFinite);
+  if (!times.length) return {};
+  return { firstKickoff: new Date(Math.min(...times)).toISOString(), lastKickoff: new Date(Math.max(...times)).toISOString() };
 }
 
 /** Starters only (bench/IR excluded), in standard lineup order. */
@@ -687,6 +699,9 @@ export async function buildDashboard(env, previous = null, opts = {}) {
     // looks like it has nobody left to play and the dashboard must not claim
     // teams are finished or locked.
     medianStatusKnown: gameStateByProTeam.size > 0,
+    // The week's first and last NFL kickoffs, which bound the Lineup Check
+    // box on your matchup card; absent when no game time is known.
+    ...(archived ? {} : weekKickoffs(gameStateByProTeam)),
     teams: teams.map((t) => ({ ...t, playoffPct: anyPlayoffData ? round2(t.playoffPct) : null })),
     matchups,
     priorSeasonHigh: priorHigh.score > 0

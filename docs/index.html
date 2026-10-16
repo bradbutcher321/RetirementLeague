@@ -151,6 +151,13 @@
   .mu-rec-line b{ font-weight: 700; }
   .mu-rec-line b.gold{ font-family: var(--scoreboard); color: var(--gold); font-variant-numeric: tabular-nums; }
   .mu-rec-line span{ display: block; font-size: 0.7rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  /* Lineup Check: your starters who won't score this week (bye, out). Outlined
+     in the loss red like the other "this costs you" marks, one line each. */
+  .mu-lineup{ display: grid; gap: 6px; margin: 0 14px 12px; padding: 9px 12px; border: 1px solid var(--loss-line); background: var(--loss-tint); border-radius: 10px; font-size: 0.8rem; line-height: 1.35; }
+  .mu-lc-line{ display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .mu-lc-slot{ flex: none; min-width: 38px; text-align: center; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.04em; color: var(--text-dim); border: 1px solid var(--line); border-radius: 5px; padding: 2px 4px; }
+  .mu-lc-name{ flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mu-lc-tag{ flex: none; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; color: var(--loss); white-space: nowrap; }
   .mu-pips-wrap{ display: flex; flex-direction: column; gap: 5px; min-width: 0; margin-top: 11px; }
   .mu-pips-wrap.home{ align-items: flex-end; }
   .mu-pips{ display: flex; gap: 3px; }
@@ -1348,6 +1355,7 @@
 <script src="page-common.js?v=35"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
+<script src="lineup-check.js?v=1"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -1612,6 +1620,7 @@
           ${status}
           ${pips(m.homePlayers || [], homeInPlay, homeRemaining, 'home')}
         </div>
+        ${mine ? lineupHtml(m) : ''}
         ${recordHtml(m)}
         ${mine ? flowHtml(m) : ''}
         ${seriesHtml(m)}
@@ -3291,6 +3300,20 @@
       && (g.winner === a || g.winner === b) && (g.year < shownYear() || (g.year === shownYear() && g.week < week)));
     const last = games.reduce((m, g) => (!m || g.year > m.year || (g.year === m.year && g.week > m.week) ? g : m), null);
     return { a: games.filter(g => g.winner === a).length, b: games.filter(g => g.winner === b).length, last };
+  }
+
+  // Lineup Check (site audit III #6): on your own card, the starters who
+  // can't score this week. lineup-check.js holds the rules and the window
+  // (Thursday morning to the last kickoff); the rows below only draw them.
+  const LC_TAGS = { bye: 'Bye', out: 'Out', zero: 'Questionable · 0 proj' };
+  function lineupHtml(m) {
+    if (shownYear() !== leagueYear || !shownData) return '';
+    const players = isMe(m.awayManager) ? m.awayPlayers : m.homePlayers;
+    const items = LineupCheck.problems(players, shownData, Date.now());
+    if (!items.length) return '';
+    return `<div class="mu-lineup">${items.map(({ player, kind }) => `<div class="mu-lc-line">
+        <span class="mu-lc-slot">${esc(player.slot)}</span><span class="mu-lc-name">${esc(player.name)}</span><span class="mu-lc-tag">${LC_TAGS[kind]}</span>
+      </div>`).join('')}</div>`;
   }
 
   // Record Watch (site audit III #14): the matchup cards' gold box when a
