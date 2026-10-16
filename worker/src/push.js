@@ -14,8 +14,9 @@
  *   final   your matchup is over (every starter on both sides has played)
  *   median  you're locked above the median (Median Watch's own rule)
  *   recap   every game this week is over, so Week in Review is up (everyone)
- *   record  a live team score passed the all-time single-game high (everyone;
- *          site audit III #14, the Record Watch chip on the dashboard)
+ *   record  a Game Records record was set or broken, good or bad -- a team
+ *          score, margin, combined points, a starter's game (everyone; site
+ *          audit III #14, the Record Watch box on the dashboard)
  *   parlay  your parlay leg hit or died
  *   parlayAll  every leg that hits while the parlay is alive, then one
  *          "killed" when it dies (killed_by in the parlay data); legs
@@ -25,6 +26,8 @@
  * gets a backlog of things that already happened.
  */
 import { sendPush } from "./webpush.js";
+// The records rules, shared with the dashboard (docs/record-watch.js).
+import RecordWatch from "../../docs/record-watch.js";
 
 const PREF_KEYS = ["final", "median", "recap", "record", "parlay", "parlayAll", "health"];
 // Off unless asked for: everyone else's legs is a lot of buzzing, and it
@@ -73,25 +76,21 @@ async function deliver(env, sub, message) {
   return status;
 }
 
-// The league's best finished single-game team score, from the site's own
-// league.json (rows are [year, week, type, p1, p2, s1, s2, winner, ...]) with
-// the rules Game Records' Highest Scores uses: no byes, unplayed or
-// in-progress games, or consolation games. Kept for ten minutes, the cron's
-// pace; null when the file can't be read, which just skips the alert.
+// The history Record Watch ranks live games against, from the site's own
+// data files (league.json rows are [year, week, type, p1, p2, s1, s2, winner,
+// ...]; data/lineups/records.json for the player records). Kept for ten
+// minutes, the cron's pace; null when league.json can't be read, which just
+// skips the alerts.
 let recordCache = { at: 0, value: null };
-async function allTimeHigh() {
+async function recordBook() {
   if (Date.now() - recordCache.at < 10 * 60 * 1000) return recordCache.value;
   try {
     const res = await fetch(SITE + "data/league.json");
     if (!res.ok) throw new Error("HTTP " + res.status);
     const { games } = await res.json();
-    let best = null;
-    for (const g of games) {
-      const [year, week, type, p1, p2, s1, s2, winner] = g;
-      if (!p2 || type === "Bye" || type === "Cons" || winner === "In Progress" || !(s1 > 0) || !(s2 > 0)) continue;
-      for (const [who, s] of [[p1, s1], [p2, s2]]) if (!best || s > best.score) best = { score: s, who, year, week };
-    }
-    recordCache = { at: Date.now(), value: best };
+    const players = await fetch(SITE + "data/lineups/records.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const rows = games.map((g) => ({ year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7] }));
+    recordCache = { at: Date.now(), value: RecordWatch.build(rows, players) };
   } catch (err) {
     console.error("Record check couldn't read league.json:", err && err.stack || err);
     recordCache = { at: Date.now() - 9 * 60 * 1000, value: null }; // try again in a minute
@@ -101,7 +100,7 @@ async function allTimeHigh() {
 
 /** Every event the current dashboard and parlay data say has happened:
  * [{ key, to: manager name or null for everyone, pref, message }]. */
-function currentEvents(year, dashboard, parlay, high) {
+function currentEvents(year, dashboard, parlay, book) {
   const out = [];
   const week = dashboard.week;
   const teams = dashboard.teams || [];
@@ -161,23 +160,28 @@ function currentEvents(year, dashboard, parlay, high) {
     }
   }
 
-  // A score above the all-time high, the moment the dashboard shows it. Once
-  // that game is final and in league.json it is the high itself, so the
-  // record isn't beaten twice; the once-only key covers the minutes between.
-  if (high && known && scored) {
-    for (const t of teams) {
-      if (!t.manager || !((t.current || 0) > high.score)) continue;
-      out.push({
-        key: `record:${year}:${week}:${t.manager}`,
-        to: null,
-        pref: "record",
-        message: {
-          title: "New league record",
-          body: `${t.manager} has ${f2(t.current)} in Week ${week}, past the ${f2(high.score)} ${high.who} scored in ${high.year}.`,
-          url: "index.html",
-          tag: `record-${year}-${week}`,
-        },
-      });
+  // A record the games have just set or broken, good or bad (the Record Watch
+  // box on the dashboard, record-watch.js). Each is sent once: the key names
+  // the record and who, and the box can't flip back because a record that is
+  // only "beaten" while games are live is one a score can't slip back from.
+  if (book && known && scored) {
+    
+    for (const m of dashboard.matchups || []) {
+      const game = RecordWatch.fromMatchup(m, year, week, known);
+      for (const it of RecordWatch.evaluate(book, game)) {
+        if (!it.achieved || it.rank !== 1) continue;
+        out.push({
+          key: `record:${year}:${week}:${it.key}`,
+          to: null,
+          pref: "record",
+          message: {
+            title: it.title,
+            body: `${RecordWatch.plain(it)}. ${it.sub}.`,
+            url: "index.html",
+            tag: `record-${year}-${week}-${it.key}`,
+          },
+        });
+      }
     }
   }
 
@@ -260,7 +264,7 @@ function currentEvents(year, dashboard, parlay, high) {
 export async function checkPushEvents(env, dashboard) {
   if (!env.VAPID_PRIVATE_JWK || !dashboard || !dashboard.teams) return;
   const parlay = await env.COOLDOWN_KV.get("parlay_stats_v1", "json").catch(() => null);
-  const events = currentEvents(env.ESPN_YEAR, dashboard, parlay, await allTimeHigh());
+  const events = currentEvents(env.ESPN_YEAR, dashboard, parlay, await recordBook());
   if (!events.length) return;
 
   // Only the ones not seen before. The batch's INSERT OR IGNORE makes a

@@ -1345,6 +1345,7 @@
 <script src="nav.js?v=17"></script>
 <script src="page-common.js?v=35"></script>
 <script src="share.js?v=1"></script>
+<script src="record-watch.js?v=1"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -1582,7 +1583,7 @@
           ${status}
           ${pips(m.homePlayers || [], homeInPlay, homeRemaining, 'home')}
         </div>
-        ${recordHtml(m, isFinal, awayScore, homeScore)}
+        ${recordHtml(m)}
         ${mine ? flowHtml(m) : ''}
         ${seriesHtml(m)}
         ${renderMatchupDetails(m, mine ? '' : flowHtml(m))}
@@ -3198,7 +3199,10 @@
       leagueSettings = d.settings || {};
       if (d.median_era_start_year) medianEraYear = d.median_era_start_year;
     })
-    .catch(() => {});
+    .catch(() => {})
+    // Player records (Record Watch): static like league.json, so the first
+    // render waits for them too; without them only those lines are left out.
+    .then(() => fetch('data/lineups/records.json', { cache: 'no-cache' }).then(res => (res.ok ? res.json() : null)).then(d => { rwPlayers = d; }).catch(() => {}));
 
   // The season on screen: this one, or a past one from the week picker.
   let dashYear = null;
@@ -3225,47 +3229,25 @@
     return { a: games.filter(g => g.winner === a).length, b: games.filter(g => g.winner === b).length, last };
   }
 
-  // Record Watch (site audit III #14). Every finished team score, best first:
-  // Game Records' Highest Scores list, whose rules this keeps (no byes, no
-  // unplayed or in-progress games, no consolation games -- nobody sets a
-  // lineup there). A live score is ranked against it, so the card can say
-  // where a team's pace would land.
-  let scoreBookFor = null, scoreBookList = [];
-  function scoreBook() {
-    if (!leagueGames) return [];
-    if (scoreBookFor !== leagueGames) {
-      scoreBookFor = leagueGames;
-      scoreBookList = leagueGames.filter(g => g.p2 && g.type !== 'Bye' && g.type !== 'Cons' && g.s1 > 0 && g.s2 > 0 && g.winner !== 'In Progress')
-        .flatMap(g => [{ s: g.s1, who: g.p1, g }, { s: g.s2, who: g.p2, g }]).sort((a, b) => b.s - a.s);
+  // Record Watch (site audit III #14): the matchup cards' gold box when a
+  // game is on pace for, or has just set, one of Game Records' records --
+  // record-watch.js holds the rules (the Worker's notification uses the same
+  // file). The history is rebuilt when league.json or the player records
+  // arrive; player records are a nice-to-have and load on their own.
+  let rwBook = null, rwFor = null, rwPlayers = null;
+  const RW_LINES = 4;
+  function recordHtml(m) {
+    if (!leagueGames || shownYear() !== leagueYear) return '';
+    if (!rwBook || rwFor !== leagueGames || rwBook.players !== rwPlayers) {
+      rwBook = { book: RecordWatch.build(leagueGames, rwPlayers), players: rwPlayers };
+      rwFor = leagueGames;
     }
-    return scoreBookList;
-  }
-  const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
-  // One team's line, or '' when neither its score nor its pace reaches the
-  // all-time top 10. `now` is the live score, `proj` ESPN's live projection
-  // (0 before kickoff, when there is nothing to rank yet).
-  function recordLine(who, now, proj) {
-    const book = scoreBook(), top = book[0];
-    if (!top || !who) return '';
-    const pace = Math.max(now, proj || 0);
-    const rank = 1 + book.filter(x => x.s > pace).length;
-    if (rank > 10) return '';
-    const held = `${esc(top.who)} ${top.g.year} Wk ${top.g.week}`;
-    const name = `<b>${esc(who)}</b>`;
-    const headline = now > top.s
-      ? `${name} broke the record with <b class="gold">${fmtScore(now)}</b>`
-      : rank === 1
-        ? `${name} is on pace for a record <b class="gold">${fmtScore(pace)}</b>`
-        : `${name} is on pace for <b class="gold">${fmtScore(pace)}</b>, the ${ordinal(rank)}-best score ever`;
-    return `<div class="mu-rec-line">${headline}<span>${now > top.s ? 'Old record' : 'Record'} ${fmtScore(top.s)} · ${held}</span></div>`;
-  }
-  function recordHtml(m, isFinal, awayScore, homeScore) {
-    if (isFinal) return '';
-    const lines = [
-      recordLine(m.awayManager || m.awayName, awayScore, m.awayProjected),
-      recordLine(m.homeManager || m.homeName, homeScore, m.homeProjected),
-    ].filter(Boolean);
-    return lines.length ? `<div class="mu-record">${lines.join('')}</div>` : '';
+    const items = RecordWatch.evaluate(rwBook.book, RecordWatch.fromMatchup(m, leagueYear, dashWeek, medianStatusKnown));
+    if (!items.length) return '';
+    return `<div class="mu-record">${items.slice(0, RW_LINES).map(it => {
+      const [who, verb, val, tail] = it.parts;
+      return `<div class="mu-rec-line"><b>${esc(who)}</b> ${verb} <b class="gold">${val}</b>${esc(tail)}<span>${esc(it.sub)}</span></div>`;
+    }).join('')}</div>`;
   }
 
   function weekScores(week) {
