@@ -13,6 +13,10 @@
  * dashboard build as the median snapshot, and sends:
  *   final   your matchup is over (every starter on both sides has played)
  *   median  you're locked above the median (Median Watch's own rule)
+ *   lineup  a starter of yours is on bye, ruled out, or questionable with a
+ *          0 projection, Thursday morning until the last kickoff (site audit
+ *          III #6, the Lineup Check box on the dashboard); one message per
+ *          run however many starters, each starter once per week
  *   recap   every game this week is over, so Week in Review is up (everyone)
  *   record  a Game Records record was set or broken, good or bad -- a team
  *          score, margin, combined points, a starter's game (everyone; site
@@ -28,8 +32,10 @@
 import { sendPush } from "./webpush.js";
 // The records rules, shared with the dashboard (docs/record-watch.js).
 import RecordWatch from "../../docs/record-watch.js";
+// The lineup rules and their Thursday-to-Monday window (docs/lineup-check.js).
+import LineupCheck from "../../docs/lineup-check.js";
 
-const PREF_KEYS = ["final", "median", "recap", "record", "parlay", "parlayAll", "health"];
+const PREF_KEYS = ["final", "median", "lineup", "recap", "record", "parlay", "parlayAll", "health"];
 // Off unless asked for: everyone else's legs is a lot of buzzing, and it
 // came after people had already subscribed with the four above on. "health"
 // is the commissioner's daily site check (healthCheck.js).
@@ -160,6 +166,30 @@ function currentEvents(year, dashboard, parlay, book) {
     }
   }
 
+  // A starter who can't score (the Lineup Check box, lineup-check.js). One
+  // event per starter per week, so he is told about once; `merge` lets
+  // checkPushEvents fold the new ones for a manager into a single message.
+  const LINEUP_SAY = { bye: "is on bye", out: "is out", zero: "is questionable and projected at 0" };
+  for (const m of dashboard.matchups || []) {
+    for (const [me, players] of [[m.awayManager, m.awayPlayers], [m.homeManager, m.homePlayers]]) {
+      if (!me) continue;
+      for (const { player, kind } of LineupCheck.problems(players, dashboard, Date.now())) {
+        out.push({
+          key: `lineup:${year}:${week}:${me}:${player.id || player.name}`,
+          to: me,
+          pref: "lineup",
+          merge: `lineup:${year}:${week}:${me}`,
+          message: {
+            title: `Lineup check, Week ${week}`,
+            body: `${player.name} (${player.slot}) ${LINEUP_SAY[kind]}.`,
+            url: "index.html",
+            tag: `lineup-${week}`,
+          },
+        });
+      }
+    }
+  }
+
   // A record the games have just set or broken, good or bad (the Record Watch
   // box on the dashboard, record-watch.js). Each is sent once: the key names
   // the record and who, and the box can't flip back because a record that is
@@ -261,6 +291,23 @@ function currentEvents(year, dashboard, parlay, book) {
   return out;
 }
 
+/** Events that share a `merge` become one: the first, with every body in
+ * order (a manager with two starters out gets one message, not two). */
+function mergeEvents(events) {
+  const groups = new Map();
+  const out = [];
+  for (const e of events) {
+    const first = e.merge && groups.get(e.merge);
+    if (first) first.message = { ...first.message, body: `${first.message.body} ${e.message.body}` };
+    else {
+      const copy = { ...e, message: { ...e.message } };
+      if (e.merge) groups.set(e.merge, copy);
+      out.push(copy);
+    }
+  }
+  return out;
+}
+
 export async function checkPushEvents(env, dashboard) {
   if (!env.VAPID_PRIVATE_JWK || !dashboard || !dashboard.teams) return;
   const parlay = await env.COOLDOWN_KV.get("parlay_stats_v1", "json").catch(() => null);
@@ -276,10 +323,11 @@ export async function checkPushEvents(env, dashboard) {
     const { results } = await env.DB.prepare(`SELECT k FROM push_sent WHERE k IN (${chunk.map(() => "?").join(",")})`).bind(...chunk).all();
     for (const r of results) seen.add(r.k);
   }
-  const fresh = events.filter((e) => !seen.has(e.key));
-  if (!fresh.length) return;
+  const newEvents = events.filter((e) => !seen.has(e.key));
+  if (!newEvents.length) return;
   const now = Date.now();
-  await env.DB.batch(fresh.map((e) => env.DB.prepare("INSERT OR IGNORE INTO push_sent (k, ts) VALUES (?1, ?2)").bind(e.key, now)));
+  await env.DB.batch(newEvents.map((e) => env.DB.prepare("INSERT OR IGNORE INTO push_sent (k, ts) VALUES (?1, ?2)").bind(e.key, now)));
+  const fresh = mergeEvents(newEvents);
 
   const { results: subs } = await env.DB.prepare("SELECT * FROM push_subs").all();
   if (!subs.length) return;

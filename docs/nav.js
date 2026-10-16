@@ -280,6 +280,7 @@
   const PUSH_TYPES = [
     ['final', 'My matchup is final', true],
     ['median', 'I clinch the median win', true],
+    ['lineup', 'A starter of mine is on bye or out', true],
     ['parlay', 'My parlay leg hits or dies', true],
     ['parlayAll', "Every leg that hits, until it's killed", false],
     ['recap', 'Week in Review is up', false],

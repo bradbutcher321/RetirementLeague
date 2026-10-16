@@ -62,4 +62,4 @@ const LineupCheck = (() => {
 
   return { problems, isOpen, windowOpens };
 })();
-if (typeof module !== 'undefined') module.exports = LineupCheck;
+if (typeof module !== 'undefined' && module.exports) module.exports = LineupCheck;
