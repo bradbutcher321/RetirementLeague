@@ -773,6 +773,8 @@
   .mwa-val.none{ color: var(--text-dim); }
   .mwa-small{ font-size: 0.6rem; color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .mwa-small .gold{ color: var(--gold); }
+  .mwa-small .up{ color: var(--turf); font-weight: 700; }
+  .mwa-small .dn{ color: var(--loss); font-weight: 700; }
   .mwa-div{ font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); padding: 12px 0 4px; border-top: 1px solid var(--line); }
   .mwa-row.fin .mwa-nm, .mwa-row.fin .mwa-val{ color: #bdbdbb; }
 
@@ -1403,6 +1405,27 @@
     return `${parts[0][0]}. ${parts.slice(1).join(' ')}`;
   }
 
+  // A starter's projection right now. ESPN serves each player's pregame
+  // projection and never moves it (only the team total moves), so a game in
+  // progress is projected here the way Average mode does it (shareLeft() in
+  // worker/src/dashboard.js): points so far plus the pregame projection for
+  // the share of the game still to play. On live games this lands within about
+  // half a point of ESPN's own team projection. Not started, finished, or
+  // without a projection, it is the pregame number, untouched -- a finished
+  // player's card compares his points to that, so it has to survive.
+  // dir: 'up' / 'down' when a live projection has drifted off the pregame one.
+  function liveProj(p) {
+    const orig = p && p.projectedPoints;
+    if (orig === null || orig === undefined) return null;
+    const state = playerState(p);
+    if (state !== 'live' && state !== 'possession') return { now: orig, orig, live: false, dir: '' };
+    const g = p.game;
+    const [m, s] = String(g.clock || '0:00').split(':').map(x => parseInt(x, 10) || 0);
+    const left = g.period > 4 ? 0 : g.period < 1 ? 1 : Math.min(1, Math.max(0, ((4 - g.period) * 15 + m + s / 60) / 60));
+    const now = (p.livePoints || 0) + orig * left;
+    return { now, orig, live: true, dir: now - orig > 0.05 ? 'up' : now - orig < -0.05 ? 'down' : '' };
+  }
+
   // mu-n is shown on a narrow (phone) card, mu-w on a wide (desktop) one.
   function playerGameLine(p, state) {
     const g = p.game;
@@ -1433,10 +1456,16 @@
     const delta = state === 'final' && hasLiveScore && p.projectedPoints !== null && p.projectedPoints !== undefined
       ? p.livePoints - p.projectedPoints
       : null;
-    const scoreSub = p.projectedPoints === null || p.projectedPoints === undefined ? ''
-      : delta === null
-      ? `<div class="mu-sub">${fmtScore(p.projectedPoints)}</div>`
-      : `<div class="mu-sub ${delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : ''}" title="Projected ${fmtScore(p.projectedPoints)}">${delta >= 0 ? '▲' : '▼'} ${fmtScore(Math.abs(delta))}</div>`;
+    // While his game is on, the number is his projection as of now, green or
+    // red against the pregame one (see liveProj); before kickoff it is the
+    // pregame one.
+    const lp = liveProj(p);
+    const scoreSub = !lp ? ''
+      : delta !== null
+      ? `<div class="mu-sub ${delta > 0.05 ? 'up' : delta < -0.05 ? 'down' : ''}" title="Projected ${fmtScore(p.projectedPoints)}">${delta >= 0 ? '▲' : '▼'} ${fmtScore(Math.abs(delta))}</div>`
+      : lp.live
+      ? `<div class="mu-sub ${lp.dir}" title="Pregame projection ${fmtScore(lp.orig)}">${fmtScore(lp.now)}</div>`
+      : `<div class="mu-sub">${fmtScore(lp.now)}</div>`;
     return `
       <div class="mu-pc ${side} ${state || ''}${p.id && p.id === plOpenId ? ' pl-on' : ''}" data-pn="${encodeURIComponent(p.name || '')}"${p.id ? ` data-pid="${p.id}" role="button" tabindex="0" aria-label="${esc(p.name || '')}: game log"` : ''}>
         <div class="mu-pinfo">
@@ -1693,6 +1722,13 @@
   // rebuilt on every refresh, so its scores stay live.
   const mwOneColumn = matchMedia('(max-width:720px)');
   let mwOpen = null;
+  // While the desktop popover is up, the cards hold the places they had when
+  // it opened (card name -> place): a poll re-ranks the managers every 15
+  // seconds on a Sunday, and a card hopping to a new spot would take its
+  // popover with it. Scores keep counting; only the order waits, and a manager
+  // who crosses the median still moves to the other half. It lifts when the
+  // popover closes (or the mode changes, which ranks them differently).
+  let mwHeld = null;
 
   const mwCardEl = name => document.querySelector(`#median-container .mb-card[data-name="${CSS.escape(name)}"]`);
   const mwStillToCome = p => ['pre', 'live', 'possession'].includes(playerState(p));
@@ -1750,16 +1786,24 @@
       : '<div class="mwa-sub">Bye week</div>';
     const done = state !== 'pre' && !live;
     const num = (v, tone = '') => `<div class="mwa-val${tone}">${v}</div>`;
+    // While his game is on, his projection is as of now, green or red against
+    // the pregame one (liveProj); otherwise the pregame number.
+    const lp = liveProj(p);
+    const proj = (cls = '') => {
+      if (!lp) return '';
+      if (!lp.live) return cls ? `<span class="${cls}">proj ${fmtScore(lp.now)}</span>` : `proj ${fmtScore(lp.now)}`;
+      return `<span class="${lp.dir === 'up' ? 'up' : lp.dir === 'down' ? 'dn' : cls}" title="Pregame projection ${fmtScore(lp.orig)}">proj ${fmtScore(lp.now)}</span>`;
+    };
     let val, small;
     if (mode === 'current') {
       val = state === 'pre' ? num('—', ' none') : num(fmtScore(p.livePoints || 0));
-      small = `proj ${fmtScore(p.projectedPoints)}`;
+      small = proj();
     } else if (done) {
       val = num(fmtScore(p.livePoints || 0));
-      small = `proj ${fmtScore(p.projectedPoints)}`;
+      small = proj();
     } else {
       val = live ? num(fmtScore(p.livePoints || 0)) : num('—', ' none');
-      small = `<span class="gold">proj ${fmtScore(p.projectedPoints)}</span>`;
+      small = proj('gold');
     }
     return mwRowHtml(p, sub, val, small, done ? ' fin' : '');
   }
@@ -1816,6 +1860,7 @@
       pop.innerHTML = `<div class="mwp-line"><span class="mwp-label">${what}</span>
         <span class="mwp-line-r"><span>${mwOtherTotal(info.t)}</span><button type="button" class="x" data-mw-close aria-label="Close">&times;</button></span></div>${pods}`;
       mwPlacePop();
+      if (!mwHeld) mwHeld = new Map([...document.querySelectorAll('#median-container .mb-card')].map((c, i) => [c.dataset.name, i]));
       return;
     }
     const list = `<div class="mwp-label">${what}</div>${pods}`;
@@ -1848,6 +1893,7 @@
 
   function mwHide() {
     mwOpen = null;
+    mwHeld = null;
     mwMark();
     ['mw-pop', 'mw-sheet', 'mw-scrim'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
   }
@@ -1911,6 +1957,16 @@
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && mwOpen) mwHide(); });
   addEventListener('resize', mwPlacePop);
+  // The popover is placed from where its card is at that moment, and anything
+  // above the card can change height afterwards (a roster opening in your
+  // matchup, a late-loading section). So it is put back under its card
+  // whenever the page's size changes. (The poll's own double layout is
+  // handled where it happens, in renderMedianStatic.)
+  if (window.ResizeObserver) {
+    const mwRelayout = new ResizeObserver(() => mwPlacePop());
+    mwRelayout.observe(document.body);
+    mwRelayout.observe(document.getElementById('median-container'));
+  }
   // Crossing 720px swaps sheet for popover: close whichever was open.
   mwOneColumn.addEventListener('change', mwHide);
 
@@ -2956,7 +3012,10 @@
       if (upLine !== null || downLine !== null) zones = { up: upLine, down: downLine };
     }
     const sorted = withScore.slice().sort((a, b) => b.score - a.score);
-    return { above: sorted.slice(0, half), below: sorted.slice(sorted.length - half), all: sorted, zones };
+    // Held places (mwHeld): within a half, the cards that were there keep their
+    // order and anyone who just crossed over goes last.
+    const held = list => mwHeld ? list.slice().sort((a, b) => (mwHeld.has(a.name) ? mwHeld.get(a.name) : 99) - (mwHeld.has(b.name) ? mwHeld.get(b.name) : 99)) : list;
+    return { above: held(sorted.slice(0, half)), below: held(sorted.slice(sorted.length - half)), all: sorted, zones };
   }
 
   // ---------- Median Watch: unified Current/Projected toggle card ----------
@@ -3129,6 +3188,11 @@
           if (medianViewMode === mode) {
             renderSpreadChart('median-chart', rows.all.slice().reverse(), medianValue, rows.zones);
             tagMedianTransitionNames();
+            // This pass is taller than the first, which moves the cards, and an
+            // open popover was placed under the card where the first pass left
+            // it. (A ResizeObserver can't catch it: the page is back to its old
+            // size by the time of the next frame.)
+            mwPlacePop();
           }
         });
       }
@@ -4118,6 +4182,7 @@
       return;
     }
     const medianValue = mwMedian(mode);
+    mwHeld = null; // a new mode ranks them anew; the popover re-holds below, in mwRefresh
     const rows = computeMedianRows(lastMedianTeams, medianValue, mode);
     document.getElementById('median-body').innerHTML = `
       <div class="card-body">
