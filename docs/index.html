@@ -1953,8 +1953,14 @@
     if (hint) hint.hidden = !document.querySelector('#median-container .mb-card.can');
     const what = document.getElementById('mw-hint-what');
     if (what) what.textContent = medianViewMode === 'average' ? 'where its number comes from' : 'its starters';
-    if (mwOpen) mwShow(mwOpen, false);
+    // The median label's sparkline is drawn into an empty 30px box by
+    // mhRefresh, pushing every card below the label down. Draw it first, so
+    // the popover is placed under its card where the card will stay: placed
+    // before it, a popover on one of those cards sat 30px high until the
+    // next re-place, and a ResizeObserver can't see it (the page is the same
+    // size again by the next frame).
     mhRefresh();
+    if (mwOpen) mwShow(mwOpen, false);
   }
 
   document.addEventListener('click', e => {
@@ -2560,6 +2566,10 @@
     mhDraw(document.getElementById('mh-spark'), true);
     if (mhIsOpen) mhRender();
     flDrawAll();
+    // The sparkline can arrive after the cards (history loads on its own), and
+    // it moves everything under it, so an open Median Watch popover goes back
+    // under its card.
+    mwPlacePop();
   }
 
   // ---------- Flow: one matchup's projections through the week ----------
