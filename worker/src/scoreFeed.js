@@ -97,9 +97,10 @@ export function feedBoard(dashboard) {
       }
     }
   }
-  // A game not started yet is only a kickoff time and a starter count on the
-  // page (the "Later" tile), so it travels as that.
-  const list = [...games.values()].map((g) => (g.state === "pre" ? { key: g.key, ko: g.ko, state: "pre", count: g.players.length } : g));
+  // A game not started yet is only a kickoff time and whose starters are in
+  // it on the page (the "Later" tile counts them, for a matchup too), so it
+  // travels as that: one manager per starter.
+  const list = [...games.values()].map((g) => (g.state === "pre" ? { key: g.key, ko: g.ko, state: "pre", ms: g.players.map((p) => p.m) } : g));
   return { teams, games: list };
 }
 

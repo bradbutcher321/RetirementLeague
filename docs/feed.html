@@ -197,7 +197,7 @@
   .fd-s{ color: var(--text-dim); font-size: 0.68rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fd-p{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.08rem; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
   .fd-p.big{ font-size: 1.3rem; }
-  .fd-p.gold{ color: var(--gold); } .fd-p.loss{ color: var(--loss); } .fd-p.mc{ color: var(--me-ring); } .fd-p.wt{ color: var(--text); }
+  .fd-p.gold{ color: var(--gold); } .fd-p.mc{ color: var(--me-ring); } .fd-p.wt{ color: var(--text); }
   .fd-row.over .fd-p{ color: var(--text-dim); text-decoration: line-through; text-decoration-thickness: 1.5px; }
   .tag{ display: inline-block; font: 800 0.56rem/1 var(--body); letter-spacing: 0.06em; padding: 3px 5px 2px; border-radius: 5px; color: var(--gold); border: 1px solid var(--lead-line); background: var(--lead-tint); vertical-align: 1px; margin-left: 5px; }
   .tag.over{ color: var(--fd-soft); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
@@ -417,7 +417,8 @@
       const head = day !== lastDay ? `<div class="fd-day"><span>${day}</span><span class="dc">${n} play${n === 1 ? '' : 's'}</span></div>` : '';
       lastDay = day;
       const whose = e.m === me ? 'mine' : opp && e.m === opp ? 'opp' : '';
-      const valTone = whose === 'mine' ? 'mc' : whose === 'opp' ? 'wt' : e.d > 0 ? 'gold' : 'loss';
+      // No red for a loss: the minus sign already says it.
+      const valTone = whose === 'mine' ? 'mc' : whose === 'opp' ? 'wt' : 'gold';
       const clock = e.q ? (e.q > 4 ? 'OT' : `Q${e.q}`) + (e.clk ? ' ' + e.clk : '') : '';
       const gameLine = e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
       const other = e.om || '';
@@ -473,10 +474,10 @@
       ${med ? `<span class="nm">Median</span>${step(e.mca, e.mcb, 'soft')}<span></span>${step(e.ma, e.mb, 'soft')}` : ''}</div>`;
   }
 
-  // Live now. Everyone: the games in progress, then today's finals and the
-  // kickoffs still to come. A matchup: only the games in progress with its
-  // starters, listing just them, and nothing while none of them are playing.
-  // On a wide screen the same tiles stack beside the list.
+  // Live now: the games in progress, then today's finals and the kickoffs
+  // still to come. On a matchup, the same strip counting only its starters:
+  // its games, its players in them, its starters per kickoff. On a wide
+  // screen the same tiles stack beside the list.
   function renderSide(pair, me, opp, tone) {
     const side = document.getElementById('fd-side');
     const strip = document.getElementById('fd-lns');
@@ -501,17 +502,16 @@
       </button>`;
     };
     let html = '';
-    if (pair) {
-      if (live.length) html = `<div class="ln-h"><span class="ln-cap">Live now</span><span class="ln-sub">${live.length} game${live.length === 1 ? '' : 's'} · ${nLive} starter${nLive === 1 ? '' : 's'}</span></div>
-        <div class="ln-strip" id="fd-lns">${live.map(tileOf).join('')}</div>`;
-    } else if (games.length) {
+    if (games.length) {
       const today = fdDay(Date.now());
-      const done = games.filter(g => g.state === 'post' && fdDay(Date.parse(g.ko)) === today);
-      const later = games.filter(g => g.state === 'pre').sort((x, y) => Date.parse(x.ko) - Date.parse(y.ko));
+      const done = games.filter(g => g.state === 'post' && fdDay(Date.parse(g.ko)) === today && inScope(g));
+      // Starters still to play per kickoff (on a matchup, only its own).
+      const starters = g => (g.ms || []).filter(m => !pair || pair.includes(m)).length || (pair ? 0 : g.count || 0);
+      const later = games.filter(g => g.state === 'pre' && starters(g)).sort((x, y) => Date.parse(x.ko) - Date.parse(y.ko));
       const byKo = new Map();
       later.forEach(g => {
         const t = Date.parse(g.ko), k = (fdDay(t) === today ? '' : fdDay(t).slice(0, 3) + ' ') + fdTime(t);
-        byKo.set(k, (byKo.get(k) || 0) + (g.count || 0));
+        byKo.set(k, (byKo.get(k) || 0) + starters(g));
       });
       const laterTile = byKo.size ? `<div class="gt later"><div class="gt-top done"><span>Later</span></div><div class="lt">${[...byKo].slice(0, 5).map(([k, n]) => `<span>${esc(k)}<em>${n} starter${n === 1 ? '' : 's'}</em></span>`).join('')}</div></div>` : '';
       const head = live.length ? 'Live now' : done.length ? 'Today' : 'Up next';
