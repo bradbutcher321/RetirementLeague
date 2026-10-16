@@ -55,9 +55,9 @@
      margin for page-level spacing, which pushed these cards far apart. */
   .section{ padding:12px 6px 6px; overflow:visible; margin-bottom:0; }
   .section.has-pop{ border-color:var(--lead-line); }
-  .section-title{ display:flex; justify-content:space-between; align-items:center; gap:10px; font-weight:700; font-size:0.95rem; padding:2px 10px 6px; }
-  /* Share (share.js): the pill's own margins keep the title row its old height. */
-  .section-title .share-btn, .list-head .share-btn{ margin:-4px 0; }
+  .section-title{ font-weight:700; font-size:0.95rem; padding:2px 10px 6px; }
+  /* Share (share.js), in the top 10's header: the pill's own margins keep the row its old height. */
+  .list-head .share-btn{ margin:-4px 0; }
   .list-head .btns{ display:flex; align-items:center; gap:10px; }
 
   .rec{ display:grid; grid-template-columns:36px minmax(0,1fr) auto 12px; gap:12px; align-items:center; width:100%; padding:10px;
@@ -416,7 +416,7 @@
         return `<button type="button" class="${cls}" data-lu="${g.year}|${g.week}|${esc(i.m.a)}|${esc(i.m.b)}|${i.m.as}|${i.m.bs}" aria-expanded="false">${inner}<span class="chev" aria-hidden="true"></span></button><div class="lineup"><div></div></div>`;
       }).join('')
       : '<div class="empty-note">No games yet for this season.</div>';
-    const head = `<div class="list-head"><div class="list-title">${c.title}</div><div class="btns">${RLShare.BUTTON.replace('data-share', 'data-share="list"')}<button type="button" class="x" data-close aria-label="Close">&times;</button></div></div>`;
+    const head = `<div class="list-head"><div class="list-title">${c.title}</div><div class="btns">${RLShare.BUTTON}<button type="button" class="x" data-close aria-label="Close">&times;</button></div></div>`;
     return { head, rows, label: c.title };
   }
 
@@ -505,7 +505,7 @@
     C = categories(year);
     setUrlParams({ year: year === 'all' ? null : year });
     document.getElementById('records').innerHTML = `<div class="sections">${LEDGER.map((p, n) =>
-      `<section class="glass section" data-section="${n}"><div class="section-title">${p.title}${RLShare.BUTTON}</div>${p.recs.map(([k, cap, tile]) => recHtml(k, cap, tile, n)).join('')}</section>`).join('')}</div>`;
+      `<section class="glass section" data-section="${n}"><div class="section-title">${p.title}</div>${p.recs.map(([k, cap, tile]) => recHtml(k, cap, tile, n)).join('')}</section>`).join('')}</div>`;
     if (open) showList(false);
   }
 
@@ -581,9 +581,8 @@
     });
   }
 
-  // The Share button's picture (share.js): a record card as it reads on the
-  // page, or the opened top 10 with whatever lineups are open under it.
-  // Drawn on the tap -- there are too many cards to keep a picture of each.
+  // The Share button's picture (share.js), in an opened top 10: the list with
+  // whatever lineups are open under it. Drawn on the tap.
   let shotNodes = [], shotName = 'game-records';
   const shot = RLShare.make({
     nodes: () => shotNodes,
@@ -592,13 +591,11 @@
     prep: wrap => {
       wrap.querySelectorAll('.x').forEach(x => x.remove());
       // The list's rows sit on the sheet's surface, not the page's black.
-      if (wrap.querySelector('.list-head')) {
-        const card = document.createElement('div');
-        card.className = 'glass';
-        card.style.padding = '14px 12px 6px';
-        [...wrap.children].slice(1).forEach(c => card.appendChild(c));
-        wrap.appendChild(card);
-      }
+      const card = document.createElement('div');
+      card.className = 'glass';
+      card.style.padding = '14px 12px 6px';
+      [...wrap.children].slice(1).forEach(c => card.appendChild(c));
+      wrap.appendChild(card);
     },
   });
   const slug = t => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -606,15 +603,9 @@
   document.addEventListener('click', e => {
     const sh = e.target.closest('[data-share]');
     if (sh) {
-      if (sh.dataset.share === 'list') {
-        const box = document.getElementById('gr-sheet') || document.getElementById('gr-pop');
-        shotNodes = box ? [...box.querySelectorAll('[data-head] > *, [data-body] > *')] : [];
-        shotName = `game-records-${slug(C[open.key].title)}`;
-      } else {
-        const sec = sh.closest('.section');
-        shotNodes = [sec];
-        shotName = `game-records-${slug(sec.querySelector('.section-title').firstChild.textContent)}`;
-      }
+      const box = document.getElementById('gr-sheet') || document.getElementById('gr-pop');
+      shotNodes = box ? [...box.querySelectorAll('[data-head] > *, [data-body] > *')] : [];
+      shotName = `game-records-${slug(C[open.key].title)}`;
       shot.share(sh);
       return;
     }
