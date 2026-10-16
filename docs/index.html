@@ -1869,6 +1869,7 @@
       pop.innerHTML = `<div class="mwp-line"><span class="mwp-label">${what}</span>
         <span class="mwp-line-r"><span>${mwOtherTotal(info.t)}</span><button type="button" class="x" data-mw-close aria-label="Close">&times;</button></span></div>${pods}`;
       mwPlacePop();
+      popTrackStart();
       if (!mwHeld) mwHeld = new Map([...document.querySelectorAll('#median-container .mb-card')].map((c, i) => [c.dataset.name, i]));
       return;
     }
@@ -1935,6 +1936,21 @@
       pop.style.setProperty('--arrow-x', (r.left + r.width / 2 - left) + 'px');
     }
   }
+
+  // Both desktop popovers (this one and the median chart's) are placed from
+  // where their anchor is at that moment, and a poll, a font or a late-loading
+  // section can move the anchor afterwards. Rather than chase each cause, a
+  // popover that is open is checked against its anchor every frame and put
+  // back when it has drifted. The loop ends itself when neither is open.
+  let popTrackRaf = 0;
+  function popTrack() {
+    popTrackRaf = 0;
+    if (!document.getElementById('mw-pop') && !document.getElementById('mh-pop')) return;
+    mwPlacePop();
+    mhPlacePop();
+    popTrackRaf = requestAnimationFrame(popTrack);
+  }
+  const popTrackStart = () => { if (!popTrackRaf) popTrackRaf = requestAnimationFrame(popTrack); };
 
   // Drag the sheet down past 90px to dismiss it, like a native sheet.
   function mwWireSwipe(sheet, close = mwHide) {
@@ -2536,6 +2552,7 @@
       pop.innerHTML = `<div class="mwp-line" style="justify-content:flex-end;margin-bottom:0"><span class="mwp-line-r"><button type="button" class="x" data-mh-close aria-label="Close">&times;</button></span></div>
         ${mhHeadHtml()}<div class="mh-chart" id="mh-chart"></div>${mhChipsHtml()}`;
       mhPlacePop();
+      popTrackStart();
     } else if (sheet) {
       sheet.querySelector('[data-head]').innerHTML = mhHeadHtml();
       const body = sheet.querySelector('[data-body]');
