@@ -254,6 +254,7 @@
    the slider gets the whole row; the desktop card keeps its ✕ beside it. */
 .you-done{ display: none; position: absolute; right: 4px; top: 0; font: 600 0.82rem var(--body); color: var(--gold); background: none; border: 0; padding: 0 12px; min-height: 44px; cursor: pointer; }
 .you-done:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+.you-sheet:focus{ outline: none; }
 @media (max-width: 720px){
   .you-sheet .sheet-grab{ position: relative; min-height: 38px; align-items: flex-start; }
   .you-done{ display: block; }

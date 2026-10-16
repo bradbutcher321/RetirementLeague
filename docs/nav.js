@@ -345,12 +345,19 @@
   }
 
   let lastFocus = null;
+  // Script focus counts as "keyboard" focus to WebKit when the last thing
+  // focused showed a ring, so on a phone Done (and then the You tab it hands
+  // focus back to) kept coming up in a gold box. Only move focus onto a
+  // button, and back, when the sheet was opened from the keyboard.
+  let byKeyboard = false;
+  document.addEventListener('keydown', () => { byKeyboard = true; }, true);
+  document.addEventListener('pointerdown', () => { byKeyboard = false; }, true);
   const onKey = e => { if (e.key === 'Escape') closeYou(); };
   function closeYou() {
     document.getElementById('you-sheet')?.remove();
     document.getElementById('you-scrim')?.remove();
     document.removeEventListener('keydown', onKey);
-    if (lastFocus && lastFocus.focus) lastFocus.focus();
+    if (byKeyboard && lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
   const YOU_PANELS = [['you', 'You'], ['push', 'Notifications'], ['settings', 'Settings']];
@@ -362,7 +369,7 @@
     lastFocus = document.activeElement;
     youPanel = YOU_PANELS.some(([k]) => k === panel) ? panel : 'you';
     document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="you-scrim"></div>
-      <div class="sheet you-sheet" id="you-sheet" role="dialog" aria-modal="true" aria-label="You">
+      <div class="sheet you-sheet" id="you-sheet" role="dialog" aria-modal="true" aria-label="You" tabindex="-1">
         <div class="sheet-grab" data-grab><span></span><button type="button" class="you-done">Done</button></div>
         <div class="sheet-head you-head" data-grab>
           <div class="sup-seg you-tabs" role="tablist" aria-label="You">${YOU_PANELS.map(([k, label]) =>
@@ -382,7 +389,10 @@
     }));
     wireYouSwipe(sheet);
     document.addEventListener('keydown', onKey);
-    (closers.find(b => b.offsetParent) || closers[0]).focus();
+    // The sheet itself takes focus (tabindex -1, no ring) unless a keyboard
+    // opened it, in which case the close button does.
+    if (byKeyboard) (closers.find(b => b.offsetParent) || closers[0]).focus();
+    else sheet.focus({ preventScroll: true });
     drawTabs();
     youNames = await loadManagers();
     if (document.getElementById('you-sheet') === sheet) drawPanel();
