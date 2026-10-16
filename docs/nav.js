@@ -21,6 +21,10 @@
     grid: SVG('<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'),
     cal: SVG('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
     play: SVG('<rect x="3.5" y="5" width="17" height="14" rx="3"/><path d="m10 9.5 4.5 2.5-4.5 2.5z" fill="currentColor"/>'),
+    swap: SVG('<path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/>'),
+    trophy: SVG('<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7"/>'),
+    jersey: SVG('<path d="M8.5 4 4 6.2l1.6 4 2.4-1V20h8V9.2l2.4 1 1.6-4L15.5 4a3.6 3.6 0 0 1-7 0z"/>'),
+    flag: SVG('<path d="M5 21V4M5 5h12l-2.5 3.8L17 12.5H5"/>'),
     spark: SVG('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>'),
   };
 
@@ -42,7 +46,11 @@
     { href: 'head-to-head.html', label: 'Head to Head', sub: 'Any two managers', icon: ICONS.people },
     { href: 'franchise.html', label: 'Franchise', sub: 'One manager’s whole career', icon: ICONS.shield },
     { href: 'wrapped.html', label: 'Season Wrapped', sub: 'Any manager’s season, told as a story', icon: ICONS.spark },
+    { href: 'hall-of-fame.html', label: 'Hall of Fame', sub: 'Legacy points and manager Elo', icon: ICONS.trophy },
     { href: 'draft-board.html', label: 'Draft Board', sub: 'Every draft since 2015', icon: ICONS.grid },
+    { href: 'players.html', label: 'Players', sub: 'Every player’s story in this league', icon: ICONS.jersey },
+    { href: 'moves.html', label: 'Trades & Waivers', sub: 'Every trade graded, best pickups', icon: ICONS.swap },
+    { href: 'race.html', label: 'Playoff Race', sub: 'Pick winners, watch the odds move', icon: ICONS.flag },
     { href: 'rule-changes.html', label: 'Rule Changes', sub: 'How the league has changed', icon: ICONS.cal },
     { href: 'videos.html', label: 'League Videos', sub: 'Weekly recaps, sign-in required', icon: ICONS.play },
   ];
@@ -101,7 +109,7 @@
   // One box over managers, every team name the league has had, every
   // drafted player and every season. Built in the browser from the same
   // data files the history pages read: league.json at once, and the much
-  // bigger draft-board.json (players) only once someone starts typing.
+  // bigger players-index.json only once someone starts typing.
   let idx = null, playersIdx = null, playersList = null;
   const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/['’.]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
   const tidy = s => String(s ?? '').replace(/\s+/g, ' ').trim();
@@ -145,29 +153,11 @@
   }
   function loadPlayers() {
     if (!playersIdx) {
-      playersIdx = fetch('data/draft-board.json').then(r => r.json()).then(d => {
-        const by = new Map();
-        for (const y of d.years) {
-          const b = d.boards[y];
-          if (!b) continue;
-          const mgrOf = new Map(b.columns.map(c => [String(c.slot), c.manager]));
-          for (const round of Object.values(b.grid || {})) {
-            for (const [slot, p] of Object.entries(round)) {
-              if (!p || !p.player_name) continue;
-              const e = by.get(p.player_name) || { name: p.player_name, pos: p.position, n: 0, last: null };
-              e.n += 1;
-              // d.years runs newest first, so the first one seen is the latest.
-              if (!e.last) e.last = { year: y, mgr: mgrOf.get(slot) };
-              by.set(p.player_name, e);
-            }
-          }
-        }
-        return (playersList = [...by.values()].map(p => ({
-          kind: 'Player', rank: 3, name: p.name, key: norm(p.name), n: p.n,
-          sub: `${p.pos ? p.pos + ' · ' : ''}${p.n > 1 ? `Drafted ${p.n}× · last by ` : 'Drafted by '}${p.last.mgr}, ${p.last.year}`,
-          href: pageLink('draft-board.html', { year: p.last.year, view: 'grid', player: p.name }),
-        })));
-      }).catch(() => { playersIdx = null; return []; });
+      playersIdx = fetch('data/players-index.json').then(r => r.json()).then(d => (playersList = d.players.map(([id, name, pos, n, pts]) => ({
+        kind: 'Player', rank: 3, name, key: norm(name), n,
+        sub: `${pos ? pos + ' · ' : ''}${n ? `Drafted ${n}×` : 'Never drafted'}${pts ? ` · ${Math.round(pts).toLocaleString('en-US')} pts started` : ''}`,
+        href: pageLink('players.html', { p: id }),
+      })))).catch(() => { playersIdx = null; return []; });
     }
     return playersIdx;
   }

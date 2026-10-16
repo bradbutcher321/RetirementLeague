@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="Every trade graded, the best pickups ever and the latest moves in the Retirement League.">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Retirement League">
+<meta property="og:title" content="Retirement League — Trades & Waivers">
+<meta property="og:description" content="Every trade graded, the best pickups ever and the latest moves in the Retirement League.">
+<meta property="og:url" content="https://bradbutcher321.github.io/RetirementLeague/moves.html">
+<meta property="og:image" content="https://bradbutcher321.github.io/RetirementLeague/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>html{background:#050505}</style>
+<title>Retirement League — Trades & Waivers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=30">
+<link rel="stylesheet" href="nav.css?v=14">
+<link rel="stylesheet" href="features.css?v=1">
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Trades &amp; Waivers</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls-row">
+      <div class="tabs" id="tabs"></div>
+    </div>
+    <div id="view"><span class="sr-only">Loading…</span></div>
+    <footer id="site-footer"></footer>
+  </div>
+<script src="nav.js?v=18"></script>
+<script src="page-common.js?v=36"></script>
+<script src="league-common.js?v=5"></script>
+<script>
+  // Trades & Waivers (site audit III #1). Reads data/moves.json, written by
+  // generate_moves_data.py: trades rebuilt from the roster change they
+  // caused and graded by what each side started for the rest of that
+  // season, the best pickups, and the season's latest moves.
+  const $ = id => document.getElementById(id);
+  const f1 = n => Number(n).toFixed(1), f2 = n => Number(n).toFixed(2);
+  const ord = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
+  const posTag = p => p ? `<span class="pt pt-${esc(String(p).replace('/', ''))}">${esc(p)}</span>` : '';
+  const pLink = (id, name) => `<a class="plink" href="${esc(pageLink('players.html', { p: id }))}">${esc(name)}</a>`;
+  const TABS = [['trades', 'Trades'], ['pickups', 'Pickups'], ['latest', 'Latest']];
+  let M, tab = 'trades', year = 'all', showAll = false;
+
+  function tradeCard(t) {
+    const names = Object.keys(t.sides);
+    const side = m => {
+      const s = t.sides[m], win = m === t.winner;
+      return `<div class="tr-side${win ? ' win' : ''}">
+        <div class="tr-who"><b>${esc(m)}</b><span>got</span></div>
+        ${s.players.map(p => `<div class="tr-pl">${posTag(p.pos)}<span class="tr-pn">${pLink(p.id, p.name)}</span><span class="tr-pp">${f1(p.start_pts)}</span></div>`).join('')}
+        <div class="tr-tot"><span>Started for ${esc(m)}</span><b class="${win ? 'gold' : ''}">${f1(s.start_pts)}</b></div></div>`;
+    };
+    const champ = t.champ && names.includes(t.champ) ? t.champ : null;
+    const fin = names.map(m => t.sides[m].final ? `${esc(m)} ${ord(t.sides[m].final)}` : '').filter(Boolean).join(' · ');
+    return `<div class="tr ft-item">
+      <div class="tr-h"><span class="tr-when">${t.year} · Week ${t.week}</span>${t.winner ? `<span class="ft-chip gold">${esc(t.winner)} +${f1(t.margin)}</span>` : '<span class="ft-chip">Even</span>'}</div>
+      <div class="tr-sides">${side(names[0])}${side(names[1])}</div>
+      <div class="tr-foot">${champ ? `<span class="tr-champ">★ ${esc(champ)} won the title</span>` : ''}${fin ? `<span class="dimt">Finished ${fin}</span>` : ''}</div></div>`;
+  }
+
+  function tradesView() {
+    const all = M.trades;
+    const list = year === 'all' ? all : all.filter(t => t.year === +year);
+    const years = [...new Set(all.map(t => t.year))].sort((a, b) => b - a);
+    const withTitle = all.filter(t => t.winner && t.winner === t.champ).length;
+    const most = M.trade_count[0];
+    const big = all.reduce((a, t) => t.margin > a ? t.margin : a, 0);
+    const shown = showAll ? list : list.slice(0, 6);
+    return `<div class="glass"><div class="mv-hero"><div class="k">Trades since ${M.first_year}</div><div class="v">${M.trade_total}</div>
+        <div class="s">${all.length} of them with both sides on record. ESPN doesn’t list a trade’s players, so each is rebuilt from the roster change it caused.</div>
+        <div class="mv-side-stats"><div><span>Most trades</span><b>${esc(most[0])} ${most[1]}</b></div><div><span>Winner took the title</span><b>${withTitle} trade${withTitle === 1 ? '' : 's'}</b></div><div><span>Biggest win</span><b>+${f1(big)}</b></div></div></div></div>
+      <div class="ft-ctl ft-sec"><span class="dimt">Year</span><select class="lg-select" id="yr" aria-label="Year"><option value="all">All-Time</option>${years.map(y => `<option value="${y}"${String(y) === String(year) ? ' selected' : ''}>${y}</option>`).join('')}</select></div>
+      <div class="glass"><div class="panel-title">Every trade, graded <span class="ft-chip">${list.length}</span></div>
+        <div class="ft-note">Points each player scored in the new team’s starting lineup, from the trade to the end of that season.</div>
+        <div class="ft-body">${shown.length ? shown.map(tradeCard).join('') : '<div class="ft-empty">No trades that year.</div>'}
+        ${!showAll && list.length > shown.length ? `<button type="button" class="ft-btn wide" data-all>Show all ${list.length}</button>` : ''}</div></div>`;
+  }
+
+  function pickupsView() {
+    const P = M.pickups.slice(0, 10);
+    const adds = M.adds_by_mgr[0], season = M.most_adds_season[0], lost = M.lost_claims[0], reg = M.regret_total[0];
+    return `<div class="glass"><div class="panel-title">Best pickups ever</div>
+        <div class="ft-note">Points he started for the team that picked him up, from the pickup to the end of that season.</div>
+        <div class="ft-body"><div class="ft-lines">${P.map((p, i) => `<div class="ft-line"><div class="ft-rk">${i + 1}</div><div class="ft-main"><div class="ft-n">${posTag(p.pos)} ${pLink(p.id, p.player)}</div>
+          <div class="ft-s">${esc(p.mgr)} · ${p.year} Wk ${p.week} · ${p.type === 'WAIVER' ? 'waivers' : 'free agent'}${p.droppedBy ? ` · <span class="warnt">${esc(p.droppedBy)} had dropped him</span>` : ''}</div></div>
+          <div class="ft-val num">${f2(p.pts)}</div></div>`).join('')}</div></div></div>
+      <div class="glass ft-sec"><div class="panel-title">On the wire</div>
+        <div class="ft-body"><div class="ft-tiles">
+          <div class="ft-tile"><div class="ft-tl">Most adds</div><div class="ft-tv">${adds[1]}</div><div class="ft-ts">${esc(adds[0])}, since ${M.tx_first_year}</div></div>
+          <div class="ft-tile"><div class="ft-tl">Most in a year</div><div class="ft-tv">${season[0]}</div><div class="ft-ts">${esc(season[2])}, ${season[1]}</div></div>
+          <div class="ft-tile"><div class="ft-tl">Claims lost</div><div class="ft-tv">${lost[1]}</div><div class="ft-ts">${esc(lost[0])}, to a higher priority</div></div></div>
+          ${reg ? `<div class="ft-note" style="padding:0">Drop regret: players ${esc(reg[0])} let go went on to start ${f1(reg[1])} points for other teams.</div>` : ''}</div></div>
+      <div class="glass ft-sec"><div class="panel-title">The ones that got away</div>
+        <div class="ft-note">Dropped, then started for someone else the rest of that season.</div>
+        <div class="ft-body"><div class="ft-lines">${M.drop_regret.slice(0, 6).map((d, i) => `<div class="ft-line"><div class="ft-rk">${i + 1}</div><div class="ft-main"><div class="ft-n">${posTag(d.pos)} ${pLink(d.id, d.player)}</div>
+          <div class="ft-s">${esc(d.droppedBy)} dropped him in ${d.year} Wk ${d.week}${d.thenFor ? ` · started for ${esc(d.thenFor)}` : ''}</div></div><div class="ft-val num">${f2(d.pts)}</div></div>`).join('')}</div></div></div>`;
+  }
+
+  function latestView() {
+    const when = ts => new Date(ts * 1000).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+    const names = a => a.length <= 1 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+    return `<div class="glass"><div class="panel-title">${M.current_year} moves <span class="ft-chip">${M.recent.length}</span></div>
+      <div class="ft-note">The latest ${M.recent.length} waiver claims and free-agent pickups this season. Waivers run early Wednesday morning; free agents are first come, first served.</div>
+      <div class="ft-body"><div class="ft-lines">${M.recent.map(m => `<div class="ft-line mvrow"><div class="ft-main"><div class="ft-n">${esc(m.mgr)} <span class="dimt" style="font-weight:500;font-size:0.68rem;margin-left:4px">${esc(m.type)} · ${esc(when(m.ts))}</span></div>
+        <div class="mv-ad">${m.add.map(([n, p]) => `<span class="mv-add">${esc(n)} <i>${esc(p || '')}</i></span>`).join('')}${m.drop.map(([n, p]) => `<span class="mv-drop">${esc(n)} <i>${esc(p || '')}</i></span>`).join('')}</div>
+        ${m.beat ? `<div class="ft-s">Won the claim over ${esc(names(m.beat))}</div>` : ''}</div></div>`).join('')}</div></div></div>`;
+  }
+
+  function render() {
+    $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
+    $('view').innerHTML = tab === 'trades' ? tradesView() : tab === 'pickups' ? pickupsView() : latestView();
+    setUrlParams({ tab: tab === 'trades' ? null : tab });
+  }
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-t]');
+    if (t) { tab = t.dataset.t; render(); return; }
+    if (e.target.closest('[data-all]')) { showAll = true; render(); }
+  });
+  document.addEventListener('change', e => { if (e.target.id === 'yr') { year = e.target.value; showAll = false; render(); } });
+
+  fetch('data/moves.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
+    M = d;
+    if (d.generated_at) $('updated-at').textContent = formatUpdated(d.generated_at);
+    if (TABS.some(([k]) => k === urlParam('tab'))) tab = urlParam('tab');
+    render();
+    riseIn(document.querySelectorAll('#view .glass'));
+  }).catch(err => { $('view').innerHTML = `<div class="glass"><div class="ft-empty">Couldn't load the moves (${esc(err.message)}).</div></div>`; });
+</script>
+<script src="track.js?v=1" defer></script>
+</body>
+</html>

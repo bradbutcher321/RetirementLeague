@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="Every player’s story in the Retirement League: drafts, who started him, and where he went.">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Retirement League">
+<meta property="og:title" content="Retirement League — Players">
+<meta property="og:description" content="Every player’s story in the Retirement League: drafts, who started him, and where he went.">
+<meta property="og:url" content="https://bradbutcher321.github.io/RetirementLeague/players.html">
+<meta property="og:image" content="https://bradbutcher321.github.io/RetirementLeague/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>html{background:#050505}</style>
+<title>Retirement League — Players</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=30">
+<link rel="stylesheet" href="nav.css?v=14">
+<link rel="stylesheet" href="features.css?v=1">
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Players</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="pl-searchwrap"><input class="pl-search" id="q" type="search" placeholder="Search players" aria-label="Search players" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"></div>
+    <div class="glass pl-res" id="res" hidden></div>
+    <div id="view"><span class="sr-only">Loading…</span></div>
+    <footer id="site-footer"></footer>
+  </div>
+<script src="nav.js?v=18"></script>
+<script src="page-common.js?v=36"></script>
+<script src="league-common.js?v=5"></script>
+<script>
+  // Players (site audit III #5). A search box over every player the league
+  // has drafted or started (data/players-index.json), and one page per
+  // player (data/players/<id>.json), both written by generate_moves_data.py.
+  // ?p=<id> opens a player.
+  const $ = id => document.getElementById(id);
+  const f2 = n => Number(n).toFixed(2);
+  const n2 = n => Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const posTag = p => p ? `<span class="pt pt-${esc(String(p).replace('/', ''))}">${esc(p)}</span>` : '';
+  const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/['’.]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const pHref = id => pageLink('players.html', { p: id });
+  const list = names => names.length <= 1 ? names.join('') : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+  let INDEX = null, SEASONS = 12;
+  const MV = { ADD: 'Picked up by', DROP: 'Dropped by', TRADE: 'Traded to' };
+
+  function nameRow(r) {
+    const [id, name, pos, drafted, pts] = r;
+    return `<a class="pl-hit" href="${esc(pHref(id))}">${posTag(pos)}<b>${esc(name)}</b><span>${drafted ? `drafted ${drafted}×` : 'never drafted'} · ${n2(pts)} pts</span></a>`;
+  }
+
+  function landing() {
+    const top = INDEX.slice(0, 12);
+    return `<div class="glass"><div class="panel-title">Most points started <span class="ft-chip">since 2019</span></div>
+      <div class="ft-note">Points scored in a manager’s starting lineup, all managers combined. Search for anyone, or tap a name.</div>
+      <div class="ft-body"><div class="ft-lines">${top.map((r, i) => `<a class="ft-line" href="${esc(pHref(r[0]))}" style="color:inherit;text-decoration:none"><div class="ft-rk">${i + 1}</div><div class="ft-main"><div class="ft-n">${posTag(r[2])} ${esc(r[1])}</div><div class="ft-s">${r[3] ? `Drafted ${r[3]}×` : 'Never drafted'}</div></div><div class="ft-val num">${n2(r[4])}</div></a>`).join('')}</div></div></div>`;
+  }
+
+  function card(p) {
+    const mgrs = new Set([...p.drafts.map(d => d.mgr), ...p.byMgr.map(x => x.mgr)]);
+    const lead = !p.drafts.length ? 'Never drafted' : p.drafts.length >= SEASONS ? `Drafted in all ${SEASONS} seasons` : `Drafted in ${p.drafts.length} of ${SEASONS} seasons`;
+    const b = p.best;
+    const moves = p.moves.slice().reverse();
+    return `<div class="glass"><div class="pl-hd"><div class="pl-name">${esc(p.name)}</div>
+        <div class="pl-sub">${posTag(p.pos)}<span>${lead} · on ${mgrs.size} manager${mgrs.size === 1 ? '' : 's'}’ team${mgrs.size === 1 ? '' : 's'}</span></div></div>
+      <div class="ft-body"><div class="ft-tiles">
+        <div class="ft-tile"><div class="ft-tl">Points started</div><div class="ft-tv">${n2(p.total)}</div><div class="ft-ts">${p.starts} start${p.starts === 1 ? '' : 's'} since 2019</div></div>
+        <div class="ft-tile"><div class="ft-tl">Best game</div><div class="ft-tv">${b ? f2(b.pts) : '—'}</div><div class="ft-ts">${b ? `${esc(b.mgr)} · ${b.year} Wk ${b.week}` : 'Never started'}</div></div>
+        <div class="ft-tile"><div class="ft-tl">Title games</div><div class="ft-tv">${p.titles.length}</div><div class="ft-ts">${p.titles.length ? esc(list(p.titles.map(t => `${t.mgr} ${t.year}`))) : 'Not yet'}</div></div></div></div></div>
+      ${p.byMgr.length ? `<div class="glass ft-sec"><div class="panel-title">Who he’s played for</div>
+        <div class="ft-body"><div class="pl-grid">${p.byMgr.map(x => `<a class="ft-item pl-m" href="${esc(pageLink('franchise.html', { m: x.mgr }))}" style="color:inherit;text-decoration:none"><div><b>${esc(x.mgr)}</b><span>${x.starts ? `${x.starts} start${x.starts === 1 ? '' : 's'} · ` : 'Bench · '}${esc(x.years.join(', '))}</span></div><em>${f2(x.pts)}</em></a>`).join('')}</div></div></div>` : ''}
+      ${p.drafts.length ? `<div class="glass ft-sec"><div class="panel-title">Draft history <span class="ft-chip">${p.drafts.length}×</span></div>
+        <div class="ft-body"><div class="pl-dr">${p.drafts.slice().reverse().map(d => `<a class="ft-item pl-d" href="${esc(pageLink('draft-board.html', { year: d.year, view: 'grid', player: p.name }))}" style="text-decoration:none;color:inherit"><b>${d.year}</b><span class="num">${d.bid ? '$' + d.bid : d.pick}</span><em>${esc(d.mgr)}${d.keeper ? ' · K' : ''}</em></a>`).join('')}</div></div></div>` : ''}
+      ${moves.length ? `<div class="glass ft-sec"><div class="panel-title">Moves <span class="ft-chip">${moves.length}</span></div>
+        <div class="ft-note">Trades since 2019, pickups and drops since 2018.</div>
+        <div class="ft-body"><div class="ft-lines">${moves.slice(0, 10).map(m => `<div class="ft-line"><div class="ft-main"><div class="ft-n">${MV[m.kind]} ${esc(m.mgr)}${m.from ? ` <span class="dimt">from ${esc(m.from)}</span>` : ''}${m.via ? ` <span class="dimt">· ${esc(m.via)}</span>` : ''}</div><div class="ft-s">${m.year} · Week ${m.week}</div></div></div>`).join('')}</div>
+        ${moves.length > 10 ? `<div class="ft-note" style="padding:0;text-align:center">and ${moves.length - 10} earlier</div>` : ''}</div></div>` : ''}`;
+  }
+
+  async function show(id) {
+    $('view').innerHTML = '<span class="sr-only">Loading…</span>';
+    try {
+      const r = await fetch(`data/players/${encodeURIComponent(id)}.json`, { cache: 'no-cache' });
+      if (!r.ok) throw new Error('no such player');
+      const p = await r.json();
+      document.title = `Retirement League — ${p.name}`;
+      $('view').innerHTML = card(p);
+    } catch (e) {
+      $('view').innerHTML = `<div class="glass"><div class="ft-empty">No player with that link.</div></div>` + landing();
+    }
+    riseIn(document.querySelectorAll('#view .glass'));
+  }
+
+  function search() {
+    const k = norm($('q').value), res = $('res');
+    if (!k) { res.hidden = true; res.innerHTML = ''; return; }
+    const scored = [];
+    for (const r of INDEX) {
+      const key = r[5];
+      let s;
+      if (key === k) s = 0; else if (key.startsWith(k)) s = 1; else if ((' ' + key).includes(' ' + k)) s = 2; else if (key.includes(k)) s = 3; else continue;
+      scored.push([s, r]);
+    }
+    scored.sort((a, b) => a[0] - b[0] || b[1][4] - a[1][4]);
+    res.hidden = false;
+    res.innerHTML = scored.length ? scored.slice(0, 8).map(x => nameRow(x[1])).join('') : '<div class="ft-empty">No player by that name.</div>';
+  }
+
+  Promise.all([
+    fetch('data/players-index.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+  ]).then(([d]) => {
+    INDEX = d.players.map(r => [...r, norm(r[1])]);
+    SEASONS = d.draft_years || SEASONS;
+    if (d.generated_at) $('updated-at').textContent = formatUpdated(d.generated_at);
+    $('q').placeholder = `Search ${INDEX.length} players`;
+    $('q').addEventListener('input', search);
+    $('q').addEventListener('keydown', e => { if (e.key === 'Enter') { const a = $('res').querySelector('.pl-hit'); if (a) location.href = a.href; } });
+    const id = urlParam('p');
+    if (id) show(id); else { $('view').innerHTML = landing(); riseIn(document.querySelectorAll('#view .glass')); }
+  }).catch(err => { $('view').innerHTML = `<div class="glass"><div class="ft-empty">Couldn't load the players (${esc(err.message)}).</div></div>`; });
+</script>
+<script src="track.js?v=1" defer></script>
+</body>
+</html>

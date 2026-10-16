@@ -40,6 +40,7 @@
 <link rel="stylesheet" href="theme.css?v=30">
 <link rel="stylesheet" href="nav.css?v=14">
 <link rel="stylesheet" href="league.css?v=7">
+<link rel="stylesheet" href="features.css?v=1">
 <style>
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
@@ -170,7 +171,7 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=17"></script>
+<script src="nav.js?v=18"></script>
 <script src="page-common.js?v=36"></script>
 <script src="league-common.js?v=5"></script>
 <script>
@@ -181,8 +182,8 @@
   const n0 = n => Math.round(n).toLocaleString('en-US');
   // "Regular Szn" / "Final" (site audit II #18): the long names pushed the
   // Year dropdown onto its own row on a phone.
-  const TABS = [['reg', 'Regular Szn'], ['final', 'Final']];
-  let D, tab = 'final';
+  const TABS = [['reg', 'Regular Szn'], ['final', 'Final'], ['bracket', 'Bracket']];
+  let D, tab = 'final', optsFor = null;
   const $ = id => document.getElementById(id);
   // No card title: it read "Regular Season" / "Final Standings" directly
   // under the selected tab saying the same thing. The note that used to be
@@ -366,15 +367,92 @@
       `</div></a>`;
   }
 
+
+  // Bracket (site audit III #4): every season's playoffs drawn as they
+  // happened, the Sacko game under them, and this season as it would be
+  // seeded today. The shape (four teams in 2015-16, six since 2017) is read
+  // from the games; the seeds are each team's regular-season finish.
+  const ord = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
+  const f2 = n => Number(n).toFixed(2);
+  const seedOf = (year, p) => { const s = D.seasons.find(x => x.year === year && x.player === p); return s ? s.reg_rank : null; };
+  const bkSide = (s, won, final) => s ? `<div class="bk-s${won ? ' won' : final ? ' lost' : ''}"><span class="bk-seed">${s.seed ?? ''}</span>${s.link === false ? `<span class="bk-m">${esc(s.m)}</span>` : `<a class="bk-m" href="${esc(pageLink('franchise.html', { m: s.m }))}">${esc(s.m)}</a>`}<span class="bk-sc">${s.s != null ? f2(s.s) : ''}</span></div>` : '';
+  function bkGame(g, label) {
+    const fin = g.w != null && g.w !== 'In Progress' && g.a.s != null;
+    const close = fin && g.b && Math.abs(g.a.s - g.b.s) < 1;
+    return `<div class="bk-g ft-item${g.type === 'Champ' ? ' champ' : ''}${g.type === 'Sacko' ? ' sacko' : ''}">${label ? `<div class="bk-lab">${label}</div>` : ''}${bkSide(g.a, fin && g.w === g.a.m, fin)}${bkSide(g.b, fin && g.b && g.w === g.b.m, fin)}${close ? `<div class="bk-note">Decided by ${f2(Math.abs(g.a.s - g.b.s))}</div>` : ''}</div>`;
+  }
+  const bkTbd = '<div class="bk-g ft-item tbd">To be decided</div>';
+  function bkRealGame(year, g) {
+    return { type: g.type, week: g.week, w: g.winner, a: { m: g.p1, seed: seedOf(year, g.p1), s: g.s1 }, b: g.p2 ? { m: g.p2, seed: seedOf(year, g.p2), s: g.s2 } : null };
+  }
+  function bracketView(year) {
+    const set = (D.settings && D.settings[year]) || {};
+    const gs = D.games.filter(g => g.year === year && ['Play', 'Bye', 'Champ', '3rd', '5th', 'Sacko'].includes(g.type)).map(g => bkRealGame(year, g));
+    const live = year === D.currentYear && !D.completeYears.includes(year);
+    if (!gs.some(g => g.type === 'Play' || g.type === 'Champ')) return live ? projectedBracket(year, set) : `<div class="ft-empty">No playoff games on record for ${year}.</div>`;
+    const spots = set.playoff_teams || (year >= 2017 ? 6 : 4);
+    const names = spots >= 6 ? ['Quarterfinals', 'Semifinals'] : ['Semifinals'];
+    const playWeeks = [...new Set(gs.filter(g => g.type === 'Play').map(g => g.week))].sort((a, b) => a - b);
+    const firstWeek = playWeeks[0] ?? ((set.reg_weeks || 14) + 1);
+    const byes = gs.filter(g => g.type === 'Bye').map(g => g.a);
+    const champ = gs.find(g => g.type === 'Champ');
+    const rounds = names.map((name, i) => ({ name, week: firstWeek + i, games: gs.filter(g => g.type === 'Play' && g.week === firstWeek + i) }));
+    const cols = rounds.length + 1;
+    const champName = champ && champ.w && champ.w !== 'In Progress' ? champ.w : null;
+    const main = `<div class="bk-main cols${cols}">
+      ${rounds.map((r, i) => `<div class="bk-col"><div class="bk-rh">${r.name}<span>Week ${r.week}</span></div>
+        ${r.games.length ? r.games.map(g => bkGame(g)).join('') : bkTbd}
+        ${i === 0 && byes.length ? `<div class="bk-bye"><span>Byes</span>${byes.map(b => `<b>${b.seed} ${esc(b.m)}</b>`).join('')}</div>` : ''}</div>`).join('')}
+      <div class="bk-col"><div class="bk-rh">Final<span>Week ${champ ? champ.week : firstWeek + rounds.length}</span></div>${champ ? bkGame(champ) : bkTbd}
+        ${champName ? `<div class="bk-champ">★ <b>${esc(champName)}</b><span>${ord(champName === champ.a.m ? champ.a.seed : champ.b.seed)} seed</span></div>` : ''}</div></div>`;
+    const third = gs.find(g => g.type === '3rd'), fifth = gs.find(g => g.type === '5th'), sacko = gs.find(g => g.type === 'Sacko');
+    const loser = sacko && sacko.w && sacko.w !== 'In Progress' ? (sacko.w === sacko.a.m ? sacko.b.m : sacko.a.m) : null;
+    const extra = [third && bkGame(third, '3rd place'), fifth && bkGame(fifth, '5th place'), sacko && bkGame(sacko, `Sacko game · Week ${sacko.week}`) + (loser ? `<div class="bk-sk">${esc(loser)} took the Sacko.</div>` : '')].filter(Boolean);
+    return main + (extra.length ? `<div class="bk-extra">${extra.join('')}</div>` : '');
+  }
+  // The season in progress, seeded as it stands: record, then points.
+  function projectedBracket(year, set) {
+    const rows = build(year, 'reg').map((r, i) => ({ m: r.player, seed: r.rank ?? i + 1, s: null }));
+    const spots = set.playoff_teams || 6, regWeeks = set.reg_weeks || 14;
+    const g = (a, b) => ({ type: 'Play', a: rows[a], b: rows[b] });
+    const w1 = regWeeks + 1, w2 = regWeeks + 2, w3 = regWeeks + 3;
+    const sk = { type: 'Sacko', a: rows[rows.length - 2], b: rows[rows.length - 1] };
+    const open = (a, text) => ({ type: 'Play', a, b: { m: text, seed: '', link: false } });
+    const six = spots >= 6;
+    return `<div class="bk-proj">If the season ended today, by record and then points.</div>
+      <div class="bk-main cols${six ? 3 : 2}">
+        ${six ? `<div class="bk-col"><div class="bk-rh">Quarterfinals<span>Week ${w1}</span></div>${bkGame(g(2, 5))}${bkGame(g(3, 4))}
+          <div class="bk-bye"><span>Byes</span><b>1 ${esc(rows[0].m)}</b><b>2 ${esc(rows[1].m)}</b></div></div>` : ''}
+        <div class="bk-col"><div class="bk-rh">Semifinals<span>Week ${six ? w2 : w1}</span></div>
+          ${six ? bkGame(open(rows[0], 'Lowest seed left')) + bkGame(open(rows[1], 'Other winner')) : bkGame(g(0, 3)) + bkGame(g(1, 2))}</div>
+        <div class="bk-col"><div class="bk-rh">Final<span>Week ${six ? w3 : w2}</span></div>${bkTbd}</div>
+      </div>
+      <div class="bk-extra">${bkGame(sk, `Sacko game · Week ${six ? w3 : w2}`)}</div>`;
+  }
+  // The Year dropdown lists All-Time everywhere but the Bracket, which
+  // draws one season at a time.
+  function yearOptions() {
+    const sel = $('year-select'), cur = sel.value, noAll = tab === 'bracket';
+    sel.innerHTML = (noAll ? '' : '<option value="all">All-Time</option>') + D.years.slice().reverse().map(y => `<option value="${y}">${y}</option>`).join('');
+    sel.value = [...sel.options].some(o => o.value === cur) ? cur : String(D.currentYear);
+    optsFor = noAll;
+  }
+
   // Picking your team in the You sheet rings your row (site audit II #36).
   window.addEventListener('rl-me', () => render());
   function render() {
+    if (optsFor !== (tab === 'bracket')) yearOptions();
     const sel = $('year-select').value;
     const year = sel === 'all' ? 'all' : Number(sel);
     const complete = year !== 'all' && D.completeYears.includes(year);
+    // The defaults (this season, Final Standings) leave the URL bare.
+    setUrlParams({ year: year === D.currentYear ? null : year, tab: tab === 'final' ? null : tab });
+    if (tab === 'bracket') {
+      $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
+      $('standings-container').innerHTML = `<div class="glass"><div class="ft-body" style="padding:18px">${bracketView(year)}</div></div>`;
+      return;
+    }
     const rows = build(year, tab);
-    // The defaults (All-Time, Final Standings) leave the URL bare.
-    setUrlParams({ year: year === 'all' ? null : year, tab: tab === 'final' ? null : tab });
     formerCount = rows.filter(r => r.former).length;
     prevRank = year === D.currentYear && !complete ? lastWeekRanks(year) : null;
     // The season in progress gets the playoff race (site audit 29): a
@@ -421,11 +499,12 @@
 
   LG.load().then(data => {
     D = data;
-    $('year-select').innerHTML = '<option value="all">All-Time</option>' + data.years.slice().reverse().map(y => `<option value="${y}">${y}</option>`).join('');
-    // A shared link's ?year=2024&tab=reg, where it names a real year and tab.
-    const y = urlParam('year');
-    $('year-select').value = data.years.includes(Number(y)) ? y : 'all';
+    // A shared link's ?year=2024&tab=reg, where it names a real year and
+    // tab. No year means this season; ?year=all is the All-Time table.
     if (TABS.some(([k]) => k === urlParam('tab'))) tab = urlParam('tab');
+    yearOptions();
+    const y = urlParam('year');
+    if (data.years.includes(Number(y)) || (y === 'all' && tab !== 'bracket')) $('year-select').value = y;
     $('year-select').addEventListener('change', render);
     render();
     riseIn(document.querySelectorAll('#standings-container .qrow'));

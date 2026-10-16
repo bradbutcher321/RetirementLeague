@@ -58,7 +58,7 @@ jobs:
     - name: Install System Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install gspread google-auth
+        pip install gspread google-auth requests
 
     - name: Create Google Secret File
       run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > google_secret.json
@@ -87,6 +87,16 @@ jobs:
         CLOUDFLARE_ACCOUNT_ID: f53f8e388e691eca52769f9f586713df
       run: python generate_rule_changes_data.py
 
+    # Trades & Waivers and Players (audit III #1, #5): D1 plus ESPN's
+    # transaction feed, which needs the same cookies as the logo mirror.
+    - name: Run Moves and Players Data Script
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: f53f8e388e691eca52769f9f586713df
+        ESPN_S2: ${{ secrets.ESPN_S2 }}
+        ESPN_SWID: ${{ secrets.ESPN_SWID }}
+      run: python generate_moves_data.py
+
     - name: Remove Google Secret File
       if: always()
       run: rm -f google_secret.json
@@ -95,7 +105,7 @@ jobs:
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add docs/data/franchise.json docs/data/draft-board.json docs/data/rule-changes.json docs/icons/teams
-        git diff --cached --quiet || git commit -m "Update franchise, draft board, and rule changes data"
+        git add docs/data/franchise.json docs/data/draft-board.json docs/data/rule-changes.json docs/data/moves.json docs/data/players-index.json docs/data/players docs/icons/teams
+        git diff --cached --quiet || git commit -m "Update franchise, draft board, rule changes, moves and players data"
         git pull --rebase
         git push
