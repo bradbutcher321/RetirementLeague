@@ -259,6 +259,55 @@
   .grade.g-D, .grade.g-F{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
   .dv-list .meta{ line-height: 1.5; }
   .dv-list .meta .win{ color: var(--turf); } .dv-list .meta .loss{ color: var(--loss); }
+
+  /* ---------- Draft Day Live (site audit III #17) ----------
+     The Live view: who is on the clock, the latest pick graded against where
+     ESPN's average draft position said he'd go, the grid filling in, and a
+     TV mode for the draft-party screen. A pick's delta is how many spots
+     after (+) or before (−) his ADP he went. */
+  .board-toggle button[hidden]{ display: none; }
+  .selector-row.live-on #year-group{ display: none; }
+  .lv-top{ display: grid; gap: 14px; margin-bottom: 14px; }
+  @media (min-width: 700px){ .lv-top{ grid-template-columns: 1fr 1fr; } }
+  .lv-top .panel-body{ padding: 12px 14px 14px; }
+  .lv-item{ padding: 14px 16px; }
+  .lv-who{ font-family: var(--scoreboard); font-weight: 800; font-size: 2.3rem; line-height: 1; color: var(--gold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lv-sub{ color: var(--text-dim); font-size: 0.78rem; margin-top: 6px; }
+  .lv-next{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .lv-next .chip b{ color: var(--text); font-weight: 600; }
+  .lv-btns{ display: flex; align-items: center; gap: 8px; }
+  .lv-tv{ height: 44px; padding: 0 4px; border: none; background: none; cursor: pointer; font: 600 0.74rem var(--body); color: var(--gold); }
+  .lv-tv:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
+  .lv-exit{ display: none; }
+  .lv-extra{ display: grid; gap: 14px; margin-top: 14px; }
+  @media (max-width: 699px){ .lv-tv{ display: none; } }
+  @media (min-width: 900px){ .lv-extra{ grid-template-columns: 1fr 1fr; align-items: start; } }
+  .lv-list{ display: grid; gap: 6px; padding: 12px 14px 14px; }
+  .lv-row{ display: grid; grid-template-columns: 40px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: var(--item); border: 1px solid var(--item-line); }
+  .lv-row.steal{ border-color: var(--win-line); background: var(--win-tint); }
+  .lv-row.reach{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .lv-no{ color: var(--text-dim); font-family: var(--scoreboard); font-size: 0.95rem; text-align: center; font-variant-numeric: tabular-nums; }
+  .lv-nm{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lv-mt{ color: var(--text-dim); font-size: 0.72rem; margin-top: 1px; }
+  .lv-delta{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; color: var(--text-dim); white-space: nowrap; }
+  .lv-delta.up{ color: var(--turf); } .lv-delta.down{ color: var(--loss); }
+  .chip.up{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
+  .chip.down{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
+  .pick-pts.lv-d{ opacity: 1; }
+  .pick-pts.lv-d.up{ color: var(--turf); } .pick-pts.lv-d.down{ color: var(--loss); }
+  .pick-cell.clock{ outline: 2px solid var(--gold); outline-offset: 1px; background: rgba(212,180,106,0.10); animation: lv-clock 1.8s ease-in-out infinite; }
+  .pick-cell.clock .pick-empty{ color: var(--gold); font-weight: 700; }
+  .pick-cell.fresh{ animation: lv-in .5s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes lv-clock{ 50%{ background: rgba(212,180,106,0.03); } }
+  @keyframes lv-in{ from{ transform: scale(0.88); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce){ .pick-cell.clock, .pick-cell.fresh{ animation: none; } }
+  /* TV mode: only the clock, the latest pick and the grid, the grid scaled
+     to whatever screen it is on (tvFit in the page script). */
+  body.tv #site-nav, body.tv header, body.tv .selector-row, body.tv #legend, body.tv footer, body.tv .lv-extra, body.tv .lv-tv{ display: none; }
+  body.tv .wrap.wide{ max-width: none; padding: 10px 16px; }
+  body.tv .lv-top{ grid-template-columns: 1fr 1fr; margin-bottom: 10px; }
+  body.tv .board-scroll{ overflow: hidden; }
+  body.tv .lv-exit{ display: flex; align-items: center; justify-content: center; position: fixed; bottom: 10px; right: 10px; z-index: 50; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--ctl-line); background: var(--ctl-bg-solid); color: var(--text-dim); cursor: pointer; font-size: 1rem; }
 </style>
 </head>
 <body>
@@ -288,12 +337,13 @@
         <div class="selector-group">
           <span class="selector-label">View</span>
           <div class="board-toggle" id="view-toggle" data-glide-panel="board-container">
+            <button type="button" data-view="live" hidden>Live</button>
             <button type="button" class="on" data-view="grid">Grid</button>
             <button type="button" data-view="simple">By Team</button>
             <button type="button" data-view="value">Value</button>
           </div>
         </div>
-        <div class="selector-group">
+        <div class="selector-group" id="year-group">
           <label class="selector-label" for="year-select">Year</label>
           <select class="board-select" id="year-select" autocomplete="off"></select>
         </div>
@@ -304,6 +354,7 @@
 
     <footer id="site-footer"></footer>
   </div>
+  <button type="button" class="lv-exit" id="lv-exit" aria-label="Leave TV mode">✕</button>
 
 <script src="nav.js?v=17"></script>
 <script src="page-common.js?v=36"></script>
@@ -386,15 +437,21 @@
   const starts = n => `${n} start${n === 1 ? '' : 's'}`;
   const valueTitle = pv => `${f2(pv[0])} pts in ${starts(pv[1])} for the team that drafted him · ${signed(pv[2])} vs the round's average`;
 
-  function renderCell(pick, round, teamCount, arrow, manager, pv) {
+  function renderCell(pick, round, teamCount, arrow, manager, pv, lv) {
     if (!pick || !pick.player_name) {
+      // Live: the slot says which pick it is, and the one on the clock lights up.
+      if (lv) {
+        const pi = lv.overall - (round - 1) * teamCount;
+        return `<td class="pick-cell pos-none${lv.clock === lv.overall ? ' clock' : ''}" data-mgr="${esc(manager)}" data-pos="" data-overall="${lv.overall}"><div class="pick-empty">${round}.${pi}</div></td>`;
+      }
       return `<td class="pick-cell pos-none" data-mgr="${esc(manager)}" data-pos=""><div class="pick-empty">—</div></td>`;
     }
     const pickInRound = pick.overall - (round - 1) * teamCount;
     const [first, last] = splitName(pick.player_name);
-    const pts = pv ? `<div class="pick-pts" title="${esc(valueTitle(pv))}">${f1(pv[0])}</div>` : '';
+    let pts = pv ? `<div class="pick-pts" title="${esc(valueTitle(pv))}">${f1(pv[0])}</div>` : '';
+    if (!pv && lv && pick.d != null) pts = `<div class="pick-pts lv-d ${deltaTone(pick.d)}" title="${esc(deltaTitle(pick))}">${signedInt(pick.d)}</div>`;
     return `
-      <td class="pick-cell ${posClass(pick.position)}${pick.player_name === FOUND ? ' found' : ''}" data-mgr="${esc(manager)}" data-pos="${esc(pick.position || '')}">
+      <td class="pick-cell ${posClass(pick.position)}${pick.player_name === FOUND ? ' found' : ''}${lv && lv.fresh.has(pick.overall) ? ' fresh' : ''}" data-mgr="${esc(manager)}" data-pos="${esc(pick.position || '')}"${lv ? ` data-overall="${pick.overall}"` : ''}>
         ${pick.keeper ? '<div class="pick-keeper" title="Keeper"></div>' : ''}
         <div class="pick-top">
           <span class="pick-tag">
@@ -408,7 +465,7 @@
       </td>`;
   }
 
-  function renderBoard(board, v) {
+  function renderBoard(board, v, live) {
     const teamCount = board.team_count;
     const lastRound = board.rounds[board.rounds.length - 1];
     const headerCells = board.columns.map(c => `
@@ -425,14 +482,15 @@
       const cells = board.columns.map(c => {
         const isTurn = c.slot === turnSlot;
         const arrow = isTurn ? (round === lastRound ? '' : '↓') : (ascending ? '→' : '←');
-        return renderCell(board.grid[round] && board.grid[round][c.slot], round, teamCount, arrow, c.manager || '', pickValue(v, round, c.slot));
+        const lv = live && { clock: live.clock, fresh: live.fresh, overall: (round - 1) * teamCount + (ascending ? c.slot : teamCount + 1 - c.slot) };
+        return renderCell(board.grid[round] && board.grid[round][c.slot], round, teamCount, arrow, c.manager || '', pickValue(v, round, c.slot), lv);
       }).join('');
       return `<tr>${cells}</tr>`;
     }).join('');
 
     return `
       <div class="board-scroll">
-        <table class="board${v ? ' has-pts' : ''}">
+        <table class="board${v || live ? ' has-pts' : ''}">
           <thead><tr>${headerCells}</tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -514,6 +572,241 @@
   let sbManager = null;
   const boardContainer = document.getElementById('board-container');
 
+  // ---------- Draft Day Live (site audit III #17) ----------
+  // The Worker's GET /draft (worker/src/draft.js) is ESPN's draft room: the
+  // order, every pick made so far and each player's average draft position.
+  // This turns it into the same board shape the other views use, with a
+  // delta on every pick (overall pick minus ADP: + he fell past where he was
+  // expected, − he went early). ?demo=2025 replays a past draft a pick at a
+  // time (?at=40 to start partway) with made-up ADPs, so the view can be
+  // tried outside draft week.
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const DEMO = urlParam('demo') || '';
+  const LIVE_MS = 4000, PRE_MS = 30000, DEMO_MS = 2500;
+  let LIVE = null, liveInfo = null, liveTimer = null, liveSeen = null, liveBusy = false, liveClock = null;
+  let demoN = Number(urlParam('at')) || 0, prevRounds = 0;
+  let tvOn = false, wakeLock = null;
+
+  const signedInt = n => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`;
+  const deltaTone = d => d >= 4 ? 'up' : d <= -4 ? 'down' : '';
+  const deltaWord = d => d >= 10 ? 'Steal' : d >= 4 ? 'Value' : d > -4 ? 'On the board' : d > -10 ? 'Early' : 'Reach';
+  const deltaTitle = p => `ADP ${p.adp} · taken at ${p.overall} · ${p.d === 0 ? 'right on it' : `${Math.abs(p.d)} ${p.d > 0 ? 'later' : 'earlier'} than expected`}`;
+  const pickNo = (o, tc) => { const r = Math.ceil(o / tc); return `${r}.${o - (r - 1) * tc}`; };
+
+  // A past draft as the Worker would send it, revealed up to pick n.
+  function demoData(board, n) {
+    const tc = board.team_count;
+    const teams = {}, players = {}, picks = [];
+    board.columns.forEach(c => { teams[c.team_id] = { manager: c.manager || '', name: c.team_name || '' }; });
+    const slotTeam = Object.fromEntries(board.columns.map(c => [c.slot, c.team_id]));
+    Object.entries(board.grid).forEach(([r, row]) => Object.entries(row).forEach(([slot, pk]) => {
+      if (!pk || !pk.player_name || pk.overall > n) return;
+      const id = pk.overall;
+      // A repeatable wobble, wider later in the draft, standing in for the ADP.
+      const wobble = Math.round((((pk.overall * 37) % 23) - 11) * (0.4 + pk.overall / 60));
+      players[id] = { n: pk.player_name, pos: pk.position || '', tm: pk.pro_team || '', adp: Math.max(1, pk.overall + wobble) };
+      picks.push({ o: pk.overall, t: slotTeam[slot], p: id, ...(pk.keeper ? { k: 1 } : {}) });
+    }));
+    picks.sort((a, b) => a.o - b.o);
+    const total = tc * board.rounds.length;
+    return { year: 'demo', status: n >= total ? 'done' : 'live', startsAt: null, order: board.columns.map(c => c.team_id), teams,
+      picks, rounds: board.rounds.length, players, updatedAt: new Date().toISOString() };
+  }
+
+  function buildLive(d) {
+    const order = d.order && d.order.length ? d.order : Object.keys(d.teams || {}).map(Number);
+    const tc = order.length;
+    if (!tc) return null;
+    const rounds = Math.max(prevRounds, d.rounds || 0, d.picks.length ? Math.ceil(d.picks[d.picks.length - 1].o / tc) : 0);
+    const team = t => d.teams[t] || { manager: '', name: '' };
+    const columns = order.map((t, i) => ({ slot: i + 1, team_id: t, team_name: team(t).name, manager: team(t).manager }));
+    const slotOf = o => { const r = Math.ceil(o / tc), p = o - (r - 1) * tc; return r % 2 ? p : tc + 1 - p; };
+    const mgrAt = o => team(order[slotOf(o) - 1]).manager;
+    const grid = {}, made = new Set(), posCount = {}, list = [];
+    d.picks.forEach(p => {
+      const pl = d.players[p.p] || {};
+      const r = Math.ceil(p.o / tc);
+      if (pl.pos) posCount[pl.pos] = (posCount[pl.pos] || 0) + 1;
+      // A keeper wasn't taken against anyone's expectations, so it gets no delta.
+      const d0 = !p.k && pl.adp ? Math.round(p.o - pl.adp) : null;
+      const cell = { overall: p.o, player_name: pl.n || 'Unknown', position: pl.pos || null,
+        position_rank: pl.pos ? pl.pos + posCount[pl.pos] : null, pro_team: pl.tm || null, keeper: !!p.k, d: d0, adp: pl.adp || null };
+      (grid[r] = grid[r] || {})[slotOf(p.o)] = cell;
+      made.add(p.o);
+      list.push({ ...cell, round: r, pick: p.o - (r - 1) * tc, manager: mgrAt(p.o) });
+    });
+    const next = [];
+    for (let o = 1; o <= tc * rounds && next.length < 4; o++) if (!made.has(o)) next.push(o);
+    const board = { team_count: tc, rounds: Array.from({ length: rounds }, (_, i) => i + 1), columns, grid };
+    return { board, list, next, clock: next[0] || null, tc, mgrAt, teamAt: o => team(order[slotOf(o) - 1]), fresh: new Set() };
+  }
+
+  function applyLive(d) {
+    const info = buildLive(d);
+    const now = new Set(d.picks.map(p => p.o));
+    // Picks that arrived since the last look pop in; the first look pops nothing.
+    if (info && liveSeen) now.forEach(o => { if (!liveSeen.has(o)) info.fresh.add(o); });
+    liveSeen = now;
+    LIVE = d;
+    liveInfo = info;
+  }
+
+  function loadLive() {
+    if (DEMO) {
+      return fetch('data/draft-board.json', { cache: 'no-cache' }).then(r => r.json()).then(all => {
+        const board = all.boards[DEMO];
+        if (!board) return null;
+        demoN = Math.min(demoN, board.team_count * board.rounds.length);
+        const out = demoData(board, demoN);
+        if (out.status === 'live') demoN += 1;
+        return out;
+      });
+    }
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+    return fetch(`${WORKER_URL}/draft`, { cache: 'no-store', signal: ctl.signal })
+      .then(r => r.json()).then(d => (d && d.status && Array.isArray(d.picks) ? d : null))
+      .catch(() => null).finally(() => clearTimeout(t));
+  }
+
+  function liveCards() {
+    const L = liveInfo, d = LIVE;
+    let clock;
+    if (!L) {
+      clock = `<div class="glass"><div class="panel-title">Draft room</div><div class="panel-body"><div class="item lv-item"><div class="empty-note" style="padding:6px 0">ESPN hasn't set the draft order yet.</div></div></div></div>`;
+    } else if (d.status === 'done' || !L.clock) {
+      clock = `<div class="glass"><div class="panel-title">Draft complete<span class="chip">${d.picks.length} picks</span></div><div class="panel-body"><div class="item lv-item"><div class="lv-who">That's the board</div><div class="lv-sub">Every pick is in. The Value view takes over once the season has points.</div></div></div></div>`;
+    } else if (d.status === 'pre') {
+      const when = d.startsAt ? new Date(d.startsAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) : '';
+      clock = `<div class="glass"><div class="panel-title">Draft room${when ? `<span class="chip">${esc(when)} ET</span>` : ''}</div><div class="panel-body"><div class="item lv-item"><div class="lv-sub" style="margin:0 0 6px">First on the clock</div><div class="lv-who">${esc(L.mgrAt(1))}</div><div class="lv-sub">${esc(L.teamAt(1).name)}</div></div></div></div>`;
+    } else {
+      const o = L.clock;
+      const next = L.next.slice(1, 4).map(n => `<span class="chip">${pickNo(n, L.tc)} <b>${esc(L.mgrAt(n))}</b></span>`).join('');
+      clock = `<div class="glass"><div class="panel-title">On the clock<span class="lv-btns"><span class="chip">Pick ${pickNo(o, L.tc)} · #${o}</span><button type="button" class="lv-tv" id="lv-tv">TV</button></span></div>
+        <div class="panel-body"><div class="item lv-item"><div class="lv-who">${esc(L.mgrAt(o))}</div><div class="lv-sub">${esc(L.teamAt(o).name)}</div>${next ? `<div class="lv-next">${next}</div>` : ''}</div></div></div>`;
+    }
+    const last = L && L.list[L.list.length - 1];
+    let lastCard;
+    if (!last) {
+      lastCard = `<div class="glass"><div class="panel-title">Latest pick</div><div class="panel-body"><div class="item lv-item"><div class="lv-sub" style="margin:0">No picks yet.</div></div></div></div>`;
+    } else {
+      const color = POSITION_COLORS[last.position] || '#8A8A85';
+      const chip = last.d == null ? (last.keeper ? '<span class="chip">Keeper</span>' : '')
+        : `<span class="chip ${deltaTone(last.d)}">${deltaWord(last.d)} · ${signedInt(last.d)}</span>`;
+      const adp = last.d == null ? '' : `<div class="dv-v"><b>${last.adp}</b><span>ADP</span><span class="${last.d >= 4 ? 'win' : last.d <= -4 ? 'loss' : ''}">taken at ${last.overall}${last.d === 0 ? '' : `, ${Math.abs(last.d)} ${last.d > 0 ? 'later' : 'earlier'}`}</span></div>`;
+      lastCard = `<div class="glass"><div class="panel-title">Latest pick${chip}</div><div class="panel-body"><div class="item lv-item">
+        <div class="dv-top"><span class="sb-badge" style="background:${color}">${esc(last.position || '')}</span><span class="dv-name">${esc(last.player_name)}</span></div>
+        <div class="dv-meta">${esc(last.manager)} · Round ${last.round}, pick ${last.pick}${last.pro_team ? ` · ${esc(last.pro_team)}` : ''}</div>${adp}</div></div></div>`;
+    }
+    return `<div class="lv-top">${clock}${lastCard}</div>`;
+  }
+
+  function liveExtra() {
+    const L = liveInfo;
+    if (!L || !L.list.length) return '';
+    const recent = L.list.slice(-10).reverse().map(p => {
+      const tone = p.d == null ? '' : p.d >= 10 ? ' steal' : p.d <= -10 ? ' reach' : '';
+      return `<div class="lv-row${tone}"><span class="lv-no">${p.round}.${p.pick}</span>
+        <div style="min-width:0"><div class="lv-nm">${esc(p.player_name)}</div><div class="lv-mt">${esc(p.position || '')}${p.pro_team ? ` · ${esc(p.pro_team)}` : ''} · ${esc(p.manager)}</div></div>
+        ${p.d == null ? (p.keeper ? '<span class="chip">Keeper</span>' : '<span></span>') : `<span class="lv-delta ${deltaTone(p.d)}" title="${esc(deltaTitle(p))}">${signedInt(p.d)}</span>`}</div>`;
+    }).join('');
+    const by = {};
+    L.list.forEach(p => {
+      const m = by[p.manager] = by[p.manager] || { n: 0, graded: 0, sum: 0 };
+      m.n++;
+      if (p.d != null) { m.graded++; m.sum += p.d; }
+    });
+    const ranked = Object.entries(by).filter(([, m]) => m.graded).sort((a, b) => b[1].sum - a[1].sum);
+    const value = ranked.map(([name, m], i) => `<div class="lv-row"><span class="lv-no">${i + 1}</span>
+        <div style="min-width:0"><div class="lv-nm">${esc(name)}</div><div class="lv-mt">${m.n} pick${m.n === 1 ? '' : 's'}</div></div>
+        <span class="lv-delta ${deltaTone(m.sum)}">${signedInt(m.sum)}</span></div>`).join('');
+    return `<div class="lv-extra"><div class="glass"><div class="panel-title">Recent picks</div><div class="lv-list">${recent}</div></div>
+      ${value ? `<div class="glass"><div class="panel-title">Draft value</div><div class="dv-note">Spots each team's picks went after (+) or before (−) their ADP.</div><div class="lv-list">${value}</div></div>` : ''}</div>`;
+  }
+
+  const renderLive = () => liveCards() + (liveInfo ? renderBoard(liveInfo.board, null, { clock: liveInfo.clock, fresh: liveInfo.fresh }) : '') + liveExtra();
+
+  // Redraws the live view in place: the grid keeps its sideways scroll, and
+  // slides to the pick on the clock when that has moved.
+  function paintLive() {
+    const old = boardContainer.querySelector('.board-scroll');
+    const left = old ? old.scrollLeft : 0;
+    boardContainer.innerHTML = renderLive();
+    const sc = boardContainer.querySelector('.board-scroll');
+    const legend = document.getElementById('legend');
+    legend.innerHTML = liveInfo && liveInfo.list.length ? renderLegend(liveInfo.board) : '';
+    legend.hidden = !legend.innerHTML;
+    applyFilters();
+    if (sc) {
+      sc.scrollLeft = left;
+      const cell = sc.querySelector('.pick-cell.clock');
+      const at = liveInfo && liveInfo.clock;
+      if (cell && at !== liveClock && !tvOn) {
+        const to = cell.offsetLeft - (sc.clientWidth - cell.offsetWidth) / 2;
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        sc.scrollTo({ left: Math.max(0, to), behavior: left && !reduce ? 'smooth' : 'auto' });
+      }
+    }
+    liveClock = liveInfo ? liveInfo.clock : null;
+    if (LIVE) document.getElementById('updated-at').textContent = formatUpdated(LIVE.updatedAt);
+    tvFit();
+  }
+
+  // The next look at ESPN: quick while picks are coming, slow before the
+  // draft, none once it's over or while the tab is hidden or on another view.
+  function liveTick() {
+    clearTimeout(liveTimer);
+    if (boardView !== 'live' || document.hidden || liveBusy) return;
+    liveBusy = true;
+    loadLive().catch(() => null).then(d => {
+      if (d) { applyLive(d); if (boardView === 'live') paintLive(); }
+    }).finally(() => {
+      liveBusy = false;
+      if (boardView !== 'live' || (LIVE && LIVE.status === 'done')) return;
+      liveTimer = setTimeout(liveTick, DEMO ? DEMO_MS : LIVE && LIVE.status === 'pre' ? PRE_MS : LIVE_MS);
+    });
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) liveTick(); });
+
+  // The grid scaled to fill the screen in TV mode: by width, but never so
+  // tall that it runs off the bottom.
+  function tvFit() {
+    const table = boardContainer.querySelector('table.board'), wrap = boardContainer.querySelector('.board-scroll');
+    if (!table || !wrap) return;
+    table.style.transform = '';
+    table.style.width = '';
+    if (!tvOn) { wrap.style.height = ''; return; }
+    let w = table.offsetWidth, h = table.offsetHeight;
+    const room = innerHeight - (wrap.getBoundingClientRect().top + scrollY) - 12;
+    const s = Math.min(2, (wrap.clientWidth - 6) / w, room / h);
+    // Taller than wide for the screen: spread the columns across what's left
+    // of the width instead of leaving it empty.
+    table.style.width = `${Math.max(w, (wrap.clientWidth - 6) / s)}px`;
+    h = table.offsetHeight;
+    table.style.transformOrigin = '0 0';
+    table.style.transform = `scale(${s})`;
+    wrap.style.height = `${Math.ceil(h * s) + 6}px`;
+  }
+
+  async function setTv(on) {
+    tvOn = on;
+    document.body.classList.toggle('tv', on);
+    try {
+      if (on) {
+        if (document.documentElement.requestFullscreen && !document.fullscreenElement) await document.documentElement.requestFullscreen();
+        if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request('screen');
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
+        if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+      }
+    } catch (e) {}
+    tvFit();
+    if (on) scrollTo(0, 0);
+  }
+  addEventListener('resize', () => { if (tvOn) tvFit(); });
+  document.addEventListener('fullscreenchange', () => { if (tvOn && !document.fullscreenElement) setTv(false); });
+  document.getElementById('lv-exit').addEventListener('click', () => setTv(false));
+  boardContainer.addEventListener('click', e => { if (e.target.closest('#lv-tv')) setTv(true); });
+
   // Exact page width, not clientWidth: that's rounded to whole pixels, and
   // the rounding error adds up a pixel or two by the last few teams.
   const sbWidth = track => track.getBoundingClientRect().width;
@@ -553,7 +846,7 @@
   // By Team is the better one on a phone; the URL wins over the saved one.
   // The newest year leaves the URL bare. The view is always written, so a
   // link opens on the sender's view rather than whatever the reader saved.
-  const VIEWS = { grid: 'grid', team: 'simple', value: 'value' };
+  const VIEWS = { live: 'live', grid: 'grid', team: 'simple', value: 'value' };
   const viewKey = v => Object.keys(VIEWS).find(k => VIEWS[k] === v);
   let boardView = VIEWS[urlParam('view')]
     || (() => { try { return VIEWS[localStorage.getItem('draft-board-view')]; } catch (e) { return null; } })()
@@ -561,18 +854,35 @@
   const viewToggle = document.getElementById('view-toggle');
   [...viewToggle.children].forEach(b => b.classList.toggle('on', b.dataset.view === boardView));
 
-  // Draft value is extra: if it fails, the board still shows, without points.
+  // Draft value and the live draft are extras: if either fails, the board
+  // still shows without them.
+  const liveReady = loadLive().catch(() => null);
   const valueReady = fetch('data/draft-value.json', { cache: 'no-cache' })
     .then(res => res.json()).then(d => { VALUE = d.years || {}; })
     .catch(err => console.error('Draft value data error:', err));
-  Promise.all([fetch('data/draft-board.json', { cache: 'no-cache' }).then(res => res.json()), valueReady])
-    .then(([data]) => {
+  Promise.all([fetch('data/draft-board.json', { cache: 'no-cache' }).then(res => res.json()), valueReady, liveReady])
+    .then(([data, , first]) => {
       const sel = document.getElementById('year-select');
+      prevRounds = (data.boards[data.years[0]] || { rounds: [] }).rounds.length;
+      // Live shows while a draft is on (or just ended and isn't in the board
+      // data yet) and leads the page until it's over. It never becomes the
+      // saved view, so a stale choice can't keep it up.
+      const liveOn = Boolean(first) && (Boolean(DEMO) || first.status !== 'done' || !data.years.includes(first.year));
+      viewToggle.querySelector('[data-view="live"]').hidden = !liveOn;
+      if (liveOn) applyLive(first);
+      if (!liveOn && boardView === 'live') boardView = 'grid';
+      else if (liveOn && !VIEWS[urlParam('view')] && (DEMO || first.status !== 'done')) boardView = 'live';
+      [...viewToggle.children].forEach(b => b.classList.toggle('on', b.dataset.view === boardView));
       sel.innerHTML = data.years.map(y => `<option value="${y}">${y}</option>`).join('');
       document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
 
       function show(year) {
-        setUrlParams({ year: String(year) === String(data.years[0]) ? null : year, view: viewKey(boardView) });
+        const isLive = boardView === 'live';
+        setUrlParams({ year: isLive || String(year) === String(data.years[0]) ? null : year, view: viewKey(boardView) });
+        document.querySelector('.selector-row').classList.toggle('live-on', isLive);
+        if (!isLive && tvOn) setTv(false);
+        if (isLive) { paintLive(); liveTick(); return; }
+        clearTimeout(liveTimer);
         const board = data.boards[year], v = yearValue(year);
         // Legend is redrawn per year, not once at load -- which positions
         // exist changes with the era's roster rules. The Value view has no
@@ -604,7 +914,7 @@
       // for its on/off states and the Clear button.
       const refilter = () => {
         if (boardView === 'value') return;
-        document.getElementById('legend').innerHTML = renderLegend(data.boards[sel.value]);
+        document.getElementById('legend').innerHTML = renderLegend(boardView === 'live' ? liveInfo.board : data.boards[sel.value]);
         applyFilters();
       };
       document.getElementById('legend').addEventListener('click', e => {
@@ -628,7 +938,7 @@
         const btn = e.target.closest('[data-view]');
         if (!btn) return;
         boardView = btn.dataset.view;
-        try { localStorage.setItem('draft-board-view', viewKey(boardView)); } catch (err) {}
+        if (boardView !== 'live') { try { localStorage.setItem('draft-board-view', viewKey(boardView)); } catch (err) {} }
         [...viewToggle.children].forEach(b => b.classList.toggle('on', b === btn));
         show(sel.value);
       });

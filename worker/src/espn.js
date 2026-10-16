@@ -41,6 +41,13 @@ async function espnGet(url, env, extraHeaders) {
   return res.json();
 }
 
+/** One read of the league endpoint with the given views and, optionally,
+ * ESPN's x-fantasy-filter (the draft board's player pool uses both). */
+export async function espnLeagueGet(env, params, filter) {
+  const url = buildUrl(leagueEndpoint(env.ESPN_YEAR, env.ESPN_LEAGUE_ID), params);
+  return espnGet(url, env, filter ? { "x-fantasy-filter": JSON.stringify(filter) } : undefined);
+}
+
 /** Cheapest authenticated call (just the league's settings), for the daily
  * health check -- throws like any other ESPN call when the cookies are bad. */
 export async function pingEspn(env) {

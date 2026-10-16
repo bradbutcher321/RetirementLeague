@@ -65,6 +65,7 @@ import { enterParlay, getParlayWeek } from "./parlayEntry.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
 import { getPlayerLog } from "./playerLog.js";
+import { getDraft } from "./draft.js";
 import { getFeed, recordScoreEvents } from "./scoreFeed.js";
 import { cached } from "./cache.js";
 import { AUTH_ROUTES } from "./auth.js";
@@ -222,6 +223,11 @@ export default {
       const body = await (url.searchParams.get("live") === "1" ? liveFeed(env, ctx, url) : getFeed(env, url))
         .catch((err) => ({ error: String(err), events: [] }));
       return jsonResponse(body, headers);
+    }
+    if (path === "/draft") {
+      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const body = await getDraft(env).catch((err) => ({ error: String(err) }));
+      return jsonResponse(body, headers, body.error ? 502 : 200);
     }
     if (path === "/player") {
       if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
