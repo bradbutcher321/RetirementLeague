@@ -1337,7 +1337,7 @@
   </div>
 
 <script src="nav.js?v=17"></script>
-<script src="page-common.js?v=34"></script>
+<script src="page-common.js?v=35"></script>
 <script src="share.js?v=1"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
@@ -5323,7 +5323,6 @@
       .then(([data]) => {
         if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
         liveData = data;
-        appBadge.set(closeMatchupBadge(data, getMe()));
         if (view === null) renderDashboard(data, true);
         else { lastDashboardData = data; renderWeekStep(); }
         openRequestedWeek();

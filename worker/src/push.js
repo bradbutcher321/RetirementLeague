@@ -71,22 +71,6 @@ async function deliver(env, sub, message) {
   return status;
 }
 
-/** The icon badge (site audit III #21): 1 while this manager's matchup is
- * within 10 points with players left on either side, else 0. The same rule
- * as closeMatchupBadge in docs/page-common.js. */
-function closeBadge(dashboard, manager) {
-  const me = String(manager || "").toLowerCase();
-  const m = me && (dashboard.matchups || []).find((x) => [x.awayManager, x.homeManager].some((n) => String(n || "").toLowerCase() === me));
-  if (!m) return 0;
-  const n = (v) => parseFloat(v) || 0;
-  const left = (r, i) => (parseInt(r, 10) || 0) + (parseInt(i, 10) || 0);
-  const aLeft = left(m.awayRemaining, m.awayInPlay), hLeft = left(m.homeRemaining, m.homeInPlay);
-  const as = n(m.awayScore), hs = n(m.homeScore);
-  if ((!aLeft && !hLeft) || as + hs === 0) return 0;
-  if (dashboard.medianStatusKnown && ((!hLeft && hs < as) || (!aLeft && as < hs))) return 0;
-  return Math.abs(as - hs) <= 10 ? 1 : 0;
-}
-
 /** Every event the current dashboard and parlay data say has happened:
  * [{ key, to: manager name or null for everyone, pref, message }]. */
 function currentEvents(year, dashboard, parlay) {
@@ -255,8 +239,7 @@ export async function checkPushEvents(env, dashboard) {
       if (e.to && (sub.me || "").toLowerCase() !== e.to.toLowerCase()) continue;
       // Your own leg already comes from "parlay" when that's on.
       if (e.about && prefs.parlay && (sub.me || "").toLowerCase() === e.about.toLowerCase()) continue;
-      // The icon's badge rides along (sw.js), for subscribers who've said who they are.
-      sends.push(deliver(env, sub, sub.me ? { ...e.message, badge: closeBadge(dashboard, sub.me) } : e.message));
+      sends.push(deliver(env, sub, e.message));
     }
   }
   await Promise.allSettled(sends);

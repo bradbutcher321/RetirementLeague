@@ -128,13 +128,19 @@ self.addEventListener('push', e => {
     badge: 'icons/favicon-32.png',
     data: { url: m.url || './' },
   })];
-  // The icon's badge (audit III #21): the Worker says whether your matchup
-  // is close and still live (page-common.js closeMatchupBadge), so the 1
-  // is right even while the app is closed. A message without it leaves the
-  // badge alone.
+  // The icon's badge (audit III #21): one more for every notification since
+  // the app was last open. The count lives in the cache (page-common.js
+  // zeroes it when a page opens), and the page clears the icon itself.
   const nav = self.navigator;
-  if (typeof m.badge === 'number' && nav && 'setAppBadge' in nav) {
-    tasks.push((m.badge > 0 ? nav.setAppBadge(m.badge) : nav.clearAppBadge()).catch(() => {}));
+  if (nav && 'setAppBadge' in nav) {
+    tasks.push((async () => {
+      const cache = await caches.open(CACHE);
+      const key = new URL('badge-count', self.registration.scope).href;
+      const hit = await cache.match(key);
+      const n = (hit ? Number(await hit.text()) || 0 : 0) + 1;
+      await cache.put(key, new Response(String(n)));
+      await nav.setAppBadge(n);
+    })().catch(() => {}));
   }
   e.waitUntil(Promise.all(tasks));
 });
