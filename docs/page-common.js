@@ -698,15 +698,25 @@ function updateAllEdgeFades() {
 // land together, so a long list doesn't keep trickling in. The class comes
 // off as each one lands (see theme.css for why); the target check skips
 // animations bubbling up from inside a card, like a live pip's pulse.
-function riseIn(els, cap = 8) {
+// `elapsed`: ms since the entrance began, for a second call that lands
+// mid-entrance (index.html re-renders its cards when the live data arrives
+// right after the cached paint): cards that were swapped out join the same
+// animation at the point the others have reached, and any card that already
+// rose is left alone.
+const risenEls = new WeakSet();
+function riseIn(els, cap = 8, elapsed = 0) {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   [...els].forEach((el, i) => {
+    if (risenEls.has(el)) return;
+    risenEls.add(el);
     el.style.setProperty('--rise-i', Math.min(i, cap));
+    if (elapsed) el.style.setProperty('--rise-t', Math.round(elapsed) + 'ms');
     el.classList.add('rise');
     const done = e => {
       if (e.target !== el) return;
       el.classList.remove('rise');
       el.style.removeProperty('--rise-i');
+      el.style.removeProperty('--rise-t');
       el.removeEventListener('animationend', done);
       el.removeEventListener('animationcancel', done);
     };

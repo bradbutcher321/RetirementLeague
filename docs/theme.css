@@ -909,7 +909,7 @@ h2{
    each one lands (a filled transform animation would leave every card its
    own stacking context and trap popovers under the next card). Same
    overshoot curve as the Median Watch glide. */
-.rise{ animation: rise-in .5s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(var(--rise-i, 0) * 90ms); }
+.rise{ animation: rise-in .5s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: calc(var(--rise-i, 0) * 90ms - var(--rise-t, 0ms)); }
 @keyframes rise-in{ from{ opacity: 0; transform: translateY(14px); } }
 @media (prefers-reduced-motion: reduce){
   .sk i, .tabs:empty, .seg:empty{ animation: none; }

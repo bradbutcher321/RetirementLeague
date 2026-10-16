@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=29">
+<link rel="stylesheet" href="theme.css?v=30">
 <link rel="stylesheet" href="nav.css?v=14">
 <style>
   /* ---------- Matchup cards ----------
@@ -1352,7 +1352,7 @@
   </div>
 
 <script src="nav.js?v=17"></script>
-<script src="page-common.js?v=35"></script>
+<script src="page-common.js?v=36"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
 <script src="lineup-check.js?v=1"></script>
@@ -5437,7 +5437,7 @@
     };
   }
 
-  let dashboardShown = false;
+  let dashboardShown = false, riseStartedAt = 0;
   function loadDashboard() {
     Promise.all([fetch(WORKER_URL, { cache: 'no-store' }).then(res => res.json()), leagueReady])
       .then(([data]) => {
@@ -5594,10 +5594,20 @@
         // real cards up in reading order. The parlay card's skeleton is
         // cleared by hand when its own fetch hasn't landed yet --
         // renderParlayHighlight leaves the container alone until it has.
+        // A refresh paints twice (cached copy, then the live answer a moment
+        // later), and the second render swaps the median and matchup cards
+        // out from under the entrance -- so for as long as it's running,
+        // the new cards join it instead of appearing at once next to
+        // League Lore, the one card that isn't rebuilt.
+        const RISE_MS = 500 + 8 * 90;
+        const riseCards = () => riseIn(document.querySelectorAll('#recap-section:not([hidden]), #me-section:not([hidden]), #median-container > :not(.sr-only), .lore-row > div > *, #matchups-container > *, #season-section'), 8, performance.now() - riseStartedAt);
         if (!dashboardShown) {
           dashboardShown = true;
           if (!parlayData) document.getElementById('parlay-highlight-container').innerHTML = '';
-          riseIn(document.querySelectorAll('#recap-section:not([hidden]), #me-section:not([hidden]), #median-container > :not(.sr-only), .lore-row > div > *, #matchups-container > *, #season-section'));
+          riseStartedAt = performance.now();
+          riseCards();
+        } else if (performance.now() - riseStartedAt < RISE_MS) {
+          riseCards();
         }
   }
 
