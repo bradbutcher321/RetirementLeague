@@ -28,7 +28,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=30">
 <link rel="stylesheet" href="nav.css?v=14">
-<link rel="stylesheet" href="features.css?v=1">
+<link rel="stylesheet" href="features.css?v=2">
 </head>
 <body>
   <div id="site-nav"></div>
@@ -96,7 +96,7 @@
     return `<div class="glass"><div class="mv-hero"><div class="k">Trades since ${M.first_year}</div><div class="v">${M.trade_total}</div>
         <div class="s">${all.length} of them with both sides on record. ESPN doesn’t list a trade’s players, so each is rebuilt from the roster change it caused.</div>
         <div class="mv-side-stats"><div><span>Most trades</span><b>${esc(most[0])} ${most[1]}</b></div><div><span>Winner took the title</span><b>${withTitle} trade${withTitle === 1 ? '' : 's'}</b></div><div><span>Biggest win</span><b>+${f1(big)}</b></div></div></div></div>
-      <div class="ft-ctl ft-sec"><span class="dimt">Year</span><select class="lg-select" id="yr" aria-label="Year"><option value="all">All-Time</option>${years.map(y => `<option value="${y}"${String(y) === String(year) ? ' selected' : ''}>${y}</option>`).join('')}</select></div>
+      <div class="ft-ctl ft-sec"><select class="lg-select" id="yr" aria-label="Year"><option value="all">All-Time</option>${years.map(y => `<option value="${y}"${String(y) === String(year) ? ' selected' : ''}>${y}</option>`).join('')}</select></div>
       <div class="glass"><div class="panel-title">Every trade, graded <span class="ft-chip">${list.length}</span></div>
         <div class="ft-note">Points each player scored in the new team’s starting lineup, from the trade to the end of that season.</div>
         <div class="ft-body">${shown.length ? shown.map(tradeCard).join('') : '<div class="ft-empty">No trades that year.</div>'}

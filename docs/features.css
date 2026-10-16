@@ -44,8 +44,8 @@ a.plink{ border-bottom:1px dotted rgba(255,255,255,0.25); }
 @media (hover:hover){ a.plink:hover{ color:var(--gold); border-bottom-color:var(--gold); } }
 
 /* Selects and tab rows on the new pages */
-.ft-ctl{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin:0 0 14px; }
-.ft-ctl > :last-child{ margin-left:auto; flex:none; }
+.ft-ctl{ display:flex; align-items:center; justify-content:flex-end; gap:10px; margin:14px 0; }
+.ft-ctl.ft-sec{ margin-top:14px; }
 
 /* ---------- Trades & Waivers ---------- */
 .mv-hero{ padding:16px 16px 14px; }
