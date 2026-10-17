@@ -50,7 +50,9 @@ once, the winners too.
 
 - Write each figure exactly as the packet has it: scores to two decimals
   (100.70, not 100.7 or 100), win chances as whole percents (48%).
-- Wrap every figure in `<b>...</b>`. Records like 8-2 and ranks stay plain.
+- Wrap every figure in `<b>...</b>` in the body paragraphs only. Headline, dek
+  and notes are plain text (the saver strips any tags there). Records like 8-2
+  and ranks stay plain.
 - No arithmetic of your own. If a margin, total or difference isn't in the
   packet, don't use it. Integers up to 25 and years need no source. The
   checker (`tools/column_add.py`) rejects any other number it can't find in

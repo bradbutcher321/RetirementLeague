@@ -58,6 +58,12 @@ def check_text(label, text, allowed, errors):
             errors.append(f"{label}: the number {tok} is not in the packet")
 
 
+def plain(text):
+    """Headline, dek and notes are shown as plain text: figures are only
+    bold inside the body."""
+    return TAG.sub("", text).strip()
+
+
 def words(paragraphs):
     return sum(len(TAG.sub("", p).split()) for p in paragraphs)
 
@@ -113,7 +119,7 @@ def main():
         if packet.get("standings_after"):
             out["standings"] = [
                 {"rank": s["rank"], "manager": s["manager"], "record": s["record"],
-                 "move": packet["teams"][s["manager"]].get("rank_move") or 0, "note": notes.get(s["manager"], "")}
+                 "move": packet["teams"][s["manager"]].get("rank_move") or 0, "note": plain(notes.get(s["manager"], ""))}
                 for s in packet["standings_after"]]
         else:
             # A playoff week has no standings movement: list the week's scores.
@@ -121,7 +127,7 @@ def main():
             out["standings_title"] = "How everyone scored"
             out["standings"] = [
                 {"rank": packet["teams"][m]["rank_in_week"], "manager": m,
-                 "record": f"{packet['teams'][m]['score']:.2f}", "move": 0, "note": notes.get(m, "")}
+                 "record": f"{packet['teams'][m]['score']:.2f}", "move": 0, "note": plain(notes.get(m, ""))}
                 for m in order]
     else:
         pairs = {frozenset((g["a"], g["b"])) for g in packet["games"]}
@@ -139,7 +145,7 @@ def main():
                 errors.append(f"game note for {r.get('a')} vs {r.get('b')}: needs 1 to 140 characters")
             check_text(f"game note for {r.get('a')} vs {r.get('b')}", note, allowed, errors)
             notes[frozenset((r.get("a"), r.get("b")))] = note
-        out["games"] = [{"a": g["a"], "b": g["b"], "note": notes.get(frozenset((g["a"], g["b"])), "")}
+        out["games"] = [{"a": g["a"], "b": g["b"], "note": plain(notes.get(frozenset((g["a"], g["b"])), ""))}
                         for g in packet["games"]]
 
     if errors:
@@ -152,7 +158,7 @@ def main():
     col = {
         "id": packet["id"], "kind": kind, "season": packet["season"], "week": packet["week"],
         "published_at": datetime.now(eastern).isoformat(timespec="seconds"),
-        "headline": draft["headline"].strip(), "dek": draft["dek"].strip(),
+        "headline": plain(draft["headline"]), "dek": plain(draft["dek"]),
         "body": [p.strip() for p in body], **out,
     }
     try:
