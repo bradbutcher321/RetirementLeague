@@ -1162,29 +1162,6 @@
     .cmp-name{ font-size: 0.72rem; }
   }
 
-  /* Collapsible tray (Site Activity), closed until opened. The tray itself is
-     styled in theme.css, shared with Parlay Results' Jon's Table -- only the
-     tabular figures this one puts in its summary line, and its own body
-     spacing, are page-specific. */
-  .tray-summary{ font-variant-numeric: tabular-nums; }
-  .tray > #activity-container{ margin-top: 16px; }
-
-  /* Site activity */
-  .act-tiles{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
-  .act-tile{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 10px; padding: 16px 12px; text-align: center; }
-  .act-label{ color: var(--text-dim); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  .act-value{ font-family: var(--scoreboard); font-weight: 800; font-size: 2.4rem; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
-  .act-sub{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
-  .act-panels{ display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 640px){ .act-panels{ grid-template-columns: 1fr; } }
-  .act-card{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 8px; }
-  .act-card-title{ font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
-  .act-row{ display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 14px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-  .act-row.head{ border-top: none; color: var(--text-dim); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 0 4px; }
-  .act-row .r{ text-align: right; min-width: 54px; }
-  .act-row .n{ font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .act-row b{ font-family: var(--scoreboard); font-size: 1.05rem; font-weight: 700; }
-
   /* ---------- Small-phone tightening (must stay last: overrides base rules above) ---------- */
   @media (max-width: 480px){
     .median-card{ padding: 16px; }
@@ -1344,17 +1321,6 @@
           <div class="loading-row">Loading standings…</div>
         </div>
       </div>
-    </section>
-
-    <section id="activity-section" hidden>
-      <details class="tray">
-        <summary>
-          <span class="tray-title">Site Activity</span>
-          <span class="tray-summary" id="activity-summary"></span>
-          <span class="chev" aria-hidden="true"></span>
-        </summary>
-        <div id="activity-container"></div>
-      </details>
     </section>
 
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
@@ -4879,45 +4845,6 @@
   }
 
 
-  // ---------- Site activity (unique visitors / page views from the Worker's own counter) ----------
-  const PAGE_LABELS = { dashboard: 'Live Dashboard', franchise: 'Franchise', 'parlay-results': 'Parlay Results', standings: 'Standings', 'head-to-head': 'Head to Head', overview: 'League History', 'game-records': 'Game Records', 'draft-board': 'Draft Board', 'rule-changes': 'Rule Changes' };
-
-  function dayLabel(iso, today) {
-    if (iso === today) return 'Today';
-    const d = new Date(iso + 'T12:00:00');
-    return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-  }
-
-  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-
-  function loadActivity() {
-    fetch(WORKER_URL + '/stats', { cache: 'no-store' })
-      .then(res => res.json())
-      .then(st => {
-        if (st.error || typeof st.visitorsToday !== 'number') throw new Error(st.error || 'No stats');
-        const days = (st.days || []).map(d => `
-          <div class="act-row"><span class="n">${dayLabel(d.day, st.today)}</span><span class="r"><b>${d.visitors}</b></span><span class="r"><b>${d.views}</b></span></div>`).join('');
-        const pages = (st.topPages || []).map(p => `
-          <div class="act-row"><span class="n">${PAGE_LABELS[p.page] || p.page}</span><span class="r"><b>${p.views}</b></span></div>`).join('');
-        document.getElementById('activity-container').innerHTML = `
-          <div class="act-tiles">
-            <div class="act-tile"><div class="act-label">Active now</div><div class="act-value">${st.activeNow}</div><div class="act-sub">last 5 minutes</div></div>
-            <div class="act-tile"><div class="act-label">Unique visitors today</div><div class="act-value">${st.visitorsToday}</div><div class="act-sub">${st.visitorsToday === 1 ? 'person' : 'people'}</div></div>
-            <div class="act-tile"><div class="act-label">Page views today</div><div class="act-value">${st.viewsToday}</div><div class="act-sub">${st.viewsToday === 1 ? 'page opened' : 'pages opened'}</div></div>
-          </div>
-          <div class="act-panels">
-            <div class="act-card"><div class="act-card-title">Last 7 days</div>
-              <div class="act-row head"><span>Day</span><span class="r">Visitors</span><span class="r">Views</span></div>${days || '<div class="act-row"><span class="n">No visits yet</span></div>'}</div>
-            <div class="act-card"><div class="act-card-title">Top pages today</div>
-              <div class="act-row head"><span>Page</span><span class="r">Views</span></div>${pages || '<div class="act-row"><span class="n">No visits yet</span></div>'}</div>
-          </div>`;
-        document.getElementById('activity-summary').textContent =
-          `${st.activeNow} active now · ${plural(st.visitorsToday, 'visitor', 'visitors')} · ${plural(st.viewsToday, 'view', 'views')} today`;
-        document.getElementById('activity-section').hidden = false;
-      })
-      .catch(() => { document.getElementById('activity-section').hidden = true; });
-  }
-
   // Polling every 15 seconds matches the Worker's own cache: within it the
   // Worker returns its D1 copy instantly; only once it's expired does a
   // real ESPN fetch happen, so builds stay at one per 15s however many
@@ -5716,8 +5643,6 @@
   // Background tabs don't poll (each poll costs Worker/KV quota); coming
   // back to the tab refreshes right away if the data is stale.
   let lastLoadAt = 0;
-  loadActivity();
-  setInterval(() => { if (!document.hidden) loadActivity(); }, 60 * 1000);
   const loadDashboardTracked = () => { lastLoadAt = Date.now(); loadDashboard(); };
   paintFromCache();
   loadDashboardTracked();
