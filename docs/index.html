@@ -1051,6 +1051,7 @@
   #recap-section{ margin-bottom: 14px; }
   #notice-section{ margin-bottom: 14px; }
   #column-section{ margin-bottom: 14px; }
+  .col-head-r{ display: flex; align-items: center; gap: 8px; }
   .col-box{ padding: 14px 14px 14px; }
   .col-box-h{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; line-height: 1.05; text-wrap: balance; }
   .col-box-d{ color: #D3D3CF; font-size: 0.86rem; line-height: 1.45; margin-top: 6px; }
@@ -5768,18 +5769,47 @@
 </script>
 <script>
   // The Column card: the newest column's headline and dek, linking to the
-  // page. Only for a week after it is published; quiet on any failure.
+  // page. A recap is on the dashboard from the Tuesday it belongs to until
+  // Thursday, a preview from Thursday until the next Tuesday, so a column
+  // published late (or rewritten later) only shows for what is left of that
+  // window. The ✕ hides that column for good; the next one shows again.
+  // Quiet on any failure.
   (function () {
     const sec = document.getElementById('column-section');
     if (!sec) return;
-    fetch('data/column.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(d => {
-      const c = d && d.columns && d.columns[0];
-      if (!c || Date.now() - new Date(c.published_at).getTime() > 7 * 864e5) return;
-      sec.innerHTML = `<div class="glass notice-card"><div class="panel-title"><span>The Column</span><span class="notice-chip">Week ${c.week} ${c.kind === 'preview' ? 'preview' : 'recap'}</span></div>
-        <div class="panel-body"><div class="item col-box"><div class="col-box-h">${esc(c.headline)}</div><div class="col-box-d">${esc(c.dek)}</div>
+    const KEY = 'rl-column-hidden';
+    const et = d => {
+      const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short' }).formatToParts(d).map(x => [x.type, x.value]));
+      return { day: Date.UTC(+p.year, +p.month - 1, +p.day) / 864e5, wd: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(p.weekday) };
+    };
+    const live = c => {
+      const pub = et(new Date(c.published_at)), now = et(new Date());
+      const recap = c.kind !== 'preview';
+      // The Tuesday (recap) or Thursday (preview) the column belongs to, then
+      // when it leaves: Thursday, or the following Tuesday.
+      const base = pub.day - ((pub.wd - (recap ? 2 : 4) + 7) % 7);
+      return now.day < base + (recap ? 2 : 5);
+    };
+    let col = null;
+    function draw() {
+      let hidden = false;
+      try { hidden = localStorage.getItem(KEY) === col.id; } catch (e) {}
+      if (hidden || !live(col)) { sec.hidden = true; sec.innerHTML = ''; return; }
+      sec.innerHTML = `<div class="glass notice-card"><div class="panel-title"><span>The Column</span><span class="col-head-r"><span class="notice-chip">Week ${col.week} ${col.kind === 'preview' ? 'preview' : 'recap'}</span><button type="button" class="st-x" aria-label="Hide this column">✕</button></span></div>
+        <div class="panel-body"><div class="item col-box"><div class="col-box-h">${esc(col.headline)}</div><div class="col-box-d">${esc(col.dek)}</div>
         <a class="col-open" href="column.html">Read it</a></div></div></div>`;
       sec.hidden = false;
       riseIn(sec.querySelectorAll('.glass'));
+    }
+    sec.addEventListener('click', e => {
+      if (!e.target.closest('.st-x') || !col) return;
+      try { localStorage.setItem(KEY, col.id); } catch (err) {}
+      sec.hidden = true;
+      sec.innerHTML = '';
+    });
+    fetch('data/column.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(d => {
+      col = d && d.columns && d.columns[0];
+      if (col) draw();
     }).catch(() => {});
   })();
 </script>
