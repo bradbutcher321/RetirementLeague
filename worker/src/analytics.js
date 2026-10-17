@@ -7,6 +7,8 @@
  *
  * "Days" are Eastern-time days, since that is when the league is playing.
  */
+import { tokenManager } from "./auth.js";
+
 const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
 const STATS_CACHE_MS = 30 * 1000;
 const RETENTION_DAYS = 120;
@@ -33,6 +35,11 @@ export async function recordHit(request, env) {
   const statements = [
     env.DB.prepare("INSERT INTO seen (vid, ts) VALUES (?1, ?2) ON CONFLICT(vid) DO UPDATE SET ts = ?2").bind(vid, now),
   ];
+  // A signed-in browser says who it is, so Activity can name the visitor.
+  const manager = kind === "view" && body.token ? await tokenManager(env, String(body.token)).catch(() => null) : null;
+  if (manager) {
+    statements.push(env.DB.prepare("INSERT INTO visitor_names (vid, manager, ts) VALUES (?1, ?2, ?3) ON CONFLICT(vid) DO UPDATE SET manager = ?2, ts = ?3").bind(vid, manager, now));
+  }
   if (kind === "view") {
     statements.push(env.DB.prepare("INSERT INTO hits (day, ts, vid, page) VALUES (?1, ?2, ?3, ?4)").bind(etDay(now), now, vid, page));
   }
@@ -41,6 +48,7 @@ export async function recordHit(request, env) {
     const cutoff = etDay(now - RETENTION_DAYS * 86400000);
     statements.push(env.DB.prepare("DELETE FROM hits WHERE day < ?1").bind(cutoff));
     statements.push(env.DB.prepare("DELETE FROM seen WHERE ts < ?1").bind(now - 86400000));
+    statements.push(env.DB.prepare("DELETE FROM visitor_names WHERE ts < ?1").bind(now - RETENTION_DAYS * 86400000));
   }
   await env.DB.batch(statements);
   return true;
@@ -70,4 +78,41 @@ export async function getStats(env) {
   };
   statsCache = { at: now, body };
   return body;
+}
+
+/** Who is behind today's visits, for the Commissioner page: each visitor id
+ * resolves to the manager it signed in as, else it is a guest.
+ * -> { visitors: {names, guests}, here: {names, guests}, pages: [{ page, views,
+ *      who: [{ name, views }], guests }], lastVisit: { manager: ms } } */
+export async function getWho(env) {
+  const now = Date.now();
+  const [pageRows, seenRows, nameRows, lastRows] = await env.DB.batch([
+    env.DB.prepare("SELECT page, vid, COUNT(*) AS views FROM hits WHERE day = ?1 GROUP BY page, vid").bind(etDay(now)),
+    env.DB.prepare("SELECT vid FROM seen WHERE ts > ?1").bind(now - ACTIVE_WINDOW_MS),
+    env.DB.prepare("SELECT vid, manager FROM visitor_names"),
+    env.DB.prepare("SELECT n.manager AS manager, MAX(h.ts) AS ts FROM hits h JOIN visitor_names n ON n.vid = h.vid GROUP BY n.manager"),
+  ]);
+  const owner = new Map(nameRows.results.map((r) => [r.vid, r.manager]));
+  const people = (vids) => {
+    const names = new Set(), guests = new Set();
+    for (const v of vids) (owner.has(v) ? names.add(owner.get(v)) : guests.add(v));
+    return { names: [...names].sort((a, b) => a.localeCompare(b)), guests: guests.size };
+  };
+  const pages = new Map();
+  for (const r of pageRows.results) {
+    const p = pages.get(r.page) || { page: r.page, views: 0, byName: new Map(), guestIds: new Set() };
+    p.views += r.views;
+    const who = owner.get(r.vid);
+    if (who) p.byName.set(who, (p.byName.get(who) || 0) + r.views); else p.guestIds.add(r.vid);
+    pages.set(r.page, p);
+  }
+  return {
+    visitors: people(pageRows.results.map((r) => r.vid)),
+    here: people(seenRows.results.map((r) => r.vid)),
+    pages: [...pages.values()].sort((a, b) => b.views - a.views).slice(0, 8).map((p) => ({
+      page: p.page, views: p.views, guests: p.guestIds.size,
+      who: [...p.byName].map(([name, views]) => ({ name, views })).sort((a, b) => b.views - a.views || a.name.localeCompare(b.name)),
+    })),
+    lastVisit: Object.fromEntries(lastRows.results.map((r) => [r.manager, r.ts])),
+  };
 }

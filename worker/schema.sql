@@ -50,6 +50,14 @@ CREATE TABLE IF NOT EXISTS cache (
   kv_at INTEGER NOT NULL,
   data TEXT NOT NULL
 );
+-- Which manager a visitor id belongs to, learned when a signed-in browser
+-- sends its visit (src/analytics.js), so the Commissioner page's Activity can
+-- name who visited. A browser that never signs in stays a guest.
+CREATE TABLE IF NOT EXISTS visitor_names (
+  vid TEXT PRIMARY KEY,
+  manager TEXT NOT NULL,
+  ts INTEGER NOT NULL
+);
 -- Commissioner page (src/roles.js, src/admin.js). Brad and Jon are
 -- commissioners without a row here; auth_roles holds the ones they add.
 -- site_settings keeps one JSON value per key (the Live page's announcement

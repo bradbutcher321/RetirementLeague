@@ -23,7 +23,7 @@
 import { commissionerGate, ensureManagers } from "./auth.js";
 import { commissioners, getSetting, logAction, setSetting } from "./roles.js";
 import { legsSummary } from "./legs.js";
-import { getStats } from "./analytics.js";
+import { getStats, getWho } from "./analytics.js";
 import { collectChecks, readSnapshot, saveSnapshot } from "./healthCheck.js";
 import { broadcast, subscriberSummary } from "./push.js";
 import { dispatchParlayRefresh } from "./parlayRefresh.js";
@@ -213,12 +213,13 @@ async function videos(env, body, who) {
 }
 
 async function activity(env) {
-  const [stats, seen, subs] = await Promise.all([
+  const [stats, who, seen, subs] = await Promise.all([
     getStats(env).catch(() => null),
+    getWho(env).catch((err) => { console.error("getWho failed:", err); return null; }),
     env.DB.prepare("SELECT manager, MAX(seen) AS seen, SUM(kind = 'app') AS apps, COUNT(*) AS devices FROM auth_sessions GROUP BY manager").all(),
     subscriberSummary(env).catch(() => []),
   ]);
-  return { status: 200, body: { stats, managers: seen.results, push: subs } };
+  return { status: 200, body: { stats, who, managers: seen.results, push: subs } };
 }
 
 async function log(env) {

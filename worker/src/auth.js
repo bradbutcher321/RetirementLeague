@@ -84,6 +84,14 @@ const appCode = (env, m) => derive(env, `code:${m.manager}:${m.gen}`, CODE_LEN);
 
 const bearer = (request) => (request.headers.get("Authorization") || "").match(/^Bearer\s+([A-Za-z0-9_-]{20,})$/)?.[1] || "";
 
+/** The manager a sign-in key belongs to, or null (the visit counter's way to
+ * name a visitor; it can't send headers, so the key rides in the body). */
+export async function tokenManager(env, token) {
+  if (!/^[A-Za-z0-9_-]{20,}$/.test(token || "")) return null;
+  const row = await env.DB.prepare("SELECT manager FROM auth_sessions WHERE token_hash = ?1").bind(await sha256(token)).first();
+  return row ? row.manager : null;
+}
+
 /** Who is asking: { manager, kind, hash } for a signed-in request, else null. */
 export async function sessionManager(request, env) {
   const token = bearer(request);

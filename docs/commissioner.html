@@ -150,6 +150,7 @@
   .cm-tile{ padding: 12px; text-align: left; }
   .cm-tile b{ display: block; font: 800 1.5rem/1 var(--scoreboard); font-variant-numeric: tabular-nums; }
   .cm-tile span{ display: block; color: var(--text-dim); font-size: 0.72rem; margin-top: 4px; }
+  .cm-tile small{ display: block; font-size: 0.72rem; line-height: 1.35; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
   .cm-day{ display: grid; grid-template-columns: 62px 1fr 34px; align-items: center; gap: 10px; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
   .cm-day .cm-bar{ margin-top: 0; height: 8px; }
   .cm-day em{ font-style: normal; text-align: right; font-weight: 700; }
@@ -628,21 +629,30 @@
   }
 
   // ---------- Activity ----------
+  // "Brad, Jon, 2 guests": who, with a guest count for browsers that never signed in.
+  const whoText = (names, guests, nobody) => {
+    const parts = [...names, ...(guests ? [guests === 1 ? 'Guest' : `${guests} guests`] : [])];
+    return parts.length ? parts.join(', ') : nobody;
+  };
   function viewActivity() {
     const d = screenData.activity;
     if (!d) return { title: 'Activity', html: panel('Visits', loading) };
-    const s = d.stats;
+    const s = d.stats, w = d.who;
     const days = s && s.days ? [...s.days].reverse() : [];
     const max = Math.max(1, ...days.map(x => x.visitors));
-    const tiles = s ? `<div class="cm-tiles"><div class="item cm-tile"><b>${s.visitorsToday}</b><span>Visitors today</span></div><div class="item cm-tile"><b>${s.viewsToday}</b><span>Page views today</span></div><div class="item cm-tile"><b>${s.activeNow}</b><span>Here now</span></div></div>
+    const count = g => g.names.length + g.guests;
+    const tiles = s ? `<div class="cm-tiles">
+        <div class="item cm-tile"><b>${w ? count(w.visitors) : s.visitorsToday}</b><span>Visitors today</span>${w ? `<small>${esc(whoText(w.visitors.names, w.visitors.guests, 'Nobody yet'))}</small>` : ''}</div>
+        <div class="item cm-tile"><b>${s.viewsToday}</b><span>Page views today</span></div>
+        <div class="item cm-tile"><b>${w ? count(w.here) : s.activeNow}</b><span>Here now</span>${w ? `<small>${esc(whoText(w.here.names, w.here.guests, 'Nobody'))}</small>` : ''}</div></div>
       <div class="cm-rows" style="margin-top:14px">${days.map(x => `<div class="cm-day"><span>${new Date(x.day + 'T12:00:00').toLocaleDateString([], { weekday: 'short', day: 'numeric' })}</span><div class="cm-bar"><i style="width:${(x.visitors / max) * 100}%"></i></div><em>${x.visitors}</em></div>`).join('')}</div>` : '<div class="cm-empty">Visit counts aren\'t available.</div>';
-    const top = s && s.topPages && s.topPages.length ? `<div class="cm-rows">${s.topPages.map(p => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(p.page)}</div></div><span class="cm-val">${p.views}</span></div>`).join('')}</div>` : '<div class="cm-empty">No views yet today.</div>';
+    const pages = w ? w.pages : (s && s.topPages ? s.topPages.map(p => ({ ...p, who: [], guests: 0 })) : []);
+    const top = pages.length ? `<div class="cm-rows">${pages.map(p => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(p.page)}</div>${w ? `<div class="cm-sub">${esc(whoText(p.who.map(x => x.views > 1 ? `${x.name} ×${x.views}` : x.name), p.guests, ''))}</div>` : ''}</div><span class="cm-val">${p.views}</span></div>`).join('')}</div>` : '<div class="cm-empty">No views yet today.</div>';
     const seen = Object.fromEntries(d.managers.map(m => [m.manager, m]));
-    const pushBy = Object.fromEntries(d.push.map(p => [p.me.toLowerCase(), p]));
+    const last = (w && w.lastVisit) || {};
     const mrows = `<div class="cm-cols">${names.map(n => {
-      const m = seen[n], p = pushBy[n.toLowerCase()];
-      const bits = [m && m.seen ? 'Here ' + when(m.seen) : 'Never signed in', m && m.apps ? 'has the app' : '', p ? 'notifications on' : ''].filter(Boolean);
-      return `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(n)}</div><div class="cm-sub${m && m.seen ? ' in' : ''}">${esc(bits.join(' · '))}</div></div></div>`;
+      const at = Math.max(last[n] || 0, (seen[n] && seen[n].seen) || 0);
+      return `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(n)}</div><div class="cm-sub${at ? ' in' : ''}">${at ? 'Here ' + esc(when(at)) : 'Never signed in'}</div></div></div>`;
     }).join('')}</div>`;
     return { title: 'Activity', html: `<div class="cm-split"><div>${panel('Visits, last 7 days', tiles)}${panel('Top pages today', top)}</div>${panel('Managers', mrows)}</div>` };
   }
