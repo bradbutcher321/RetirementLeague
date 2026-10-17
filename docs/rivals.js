@@ -122,7 +122,7 @@ const Rivals = (() => {
     await ready();
     if (document.getElementById('rv-sheet')) return;
     const r = book ? book.rec(me, name) : null;
-    const mono = (n, you) => `<span class="rv-mono${you ? ' me' : ''}">${esc(monogram(n))}</span>`;
+    const mono = (n, you) => `<span class="rv-mono${you ? ' you' : ''}">${esc(monogram(n))}</span>`;
     const head = `<div class="rv-vs">
         <div class="rv-side">${mono(me, true)}<b>You</b></div>
         <div class="rv-rec">${r ? `${r.w}–${r.l}<small>${Math.round(r.pct * 100)}% for you</small>` : '–<small>never met</small>'}</div>

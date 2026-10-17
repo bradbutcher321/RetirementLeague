@@ -291,7 +291,7 @@ function openRival(name) {
   if (typeof Rivals !== 'undefined') return Rivals.openSheet(name);
   return new Promise(done => {
     const s = document.createElement('script');
-    s.src = 'rivals.js?v=1';
+    s.src = 'rivals.js?v=2';
     s.onload = s.onerror = done;
     document.head.appendChild(s);
   }).then(() => (typeof Rivals !== 'undefined' ? Rivals.openSheet(name) : null));
@@ -956,3 +956,100 @@ function feedWhat(e) {
   if (e.pos === 'D/ST' && (dd(120) !== 0 || !parts.length)) parts.push(`${v(s, 120)} pts allowed`);
   return parts.length ? parts.join(', ') : 'points adjusted';
 }
+
+// ---------- Sheets swipe down to close, every one of them ----------
+// One handler for every bottom sheet on the site, so a sheet can't be built
+// without it (the tap-a-name sheet once shipped that way). Drag down from the
+// handle, the header or anywhere in the body once that is scrolled to the top;
+// let go past 90px (or with a quick flick) and it closes the way a tap on its
+// scrim does, which each page already wires, so no sheet needs its own code.
+// Only a sheet that is pinned to the bottom of the screen: on desktop the same
+// element is a card near the top and stays put.
+(() => {
+  const FAR = 90, FLICK = 0.5; // px, px/ms
+  let g = null; // { sheet, x, y, t, dy, on }
+
+  const isBottomSheet = sheet => getComputedStyle(sheet).bottom === '0px';
+  // Is anything between the touch and the sheet scrolled down from its top?
+  const scrolledDown = (el, sheet) => {
+    for (; el && el !== sheet; el = el.parentElement) {
+      if (el.scrollTop > 0 && el.scrollHeight > el.clientHeight) return true;
+    }
+    return false;
+  };
+  const close = sheet => {
+    const scrim = sheet.previousElementSibling;
+    if (scrim && scrim.classList.contains('scrim')) scrim.click();
+    else sheet.remove();
+    // Something kept it open (it asked first, say): put it back.
+    if (sheet.isConnected) { sheet.style.transition = 'transform .18s ease-out'; sheet.style.transform = ''; }
+  };
+  const settle = sheet => {
+    sheet.style.transition = 'transform .18s ease-out';
+    sheet.style.transform = '';
+    setTimeout(() => { sheet.style.transition = ''; }, 200);
+  };
+
+  addEventListener('touchstart', e => {
+    g = null;
+    const sheet = e.target.closest && e.target.closest('.sheet');
+    if (!sheet || e.touches.length !== 1 || !isBottomSheet(sheet)) return;
+    g = { sheet, el: e.target, x: e.touches[0].clientX, y: e.touches[0].clientY, t: e.timeStamp, dy: 0, on: false };
+  }, { passive: true });
+
+  addEventListener('touchmove', e => {
+    if (!g) return;
+    const dx = e.touches[0].clientX - g.x, dy = e.touches[0].clientY - g.y;
+    if (!g.on) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      // Sideways (a scroll strip) or upward, or the body still has more above
+      // it to scroll: that's the page's gesture, not ours.
+      if (dy <= 0 || Math.abs(dx) > dy || scrolledDown(g.el, g.sheet)) { g = null; return; }
+      g.on = true;
+      g.y = e.touches[0].clientY; // measure from here, so the sheet doesn't jump
+      g.sheet.style.animation = 'none';
+      g.sheet.style.transition = '';
+      g.t = e.timeStamp;
+    }
+    g.dy = Math.max(0, e.touches[0].clientY - g.y);
+    g.sheet.style.transform = `translateY(${g.dy}px)`;
+    if (e.cancelable) e.preventDefault();
+  }, { passive: false });
+
+  const end = e => {
+    if (!g) return;
+    const { sheet, dy, on, t } = g;
+    g = null;
+    if (!on) return;
+    const fast = dy / Math.max(e.timeStamp - t, 1) > FLICK && dy > 30;
+    if (e.type !== 'touchcancel' && (dy > FAR || fast)) close(sheet);
+    else settle(sheet);
+  };
+  addEventListener('touchend', end);
+  addEventListener('touchcancel', end);
+
+  // A mouse (a narrow desktop window) drags the handle or header the same way.
+  let m = null;
+  addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('button, a, input, select, textarea')) return;
+    const grip = e.target.closest('.sheet-grab, .sheet-head');
+    const sheet = grip && grip.closest('.sheet');
+    if (!sheet || !isBottomSheet(sheet)) return;
+    m = { sheet, grip, y: e.clientY, dy: 0, id: e.pointerId };
+    sheet.style.animation = 'none';
+    grip.setPointerCapture(e.pointerId);
+  });
+  addEventListener('pointermove', e => {
+    if (!m || e.pointerId !== m.id) return;
+    m.dy = Math.max(0, e.clientY - m.y);
+    m.sheet.style.transform = `translateY(${m.dy}px)`;
+  });
+  const mouseEnd = e => {
+    if (!m || e.pointerId !== m.id) return;
+    const { sheet, dy } = m;
+    m = null;
+    if (e.type !== 'pointercancel' && dy > FAR) close(sheet); else settle(sheet);
+  };
+  addEventListener('pointerup', mouseEnd);
+  addEventListener('pointercancel', mouseEnd);
+})();

@@ -390,7 +390,7 @@
 .rv-side{ display: grid; justify-items: center; gap: 6px; text-align: center; min-width: 0; }
 .rv-side b{ font-size: 1rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rv-mono{ display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); font: 800 0.82rem/1 var(--body); letter-spacing: 0.02em; }
-.rv-mono.me{ border-color: var(--me-ring, #7AAEDB); }
+.rv-mono.you{ border-color: var(--me-ring, #7AAEDB); }
 .rv-rec{ text-align: center; font: 600 3rem/1 var(--scoreboard); }
 .rv-rec small{ display: block; margin-top: 4px; color: var(--text-dim); font: 500 0.72rem/1.2 var(--body); }
 .rv-form{ display: flex; justify-content: center; gap: 4px; margin-top: 14px; }

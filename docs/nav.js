@@ -411,7 +411,6 @@
       youPanel = b.dataset.youPanel;
       drawPanel();
     }));
-    wireYouSwipe(sheet);
     document.addEventListener('keydown', onKey);
     // The sheet itself takes focus (tabindex -1, no ring) unless a keyboard
     // opened it, in which case the close button does.
@@ -421,19 +420,6 @@
     youNames = await loadManagers();
     if (document.getElementById('you-sheet') === sheet) drawPanel();
   };
-
-  // Drag the sheet down past 90px to dismiss it, like the dashboard's
-  // sheets. Only the phone's bottom sheet; the desktop card stays put.
-  const youIsSheet = matchMedia('(max-width: 720px)');
-  function wireYouSwipe(sheet) {
-    let y0 = null, dy = 0;
-    sheet.querySelectorAll('[data-grab]').forEach(el => {
-      el.addEventListener('pointerdown', e => { if (!youIsSheet.matches || e.target.closest('button')) return; y0 = e.clientY; dy = 0; sheet.style.animation = 'none'; el.setPointerCapture(e.pointerId); });
-      el.addEventListener('pointermove', e => { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sheet.style.transform = `translateY(${dy}px)`; });
-      el.addEventListener('pointerup', () => { if (y0 === null) return; y0 = null; if (dy > 90) closeYou(); else sheet.style.transform = ''; });
-      el.addEventListener('pointercancel', () => { y0 = null; sheet.style.transform = ''; });
-    });
-  }
 
   function drawTabs() {
     document.querySelectorAll('#you-sheet [data-you-panel]').forEach(b => {

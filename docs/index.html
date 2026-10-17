@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=30">
-<link rel="stylesheet" href="nav.css?v=16">
+<link rel="stylesheet" href="nav.css?v=17">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -1348,11 +1348,11 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=23"></script>
-<script src="page-common.js?v=38"></script>
+<script src="nav.js?v=24"></script>
+<script src="page-common.js?v=39"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
-<script src="rivals.js?v=1"></script>
+<script src="rivals.js?v=2"></script>
 <script src="lineup-check.js?v=1"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
@@ -1903,7 +1903,6 @@
           <div class="sheet-head" data-grab data-head></div>
           <div class="sheet-body" data-body></div></div>`);
       sheet = document.getElementById('mw-sheet');
-      mwWireSwipe(sheet);
     }
     sheet.setAttribute('aria-label', label);
     sheet.querySelector('[data-head]').innerHTML = mwHeadHtml(info.t, name);
@@ -1964,16 +1963,6 @@
     popTrackRaf = requestAnimationFrame(popTrack);
   }
   const popTrackStart = () => { if (!popTrackRaf) popTrackRaf = requestAnimationFrame(popTrack); };
-
-  // Drag the sheet down past 90px to dismiss it, like a native sheet.
-  function mwWireSwipe(sheet, close = mwHide) {
-    let y0 = null, dy = 0;
-    sheet.querySelectorAll('[data-grab]').forEach(el => {
-      el.addEventListener('pointerdown', e => { if (e.target.closest('button, a')) return; y0 = e.clientY; dy = 0; sheet.style.animation = 'none'; el.setPointerCapture(e.pointerId); });
-      el.addEventListener('pointermove', e => { if (y0 === null) return; dy = Math.max(0, e.clientY - y0); sheet.style.transform = `translateY(${dy}px)`; });
-      el.addEventListener('pointerup', () => { if (y0 === null) return; y0 = null; if (dy > 90) close(); else sheet.style.transform = ''; });
-    });
-  }
 
   // Called after every rebuild of the cards (refresh or Current/Projected).
   // The hint under the title only shows while some card can actually open.
@@ -2198,7 +2187,6 @@
           <div class="sheet-grab" data-grab><span></span><button type="button" class="mwp-done" data-pl-close>Done</button></div>
           <div class="sheet-head" data-grab data-head></div>
           <div class="sheet-body" data-body></div></div>`);
-      mwWireSwipe(document.getElementById('pl-sheet'), plHide);
     }
     plMark();
     plRender(null);
@@ -2543,7 +2531,6 @@
           <div class="sheet-grab" data-grab><span></span><button type="button" class="mwp-done" data-mh-close>Done</button></div>
           <div class="sheet-head" data-grab data-head></div>
           <div class="sheet-body" data-body></div></div>`);
-      mwWireSwipe(document.getElementById('mh-sheet'), mhClose);
     }
     mhRender();
   }
@@ -5314,7 +5301,6 @@
           <div class="sheet-grab" data-grab><span></span><button type="button" class="mwp-done" data-wp-close>Done</button></div>
           <div class="sheet-head" data-grab><div class="mwp-label wp-head">Pick a week</div></div>
           <div class="sheet-body" data-body></div></div>`);
-      mwWireSwipe(document.getElementById('wp-sheet'), wpHide);
     }
     document.getElementById('wk-title').setAttribute('aria-expanded', 'true');
     document.body.classList.add('wp-open');
