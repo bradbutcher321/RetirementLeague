@@ -110,10 +110,19 @@ def main():
                 errors.append(f"standings note for {r.get('manager')}: needs 1 to 110 characters")
             check_text(f"standings note for {r.get('manager')}", note, allowed, errors)
             notes[r.get("manager")] = note
-        out["standings"] = [
-            {"rank": s["rank"], "manager": s["manager"], "record": s["record"],
-             "move": packet["teams"][s["manager"]].get("rank_move") or 0, "note": notes.get(s["manager"], "")}
-            for s in packet["standings_after"]]
+        if packet.get("standings_after"):
+            out["standings"] = [
+                {"rank": s["rank"], "manager": s["manager"], "record": s["record"],
+                 "move": packet["teams"][s["manager"]].get("rank_move") or 0, "note": notes.get(s["manager"], "")}
+                for s in packet["standings_after"]]
+        else:
+            # A playoff week has no standings movement: list the week's scores.
+            order = sorted(packet["teams"], key=lambda m: packet["teams"][m]["rank_in_week"])
+            out["standings_title"] = "How everyone scored"
+            out["standings"] = [
+                {"rank": packet["teams"][m]["rank_in_week"], "manager": m,
+                 "record": f"{packet['teams'][m]['score']:.2f}", "move": 0, "note": notes.get(m, "")}
+                for m in order]
     else:
         pairs = {frozenset((g["a"], g["b"])) for g in packet["games"]}
         rows = draft.get("games")

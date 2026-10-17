@@ -71,7 +71,7 @@
   const chipText = c => `Week ${c.week} · ${kindLabel(c)}`;
 
   function standingsHtml(c) {
-    return `<div class="glass ft-sec"><div class="panel-title">Where everyone stands</div>
+    return `<div class="glass ft-sec"><div class="panel-title">${esc(c.standings_title || 'Where everyone stands')}</div>
       <div class="ft-body"><div class="ft-lines">${c.standings.map(s => {
         const mv = s.move > 0 ? `<span class="turf">▲${s.move}</span>` : s.move < 0 ? `<span class="lossc">▼${-s.move}</span>` : '<span class="dimt">–</span>';
         return `<div class="ft-line col-row"><div class="ft-rk">${s.rank}</div><div class="col-mv">${mv}</div>
