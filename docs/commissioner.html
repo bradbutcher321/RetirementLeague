@@ -132,6 +132,19 @@
   }
   .cm-toast{ position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--tabbar-h, 0px) + 18px); z-index: 70; max-width: 88vw; padding: 10px 16px; border-radius: 999px; background: var(--ctl-bg-solid); border: 1px solid var(--lead-line); color: var(--text); font-weight: 600; font-size: 0.8rem; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
 
+  /* Jon's Tables */
+  .cm-pills .cm-pill.on{ background: var(--gold); border-color: var(--gold); color: var(--ctl-on-ink); }
+  .cm-table-wrap{ overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; margin-top: 14px; }
+  .cm-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .cm-table th, .cm-table td{ padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .cm-table th{ color: var(--text-dim); font-weight: 700; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--surface-raised); }
+  .cm-table th:first-child, .cm-table td:first-child{ text-align: left; font-weight: 600; }
+  .cm-table.bets th:nth-child(2), .cm-table.bets td:nth-child(2){ text-align: left; }
+  .cm-table sup{ font-size: 0.7em; line-height: 0; margin-left: 1px; }
+  .cm-table tbody tr:last-child td{ border-bottom: none; }
+  @media (hover: hover){ .cm-table tbody tr:hover{ background: var(--surface-raised); } }
+  .cm-tools{ display: flex; gap: 6px; }
+
   /* Activity */
   .cm-tiles{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .cm-tile{ padding: 12px; text-align: left; }
@@ -189,6 +202,7 @@
     cal: SVG('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
     shield: SVG('<path d="M12 3 19 6v5.5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z"/><path d="m9 12 2.2 2.2L15.5 10"/>'),
     sync: SVG('<path d="M20 11a8 8 0 0 0-14.5-4M4 5v3.5h3.5"/><path d="M4 13a8 8 0 0 0 14.5 4M20 19v-3.5h-3.5"/>'),
+    table: SVG('<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 10h17M3.5 14.5h17M9.5 10v9"/>'),
     chart: SVG('<path d="M4 19h16"/><path d="m5 15 4-5 4 3 6-7"/>'),
     chev: SVG('<path d="m9 6 6 6-6 6"/>'),
     back: SVG('<path d="m15 6-6 6 6 6"/>'),
@@ -287,7 +301,8 @@
 
   // ---------- The hub ----------
   const TOOLS = {
-    parlay:   { label: 'Parlay', icon: I.ticket },
+    parlay:   { label: 'Parlay Management', icon: I.ticket },
+    tables:   { label: "Jon's Tables", icon: I.table },
     push:     { label: 'Notifications', icon: I.bell },
     announce: { label: 'Announcements', icon: I.mega },
     signins:  { label: 'Sign-Ins', icon: I.key },
@@ -300,8 +315,8 @@
     activity: { label: 'Activity', icon: I.chart },
   };
   const GROUPS = [
-    ['Each week', ['parlay', 'push', 'announce']],
-    ['People', ['signins', 'members', 'audit']],
+    ['Parlay', ['parlay', 'tables']],
+    ['People', ['signins', 'members', 'push', 'announce', 'audit']],
     ['League', ['videos', 'season']],
     ['Site', ['health', 'refresh', 'activity']],
   ];
@@ -315,6 +330,7 @@
         if (!P) return { t: 'Legs, Sacko and final odds' };
         if (!P.windowOpen) return { t: `Next week's legs open Tue 12 AM` };
         return { t: P.locked ? `Locked · ${P.legsIn.length} of ${P.players.length} in` : `${P.legsIn.length} of ${P.players.length} in · locks ${etDay(P.locksAt)}` };
+      case 'tables': return { t: "Season table and this week's legs" };
       case 'push': return { t: ov.push.people ? `${ov.push.people} of ${ov.managers} have it on` : 'Nobody has it on yet' };
       case 'announce': return { t: ov.announcement ? 'Showing on Live' : 'Nothing showing' };
       case 'signins': return { t: `${ov.signedIn} of ${ov.managers} signed in` };
@@ -357,7 +373,7 @@
   // ---------- Parlay ----------
   function viewParlay() {
     const P = ov.parlay;
-    if (!P) return { title: 'Parlay', html: panel('Legs', '<div class="cm-empty">Couldn\'t read this week\'s legs. Try again in a minute.</div>') };
+    if (!P) return { title: 'Parlay Management', html: panel('Legs', '<div class="cm-empty">Couldn\'t read this week\'s legs. Try again in a minute.</div>') };
     const cant = P.missing.filter(m => ov.unsigned.includes(m));
     const dots = P.players.map(n => `<span class="cm-mono ${P.legsIn.includes(n) ? 'in' : 'out'}" title="${esc(n)}">${esc(monogram(n))}</span>`).join('');
     let legs;
@@ -378,8 +394,85 @@
       <div class="cm-line item"><div class="cm-main"><div class="cm-name">Refresh parlay data</div><div class="cm-sub">${busy === 'parlay' ? 'Refreshing…' : refreshed ? 'Last refreshed ' + ago(refreshed) : 'Re-reads the sheet and regrades'}</div></div><button type="button" class="cm-btn dim" data-act="run" data-which="parlay"${busy === 'parlay' ? ' disabled' : ''}>Refresh</button></div>
       <div class="cm-line item" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px"><div class="cm-name">Odds credits</div><span class="cm-val">${left == null ? '—' : `${left} of 500`}</span></div><div class="cm-sub">${left == null ? 'Not checked yet this month' : 'Left this month for Hard Rock lines'}</div>${left == null ? '' : `<div class="cm-bar"><i style="width:${Math.max(0, Math.min(100, left / 5))}%"></i></div>`}</div>
     </div>`;
-    return { title: 'Parlay', right: `<span class="cm-count ${P.locked ? 'dim' : P.windowOpen ? 'green' : 'dim'}">${P.locked ? 'Locked' : P.windowOpen ? 'Open' : 'Closed'}</span>`,
+    return { title: 'Parlay Management', right: `<span class="cm-count ${P.locked ? 'dim' : P.windowOpen ? 'green' : 'dim'}">${P.locked ? 'Locked' : P.windowOpen ? 'Open' : 'Closed'}</span>`,
       html: `<div class="cm-split">${panel('Legs', legs, P.windowOpen ? `<span class="cm-count">${P.legsIn.length} of ${P.players.length} in</span>` : '')}${panel('Tools', rows)}</div>` };
+  }
+
+  // ---------- Jon's Tables (the season table and this week's legs, copyable) ----------
+  let tScope = '';
+  let tCopied = '';
+  let tStatus = '';
+  const fmtOdds = o => o === null || o === undefined ? '—' : (Math.round(o) > 0 ? '+' : '') + Math.round(o).toLocaleString();
+  const fmtPct = n => n === null || n === undefined ? '—' : Number(n).toFixed(1) + '%';
+  const toSuper = n => String(n).replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function jonsRows(d, scope) {
+    const st = d.stats[scope];
+    if (!st) return [];
+    const odds = Object.fromEntries(st.average_odds.map(r => [r.player, r.avg_odds]));
+    const sackos = st.table_sackos || {};
+    // individual_wl is already in win % order with ties broken on average odds.
+    return st.individual_wl.map(w => ({ player: w.player, w: w.w, l: w.l, pct: w.win_pct, odds: odds[w.player] ?? null, sackos: sackos[w.player] ?? 0 }));
+  }
+  function betRows(d) {
+    const cur = d.weeks[d.weeks.length - 1];
+    const time = iso => { if (!iso) return 'TBD'; const t = new Date(iso), h = t.getHours(); return `${DAYS[t.getDay()]}. ${h % 12 || 12}:${String(t.getMinutes()).padStart(2, '0')}${h < 12 ? 'AM' : 'PM'}`; };
+    // "{bet type}: {details}" -> "{bet type} | {details}"; Money Line / ML read Moneyline.
+    const bet = p => {
+      const x = String(p.pick || ''), i = x.indexOf(':');
+      let type = (i < 0 ? x : x.slice(0, i)).trim();
+      const rest = i < 0 ? '' : x.slice(i + 1).trim();
+      if (/^(money\s*line|ml)$/i.test(type)) type = 'Moneyline';
+      return rest ? `${type} | ${rest}` : type;
+    };
+    return d.players.filter(p => cur.picks[p]).map(p => [p, cur.picks[p]])
+      .sort((a, b) => (a[1].gametime || '9999').localeCompare(b[1].gametime || '9999'))
+      .map(([name, p]) => [name, bet(p), fmtOdds(p.odds), time(p.gametime), p.result || 'Pending']);
+  }
+  function viewTables() {
+    const d = screenData.tables;
+    if (!d) return { title: "Jon's Tables", html: panel("Jon's Table", loading) };
+    if (d.error || !d.weeks) return { title: "Jon's Tables", html: panel("Jon's Table", '<div class="cm-empty">Couldn\'t read the parlay stats. Try again in a minute.</div>') };
+    const cur = d.weeks[d.weeks.length - 1];
+    const scopes = ['all', ...[...(d.years || [])].sort((a, b) => b - a).map(String)];
+    if (!tScope || !d.stats[tScope]) tScope = String(cur.year);
+    const rows = jonsRows(d, tScope).map(r => `<tr><td>${esc(r.player)}${r.sackos ? `<sup>${r.sackos}</sup>` : ''}</td><td>${fmtOdds(r.odds)}</td><td>${r.w} - ${r.l}</td><td>${fmtPct(r.pct)}</td></tr>`).join('');
+    const pills = `<div class="cm-pills" role="group" aria-label="Season">${scopes.map(x => `<button type="button" class="cm-pill${x === tScope ? ' on' : ''}" data-act="tscope" data-scope="${x}" aria-pressed="${x === tScope}">${x === 'all' ? 'All Time' : x}</button>`).join('')}</div>`;
+    const tools = `<div class="cm-tools"><button type="button" class="cm-btn dim" data-act="trefresh"${busy === 'trefresh' || tStatus ? ' disabled' : ''}>Refresh Data</button><button type="button" class="cm-btn dim" data-act="tcopy" data-which="j">${tCopied === 'j' ? 'Copied!' : 'Copy All'}</button></div>`;
+    const jon = panel("Jon's Table", `${pills}<div class="cm-table-wrap"><table class="cm-table"><thead><tr><th>Team</th><th>Avg Odds</th><th>W - L</th><th>Win %</th></tr></thead><tbody>${rows}</tbody></table></div>${tStatus ? `<p class="cm-fine">${esc(tStatus)}</p>` : ''}`, tools);
+    const bets = betRows(d).map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
+    const pt = panel('Parlay Table', `<div class="cm-table-wrap" style="margin-top:0"><table class="cm-table bets"><thead><tr><th>Manager</th><th>Bet</th><th>Odds</th><th>Game Time</th><th>Result</th></tr></thead><tbody>${bets}</tbody></table></div>`,
+      `<button type="button" class="cm-btn dim" data-act="tcopy" data-which="p">${tCopied === 'p' ? 'Copied!' : 'Copy All'}</button>`);
+    return { title: "Jon's Tables", html: jon + pt };
+  }
+  function copyText(text, done) {
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { console.error('Copy failed', e); }
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(fallback);
+    else fallback();
+  }
+  // Starts the parlay data refresh, then re-reads the stats once it has had time to finish.
+  async function refreshTables() {
+    await call('workflow_run', { which: 'parlay' });
+    let left = 55;
+    const tick = async () => {
+      if (left <= 0) {
+        tStatus = '';
+        try { screenData.tables = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(r => r.json()); } catch { /* the old numbers stay */ }
+        if (route() === 'tables') draw();
+        return;
+      }
+      tStatus = `Refresh started. Updating in ${left}s…`;
+      left -= 1;
+      if (route() === 'tables') draw();
+      setTimeout(tick, 1000);
+    };
+    tick();
   }
 
   // ---------- Announcements ----------
@@ -555,7 +648,7 @@
   }
 
   // ---------- Drawing ----------
-  const VIEWS = { hub: viewHub, parlay: viewParlay, announce: viewAnnounce, signins: viewSignins, members: viewMembers, push: viewPush, audit: viewAudit, videos: viewVideos, season: viewSeason, health: viewHealth, refresh: viewRefresh, activity: viewActivity };
+  const VIEWS = { hub: viewHub, parlay: viewParlay, tables: viewTables, announce: viewAnnounce, signins: viewSignins, members: viewMembers, push: viewPush, audit: viewAudit, videos: viewVideos, season: viewSeason, health: viewHealth, refresh: viewRefresh, activity: viewActivity };
   const route = () => { const r = location.hash.slice(1); return VIEWS[r] ? r : 'hub'; };
 
   function draw() {
@@ -608,6 +701,7 @@
     const r = route();
     try {
       if (r === 'signins' || r === 'members') { people = await call('list', { names }, '/auth/admin'); people.managers.sort((a, b) => a.manager.localeCompare(b.manager)); }
+      else if (r === 'tables') { if (!screenData.tables) screenData.tables = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(x => x.json()); }
       else if (r === 'push') screenData.push = await call('push_info');
       else if (r === 'audit') screenData.log = (await call('log')).entries;
       else if (r === 'activity') screenData.activity = await call('activity');
@@ -733,6 +827,15 @@
         call('health').then(h => { health = h; draw(); }).catch(() => {});
       });
     }
+    else if (a === 'tscope') { tScope = d.scope; draw(); }
+    else if (a === 'tcopy') {
+      const data = screenData.tables;
+      const lines = d.which === 'j'
+        ? [['Team', 'Avg Odds', 'W - L', 'Win %']].concat(jonsRows(data, tScope).map(r => [r.sackos ? r.player + toSuper(r.sackos) : r.player, r.odds == null ? '' : fmtOdds(r.odds), `${r.w} - ${r.l}`, r.pct == null ? '' : r.pct.toFixed(1) + '%']))
+        : [['Manager', 'Bet', 'Odds', 'Game Time', 'Result']].concat(betRows(data));
+      copyText(lines.map(r => r.join('\t')).join('\n'), () => { tCopied = d.which; draw(); setTimeout(() => { tCopied = ''; if (route() === 'tables') draw(); }, 1200); });
+    }
+    else if (a === 'trefresh') await act('trefresh', refreshTables);
     else if (a === 'check') await act('check', async () => { health = await call('health'); });
     else if (a === 'announce-post') {
       const text = ($('an-text').value || '').trim();
