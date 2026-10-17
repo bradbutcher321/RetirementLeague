@@ -45,6 +45,7 @@
     { href: 'game-records.html', label: 'Game Records', sub: 'Every single-game record', icon: ICONS.chart },
     { href: 'head-to-head.html', label: 'Head to Head', sub: 'Any two managers', icon: ICONS.people },
     { href: 'franchise.html', label: 'Franchise', sub: 'One manager’s whole career', icon: ICONS.shield },
+    { href: 'parlay-stats.html', label: 'Parlay Stats', sub: 'Hit rates, streaks and bet breakdowns', icon: ICONS.ticket },
     { href: 'wrapped.html', label: 'Season Wrapped', sub: 'Any manager’s season, told as a story', icon: ICONS.spark },
     { href: 'hall-of-fame.html', label: 'Hall of Fame', sub: 'Legacy points and manager Elo', icon: ICONS.trophy },
     { href: 'draft-board.html', label: 'Draft Board', sub: 'Every draft since 2015', icon: ICONS.grid },

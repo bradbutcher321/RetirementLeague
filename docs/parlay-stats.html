@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="Live scores, standings, records and history for the Retirement League.">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Retirement League">
+<meta property="og:title" content="Retirement League — Parlay Stats">
+<meta property="og:description" content="Live scores, standings, records and history for the Retirement League.">
+<meta property="og:url" content="https://bradbutcher321.github.io/RetirementLeague/parlay-stats.html">
+<meta property="og:image" content="https://bradbutcher321.github.io/RetirementLeague/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>html{background:#050505}</style>
+<title>Retirement League — Parlay Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The two font-family's woff2 files Google serves for the latin subset
+     at the weights this site uses -- one variable-font file per family
+     covers every weight declared, confirmed directly by fetching the
+     stylesheet below and comparing each @font-face block's url(). Starts
+     the actual font downloads immediately, in parallel with that
+     stylesheet fetch, instead of waiting to discover these same URLs
+     only after the stylesheet loads and is parsed -- avoids the
+     fallback-to-webfont swap (FOUT) that otherwise shows on a slow or
+     uncached load. If Google ever changes these hashed URLs, this just
+     degrades to a wasted (unused) preload, not a correctness issue -- the
+     stylesheet's own @font-face still fetches whatever the new URL is. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=30">
+<link rel="stylesheet" href="nav.css?v=15">
+<style>
+  /* One tab row (the four groups of stats) with the Year beside it. Each group's
+     cards sit in pairs in the grid below, so no second row of tabs is needed. */
+  .stats-cards{ margin-top: 4px; }
+
+  /* ---------- Stat cards ----------
+     .card-grid, the .stat-card family and .pill all live in theme.css; what
+     stays here is this page's two departures from them. */
+  .stat-card{ overflow: hidden; }
+  .pill.flat{ color: var(--text-dim); border-color: var(--line); }
+
+  /* Ranked rows: Game Records' .cols/.ln pattern -- a plain two-column list,
+     the record holder picked out with the shared outline accent. */
+  .cols{ display: flex; flex-direction: column; }
+  .ln{
+    display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
+    background: var(--item); border: 1px solid var(--item-line); border-radius: 10px;
+    padding: 9px 12px; margin-top: 6px; min-height: 58px;
+  }
+  .ln.norank{ grid-template-columns: minmax(0,1fr) auto; }
+  .ln .rk{ font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); text-align: center; font-size: 1.2rem; }
+  .ln .tm{ font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ln .meta{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ln.rec.up{ border-color: var(--win-line); background: var(--win-tint); }
+  .ln.rec.up .rk{ color: var(--turf); }
+  .ln.rec.down{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .ln.rec.down .rk{ color: var(--loss); }
+  .row-stats{ display: flex; gap: 14px; }
+  .row-stat{ text-align: center; min-width: 34px; }
+  .row-stat b.up{ color: var(--turf); }
+  .row-stat b.down{ color: var(--loss); }
+  .ln-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Histograms ---------- */
+  .hist-row{ display: grid; grid-template-columns: 26px 1fr 30px; align-items: center; gap: 10px; padding: 5px 16px; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+    .hist-row:last-child{ padding-bottom: 12px; }
+  .hist-label{ color: var(--text-dim); text-align: right; }
+  .hist-track{ height: 10px; }
+  .hist-bar{ height: 100%; border-radius: 0 4px 4px 0; min-width: 0; }
+  .hist-bar.low{ background: var(--loss); }
+  .hist-bar.mid{ background: var(--turf); }
+  .hist-bar.full{ background: var(--gold); }
+  .hist-count{ text-align: right; font-weight: 600; }
+  .hist-count.zero{ color: var(--text-dim); font-weight: 400; }
+
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Parlay Stats</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <!-- No section heading and no second row of tabs: the title says what
+           this is, the tabs say which group, and the Year says which years.
+           Each group's cards come in pairs, so they sit in the grid as they
+           always did, all of them at once. -->
+      <div class="controls-row">
+        <div class="tabs scroll" id="category-tab-row" data-glide-panel="stats-container"></div>
+        <div class="selector-group">
+          <label class="selector-label" for="scope-select">Year</label>
+          <select class="parlay-select" id="scope-select" autocomplete="off"></select>
+        </div>
+      </div>
+      <div class="card-grid stats-cards" id="stats-container"><div class="loading-row">Loading stats…</div></div>
+    </section>
+
+    <footer id="site-footer" data-source="Data from the league sheet"></footer>
+  </div>
+
+<script src="nav.js?v=21"></script>
+<script src="page-common.js?v=37"></script>
+<script>
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+
+  function fmtOdds(o) {
+    if (o === null || o === undefined) return '—';
+    const n = Math.round(o);
+    return (n > 0 ? '+' : '') + n.toLocaleString();
+  }
+  function fmtMoney(n) {
+    if (n === null || n === undefined) return '—';
+    return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  }
+  function fmtPct(n) {
+    return n === null || n === undefined ? '—' : Number(n).toFixed(1) + '%';
+  }
+  // ---------- Stat cards ----------
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  const pill = (text, up) => `<span class="pill ${up ? 'up' : 'down'}">${text}</span>`;
+  const winPill = pct => pct === null || pct === undefined ? '<span class="pill flat">—</span>' : pill(fmtPct(pct), pct >= 50);
+  const signedMoney = n => (n < 0 ? '-' : '') + fmtMoney(Math.abs(n));
+  // list entries are [value, label, tone?] -- tone 'up'/'down' colors just that number.
+  const stats = list => `<div class="row-stats">${list.map(([v, l, tone]) => `<div class="row-stat"><b class="${tone || ''}">${v}</b><span>${l}</span></div>`).join('')}</div>`;
+  // Highlights every item tied for the max (or min) of valueFn's result, by
+  // setting item.highlight to the given tone -- used so "tied for the lead"
+  // (or "tied for last") picks out every row that qualifies, not just one.
+  function highlightExtreme(items, valueFn, which, tone) {
+    if (!items.length) return;
+    const vals = items.map(valueFn);
+    const target = which === 'max' ? Math.max(...vals) : Math.min(...vals);
+    items.forEach((it, i) => { if (vals[i] === target) it.highlight = tone; });
+  }
+
+  // items: { name, sub/detail, right, unranked, highlight }. Ranked lists
+  // (the default) number every row; unless an item sets `highlight`
+  // ('up'/'down') explicitly, #1 is picked out the way Game Records does --
+  // a colored left border, no separate "top 3" tile treatment. Pass
+  // podium: false for lists that are buckets, not rankings (e.g. Favorite
+  // vs. Underdog), which renders as a plain unnumbered list instead.
+  function rankedCard(title, items, opts = {}) {
+    const ranked = opts.podium !== false;
+    let rank = 0;
+    const rows = items.map(it => {
+      const body = `<div style="min-width:0"><div class="tm">${esc(it.name)}</div>${it.detail || it.sub ? `<div class="meta">${esc(it.detail || it.sub)}</div>` : ''}</div>${it.right || '<span></span>'}`;
+      if (!ranked) return `<div class="ln norank">${body}</div>`;
+      if (!it.unranked) rank++;
+      const auto = rank === 1 && !it.unranked ? 'up' : null;
+      const tone = it.highlight !== undefined ? it.highlight : auto;
+      return `<div class="ln${tone ? ` rec ${tone}` : ''}"><div class="rk">${it.unranked ? '–' : rank}</div>${body}</div>`;
+    });
+    const cols = `<div class="cols">${rows.join('')}</div>`;
+    return `
+      <div class="stat-card">
+        <div class="stat-card-title">${title}</div>
+        ${opts.note ? `<div class="stat-card-note">${opts.note}</div>` : ''}
+        <div class="stat-card-body">${cols}</div>
+      </div>`;
+  }
+
+  // Keeps the 10 most-bet categories (ordered by win %) and folds the rest
+  // into a single "All Others" row so the card can't grow without bound.
+  function condensedWlItems(rows, key, limit = 10) {
+    if (rows.length <= limit) return wlItems(rows, key);
+    const byVolume = [...rows].sort((a, b) => (b.w + b.l) - (a.w + a.l));
+    const kept = new Set(byVolume.slice(0, limit));
+    const others = rows.filter(r => !kept.has(r));
+    const w = others.reduce((a, r) => a + r.w, 0);
+    const l = others.reduce((a, r) => a + r.l, 0);
+    const items = wlItems(rows.filter(r => kept.has(r)), key);
+    items.push({
+      name: 'All Others', unranked: true, sub: `${w}-${l} · ${others.length} more`, big: fmtPct(w + l ? w / (w + l) * 100 : null),
+      right: winPill(w + l ? w / (w + l) * 100 : 0),
+    });
+    return items;
+  }
+
+  function wlItems(rows, key) {
+    return rows.map(r => ({ name: r[key], sub: `${r.w}-${r.l}`, big: fmtPct(r.win_pct), right: winPill(r.win_pct) }));
+  }
+
+  function histCard(title, rows, note) {
+    const max = Math.max(1, ...rows.map(r => r.occurrences));
+    const body = rows.map(r => `
+      <div class="hist-row">
+        <div class="hist-label">${r.legs}</div>
+        <div class="hist-track"><div class="hist-bar ${r.legs < 6 ? 'low' : r.legs < 12 ? 'mid' : 'full'}" style="width:${r.occurrences / max * 100}%"></div></div>
+        <div class="hist-count${r.occurrences ? '' : ' zero'}">${r.occurrences}</div>
+      </div>`).join('');
+    return `<div class="stat-card"><div class="stat-card-title">${title}</div><div class="stat-card-note">${note}</div><div class="stat-card-body">${body}</div></div>`;
+  }
+
+  function withTotal(rows, key) {
+    const tw = rows.reduce((a, r) => a + r.w, 0);
+    const tl = rows.reduce((a, r) => a + r.l, 0);
+    const items = wlItems(rows, key);
+    items.push({ name: 'Total', sub: `${tw}-${tl}`, right: winPill(tw + tl ? tw / (tw + tl) * 100 : null) });
+    return items;
+  }
+
+  function weekLabel(r) {
+    return `${r.year} · Week ${r.week}`;
+  }
+
+  // ---------- Individual cards, one function per card, keyed by name ----------
+  const CARD = {
+    legsPerParlay: s => histCard('Legs Won per Parlay', s.legs_won_per_parlay, 'Weeks by how many of the legs hit, once every leg was graded.'),
+    legsBeforeLoss: s => histCard('Legs Won Before First Loss', s.legs_won_before_loss, 'Weeks by how many legs won, in game-time order, before the first loss.'),
+
+    individualWL: s => rankedCard('Individual W/L', wlItems(s.individual_wl, 'player')),
+    averageOdds: s => rankedCard('Average Odds', s.average_odds.map(r => ({
+      name: r.player, right: `<span class="ln-val">${fmtOdds(r.avg_odds)}</span>`,
+    }))),
+    winStreaks: s => {
+      const rows = [...s.streaks].sort((a, b) => b.longest_win - a.longest_win || b.current - a.current)
+        .map(r => ({ player: r.player, longest_win: r.longest_win, curWin: Math.max(r.current, 0) }));
+      const maxLongest = Math.max(...rows.map(r => r.longest_win));
+      const maxCurrent = Math.max(...rows.map(r => r.curWin));
+      return rankedCard('Win Streaks', rows.map(r => {
+        const longestTie = r.longest_win === maxLongest;
+        const currentTie = maxCurrent > 0 && r.curWin === maxCurrent;
+        return {
+          name: r.player, sub: `Current ${r.curWin}`,
+          right: stats([[r.longest_win, 'Longest', longestTie ? 'up' : null], [r.curWin, 'Current', currentTie ? 'up' : null]]),
+          highlight: (longestTie || currentTie) ? 'up' : null,
+        };
+      }));
+    },
+    lossStreaks: s => {
+      const rows = [...s.streaks].sort((a, b) => b.longest_loss - a.longest_loss || a.current - b.current)
+        .map(r => ({ player: r.player, longest_loss: r.longest_loss, curLoss: Math.max(-r.current, 0) }));
+      const maxLongest = Math.max(...rows.map(r => r.longest_loss));
+      const maxCurrent = Math.max(...rows.map(r => r.curLoss));
+      return rankedCard('Losing Streaks', rows.map(r => {
+        const longestTie = r.longest_loss === maxLongest;
+        const currentTie = maxCurrent > 0 && r.curLoss === maxCurrent;
+        return {
+          name: r.player, sub: `Current ${r.curLoss}`,
+          right: stats([[r.longest_loss, 'Longest', longestTie ? 'down' : null], [r.curLoss, 'Current', currentTie ? 'down' : null]]),
+          highlight: (longestTie || currentTie) ? 'down' : null,
+        };
+      }));
+    },
+
+    potentialEarnings: s => {
+      const earnings = s.potential_earnings.map(r => ({ player: r.player, net: r.winnings - r.losses })).sort((a, b) => b.net - a.net);
+      const items = earnings.map(r => ({ name: r.player, right: pill(signedMoney(r.net), r.net >= 0), net: r.net }));
+      highlightExtreme(items, it => it.net, 'min', 'down');
+      return rankedCard('Potential Earnings', items);
+    },
+    flatBetProfit: s => {
+      const items = s.flat_bet_profit.map(r => ({ name: r.player, sub: plural(r.bets, 'bet'), right: pill(signedMoney(r.profit), r.profit >= 0), profit: r.profit }));
+      highlightExtreme(items, it => it.profit, 'min', 'down');
+      return rankedCard('Flat Bet Profit', items);
+    },
+
+    biggestHit: s => {
+      const items = s.biggest_hits.map(r => ({ name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick, odds: r.odds }));
+      highlightExtreme(items, it => it.odds, 'max', 'up');
+      return rankedCard('Biggest Hit', items);
+    },
+    safestLoss: s => {
+      const items = s.safest_losses.map(r => ({ name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick, odds: r.odds }));
+      highlightExtreme(items, it => it.odds, 'min', 'down');
+      return rankedCard('Safest Loss', items);
+    },
+
+    weeklySackos: s => {
+      const items = s.weekly_sackos.map(r => ({ name: r.player, sub: fmtMoney(r.cost), right: stats([[r.sackos, r.sackos === 1 ? 'Sacko' : 'Sackos']]), sackos: r.sackos }));
+      highlightExtreme(items, it => it.sackos, 'max', 'down');
+      highlightExtreme(items, it => it.sackos, 'min', 'up');
+      return rankedCard('Weekly Sacko Count', items);
+    },
+    parlaysKilled: s => {
+      const items = s.parlays_killed.map(r => ({
+        name: r.player, sub: plural(r.kill_chances, 'chance'),
+        right: stats([[r.kills.toFixed(1), 'Kills'], [r.avg_bet_position === null ? '—' : r.avg_bet_position.toFixed(1), 'Avg Pos']]),
+        kills: r.kills,
+      }));
+      highlightExtreme(items, it => it.kills, 'max', 'down');
+      highlightExtreme(items, it => it.kills, 'min', 'up');
+      return rankedCard('Parlays Killed', items);
+    },
+
+    sportWL: s => rankedCard('Sport W/L', condensedWlItems(s.sport_wl, 'sport')),
+    betTypeWL: s => rankedCard('Bet Type W/L', condensedWlItems(s.bet_type_wl, 'bet_type')),
+    favoriteUnderdog: s => rankedCard('Favorite vs. Underdog', withTotal(s.odds_type_wl, 'odds_type'), { podium: false }),
+    oddsRange: s => rankedCard('Odds Range', wlItems(s.odds_range_wl, 'range'), { podium: false }),
+    overUnder: s => rankedCard('Over vs. Under', withTotal(s.over_under_wl, 'side'), { podium: false }),
+    dayOfWeek: s => rankedCard('Day of Week', wlItems(s.day_of_week_wl, 'day'), { podium: false }),
+    biggestMisses: s => rankedCard('Biggest Misses', s.biggest_misses.map(r => ({
+      name: weekLabel(r), sub: `Killed by ${r.killed_by.join(' & ')}`,
+      right: stats([[fmtMoney(r.payout), 'Payout']]),
+    })), { podium: false }),
+    closestCalls: s => rankedCard('Closest Calls', s.closest_calls.map(r => ({
+      name: weekLabel(r), sub: `Missed by ${r.lost_by.join(', ')}`,
+      right: stats([[`${r.legs_hit}/12`, 'Legs Hit']]),
+    })), { podium: false }),
+  };
+
+  // ---------- Category > subsection structure ----------
+  const CATEGORIES = [
+    {
+      label: 'Legs',
+      subsections: [
+        { label: 'Per Parlay', cards: ['legsPerParlay'] },
+        { label: 'Before First Loss', cards: ['legsBeforeLoss'] },
+      ],
+    },
+    {
+      label: 'Betting',
+      subsections: [
+        { label: 'Record', cards: ['individualWL', 'averageOdds'] },
+        { label: 'Streaks', cards: ['winStreaks', 'lossStreaks'] },
+        { label: 'Picks', cards: ['biggestHit', 'safestLoss'] },
+        { label: 'Sacko & Kills', cards: ['weeklySackos', 'parlaysKilled'] },
+      ],
+    },
+    {
+      label: 'Breakdowns',
+      subsections: [
+        { label: 'Bet Type', cards: ['sportWL', 'betTypeWL'] },
+        { label: 'Odds', cards: ['favoriteUnderdog', 'overUnder', 'dayOfWeek', 'oddsRange'] },
+      ],
+    },
+    {
+      label: 'Misc',
+      subsections: [
+        { label: 'Money', cards: ['potentialEarnings', 'flatBetProfit'] },
+        { label: 'Notable Weeks', cards: ['biggestMisses', 'closestCalls'] },
+      ],
+    },
+  ];
+
+  // ---------- Wiring ----------
+  // The tab names in the address (#betting) so a link or Back lands on the same group.
+  const TAB_KEYS = ['legs', 'betting', 'breakdowns', 'misc'];
+
+  fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
+    .then(res => res.json())
+    .then(data => {
+      const { stats } = data;
+      let activeCategory = Math.max(0, TAB_KEYS.indexOf(location.hash.slice(1)));
+      let activeScope = 'all';
+
+      const scopeSelect = document.getElementById('scope-select');
+      const categoryTabRow = document.getElementById('category-tab-row');
+      const statsContainer = document.getElementById('stats-container');
+
+      const scopes = ['all', ...[...(data.years || [])].sort((a, b) => b - a).map(String)];
+      scopeSelect.innerHTML = scopes.map(s => `<option value="${s}">${s === 'all' ? 'All-Time' : s}</option>`).join('');
+      scopeSelect.value = activeScope;
+      categoryTabRow.innerHTML = CATEGORIES.map((c, i) => `<button type="button" class="tab${i === activeCategory ? ' on' : ''}" data-i="${i}">${c.label}</button>`).join('');
+
+      function renderStats() {
+        const s = stats[activeScope];
+        if (!s) return;
+        const keys = CATEGORIES[activeCategory].subsections.flatMap(sub => sub.cards);
+        statsContainer.innerHTML = keys.map(key => CARD[key](s)).join('');
+        keepSelectedInView(categoryTabRow);
+      }
+      scopeSelect.addEventListener('change', () => {
+        activeScope = scopeSelect.value;
+        renderStats();
+      });
+      categoryTabRow.addEventListener('click', e => {
+        const btn = e.target.closest('.tab');
+        if (!btn) return;
+        activeCategory = Number(btn.dataset.i);
+        [...categoryTabRow.children].forEach((b, i) => b.classList.toggle('on', i === activeCategory));
+        history.replaceState(null, '', '#' + TAB_KEYS[activeCategory]);
+        renderStats();
+      });
+      renderStats();
+
+      document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
+    })
+    .catch(err => {
+      console.error('Parlay stats error:', err);
+      document.getElementById('stats-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading parlay stats.</div>';
+    });
+</script>
+<script src="track.js?v=2" defer></script>
+</body>
+</html>
