@@ -177,7 +177,7 @@
     <footer id="site-footer" data-source="Tools kept by the league's Worker"></footer>
   </div>
 
-<script src="nav.js?v=22"></script>
+<script src="nav.js?v=23"></script>
 <script src="page-common.js?v=38"></script>
 <script>
 (function () {
@@ -216,6 +216,7 @@
   let ov = null;           // the hub's overview
   let people = null;       // { founder, managers } from the sign-in list
   let health = null;       // { at, checks }
+  let healthPush = null;   // this phone's notification state, for the site health alert (rlPush.state)
   let asking = '';         // the manager whose Reset is waiting on a yes
   let copied = '';         // the manager whose text was just copied (no share sheet here)
   let sheet = '';          // the manager whose role sheet is open
@@ -615,8 +616,23 @@
     const bad = checks.filter(c => !c.ok).length;
     const body = checks.length ? `<div class="cm-cols">${checks.map(c => `<div class="cm-line item ${c.ok ? '' : 'is-loss'}"><div class="cm-main"><div class="cm-name">${esc(c.name)}</div><div class="cm-sub${c.ok ? '' : ' bad'}">${esc(c.detail)}</div></div><span class="cm-dot ${c.ok ? '' : 'red'}" style="margin:0 6px"></span></div>`).join('')}</div>` : '<div class="cm-empty">Checking…</div>';
     return { title: 'Site Health', right: checks.length ? `<span class="cm-count ${bad ? 'red' : 'green'}">${bad ? bad + ' failing' : checks.length + ' of ' + checks.length + ' passing'}</span>` : '',
-      html: `<section class="cm-section"><div class="glass"><div class="cm-note" style="padding-top:16px">Checked every morning at 9 AM ET. Anyone with site health alerts on in their You sheet gets a push when something breaks, and again when it is fixed.${h ? ` Last checked ${esc(ago(h.at))}.` : ''}</div>
-        <div class="panel-body">${body}<div class="cm-wrap"><button type="button" class="cm-btn dim" data-act="check"${busy === 'check' ? ' disabled' : ''}>${busy === 'check' ? 'Checking…' : 'Check now'}</button></div></div></div></section>` };
+      html: `<section class="cm-section"><div class="glass"><div class="cm-note" style="padding-top:16px">Checked every morning at 9 AM ET. Commissioners with the alert below on get a push when something breaks, and again when it is fixed.${h ? ` Last checked ${esc(ago(h.at))}.` : ''}</div>
+        <div class="panel-body">${body}<div class="cm-wrap"><button type="button" class="cm-btn dim" data-act="check"${busy === 'check' ? ' disabled' : ''}>${busy === 'check' ? 'Checking…' : 'Check now'}</button></div></div></div></section>
+        <section class="cm-section"><div class="glass"><div class="panel-body">${healthAlertRow()}</div></div></section>` };
+  }
+  // The daily site health push, for this phone (the You sheet no longer has it).
+  // It rides on the phone's notification subscription, so Notify me has to be on there first.
+  function healthAlertRow() {
+    const on = healthPush === 'on' && window.rlPush && rlPush.get('health');
+    let sub = 'A push to this phone when a check fails, and when it recovers.';
+    let off = false;
+    if (access !== 'session') { sub = 'Sign in from the You tab to turn this on.'; off = true; }
+    else if (healthPush === null) { sub = 'Checking this phone…'; off = true; }
+    else if (healthPush === 'unsupported') { sub = "This browser can't show notifications."; off = true; }
+    else if (healthPush === 'blocked') { sub = 'Notifications are blocked for this site in your browser settings.'; off = true; }
+    else if (healthPush === 'off') { sub = 'Turn on Notify me in your You sheet first.'; off = true; }
+    return `<div class="cm-line item"><div class="cm-main"><div class="cm-name">Site health alerts</div><div class="cm-sub">${esc(sub)}</div></div>
+      <button type="button" class="cm-sw" role="switch" aria-checked="${on}" aria-label="Site health alerts" data-act="healthpush"${off || busy === 'healthpush' ? ' disabled' : ''}></button></div>`;
   }
   const RUNNABLE = [['refresh_league_data.yml', 'league'], ['refresh_franchise_data.yml', 'franchise'], ['update_history_d1.yml', 'history'], ['sync_scores_to_sheet.yml', 'scores'], ['refresh_parlay_data.yml', 'parlay']];
   function viewRefresh() {
@@ -723,7 +739,10 @@
         draw();
         if (videoSeason) screenData.videoList = (await call('videos_list', { season: videoSeason })).videos;
       }
-      else if (r === 'health' || r === 'refresh') { draw(); health = await call('health'); }
+      else if (r === 'health' || r === 'refresh') {
+        if (r === 'health' && window.rlPush) rlPush.state().then(s => { healthPush = s; if (route() === 'health') draw(); });
+        draw(); health = await call('health');
+      }
       else if (r === 'hub') { await loadOverview(); draw(); if (!health || Date.now() - health.at > 10 * 60 * 1000) refreshHealth(); }
       else if (r === 'parlay' || r === 'season' || r === 'announce') await loadOverview();
     } catch (err) {
@@ -847,6 +866,7 @@
     }
     else if (a === 'trefresh') await act('trefresh', refreshTables);
     else if (a === 'check') await act('check', async () => { health = await call('health'); });
+    else if (a === 'healthpush') await act('healthpush', async () => { await rlPush.set('health', !rlPush.get('health')); toast(rlPush.get('health') ? 'Site health alerts on' : 'Site health alerts off'); });
     else if (a === 'announce-post') {
       const text = ($('an-text').value || '').trim();
       if (!text) { $('an-text').focus(); return; }

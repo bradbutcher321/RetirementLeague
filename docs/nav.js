@@ -272,12 +272,11 @@
     ['final', 'My matchup is final', true],
     ['median', 'I clinch the median win', true],
     ['lineup', 'A starter of mine is on bye or out', true],
-    ['rival', 'Rivals<small>When I play Your Daddy or Your Bitch, when they take the lead, and the result</small>', true],
+    ['rival', 'Rival Game Alerts', true],
     ['parlay', 'My parlay leg hits or dies', true],
     ['parlayAll', "Every leg that hits, until it's killed", false],
     ['recap', 'Week in Review is up', false],
     ['record', 'A league record falls (good or bad)', false],
-    ['health', 'Site health alerts (daily check)', false],
   ];
   const PERSON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg>';
 
@@ -287,8 +286,12 @@
   function getPrefs() {
     let p = {};
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch (e) {}
-    // Every leg, the rival alerts and the site health check are opt-in (worker/src/push.js PREF_OFF_BY_DEFAULT).
-    return Object.fromEntries(PUSH_TYPES.map(([k]) => [k, (k === 'parlayAll' || k === 'health' || k === 'rival') ? p[k] === true : p[k] !== false]));
+    // Every leg and the rival alerts are opt-in (worker/src/push.js PREF_OFF_BY_DEFAULT).
+    const out = Object.fromEntries(PUSH_TYPES.map(([k]) => [k, (k === 'parlayAll' || k === 'rival') ? p[k] === true : p[k] !== false]));
+    // The daily site health alert isn't in this list: it lives on the Commissioner
+    // page's Site Health screen, and only a signed-in commissioner can have it on.
+    out.health = p.health === true && isCommissioner(getAuth());
+    return out;
   }
   async function currentSub() {
     if (!pushReady()) return null;
@@ -301,6 +304,25 @@
     const sub = await currentSub().catch(() => null);
     if (sub) await post('/push/subscribe', { sub: sub.toJSON(), me: getMe(), prefs: getPrefs() }).catch(() => {});
   }
+  // For a notification switch that lives on another page (the Commissioner
+  // page's site health alert): whether this phone can have notifications
+  // ('on' once Notify me is on, else 'off', 'blocked' or 'unsupported'), and
+  // reading or changing one choice, which is saved like the You sheet's.
+  window.rlPush = {
+    async state() {
+      if (!pushReady()) return 'unsupported';
+      if (Notification.permission === 'denied') return 'blocked';
+      return (await currentSub().catch(() => null)) ? 'on' : 'off';
+    },
+    get: key => !!getPrefs()[key],
+    async set(key, on) {
+      let p = {};
+      try { p = JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch (e) {}
+      p[key] = !!on;
+      try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+      await syncSub();
+    },
+  };
   function b64uToBytes(s) {
     const b = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4));
     return Uint8Array.from(b, c => c.charCodeAt(0));

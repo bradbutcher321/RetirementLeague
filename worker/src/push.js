@@ -40,6 +40,7 @@ import RecordWatch from "../../docs/record-watch.js";
 import LineupCheck from "../../docs/lineup-check.js";
 // Who beats you most / who you beat most, shared with the standings tags and the tap-a-name sheet.
 import Rivals from "../../docs/rivals.js";
+import { commissioners } from "./roles.js";
 
 const PREF_KEYS = ["final", "median", "lineup", "rival", "recap", "record", "parlay", "parlayAll", "health"];
 // Off unless asked for: everyone else's legs is a lot of buzzing, and it
@@ -445,7 +446,11 @@ export async function checkPushEvents(env, dashboard) {
  * targeting, no once-only key: the caller decides when to call). */
 export async function notifyPref(env, pref, message) {
   if (!env.VAPID_PRIVATE_JWK) return;
-  const { results: subs } = await env.DB.prepare("SELECT * FROM push_subs").all();
+  const { results: all } = await env.DB.prepare("SELECT * FROM push_subs").all();
+  // The site health alert is the commissioners' (its switch is on the Commissioner
+  // page); a phone that still has it on from before that is skipped.
+  const only = pref === "health" ? new Set((await commissioners(env)).map((m) => m.toLowerCase())) : null;
+  const subs = only ? all.filter((s) => only.has((s.me || "").toLowerCase())) : all;
   await Promise.allSettled(subs.filter((s) => cleanPrefs(JSON.parse(s.prefs || "{}"))[pref]).map((s) => deliver(env, s, message)));
 }
 
