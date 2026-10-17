@@ -1,0 +1,108 @@
+{
+ "generated_at": "2026-10-17T05:57:54+00:00",
+ "columns": [
+  {
+   "id": "2026-w05-recap",
+   "kind": "recap",
+   "season": 2026,
+   "week": 5,
+   "published_at": "2026-10-17T01:57:54-04:00",
+   "headline": "Chad drops a monster week while Collin benches a 25-point QB",
+   "dek": "Chad posted the week's best score and Joe G the worst, but Collin found the most creative way to lose: starting a negative quarterback with a monster on the bench.",
+   "body": [
+    "Chad scored <b>155.24</b>, the high score of the week, and his best possible lineup was only <b>156.64</b>. Jahmyr Gibbs carried the load and Christian Watson beat his projection of <b>11.52</b> by <b>17.78</b>. Joe G was on the other side of it, and the scoreboard reads <b>68.26</b>, the lowest of the week. The series between them is now tied 11-11, which tells you the last few meetings have been less polite than this one.",
+    "Joe G did not lose gracefully. CeeDee Lamb was projected for <b>15.46</b> and delivered <b>1.90</b>, and RJ Harvey was good for <b>0.70</b>. Justin Herbert sat on the bench with <b>10.24</b>, which beat either of those starters on its own. Joe G still sits fifth at 6-4, which says something about the rest of the league.",
+    "Then there is Collin, the only loser whose best lineup would have beaten his opponent. He started Tyler Shough, who scored <b>-0.16</b> against a projection of <b>16.51</b>, while Jordan Love put up <b>25.28</b> on the bench. Collin's best lineup was <b>107.46</b>, he lost to Jon by a final of <b>74.42</b> to <b>81.54</b>, and he left <b>33.04</b> points sitting on the pine. That was also the closest game of the week, so every one of those points mattered. Collin is 2-8 and last in the standings, and the manager is the only person to blame.",
+    "Jon deserves a short lap of honor and a long look at his luck. He won with <b>81.54</b>, which missed the median of <b>100.25</b>, so the head-to-head win came with a median loss attached. Parker Washington scored <b>27.40</b> for him and nobody else seems to have noticed. Jon is 8-2 and sits second, behind Chad, and leads the series with Collin 4-3.",
+    "Jeff gets credit for the week's most elaborate self-sabotage that still ended in a win. Matthew Stafford started at QB and scored <b>0.00</b> against a projection of <b>18.17</b>, while Mike Evans put up <b>22.80</b> and C.J. Stroud <b>20.94</b> on the bench. Jeff beat Brad anyway, <b>108.36</b> to <b>100.70</b>, and jumped three spots to sixth. Brad can console himself that Isaiah Likely scored <b>26.90</b>, even as Carnell Tate laid <b>1.10</b> in a slot that wanted <b>11.10</b>. Brad leads the series 10-7, for whatever that is worth to him now.",
+    "The best start belonged to TJ, whose Drake Maye scored <b>39.46</b> on a projection of <b>18.47</b>, and TJ beat Ben <b>123.56</b> to <b>99.80</b>. Ben missed the median by a margin so thin it was a rounding error, and he fell three places to tenth. Joe K matched Jeff's climb, rising three places on a <b>124.88</b> win over Kris, even with Jeremiyah Love turning in <b>2.20</b>. Jared fell three places after Flanders beat him <b>96.34</b> to <b>85.92</b>, and Flanders celebrated by climbing out of last place into 11th, a promotion nobody wants."
+   ],
+   "standings": [
+    {
+     "rank": 1,
+     "manager": "Chad",
+     "record": "8-2",
+     "move": 1,
+     "note": "Scored 155.24 and still left 1.40 on the bench. Even perfection has a typo."
+    },
+    {
+     "rank": 2,
+     "manager": "Jon",
+     "record": "8-2",
+     "move": -1,
+     "note": "Won at 81.54 but missed the median of 100.25. A win that looks better than it played."
+    },
+    {
+     "rank": 3,
+     "manager": "Kris",
+     "record": "7-3",
+     "move": 1,
+     "note": "Josh Allen scored 30.50 and MarShawn Lloyd sat on the bench for 16.20. Lost by choice."
+    },
+    {
+     "rank": 4,
+     "manager": "TJ",
+     "record": "6-4",
+     "move": 1,
+     "note": "Drake Maye scored 39.46 and carried the whole lineup. Chris Olave offered 6.60."
+    },
+    {
+     "rank": 5,
+     "manager": "Joe G",
+     "record": "6-4",
+     "move": -2,
+     "note": "68.26, last in the league, and Lamb gave 1.90. Still fifth. The standings are generous."
+    },
+    {
+     "rank": 6,
+     "manager": "Jeff",
+     "record": "5-5",
+     "move": 3,
+     "note": "Stafford scored 0.00 and Evans sat for 22.80. Won anyway, which is the worst lesson."
+    },
+    {
+     "rank": 7,
+     "manager": "Joe K",
+     "record": "5-5",
+     "move": 3,
+     "note": "Jeremiyah Love scored 2.20 and it did not matter. Up three spots on Puka's 29.20."
+    },
+    {
+     "rank": 8,
+     "manager": "Brad",
+     "record": "4-6",
+     "move": 0,
+     "note": "Beat the median by 0.45 and lost anyway. Carnell Tate scored 1.10 of 11.10."
+    },
+    {
+     "rank": 9,
+     "manager": "Jared",
+     "record": "3-7",
+     "move": -3,
+     "note": "85.92, three spots down. Deebo Samuel Sr. scored 1.50 of 9.28 projected."
+    },
+    {
+     "rank": 10,
+     "manager": "Ben",
+     "record": "3-7",
+     "move": -3,
+     "note": "Missed the median by 0.45 and fell three places. David Montgomery scored 1.10."
+    },
+    {
+     "rank": 11,
+     "manager": "Flanders",
+     "record": "3-7",
+     "move": 1,
+     "note": "Won with 96.34 and started Kenyon Sadiq for 0.00. Up one, out of last."
+    },
+    {
+     "rank": 12,
+     "manager": "Collin",
+     "record": "2-8",
+     "move": -1,
+     "note": "Benched Jordan Love's 25.28 for Shough's -0.16. Last place, fully self-made."
+    }
+   ]
+  }
+ ]
+}
