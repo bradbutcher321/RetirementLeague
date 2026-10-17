@@ -847,15 +847,13 @@
      where the list runs two across). Also up here: the one-line ask before
      you've picked, and your Season Wrapped once the season's over. */
   #me-section{ margin-bottom: 28px; }
-  /* Status line: pills in a row that wraps; the ✕ stays top right. */
+  /* Status line: one sentence in a box, your monogram on the left, the ✕ on the right. */
   #status-section{ margin: 4px 0 18px; }
-  .st-line{ display: flex; align-items: flex-start; gap: 8px; }
-  .st-pills{ flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px 8px; }
-  .st-pill{ display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: var(--text); font: 600 0.8rem/1 var(--body); white-space: nowrap; }
-  .st-pill b{ font-weight: 700; }
-  .st-pill.mine{ padding-left: 4px; border-color: color-mix(in srgb, var(--me-ring) 55%, transparent); }
-  .st-mono{ flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--me-ring); font: 800 0.5rem/1 var(--body); letter-spacing: 0.02em; }
-  .st-x{ flex: none; background: rgba(255,255,255,0.06); border: none; color: var(--text-dim); border-radius: 999px; width: 30px; height: 30px; margin-top: 1px; font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; position: relative; }
+  .st-line{ display: flex; align-items: center; gap: 12px; padding: 12px 10px 12px 14px; border: 1px solid var(--item-line); border-radius: 14px; background: var(--item); }
+  .st-mono{ flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--me-ring); font: 800 0.8rem/1 var(--body); letter-spacing: 0.02em; }
+  .st-text{ flex: 1; min-width: 0; margin: 0; font-size: 0.92rem; font-weight: 500; line-height: 1.4; }
+  .st-text b{ font-weight: 700; }
+  .st-x{ flex: none; align-self: flex-start; background: rgba(255,255,255,0.06); border: none; color: var(--text-dim); border-radius: 999px; width: 30px; height: 30px; font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; position: relative; }
   .st-x::before{ content: ''; position: absolute; inset: -7px; }
   .st-x:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   #me-section .matchups{ grid-template-columns: minmax(0, 1fr); }
@@ -5067,22 +5065,26 @@
     let hidden = false;
     try { hidden = localStorage.getItem(STATUS_KEY) === key; } catch (e) {}
     if (!t || hidden || typeof t.standing !== 'number') { el.hidden = true; el.innerHTML = ''; return; }
-    const pills = [`<span class="st-pill mine"><span class="st-mono">${esc(monogram(t.manager))}</span><span><b>${ordinal(t.standing)}</b> · ${esc(t.record)}</span></span>`];
-    // Games from the last playoff spot, or the first spot out; a game is a win more or a loss fewer.
+    // "You're 8th at 4-6, 1 game back of the playoff line, with a 38% shot at the
+    // playoffs. Up next: Jared." Each clause is left out when its number isn't there.
+    let line = '';
     const spots = data.playoffTeamCount || 0;
     const order = teams.filter(x => typeof x.standing === 'number').sort((a, b) => a.standing - b.standing);
     if (spots && order.length > spots) {
+      // Games from the last playoff spot, or the first spot out; a game is a win more or a loss fewer.
       const [w, l] = recWL(t.record);
       const edge = recWL(order[t.standing > spots ? spots - 1 : spots].record);
       const gb = t.standing > spots ? ((edge[0] - w) + (l - edge[1])) / 2 : ((w - edge[0]) + (edge[1] - l)) / 2;
       const n = gb % 1 ? gb.toFixed(1) : String(gb);
-      pills.push(`<span class="st-pill">${t.standing > spots ? `${n} ${gb === 1 ? 'game' : 'games'} back of the playoff line` : `${n} ${gb === 1 ? 'game' : 'games'} up on the playoff line`}</span>`);
+      line = `, ${n} ${gb === 1 ? 'game' : 'games'} ${t.standing > spots ? 'back of' : 'up on'} the playoff line`;
     }
-    if (typeof t.playoffPct === 'number') pills.push(`<span class="st-pill"><span><b>${Math.round(t.playoffPct)}%</b> to make the playoffs</span></span>`);
+    const odds = typeof t.playoffPct === 'number' ? `, with a <b>${Math.round(t.playoffPct)}%</b> shot at the playoffs` : '';
     const mu = (data.matchups || []).find(m => isMe(m.awayManager) || isMe(m.homeManager));
     const opp = mu && (isMe(mu.awayManager) ? mu.homeManager : mu.awayManager);
-    if (opp) pills.push(`<span class="st-pill"><span>vs <b>${esc(opp)}</b></span></span>`);
-    el.innerHTML = `<div class="st-line"><div class="st-pills">${pills.join('')}</div><button type="button" class="st-x" aria-label="Hide until next week">✕</button></div>`;
+    const next = opp ? ` Up next: <b>${esc(opp)}</b>.` : '';
+    el.innerHTML = `<div class="st-line"><span class="st-mono">${esc(monogram(t.manager))}</span>
+      <p class="st-text">You're <b>${ordinal(t.standing)} at ${esc(t.record)}</b>${line}${odds}.${next}</p>
+      <button type="button" class="st-x" aria-label="Hide until next week">✕</button></div>`;
     el.dataset.key = key;
     el.hidden = false;
   }
