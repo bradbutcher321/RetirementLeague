@@ -39,7 +39,9 @@ once, the winners too.
   - "Benched X for Y" needs X on that team's bench and Y a starter at a
     comparable slot, with X's points above Y's.
   - Ranks and records: use `rank_after`, `rank_move`, `record_after` as given.
-    "Last", "first", "alone" must match the standings.
+    "Last", "first", "alone" must match the standings. Two managers with the
+    same `record_after` are tied on record: don't call either "alone" in
+    first or last, and say "ahead on points" if rank separates them.
 - If two facts are in the packet you may put them side by side, but don't
   combine them into a new number or a causal claim ("more than A and B
   combined" needs arithmetic you aren't allowed to do).
