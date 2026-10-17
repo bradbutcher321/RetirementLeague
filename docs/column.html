@@ -28,7 +28,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=30">
 <link rel="stylesheet" href="nav.css?v=17">
-<link rel="stylesheet" href="features.css?v=4">
+<link rel="stylesheet" href="features.css?v=5">
 </head>
 <body>
   <div id="site-nav"></div>
@@ -91,7 +91,6 @@
         <div class="col-top"><span class="ft-chip gold">${chipText(c)}</span><span class="dimt col-date">${esc(day(c.published_at))}</span></div>
         <h2 class="col-hl">${esc(c.headline)}</h2>
         <p class="col-d">${esc(c.dek)}</p>
-        <div class="col-by">Written by Claude from the league’s data</div>
         ${c.body.map(p => `<p class="col-p">${safe(p)}</p>`).join('')}
       </div>${c.kind === 'preview' ? gamesHtml(c) : standingsHtml(c)}`;
     $('picker').innerHTML = C.length > 1
