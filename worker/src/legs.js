@@ -53,8 +53,9 @@ const ODDS_API = "https://api.the-odds-api.com/v4/sports";
 const BOOKS = ["hardrockbet_fl", "hardrockbet"];
 const ODDS_RESERVE = 30;
 const ODDS_LEFT_KEY = "legs:odds-left";
-// Who may enter any manager's leg, not just their own (COMMISSIONERS in nav.js).
-const COMMISSIONERS = ["Brad", "Jon"];
+// Who may enter any manager's leg, not just their own, and save a whole week
+// (COMMISSIONERS in nav.js).
+export const COMMISSIONERS = ["Brad", "Jon"];
 
 // The sheet's Bet Type list (tools/add_parlay_validation.py), plus "Other"
 // for a typed-in leg.
@@ -235,10 +236,13 @@ async function board(env, request) {
   // A commissioner's Lock legs button shuts the week to everyone else once
   // the bet is live; a commissioner can still edit (open stays true for them).
   const locked = !!(await env.COOLDOWN_KV.get(lockKey(wk)));
+  // A commissioner can enter or fix a leg at any time (canEnter); `open` is
+  // the members' window.
   return {
-    year: wk.year, week: wk.week, open: win.open && (!locked || commish), locked: win.open && locked, locksAt: win.locksAt, opensAt: win.opensAt,
+    year: wk.year, week: wk.week, open: win.open && (!locked || commish), canEnter: commish || (win.open && !locked),
+    locked: win.open && locked, locksAt: win.locksAt, opensAt: win.opensAt,
     days: win.days, players: stats?.players || [], legs: await weekLegs(env, wk, win), me: me ? me.manager : null,
-    commish,
+    commish, asOf: Date.now(),
     _wk: wk, _win: win,
   };
 }
@@ -254,7 +258,7 @@ async function saveLeg(request, env) {
   const body = await request.json().catch(() => null);
   if (!body) return { status: 400, body: { error: "bad_json" } };
   const b = await board(env, request);
-  if (!b.open) return { status: 403, body: { error: "locked", ...publicBoard(b), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
+  if (!b.canEnter) return { status: 403, body: { error: "locked", ...publicBoard(b), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
   // A commissioner may save for anyone; everyone else only for themselves.
   const player = typeof body.player === "string" && body.player ? body.player : who.manager;
   if (player !== who.manager && !COMMISSIONERS.includes(who.manager)) return { status: 403, body: { error: "not_commissioner" } };
@@ -312,6 +316,53 @@ async function saveWeek(request, env) {
   await env.COOLDOWN_KV.put(metaKey(b._wk), JSON.stringify(meta), { expirationTtl: 3600 });
   const synced = await dispatchSync(env, b._wk, meta).catch((err) => { console.error("Week sync dispatch failed:", err); return false; });
   return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager, commish: true } };
+}
+
+// ---------- A commissioner's whole-week save (POST /parlay-entry) ----------
+const blankLeg = () => ({ sport: "", bet_type: "", team: "", opponent: "", player_prop: "", line: "", side: "", odds: null, gametime: "", raw_pick: "" });
+
+/** Before the save is sent to the sheet: a leg a manager entered after the
+ * commissioner's page loaded (picks.loaded_at, epoch ms) is newer than the
+ * page's copy, so it stays instead of being overwritten by a stale row. */
+export async function guardSavedWeek(env, picks) {
+  const b = await board(env, null);
+  const loaded = Number(picks.loaded_at);
+  if (Number(picks.year) !== b._wk.year || Number(picks.week) !== b._wk.week || !loaded) return picks;
+  const { results } = await env.PARLAY_DB.prepare("SELECT * FROM leg_entries WHERE year = ?1 AND week = ?2 AND updated > ?3")
+    .bind(b.year, b.week, loaded).all();
+  for (const e of results) if (picks.rows[e.player]) picks.rows[e.player] = { ...(e.removed ? blankLeg() : pickFields(e)), result: "Pending" };
+  return picks;
+}
+
+/** After the save is sent: the board's own copy (leg_entries) takes the
+ * saved rows, so the board shows them at once and a later leg sync, which
+ * writes whatever differs from the sheet, can't put an old leg back. Only
+ * for the week the board is on. */
+export async function mirrorSavedWeek(env, picks) {
+  const b = await board(env, null);
+  if (Number(picks.year) !== b._wk.year || Number(picks.week) !== b._wk.week) return;
+  const now = Date.now();
+  const stmts = [];
+  for (const [player, r] of Object.entries(picks.rows || {})) {
+    if (!b.players.includes(player)) continue;
+    const have = b.legs.find((l) => l.player === player);
+    if (!r.bet_type) {
+      if (have) stmts.push(env.PARLAY_DB.prepare("UPDATE leg_entries SET removed = 1, updated = ?1 WHERE year = ?2 AND week = ?3 AND player = ?4").bind(now, b.year, b.week, player));
+      continue;
+    }
+    const leg = Object.fromEntries(LEG_FIELDS.map((f) => [f, f === "odds" ? (Number.isFinite(Number(r.odds)) && r.odds !== "" && r.odds != null ? Number(r.odds) : null) : String(r[f] ?? "")]));
+    if (have && LEG_FIELDS.every((f) => String(have[f] ?? "") === String(leg[f] ?? ""))) continue;
+    stmts.push(env.PARLAY_DB.prepare(
+      `INSERT INTO leg_entries (year, week, player, win, sport, bet_type, team, opponent, player_prop, line, side, odds, gametime, raw_pick, game_id, removed, updated)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, '', 0, ?15)
+       ON CONFLICT(year, week, player) DO UPDATE SET win = excluded.win, sport = excluded.sport, bet_type = excluded.bet_type,
+         team = excluded.team, opponent = excluded.opponent, player_prop = excluded.player_prop, line = excluded.line,
+         side = excluded.side, odds = excluded.odds, gametime = excluded.gametime, raw_pick = excluded.raw_pick,
+         game_id = CASE WHEN leg_entries.raw_pick = excluded.raw_pick THEN leg_entries.game_id ELSE '' END,
+         removed = 0, updated = excluded.updated`
+    ).bind(b.year, b.week, player, b._win.tue, leg.sport, leg.bet_type, leg.team, leg.opponent, leg.player_prop, leg.line, leg.side, leg.odds, leg.gametime, leg.raw_pick, now));
+  }
+  if (stmts.length) await env.PARLAY_DB.batch(stmts);
 }
 
 /** Hands the week's legs (and, from saveWeek, its Sacko and final numbers)

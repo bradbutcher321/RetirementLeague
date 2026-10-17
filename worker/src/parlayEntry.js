@@ -1,8 +1,10 @@
 /**
- * POST /parlay-entry -- the site's Enter Picks page (site audit II #11).
- * The page parses the note and finds every game on ESPN itself; this only
- * checks the PIN and hands the finished week to enter_parlay.yml, which
- * writes it to Auto Parlay Tracker and then grades, publishes and syncs.
+ * POST /parlay-entry -- a commissioner's whole-week save from Parlay Legs
+ * (it was the Enter Picks page, site audit II #11). The page parses the
+ * note and finds every game on ESPN itself; this only checks who is asking
+ * (a signed-in commissioner, or the PIN) and hands the finished week to
+ * enter_parlay.yml, which writes it to Auto Parlay Tracker and then grades,
+ * publishes and syncs.
  *
  * Body: { pin, picks: {year, week, sacko, final_odds, final_payout,
  * dry_run, mode, rows} } (see enter_parlay.py for the rows' fields;
@@ -49,8 +51,13 @@ export async function checkPin(env, pin) {
   return null;
 }
 
-export async function enterParlay(request, env) {
-  if (!env.PARLAY_PIN) return { status: 503, body: { error: "not_configured" } };
+/** opts.commissioner: index.js saw a signed-in commissioner, so no PIN.
+ * opts.guard(picks) may adjust the rows before they are sent; opts.after(picks)
+ * runs once the Action is dispatched (both from legs.js, which owns the
+ * board's copy of the week). */
+export async function enterParlay(request, env, opts = {}) {
+  const commissioner = !!opts.commissioner;
+  if (!commissioner && !env.PARLAY_PIN) return { status: 503, body: { error: "not_configured" } };
   let body;
   try {
     body = await request.json();
@@ -58,13 +65,17 @@ export async function enterParlay(request, env) {
     return { status: 400, body: { error: "bad_json" } };
   }
 
-  const denied = await checkPin(env, body.pin);
-  if (denied) return denied;
+  // A signed-in commissioner (index.js checked) needs no PIN.
+  if (!commissioner) {
+    const denied = await checkPin(env, body.pin);
+    if (denied) return denied;
+  }
 
-  const picks = body.picks;
+  let picks = body.picks;
   if (!picks || !picks.rows || !Number(picks.year) || !Number(picks.week)) {
     return { status: 400, body: { error: "missing_week" } };
   }
+  if (opts.guard) picks = await opts.guard(picks).catch((err) => { console.error("Save guard failed:", err); return picks; });
   const json = JSON.stringify(picks);
   if (json.length > MAX_PICKS_CHARS) return { status: 413, body: { error: "too_big" } };
 
@@ -88,6 +99,7 @@ export async function enterParlay(request, env) {
     return { status: 502, body: { error: "github_dispatch_failed", detail: detail.slice(0, 300) } };
   }
   await env.COOLDOWN_KV.put(COOLDOWN_KEY, String(now), { expirationTtl: COOLDOWN_SECONDS + 10 });
+  if (opts.after) await opts.after(picks).catch((err) => console.error("Save mirror failed:", err));
   return { status: 202, body: { ok: true } };
 }
 

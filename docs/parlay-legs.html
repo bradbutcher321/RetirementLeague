@@ -79,6 +79,7 @@
   .in:focus{ outline: none; border-color: var(--gold); }
   textarea.in{ height: auto; min-height: 92px; padding: 10px 12px; resize: vertical; line-height: 1.4; }
   .two{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .two .full{ grid-column: 1 / -1; }
 
   .picks{ display: flex; flex-wrap: wrap; gap: 6px; }
   .pick{ height: 44px; padding: 0 15px; border-radius: 22px; border: 1px solid var(--ctl-line); background: var(--ctl-bg); color: var(--text); font: 600 0.86rem var(--body); cursor: pointer; white-space: nowrap; }
@@ -129,28 +130,81 @@
   .msg{ font-size: 0.82rem; margin-top: 10px; color: var(--text-dim); }
   .msg.bad{ color: var(--loss); font-weight: 600; }
   .msg b{ color: var(--text); font-weight: 600; }
+  .msg.ok::before{ content: '✓ '; color: var(--gold); font-weight: 700; }
+
+  /* ---------- Commissioner view ----------
+     A signed-in commissioner gets the week's list with every row opening
+     into its text boxes, the week's numbers on top (with a week stepper),
+     and a paste box for a whole week. Nothing is saved until the bar at the
+     bottom is tapped. */
+  .cols > section{ margin: 0; }
+  .cm-banner{ display: flex; align-items: center; gap: 8px; margin: -4px 0 14px; color: var(--gold); font: 700 0.66rem var(--body); letter-spacing: 0.1em; text-transform: uppercase; }
+  .cm-banner::before{ content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+  .cm-banner span{ color: var(--text-dim); font-weight: 500; letter-spacing: 0; text-transform: none; font-size: 0.76rem; }
+  @media (min-width: 900px){
+    .wrap.cm{ max-width: 980px; }
+    .wrap.cm .cols{ grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "num board" "mine board" "paste board"; grid-template-rows: auto auto 1fr; }
+    #week-card{ grid-area: num; } #mine-sec{ grid-area: mine; } #board-sec{ grid-area: board; } #paste-sec{ grid-area: paste; }
+  }
+  .stepper{ display: flex; gap: 4px; align-items: center; }
+  .stepper .pick{ padding: 0 12px; }
+  .stepper .pick:disabled{ opacity: 0.35; cursor: default; }
+  .stepper select.in{ width: auto; min-width: 118px; height: 44px; border-radius: 22px; font-weight: 600; font-size: 0.86rem; padding-left: 14px; }
+  .leg.changed{ border-color: var(--lead-line); background: var(--lead-tint); }
+  .leg.bad{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .leg-why{ color: var(--loss); font-size: 0.8rem; font-weight: 600; margin-top: 6px; }
+  .leg-wait{ color: var(--text-dim); display: inline-flex; align-items: center; gap: 7px; }
+  .leg-wait::before{ content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: blink 1s ease-in-out infinite; }
+  @keyframes blink{ 50%{ opacity: 0.25; } }
+  @media (prefers-reduced-motion: reduce){ .leg-wait::before{ animation: none; } }
+  .res-row{ display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  .res-row .btns{ display: flex; gap: 16px; margin-left: auto; }
+  .res-row .link-btn{ padding: 0; display: inline-flex; align-items: center; white-space: nowrap; }
+  .edit-form{ margin-top: 6px; border-top: 1px solid var(--line); padding-top: 2px; }
+  .typed-q{ margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; border: 1px dashed var(--lead-line); color: var(--text); font-size: 0.84rem; overflow-wrap: anywhere; }
+  .typed-q small{ display: block; color: var(--text-dim); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 2px; }
+  .fill-row{ display: flex; gap: 8px; align-items: flex-end; }
+  .fill-row .field{ flex: 1 1 auto; }
+  .fill-row .gold-btn{ flex: none; }
+  .hint{ font-size: 0.78rem; color: var(--text-dim); margin-top: 6px; }
+  .hint.bad{ color: var(--loss); font-weight: 600; }
+  .savebar{ position: sticky; bottom: calc(var(--tabbar-h, 0px) + 10px); z-index: 20; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: #1a1710; border: 1px solid var(--lead-line); border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+  @media (min-width: 1080px){ .savebar{ bottom: 10px; } }
+  .savebar[hidden]{ display: none; }
+  .savebar .gold-btn{ flex: none; height: 44px; }
+  .savebar span{ font-weight: 600; font-size: 0.86rem; min-width: 0; }
+  .savebar span small{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.74rem; }
+  .note-box{ display: block; width: 100%; min-height: 190px; resize: vertical; background: var(--ctl-bg-solid); color: var(--text); border: 1px solid var(--ctl-line); border-radius: 10px; padding: 12px 14px; font: 16px/1.45 var(--body); user-select: text; -webkit-user-select: text; }
+  .note-box:focus{ outline: none; border-color: var(--gold); }
+  .skipped{ margin-top: 10px; font-size: 0.8rem; color: var(--text-dim); }
+  .skipped div{ color: var(--text); font-family: ui-monospace, Menlo, monospace; font-size: 0.78rem; margin-top: 4px; overflow-wrap: anywhere; }
+  /* iPhone Safari gives a date-time field a fixed width wider than half a card. */
+  input.in[type="datetime-local"]{ -webkit-appearance: none; appearance: none; display: block; max-width: 100%; color-scheme: dark; }
+  input.in[type="datetime-local"]::-webkit-date-and-time-value{ text-align: left; }
 </style>
 </head>
 <body>
   <div id="site-nav"></div>
-  <div class="wrap">
+  <div class="wrap" id="wrap">
     <header>
       <div class="eyebrow">Retirement League</div>
       <h1 style="margin-bottom:12px">Parlay Legs</h1>
     </header>
+    <div class="cm-banner" id="cm-banner" hidden>Commissioner <span>Every leg and every week is on this page</span></div>
     <div class="chips" id="chips"></div>
     <div class="cols" id="cols">
-      <div class="col">
-      <section class="glass"><div class="panel-title" id="mine-title">Your leg</div><div class="panel-body" id="mine"><p class="empty">Loading…</p></div></section>
-      <section class="glass" id="commish" hidden><div class="panel-title" id="commish-title">Commissioner</div><div class="panel-body" id="commish-body"></div></section>
-      </div>
-      <section class="glass"><div class="panel-title" id="board-title">This week</div><div class="panel-body" id="board"></div></section>
+      <section class="glass" id="week-card" hidden><div class="panel-title" id="week-title"></div><div class="panel-body" id="week-body"></div></section>
+      <section class="glass" id="mine-sec"><div class="panel-title" id="mine-title">Your leg</div><div class="panel-body" id="mine"><p class="empty">Loading…</p></div></section>
+      <section class="glass" id="board-sec"><div class="panel-title" id="board-title">This week</div><div class="panel-body" id="board"></div></section>
+      <div id="paste-sec" hidden></div>
     </div>
+    <div class="savebar" id="savebar" hidden></div>
     <footer id="site-footer" data-source="Lines from Hard Rock Bet · Games from ESPN"></footer>
   </div>
 
 <script src="nav.js?v=19"></script>
 <script src="page-common.js?v=36"></script>
+<script src="parlay-note.js?v=2"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const ESPN = 'https://site.web.api.espn.com/apis/site/v2/sports';
@@ -425,6 +479,7 @@
       loadError = '';
     } catch { if (!board) loadError = "Couldn't load this week's legs. Pull down or reload to try again."; }
     render();
+    if (isCm()) { cmStart(); refreshFromBoard(); }
   }
 
   // ---------- Drawing ----------
@@ -439,11 +494,8 @@
     if (!board) return loadError ? `<p class="empty bad">${esc(loadError)}</p>` : '<p class="empty">Loading…</p>';
     const inn = board.legs.slice().sort((a, b) => (a.gametime || '9').localeCompare(b.gametime || '9') || a.player.localeCompare(b.player));
     const out = board.players.filter(p => !board.legs.some(l => l.player === p));
-    // A commissioner can enter anyone's leg while legs are open.
-    const enter = p => board.commish && board.open && p !== forWhom()
-      ? `<button type="button" class="link-btn" data-for="${esc(p)}" style="padding:4px 0 0;min-height:32px">${board.legs.some(l => l.player === p) ? `Change ${esc(p)}'s leg` : `Enter ${esc(p)}'s leg`}</button>` : '';
-    return inn.map(l => legRow(l).replace(/<\/div>$/, enter(l.player) + '</div>')).join('')
-      + out.map(p => `<div class="leg out${p === me() ? ' me' : ''}"><div class="leg-top"><span class="leg-name">${esc(p)}</span><span class="leg-odds">Not in yet</span></div>${enter(p)}</div>`).join('');
+    return inn.map(legRow).join('')
+      + out.map(p => `<div class="leg out${p === me() ? ' me' : ''}"><div class="leg-top"><span class="leg-name">${esc(p)}</span><span class="leg-odds">Not in yet</span></div></div>`).join('');
   }
 
   const sportChips = () => `<div class="picks">${SPORTS.map(k => `<button type="button" class="pick${st.sport === k ? ' on' : ''}" data-sport="${k}">${k}</button>`).join('')}</div>`;
@@ -537,10 +589,10 @@
     if (!me()) return '<p class="empty bad">Your sign-in has run out. Tap You and sign in again.</p>';
     if (!board.players.includes(forWhom())) return '<p class="empty">Only the twelve managers in this year\'s parlay enter legs.</p>';
     const lockedAt = board.locked ? 'The legs are locked in' : `Locked ${etWhen(board.locksAt)}`;
-    if (!board.open) return m ? legRow(m) + `<p class="fine">${esc(lockedAt)}. Text the group chat if it needs a fix.</p>`
+    if (!board.canEnter) return m ? legRow(m) + `<p class="fine">${esc(lockedAt)}. Text the group chat if it needs a fix.</p>`
       : `<p class="empty">${esc(board.locked ? 'The legs are locked in' : `Legs locked ${etWhen(board.locksAt)}`)} and yours isn't in. Text it to the group chat.</p>`;
     if (m && !editing) return legRow(m) + `<div class="acts"><button type="button" class="gold-btn" data-act="change">Change</button>${m.sheet ? '' : '<button type="button" class="gold-btn quiet" data-act="remove">Remove</button>'}</div>
-      <p class="fine">${saveMsg ? `<b>${esc(saveMsg)}</b> ` : ''}Everyone can see it. You can change it until <b>${esc(etWhen(board.locksAt))}</b>.</p>`;
+      <p class="fine">${saveMsg ? `<b>${esc(saveMsg)}</b> ` : ''}${board.open ? `Everyone can see it. You can change it until <b>${esc(etWhen(board.locksAt))}</b>.` : 'Locked for members. You can still change it as commissioner.'}</p>`;
     if (st.typed) return typedForm();
     return `<div style="margin:-12px 0 4px"><button type="button" class="link-btn" data-act="type">Can't find it? Type it in</button></div>`
       + sportChips()
@@ -555,20 +607,24 @@
   const mineEl = document.getElementById('mine');
   mineEl.addEventListener('focusout', () => setTimeout(() => { if (held) render(); }, 0));
   function render(){
-    const wk = board ? `Week ${board.week}` : 'This week';
-    document.getElementById('board-title').textContent = wk;
+    const cm = isCm();
+    document.getElementById('wrap').classList.toggle('cm', cm);
+    for (const id of ['cm-banner', 'week-card', 'paste-sec']) document.getElementById(id).hidden = !cm;
     const other = board && forWhom() !== me();
     document.getElementById('mine-title').innerHTML = other
       ? `<span>${esc(forWhom())}'s leg</span><button type="button" class="link-btn" id="back-mine" style="padding:0;min-height:32px">Back to mine</button>` : 'Your leg';
     document.getElementById('chips').innerHTML = board ? `<span class="chip gold">${board.year} · Week ${board.week}</span>
       <span class="chip${board.open && !board.locked ? '' : ' loss'}">${board.locked ? 'Locked · legs confirmed' : board.open ? `Locks ${esc(etWhen(board.locksAt))}` : `Locked · opens ${esc(etWhen(board.opensAt))}`}</span>
       <span class="chip">${board.legs.length} of ${board.players.length} in</span>` : '';
-    document.getElementById('board').innerHTML = drawBoard();
+    if (cm) renderCm();
+    else {
+      document.getElementById('board-title').textContent = board ? `Week ${board.week}` : 'This week';
+      document.getElementById('board').innerHTML = drawBoard();
+    }
     held = mineEl.contains(document.activeElement) && document.activeElement.matches('input, textarea');
     if (held) { refreshSlip(); return; }
     mineEl.innerHTML = drawMine();
-    drawCommish();
-    if (board && board.open && me() && (editing || !mine()) && !st.typed) loadGames(st.sport);
+    if (board && board.canEnter && me() && (editing || !mine()) && !st.typed) loadGames(st.sport);
   }
 
   // ---------- Saving ----------
@@ -593,6 +649,7 @@
     saving = false;
     if (out.legs) board = { ...board, ...out };
     if (res && res.ok) {
+      if (isCm()) refreshFromBoard([forWhom()]);
       editing = false;
       st = { ...blank(), sport: st.sport };
       saveMsg = body.remove ? '' : 'Saved.';
@@ -664,63 +721,538 @@
     }
   });
 
-  // ---------- Commissioner: the week's Sacko and final numbers ----------
-  const commishEl = document.getElementById('commish-body');
-  let metaMsg = '', metaSaving = false;
-  function drawCommish(){
-    const box = document.getElementById('commish');
-    box.hidden = !(board && board.commish);
-    if (box.hidden || (commishEl.contains(document.activeElement) && document.activeElement.matches('input'))) return;
-    const m = board.meta || {};
-    document.getElementById('commish-title').textContent = `Commissioner · Week ${board.week}`;
-    commishEl.innerHTML = `<div class="meta-grid">
-        <label class="field"><span>Sacko</span><select class="in" id="m-sacko">${['', ...board.players].map(p => `<option value="${esc(p)}"${p === (m.sacko || '') ? ' selected' : ''}>${esc(p || '—')}</option>`).join('')}</select></label>
-        <label class="field"><span>Final odds</span><input class="in" id="m-odds" inputmode="numbers-and-punctuation" autocomplete="off" placeholder="+478887" value="${esc(fmtOdds(m.final_odds))}"></label>
-        <label class="field"><span>Final payout</span><input class="in" id="m-payout" inputmode="decimal" autocomplete="off" placeholder="95797.48" value="${esc(m.final_payout ?? '')}"></label>
-      </div>
-      <div class="acts"><button type="button" class="gold-btn solid" id="m-save"${metaSaving ? ' disabled' : ''}>${metaSaving ? 'Saving…' : 'Save week'}</button><button type="button" class="gold-btn" id="m-lock"${metaSaving ? ' disabled' : ''}>${board.locked ? 'Unlock legs' : 'Lock legs'}</button><a class="gold-btn" href="parlay-entry.html?year=${board.year}&week=${board.week}">Commish View</a></div>
-      ${metaMsg ? `<p class="fine">${esc(metaMsg)}</p>` : ''}`;
+  // ---------- Commissioner: every leg, every week, on this page ----------
+  // This is what the Enter Picks page was. A signed-in commissioner (Brad,
+  // Jon) edits the week in place (ed.cur against ed.orig as loaded) and one
+  // bar saves the whole week through POST /parlay-entry, no PIN. Re-pick and
+  // Pick go through the sportsbook board above (the Worker saves that leg
+  // at once); Edit pick opens the text boxes; "Type it like the note" fills
+  // the boxes from a line written the way the group chat writes a pick, and
+  // every path that names a game finds its sport and kickoff on ESPN.
+  const NOTE_KEY = 'rl-parlay-note';
+  const store = {
+    get: k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } },
+    set: (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* private mode */ } },
+  };
+  const BET_TYPES = ['Money Line', 'Spread', 'Alt Spread', '1st Half Spread', 'Anytime TD', 'Total Points', 'Total Goals',
+    'Total Rounds', 'Receiving Yards', 'Passing TD', 'Passing Yards', 'Receptions', 'Total Yards', 'Home Runs',
+    'Player Points', 'Interceptions', 'Coin Toss'];
+  // Which boxes a bet type uses (parlay_gui.py's FIELD_RELEVANCE).
+  const FIELDS_FOR = {};
+  ['Spread', 'Alt Spread', '1st Half Spread'].forEach(b => { FIELDS_FOR[b] = ['team', 'opponent', 'line']; });
+  FIELDS_FOR['Money Line'] = ['team', 'opponent'];
+  ['Total Points', 'Total Goals', 'Total Rounds'].forEach(b => { FIELDS_FOR[b] = ['team', 'opponent', 'side', 'line']; });
+  ['Receiving Yards', 'Passing TD', 'Home Runs', 'Player Points', 'Interceptions', 'Total Yards', 'Receptions', 'Passing Yards']
+    .forEach(b => { FIELDS_FOR[b] = ['player_prop', 'side', 'line']; });
+  ['Anytime TD', 'Coin Toss'].forEach(b => { FIELDS_FOR[b] = ['player_prop']; });
+  const ALL_FIELDS = ['team', 'opponent', 'player_prop', 'line', 'side'];
+  const LABELS = { team: 'Team', opponent: 'Opponent', player_prop: 'Player', line: 'Line', side: 'Side' };
+  const RESULTS = ['Pending', 'Win', 'Loss'];
+  const dryQ = new URLSearchParams(location.search).has('dry') ? '&dry' : '';
+
+  const ed = { year: null, week: null, orig: null, cur: null, status: '', open: new Set(), finding: new Set(),
+    keys: {}, parseWhy: {}, gameWhy: {}, hint: {}, q: {}, asOf: 0, stamp: 0, steps: null };
+  let stats = null;                 // GET /parlay-stats: { players, weeks }
+  let cmReady = false, cmSaving = false, lockMsg = '';
+  let noteText = store.get(NOTE_KEY), pasteOpen = !!noteText, pasteMsg = null, noteFromLink = false;
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const isCm = () => !!(board && board.commish);
+  const roster = () => (stats && stats.players && stats.players.length ? stats.players : (board ? board.players : []));
+  const onBoardWeek = () => !!board && ed.year === board.year && ed.week === board.week;
+  const canPick = () => onBoardWeek() && !!board.canEnter;
+  const weekSaved = (y, w) => !!stats && stats.weeks.some(x => x.year === y && x.week === w);
+  const oddsText = o => o == null || o === '' ? '' : (Number(o) > 0 ? '+' : '') + Math.round(Number(o));
+  const parseOdds = t => { const v = parseFloat(String(t).replace(/[,\s$+]/g, '')); return Number.isNaN(v) ? null : v; };
+  const blankRow = () => ({ sport: '', bet_type: '', team: '', opponent: '', player_prop: '', line: '', side: '', odds: '', gametime: '', result: '', raw_pick: '' });
+
+  function weekList(){
+    const list = (stats ? stats.weeks : []).map(w => ({ year: w.year, week: w.week }));
+    for (const w of [board && { year: board.year, week: board.week }, ed.year && { year: ed.year, week: ed.week }]) {
+      if (w && !list.some(x => x.year === w.year && x.week === w.week)) list.push(w);
+    }
+    return list.sort((a, b) => b.year - a.year || b.week - a.week);   // newest first
   }
-  commishEl.addEventListener('click', async e => {
-    if (e.target.closest('#m-lock') && !metaSaving) {
-      metaSaving = true; metaMsg = ''; drawCommish();
-      let res = null, out = {};
-      try {
-        res = await fetch(WORKER_URL + '/legs/lock', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ locked: !board.locked }) });
-        out = await res.json().catch(() => ({}));
-      } catch { /* no connection */ }
-      metaSaving = false;
-      if (out.legs) board = { ...board, ...out };
-      metaMsg = res && res.ok ? (board.locked ? 'Legs locked. Only commissioners can change them now.' : 'Legs unlocked.')
-        : `Couldn't change the lock (${res ? out.error || res.status : 'no connection'}).`;
-      render();
+
+  // ---------- The week as rows ----------
+  // A saved week as the sheet has it (the D1 mirror).
+  function fromServer(d){
+    const rows = {};
+    for (const n of roster()) {
+      const r = d.rows[n] || {};
+      rows[n] = { ...blankRow(), ...Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v == null ? '' : String(v)])),
+        odds: oddsText(r.odds), gametime: (r.gametime || '').slice(0, 16) };
+    }
+    return { sacko: d.sacko || '', final_odds: oddsText(d.final_odds), final_payout: d.final_payout == null ? '' : String(d.final_payout), rows };
+  }
+  // The board's copy of one manager's leg (it is ahead of the sheet by a
+  // minute or two), with the Result the sheet has for the same pick.
+  function boardRow(n, prev){
+    const l = board.legs.find(x => x.player === n);
+    if (!l) return blankRow();
+    const r = { ...blankRow(), ...Object.fromEntries(['sport', 'bet_type', 'team', 'opponent', 'player_prop', 'line', 'side', 'raw_pick'].map(f => [f, l[f] == null ? '' : String(l[f])])),
+      odds: oddsText(l.odds), gametime: (l.gametime || '').slice(0, 16) };
+    r.result = prev && prev.bet_type === r.bet_type && prev.raw_pick === r.raw_pick ? prev.result : '';
+    return r;
+  }
+  function buildBase(d){
+    const base = d ? fromServer(d) : { sacko: '', final_odds: '', final_payout: '', rows: Object.fromEntries(roster().map(n => [n, blankRow()])) };
+    if (onBoardWeek()) {
+      for (const n of roster()) base.rows[n] = boardRow(n, base.rows[n]);
+      const m = board.meta;
+      if (m) Object.assign(base, { sacko: m.sacko || '', final_odds: oddsText(m.final_odds), final_payout: m.final_payout == null ? '' : String(m.final_payout) });
+    }
+    return base;
+  }
+  const isChanged = n => JSON.stringify(ed.cur.rows[n]) !== JSON.stringify(ed.orig.rows[n]);
+  const weekChanged = () => ['sacko', 'final_odds', 'final_payout'].some(k => ed.cur[k] !== ed.orig[k]);
+  const changeCount = () => ed.cur ? roster().filter(isChanged).length + (weekChanged() ? 1 : 0) : 0;
+  const gkey = r => [r.bet_type, r.team, r.opponent, r.player_prop].join('|');
+  const setKeys = () => { ed.keys = {}; for (const n of roster()) if (ed.cur.rows[n].bet_type) ed.keys[n] = gkey(ed.cur.rows[n]); };
+
+  async function loadWeek(year, week){
+    Object.assign(ed, { year, week, orig: null, cur: null, status: 'Loading…', open: new Set(), finding: new Set(),
+      keys: {}, parseWhy: {}, gameWhy: {}, hint: {}, q: {}, steps: null, asOf: board ? board.asOf : 0 });
+    const stamp = ++ed.stamp;
+    history.replaceState(null, '', location.pathname + (onBoardWeek() ? (dryQ ? '?dry' : '') : `?year=${year}&week=${week}${dryQ}`));
+    renderCm();
+    let d = null;
+    try {
+      const res = await fetch(`${WORKER_URL}/parlay-week?year=${year}&week=${week}`, { cache: 'no-store' });
+      if (res.ok) d = await res.json();
+      else if (res.status !== 404) throw new Error(String(res.status));
+    } catch {
+      if (stamp === ed.stamp) { ed.status = "Couldn't load that week. Try again."; renderCm(); }
       return;
     }
-    if (!e.target.closest('#m-save') || metaSaving) return;
-    const body = { sacko: document.getElementById('m-sacko').value, final_odds: document.getElementById('m-odds').value.trim(), final_payout: document.getElementById('m-payout').value.trim() };
-    metaSaving = true; metaMsg = ''; drawCommish();
+    if (stamp !== ed.stamp) return;   // switched again meanwhile
+    ed.orig = buildBase(d);
+    ed.cur = clone(ed.orig);
+    ed.status = '';
+    setKeys();
+    renderCm();
+  }
+
+  async function cmStart(){
+    if (cmReady) return;
+    cmReady = true;
+    try { stats = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(r => r.json()); } catch { stats = null; }
+    const q = new URLSearchParams(location.search), y = Number(q.get('year')), w = Number(q.get('week'));
+    await loadWeek(y && w ? y : board.year, y && w ? w : board.week);
+    if (noteFromLink) { noteFromLink = false; await applyNote(); }
+  }
+
+  // The board moved (a manager saved, or a Pick above): rows the commissioner
+  // hasn't touched follow it; a row being edited keeps its boxes.
+  function refreshFromBoard(only){
+    if (!ed.orig || !onBoardWeek()) return;
+    if (!only) ed.asOf = board.asOf;
+    for (const n of only || roster()) {
+      const nb = boardRow(n, ed.orig.rows[n]);
+      if (JSON.stringify(nb) === JSON.stringify(ed.orig.rows[n])) continue;
+      const touched = isChanged(n);
+      ed.orig.rows[n] = nb;
+      if (!touched) { ed.cur.rows[n] = clone(nb); if (nb.bet_type) ed.keys[n] = gkey(nb); else delete ed.keys[n]; }
+    }
+    renderCm();
+  }
+
+  // ---------- Finding the game ----------
+  // Sport and kickoff come from ESPN for every row whose teams or player
+  // changed (parlay-note.js, the same lookup the desktop tool used). A game
+  // it can't find leaves the boxes as they are and says why.
+  async function lookRow(n, canon){
+    const r = ed.cur && ed.cur.rows[n];
+    if (!r || !r.bet_type || !((r.team && r.opponent) || r.player_prop) || !BET_TYPES.includes(r.bet_type)) return;
+    const key = gkey(r);
+    if (!canon && ed.keys[n] === key) return;
+    ed.keys[n] = key;
+    ed.finding.add(n);
+    renderCm();
+    const stamp = ed.stamp;
+    let res;
+    try { res = await ParlayNote.findGame({ bet_type: r.bet_type, team: r.team, opponent: r.opponent, player_prop: r.player_prop }); }
+    catch { res = { found: false, why: "ESPN didn't answer. Try again in a minute." }; }
+    if (stamp !== ed.stamp) return;
+    ed.finding.delete(n);
+    const now = ed.cur.rows[n];
+    if (gkey(now) !== key) { renderCm(); return; }   // edited again: the newer lookup rules
+    if (res.found) {
+      now.sport = res.sport;
+      now.gametime = res.gametime.slice(0, 16);
+      // ESPN's own spelling of the teams (and a ranked team's #), as a pasted note always got.
+      if (canon && res.team) { now.team = res.team; now.opponent = res.opponent; ed.keys[n] = gkey(now); }
+      delete ed.gameWhy[n];
+    } else {
+      ed.gameWhy[n] = res.why;
+      if (/didn't answer/.test(res.why)) delete ed.keys[n];   // not an answer: the next edit tries again
+    }
+    renderCm();
+  }
+
+  /** "Spread: Bills -5 vs. Raiders (-110)" typed into one row's box. */
+  function fillFromText(n){
+    const text = (ed.q[n] || '').trim();
+    if (!text) return;
+    const p = ParlayNote.parse(`${n}: ${text}`, roster()).picks[n];
+    const bad = t => { ed.hint[n] = { bad: true, t }; renderCm(); };
+    if (!p) return bad('Start with the bet type, like Spread: Bills -5 vs. Raiders (-110).');
+    if (!BET_TYPES.includes(p.bet_type)) return bad(p.why);
+    const r = ed.cur.rows[n];
+    Object.assign(r, { bet_type: p.bet_type, team: p.team, opponent: p.opponent, player_prop: p.player_prop, line: p.line, side: p.side,
+      odds: p.odds == null ? r.odds : oddsText(p.odds) });
+    delete ed.parseWhy[n];
+    ed.hint[n] = p.ok ? { t: 'Filled the boxes.' } : { bad: true, t: `${p.why}. Finish the boxes by hand.` };
+    if (p.ok) ed.q[n] = '';
+    lookRow(n, true);
+    renderCm();
+  }
+
+  // ---------- Drawing ----------
+  const fmtRowOdds = r => fmtOdds(parseOdds(r.odds)) || '—';
+  function rowWhy(n){ return [ed.parseWhy[n], ed.gameWhy[n]].filter(Boolean); }
+  const act = (a, n, label) => `<button type="button" class="link-btn" data-act="${a}" data-p="${esc(n)}">${label}</button>`;
+
+  function editForm(n){
+    const r = ed.cur.rows[n];
+    const fields = r.bet_type ? (FIELDS_FOR[r.bet_type] || ALL_FIELDS) : [];
+    const withCur = (list, v) => v && !list.includes(v) ? [...list, v] : list;
+    const opt = (list, v) => list.map(x => `<option value="${esc(x)}"${x === v ? ' selected' : ''}>${esc(x || '—')}</option>`).join('');
+    const sel = (f, list) => `<select class="in" data-p="${esc(n)}" data-f="${f}">${opt(withCur(list, r[f]), r[f])}</select>`;
+    const inp = (f, extra = '') => `<input class="in" data-p="${esc(n)}" data-f="${f}" value="${esc(r[f])}" autocomplete="off" ${extra}>`;
+    const fld = (label, html, cls = '') => `<label class="field ${cls}"><span>${label}</span>${html}</label>`;
+    const was = ed.orig.rows[n];
+    const typed = was.bet_type === 'Other' ? `<div class="typed-q"><small>They typed</small>“${esc(was.player_prop)}”</div>` : '';
+    const h = ed.hint[n];
+    return `<div class="edit-form">${typed}
+      <div class="fill-row"><label class="field"><span>Type it like the note (optional)</span>
+        <input class="in" data-q="${esc(n)}" value="${esc(ed.q[n] || '')}" placeholder="Spread: Bills -5 vs. Raiders (-110)" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <button type="button" class="gold-btn quiet" data-act="fill" data-p="${esc(n)}">Fill</button></div>
+      ${h ? `<div class="hint${h.bad ? ' bad' : ''}">${esc(h.t)}</div>` : ''}
+      <div class="two">
+        ${fld('Bet type', sel('bet_type', ['', ...BET_TYPES]))}
+        ${fld('Sport', sel('sport', ['', ...ParlayNote.SPORTS]))}
+        ${fields.map(f => f === 'side' ? fld('Side', sel('side', ['', 'Over', 'Under']))
+          : fld(LABELS[f], inp(f, f === 'line' ? 'inputmode="numbers-and-punctuation"' : ''), f === 'player_prop' ? 'full' : '')).join('')}
+        ${fld('Odds', inp('odds', 'inputmode="numbers-and-punctuation" placeholder="-110"'))}
+        ${fld('Kickoff (Eastern)', inp('gametime', 'type="datetime-local" step="60"'), 'full')}
+      </div></div>`;
+  }
+
+  function cmRow(n){
+    const r = ed.cur.rows[n], has = !!r.bet_type, open = ed.open.has(n);
+    const why = rowWhy(n);
+    const bad = has && why.length > 0;
+    let game = '';
+    if (has) {
+      if (ed.finding.has(n)) game = '<span class="leg-wait">Finding the game…</span>';
+      else if (r.gametime) game = `<span><span class="sport">${esc(r.sport || '—')}</span> · ${esc(kick(r.gametime + ':00'))}</span>`;
+      else game = '<span style="color:var(--loss);font-weight:600">No game time</span>';
+      if (ed.orig.rows[n].bet_type === 'Other' && r.bet_type === 'Other') game = '<span class="badge gold">Typed in</span>' + (r.gametime ? game : '');
+    }
+    const results = has && !(onBoardWeek() && board.open)
+      ? `<div class="seg" data-res="${esc(n)}">${RESULTS.map(x => `<button type="button" data-v="${x}" class="${(r.result || 'Pending') === x ? 'on' : ''}">${x}</button>`).join('')}</div>` : '<span></span>';
+    const btns = (canPick() ? act('pick', n, has ? 'Re-pick' : 'Pick') : '') + act('edit', n, open ? 'Done' : has ? 'Edit pick' : 'Edit');
+    const l = { ...r, odds: parseOdds(r.odds) };
+    return `<div class="leg${has ? '' : ' out'}${isChanged(n) ? ' changed' : ''}${bad ? ' bad' : ''}${n === me() ? ' me' : ''}">
+      <div class="leg-top"><span class="leg-name">${esc(n)}</span><span class="leg-odds">${has ? fmtRowOdds(r) : 'Not in yet'}</span></div>
+      ${has ? `<div class="leg-bet">${betHtml(l)}</div>` : ''}
+      ${game ? `<div class="leg-game">${game}</div>` : ''}
+      ${has ? why.map(w => `<div class="leg-why">${esc(w)}</div>`).join('') : ''}
+      <div class="res-row">${results}<span class="btns">${btns}</span></div>
+      ${open ? editForm(n) : ''}</div>`;
+  }
+
+  function stepperHtml(){
+    const list = weekList(), i = list.findIndex(w => w.year === ed.year && w.week === ed.week);
+    const prev = list[i + 1], next = list[i - 1];
+    return `<span class="stepper">
+      <button type="button" class="pick" data-step="${i + 1}"${prev ? '' : ' disabled'} aria-label="Previous week">‹ ${prev ? prev.week : ''}</button>
+      <select class="in" id="wk-select" aria-label="Week">${list.map((w, k) => `<option value="${k}"${k === i ? ' selected' : ''}>${w.year} · Week ${w.week}</option>`).join('')}</select>
+      <button type="button" class="pick" data-step="${i - 1}"${next ? '' : ' disabled'} aria-label="Next week">${next ? next.week : ''} ›</button></span>`;
+  }
+
+  function weekCardHtml(){
+    const c = ed.cur;
+    const body = !c ? `<p class="empty${/Couldn/.test(ed.status) ? ' bad' : ''}">${esc(ed.status || 'Loading…')}</p>`
+      : `<div class="meta-grid">
+        <label class="field"><span>Sacko</span><select class="in" data-w="sacko">${['', ...roster()].map(p => `<option value="${esc(p)}"${p === c.sacko ? ' selected' : ''}>${esc(p || '—')}</option>`).join('')}</select></label>
+        <label class="field"><span>Final odds</span><input class="in" data-w="final_odds" value="${esc(c.final_odds)}" inputmode="numbers-and-punctuation" autocomplete="off" placeholder="+478887"></label>
+        <label class="field"><span>Final payout</span><input class="in" data-w="final_payout" value="${esc(c.final_payout)}" inputmode="decimal" autocomplete="off" placeholder="95797.48"></label>
+      </div>${onBoardWeek() && board.open ? `<div class="acts"><button type="button" class="gold-btn" id="m-lock"${cmSaving ? ' disabled' : ''}>${board.locked ? 'Unlock legs' : 'Lock legs'}</button></div>` : ''}
+      ${lockMsg ? `<p class="fine">${esc(lockMsg)}</p>` : ''}`;
+    return [`<span>Week numbers</span>${stepperHtml()}`, body];
+  }
+
+  function pasteHtml(){
+    if (!pasteOpen) return '<button type="button" class="gold-btn quiet" data-act="paste-open" style="width:100%">Paste a whole week from the note</button>';
+    const m = pasteMsg;
+    const info = !m ? '' : m.bad ? `<p class="msg bad">${esc(m.bad)}</p>` : `<div class="chips" style="margin:14px 0 0">
+        <span class="chip">${m.year} · Week ${m.week}</span><span class="chip gold">${m.got} leg${m.got === 1 ? '' : 's'} filled</span>
+        ${m.missing ? `<span class="chip loss">${m.missing} not in the note</span>` : ''}</div>
+      ${m.skipped.length ? `<div class="skipped">Lines that aren't a pick, so they were skipped:${m.skipped.map(x => `<div>${esc(x)}</div>`).join('')}</div>` : ''}
+      <p class="fine">Check the rows, then Save to the sheet. Saving replaces the week; a pick that didn't change keeps its result.</p>`;
+    return `<section class="glass"><div class="panel-title">Paste a whole week</div><div class="panel-body">
+      <textarea class="note-box" id="note-box" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="The week's parlay note"
+        placeholder="2026 Week 7:&#10;Sacko: …&#10;&#10;Brad: Spread: Lions -5.5 vs. Cardinals (-110)&#10;…&#10;&#10;Final Odds: +478887&#10;Final Payout: $95,797.48">${esc(noteText)}</textarea>
+      <div class="acts"><button type="button" class="gold-btn" data-act="note-paste">Paste</button><button type="button" class="gold-btn solid" data-act="note-fill">Fill the week</button><button type="button" class="gold-btn quiet" data-act="note-clear">Clear</button></div>
+      ${info}</div></section>`;
+  }
+
+  const weekCardEl = document.getElementById('week-body'), weekTitleEl = document.getElementById('week-title');
+  const boardEl = document.getElementById('board'), pasteEl = document.getElementById('paste-sec'), barEl = document.getElementById('savebar');
+  const inField = el => el.contains(document.activeElement) && document.activeElement.matches('input, select, textarea');
+  let cmHeld = false;
+  function renderCm(){
+    if (!isCm()) return;
+    barHtml();
+    // No redraw out from under a field you're typing in; it waits for you to leave.
+    cmHeld = [weekCardEl, boardEl, pasteEl].some(inField);
+    if (cmHeld) return;
+    const [title, body] = weekCardHtml();
+    weekTitleEl.innerHTML = title;
+    weekCardEl.innerHTML = body;
+    const n = changeCount();
+    document.getElementById('board-title').innerHTML = `<span>Week ${ed.week || board.week}</span>${ed.cur ? `<span class="chip${n ? ' gold' : ''}">${n ? `${n} change${n === 1 ? '' : 's'}` : 'No changes'}</span>` : ''}`;
+    if (!ed.cur) boardEl.innerHTML = `<p class="empty${/Couldn/.test(ed.status) ? ' bad' : ''}">${esc(ed.status || 'Loading…')}</p>`;
+    else {
+      const o = ed.orig.rows;
+      const order = roster().slice().sort((a, b) => (!!o[b].bet_type - !!o[a].bet_type) || (o[a].gametime || '9').localeCompare(o[b].gametime || '9') || a.localeCompare(b));
+      boardEl.innerHTML = order.map(cmRow).join('') + (ed.steps ? `<div class="steps">${ed.steps.map(([s, t]) => `<p class="msg${s === 'fail' ? ' bad' : s === 'done' ? ' ok' : ''}">${t}</p>`).join('')}</div>` : '');
+    }
+    pasteEl.innerHTML = pasteHtml();
+  }
+  function barHtml(){
+    const n = changeCount();
+    barEl.hidden = !ed.cur || !(n || cmSaving);
+    if (barEl.hidden) return;
+    const mode = weekSaved(ed.year, ed.week) ? 'edit' : 'new';
+    const label = cmSaving ? 'Saving…' : ed.finding.size ? 'Finding games…' : mode === 'new' ? `Save Week ${ed.week}` : 'Save to the sheet';
+    barEl.innerHTML = `<span>${n} change${n === 1 ? '' : 's'}<small>Nothing is saved until you tap.</small></span>
+      <button type="button" class="gold-btn solid" data-act="save"${cmSaving || ed.finding.size || !stats ? ' disabled' : ''}>${label}</button>`;
+  }
+  for (const el of [weekCardEl, boardEl, pasteEl]) el.addEventListener('focusout', () => setTimeout(() => { if (cmHeld) renderCm(); }, 0));
+  addEventListener('beforeunload', e => { if (isCm() && ed.cur && changeCount() && !cmSaving) e.preventDefault(); });
+
+  // ---------- Week and numbers ----------
+  async function goToWeek(year, week){
+    if (ed.cur && changeCount() && !confirm(`Drop your unsaved changes to ${ed.year} Week ${ed.week}?`)) { renderCm(); return false; }
+    await loadWeek(year, week);
+    return true;
+  }
+  document.getElementById('week-card').addEventListener('click', async e => {
+    const step = e.target.closest('[data-step]');
+    if (step && !step.disabled) { const w = weekList()[Number(step.dataset.step)]; if (w) goToWeek(w.year, w.week); return; }
+    if (!e.target.closest('#m-lock') || cmSaving) return;
+    cmSaving = true; lockMsg = ''; renderCm();
     let res = null, out = {};
     try {
-      res = await fetch(WORKER_URL + '/legs/week', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(body) });
+      res = await fetch(WORKER_URL + '/legs/lock', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ locked: !board.locked }) });
       out = await res.json().catch(() => ({}));
     } catch { /* no connection */ }
-    metaSaving = false;
+    cmSaving = false;
     if (out.legs) board = { ...board, ...out };
-    metaMsg = res && res.ok ? 'Saved. It reaches the sheet in a minute or two.'
-      : out.error === 'bad_number' ? 'Odds and payout need to be numbers.' : `Couldn't save it (${res ? out.error || res.status : 'no connection'}).`;
+    lockMsg = res && res.ok ? (board.locked ? 'Legs locked. Only commissioners can change them now.' : 'Legs unlocked.')
+      : `Couldn't change the lock (${res ? out.error || res.status : 'no connection'}).`;
     render();
   });
+  document.getElementById('week-card').addEventListener('change', e => {
+    if (e.target.id === 'wk-select') {
+      const w = weekList()[Number(e.target.value)];
+      if (w && !(w.year === ed.year && w.week === ed.week)) goToWeek(w.year, w.week); else renderCm();
+      return;
+    }
+    const k = e.target.dataset.w;
+    if (!k || !ed.cur) return;
+    ed.cur[k] = e.target.value;
+    if (e.target.matches('select')) e.target.blur();
+    renderCm();
+  });
+  document.getElementById('week-card').addEventListener('input', e => {
+    const k = e.target.dataset.w;
+    if (k && ed.cur) { ed.cur[k] = e.target.value; barHtml(); }
+  });
+
+  // ---------- The rows ----------
+  boardEl.addEventListener('click', e => {
+    const seg = e.target.closest('[data-res] button');
+    if (seg && ed.cur) { ed.cur.rows[seg.parentElement.dataset.res].result = seg.dataset.v; renderCm(); return; }
+    const b = e.target.closest('[data-act]');
+    if (!b || !ed.cur) return;
+    const n = b.dataset.p;
+    if (b.dataset.act === 'edit') { if (ed.open.has(n)) ed.open.delete(n); else ed.open.add(n); renderCm(); }
+    else if (b.dataset.act === 'pick' && !saving) enterFor(n);
+    else if (b.dataset.act === 'fill') fillFromText(n);
+  });
+  boardEl.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.q != null && 'q' in t.dataset) ed.q[t.dataset.q] = t.value;
+    else if (t.dataset.f && ed.cur) { ed.cur.rows[t.dataset.p][t.dataset.f] = t.value; delete ed.parseWhy[t.dataset.p]; barHtml(); }
+  });
+  boardEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && 'q' in e.target.dataset) { e.preventDefault(); const n = e.target.dataset.q; e.target.blur(); fillFromText(n); }
+  });
+  boardEl.addEventListener('change', e => {
+    const t = e.target, n = t.dataset.p;
+    if (!ed.cur || !t.dataset.f) return;
+    const r = ed.cur.rows[n];
+    if (t.dataset.f === 'bet_type') {
+      // Clear the boxes the new bet type doesn't use.
+      const keep = FIELDS_FOR[t.value] || ALL_FIELDS;
+      ALL_FIELDS.forEach(f => { if (!keep.includes(f)) r[f] = ''; });
+      if (!t.value) { Object.assign(r, { ...blankRow(), raw_pick: r.raw_pick }); delete ed.gameWhy[n]; }
+    }
+    r[t.dataset.f] = t.value;
+    delete ed.parseWhy[n];
+    if (['bet_type', 'team', 'opponent', 'player_prop'].includes(t.dataset.f)) lookRow(n);
+    if (t.matches('select')) t.blur();   // a pick from a list is finished; redraw now
+    renderCm();
+  });
+
+  // ---------- Paste a whole week ----------
+  const WEEK_LINE = /^\s*\d{4}\s+week\s+\d+:?\s*$/i;
+  // The league's note keeps every week, newest on top. Only the top week is
+  // wanted: from the first "2026 Week 7:" line to the next one.
+  function topWeek(text){
+    const lines = String(text).replace(/\u00a0/g, ' ').split(/\r\n|\r|\n|\u2028|\u2029/);
+    const heads = lines.map((l, i) => WEEK_LINE.test(l) ? i : -1).filter(i => i >= 0);
+    if (!heads.length) return lines.join('\n').trim();
+    const before = lines.slice(0, heads[0]);
+    if (before.some(l => /^[^:]+:\s*[^:]+:\s*\S/.test(l))) return before.join('\n').trim();
+    return lines.slice(heads[0], heads[1] ?? lines.length).join('\n').trim();
+  }
+  async function applyNote(){
+    noteText = topWeek(noteText);
+    store.set(NOTE_KEY, noteText);
+    const { picks, final, unmatched } = ParlayNote.parse(noteText, roster());
+    const got = Object.keys(picks).length;
+    pasteOpen = true;
+    if (!got && !final.year) { pasteMsg = { bad: 'Nothing in that looks like a week of picks.' }; renderCm(); return; }
+    // The note names its week; otherwise it is the week the board is on.
+    const wk = final.year && final.week ? { year: Number(final.year), week: Number(final.week) } : { year: board.year, week: board.week };
+    if (wk.year !== ed.year || wk.week !== ed.week) { if (!(await goToWeek(wk.year, wk.week))) return; }
+    if (!ed.cur) return;
+    for (const n of roster()) {
+      const p = picks[n], was = ed.orig.rows[n];
+      delete ed.parseWhy[n]; delete ed.gameWhy[n]; delete ed.hint[n];
+      if (!p) { ed.cur.rows[n] = blankRow(); delete ed.keys[n]; continue; }
+      if (was.bet_type && was.raw_pick && was.raw_pick === p.raw_line) { ed.cur.rows[n] = clone(was); continue; }   // unchanged
+      ed.cur.rows[n] = { ...blankRow(), bet_type: p.bet_type, team: p.team, opponent: p.opponent, player_prop: p.player_prop,
+        line: p.line, side: p.side, odds: oddsText(p.odds), raw_pick: p.raw_line };
+      delete ed.keys[n];
+      if (!p.ok) ed.parseWhy[n] = p.why;
+      lookRow(n, true);
+    }
+    if (final.sacko && roster().includes(final.sacko)) ed.cur.sacko = final.sacko;
+    if (final.odds != null) ed.cur.final_odds = oddsText(final.odds);
+    if (final.payout != null) ed.cur.final_payout = String(final.payout);
+    pasteMsg = { year: ed.year, week: ed.week, got, missing: roster().filter(n => !picks[n]).length, skipped: unmatched };
+    renderCm();
+  }
+  pasteEl.addEventListener('input', e => { if (e.target.id === 'note-box') { noteText = e.target.value; store.set(NOTE_KEY, noteText); } });
+  pasteEl.addEventListener('paste', e => { if (e.target.id === 'note-box') setTimeout(() => { noteText = e.target.value; applyNote(); }, 0); });
+  pasteEl.addEventListener('click', async e => {
+    const a = e.target.closest('[data-act]');
+    if (!a) return;
+    const k = a.dataset.act;
+    if (k === 'paste-open') { pasteOpen = true; renderCm(); const box = document.getElementById('note-box'); if (box) box.focus(); }
+    else if (k === 'note-fill') { const box = document.getElementById('note-box'); if (box) noteText = box.value; await applyNote(); }
+    else if (k === 'note-clear') { noteText = ''; store.set(NOTE_KEY, ''); pasteMsg = null; renderCm(); const box = document.getElementById('note-box'); if (box) box.focus(); }
+    else if (k === 'note-paste') {
+      try { noteText = await navigator.clipboard.readText(); await applyNote(); }
+      catch { const box = document.getElementById('note-box'); if (box) box.focus(); }   // no clipboard access: paste by hand
+    }
+  });
+
+  // ---------- Save ----------
+  // A row's Raw Pick, when it has none yet, reads the way the note writes it.
+  const rawFor = r => r.raw_pick || (r.bet_type ? `${pickText({ ...r, odds: parseOdds(r.odds) })} (${fmtRowOdds(r)})` : '');
+  function editPayload(){
+    const rows = {};
+    for (const n of roster()) {
+      const r = ed.cur.rows[n];
+      rows[n] = { ...r, odds: parseOdds(r.odds), gametime: r.gametime ? `${r.gametime}:00` : '', raw_pick: rawFor(r),
+        result: r.bet_type ? (r.result || 'Pending') : '' };
+    }
+    const payout = parseFloat(String(ed.cur.final_payout).replace(/[$,\s]/g, ''));
+    return { sacko: ed.cur.sacko, final_odds: parseOdds(ed.cur.final_odds), final_payout: Number.isNaN(payout) ? null : payout, rows };
+  }
+  const SAVE_ERRORS = {
+    wrong_pin: () => 'Your sign-in has run out. Tap You and sign in again.',
+    not_configured: () => 'Your sign-in has run out. Tap You and sign in again.',
+    cooldown: b => `Just saved. Try again in ${b.retryAfterSeconds}s.`,
+  };
+  const steps = list => { ed.steps = list; renderCm(); };
+
+  async function saveWeek(){
+    if (cmSaving || !ed.cur || !changeCount() || ed.finding.size || !stats) return;
+    const year = ed.year, week = ed.week, mode = weekSaved(year, week) ? 'edit' : 'new';
+    const sent = clone(ed.cur);
+    const body = { picks: { year, week, mode, loaded_at: ed.asOf, dry_run: dryQ !== '', ...editPayload() } };
+    cmSaving = true;
+    steps([['', 'Sending…']]);
+    const sentAt = Date.now();
+    let res = null, out = {};
+    try {
+      res = await fetch(WORKER_URL + '/parlay-entry', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(body) });
+      out = await res.json().catch(() => ({}));
+    } catch { /* no connection */ }
+    if (!res || !res.ok) {
+      cmSaving = false;
+      steps([['fail', esc(res && SAVE_ERRORS[out.error] ? SAVE_ERRORS[out.error](out) : `Couldn't send it (${res ? out.error || res.status : 'no connection'}). Try again.`)]]);
+      return;
+    }
+    const label = `${year} Week ${week}`;
+    if (body.picks.dry_run) { cmSaving = false; steps([['done', `Sent ${label} as a dry run. Nothing will be written; check the Enter Parlay Picks Action log.`]]); return; }
+    steps([['done', `Sent ${label}`], ['', 'Writing it to the sheet, grading and publishing. Usually a minute or two.']]);
+    loadBoard();   // the Worker already moved the board's copy
+    // Done once Parlay Results' data is newer than the save and has the week.
+    const deadline = sentAt + 6 * 60 * 1000;
+    const poll = async () => {
+      try {
+        const data = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(r => r.json());
+        // Newer than the save, and holding these picks: a scheduled refresh
+        // can publish the old copy of a week being replaced in between.
+        const w = Date.parse(data.generated_at) > sentAt && data.weeks.find(x => x.year === year && x.week === week);
+        const same = ([n, r]) => !r.bet_type || (w.picks[n] && (w.picks[n].odds ?? null) === (r.odds ?? null) && (mode === 'new' || w.picks[n].result === r.result));
+        if (w && Object.entries(body.picks.rows).every(same)) {
+          stats = data;
+          cmSaving = false;
+          if (ed.year === year && ed.week === week && ed.orig) ed.orig = sent;   // later edits stay changes
+          if (pasteMsg) { noteText = ''; store.set(NOTE_KEY, ''); pasteMsg = null; pasteOpen = false; }
+          steps([['done', `Saved and published. <a href="parlay-results.html" style="color:var(--gold);font-weight:600">See it on Parlay Results</a>`]]);
+          return;
+        }
+      } catch { /* try again next tick */ }
+      if (Date.now() < deadline) setTimeout(poll, 10000);
+      else {
+        cmSaving = false;
+        steps([['done', `Sent ${label}`], ['fail', `It hasn't shown up after six minutes. Check the <a href="https://github.com/bradbutcher321/RetirementLeague/actions/workflows/enter_parlay.yml" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600">Enter Parlay Picks</a> Action.`]]);
+      }
+    };
+    setTimeout(poll, 30000);
+  }
+  barEl.addEventListener('click', e => { if (e.target.closest('[data-act="save"]')) saveWeek(); });
 
   function enterFor(p){
     target = p === me() ? null : p;
-    editing = false; saveMsg = ''; st = { ...blank(), sport: st.sport };
+    // A Re-pick on someone who has a leg goes straight to the board.
+    editing = target !== null && !!mine(); saveMsg = ''; st = { ...blank(), sport: st.sport };
     render();
     document.getElementById('mine-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
-  document.getElementById('board').addEventListener('click', e => { const b = e.target.closest('[data-for]'); if (b && !saving) enterFor(b.dataset.for); });
   document.getElementById('mine-title').addEventListener('click', e => { if (e.target.closest('#back-mine') && !saving) enterFor(me()); });
 
   // ---------- Start ----------
+  // From the iPhone Shortcut (the old Enter Picks link): parlay-legs.html#note=<the note, URL-encoded>.
+  // It waits in the paste box, and a signed-in commissioner gets it filled into the week.
+  if (location.hash.startsWith('#note=')) {
+    try {
+      noteText = topWeek(decodeURIComponent(location.hash.slice(6)));
+      store.set(NOTE_KEY, noteText);
+      pasteOpen = noteFromLink = true;
+    } catch { /* a mangled link: keep what was there */ }
+    history.replaceState(null, '', location.pathname + location.search);
+  }
   addEventListener('rl-auth', loadBoard);
   // Everyone else's legs land while you look: every 45 seconds, and on return.
   setInterval(() => { if (document.visibilityState === 'visible' && !saving) loadBoard(); }, 45000);

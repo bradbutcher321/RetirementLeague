@@ -22,9 +22,9 @@
  * POST /refresh-parlay -> dispatches the Parlay data refresh Action on
  *                      demand (see parlayRefresh.js); used by the "Refresh
  *                      Data" button on the Parlay Results page.
- * POST /parlay-entry -> the Enter Picks page's save: checks the PIN and
- *                      dispatches the Action that writes the week to the
- *                      sheet (see parlayEntry.js).
+ * POST /parlay-entry -> Parlay Legs' commissioner save: checks a signed-in
+ *                      commissioner (or the PIN) and dispatches the Action
+ *                      that writes the week to the sheet (see parlayEntry.js).
  * GET /parlay-week?year=&week= -> one week's raw rows, for Edit Week.
  * GET /median-history -> the week's projected median over time, for Median
  *                      Watch's chart (see medianHistory.js; the rows are
@@ -69,8 +69,8 @@ import { getPlayerLog } from "./playerLog.js";
 import { getDraft } from "./draft.js";
 import { feedBoard, getFeed, recordScoreEvents } from "./scoreFeed.js";
 import { cached } from "./cache.js";
-import { AUTH_ROUTES } from "./auth.js";
-import { LEG_ROUTES } from "./legs.js";
+import { AUTH_ROUTES, sessionManager } from "./auth.js";
+import { COMMISSIONERS, LEG_ROUTES, guardSavedWeek, mirrorSavedWeek } from "./legs.js";
 import { VIDEO_ROUTES } from "./videos.js";
 import { runHealthCheck } from "./healthCheck.js";
 
@@ -207,7 +207,10 @@ export default {
     }
     if (path === "/parlay-entry") {
       if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
-      const result = await enterParlay(request, env).catch((err) => ({ status: 502, body: { error: String(err) } }));
+      // A signed-in commissioner needs no PIN; anyone else still does.
+      const who = await sessionManager(request, env).catch(() => null);
+      const commissioner = !!who && COMMISSIONERS.includes(who.manager);
+      const result = await enterParlay(request, env, { commissioner, guard: (p) => guardSavedWeek(env, p), after: (p) => mirrorSavedWeek(env, p) }).catch((err) => ({ status: 502, body: { error: String(err) } }));
       return jsonResponse(result.body, headers, result.status);
     }
     if (path === "/parlay-week") {
