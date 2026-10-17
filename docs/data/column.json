@@ -1,4 +1,109 @@
 {
- "generated_at": "2026-10-17T06:00:00+00:00",
- "columns": []
+ "generated_at": "2026-10-17T14:59:14+00:00",
+ "columns": [
+  {
+   "id": "2026-w05-recap",
+   "kind": "recap",
+   "season": 2026,
+   "week": 5,
+   "published_at": "2026-10-17T10:59:14-04:00",
+   "headline": "Chad Flattens Joe G and Takes Over First Place",
+   "dek": "Chad posted the week's best score by a mile, Jon won with the tenth-best score and still slid out of first, and Collin left a winning quarterback on the bench.",
+   "body": [
+    "Chad did not so much beat Joe G as file a noise complaint against him. The final was <b>155.24</b> to <b>68.26</b>, a margin of <b>86.98</b>, the highest and lowest scores of the week in the same box. Jahmyr Gibbs put up <b>35.20</b> and Christian Watson beat his projection by <b>17.78</b>. The series now sits tied 11-11, and Chad sits alone in first at 8-2. Even his worst lineup call was a rounding error: <b>1.40</b> points left on the bench.",
+    "Joe G, meanwhile, got <b>1.90</b> from CeeDee Lamb on a <b>15.46</b> projection, and RJ Harvey chipped in <b>0.70</b>. His best possible lineup was <b>81.36</b>, so no bench move was saving this one. He drops from third to fifth at 6-4, which is still a winning record, which is the nicest thing anyone can say about his Sunday.",
+    "Now the one that hurts. Collin lost the week's closest game to Jon, <b>81.54</b> to <b>74.42</b>, by <b>7.12</b>. He started Tyler Shough at quarterback, who finished at <b>-0.16</b> on a <b>16.51</b> projection, while Jordan Love sat on his bench with <b>25.28</b>. Collin's best lineup was <b>107.46</b>, enough to win, which makes him the only loser this week who chose his loss. He left <b>33.04</b> on the pine and slides to last at 2-8.",
+    "Jon will take the win, and he should, because it was a heist. His <b>81.54</b> was tenth of 12, well under the <b>100.25</b> median, and his bench produced exactly <b>0.00</b>. Parker Washington's <b>27.40</b> carried the lineup. Jon went 1-1 on the week, and he slid from first to second at 8-2, behind Chad on points. Jon leads that series 4-3.",
+    "Jeff beat Brad <b>108.36</b> to <b>100.70</b> despite starting a quarterback who scored <b>0.00</b> on an <b>18.17</b> projection, with C.J. Stroud and his <b>20.94</b> sitting on the bench. Jayden Daniels and his <b>32.26</b> covered for it. Jeff jumps from ninth to sixth. Brad got <b>26.90</b> from Isaiah Likely and <b>1.10</b> from Carnell Tate, beat the <b>100.25</b> median by <b>0.45</b>, and still lost. He stays eighth and still leads Jeff 10-7 in the series, for what that is worth this week.",
+    "TJ owns the start of the week: Drake Maye put up <b>39.46</b> on an <b>18.47</b> projection, beating it by <b>20.99</b>, and TJ beat Ben <b>123.56</b> to <b>99.80</b>. Ben missed the median by <b>0.45</b>, got <b>1.10</b> from David Montgomery, and fell from seventh to tenth. Joe K handled Kris <b>124.88</b> to <b>105.50</b> and climbed from tenth to seventh. Kris left MarShawn Lloyd's <b>16.20</b> on the bench, but his best lineup was <b>124.00</b>, still short, so blame the opponent and not the clipboard.",
+    "Down in the cellar, Flanders beat Jared <b>96.34</b> to <b>85.92</b> while getting <b>0.00</b> from tight end Kenyon Sadiq, and that was enough to climb out of last to eleventh. Jared got <b>1.50</b> from Deebo Samuel Sr. and fell from sixth to ninth. Jared still leads that series 9-8."
+   ],
+   "standings": [
+    {
+     "rank": 1,
+     "manager": "Chad",
+     "record": "8-2",
+     "move": 1,
+     "note": "155.24, the week's high, and only 1.40 left on the bench. Up to first."
+    },
+    {
+     "rank": 2,
+     "manager": "Jon",
+     "record": "8-2",
+     "move": -1,
+     "note": "Won with 81.54, tenth of 12. Bench scored 0.00. Lost first place anyway."
+    },
+    {
+     "rank": 3,
+     "manager": "Kris",
+     "record": "7-3",
+     "move": 1,
+     "note": "Josh Allen gave 30.50 and Kris still lost, but rose to third at 7-3."
+    },
+    {
+     "rank": 4,
+     "manager": "TJ",
+     "record": "6-4",
+     "move": 1,
+     "note": "Drake Maye: 39.46 on an 18.47 projection. Up to fourth."
+    },
+    {
+     "rank": 5,
+     "manager": "Joe G",
+     "record": "6-4",
+     "move": -2,
+     "note": "68.26, the week's low. CeeDee Lamb: 1.90. Down to fifth."
+    },
+    {
+     "rank": 6,
+     "manager": "Jeff",
+     "record": "5-5",
+     "move": 3,
+     "note": "Won with a 0.00 at QB and 49.94 on the bench. Up three spots to sixth."
+    },
+    {
+     "rank": 7,
+     "manager": "Joe K",
+     "record": "5-5",
+     "move": 3,
+     "note": "Puka Nacua's 29.20 led a 124.88 that lifted him from tenth to seventh."
+    },
+    {
+     "rank": 8,
+     "manager": "Brad",
+     "record": "4-6",
+     "move": 0,
+     "note": "Beat the median by 0.45 and still lost. Carnell Tate: 1.10 on an 11.10 projection."
+    },
+    {
+     "rank": 9,
+     "manager": "Jared",
+     "record": "3-7",
+     "move": -3,
+     "note": "Deebo Samuel Sr. gave 1.50 in the flex. Down three spots to ninth."
+    },
+    {
+     "rank": 10,
+     "manager": "Ben",
+     "record": "3-7",
+     "move": -3,
+     "note": "Missed the median by 0.45. David Montgomery: 1.10. Down to tenth."
+    },
+    {
+     "rank": 11,
+     "manager": "Flanders",
+     "record": "3-7",
+     "move": 1,
+     "note": "A 0.00 at tight end and still a win. Out of the basement, up to eleventh."
+    },
+    {
+     "rank": 12,
+     "manager": "Collin",
+     "record": "2-8",
+     "move": -1,
+     "note": "Jordan Love's 25.28 sat; Tyler Shough's -0.16 played. Last at 2-8."
+    }
+   ]
+  }
+ ]
 }
