@@ -1050,6 +1050,11 @@
      on desktop. Gold is each pod's figure; the two misses are red. */
   #recap-section{ margin-bottom: 14px; }
   #notice-section{ margin-bottom: 14px; }
+  #column-section{ margin-bottom: 14px; }
+  .col-box{ padding: 14px 14px 14px; }
+  .col-box-h{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; line-height: 1.05; text-wrap: balance; }
+  .col-box-d{ color: #D3D3CF; font-size: 0.86rem; line-height: 1.45; margin-top: 6px; }
+  .col-open{ display: inline-flex; align-items: center; height: 44px; padding: 0 18px; margin-top: 12px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); font-weight: 700; font-size: 0.82rem; text-decoration: none; }
   .notice-stack{ display: grid; gap: 10px; }
   .notice-chip{ font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); white-space: nowrap; }
   .notice-box{ padding: 12px 14px; font-size: 0.92rem; line-height: 1.4; }
@@ -1228,6 +1233,10 @@
          matchups have nothing new to say. Hidden the rest of the week. -->
     <section id="recap-section" hidden></section>
 
+    <!-- The Column (site audit III #3): the latest written recap or preview,
+         from data/column.json. Shown for a week after it is published. -->
+    <section id="column-section" hidden></section>
+
     <!-- A commissioner's announcement and the draft date (Commissioner page >
          Announcements, Season Setup; Worker GET /site-info). Absent when there
          is neither. -->
@@ -1348,7 +1357,7 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=24"></script>
+<script src="nav.js?v=25"></script>
 <script src="page-common.js?v=39"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
@@ -5650,7 +5659,7 @@
         // the new cards join it instead of appearing at once next to
         // League Lore, the one card that isn't rebuilt.
         const RISE_MS = 500 + 8 * 90;
-        const riseCards = () => riseIn(document.querySelectorAll('#recap-section:not([hidden]), #me-section:not([hidden]), #median-container > :not(.sr-only), .lore-row > div > *, #matchups-container > *, #season-section'), 8, performance.now() - riseStartedAt);
+        const riseCards = () => riseIn(document.querySelectorAll('#recap-section:not([hidden]), #column-section:not([hidden]), #me-section:not([hidden]), #median-container > :not(.sr-only), .lore-row > div > *, #matchups-container > *, #season-section'), 8, performance.now() - riseStartedAt);
         if (!dashboardShown) {
           dashboardShown = true;
           if (!parlayData) document.getElementById('parlay-highlight-container').innerHTML = '';
@@ -5754,6 +5763,23 @@
       if (!html) return;
       sec.innerHTML = `<div class="notice-stack">${html}</div>`;
       sec.hidden = false;
+    }).catch(() => {});
+  })();
+</script>
+<script>
+  // The Column card: the newest column's headline and dek, linking to the
+  // page. Only for a week after it is published; quiet on any failure.
+  (function () {
+    const sec = document.getElementById('column-section');
+    if (!sec) return;
+    fetch('data/column.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(d => {
+      const c = d && d.columns && d.columns[0];
+      if (!c || Date.now() - new Date(c.published_at).getTime() > 7 * 864e5) return;
+      sec.innerHTML = `<div class="glass notice-card"><div class="panel-title"><span>The Column</span><span class="notice-chip">Week ${c.week} ${c.kind === 'preview' ? 'preview' : 'recap'}</span></div>
+        <div class="panel-body"><div class="item col-box"><div class="col-box-h">${esc(c.headline)}</div><div class="col-box-d">${esc(c.dek)}</div>
+        <a class="col-open" href="column.html">Read it</a></div></div></div>`;
+      sec.hidden = false;
+      riseIn(sec.querySelectorAll('.glass'));
     }).catch(() => {});
   })();
 </script>

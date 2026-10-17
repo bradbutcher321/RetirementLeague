@@ -25,6 +25,7 @@
     trophy: SVG('<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7"/>'),
     jersey: SVG('<path d="M8.5 4 4 6.2l1.6 4 2.4-1V20h8V9.2l2.4 1 1.6-4L15.5 4a3.6 3.6 0 0 1-7 0z"/>'),
     flag: SVG('<path d="M5 21V4M5 5h12l-2.5 3.8L17 12.5H5"/>'),
+    pen: SVG('<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14 7l3 3"/>'),
     spark: SVG('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>'),
   };
 
@@ -41,6 +42,7 @@
   const NO_TAB = ['commissioner.html'];
   // The History hub's tiles (history.html), in its order.
   const HISTORY = [
+    { href: 'column.html', label: 'The Column', sub: 'Tuesday recap, Thursday preview', icon: ICONS.pen },
     { href: 'overview.html', label: 'League History', sub: 'Champions, timeline, leaderboards', icon: ICONS.book },
     { href: 'game-records.html', label: 'Game Records', sub: 'Every single-game record', icon: ICONS.chart },
     { href: 'head-to-head.html', label: 'Head to Head', sub: 'Any two managers', icon: ICONS.people },

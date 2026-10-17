@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="A written recap every Tuesday and a preview every Thursday, roasted from the league's own numbers.">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Retirement League">
+<meta property="og:title" content="Retirement League — The Column">
+<meta property="og:description" content="A written recap every Tuesday and a preview every Thursday, roasted from the league's own numbers.">
+<meta property="og:url" content="https://bradbutcher321.github.io/RetirementLeague/column.html">
+<meta property="og:image" content="https://bradbutcher321.github.io/RetirementLeague/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>html{background:#050505}</style>
+<title>Retirement League — The Column</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=30">
+<link rel="stylesheet" href="nav.css?v=17">
+<link rel="stylesheet" href="features.css?v=4">
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>The Column</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- No heading above the article or the picker: the page title names the
+         subject, the picker names which column, and the chip in the article
+         says its week and kind. -->
+    <div class="ft-ctl" id="picker" hidden></div>
+    <div id="view"><span class="sr-only">Loading…</span></div>
+    <footer id="site-footer"></footer>
+  </div>
+<script src="nav.js?v=25"></script>
+<script src="page-common.js?v=39"></script>
+<script src="league-common.js?v=5"></script>
+<script>
+  // The Column (site audit III #3). Reads data/column.json, written by the
+  // Tuesday recap and Thursday preview routines through tools/column_add.py,
+  // which has already checked every number in the text against the week's
+  // data. Paragraphs carry <b> around figures and nothing else; they are
+  // escaped here first and only the <b> tags put back.
+  const $ = id => document.getElementById(id);
+  let C = [], cur = null;
+
+  const safe = s => esc(s).replace(/&lt;(\/?)b&gt;/g, '<$1b>');
+  const day = iso => new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' });
+  const kindLabel = c => c.kind === 'preview' ? 'Preview' : 'Recap';
+  const chipText = c => `Week ${c.week} · ${kindLabel(c)}`;
+
+  function standingsHtml(c) {
+    return `<div class="glass ft-sec"><div class="panel-title">Where everyone stands</div>
+      <div class="ft-body"><div class="ft-lines">${c.standings.map(s => {
+        const mv = s.move > 0 ? `<span class="turf">▲${s.move}</span>` : s.move < 0 ? `<span class="lossc">▼${-s.move}</span>` : '<span class="dimt">–</span>';
+        return `<div class="ft-line col-row"><div class="ft-rk">${s.rank}</div><div class="col-mv">${mv}</div>
+          <div class="ft-main"><div class="ft-n">${esc(s.manager)} <span class="dimt">${esc(s.record)}</span></div><div class="ft-s">${esc(s.note)}</div></div></div>`;
+      }).join('')}</div></div></div>`;
+  }
+
+  function gamesHtml(c) {
+    return `<div class="glass ft-sec"><div class="panel-title">The matchups</div>
+      <div class="ft-body"><div class="ft-lines">${c.games.map(g => `<div class="ft-line col-row"><div class="ft-main">
+        <div class="ft-n">${esc(g.a)} <span class="dimt">vs</span> ${esc(g.b)}</div><div class="ft-s">${esc(g.note)}</div></div></div>`).join('')}</div></div></div>`;
+  }
+
+  function render() {
+    const c = cur;
+    $('view').innerHTML = `<div class="glass col-art">
+        <div class="col-top"><span class="ft-chip gold">${chipText(c)}</span><span class="dimt col-date">${esc(day(c.published_at))}</span></div>
+        <h2 class="col-hl">${esc(c.headline)}</h2>
+        <p class="col-d">${esc(c.dek)}</p>
+        <div class="col-by">Written by Claude from the league’s data</div>
+        ${c.body.map(p => `<p class="col-p">${safe(p)}</p>`).join('')}
+      </div>${c.kind === 'preview' ? gamesHtml(c) : standingsHtml(c)}`;
+    $('picker').innerHTML = C.length > 1
+      ? `<select class="lg-select" id="pick" aria-label="Column">${C.map(x => `<option value="${esc(x.id)}"${x.id === c.id ? ' selected' : ''}>${esc(x.season === C[0].season ? chipText(x) : x.season + ' · ' + chipText(x))}</option>`).join('')}</select>` : '';
+    $('picker').hidden = C.length < 2;
+    setUrlParams({ id: c.id === C[0].id ? null : c.id });
+  }
+  document.addEventListener('change', e => {
+    if (e.target.id !== 'pick') return;
+    cur = C.find(x => x.id === e.target.value) || C[0];
+    render();
+    window.scrollTo({ top: 0 });
+  });
+
+  fetch('data/column.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
+    C = d.columns || [];
+    if (d.generated_at) $('updated-at').textContent = formatUpdated(d.generated_at);
+    if (!C.length) { $('view').innerHTML = '<div class="glass"><div class="ft-empty">The first column goes up Tuesday, after Monday Night Football.</div></div>'; return; }
+    cur = C.find(x => x.id === urlParam('id')) || C[0];
+    render();
+    riseIn(document.querySelectorAll('#view .glass'));
+  }).catch(err => { $('view').innerHTML = `<div class="glass"><div class="ft-empty">Couldn't load the column (${esc(err.message)}).</div></div>`; });
+</script>
+<script src="track.js?v=2" defer></script>
+</body>
+</html>
