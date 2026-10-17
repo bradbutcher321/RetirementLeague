@@ -198,7 +198,9 @@ CREATE TABLE IF NOT EXISTS score_events (
     opp_manager TEXT,
     opp_proj REAL,
     median_prev REAL,
-    median REAL
+    median REAL,
+    kind TEXT,
+    note TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_score_events_week ON score_events (season, week, id);
 CREATE INDEX IF NOT EXISTS idx_score_events_player ON score_events (season, week, player_id, id);

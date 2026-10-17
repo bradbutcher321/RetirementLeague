@@ -239,11 +239,16 @@ const FEED_STATS = [1, 3, 4, 19, 20, 23, 24, 25, 26, 41, 42, 43, 44, 53, 61, 63,
   74, 77, 80, 83, 85, 86, 88, 95, 96, 97, 98, 99, 101, 102, 105, 120];
 
 /** Each starter's points right now, for the Feed (scoreFeed.js): who has
- * him, his points and the stats behind them, and where his game is. */
+ * him, his points and the stats behind them, and where his game is. Also what
+ * ESPN projects him for (pj), his injury report (inj) and his game's state
+ * (gs), which is how the Feed tells a lineup move or injury news from a play
+ * when a team's projection moves. */
 function starterLines(entries, manager, gameStateByProTeam) {
   return entries.filter((e) => SLOT_ORDER.includes(e.lineupSlotId)).map((e) => {
     const player = e.playerPoolEntry?.player || e.player || {};
     const actual = (player.stats || []).find((s) => s.statSourceId === 0);
+    const projected = (player.stats || []).find((s) => s.statSourceId === 1);
+    const injury = player.injuryStatus || e.injuryStatus;
     const s = {};
     for (const id of FEED_STATS) {
       const v = actual?.stats?.[id];
@@ -261,6 +266,9 @@ function starterLines(entries, manager, gameStateByProTeam) {
       op: game?.opponentAbbrev || "",
       q: game?.period || 0,
       clk: game?.displayClock || "",
+      pj: projected ? round2(projected.appliedTotal || 0) : 0,
+      inj: injury && injury !== "ACTIVE" ? injury : "",
+      gs: game?.state || "",
     };
   });
 }

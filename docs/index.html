@@ -2683,15 +2683,25 @@
     wrap.querySelector('.fl-key').innerHTML = `<span class="a">${esc(A)} ${fmtScore(val(last, A))}</span><span class="b">${esc(B)} ${fmtScore(val(last, B))}</span>`
       + (withMedian ? `<span class="md"><i></i>Median ${fmtScore(md(last))}</span>` : '') + `<span class="note">${metric}</span>`;
 
-    // What the biggest jump was, from the Feed when it saw the play.
+    // What the biggest jump was, from the Feed when it saw it. A row only
+    // gets the blame if it moved the projection at least half as far as the
+    // jump did: a catch that was called back a minute later, beside a lineup
+    // change at halftime, explains none of it. (A projection note is a lineup
+    // move or injury news, and says which.)
     const swing = wrap.querySelector('.fl-swing');
     swing.hidden = !best;
     if (best) {
       const t0 = pts[best.i - 1].t - 60, t1 = pts[best.i].t + 60;
+      const moved = e => (e.k === 'p' || typeof e.pa !== 'number' || typeof e.pb !== 'number' ? e.d : e.pb - e.pa);
       const ev = metric === 'current' ? null : feedFor(dashWeek).filter(e => e.m === best.who && e.t / 1000 > t0 && e.t / 1000 <= t1)
-        .sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0];
-      swing.innerHTML = ev
-        ? `<b>${esc(mhDay(ev.t / 1000))} ${esc(fdTime(ev.t))}</b> ${esc(ev.n)}’s ${esc(feedWhat(ev))} moved ${esc(best.who)}’s projection ${mhSigned(best.d)}.`
+        .sort((a, b) => Math.abs(moved(b)) - Math.abs(moved(a)))[0];
+      const explains = ev && Math.abs(moved(ev)) >= Math.abs(best.d) / 2 && Math.sign(moved(ev)) === Math.sign(best.d);
+      const when = explains ? `<b>${esc(mhDay(ev.t / 1000))} ${esc(fdTime(ev.t))}</b>` : '';
+      const reasons = explains && ev.k === 'p' ? (ev.nt || []).filter(x => x.a).slice(0, 3).map(x => esc(x.t)).join(', ') : '';
+      swing.innerHTML = explains && ev.k === 'p'
+        ? `${when} ${esc(ev.n)} moved ${esc(best.who)}’s projection ${mhSigned(best.d)}.${reasons ? ' ' + reasons + '.' : ''}`
+        : explains
+        ? `${when} ${esc(ev.n)}’s ${esc(feedWhat(ev))} moved ${esc(best.who)}’s projection ${mhSigned(best.d)}.`
         : `<b>Biggest swing</b> ${esc(best.who)}’s ${metric === 'current' ? 'score' : 'projection'} ${mhSigned(best.d)}, ${esc(mhFmtTime(pts[best.i].t))}.`;
     }
 

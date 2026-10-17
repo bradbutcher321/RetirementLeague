@@ -195,6 +195,8 @@
   .fd-m b{ font-weight: 600; }
   .fd-m .what{ color: var(--text-dim); }
   .fd-s{ color: var(--text-dim); font-size: 0.68rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fd-s.fd-why{ white-space: normal; margin-top: 3px; color: var(--fd-soft); }
+  .fd-s.fd-why b{ font-weight: 700; font-variant-numeric: tabular-nums; }
   .fd-p{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.08rem; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
   .fd-p.big{ font-size: 1.3rem; }
   .fd-p.gold{ color: var(--gold); } .fd-p.mc{ color: var(--me-ring); } .fd-p.wt{ color: var(--text); }
@@ -324,6 +326,13 @@
     for (const e of events) {
       const key = e.pid || e.n;
       if (!cur.has(e.m)) cur.set(e.m, 0);
+      // A projection note (lineup move, injury news) changes no score.
+      if (e.k === 'p') {
+        e.ca = e.cb = cur.get(e.m); e.mca = e.mcb = median([...cur.values()]);
+        e.oc = e.om != null ? cur.get(e.om) ?? 0 : null;
+        e.what = ''; e.td = false; e.over = false; e.undo = false;
+        continue;
+      }
       e.ca = cur.get(e.m); e.mca = median([...cur.values()]);
       cur.set(e.m, cur.get(e.m) - (pts.get(key) || 0) + e.b);
       pts.set(key, e.b);
@@ -409,12 +418,13 @@
     const gp = game ? (games.find(g => g.key === game)?.teams || game.split('-')) : null;
     document.getElementById('fd-gpill').innerHTML = gp ? `<button type="button" class="fd-gpill" data-fd-cleargame>${esc(gp.join(' vs '))} plays<i aria-hidden="true">✕</i></button>` : '';
 
-    const perDay = new Map();
-    list.forEach(e => { const d = fdDay(e.t); perDay.set(d, (perDay.get(d) || 0) + 1); });
+    const perDay = new Map(), upDay = new Map();
+    list.forEach(e => { const d = fdDay(e.t), c = e.k === 'p' ? upDay : perDay; c.set(d, (c.get(d) || 0) + 1); });
     let lastDay = '';
     const rows = list.map(e => {
-      const day = fdDay(e.t), n = perDay.get(day);
-      const head = day !== lastDay ? `<div class="fd-day"><span>${day}</span><span class="dc">${n} play${n === 1 ? '' : 's'}</span></div>` : '';
+      const day = fdDay(e.t), n = perDay.get(day) || 0, u = upDay.get(day) || 0;
+      const count = [n ? `${n} play${n === 1 ? '' : 's'}` : '', u ? `${u} projection note${u === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ');
+      const head = day !== lastDay ? `<div class="fd-day"><span>${day}</span><span class="dc">${count}</span></div>` : '';
       lastDay = day;
       const whose = e.m === me ? 'mine' : opp && e.m === opp ? 'opp' : '';
       // No red for a loss: the minus sign already says it.
@@ -426,14 +436,18 @@
       // row from before it kept them shows the compact line instead.
       const detailed = view === 'detailed' && !e.over && typeof e.pa === 'number' && typeof e.pb === 'number';
       const who = name(e.m, sTone(e.m)) + (other ? ' vs ' + name(other, oTone(other)) : '');
-      const sub = detailed ? esc(gameLine) : who + (gameLine ? ' · ' + esc(gameLine) : '');
-      const tags = (e.td ? '<span class="tag">TD</span>' : '') + (e.over ? '<span class="tag over">Overturned</span>' : '');
+      // A projection note has no game, so its second line is always the matchup.
+      const sub = e.k === 'p' ? who : detailed ? esc(gameLine) : who + (gameLine ? ' · ' + esc(gameLine) : '');
+      const tags = (e.td ? '<span class="tag">TD</span>' : '') + (e.over ? '<span class="tag over">Overturned</span>' : '')
+        + (e.k === 'p' ? '<span class="tag over">Proj</span>' : '');
+      // What moved it: each reason with its share of the change.
+      const why = e.k === 'p' ? (e.nt || []).map(x => `<div class="fd-s fd-why">${esc(x.t)} <b class="${x.a < 0 ? 'soft' : sTone(e.m)}">${x.a > 0 ? '+' : x.a < 0 ? '−' : ''}${f2(Math.abs(x.a))}</b></div>`).join('') : '';
       const x = detailed ? `<div class="fd-x">${lines(e, other, sTone(e.m), oTone(other), name)}</div>` : '';
       const mins = e.over ? Math.max(1, Math.round(e.over / 60000)) : 0;
       const note = e.over && view === 'detailed' ? `<div class="fd-note">Taken back ${mins === 1 ? 'a minute' : mins + ' minutes'} later, so it didn't count.</div>` : '';
       return `${head}<div class="fd-row item${whose ? ' ' + whose : ''}${detailed ? '' : ' compact'}${e.td && !e.over ? ' td' : ''}${e.over ? ' over' : ''}${seen && e.id > seen ? ' fd-new' : ''}" data-id="${e.id}">
           <span class="fd-t">${fdTime(e.t)}</span>
-          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${tags}${sub ? `<div class="fd-s">${sub}</div>` : ''}</div>
+          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${tags}${sub ? `<div class="fd-s">${sub}</div>` : ''}${why}</div>
           <span class="fd-p ${valTone}${Math.abs(e.d) >= 6 ? ' big' : ''}">${e.d > 0 ? '+' : '−'}${f2(Math.abs(e.d))}</span>
           ${x}${note}
         </div>`;
