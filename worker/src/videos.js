@@ -18,18 +18,36 @@
  */
 import { sessionManager } from "./auth.js";
 import { cached } from "./cache.js";
+import { getSetting } from "./roles.js";
 
 const CACHE_SECONDS = 30 * 60;
 
-/** The season -> playlist id map, or {} when it isn't set. */
-function playlists(env) {
+const cleanMap = (map) => Object.fromEntries(Object.entries(map || {}).filter(([y, id]) => /^\d{4}$/.test(y) && /^[A-Za-z0-9_-]{10,60}$/.test(id)));
+
+/** The season -> playlist id map from the secret, or {} when it isn't set. */
+function secretPlaylists(env) {
   try {
-    const map = JSON.parse(env.VIDEO_PLAYLISTS || "{}");
-    return Object.fromEntries(Object.entries(map).filter(([y, id]) => /^\d{4}$/.test(y) && /^[A-Za-z0-9_-]{10,60}$/.test(id)));
+    return cleanMap(JSON.parse(env.VIDEO_PLAYLISTS || "{}"));
   } catch {
     return {};
   }
 }
+
+/** The secret's playlists plus the ones the Commissioner page saved (the
+ * page's win), season -> playlist id. */
+export async function playlists(env) {
+  return { ...secretPlaylists(env), ...cleanMap(await getSetting(env, "video_playlists", {})) };
+}
+
+/** A playlist id from what was pasted: the id itself, or a YouTube link with list=. */
+export function playlistId(text) {
+  const t = String(text || "").trim();
+  const id = (t.match(/[?&]list=([A-Za-z0-9_-]+)/) || [])[1] || t;
+  return /^[A-Za-z0-9_-]{10,60}$/.test(id) ? id : "";
+}
+
+/** Ids of videos the commissioner hid. */
+export const hiddenVideos = async (env) => new Set(await getSetting(env, "video_hidden", []));
 
 /** Every { id, title } in a playlist page's data, in page order. */
 function pageVideos(html) {
@@ -52,7 +70,7 @@ function pageVideos(html) {
 /** "2023 Retirement League - Week 4" or "2020 Week 3 - The Beginning" -> "Week 4" / "Week 3 - The Beginning". */
 const shortTitle = (t) => t.replace(/^\s*\d{4}\s+(?:Retirement League\s*)?[-–:]?\s*/i, "").trim() || t;
 
-async function fetchPlaylist(listId) {
+export async function fetchPlaylist(listId) {
   const res = await fetch(`https://www.youtube.com/playlist?list=${listId}&hl=en`, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
@@ -68,13 +86,13 @@ async function fetchPlaylist(listId) {
 
 async function getVideos(request, env) {
   if (!(await sessionManager(request, env))) return { status: 401, body: { error: "signed_out" } };
-  const lists = playlists(env);
+  const lists = await playlists(env);
   const seasons = Object.keys(lists).map(Number).sort((a, b) => a - b);
   if (!seasons.length) return { status: 503, body: { error: "not_configured" } };
   const asked = Number(new URL(request.url).searchParams.get("season"));
   const season = seasons.includes(asked) ? asked : seasons[seasons.length - 1];
-  const videos = await cached(env, `videos:${season}`, CACHE_SECONDS, () => fetchPlaylist(lists[season]));
-  return { status: 200, body: { seasons, season, videos } };
+  const [all, hidden] = await Promise.all([cached(env, `videos:${season}:${lists[season]}`, CACHE_SECONDS, () => fetchPlaylist(lists[season])), hiddenVideos(env)]);
+  return { status: 200, body: { seasons, season, videos: all.filter((v) => !hidden.has(v.id)) } };
 }
 
 export const VIDEO_ROUTES = {

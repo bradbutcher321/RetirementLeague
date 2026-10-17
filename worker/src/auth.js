@@ -20,12 +20,15 @@
  * GET  /auth/me      Authorization: Bearer <token> -> { manager, kind };
  *                    ?code=1 adds the app code
  * POST /auth/signout Authorization: Bearer <token>
- * POST /auth/admin   { pin, action, ... } -> the Commissioner page, behind
- *                    the Enter Picks PIN:
- *                      list  { names }   -> every manager's link key and
- *                                           where they're signed in
+ * POST /auth/admin   { pin, action, ... } -> the Commissioner page. A signed-in
+ *                    commissioner needs no PIN; anyone else sends the PIN:
+ *                      list  { names }   -> every manager's link key, where
+ *                                           they're signed in, and their role
  *                      sent  { manager } -> notes that the text went out
  *                      reset { manager } -> new link and code, signed out
+ *                      role  { manager, commissioner } -> Brad or Jon only,
+ *                                           signed in (never by PIN); neither
+ *                                           of them can be removed (roles.js)
  *
  * Other routes call sessionManager() to learn who is asking.
  *
@@ -37,6 +40,7 @@
  *   - KV namespace COOLDOWN_KV, for the wrong-code lockout
  */
 import { checkPin } from "./parlayEntry.js";
+import { FOUNDERS, commissioners, isCommissioner, logAction, setCommissioner } from "./roles.js";
 
 // No 0/O or 1/I/L: nothing to misread off a screen or mistype.
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -123,13 +127,13 @@ async function claim(request, env) {
     env.DB.prepare("INSERT INTO auth_sessions (token_hash, manager, kind, created, seen) VALUES (?1, ?2, ?3, ?4, ?4)")
       .bind(await sha256(token), who.manager, body.kind === "app" ? "app" : "web", now),
   ]);
-  return { status: 200, body: { token, manager: who.manager } };
+  return { status: 200, body: { token, manager: who.manager, commissioner: await isCommissioner(env, who.manager) } };
 }
 
 async function me(request, env) {
   const s = await sessionManager(request, env);
   if (!s) return { status: 401, body: { error: "signed_out" } };
-  const out = { manager: s.manager, kind: s.kind };
+  const out = { manager: s.manager, kind: s.kind, commissioner: await isCommissioner(env, s.manager) };
   if (new URL(request.url).searchParams.get("code") === "1" && env.AUTH_SECRET) {
     const m = await env.DB.prepare("SELECT manager, gen FROM auth_managers WHERE manager = ?1").bind(s.manager).first();
     if (m) out.code = await appCode(env, m);
@@ -143,8 +147,20 @@ async function signout(request, env) {
   return { status: 200, body: { ok: true } };
 }
 
+/** Who may use the Commissioner page: a signed-in commissioner, with no PIN,
+ * or anyone who has the PIN. -> { who } (who is the manager's name, null for
+ * the PIN) or { denied } (the response to send back). Shared with admin.js. */
+export async function commissionerGate(request, env, body) {
+  const me = await sessionManager(request, env).catch(() => null);
+  if (me && (await isCommissioner(env, me.manager))) return { who: me.manager };
+  // No PIN sent at all isn't a guess, so it doesn't count toward the lockout.
+  if (!body || !body.pin) return { denied: { status: 403, body: { error: "pin_needed" } } };
+  const denied = await checkPin(env, body.pin);
+  return denied ? { denied } : { who: null };
+}
+
 /** One manager as the Commissioner page shows them. */
-async function adminRow(env, m, sessions) {
+async function adminRow(env, m, sessions, commish) {
   const mine = sessions.filter((s) => s.manager === m.manager);
   return {
     manager: m.manager,
@@ -152,30 +168,42 @@ async function adminRow(env, m, sessions) {
     sentAt: m.sent_at || null,
     web: mine.filter((s) => s.kind !== "app").length,
     app: mine.filter((s) => s.kind === "app").length,
+    lastSeen: mine.reduce((t, s) => Math.max(t, s.seen || 0), 0) || null,
+    commissioner: commish.includes(m.manager),
+    founder: FOUNDERS.includes(m.manager),
   };
+}
+
+/** Makes sure every name has a row (the page passes this season's managers). */
+export async function ensureManagers(env, names) {
+  const list = (Array.isArray(names) ? names : []).filter((n) => typeof n === "string" && n && n.length <= 40).slice(0, MAX_NAMES);
+  if (list.length) await env.DB.batch(list.map((n) => env.DB.prepare("INSERT OR IGNORE INTO auth_managers (manager) VALUES (?1)").bind(n)));
+  return list;
 }
 
 async function admin(request, env) {
   const body = await request.json().catch(() => null);
   if (!body) return { status: 400, body: { error: "bad_json" } };
-  const denied = await checkPin(env, body.pin);
-  if (denied) return denied;
+  const gate = await commissionerGate(request, env, body);
+  if (gate.denied) return gate.denied;
   if (!env.AUTH_SECRET) return { status: 503, body: { error: "not_configured" } };
+  const by = gate.who;
 
   const name = typeof body.manager === "string" ? body.manager.slice(0, 40) : "";
   if (body.action === "list") {
-    const names = (Array.isArray(body.names) ? body.names : []).filter((n) => typeof n === "string" && n && n.length <= 40).slice(0, MAX_NAMES);
+    const names = await ensureManagers(env, body.names);
     if (!names.length) return { status: 400, body: { error: "no_names" } };
-    await env.DB.batch(names.map((n) => env.DB.prepare("INSERT OR IGNORE INTO auth_managers (manager) VALUES (?1)").bind(n)));
-    const [managers, sessions] = await Promise.all([
+    const [managers, sessions, commish] = await Promise.all([
       env.DB.prepare("SELECT manager, gen, sent_at FROM auth_managers").all(),
-      env.DB.prepare("SELECT manager, kind FROM auth_sessions").all(),
+      env.DB.prepare("SELECT manager, kind, seen FROM auth_sessions").all(),
+      commissioners(env),
     ]);
     const rows = managers.results.filter((m) => names.includes(m.manager));
-    return { status: 200, body: { managers: await Promise.all(rows.map((m) => adminRow(env, m, sessions.results))) } };
+    return { status: 200, body: { me: by, founder: !!by && FOUNDERS.includes(by), managers: await Promise.all(rows.map((m) => adminRow(env, m, sessions.results, commish))) } };
   }
   if (body.action === "sent" && name) {
     await env.DB.prepare("UPDATE auth_managers SET sent_at = ?1 WHERE manager = ?2").bind(Date.now(), name).run();
+    await logAction(env, by, "signin", `Sent ${name} a sign-in text`);
     return { status: 200, body: { ok: true } };
   }
   if (body.action === "reset" && name) {
@@ -185,7 +213,19 @@ async function admin(request, env) {
       env.DB.prepare("SELECT manager, gen, sent_at FROM auth_managers WHERE manager = ?1").bind(name),
     ]);
     if (!fresh.results.length) return { status: 404, body: { error: "no_manager" } };
-    return { status: 200, body: { manager: await adminRow(env, fresh.results[0], []) } };
+    await logAction(env, by, "signin", `Reset ${name}'s sign-in`);
+    return { status: 200, body: { manager: await adminRow(env, fresh.results[0], [], await commissioners(env)) } };
+  }
+  // Only Brad and Jon, signed in (not by PIN), can make or remove a commissioner,
+  // and neither of them can be removed.
+  if (body.action === "role" && name && typeof body.commissioner === "boolean") {
+    if (!by || !FOUNDERS.includes(by)) return { status: 403, body: { error: "founders_only" } };
+    if (FOUNDERS.includes(name)) return { status: 403, body: { error: "founder_locked" } };
+    const known = await env.DB.prepare("SELECT 1 AS x FROM auth_managers WHERE manager = ?1").bind(name).first();
+    if (!known) return { status: 404, body: { error: "no_manager" } };
+    await setCommissioner(env, name, body.commissioner, by);
+    await logAction(env, by, "role", body.commissioner ? `Made ${name} a commissioner` : `Removed ${name} as a commissioner`);
+    return { status: 200, body: { ok: true, commissioner: body.commissioner } };
   }
   return { status: 400, body: { error: "bad_action" } };
 }

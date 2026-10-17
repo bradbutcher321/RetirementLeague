@@ -50,3 +50,24 @@ CREATE TABLE IF NOT EXISTS cache (
   kv_at INTEGER NOT NULL,
   data TEXT NOT NULL
 );
+-- Commissioner page (src/roles.js, src/admin.js). Brad and Jon are
+-- commissioners without a row here; auth_roles holds the ones they add.
+-- site_settings keeps one JSON value per key (the Live page's announcement
+-- and draft date, the recap playlists); admin_log is the Activity Log.
+CREATE TABLE IF NOT EXISTS auth_roles (
+  manager TEXT PRIMARY KEY,
+  granted_by TEXT NOT NULL,
+  granted_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS site_settings (
+  k TEXT PRIMARY KEY,
+  v TEXT NOT NULL,
+  updated INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS admin_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts INTEGER NOT NULL,
+  who TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  text TEXT NOT NULL
+);

@@ -411,8 +411,8 @@
     <footer id="site-footer" data-source="Data from the league sheet" data-note="Refreshes every 10 minutes"></footer>
   </div>
 
-<script src="nav.js?v=19"></script>
-<script src="page-common.js?v=36"></script>
+<script src="nav.js?v=20"></script>
+<script src="page-common.js?v=37"></script>
 <script src="share.js?v=1"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
@@ -1124,7 +1124,7 @@
 
       // ---------- Commissioner-only tables (Jon + Brad) ----------
       const auth = getAuth();
-      if (auth && ['Brad', 'Jon'].includes(auth.manager)) {
+      if (isCommissioner(auth)) {
         document.getElementById('jt-section').hidden = false;
       }
 

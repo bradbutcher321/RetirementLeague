@@ -67,6 +67,17 @@ function setAuth(auth) {
   if (auth) setMe(auth.manager);
   window.dispatchEvent(new CustomEvent('rl-auth', { detail: auth || null }));
 }
+// Adds fields to the saved sign-in (the Worker's word on whether you're a
+// commissioner) without announcing a new sign-in.
+function patchAuth(fields) {
+  const a = getAuth();
+  if (!a) return;
+  try { localStorage.setItem(AUTH_KEY, JSON.stringify({ ...a, ...fields })); } catch (e) {}
+}
+// Brad and Jon until the Worker has said otherwise (auth.commissioner, kept by nav.js).
+function isCommissioner(a) {
+  return !!a && (a.commissioner !== undefined ? !!a.commissioner : ['Brad', 'Jon'].includes(a.manager));
+}
 function authHeaders() {
   const a = getAuth();
   return a ? { Authorization: 'Bearer ' + a.token } : {};

@@ -435,9 +435,9 @@
   // code to paste into the app's You sheet instead. getAuth/setAuth in
   // page-common.js keep the result; worker/src/auth.js is the other end.
   const COMMISH = 'Brad';
-  // Who gets a way to the Commissioner page in their You sheet once signed
-  // in. Only a shortcut: the page itself still asks for the PIN.
-  const COMMISSIONERS = ['Brad', 'Jon'];
+  // Commissioners get a way to the Commissioner page in their You sheet once
+  // signed in (isCommissioner() in page-common.js; the Worker says who is one,
+  // /auth/me, kept in the saved sign-in). Only a shortcut: the page checks again.
   // What a sign-in box was given: the texted link (or a whole text with it
   // in), or the eight-character code. '' while it's neither.
   function codeIn(text) {
@@ -469,7 +469,7 @@
     const out = await res.json().catch(() => ({}));
     if (!res.ok) throw out;
     const old = getAuth();
-    setAuth({ token: out.token, manager: out.manager });
+    setAuth({ token: out.token, manager: out.manager, commissioner: !!out.commissioner });
     // The key this browser held before, if any, is no use to anyone now.
     if (old) fetch(WORKER + '/auth/signout', { method: 'POST', headers: { Authorization: 'Bearer ' + old.token }, keepalive: true }).catch(() => {});
     syncSub();
@@ -568,7 +568,7 @@
         <div class="you-acct-t"><b>${esc(auth.manager)}</b><span>Signed in on this ${web ? 'browser' : 'phone'}</span></div>
         <button type="button" class="you-txt" id="you-signout">Sign out</button>
       </div>
-      ${COMMISSIONERS.includes(auth.manager) && currentFile() !== 'commissioner.html' ? `<a class="you-link item" id="you-commish" href="commissioner.html">Commissioner<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>` : ''}
+      ${isCommissioner(auth) && currentFile() !== 'commissioner.html' ? `<a class="you-link item" id="you-commish" href="commissioner.html">Commissioner<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>` : ''}
       ${web ? `<div class="you-sec" id="you-handoff">
         <div class="you-sec-h">Use the app on your home screen?</div>
         <div class="you-sub">It signs in on its own. Copy your code, open the app, tap You and paste.</div>
@@ -604,6 +604,10 @@
         return;
       }
       const out = await res.json();
+      if (out.commissioner !== undefined && out.commissioner !== isCommissioner(getAuth())) {
+        patchAuth({ commissioner: out.commissioner });
+        if (youPanel === 'you' && document.body.contains(body)) drawPanel();
+      }
       if (!web || !out.code) return;
       appCode = { token: auth.token, code: out.code };
       if (!still() || !copy) return;

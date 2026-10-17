@@ -46,6 +46,7 @@
  */
 import { sessionManager } from "./auth.js";
 import { cached } from "./cache.js";
+import { isCommissioner, logAction } from "./roles.js";
 
 const REPO = "bradbutcher321/RetirementLeague";
 const SYNC_WORKFLOW = "sync_legs.yml";
@@ -53,9 +54,8 @@ const ODDS_API = "https://api.the-odds-api.com/v4/sports";
 const BOOKS = ["hardrockbet_fl", "hardrockbet"];
 const ODDS_RESERVE = 30;
 const ODDS_LEFT_KEY = "legs:odds-left";
-// Who may enter any manager's leg, not just their own, and save a whole week
-// (COMMISSIONERS in nav.js).
-export const COMMISSIONERS = ["Brad", "Jon"];
+// Who may enter any manager's leg, not just their own, and save a whole week:
+// isCommissioner() in roles.js (Brad and Jon, plus whoever they add).
 
 // The sheet's Bet Type list (tools/add_parlay_validation.py), plus "Other"
 // for a typed-in leg.
@@ -232,7 +232,7 @@ async function board(env, request) {
   const stats = await readStats(env);
   const wk = await targetWeek(env, win, stats);
   const me = request ? await sessionManager(request, env) : null;
-  const commish = !!me && COMMISSIONERS.includes(me.manager);
+  const commish = !!me && (await isCommissioner(env, me.manager));
   // A commissioner's Lock legs button shuts the week to everyone else once
   // the bet is live; a commissioner can still edit (open stays true for them).
   const locked = !!(await env.COOLDOWN_KV.get(lockKey(wk)));
@@ -255,13 +255,14 @@ async function getLegs(request, env) {
 async function saveLeg(request, env) {
   const who = await sessionManager(request, env);
   if (!who) return { status: 401, body: { error: "signed_out" } };
+  const commish = await isCommissioner(env, who.manager);
   const body = await request.json().catch(() => null);
   if (!body) return { status: 400, body: { error: "bad_json" } };
   const b = await board(env, request);
-  if (!b.canEnter) return { status: 403, body: { error: "locked", ...publicBoard(b), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
+  if (!b.canEnter) return { status: 403, body: { error: "locked", ...publicBoard(b), me: who.manager, commish } };
   // A commissioner may save for anyone; everyone else only for themselves.
   const player = typeof body.player === "string" && body.player ? body.player : who.manager;
-  if (player !== who.manager && !COMMISSIONERS.includes(who.manager)) return { status: 403, body: { error: "not_commissioner" } };
+  if (player !== who.manager && !commish) return { status: 403, body: { error: "not_commissioner" } };
   if (!b.players.includes(player)) return { status: 403, body: { error: "not_a_player" } };
   const now = Date.now();
 
@@ -273,7 +274,7 @@ async function saveLeg(request, env) {
     if (leg.error) return { status: 400, body: { error: leg.error } };
     const hits = b.legs.filter((l) => l.player !== player).map((l) => [l, clash(leg, l)]);
     const stop = hits.find((h) => h[1] === "same") || hits.find((h) => h[1] === "opposite");
-    if (stop) return { status: 409, body: { error: stop[1], by: stop[0].player, pick: pickText(stop[0]), ...publicBoard(b), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
+    if (stop) return { status: 409, body: { error: stop[1], by: stop[0].player, pick: pickText(stop[0]), ...publicBoard(b), me: who.manager, commish } };
     await env.PARLAY_DB.prepare(
       `INSERT INTO leg_entries (year, week, player, win, sport, bet_type, team, opponent, player_prop, line, side, odds, gametime, raw_pick, game_id, removed, updated)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, 0, ?16)
@@ -285,19 +286,20 @@ async function saveLeg(request, env) {
       leg.line, leg.side, leg.odds, leg.gametime, leg.raw_pick, leg.game_id, now).run();
   }
   const synced = await dispatchSync(env, b._wk).catch((err) => { console.error("Leg sync dispatch failed:", err); return false; });
-  return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager, commish: COMMISSIONERS.includes(who.manager) } };
+  return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager, commish } };
 }
 
 /** A commissioner locks (or unlocks) the week's legs for everyone else. */
 async function saveLock(request, env) {
   const who = await sessionManager(request, env);
   if (!who) return { status: 401, body: { error: "signed_out" } };
-  if (!COMMISSIONERS.includes(who.manager)) return { status: 403, body: { error: "not_commissioner" } };
+  if (!(await isCommissioner(env, who.manager))) return { status: 403, body: { error: "not_commissioner" } };
   const body = await request.json().catch(() => null);
   if (!body || typeof body.locked !== "boolean") return { status: 400, body: { error: "bad_json" } };
   const b = await board(env, null);
   if (body.locked) await env.COOLDOWN_KV.put(lockKey(b._wk), "1", { expirationTtl: 14 * 24 * 3600 });
   else await env.COOLDOWN_KV.delete(lockKey(b._wk));
+  await logAction(env, who.manager, "parlay", `${body.locked ? "Locked" : "Unlocked"} the legs for week ${b._wk.week}`);
   return { status: 200, body: { ok: true, ...publicBoard(await board(env, request)), me: who.manager } };
 }
 
@@ -305,7 +307,7 @@ async function saveLock(request, env) {
 async function saveWeek(request, env) {
   const who = await sessionManager(request, env);
   if (!who) return { status: 401, body: { error: "signed_out" } };
-  if (!COMMISSIONERS.includes(who.manager)) return { status: 403, body: { error: "not_commissioner" } };
+  if (!(await isCommissioner(env, who.manager))) return { status: 403, body: { error: "not_commissioner" } };
   const body = await request.json().catch(() => null);
   if (!body) return { status: 400, body: { error: "bad_json" } };
   const b = await board(env, null);
@@ -314,6 +316,7 @@ async function saveWeek(request, env) {
   if (meta.sacko && !b.players.includes(meta.sacko)) return { status: 400, body: { error: "bad_sacko" } };
   if ([meta.final_odds, meta.final_payout].some((v) => v != null && !Number.isFinite(v))) return { status: 400, body: { error: "bad_number" } };
   await env.COOLDOWN_KV.put(metaKey(b._wk), JSON.stringify(meta), { expirationTtl: 3600 });
+  await logAction(env, who.manager, "parlay", `Saved the Sacko and final odds for week ${b._wk.week}`);
   const synced = await dispatchSync(env, b._wk, meta).catch((err) => { console.error("Week sync dispatch failed:", err); return false; });
   return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager, commish: true } };
 }
@@ -436,6 +439,21 @@ async function getProps(request, env) {
     return out;
   }).catch(() => ({}));
   return { status: 200, body: { odds } };
+}
+
+/** What the Commissioner page shows about the week: who has a leg in, whether
+ * the board is open or locked, and the Odds API credits left. */
+export async function legsSummary(env) {
+  const b = await board(env, null);
+  const locked = !!(await env.COOLDOWN_KV.get(lockKey(b._wk)));
+  const left = await env.COOLDOWN_KV.get(ODDS_LEFT_KEY);
+  const inNow = new Set(b.legs.map((l) => l.player));
+  return {
+    year: b._wk.year, week: b._wk.week, windowOpen: b._win.open, locked: b._win.open && locked,
+    locksAt: b.locksAt, opensAt: b.opensAt, players: b.players,
+    legsIn: b.players.filter((p) => inNow.has(p)), missing: b.players.filter((p) => !inNow.has(p)),
+    oddsLeft: left == null ? null : Number(left),
+  };
 }
 
 export const LEG_ROUTES = {

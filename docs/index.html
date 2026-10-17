@@ -1032,6 +1032,10 @@
      six stat pods in bordered item boxes, two across on a phone and three
      on desktop. Gold is each pod's figure; the two misses are red. */
   #recap-section{ margin-bottom: 14px; }
+  #notice-section{ margin-bottom: 14px; }
+  .notice-stack{ display: grid; gap: 10px; }
+  .notice-chip{ font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); white-space: nowrap; }
+  .notice-box{ padding: 12px 14px; font-size: 0.92rem; line-height: 1.4; }
   .recap-card{
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px 18px;
@@ -1225,6 +1229,11 @@
          matchups have nothing new to say. Hidden the rest of the week. -->
     <section id="recap-section" hidden></section>
 
+    <!-- A commissioner's announcement and the draft date (Commissioner page >
+         Announcements, Season Setup; Worker GET /site-info). Absent when there
+         is neither. -->
+    <section id="notice-section" hidden></section>
+
     <!-- This is me (site audit II #36): the visitor's own matchup leads the
          matchups list below, ringed, or sits here with the You sheet's
          "top of the dashboard" setting on. Until they've picked a team, a
@@ -1351,8 +1360,8 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=19"></script>
-<script src="page-common.js?v=36"></script>
+<script src="nav.js?v=20"></script>
+<script src="page-common.js?v=37"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
 <script src="lineup-check.js?v=1"></script>
@@ -5719,6 +5728,32 @@
   // Ticks the countdown between data refreshes so it counts down smoothly
   // rather than jumping only once every AUTO_REFRESH_MS.
   setInterval(updateKickoffCountdown, 60 * 1000);
+</script>
+<script>
+  // The announcement and draft cards above the matchups. Quiet on any failure:
+  // the section just stays hidden.
+  (function () {
+    const sec = document.getElementById('notice-section');
+    if (!sec) return;
+    const card = (title, chip, text) => `<div class="glass notice-card"><div class="panel-title"><span>${esc(title)}</span>${chip ? `<span class="notice-chip">${esc(chip)}</span>` : ''}</div>
+      <div class="panel-body"><div class="item notice-box">${esc(text)}</div></div></div>`;
+    function draft(at) {
+      const target = new Date(at + ':00');
+      const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      if (!(target > now)) return '';
+      const day = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const n = Math.round((day(target) - day(now)) / 864e5);
+      const when = target.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + ' at ' + target.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' ET';
+      return card('Draft', n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : `In ${n} days`, when);
+    }
+    fetch(WORKER_URL + '/site-info').then(r => r.ok ? r.json() : null).then(info => {
+      if (!info) return;
+      const html = (info.announcement ? card('Announcement', '', info.announcement.text) : '') + (info.draft ? draft(info.draft.at) : '');
+      if (!html) return;
+      sec.innerHTML = `<div class="notice-stack">${html}</div>`;
+      sec.hidden = false;
+    }).catch(() => {});
+  })();
 </script>
 <script src="track.js?v=1" defer></script>
 </body>

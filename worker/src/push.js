@@ -352,3 +352,29 @@ export async function notifyPref(env, pref, message) {
   const { results: subs } = await env.DB.prepare("SELECT * FROM push_subs").all();
   await Promise.allSettled(subs.filter((s) => cleanPrefs(JSON.parse(s.prefs || "{}"))[pref]).map((s) => deliver(env, s, message)));
 }
+
+/** The Commissioner page's own message: to everyone who has a subscription,
+ * or just one manager's devices (`to`, a name). Ignores each person's
+ * notification choices on purpose: it is the commissioner talking.
+ * -> { sent, gone, devices } */
+export async function broadcast(env, message, to = null) {
+  if (!env.VAPID_PRIVATE_JWK) return { error: "not_configured" };
+  const { results } = await env.DB.prepare("SELECT * FROM push_subs").all();
+  const subs = to ? results.filter((s) => (s.me || "").toLowerCase() === String(to).toLowerCase()) : results;
+  const codes = await Promise.all(subs.map((s) => deliver(env, s, { ...message, tag: message.tag || "commissioner" })));
+  return { devices: subs.length, sent: codes.filter((c) => c >= 200 && c < 300).length, gone: codes.filter((c) => c === 404 || c === 410).length };
+}
+
+/** Who has the app's notifications on: [{ me, devices, health }] by manager. */
+export async function subscriberSummary(env) {
+  const { results } = await env.DB.prepare("SELECT me, prefs FROM push_subs").all();
+  const by = new Map();
+  for (const r of results) {
+    const key = r.me || "";
+    const row = by.get(key) || { me: key, devices: 0, health: false };
+    row.devices++;
+    if (cleanPrefs(JSON.parse(r.prefs || "{}")).health) row.health = true;
+    by.set(key, row);
+  }
+  return [...by.values()];
+}

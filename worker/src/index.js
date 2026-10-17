@@ -47,6 +47,8 @@
  *                      notifications (see push.js, site audit II #37).
  * POST /auth/claim, GET /auth/me, POST /auth/signout, POST /auth/admin ->
  *                      manager sign-in (see auth.js, site audit III #24).
+ * POST /admin, GET /site-info -> the Commissioner page's tools, and what the
+ *                      Live page shows from them (see admin.js, roles.js).
  * GET /videos?season= -> the weekly recap videos, signed-in managers only
  *                      (see videos.js; secret VIDEO_PLAYLISTS).
  * GET/POST /legs, GET /legs/games, GET /legs/props -> Parlay Legs, each
@@ -70,7 +72,9 @@ import { getDraft } from "./draft.js";
 import { feedBoard, getFeed, recordScoreEvents } from "./scoreFeed.js";
 import { cached } from "./cache.js";
 import { AUTH_ROUTES, sessionManager } from "./auth.js";
-import { COMMISSIONERS, LEG_ROUTES, guardSavedWeek, mirrorSavedWeek } from "./legs.js";
+import { LEG_ROUTES, guardSavedWeek, mirrorSavedWeek } from "./legs.js";
+import { isCommissioner } from "./roles.js";
+import { ADMIN_ROUTES, siteInfo } from "./admin.js";
 import { VIDEO_ROUTES } from "./videos.js";
 import { runHealthCheck } from "./healthCheck.js";
 
@@ -209,7 +213,7 @@ export default {
       if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       // A signed-in commissioner needs no PIN; anyone else still does.
       const who = await sessionManager(request, env).catch(() => null);
-      const commissioner = !!who && COMMISSIONERS.includes(who.manager);
+      const commissioner = !!who && (await isCommissioner(env, who.manager));
       const result = await enterParlay(request, env, { commissioner, guard: (p) => guardSavedWeek(env, p), after: (p) => mirrorSavedWeek(env, p) }).catch((err) => ({ status: 502, body: { error: String(err) } }));
       return jsonResponse(result.body, headers, result.status);
     }
@@ -250,6 +254,16 @@ export default {
       if (request.method !== method) return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
       return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
+    }
+    if (ADMIN_ROUTES[path]) {
+      const [method, route] = ADMIN_ROUTES[path];
+      if (request.method !== method) return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
+    }
+    if (path === "/site-info") {
+      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      return jsonResponse(await siteInfo(env).catch(() => ({ announcement: null, draft: null })), { ...headers, "Cache-Control": "public, max-age=60" });
     }
     if (VIDEO_ROUTES[path]) {
       const [method, route] = VIDEO_ROUTES[path];
