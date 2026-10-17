@@ -278,8 +278,34 @@ function pageLink(page, params) {
 // plain text. Inherits its row's color and type (theme.css a.mgr).
 function mgrLink(name, known) {
   if (known && !known.has(name)) return esc(name);
-  return `<a class="mgr" href="${esc(pageLink('franchise.html', { m: name }))}">${esc(name)}</a>`;
+  return `<a class="mgr" data-rv="${esc(name)}" href="${esc(pageLink('franchise.html', { m: name }))}">${esc(name)}</a>`;
 }
+
+// ---------- Tap a name ----------
+// Once you've picked your team, tapping a manager's name (a standings row, a
+// mgrLink, anything carrying data-rv="Name") opens a sheet with you against
+// them instead of going to their Franchise page; the sheet has a button on to
+// it. Your own name, and a tap with a modifier key (open in a new tab), go
+// where they always did. rivals.js loads the first time it's needed.
+function openRival(name) {
+  if (typeof Rivals !== 'undefined') return Rivals.openSheet(name);
+  return new Promise(done => {
+    const s = document.createElement('script');
+    s.src = 'rivals.js?v=1';
+    s.onload = s.onerror = done;
+    document.head.appendChild(s);
+  }).then(() => (typeof Rivals !== 'undefined' ? Rivals.openSheet(name) : null));
+}
+document.addEventListener('click', e => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const el = e.target.closest && e.target.closest('[data-rv]');
+  if (!el) return;
+  const name = el.getAttribute('data-rv');
+  if (!name || !getMe() || isMe(name)) return;
+  e.preventDefault();
+  e.stopPropagation();
+  openRival(name);
+}, true);
 // The real name for one typed into a URL by hand, ignoring case (?m=brad).
 function matchName(names, s) {
   const k = String(s ?? '').trim().toLowerCase();

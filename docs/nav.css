@@ -342,6 +342,7 @@
 .you-row.dis{ color: var(--text-dim); cursor: default; }
 .you-types{ margin: 2px 0 0 0; padding-left: 10px; border-left: 1px solid var(--line); }
 .you-types .you-row{ font-size: 0.84rem; min-height: 40px; }
+.you-types .you-row:has(small){ padding-top: 7px; padding-bottom: 7px; }
 /* An on/off switch: a pill track, gold when on. */
 .you-sw{
   appearance: none;
@@ -377,4 +378,35 @@
   .you-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: 440px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
   .you-sheet .sheet-grab{ visibility: hidden; height: 8px; padding: 0; }
   .you-sheet .sheet-body{ padding-bottom: 18px; }
+}
+
+/* ---------- Rivals (rivals.js) ----------
+   The standings tag: in your ring color, never gold/green/red, which mean
+   something already. The tap-a-name sheet: you against one manager. */
+.rv-tag{ flex: none; display: inline-flex; align-items: center; margin-left: 0.55em; padding: 3px 7px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--me-ring, #7AAEDB) 55%, transparent); background: color-mix(in srgb, var(--me-ring, #7AAEDB) 9%, transparent); color: var(--me-ring, #7AAEDB); font: 800 0.56rem/1 var(--body); letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; vertical-align: middle; }
+.rv-sheet:focus{ outline: none; }
+.rv-sheet .sheet-body{ padding: 4px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
+.rv-vs{ display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; padding-top: 6px; }
+.rv-side{ display: grid; justify-items: center; gap: 6px; text-align: center; min-width: 0; }
+.rv-side b{ font-size: 1rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-mono{ display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); font: 800 0.82rem/1 var(--body); letter-spacing: 0.02em; }
+.rv-mono.me{ border-color: var(--me-ring, #7AAEDB); }
+.rv-rec{ text-align: center; font: 600 3rem/1 var(--scoreboard); }
+.rv-rec small{ display: block; margin-top: 4px; color: var(--text-dim); font: 500 0.72rem/1.2 var(--body); }
+.rv-form{ display: flex; justify-content: center; gap: 4px; margin-top: 14px; }
+.rv-form i{ width: 22px; height: 22px; border-radius: 6px; border: 1px solid; font: 800 0.66rem/20px var(--body); text-align: center; font-style: normal; }
+.rv-form i.W{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
+.rv-form i.L{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
+.rv-grid{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 16px 0 14px; }
+.rv-box{ padding: 10px 12px; border: 1px solid var(--item-line, var(--line)); border-radius: 12px; background: var(--item, rgba(255,255,255,0.025)); min-width: 0; }
+.rv-box small{ display: block; color: var(--text-dim); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.rv-box b{ display: block; font: 600 1.5rem/1.15 var(--scoreboard); }
+.rv-box span{ display: block; color: var(--text-dim); font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-none{ margin: 22px 0 18px; text-align: center; color: var(--text-dim); font-size: 0.9rem; }
+.rv-go, .rv-done{ display: flex; align-items: center; justify-content: center; width: 100%; min-height: 46px; margin-top: 8px; border-radius: 999px; border: 1px solid var(--gold); background: var(--gold); color: var(--ctl-on-ink, #0A0A08); font: 700 0.9rem var(--body); text-decoration: none; cursor: pointer; }
+.rv-go.ghost, .rv-done{ border-color: var(--line); background: rgba(255,255,255,0.06); color: var(--text); }
+.rv-go:focus-visible, .rv-done:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (min-width: 721px){
+  .rv-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: 440px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
+  .rv-sheet .sheet-grab{ visibility: hidden; height: 8px; padding: 0; }
 }

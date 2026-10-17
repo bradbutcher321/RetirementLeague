@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=30">
-<link rel="stylesheet" href="nav.css?v=15">
+<link rel="stylesheet" href="nav.css?v=16">
 <link rel="stylesheet" href="league.css?v=7">
 <link rel="stylesheet" href="features.css?v=3">
 <style>
@@ -57,6 +57,8 @@
 
   .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; min-width:0; }
   .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  /* Your Daddy / Your Bitch (rivals.js): on a line of its own, so it never squeezes the name. */
+  .qrow .rv-row{ margin-top:4px; } .qrow .rv-row .rv-tag{ margin-left:0; }
   .qrow-main{ min-width:0; }
   /* All-Time titles and Sackos ride the line under the name ("12 szns ·
      3 titles · 2 Sackos", site audit II #10) instead of badges, which
@@ -171,9 +173,10 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=21"></script>
-<script src="page-common.js?v=37"></script>
+<script src="nav.js?v=22"></script>
+<script src="page-common.js?v=38"></script>
 <script src="league-common.js?v=5"></script>
+<script src="rivals.js?v=1"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
   const { pct } = LG;
@@ -360,7 +363,8 @@
       const say = mv > 0 ? `Up ${mv}` : mv < 0 ? `Down ${-mv}` : 'No change';
       moveHtml = `<i class="mv${mv > 0 ? ' up' : mv < 0 ? ' down' : ''}" title="${say} since Week ${lastWeek}" aria-label="${say} since Week ${lastWeek}">${txt}</i>`;
     }
-    return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline">${badges.join('')}</span></div>` +
+    // Your Daddy / Your Bitch (rivals.js), in your ring color, after the name.
+    return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}" data-rv="${esc(r.player)}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline">${badges.join('')}</span></div>${Rivals.pill(r.player) ? `<div class="rv-row">${Rivals.pill(r.player)}</div>` : ''}` +
       `<div class="meta">${metaHtml}</div></div>` +
       `<div class="stats-col"><div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div>` +
       (form && form.length ? `<div class="form" aria-label="Last ${form.length}: ${form.map(f => f.toUpperCase()).join(' ')}">${form.map(f => `<i class="${f}" aria-hidden="true">${f.toUpperCase()}</i>`).join('')}</div>` : '') +
@@ -440,6 +444,8 @@
 
   // Picking your team in the You sheet rings your row (site audit II #36).
   window.addEventListener('rl-me', () => render());
+  // The tags need the head-to-head history, which lands on its own.
+  Rivals.ready().then(book => { if (book && D) render(); });
   function render() {
     if (optsFor !== (tab === 'bracket')) yearOptions();
     const sel = $('year-select').value;

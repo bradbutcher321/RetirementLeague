@@ -272,6 +272,7 @@
     ['final', 'My matchup is final', true],
     ['median', 'I clinch the median win', true],
     ['lineup', 'A starter of mine is on bye or out', true],
+    ['rival', 'Rivals<small>When I play Your Daddy or Your Bitch, when they take the lead, and the result</small>', true],
     ['parlay', 'My parlay leg hits or dies', true],
     ['parlayAll', "Every leg that hits, until it's killed", false],
     ['recap', 'Week in Review is up', false],
@@ -286,8 +287,8 @@
   function getPrefs() {
     let p = {};
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch (e) {}
-    // Every leg and the site health check are opt-in (worker/src/push.js PREF_OFF_BY_DEFAULT).
-    return Object.fromEntries(PUSH_TYPES.map(([k]) => [k, (k === 'parlayAll' || k === 'health') ? p[k] === true : p[k] !== false]));
+    // Every leg, the rival alerts and the site health check are opt-in (worker/src/push.js PREF_OFF_BY_DEFAULT).
+    return Object.fromEntries(PUSH_TYPES.map(([k]) => [k, (k === 'parlayAll' || k === 'health' || k === 'rival') ? p[k] === true : p[k] !== false]));
   }
   async function currentSub() {
     if (!pushReady()) return null;

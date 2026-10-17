@@ -22,6 +22,10 @@
  *          score, margin, combined points, a starter's game (everyone; site
  *          audit III #14, the Record Watch box on the dashboard)
  *   parlay  your parlay leg hit or died
+ *   rival   your Daddy / your Bitch (docs/rivals.js: who beats you most, who
+ *          you beat most): the morning of the week's first kickoff when you
+ *          play one, once when they pull 10 points ahead of you, and the
+ *          final (which stands in for the plain "matchup is final")
  *   parlayAll  every leg that hits while the parlay is alive, then one
  *          "killed" when it dies (killed_by in the parlay data); legs
  *          whose games start after the kill send nothing
@@ -34,12 +38,15 @@ import { sendPush } from "./webpush.js";
 import RecordWatch from "../../docs/record-watch.js";
 // The lineup rules and their Thursday-to-Monday window (docs/lineup-check.js).
 import LineupCheck from "../../docs/lineup-check.js";
+// Who beats you most / who you beat most, shared with the standings tags and the tap-a-name sheet.
+import Rivals from "../../docs/rivals.js";
 
-const PREF_KEYS = ["final", "median", "lineup", "recap", "record", "parlay", "parlayAll", "health"];
+const PREF_KEYS = ["final", "median", "lineup", "rival", "recap", "record", "parlay", "parlayAll", "health"];
 // Off unless asked for: everyone else's legs is a lot of buzzing, and it
 // came after people had already subscribed with the four above on. "health"
-// is the commissioner's daily site check (healthCheck.js).
-const PREF_OFF_BY_DEFAULT = new Set(["parlayAll", "health"]);
+// is the commissioner's daily site check (healthCheck.js). "rival" is new
+// and stands in for the plain final alert on a rival game, so it waits to be asked.
+const PREF_OFF_BY_DEFAULT = new Set(["parlayAll", "health", "rival"]);
 const SITE = "https://bradbutcher321.github.io/RetirementLeague/";
 const f2 = (n) => (Number(n) || 0).toFixed(2);
 
@@ -88,14 +95,36 @@ async function deliver(env, sub, message) {
 // minutes, the cron's pace; null when league.json can't be read, which just
 // skips the alerts.
 let recordCache = { at: 0, value: null };
+// league.json as rows, shared by the records and the rivals; kept ten minutes.
+let leagueCache = { at: 0, rows: null };
+async function leagueRows() {
+  if (leagueCache.rows && Date.now() - leagueCache.at < 10 * 60 * 1000) return leagueCache.rows;
+  const res = await fetch(SITE + "data/league.json");
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const { games } = await res.json();
+  leagueCache = { at: Date.now(), rows: games.map((g) => ({ year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7] })) };
+  return leagueCache.rows;
+}
+// The head-to-head book for the Rival alerts: this season's managers are the
+// ones on the live dashboard. null when league.json can't be read.
+let rivalCache = { at: 0, book: null };
+async function rivalBook(dashboard) {
+  try {
+    const rows = await leagueRows();
+    if (!rivalCache.book || rivalCache.at !== leagueCache.at) {
+      rivalCache = { at: leagueCache.at, book: Rivals.build(rows, (dashboard.teams || []).map((t) => t.manager).filter(Boolean)) };
+    }
+    return rivalCache.book;
+  } catch (err) {
+    console.error("Rival check couldn't read league.json:", err && err.stack || err);
+    return null;
+  }
+}
 async function recordBook() {
   if (Date.now() - recordCache.at < 10 * 60 * 1000) return recordCache.value;
   try {
-    const res = await fetch(SITE + "data/league.json");
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const { games } = await res.json();
+    const rows = await leagueRows();
     const players = await fetch(SITE + "data/lineups/records.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
-    const rows = games.map((g) => ({ year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7] }));
     recordCache = { at: Date.now(), value: RecordWatch.build(rows, players) };
   } catch (err) {
     console.error("Record check couldn't read league.json:", err && err.stack || err);
@@ -106,7 +135,7 @@ async function recordBook() {
 
 /** Every event the current dashboard and parlay data say has happened:
  * [{ key, to: manager name or null for everyone, pref, message }]. */
-function currentEvents(year, dashboard, parlay, book) {
+function currentEvents(year, dashboard, parlay, book, rivals) {
   const out = [];
   const week = dashboard.week;
   const teams = dashboard.teams || [];
@@ -137,6 +166,69 @@ function currentEvents(year, dashboard, parlay, book) {
             tag: `final-${week}`,
           },
         });
+      }
+    }
+  }
+
+  // Your Daddy and Your Bitch (docs/rivals.js). Only the games between you
+  // and one of them; the record each message quotes is from before this week
+  // (league.json can be a week behind, so the live game is added by hand).
+  if (rivals) {
+    const wk = { year: Number(year), week };
+    const kickoff = Date.parse(dashboard.firstKickoff);
+    const morning = Number.isFinite(kickoff) && Date.now() >= kickoff - 12 * 3600 * 1000;
+    for (const m of dashboard.matchups || []) {
+      const over = !(m.awayRemaining || m.awayInPlay || m.homeRemaining || m.homeInPlay);
+      for (const [me, mine, opp, theirs] of [
+        [m.awayManager, m.awayScore, m.homeManager, m.homeScore],
+        [m.homeManager, m.homeScore, m.awayManager, m.awayScore],
+      ]) {
+        const k = me && opp && rivals.kind(me, opp);
+        if (!k) continue;
+        const label = Rivals.LABEL[k];
+        const r = rivals.rec(me, opp, wk);
+        const said = r ? `You're ${r.w}\u2013${r.l} against ${opp} all-time and have ${Rivals.word(r)}.` : `You haven't played ${opp} before.`;
+        if (morning) {
+          out.push({
+            key: `rival:play:${year}:${week}:${me}`,
+            to: me,
+            pref: "rival",
+            message: {
+              title: k === "daddy" ? `Revenge game vs ${label}` : `${label} is up next`,
+              body: `${opp} this week. ${said}`,
+              url: "index.html",
+              tag: `rival-${week}`,
+            },
+          });
+        }
+        if (known && scored && !over && theirs - mine >= 10 && theirs >= 40) {
+          out.push({
+            key: `rival:lead:${year}:${week}:${me}`,
+            to: me,
+            pref: "rival",
+            message: {
+              title: `${label} is up on you`,
+              body: `${opp} leads ${f2(theirs)}\u2013${f2(mine)}. ${said}`,
+              url: "index.html",
+              tag: `rival-${week}`,
+            },
+          });
+        }
+        if (known && scored && over) {
+          const w = (r ? r.w : 0) + (mine > theirs ? 1 : 0), l = (r ? r.l : 0) + (mine < theirs ? 1 : 0);
+          out.push({
+            key: `rival:final:${year}:${week}:${me}`,
+            to: me,
+            pref: "rival",
+            replaces: `final:${year}:${week}:${me}`,
+            message: {
+              title: mine > theirs ? `You beat ${label}` : mine < theirs ? `${label} beat you` : `You tied ${label}`,
+              body: `Week ${week} final: ${f2(mine)}\u2013${f2(theirs)}. You're now ${w}\u2013${l} against ${opp} all-time.`,
+              url: "index.html",
+              tag: `final-${week}`,
+            },
+          });
+        }
       }
     }
   }
@@ -311,7 +403,7 @@ function mergeEvents(events) {
 export async function checkPushEvents(env, dashboard) {
   if (!env.VAPID_PRIVATE_JWK || !dashboard || !dashboard.teams) return;
   const parlay = await env.COOLDOWN_KV.get("parlay_stats_v1", "json").catch(() => null);
-  const events = currentEvents(env.ESPN_YEAR, dashboard, parlay, await recordBook());
+  const events = currentEvents(env.ESPN_YEAR, dashboard, parlay, await recordBook(), await rivalBook(dashboard));
   if (!events.length) return;
 
   // Only the ones not seen before. The batch's INSERT OR IGNORE makes a
@@ -332,10 +424,14 @@ export async function checkPushEvents(env, dashboard) {
   const { results: subs } = await env.DB.prepare("SELECT * FROM push_subs").all();
   if (!subs.length) return;
   const sends = [];
+  // A rival game's result replaces the plain "matchup is final" for anyone
+  // with Rivals on, so they get one message about it, not two.
+  const replaced = new Set(fresh.filter((e) => e.replaces).map((e) => e.replaces));
   for (const e of fresh) {
     for (const sub of subs) {
       const prefs = cleanPrefs(JSON.parse(sub.prefs || "{}"));
       if (!prefs[e.pref]) continue;
+      if (replaced.has(e.key) && prefs.rival) continue;
       if (e.to && (sub.me || "").toLowerCase() !== e.to.toLowerCase()) continue;
       // Your own leg already comes from "parlay" when that's on.
       if (e.about && prefs.parlay && (sub.me || "").toLowerCase() === e.about.toLowerCase()) continue;

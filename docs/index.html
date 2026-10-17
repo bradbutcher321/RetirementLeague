@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=30">
-<link rel="stylesheet" href="nav.css?v=15">
+<link rel="stylesheet" href="nav.css?v=16">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -383,6 +383,11 @@
   .mu-series-lead{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mu-series-last{ flex: none; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
   .mu-series-last svg{ width: 6px; height: 10px; opacity: 0.8; }
+  /* Your matchup's last five meetings, the way the standings show a form. */
+  .mu-form{ display: inline-flex; gap: 3px; }
+  .mu-form i{ width: 18px; height: 18px; border-radius: 5px; border: 1px solid; font: 800 0.58rem/16px var(--body); text-align: center; font-style: normal; }
+  .mu-form i.W{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
+  .mu-form i.L{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
   @container mu (min-width: 460px){ .mu-series{ padding: 0 18px; } }
 
   /* Game line: a narrow card (phone) drops the "PM" and the opponent on
@@ -451,6 +456,9 @@
   .lb-parts{ display: flex; flex-wrap: wrap; margin-left: -1em; }
   .lb-parts > span{ white-space: nowrap; }
   .lb-parts > span::before{ content: '•'; display: inline-block; width: 1em; text-align: center; color: var(--text-dim); font-weight: 400; }
+  /* The rival tag keeps the bullet's room but not the bullet. */
+  .lb-parts > span.rv-part::before{ content: ''; }
+  .lb-parts .rv-tag{ margin-left: 0; }
   .lb-stat{ text-align: center; flex-shrink: 0; width: 48px; }
   .lb-stat .v{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
   /* One header over the list names the columns, instead of a caption
@@ -839,6 +847,17 @@
      where the list runs two across). Also up here: the one-line ask before
      you've picked, and your Season Wrapped once the season's over. */
   #me-section{ margin-bottom: 28px; }
+  /* Status line: pills in a row that wraps; the ✕ stays top right. */
+  #status-section{ margin: 4px 0 18px; }
+  .st-line{ display: flex; align-items: flex-start; gap: 8px; }
+  .st-pills{ flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px 8px; }
+  .st-pill{ display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: var(--text); font: 600 0.8rem/1 var(--body); white-space: nowrap; }
+  .st-pill b{ font-weight: 700; }
+  .st-pill.mine{ padding-left: 4px; border-color: color-mix(in srgb, var(--me-ring) 55%, transparent); }
+  .st-mono{ flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--me-ring); font: 800 0.5rem/1 var(--body); letter-spacing: 0.02em; }
+  .st-x{ flex: none; background: rgba(255,255,255,0.06); border: none; color: var(--text-dim); border-radius: 999px; width: 30px; height: 30px; margin-top: 1px; font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; position: relative; }
+  .st-x::before{ content: ''; position: absolute; inset: -7px; }
+  .st-x:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   #me-section .matchups{ grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px){ #me-section .matchups{ max-width: calc(50% - 7px); margin: 0 auto; } }
   #me-section .matchups:empty{ display: none; }
@@ -1201,6 +1220,11 @@
       </div>
     </header>
 
+    <!-- Your standing, once you've picked your team (renderStatusLine): where
+         you sit, how far from the playoff line, your odds, who you play. Its
+         ✕ hides it until the next week. -->
+    <section id="status-section" hidden></section>
+
     <!-- Week in Review (site audit 28): leads the page from the end of the
          week until the next one kicks off, when Median Watch and the
          matchups have nothing new to say. Hidden the rest of the week. -->
@@ -1326,10 +1350,11 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=21"></script>
-<script src="page-common.js?v=37"></script>
+<script src="nav.js?v=22"></script>
+<script src="page-common.js?v=38"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
+<script src="rivals.js?v=1"></script>
 <script src="lineup-check.js?v=1"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
@@ -1609,6 +1634,21 @@
     const a = m.awayManager, b = m.homeManager;
     const s = seriesFor(a, b, dashWeek);
     if (!s) return '';
+    // Your own matchup says it from your side, with the streak and the last
+    // five meetings; every other card keeps the plain series.
+    const meA = isMe(a), meB = isMe(b);
+    if ((meA || meB) && s.form.length) {
+      const f = meA ? s.form : s.form.map(x => (x === 'W' ? 'L' : 'W'));
+      const kind = f[f.length - 1];
+      let n = 0;
+      for (let i = f.length - 1; i >= 0 && f[i] === kind; i--) n++;
+      const say = `${kind === 'W' ? 'won' : 'lost'} the last ${n === 1 ? 'one' : n}`;
+      const opp = meA ? b : a;
+      return `<a class="mu-series" href="${esc(pageLink('head-to-head.html', { a, b }))}">
+        <span class="mu-series-lead">You're <b>${meA ? s.a : s.b}-${meA ? s.b : s.a}</b> vs ${esc(opp)} · ${say}</span>
+        <span class="mu-series-last"><span class="mu-form" aria-label="Last ${Math.min(5, f.length)} meetings, oldest first">${f.slice(-5).map(x => `<i class="${x}">${x}</i>`).join('')}</span><svg viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>`;
+    }
     const lead = s.a === s.b
       ? (s.a ? `Series tied <b>${s.a}-${s.b}</b>` : 'First meeting')
       : `<b>${esc(s.a > s.b ? a : b)}</b> leads the series <b>${Math.max(s.a, s.b)}-${Math.min(s.a, s.b)}</b>`;
@@ -3311,7 +3351,10 @@
     const games = leagueGames.filter(g => g.p2 && ((g.p1 === a && g.p2 === b) || (g.p1 === b && g.p2 === a))
       && (g.winner === a || g.winner === b) && (g.year < shownYear() || (g.year === shownYear() && g.week < week)));
     const last = games.reduce((m, g) => (!m || g.year > m.year || (g.year === m.year && g.week > m.week) ? g : m), null);
-    return { a: games.filter(g => g.winner === a).length, b: games.filter(g => g.winner === b).length, last };
+    // Who won each meeting, oldest first, from `a`'s side (the matchup card's
+    // "You're 14-4 vs Jared" line reads the streak and the last five off it).
+    const form = games.slice().sort((x, y) => x.year - y.year || x.week - y.week).map(g => (g.winner === a ? 'W' : 'L'));
+    return { a: games.filter(g => g.winner === a).length, b: games.filter(g => g.winner === b).length, last, form };
   }
 
   // Lineup Check (site audit III #6): on your own card, the starters who
@@ -4349,7 +4392,7 @@
   // Franchise's), a plain row otherwise. The link names the manager
   // (franchise.html?m=Brad), so it can be opened in a new tab or shared.
   function lbRowTag(manager) {
-    return manager ? `a href="${esc(pageLink('franchise.html', { m: manager }))}"` : 'div';
+    return manager ? `a href="${esc(pageLink('franchise.html', { m: manager }))}" data-rv="${esc(manager)}"` : 'div';
   }
 
   // The lines under a team's name: manager and record, then the schedule
@@ -4360,7 +4403,9 @@
   function lbMeta(manager, record, race, sos, hard) {
     const line = parts => `<span class="lb-parts">${parts.join('')}</span>`;
     const second = sosMark(sos, hard) + raceMark(race);
-    return `<div class="lb-meta">${line([manager ? `<span>${manager}</span>` : '', `<span>${record}</span>`])}${second ? line([second]) : ''}</div>`;
+    // Your Daddy / Your Bitch (rivals.js), in your ring color, after the record.
+    const rv = typeof Rivals !== 'undefined' ? Rivals.pill(manager) : '';
+    return `<div class="lb-meta">${line([manager ? `<span>${manager}</span>` : '', `<span>${record}</span>`, rv ? `<span class="rv-part">${rv}</span>` : ''])}${second ? line([second]) : ''}</div>`;
   }
 
   function renderLeaderboardRow(t, rank, playoffTeamCount, race, sos, hard) {
@@ -5007,12 +5052,55 @@
       section.hidden = !document.getElementById('my-matchup').children.length && !document.getElementById('me-wrapped');
     });
   }
+  // The status line: your place in the standings, the playoff line, your
+  // odds and this week's opponent. Shown only on the live week and only once
+  // you've picked your team. The ✕ remembers "year:week", so it comes back
+  // when the next week starts and not before.
+  const STATUS_KEY = 'rl-status-hidden';
+  const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
+  const recWL = r => String(r || '').split('-').map(Number);
+  function renderStatusLine(data) {
+    const el = document.getElementById('status-section');
+    const teams = data.teams || [];
+    const t = getMe() && !data.archived && !data.playoffWeek && data.week ? teams.find(x => x.manager && isMe(x.manager)) : null;
+    const key = `${data.year || leagueYear}:${data.week}`;
+    let hidden = false;
+    try { hidden = localStorage.getItem(STATUS_KEY) === key; } catch (e) {}
+    if (!t || hidden || typeof t.standing !== 'number') { el.hidden = true; el.innerHTML = ''; return; }
+    const pills = [`<span class="st-pill mine"><span class="st-mono">${esc(monogram(t.manager))}</span><span><b>${ordinal(t.standing)}</b> · ${esc(t.record)}</span></span>`];
+    // Games from the last playoff spot, or the first spot out; a game is a win more or a loss fewer.
+    const spots = data.playoffTeamCount || 0;
+    const order = teams.filter(x => typeof x.standing === 'number').sort((a, b) => a.standing - b.standing);
+    if (spots && order.length > spots) {
+      const [w, l] = recWL(t.record);
+      const edge = recWL(order[t.standing > spots ? spots - 1 : spots].record);
+      const gb = t.standing > spots ? ((edge[0] - w) + (l - edge[1])) / 2 : ((w - edge[0]) + (edge[1] - l)) / 2;
+      const n = gb % 1 ? gb.toFixed(1) : String(gb);
+      pills.push(`<span class="st-pill">${t.standing > spots ? `${n} ${gb === 1 ? 'game' : 'games'} back of the playoff line` : `${n} ${gb === 1 ? 'game' : 'games'} up on the playoff line`}</span>`);
+    }
+    if (typeof t.playoffPct === 'number') pills.push(`<span class="st-pill"><span><b>${Math.round(t.playoffPct)}%</b> to make the playoffs</span></span>`);
+    const mu = (data.matchups || []).find(m => isMe(m.awayManager) || isMe(m.homeManager));
+    const opp = mu && (isMe(mu.awayManager) ? mu.homeManager : mu.awayManager);
+    if (opp) pills.push(`<span class="st-pill"><span>vs <b>${esc(opp)}</b></span></span>`);
+    el.innerHTML = `<div class="st-line"><div class="st-pills">${pills.join('')}</div><button type="button" class="st-x" aria-label="Hide until next week">✕</button></div>`;
+    el.dataset.key = key;
+    el.hidden = false;
+  }
+  document.getElementById('status-section').addEventListener('click', e => {
+    if (!e.target.closest('.st-x')) return;
+    const el = document.getElementById('status-section');
+    try { localStorage.setItem(STATUS_KEY, el.dataset.key || ''); } catch (err) {}
+    el.hidden = true;
+    el.innerHTML = '';
+  });
   // Picking (or changing) your team redraws from the numbers already here.
   let lastDashboardData = null;
   // liveData: the Worker's latest live answer. shownData: whatever is on
   // screen -- the live week, or a past one picked with the week stepper.
   let liveData = null, shownData = null;
   window.addEventListener('rl-me', () => { if (shownData) renderDashboard(shownData, false, true); });
+  // The standings tags need the head-to-head history, which lands on its own.
+  Rivals.ready().then(book => { if (book && standingsData) renderStandings(); });
   window.addEventListener('rl-settings', () => { if (shownData) renderDashboard(shownData, false, true); });
 
   // ---------- Week picker and stepper ----------
@@ -5516,6 +5604,7 @@
         const ordered = onTop ? rest : mine ? [mine, ...rest] : matchups;
         document.getElementById('my-matchup').innerHTML = onTop ? renderMatchupCard(mine) : '';
         renderMePrompt(onTop);
+        renderStatusLine(data);
         document.getElementById('matchups-container').innerHTML =
           ordered.length ? ordered.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
         holdScroll();
