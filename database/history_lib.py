@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 from datetime import datetime
 
 # ESPN's playoffTierType has 4 values: NONE (regular season), WINNERS_BRACKET
@@ -434,7 +435,34 @@ def changed_rows(table, columns, key_columns, rows, where="1=1", db_name=None) -
     return changed
 
 
-def run_d1_sql(statements, label, db_name=None):
+def _run_wrangler_d1(args, attempts, timeout=120):
+    """Runs `wrangler d1 execute` and returns the finished process, retrying
+    up to `attempts` times (15s then 30s apart) on a non-zero exit or a hang.
+    Callers only pass attempts > 1 for statements that are safe to repeat
+    (reads, INSERT OR REPLACE). Returns the last attempt's result, or None if
+    the last attempt timed out."""
+    result = None
+    for attempt in range(1, attempts + 1):
+        try:
+            result = subprocess.run(
+                [NPX, "-y", "wrangler", "d1", "execute", *args],
+                cwd=WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                timeout=timeout,
+            )
+            if result.returncode == 0:
+                return result
+            detail = f"exit {result.returncode}"
+        except subprocess.TimeoutExpired:
+            result = None
+            detail = f"timed out after {timeout}s"
+        if attempt < attempts:
+            wait = 15 * attempt
+            print(f"wrangler d1 execute failed ({detail}); retrying in {wait}s ({attempt}/{attempts})")
+            time.sleep(wait)
+    return result
+
+
+def run_d1_sql(statements, label, db_name=None, attempts=1):
     """Writes `statements` to a temp .sql file and applies it to Cloudflare
     D1 via `wrangler d1 execute --remote`, raising SystemExit with the
     wrangler output on failure. This is the write counterpart to d1_query()
@@ -444,38 +472,43 @@ def run_d1_sql(statements, label, db_name=None):
     sync_parlay_to_d1.py) instead of each re-implementing the same
     temp-file/subprocess/error-handling around wrangler. Output is
     ascii-encoded defensively on failure -- wrangler output has crashed a
-    plain print() on Windows consoles before with a non-ascii character."""
+    plain print() on Windows consoles before with a non-ascii character.
+    Pass attempts > 1 only when re-applying the statements is harmless
+    (INSERT OR REPLACE)."""
     if not statements:
         return
     with tempfile.NamedTemporaryFile("w", suffix=".sql", delete=False, encoding="utf-8") as f:
         f.write("\n".join(statements))
         path = f.name
     try:
-        result = subprocess.run(
-            [NPX, "-y", "wrangler", "d1", "execute", db_name or D1_DATABASE_NAME, "--remote", f"--file={path}"],
-            cwd=WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
-        )
-        if result.returncode != 0:
-            print(result.stdout.encode("ascii", "replace").decode("ascii"))
-            print(result.stderr.encode("ascii", "replace").decode("ascii"))
+        result = _run_wrangler_d1([db_name or D1_DATABASE_NAME, "--remote", f"--file={path}"], attempts)
+        if result is None or result.returncode != 0:
+            if result is not None:
+                print(result.stdout.encode("ascii", "replace").decode("ascii"))
+                print(result.stderr.encode("ascii", "replace").decode("ascii"))
             raise SystemExit(f"wrangler d1 execute failed for {label}")
     finally:
         os.unlink(path)
 
 
-def d1_query(sql, db_name=None):
+def d1_query(sql, db_name=None, attempts=3):
     """Runs a read-only query against remote D1 via `wrangler d1 execute
     --json` and returns the result rows as a list of dicts. Uses the same
     wrangler-CLI approach as the write path (update_history_d1.py) rather
     than D1's raw HTTP API, so both read and write inherit wrangler's
     already-proven auth/retry behavior. db_name defaults to
     D1_DATABASE_NAME (retirement-league-history) -- pass it explicitly to
-    query a different D1 database, same as run_d1_sql already does."""
-    result = subprocess.run(
-        [NPX, "-y", "wrangler", "d1", "execute", db_name or D1_DATABASE_NAME, "--remote", f"--command={sql}", "--json"],
-        cwd=WORKER_DIR, capture_output=True, text=True, encoding="utf-8", errors="replace",
-    )
+    query a different D1 database, same as run_d1_sql already does.
+    Retries (reads are always safe to repeat): on the GitHub runner this
+    failed about half the time after a ~30s hang. With --json wrangler
+    reports its error on stdout, not stderr, so both go in the exception."""
+    result = _run_wrangler_d1([db_name or D1_DATABASE_NAME, "--remote", f"--command={sql}", "--json"], attempts)
+    if result is None:
+        raise RuntimeError(f"D1 query timed out after {attempts} attempt(s)\nSQL: {sql}")
     if result.returncode != 0:
-        raise RuntimeError(f"D1 query failed: {result.stderr}\nSQL: {sql}")
+        raise RuntimeError(
+            f"D1 query failed (exit {result.returncode}):\nstderr: {result.stderr}\n"
+            f"stdout: {result.stdout[:2000]}\nSQL: {sql}"
+        )
     data = json.loads(result.stdout)
     return data[0]["results"]

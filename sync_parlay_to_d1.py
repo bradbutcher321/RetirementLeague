@@ -97,7 +97,7 @@ def run_sql(statements):
     if not statements:
         print("Nothing to sync.")
         return
-    hl.run_d1_sql(statements, "parlay picks", db_name=D1_DATABASE_NAME)
+    hl.run_d1_sql(statements, "parlay picks", db_name=D1_DATABASE_NAME, attempts=3)
     print(f"Synced {len(statements)} row(s) to D1.")
 
 
