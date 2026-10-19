@@ -71,6 +71,13 @@
 
 * { box-sizing: border-box; }
 
+/* The hidden attribute always wins. Without this, any rule that sets
+   display (.cm-banner{display:flex}, .controls-row) beats the browser's own
+   [hidden] style, and the element shows anyway: Parlay Legs showed its
+   Commissioner banner and League Videos its empty Season picker to
+   everyone (site audit IV #24, #25). */
+[hidden] { display: none !important; }
+
 /* ---------- Text selection ----------
    Off site-wide, tried first on the dashboard's Median Watch section and
    confirmed before rolling out further. This is a stats site with no
