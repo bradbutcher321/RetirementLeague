@@ -8,7 +8,8 @@ on:
   # this workflow on a real schedule instead -- see worker/wrangler.toml's
   # [triggers] (off midweek, hourly on a game day, every 10 min during an
   # actual NCAAF/NFL window) and the scheduled() handler in
-  # worker/src/index.js.
+  # worker/src/index.js. It only dispatches when a Pending pick's game is near
+  # (30 min before to 8 h after kickoff), plus once every 6 h as a safety net.
   workflow_dispatch: # Manual button inside GitHub web console, and Cloudflare's cron dispatch
 
 permissions:

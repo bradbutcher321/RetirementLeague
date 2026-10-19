@@ -63,7 +63,7 @@
  */
 import { buildDashboard } from "./dashboard.js";
 import { getStats, recordHit } from "./analytics.js";
-import { dispatchParlayRefresh } from "./parlayRefresh.js";
+import { dispatchParlayRefresh, dispatchParlayRefreshIfNeeded } from "./parlayRefresh.js";
 import { enterParlay, getParlayWeek } from "./parlayEntry.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
@@ -352,7 +352,7 @@ export default {
       ctx.waitUntil(runHealthCheck(env).catch((err) => console.error("Health check failed:", err)));
     }
     const [parlay, median] = await Promise.allSettled([
-      tenth ? dispatchParlayRefresh(env) : { status: 204 },
+      tenth ? dispatchParlayRefreshIfNeeded(env) : { status: 204 },
       (async () => {
         const entry = await readCache(env);
         const now = Math.floor(Date.now() / 1000);
