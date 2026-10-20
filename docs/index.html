@@ -685,6 +685,8 @@
   @keyframes mh-pulse{ 0%{ r: 2.5px; opacity: .7; } 70%{ r: 9px; opacity: 0; } 100%{ r: 9px; opacity: 0; } }
   .mh-pulse{ animation: mh-pulse 1.6s infinite; }
   @media (prefers-reduced-motion: reduce){ .mh-pulse{ animation: none; opacity: 0; } button.median-split-label, .mh-chip{ transition: none; } }
+  /* A finished week's chip where the mode switch was (audit V #9). */
+  .mw-final{ flex: none; align-self: center; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); color: var(--text); white-space: nowrap; }
   .mw-grid{ display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
   @media (max-width: 420px){
     .mw-grid{ grid-template-columns: 1fr; }
@@ -888,6 +890,66 @@
   .cu-foot{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
   .cu-more{ color: var(--gold); font-weight: 600; font-size: 0.8rem; text-decoration: none; padding: 12px 0; }
   .cu-got{ flex: none; height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid var(--lead-line); background: none; color: var(--gold); font: 700 0.8rem var(--body); cursor: pointer; }
+  /* Your week (audit V #12): the status line's place once the week is final.
+     The dashboard card shape, with your result, what it moved and who's next.
+     Two columns from 700px. */
+  .yw{ position: relative; overflow: hidden; padding: 14px 14px 12px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(165deg, var(--surface-2), var(--surface)); }
+  .yw-h{ display: flex; align-items: center; gap: 10px; }
+  .yw-h b{ font-size: 0.95rem; margin-right: auto; }
+  .yw-res{ flex: none; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--win-line); background: var(--win-tint); color: var(--turf); }
+  .yw-res.l{ border-color: var(--loss-line); background: var(--loss-tint); color: var(--loss); }
+  .yw-res.t{ border-color: var(--line); background: var(--item); color: var(--text); }
+  .yw-score{ display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; }
+  .yw-score .s{ display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .yw-score .s.r{ justify-content: flex-end; flex-direction: row-reverse; }
+  .yw-score .s b{ font-size: 0.95rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .yw-score .s span{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.9rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .yw-score .s.mine span{ color: var(--gold); }
+  .yw-score .s.mine b{ color: var(--me-ring); }
+  .yw-score .s.r span{ color: var(--text-dim); }
+  .yw-score .d{ color: #555; }
+  .yw-tags{ display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .yw-tag{ font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--lead-line); background: var(--lead-tint); color: var(--gold); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .yw-tag.n{ border-color: var(--line); background: var(--item); color: #D3D3CF; }
+  .yw-moves{ display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+  .yw-mv{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 9px 8px 8px; text-align: center; min-width: 0; }
+  .yw-mv .l{ color: var(--text-dim); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+  .yw-mv .v{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.55rem; line-height: 1.1; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .yw-mv .f{ font-size: 0.68rem; color: var(--text-dim); margin-top: 1px; white-space: nowrap; }
+  .yw-mv .f b{ color: var(--turf); font-weight: 700; }
+  .yw-mv .f b.dn{ color: var(--loss); }
+  a.yw-next{ display: block; margin-top: 10px; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 11px 14px 12px; color: inherit; text-decoration: none; }
+  @media (hover: hover){ a.yw-next:hover{ background: var(--item-hover); } }
+  a.yw-next:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .yw-next .r1{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .yw-next .k{ color: var(--text-dim); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; white-space: nowrap; }
+  .yw-next .ser{ color: var(--text-dim); font-size: 0.76rem; text-align: right; }
+  .yw-next .ser b{ color: var(--text); }
+  .yw-next .opp{ display: flex; align-items: center; gap: 10px; margin-top: 8px; min-width: 0; }
+  .yw-next .opp > div{ min-width: 0; }
+  .yw-next .opp b{ font-size: 1.02rem; }
+  .yw-next .opp span{ display: block; color: var(--text-dim); font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .yw-lg{ flex: none; width: 34px; height: 34px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: #1d1d1d; box-shadow: 0 0 0 1px rgba(255,255,255,0.14); font: 800 0.7rem/1 var(--body); }
+  .yw-lg img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+  .stakes{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .stake{ border-radius: 10px; padding: 8px 10px; border: 1px solid; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .stake.w{ border-color: var(--win-line); background: var(--win-tint); }
+  .stake.l{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .stake span{ font-size: 0.76rem; color: #D3D3CF; font-weight: 600; white-space: nowrap; }
+  .stake b{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+  .stake.w b{ color: var(--turf); } .stake.l b{ color: var(--loss); }
+  @media (min-width: 700px){
+    .yw-body{ display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0 12px; align-items: start; }
+    .yw-body a.yw-next{ margin-top: 12px; }
+  }
+  /* The result moment (audit V #13): once per matchup, never with Reduce Motion. */
+  .yw-sweep{ position: absolute; inset: 0; pointer-events: none; transform: translateX(-100%);
+             background: linear-gradient(105deg, transparent 30%, rgba(212,180,106,0.16) 45%, rgba(255,232,170,0.22) 50%, rgba(212,180,106,0.16) 55%, transparent 70%); }
+  .yw.play.top .yw-sweep{ animation: yw-sweep 1.4s .55s cubic-bezier(.3,.6,.2,1) both; }
+  .yw.play .yw-res{ animation: yw-stamp .5s .35s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes yw-sweep{ to{ transform: translateX(100%); } }
+  @keyframes yw-stamp{ from{ transform: scale(2.2); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce){ .yw.play .yw-sweep, .yw.play .yw-res{ animation: none; } }
   #me-section .matchups{ grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px){ #me-section .matchups{ max-width: calc(50% - 7px); margin: 0 auto; } }
   #me-section .matchups:empty{ display: none; }
@@ -2410,7 +2472,7 @@
   // week's, which has no current history), the current one, or nothing for
   // Average mode. A snapshot from before current totals were kept still
   // has the current median (cm), just no team lines.
-  const mhMetric = () => ((lastMedianData && lastMedianData.archived) || medianViewMode === 'projected' ? 'projected'
+  const mhMetric = () => ((lastMedianData && lastMedianData.archived) || weekFinal || medianViewMode === 'projected' ? 'projected'
     : medianViewMode === 'current' ? 'current' : null);
   const mhPts = metric => (metric === 'current' ? mhSeries().filter(p => typeof p.cm === 'number') : mhSeries());
   const mhMed = (p, metric) => (metric === 'current' ? p.cm : p.pm);
@@ -2419,7 +2481,7 @@
 
   function medianSplitHtml(mode, medianValue, id) {
     const idAttr = id ? ` id="${id}"` : '';
-    const label = lastMedianData && lastMedianData.archived ? 'Median' : MW_MODES[mode].label;
+    const label = lastMedianData && lastMedianData.archived ? 'Median' : weekFinal ? 'Final Median' : MW_MODES[mode].label;
     // A past week's card shows final scores, but its chart (the projected
     // median through that week) opens from the label all the same.
     if (!mhHas()) {
@@ -2894,6 +2956,15 @@
   // Whether the Worker could read NFL game states this refresh; without that
   // every team would look finished, so status and locks stay hidden.
   let medianStatusKnown = false;
+  // The live week once every starter is done (audit V #9): from Monday
+  // night's last whistle until ESPN rolls the week over. Week in Review
+  // already used the same test; Median Watch, Superlatives, the status line
+  // and the matchups read this flag so none of them talk as if games were on.
+  let weekFinal = false;
+  const allStartersDone = data => {
+    const teams = data.teams || [];
+    return teams.some(t => (t.current || 0) > 0) && teams.every(t => !(t.remaining || 0) && !(t.inPlay || 0));
+  };
 
   const SPREAD_MIN_GAP = 3; // px minimum breathing room between separate rows
 
@@ -3261,7 +3332,10 @@
   function renderMedianStatic(mode) {
     const currentHasStarted = lastMedianTeams.some(t => t.current > 0);
     // A past week's three modes are all its final scores: no toggle.
-    const toggleHtml = lastMedianData && lastMedianData.archived ? '' : mwToggleHtml(mode);
+    // A finished live week says so where the switch was; the strip and the
+    // median's chart for the week stay as they are.
+    const toggleHtml = lastMedianData && lastMedianData.archived ? ''
+      : weekFinal ? '<span class="mw-final">Final</span>' : mwToggleHtml(mode);
     let bodyHtml, rows = null, medianValue = null;
     if (mode === 'current' && !currentHasStarted) {
       bodyHtml = medianPendingBodyHtml();
@@ -4759,6 +4833,10 @@
         ['live', `Week ${week} final`],
       ];
     }
+    // The live week, every game over (audit V #9): live and projected are
+    // the same final numbers, so the cards open on them, named for what
+    // they are, and there's nothing to switch between.
+    if (weekFinal) return [['live', `Through Week ${week}`]];
     return [
       ...(hasPrior ? [['through', `Through Week ${week - 1}`]] : []),
       ...(started ? [['live', `Week ${week} live`]] : []),
@@ -5000,7 +5078,7 @@
   // Gold marks a week led by the leader this mode shows. In the live and
   // projected modes the last tile is this week, dashed. Past about five
   // weeks the strip scrolls on a phone, opening on the latest week.
-  function leaderStripHtml(teams, leaderTeam, week, mode) {
+  function leaderStripHtml(teams, leaderTeam, week, mode, fin) {
     if (!historyThrough(week) || teams.some(t => !t.manager)) return '';
     const live = mode !== 'through';
     const sums = new Map(teams.map(t => [t.manager, 0]));
@@ -5024,7 +5102,9 @@
     }
     if (live) {
       teams.forEach(t => sums.set(t.manager, sums.get(t.manager) + (mode === 'live' ? t.cur : t.proj)));
-      tile(`Wk ${week} ${mode === 'live' ? 'live' : 'proj'}`, ' now');
+      // A finished week is a week like the others: no dashes.
+      if (fin) tile(`Week ${week}`, '');
+      else tile(`Wk ${week} ${mode === 'live' ? 'live' : 'proj'}`, ' now');
     }
     if (!tiles.length) return '';
     return `
@@ -5072,6 +5152,8 @@
     // week to show, so without one this card reads the live view instead.
     const shared = activeSeasonMode();
     const m = shared === 'through' && !hasPrior ? 'live' : shared;
+    // Every game over: "live" is the week's final (audit V #9).
+    const fin = weekFinal && m === 'live';
 
     const tag = (isNew, label) => !hasPrior || m === 'through' ? ''
       : (isNew ? `<span class="badge turf">${label}</span>` : '<span class="badge dim">Holding</span>');
@@ -5103,9 +5185,9 @@
     let high;
     if (m === 'through' && prevHigh) high = { score: prevHigh.score, team: prevHigh.team, manager: prevHigh.manager, meta: `Week ${prevHigh.week}`, isNew: false };
     else if (m === 'proj' && projBreaks) high = { score: bestProj.proj, team: bestProj.team, manager: bestProj.manager, meta: `Week ${week} \u00b7 projected`, isNew: true };
-    else if (liveBreaks) high = { score: bestCur.cur, team: bestCur.team, manager: bestCur.manager, meta: `Week ${week} \u00b7 live`, isNew: true };
+    else if (liveBreaks) high = { score: bestCur.cur, team: bestCur.team, manager: bestCur.manager, meta: `Week ${week}${fin ? '' : ' \u00b7 live'}`, isNew: true };
     else if (prevHigh) high = { score: prevHigh.score, team: prevHigh.team, manager: prevHigh.manager, meta: `Week ${prevHigh.week}`, isNew: false };
-    else high = { score: bestCur.cur, team: bestCur.team, manager: bestCur.manager, meta: `Week ${week} \u00b7 live`, isNew: true };
+    else high = { score: bestCur.cur, team: bestCur.team, manager: bestCur.manager, meta: `Week ${week}${fin ? '' : ' \u00b7 live'}`, isNew: true };
 
     // Shared helper for every comparison row below: maps a value to a 0-100%
     // position on an axis spanning [lo, hi] (padded 8%), so a row's markers
@@ -5153,7 +5235,7 @@
     const throughLeader = [...teams].sort((a, b) => b.prior - a.prior)[0];
     const leader = ranked[0];
     const leaderChanged = hasPrior && m !== 'through' && leader.team !== throughLeader.team;
-    const modeLabel = m === 'through' ? `Through Week ${week - 1}` : m === 'live' ? `Through Week ${week} so far` : `Projected through Week ${week}`;
+    const modeLabel = m === 'through' ? `Through Week ${week - 1}` : fin ? `Through Week ${week}` : m === 'live' ? `Through Week ${week} so far` : `Projected through Week ${week}`;
     const top4 = ranked.slice(0, 4);
     const domainVals2 = top4.flatMap(r => [r.prior, total(r)]);
     const scale2 = cmpScale(Math.min(...domainVals2), Math.max(...domainVals2));
@@ -5177,9 +5259,9 @@
     // The arrow reads "from where the bars start -> to where they end", so
     // it only belongs in live/projected mode; Through mode has no movement.
     const leadCaption = m === 'through' ? modeLabel
-      : `${week > 1 ? 'Week ' + (week - 1) : 'Preseason'} \u2192 Week ${week} ${m === 'live' ? 'live' : 'projected'}`;
+      : `${week > 1 ? 'Week ' + (week - 1) : 'Preseason'} \u2192 Week ${week}${fin ? '' : m === 'live' ? ' live' : ' projected'}`;
     const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${leadCaption}</span></div>${leadRows}</div>`
-      + leaderStripHtml(teams, leader, week, m);
+      + leaderStripHtml(teams, leader, week, m, fin);
 
     container.innerHTML =
       card('Season High Score', high.score, high.team, high.manager, high.meta, highExtra, tag(high.isNew, 'New record')) +
@@ -5366,30 +5448,192 @@
     const key = `${data.year || leagueYear}:${data.week}`;
     let hidden = false;
     try { hidden = localStorage.getItem(STATUS_KEY) === key; } catch (e) {}
+    if (!hidden && renderYourWeek(el, data, t, key)) return;
     if (!t || hidden || typeof t.standing !== 'number') { el.hidden = true; el.innerHTML = ''; return; }
     // "You're 8th at 4-6, 1 game back of the playoff line, with a 38% shot at the
     // playoffs. Up next: Jared." Each clause is left out when its number isn't there.
+    // Once every game is over, ESPN's record and rank are still last week's
+    // until it rolls the week over, so they get this week's results added
+    // (as Superlatives' final view does), and "up next" is next week's
+    // opponent (audit V #16).
+    const after = weekFinal ? standingsAfter(data) : null;
+    const recOf = x => (after && after.get(x.manager) ? after.get(x.manager).rec : x.record);
+    const rankOf = x => (after && after.get(x.manager) ? after.get(x.manager).rank : x.standing);
     let line = '';
     const spots = data.playoffTeamCount || 0;
-    const order = teams.filter(x => typeof x.standing === 'number').sort((a, b) => a.standing - b.standing);
+    const order = teams.filter(x => typeof x.standing === 'number').sort((a, b) => rankOf(a) - rankOf(b));
     if (spots && order.length > spots) {
       // Games from the last playoff spot, or the first spot out; a game is a win more or a loss fewer.
-      const [w, l] = recWL(t.record);
-      const edge = recWL(order[t.standing > spots ? spots - 1 : spots].record);
-      const gb = t.standing > spots ? ((edge[0] - w) + (l - edge[1])) / 2 : ((w - edge[0]) + (edge[1] - l)) / 2;
+      const [w, l] = recWL(recOf(t));
+      const edge = recWL(recOf(order[rankOf(t) > spots ? spots - 1 : spots]));
+      const gb = rankOf(t) > spots ? ((edge[0] - w) + (l - edge[1])) / 2 : ((w - edge[0]) + (edge[1] - l)) / 2;
       const n = gb % 1 ? gb.toFixed(1) : String(gb);
-      line = `, ${n} ${gb === 1 ? 'game' : 'games'} ${t.standing > spots ? 'back of' : 'up on'} the playoff line`;
+      line = `, ${n} ${gb === 1 ? 'game' : 'games'} ${rankOf(t) > spots ? 'back of' : 'up on'} the playoff line`;
     }
     const odds = typeof t.playoffPct === 'number' ? `, with a <b>${Math.round(t.playoffPct)}%</b> shot at the playoffs` : '';
     const mu = (data.matchups || []).find(m => isMe(m.awayManager) || isMe(m.homeManager));
-    const opp = mu && (isMe(mu.awayManager) ? mu.homeManager : mu.awayManager);
+    const opp = weekFinal ? (t.ahead || [])[1] : mu && (isMe(mu.awayManager) ? mu.homeManager : mu.awayManager);
     const next = opp ? ` Up next: <b>${esc(opp)}</b>.` : '';
     el.innerHTML = `<div class="st-line"><span class="st-mono">${esc(monogram(t.manager))}</span>
-      <p class="st-text">You're <b>${ordinal(t.standing)} at ${esc(t.record)}</b>${line}${odds}.${next}</p>
+      <p class="st-text">You're <b>${ordinal(rankOf(t))} at ${esc(recOf(t))}</b>${line}${odds}.${next}</p>
       <button type="button" class="st-x" aria-label="Hide until next week">✕</button></div>`;
     el.dataset.key = key;
     el.hidden = false;
   }
+  // The table once this week counts (Superlatives' final view): manager ->
+  // { rec, rank, w, l, pf }, by wins then points.
+  function standingsAfter(data) {
+    const rows = projectStandings(data, 'live').sort((a, b) => b.w - a.w || b.pf - a.pf);
+    return new Map(rows.map((r, i) => [r.manager, { rec: formatRecordParts(r.w, r.l, r.ties), rank: i + 1, w: r.w, l: r.l, pf: r.pf }]));
+  }
+
+  // ---------- Your week (audit V #12, #13) ----------
+  // From the last whistle of the week until ESPN rolls it over, the status
+  // line's place holds a card about you: the result, what it did to your
+  // record, place and playoff odds (the site's own sim, run without and with
+  // this week), and who's next, with the series and what a win or a loss
+  // would do to your odds. The card is kept, so after the rollover it stays
+  // up until the next week's first kickoff. The first time you see a result
+  // it plays once: the scores count up, the result stamps in, and a gold
+  // sweep crosses the card when you had the week's top score.
+  const YW_KEY = 'rl-your-week', YW_SEEN = 'rl-your-week-seen';
+  let ywMemo = null;
+  const ywLogo = name => {
+    const p = franchiseData && franchiseData.players.find(x => x.name === name);
+    return (p && p.current_team_logo) || '';
+  };
+  function yourWeekModel(data, t) {
+    // Polls bring the same final numbers every 15 seconds; the sims run once.
+    const memoKey = [data.year, data.week, t.manager, data.currentMedian, ...(data.teams || []).map(x => x.current)].join('|');
+    if (ywMemo && ywMemo.k === memoKey) return ywMemo.m;
+    const m = (data.matchups || []).find(x => isMe(x.awayManager) || isMe(x.homeManager));
+    const inp = typeof RaceSim !== 'undefined' && RaceSim.inputs(data);
+    if (!m || !inp) return null;
+    const away = isMe(m.awayManager);
+    const my = parseFloat(away ? m.awayScore : m.homeScore) || 0, th = parseFloat(away ? m.homeScore : m.awayScore) || 0;
+    const players = (away ? m.awayPlayers : m.homePlayers) || [];
+    const proj = players.reduce((s, p) => s + (p.projectedPoints || 0), 0);
+    const teams = data.teams || [];
+    const top = my >= Math.max(...teams.map(x => x.current || 0));
+    const median = data.medianGames === false ? null : data.currentMedian;
+    // Odds after this week (with the win/lose split for next week), and
+    // before it: the same payload with this week's games unplayed.
+    const after = RaceSim.simulate(inp, RaceSim.RUNS, null, true);
+    const binp = RaceSim.inputs(Object.assign({}, data, { matchups: [] }));
+    const before = binp ? RaceSim.simulate(binp, RaceSim.RUNS) : null;
+    const table = standingsAfter(data);
+    const me = table.get(t.manager);
+    const prior = t.prior || {};
+    const oppName = (t.ahead || [])[1] || null;
+    const ot = oppName && teams.find(x => x.manager === oppName);
+    let next = null;
+    if (ot) {
+      const s = seriesFor(t.manager, oppName, data.week + 1);
+      let run = 0, runBy = null;
+      if (s && s.form.length) {
+        const k = s.form[s.form.length - 1];
+        for (let i = s.form.length - 1; i >= 0 && s.form[i] === k; i--) run++;
+        runBy = k === 'W' ? t.manager : oppName;
+      }
+      const o = table.get(oppName) || {};
+      next = {
+        name: oppName, team: ot.name, rec: o.rec || ot.record, rank: o.rank || ot.standing,
+        series: s ? [s.a, s.b] : null, run, runBy,
+        ifWin: after[t.manager] && after[t.manager].ifWin, ifLoss: after[t.manager] && after[t.manager].ifLoss,
+      };
+    }
+    const model = {
+      year: data.year || leagueYear, week: data.week, me: t.manager, opp: away ? m.homeManager : m.awayManager,
+      my, th, top, median, proj: proj ? my - proj : null,
+      rec: me ? me.rec : t.record, recBefore: formatRecordParts(prior.w || 0, prior.l || 0, prior.t || 0),
+      rank: me ? me.rank : t.standing, rankBefore: t.standing,
+      odds: after[t.manager] ? after[t.manager].po : null, oddsBefore: before && before[t.manager] ? before[t.manager].po : null,
+      next,
+    };
+    ywMemo = { k: memoKey, m: model };
+    return model;
+  }
+  function yourWeekHtml(y, play) {
+    const res = y.my > y.th ? 'Won' : y.my < y.th ? 'Lost' : 'Tied';
+    const tags = [];
+    if (y.top) tags.push('<span class="yw-tag">Top score of the week</span>');
+    if (typeof y.median === 'number') tags.push(`<span class="yw-tag${y.my > y.median ? '' : ' n'}">${y.my > y.median ? 'Beat' : 'Missed'} the median by ${fmtScore(Math.abs(y.my - y.median))}</span>`);
+    if (typeof y.proj === 'number') tags.push(`<span class="yw-tag n">${cuSigned(y.proj)} vs projection</span>`);
+    // "▲ from 4-6": green up, red down, "no change" in grey.
+    const move = (better, same, from) => (same ? '<span>no change</span>' : `<b class="${better ? '' : 'dn'}">${better ? '▲' : '▼'} from ${from}</b>`);
+    const [w1, l1] = recWL(y.rec), [w0, l0] = recWL(y.recBefore);
+    const oddsR = v => Math.round(v);
+    const mv = (label, val, sub) => `<div class="yw-mv"><div class="l">${label}</div><div class="v">${val}</div><div class="f">${sub}</div></div>`;
+    const moves = [
+      mv('Record', esc(y.rec), move(w1 - l1 >= w0 - l0, y.rec === y.recBefore, esc(y.recBefore))),
+      typeof y.rank === 'number' ? mv('Standing', ordinal(y.rank), move(y.rank < y.rankBefore, y.rank === y.rankBefore, ordinal(y.rankBefore || y.rank))) : '',
+      typeof y.odds === 'number' ? mv('Playoff odds', `${oddsR(y.odds)}%`, typeof y.oddsBefore === 'number' ? move(oddsR(y.odds) > oddsR(y.oddsBefore), oddsR(y.odds) === oddsR(y.oddsBefore), `${oddsR(y.oddsBefore)}%`) : '') : '',
+    ].join('');
+    let nextHtml = '';
+    const n = y.next;
+    if (n) {
+      const ser = !n.series ? '' : n.series[0] === n.series[1] ? (n.series[0] ? `Tied <b>${n.series[0]}-${n.series[1]}</b>` : 'First meeting')
+        : n.series[0] > n.series[1] ? `You lead <b>${n.series[0]}-${n.series[1]}</b>` : `${esc(n.name)} leads <b>${n.series[1]}-${n.series[0]}</b>`;
+      const run = n.run > 1 ? ` · ${n.runBy === y.me ? 'you' : esc(n.runBy)} won the last ${n.run}` : '';
+      const logo = ywLogo(n.name);
+      const pct = v => (typeof v === 'number' ? `${Math.round(v)}%` : '—');
+      nextHtml = `<a class="yw-next" href="${esc(pageLink('head-to-head.html', { a: y.me, b: n.name }))}">
+          <div class="r1"><span class="k">Up next · Week ${y.week + 1}</span><span class="ser">${ser}${run}</span></div>
+          <div class="opp"><span class="yw-lg">${logo ? `<img src="${esc(logo)}" alt="">` : esc(monogram(n.name))}</span><div><b>${esc(n.name)}</b><span>${esc(n.rec)}${n.rank ? ` · ${ordinal(n.rank)}` : ''} · ${esc(n.team)}</span></div></div>
+          ${typeof n.ifWin === 'number' || typeof n.ifLoss === 'number' ? `<div class="stakes"><div class="stake w"><span>If you win</span><b>${pct(n.ifWin)}</b></div><div class="stake l"><span>If you lose</span><b>${pct(n.ifLoss)}</b></div></div>` : ''}
+        </a>`;
+    }
+    const sc = v => `<span data-count="${v}">${fmtScore(v)}</span>`;
+    return `<div class="yw${play ? ' play' : ''}${play && y.top ? ' top' : ''}">
+        <div class="yw-sweep" aria-hidden="true"></div>
+        <div class="yw-h"><b>Your Week ${y.week}</b><span class="yw-res${res === 'Lost' ? ' l' : res === 'Tied' ? ' t' : ''}">${res}</span><button type="button" class="st-x" aria-label="Hide until next week">✕</button></div>
+        <div class="yw-body"><div>
+          <div class="yw-score"><div class="s mine"><b>${esc(y.me)}</b>${sc(y.my)}</div><span class="d">–</span><div class="s r"><b>${esc(y.opp)}</b>${sc(y.th)}</div></div>
+          ${tags.length ? `<div class="yw-tags">${tags.join('')}</div>` : ''}
+          <div class="yw-moves">${moves}</div>
+        </div><div>${nextHtml}</div></div>
+      </div>`;
+  }
+  function ywCountUp(root) {
+    root.querySelectorAll('[data-count]').forEach(el => {
+      const to = Number(el.dataset.count), t0 = performance.now(), dur = 950;
+      const step = now => {
+        const p = Math.min(1, (now - t0) / dur);
+        el.textContent = fmtScore(to * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  function renderYourWeek(el, data, t, key) {
+    if (!getMe() || data.archived || data.pastSeason || data.playoffWeek || data !== liveData) return false;
+    let y = null;
+    if (weekFinal && t) {
+      y = yourWeekModel(data, t);
+      if (y) { try { localStorage.setItem(YW_KEY, JSON.stringify(y)); } catch (e) {} }
+    } else if (!(data.teams || []).some(x => (x.current || 0) > 0)) {
+      // After the rollover, until the first kickoff: the card from last week.
+      try { y = JSON.parse(localStorage.getItem(YW_KEY) || 'null'); } catch (e) {}
+      if (!y || y.year !== (data.year || leagueYear) || y.week !== data.week - 1 || !isMe(y.me)) y = null;
+    }
+    if (!y) return false;
+    const seenKey = `${y.year}:${y.week}:${y.me}`;
+    let seen = false;
+    try { seen = localStorage.getItem(YW_SEEN) === seenKey; } catch (e) {}
+    const play = !seen && !mwReduceMotion && !document.hidden;
+    // A poll redraws the same card in place without replaying it.
+    const html = yourWeekHtml(y, false);
+    if (el.dataset.yw !== html || play || !el.querySelector('.yw')) {
+      el.innerHTML = yourWeekHtml(y, play);
+      el.dataset.yw = html;
+      if (play) ywCountUp(el);
+    }
+    if (!seen && !document.hidden) { try { localStorage.setItem(YW_SEEN, seenKey); } catch (e) {} }
+    el.dataset.key = key;
+    el.hidden = false;
+    return true;
+  }
+
   // ---------- Catch me up (audit IV #9) ----------
   // Every look at the live week leaves a snapshot behind (your score, your
   // opponent's, the median, and when). Come back to games in progress after
@@ -5935,6 +6179,7 @@
         // order instead of continuously reshuffling every poll.
         // Set before the matchups are sorted below: matchupDecided reads it.
         medianStatusKnown = Boolean(data.medianStatusKnown) && teams.every(t => typeof t.remaining === 'number');
+        weekFinal = !archived && !data.pastSeason && medianStatusKnown && allStartersDone(data);
         const matchups = (data.matchups || [])
           .map((m, i) => ({ m, i, final: matchupDecided(m) }))
           .sort((a, b) => (a.final === b.final ? a.i - b.i : a.final ? 1 : -1))
@@ -6013,7 +6258,8 @@
         lastMedianData = data;
         // A past week shows its final scores (Current), without touching the
         // saved pick, which comes back with the live week.
-        if (archived) { if (!mwLiveMode) mwLiveMode = medianViewMode; medianViewMode = 'current'; }
+        // So does a finished live week, where all three modes are the same number.
+        if (archived || weekFinal) { if (!mwLiveMode) mwLiveMode = medianViewMode; medianViewMode = 'current'; }
         else if (mwLiveMode) { medianViewMode = mwLiveMode; mwLiveMode = null; }
         renderMedianStatic(medianViewMode);
         if (animate) animateMedianRefresh(prevMedianTeams, prevMedianData);

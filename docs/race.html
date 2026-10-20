@@ -128,6 +128,8 @@
   window.addEventListener('rl-me', () => { if (BASELINE) render(); });
 
   fetch(WORKER_URL, { cache: 'no-store' }).then(r => r.json()).then(live => {
+    // Audit V #17: the Updated stamp was never written.
+    if (live.updatedAt) $('updated-at').textContent = formatUpdated(live.updatedAt);
     if (!setup(live) || !sched.length || !sched[0].pairs.length) {
       $('view').innerHTML = `<div class="glass"><div class="ft-empty">The regular season is over, so there’s nothing left to pick. See the Bracket tab on Standings.</div></div>`;
       return;

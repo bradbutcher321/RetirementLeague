@@ -410,7 +410,7 @@
         if (d.medianGames !== false) { if (medianWin.get(t.name)) w++; else l++; }
       }
       return { player: t.manager, w, l, ties, pf: p.pf + (mode === 'proj' ? own : 0), pa: p.pa + (mode === 'proj' && os !== null ? os : 0),
-        odds: mode === 'through' ? t.playoffPct : null, ahead: t.ahead || [] };
+        odds: mode === 'through' || liveFinal() ? t.playoffPct : null, ahead: t.ahead || [] };
     });
     // Through keeps the Worker's own order (its tiebreakers); projected
     // orders by wins, then points, as the dashboard did.
@@ -430,7 +430,14 @@
     });
     return { rows: ord, race, sos, hard: rankSchedules(sos), spots };
   }
+  // Every starter done, before ESPN rolls the week over (audit V #9): the
+  // projected table is the week's final, so it opens on it, unswitched.
+  function liveFinal() {
+    const d = LIVE && LIVE.raw, teams = (d && d.teams) || [];
+    return !!d && !!d.medianStatusKnown && teams.some(t => (t.current || 0) > 0) && teams.every(t => !(t.remaining || 0) && !(t.inPlay || 0));
+  }
   function bandHtml(d) {
+    if (liveFinal()) return '';
     const w = d.week;
     return `<div class="sf-band" id="sf-band"><div class="sup-seg">${[['through', `Through Week ${w - 1}`], ['proj', `Week ${w} projected`]]
       .map(([k, l]) => `<button type="button" data-sm="${k}" class="${k === sMode ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
@@ -619,9 +626,10 @@
     const useBand = live && bandOn();
     bumpExt = null;
     if (useBand) {
-      const lv = liveRows(year, sMode);
+      const mode = liveFinal() ? 'proj' : sMode;
+      const lv = liveRows(year, mode);
       rows = lv.rows; race = lv.race; sos = lv.sos; hard = lv.hard; spots = lv.spots; prevRank = null;
-      if (sMode === 'proj') bumpExt = new Map(rows.map(r => [r.player, r.rank]));
+      if (mode === 'proj') bumpExt = new Map(rows.map(r => [r.player, r.rank]));
     }
     const legend = tab === 'reg' && complete
       ? '<div class="legend"><span><i style="background:var(--turf)"></i>Made the playoffs</span><span><i style="background:var(--line)"></i>Missed the playoffs</span></div>'
