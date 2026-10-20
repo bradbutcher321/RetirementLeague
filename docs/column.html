@@ -28,7 +28,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=31">
 <link rel="stylesheet" href="nav.css?v=17">
-<link rel="stylesheet" href="features.css?v=5">
+<link rel="stylesheet" href="features.css?v=6">
 </head>
 <body>
   <div id="site-nav"></div>
@@ -63,7 +63,8 @@
   // data. Paragraphs carry <b> around figures and nothing else; they are
   // escaped here first and only the <b> tags put back.
   const $ = id => document.getElementById(id);
-  let C = [], cur = null;
+  let C = [], cur = null, GAMES = [];
+  const f2 = n => Number(n).toFixed(2);
 
   const safe = s => esc(s).replace(/&lt;(\/?)b&gt;/g, '<$1b>');
   const day = iso => new Date(iso).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/New_York' });
@@ -79,6 +80,28 @@
       }).join('')}</div></div></div>`;
   }
 
+  // Audit IV #20: in a recap, a final score ("<b>155.24</b> to <b>68.26</b>")
+  // goes gold and gets a scoreline above its paragraph, names from league.json.
+  // Every other figure stays plain bold. No league data, no scorelines.
+  function bodyHtml(c) {
+    const wk = GAMES.filter(g => g[0] === c.season && g[1] === c.week);
+    const near = (a, b) => Math.abs(a - b) < 0.006;
+    return c.body.map(p => {
+      const lines = [];
+      if (c.kind === 'preview') return `<p class="col-p">${safe(p)}</p>`;
+      const q = p.replace(/<b>(\d+\.\d\d)<\/b> to <b>(\d+\.\d\d)<\/b>/g, (all, x, y) => {
+        const g = wk.find(g => (near(g[5], +x) && near(g[6], +y)) || (near(g[5], +y) && near(g[6], +x)));
+        if (g) {
+          const aw = g[5] > g[6];
+          lines.push(`<div class="col-sl"><span class="nm">${esc(g[3])}</span><span class="s ${aw ? 'w' : ''}">${f2(g[5])}</span><span class="dimt">–</span><span class="s ${aw ? '' : 'w'}">${f2(g[6])}</span><span class="nm">${esc(g[4])}</span><span class="mg">by ${f2(Math.abs(g[5] - g[6]))}</span></div>`);
+        }
+        return `<b>${x}</b> to <b>${y}</b>`;
+      });
+      const html = safe(q).replace(/<b>(\d+\.\d\d)<\/b> to <b>(\d+\.\d\d)<\/b>/g, (all, x, y) => wk.some(g => (near(g[5], +x) && near(g[6], +y)) || (near(g[5], +y) && near(g[6], +x))) ? `<b class="sc">${x}</b> to <b class="sc">${y}</b>` : all);
+      return lines.join('') + `<p class="col-p">${html}</p>`;
+    }).join('');
+  }
+
   function gamesHtml(c) {
     return `<div class="glass ft-sec"><div class="panel-title">The matchups</div>
       <div class="ft-body"><div class="ft-lines">${c.games.map(g => `<div class="ft-line col-row"><div class="ft-main">
@@ -87,12 +110,12 @@
 
   function render() {
     const c = cur;
-    $('view').innerHTML = `<div class="glass col-art">
+    $('view').innerHTML = `<div class="col-wrap${c.kind === 'preview' ? '' : ' rail'}"><div class="glass col-art">
         <div class="col-top"><span class="ft-chip gold">${chipText(c)}</span><span class="dimt col-date">${esc(day(c.published_at))}</span></div>
         <h2 class="col-hl">${esc(c.headline)}</h2>
         <p class="col-d">${esc(c.dek)}</p>
-        ${c.body.map(p => `<p class="col-p">${safe(p)}</p>`).join('')}
-      </div>${c.kind === 'preview' ? gamesHtml(c) : standingsHtml(c)}`;
+        ${bodyHtml(c)}
+      </div>${c.kind === 'preview' ? gamesHtml(c) : standingsHtml(c)}</div>`;
     $('picker').innerHTML = C.length > 1
       ? `<select class="lg-select" id="pick" aria-label="Column">${C.map(x => `<option value="${esc(x.id)}"${x.id === c.id ? ' selected' : ''}>${esc(x.season === C[0].season ? chipText(x) : x.season + ' · ' + chipText(x))}</option>`).join('')}</select>` : '';
     $('picker').hidden = C.length < 2;
@@ -105,7 +128,9 @@
     window.scrollTo({ top: 0 });
   });
 
-  fetch('data/column.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
+  const gamesP = fetch('data/league.json').then(r => r.ok ? r.json() : null).then(d => { GAMES = (d && d.games) || []; }).catch(() => {});
+  fetch('data/column.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(async d => {
+    await gamesP;
     C = d.columns || [];
     if (d.generated_at) $('updated-at').textContent = formatUpdated(d.generated_at);
     if (!C.length) { $('view').innerHTML = '<div class="glass"><div class="ft-empty">The first column goes up Tuesday, after Monday Night Football.</div></div>'; return; }

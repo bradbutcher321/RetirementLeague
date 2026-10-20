@@ -201,8 +201,18 @@ svg.elo{ width:100%; height:auto; display:block; }
 .col-d{ color:#D3D3CF; font-size:0.98rem; line-height:1.45; margin:10px 0 14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
 .col-p{ font-size:0.95rem; line-height:1.65; color:#D3D3CF; margin:0 0 14px; }
 .col-p:last-child{ margin-bottom:0; }
-.col-d, .col-p{ max-width:72ch; }
-.col-p b{ color:var(--gold); font-weight:700; font-variant-numeric:tabular-nums; }
+.col-d, .col-p, .col-sl{ max-width:62ch; }
+/* Figures are white semibold; gold is kept for final scores (b.sc) so the
+   numbers a reader looks for stand out from the rest (audit IV #20). */
+.col-p b{ color:var(--text); font-weight:600; font-variant-numeric:tabular-nums; }
+.col-p b.sc{ color:var(--gold); font-weight:700; }
+.col-sl{ display:flex; align-items:center; gap:10px; margin:18px 0 8px; padding:8px 12px; border-radius:10px; border:1px solid var(--line); background:var(--item); font-size:0.8rem; }
+.col-sl .nm{ font-weight:700; min-width:0; }
+.col-sl .s{ font-family:var(--scoreboard); font-weight:800; font-size:1.05rem; font-variant-numeric:tabular-nums; color:#8a8a88; }
+.col-sl .s.w{ color:var(--gold); }
+.col-sl .mg{ margin-left:auto; color:var(--text-dim); font-size:0.72rem; white-space:nowrap; }
+.col-wrap{ display:grid; gap:14px; }
+.col-wrap > *{ min-width:0; }
 .col-row{ padding:9px 12px; }
 .col-mv{ width:30px; flex:none; font-size:0.66rem; font-weight:700; text-align:center; }
 @media (min-width:700px){
@@ -210,4 +220,9 @@ svg.elo{ width:100%; height:auto; display:block; }
   .col-hl{ font-size:3.2rem; }
   .col-d{ font-size:1.05rem; }
   .col-p{ font-size:1rem; }
+}
+@media (min-width:900px){
+  .col-wrap.rail{ grid-template-columns:minmax(0,1fr) 290px; align-items:start; }
+  .col-wrap.rail .col-art{ padding:30px 32px 32px; }
+  .col-wrap.rail > .ft-sec{ margin-top:0; position:sticky; top:12px; }
 }
