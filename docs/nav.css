@@ -216,10 +216,25 @@
 .sr-s{ color: var(--text-dim); font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sr-none{ color: var(--text-dim); font-size: 0.86rem; padding: 14px 10px; }
 
-/* The History hub's tiles: two across on a phone, three on a desktop. */
-.hub-grid{ display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
-.hub-grid[hidden]{ display: none; }
-@media (min-width: 721px){ .hub-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); } }
+/* The History hub: the pages you were last on, then four headed groups of
+   tiles. Two tiles across on a phone; four group columns on a desktop. */
+.hub-h{ display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 8px; }
+.hub-h b{ font-size: 0.7rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim); }
+.hub-h.live b{ color: var(--gold); }
+.hub-recent{ display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 0 18px; }
+.hub-recent::-webkit-scrollbar{ display: none; }
+.hub-chip{ flex: none; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 0 10px; border-radius: 22px; border: 1px solid var(--line); background: var(--item); color: var(--text); font-size: 0.82rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.hub-chip i{ width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; background: var(--lead-tint); color: var(--gold); }
+.hub-chip svg{ width: 14px; height: 14px; }
+@media (hover: hover){ .hub-chip:hover{ border-color: var(--lead-line); } }
+.hub-chip:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+#hub-grid[hidden]{ display: none; }
+.hub-cols{ display: grid; gap: 18px; }
+.hub-g{ display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+@media (min-width: 721px){
+  .hub-cols{ grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; align-items: start; }
+  .hub-g{ grid-template-columns: minmax(0,1fr); }
+}
 .hub-tile{
   display: flex;
   flex-direction: column;

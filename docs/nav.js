@@ -40,22 +40,23 @@
   ];
   // Pages that belong to no tab, so none lights up.
   const NO_TAB = ['commissioner.html'];
-  // The History hub's tiles (history.html), in its order.
+  // The History hub's tiles (history.html). `group` files each under a heading;
+  // the tiles show in the order below within it.
   const HISTORY = [
-    { href: 'column.html', label: 'The Column', sub: 'Tuesday recap, Thursday preview', icon: ICONS.pen },
-    { href: 'overview.html', label: 'League History', sub: 'Champions, timeline, leaderboards', icon: ICONS.book },
-    { href: 'game-records.html', label: 'Game Records', sub: 'Every single-game record', icon: ICONS.chart },
-    { href: 'head-to-head.html', label: 'Head to Head', sub: 'Any two managers', icon: ICONS.people },
-    { href: 'franchise.html', label: 'Franchise', sub: 'One manager’s whole career', icon: ICONS.shield },
-    { href: 'parlay-stats.html', label: 'Parlay Stats', sub: 'Hit rates, streaks and bet breakdowns', icon: ICONS.ticket },
-    { href: 'wrapped.html', label: 'Season Wrapped', sub: 'Any manager’s season, told as a story', icon: ICONS.spark },
-    { href: 'hall-of-fame.html', label: 'Hall of Fame', sub: 'Legacy points and manager Elo', icon: ICONS.trophy },
-    { href: 'draft-board.html', label: 'Draft Board', sub: 'Every draft since 2015', icon: ICONS.grid },
-    { href: 'players.html', label: 'Players', sub: 'Every player’s story in this league', icon: ICONS.jersey },
-    { href: 'moves.html', label: 'Trades & Waivers', sub: 'Every trade graded, best pickups', icon: ICONS.swap },
-    { href: 'race.html', label: 'Playoff Race', sub: 'Pick winners, watch the odds move', icon: ICONS.flag },
-    { href: 'rule-changes.html', label: 'Rule Changes', sub: 'How the league has changed', icon: ICONS.cal },
-    { href: 'videos.html', label: 'League Videos', sub: 'Weekly recaps, sign-in required', icon: ICONS.play },
+    { href: 'column.html', label: 'The Column', sub: 'Tuesday recap, Thursday preview', icon: ICONS.pen, group: 'This season' },
+    { href: 'overview.html', label: 'League History', sub: 'Champions, timeline, leaderboards', icon: ICONS.book, group: 'Records' },
+    { href: 'game-records.html', label: 'Game Records', sub: 'Every single-game record', icon: ICONS.chart, group: 'Records' },
+    { href: 'head-to-head.html', label: 'Head to Head', sub: 'Any two managers', icon: ICONS.people, group: 'Managers' },
+    { href: 'franchise.html', label: 'Franchise', sub: 'One manager’s whole career', icon: ICONS.shield, group: 'Managers' },
+    { href: 'parlay-stats.html', label: 'Parlay Stats', sub: 'Hit rates, streaks and bet breakdowns', icon: ICONS.ticket, group: 'Records' },
+    { href: 'wrapped.html', label: 'Season Wrapped', sub: 'Any manager’s season, told as a story', icon: ICONS.spark, group: 'Managers' },
+    { href: 'hall-of-fame.html', label: 'Hall of Fame', sub: 'Legacy points and manager Elo', icon: ICONS.trophy, group: 'Records' },
+    { href: 'draft-board.html', label: 'Draft Board', sub: 'Every draft since 2015', icon: ICONS.grid, group: 'Drafts & rules' },
+    { href: 'players.html', label: 'Players', sub: 'Every player’s story in this league', icon: ICONS.jersey, group: 'Managers' },
+    { href: 'moves.html', label: 'Trades & Waivers', sub: 'Every trade graded, best pickups', icon: ICONS.swap, group: 'This season' },
+    { href: 'race.html', label: 'Playoff Race', sub: 'Pick winners, watch the odds move', icon: ICONS.flag, group: 'This season' },
+    { href: 'rule-changes.html', label: 'Rule Changes', sub: 'How the league has changed', icon: ICONS.cal, group: 'Drafts & rules' },
+    { href: 'videos.html', label: 'League Videos', sub: 'Weekly recaps, sign-in required', icon: ICONS.play, group: 'This season' },
   ];
 
   function currentFile() {
@@ -68,6 +69,7 @@
     if (!mount) return;
 
     const file = currentFile();
+    noteVisit(file);
     const active = NO_TAB.includes(file) ? '' : (TABS.find(t => t.pages.includes(file)) || TABS.find(t => t.key === 'history')).key;
     // The page you're on is only "current" when it's the tab's own page:
     // Franchise lights History but isn't the History page.
@@ -222,11 +224,29 @@
 
   const searchBox = id => `<div class="sr-box"><span class="sr-ic">${ICONS.search}</span><input type="search" id="${id}" placeholder="Managers, teams, players, seasons" aria-label="Search the league" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"><button type="button" class="sr-x" aria-label="Clear search" hidden>✕</button></div>`;
 
-  // The History hub (history.html): the search box, then a tile per page.
+  // The last three hub pages visited, newest first (localStorage; the hub
+  // works without it).
+  const RECENT_KEY = 'hubRecent';
+  const readRecent = () => {
+    try { const r = JSON.parse(localStorage.getItem(RECENT_KEY)); return Array.isArray(r) ? r.filter(h => HISTORY.some(p => p.href === h)).slice(0, 3) : []; } catch (e) { return []; }
+  };
+  const noteVisit = file => {
+    if (!HISTORY.some(p => p.href === file)) return;
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify([file, ...readRecent().filter(h => h !== file)].slice(0, 3))); } catch (e) {}
+  };
+
+  // The History hub (history.html): the search box, the pages you were last
+  // on, then the tiles under four headings.
   window.renderHistoryHub = function renderHistoryHub(mount) {
+    const tile = p => `<a class="hub-tile" href="${p.href}"><span class="hub-ic">${p.icon}</span><b>${p.label}</b><span>${p.sub}</span></a>`;
+    const groups = [...new Set(HISTORY.map(p => p.group))];
+    const recent = readRecent().map(h => HISTORY.find(p => p.href === h));
     mount.innerHTML = `${searchBox('hub-q')}
       <div class="sr-results glass" id="hub-results" hidden></div>
-      <div class="hub-grid" id="hub-grid">${HISTORY.map(p => `<a class="hub-tile" href="${p.href}"><span class="hub-ic">${p.icon}</span><b>${p.label}</b><span>${p.sub}</span></a>`).join('')}</div>`;
+      <div id="hub-grid">
+        ${recent.length ? `<div class="hub-h"><b>Pick up where you left off</b></div><div class="hub-recent">${recent.map(p => `<a class="hub-chip" href="${p.href}"><i>${p.icon}</i>${p.label}</a>`).join('')}</div>` : ''}
+        <div class="hub-cols">${groups.map((g, i) => `<section class="hub-sec"><div class="hub-h${i === 0 ? ' live' : ''}"><b>${esc(g)}</b></div><div class="hub-g">${HISTORY.filter(p => p.group === g).map(tile).join('')}</div></section>`).join('')}</div>
+      </div>`;
     const grid = mount.querySelector('#hub-grid');
     wireSearch(mount.querySelector('#hub-q'), mount.querySelector('#hub-results'), has => { grid.hidden = has; });
     loadIndex();

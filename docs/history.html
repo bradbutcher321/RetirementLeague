@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=31">
-<link rel="stylesheet" href="nav.css?v=17">
+<link rel="stylesheet" href="nav.css?v=18">
 </head>
 <body>
   <div id="site-nav"></div>
@@ -52,18 +52,18 @@
       </div>
     </header>
 
-    <!-- The hub (site audit III #10): one search box, then a tile for each
-         history page. nav.js draws both, from the same list it keeps for
+    <!-- The hub (site audit III #10): one search box, then the pages you were last on,
+         then a tile for each history page under four headings. nav.js draws both, from the same list it keeps for
          the tab bar, so a new history page is one entry there. -->
     <section id="hub"></section>
 
     <footer id="site-footer"></footer>
   </div>
-<script src="nav.js?v=25"></script>
+<script src="nav.js?v=26"></script>
 <script src="page-common.js?v=39"></script>
 <script>
   renderHistoryHub(document.getElementById('hub'));
-  riseIn(document.querySelectorAll('#hub-grid > a'));
+  riseIn(document.querySelectorAll('#hub-grid .hub-tile'));
 </script>
 <script src="track.js?v=2" defer></script>
 </body>
