@@ -1234,7 +1234,7 @@
   .rc-end-n em{ font-style: normal; font-weight: 500; color: var(--text-dim); }
   .rc-plot{ position: relative; height: var(--h, 64px); margin-top: 4px; }
   .rc-axis{ position: absolute; left: 0; right: 0; top: var(--ay, 28px); height: 1px; background: rgba(255,255,255,0.12); }
-  .rc-med{ position: absolute; top: 0; bottom: 16px; border-left: 1.5px dashed color-mix(in srgb, var(--gold) 70%, transparent); }
+  .rc-med{ position: absolute; top: 0; bottom: 16px; border-left: 2px dashed color-mix(in srgb, var(--gold) 85%, transparent); }
   .rc-medl{ position: absolute; bottom: 0; transform: translateX(-50%); color: var(--gold); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
   .rc-dot{ position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; display: grid; place-items: center;
            background: #151515; border: 1.5px solid rgba(255,255,255,0.35); color: var(--text); font: 800 0.5rem/1 var(--body); letter-spacing: 0.02em; }
@@ -4704,14 +4704,16 @@
     rcPlotWidth = W;
     const dots = [...plot.querySelectorAll('.rc-dot')];
     const xs = dots.map(d => +d.dataset.x);
-    const lo = Math.min(...xs), hi = Math.max(...xs), pad = 14, D = 25;
+    // D is the dots' clearance; S is the row pitch, wider than a 24px dot so
+    // the median's dashed line shows in the gaps of a stack at the median.
+    const lo = Math.min(...xs), hi = Math.max(...xs), pad = 14, D = 25, S = 31;
     const X = v => pad + (v - lo) / ((hi - lo) || 1) * (W - 2 * pad);
     const placed = [];
     dots.forEach(d => {
       const x = X(+d.dataset.x);
       let y = 0;
       for (let k = 0; k < 24; k++) {
-        const c = k === 0 ? 0 : (k % 2 ? -1 : 1) * Math.ceil(k / 2) * D;
+        const c = k === 0 ? 0 : (k % 2 ? -1 : 1) * Math.ceil(k / 2) * S;
         if (placed.every(p => Math.hypot(p.x - x, p.y - c) >= D - 1)) { y = c; break; }
       }
       placed.push({ x, y, d });
