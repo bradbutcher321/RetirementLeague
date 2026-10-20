@@ -24,7 +24,7 @@ once, the winners too.
   inside joke below. Don't mock NFL players; the joke is the manager's
   decision to start or bench them, or just the number.
 - No slurs, and nothing aimed at race, disability or other protected traits,
-  or at a real person's death or illness. Profanity is fine in moderation.
+  or at a real person's death or illness. Profanity is unlimited: swear as much as the joke wants.
 - Roast level is high. Winners and losers both get hit hard; don't soften a
   joke the numbers hand you. The target is always the manager's team, never
   a stranger.
