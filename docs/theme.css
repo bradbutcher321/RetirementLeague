@@ -1000,9 +1000,10 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
    flipped to point down at the Safari button to tap first: bottom right for
    Safari 26's ⋯, the middle for older Safari's Share, none for Chrome. On
    iOS 26, bottom:0 is the top edge of Safari's floating toolbar, so 12px
-   leaves the arrow just clear of it. Below the scrim (60) so an open sheet
+   leaves the arrow just clear of it. The tab bar (--tabbar-h) fills that
+   same strip, so the card sits above it instead of covering it. Below the scrim (60) so an open sheet
    still covers it. */
-.a2hs{ position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); z-index:55; max-width:460px; margin:0 auto;
+.a2hs{ position:fixed; left:12px; right:12px; bottom:calc(12px + var(--tabbar-h, env(safe-area-inset-bottom, 0px))); z-index:55; max-width:460px; margin:0 auto;
        background:#151515; border:1px solid var(--lead-line); border-radius:14px; padding:14px;
        box-shadow:0 18px 50px -12px rgba(0,0,0,0.9); animation:a2hs-in .45s cubic-bezier(0.34,1.56,0.64,1) both; }
 .a2hs::after{ content:''; position:absolute; bottom:-7px; right:20px; width:12px; height:12px; background:#151515;
