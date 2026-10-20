@@ -51,124 +51,26 @@
   </div>
 <script src="nav.js?v=25"></script>
 <script src="page-common.js?v=39"></script>
-<script src="league-common.js?v=5"></script>
+<script src="race-sim.js?v=1"></script>
 <script>
-  // Playoff Race (site audit III #2). A real simulation in the page: every
-  // remaining regular-season game is played, the median game too, and ties
-  // go to points scored. Records come from data/league.json, the schedule
-  // left from the Worker's live numbers (teams[].ahead). Pick this week's
-  // winners and the rest of the season is replayed 6,000 times.
+  // Playoff Race (site audit III #2, IV #2). The simulation is the site's
+  // one, in race-sim.js, so these odds match every other page. Pick this
+  // week's winners and the rest of the season is replayed 6,000 times.
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const $ = id => document.getElementById(id);
   const pct = n => n == null ? '—' : Math.round(n) + '%';
-  const RUNS = 6000, SD = 22, SHRINK = 20;
-  let LIVEPART = {}, TEAMS, AHEAD, base, MU, sched, PICK_WEEK, DONE, REG, SPOTS, BYES, N, MEDIAN_ERA, LIVE_WEEK, BASELINE;
+  const RUNS = RaceSim.RUNS;
+  let INP, TEAMS, base, sched, PICK_WEEK, DONE, SPOTS, BYES, N, BASELINE;
   const picks = {};              // "a|b" -> winner, for PICK_WEEK only
 
-  let seed = 1;
-  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
-  const gauss = () => { let u = 0, v = 0; while (u === 0) u = rnd(); while (v === 0) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
-
-  function setup(D, live) {
-    const year = D.currentYear, set = D.settings[year];
-    REG = set.reg_weeks; SPOTS = set.playoff_teams; BYES = SPOTS >= 6 ? 2 : 0;
-    MEDIAN_ERA = year >= D.median_era_start_year;
-    TEAMS = [...D.active].sort();
+  function setup(live) {
+    INP = RaceSim.inputs(live);
+    if (!INP) return false;
+    ({ teams: TEAMS, base, sched, pickWeek: PICK_WEEK, done: DONE, spots: SPOTS, byes: BYES } = INP);
     N = TEAMS.length;
-    AHEAD = Object.fromEntries((live.teams || []).filter(t => t.manager).map(t => [t.manager, t.ahead || []]));
-    LIVE_WEEK = live.week;
-    const games = D.games.filter(g => g.year === year && g.type === 'Reg' && g.p2 && g.winner !== 'In Progress')
-      .map(g => ({ w: g.week, a: g.p1, b: g.p2, sa: g.s1, sb: g.s2, med: g.median }));
-    // The live week counts as played once every game in it is over.
-    const liveFinal = live.matchups && live.matchups.length && live.matchups.every(m => !m.awayRemaining && !m.homeRemaining && !m.awayInPlay && !m.homeInPlay);
-    if (liveFinal && !games.some(g => g.w === LIVE_WEEK)) {
-      live.matchups.forEach(m => games.push({ w: LIVE_WEEK, a: m.awayManager, b: m.homeManager, sa: m.awayScore, sb: m.homeScore, med: live.currentMedian }));
-    }
-    DONE = games.length ? Math.max(...games.map(g => g.w)) : 0;
-    // A live week still going: games already over lock in now, the rest start
-    // from their live score. The median win waits for the simulation.
-    LIVEPART = {};
-    if (!liveFinal && live.matchups && live.matchups.length && !games.some(g => g.w === LIVE_WEEK)) {
-      live.matchups.forEach(m => {
-        const fin = !m.awayRemaining && !m.homeRemaining && !m.awayInPlay && !m.homeInPlay;
-        LIVEPART[m.awayManager] = { s: m.awayScore, proj: m.awayProjected, fin };
-        LIVEPART[m.homeManager] = { s: m.homeScore, proj: m.homeProjected, fin };
-        if (fin) games.push({ w: LIVE_WEEK, a: m.awayManager, b: m.homeManager, sa: m.awayScore, sb: m.homeScore, med: null });
-      });
-    }
-    PICK_WEEK = DONE + 1;
-    base = Object.fromEntries(TEAMS.map(t => [t, { w: 0, l: 0, pf: 0, sc: [] }]));
-    games.forEach(g => {
-      [[g.a, g.sa, g.sb], [g.b, g.sb, g.sa]].forEach(([p, s, o]) => {
-        const r = base[p]; if (!r) return;
-        r.pf += s; r.sc.push(s);
-        if (s > o) r.w++; else r.l++;
-        if (MEDIAN_ERA && g.med != null) { if (s > g.med) r.w++; else r.l++; }
-      });
-    });
-    // Each team scores like its average so far, pulled hard toward the
-    // league's (worth SHRINK games), since a few weeks are mostly noise.
-    const recent = D.games.filter(g => g.type === 'Reg' && g.year >= year - 3 && g.s1 != null && g.s2 != null && g.winner !== 'In Progress').flatMap(g => [g.s1, g.s2]);
-    const LM = recent.reduce((a, b) => a + b, 0) / recent.length;
-    MU = Object.fromEntries(TEAMS.map(t => {
-      const sc = base[t].sc, n = sc.length, m = n ? sc.reduce((a, b) => a + b, 0) / n : LM;
-      return [t, (n * m + SHRINK * LM) / (n + SHRINK)];
-    }));
-    // The schedule left: AHEAD lists opponents from the live week on.
-    sched = [];
-    for (let w = PICK_WEEK; w <= REG; w++) {
-      const i = w - LIVE_WEEK, seen = new Set(), pairs = [];
-      if (i < 0) continue;
-      TEAMS.forEach(t => {
-        const o = AHEAD[t] && AHEAD[t][i];
-        if (!o || seen.has(t) || !TEAMS.includes(o)) return;
-        seen.add(t); seen.add(o); pairs.push([t, o]);
-      });
-      sched.push({ w, pairs: w === LIVE_WEEK ? pairs.filter(([a, b]) => !(LIVEPART[a] && LIVEPART[a].fin)) : pairs });
-    }
+    return true;
   }
-
-  function simulate(n, force) {
-    seed = 20261013;
-    const out = Object.fromEntries(TEAMS.map(t => [t, { po: 0, bye: 0, sacko: 0 }]));
-    const cond = force ? { win: Object.fromEntries(TEAMS.map(t => [t, [0, 0]])), loss: Object.fromEntries(TEAMS.map(t => [t, [0, 0]])) } : null;
-    for (let k = 0; k < n; k++) {
-      const w = {}, pf = {}, pickRes = {};
-      TEAMS.forEach(t => { w[t] = base[t].w; pf[t] = base[t].pf; });
-      sched.forEach(({ w: wk, pairs }) => {
-        const sc = {};
-        TEAMS.forEach(t => {
-          const L = wk === LIVE_WEEK ? LIVEPART[t] : null;
-          if (L && L.fin) sc[t] = L.s;
-          else if (L) { const f = L.proj > 0 ? Math.min(1, Math.max(0.05, (L.proj - L.s) / L.proj)) : 1; sc[t] = Math.max(L.s, L.proj) + SD * Math.sqrt(f) * gauss(); }
-          else sc[t] = MU[t] + SD * gauss();
-        });
-        pairs.forEach(([a, b]) => {
-          const forced = wk === PICK_WEEK ? picks[a + '|' + b] : null;
-          if (forced && ((forced === a) !== (sc[a] > sc[b]))) { const x = sc[a]; sc[a] = sc[b]; sc[b] = x; }
-          const winner = sc[a] > sc[b] ? a : b;
-          w[winner]++;
-          if (wk === PICK_WEEK) { pickRes[a] = winner === a; pickRes[b] = winner === b; }
-        });
-        if (MEDIAN_ERA) TEAMS.slice().sort((x, y) => sc[y] - sc[x]).slice(0, N / 2).forEach(t => { w[t]++; });
-        TEAMS.forEach(t => { if (!(wk === LIVE_WEEK && LIVEPART[t] && LIVEPART[t].fin)) pf[t] += sc[t]; });
-      });
-      const rank = TEAMS.slice().sort((x, y) => (w[y] - w[x]) || (pf[y] - pf[x]));
-      rank.forEach((t, i) => {
-        const o = out[t];
-        if (i < SPOTS) o.po++;
-        if (i < BYES) o.bye++;
-        if (i >= N - 2) o.sacko++;
-        if (cond && pickRes[t] !== undefined) { const c = pickRes[t] ? cond.win[t] : cond.loss[t]; c[0]++; if (i < SPOTS) c[1]++; }
-      });
-    }
-    TEAMS.forEach(t => { const o = out[t]; o.po *= 100 / n; o.bye *= 100 / n; o.sacko *= 100 / n; });
-    if (cond) TEAMS.forEach(t => {
-      out[t].ifWin = cond.win[t][0] ? cond.win[t][1] * 100 / cond.win[t][0] : null;
-      out[t].ifLoss = cond.loss[t][0] ? cond.loss[t][1] * 100 / cond.loss[t][0] : null;
-    });
-    return out;
-  }
+  const simulate = (n, force) => RaceSim.simulate(INP, n, picks, force);
 
   function render() {
     const n = Object.keys(picks).length;
@@ -200,7 +102,7 @@
               <div class="rc-v sm${r.sacko >= 25 ? ' red' : ''}">${pct(r.sacko)}</div></a>${i === SPOTS - 1 ? PLAYOFF_LINE : ''}`;
           }).join('')}</div></div></div>
       </div></div>
-      <div class="rc-foot">Each team scores like its average so far, pulled toward the league’s. Ties go to points scored, the league’s rule. The Sacko column is the chance of finishing ${N - 1}th or ${N}th, which since 2025 means playing in the Sacko game. ESPN’s own odds sit on the dashboard; they weigh each roster’s projections and don’t know about the Sacko game.</div>`;
+      <div class="rc-foot">Each team scores like its average so far, pulled toward the league’s. Ties go to points scored, the league’s rule. The Sacko column is the chance of finishing ${N - 1}th or ${N}th, which since 2025 means playing in the Sacko game. These are the same odds the dashboard and Standings show.</div>`;
   }
 
   document.addEventListener('click', e => {
@@ -210,16 +112,15 @@
   });
   window.addEventListener('rl-me', () => { if (BASELINE) render(); });
 
-  Promise.all([LG.load(), fetch(WORKER_URL, { cache: 'no-store' }).then(r => r.json())]).then(([D, live]) => {
-    setup(D, live);
-    if (PICK_WEEK > REG || !sched.length || !sched[0].pairs.length) {
+  fetch(WORKER_URL, { cache: 'no-store' }).then(r => r.json()).then(live => {
+    if (!setup(live) || !sched.length || !sched[0].pairs.length) {
       $('view').innerHTML = `<div class="glass"><div class="ft-empty">The regular season is over, so there’s nothing left to pick. See the Bracket tab on Standings.</div></div>`;
       return;
     }
     BASELINE = simulate(RUNS, true);
     render();
     riseIn(document.querySelectorAll('#view .glass'));
-  }).catch(err => LG.showError('view', err));
+  }).catch(err => { $('view').innerHTML = `<div class="loading-row">Couldn’t load the league (${esc(err.message)}).</div>`; });
 </script>
 <script src="track.js?v=2" defer></script>
 </body>

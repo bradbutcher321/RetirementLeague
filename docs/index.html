@@ -1342,6 +1342,7 @@
 
 <script src="nav.js?v=25"></script>
 <script src="page-common.js?v=39"></script>
+<script src="race-sim.js?v=1"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
 <script src="rivals.js?v=2"></script>
@@ -5484,6 +5485,7 @@
     Promise.all([fetch(WORKER_URL, { cache: 'no-store' }).then(res => res.json()), leagueReady])
       .then(([data]) => {
         if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
+        RaceSim.apply(data);
         liveData = data;
         if (view === null) renderDashboard(data, true);
         else { lastDashboardData = data; renderWeekStep(); }
@@ -5508,6 +5510,7 @@
       .then(data => {
         if (!data || !data.teams || dashboardShown) return;
         if (!(Date.now() - new Date(data.updatedAt).getTime() < 864e5)) return;
+        RaceSim.apply(data);
         return leagueReady.then(() => { if (!dashboardShown && view === null) renderDashboard(data, false); });
       })
       .catch(() => {});

@@ -198,6 +198,7 @@
 <script src="nav.js?v=25"></script>
 <script src="page-common.js?v=39"></script>
 <script src="league-common.js?v=5"></script>
+<script src="race-sim.js?v=1"></script>
 <script src="rivals.js?v=2"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -353,6 +354,7 @@
     if (liveAsked) return;
     liveAsked = true;
     fetch(WORKER_URL, { cache: 'no-store' }).then(r => r.json()).then(d => {
+      RaceSim.apply(d);
       LIVE = { week: d.week, raw: d, ahead: new Map((d.teams || []).filter(t => t.manager).map(t => [t.manager, t.ahead || []])) };
       render();
     }).catch(err => console.error('Schedule left:', err));
