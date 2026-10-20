@@ -69,6 +69,11 @@
   /* The Share button's picture (share.js) is a copy of the hero + legs card
      as it reads on screen, minus the button itself. */
   .share-shot .legs-actions{ display: none; }
+  /* The picture keeps each name's and pill's on-screen width to the pixel,
+     but iPhone draws the picture's own copy of the font a hair wider -- so
+     a name that just fits on screen ("Collin") came out "Col…". In the
+     picture they're drawn in full instead; there's room beside each. */
+  .share-shot .leg-name, .share-shot .fin{ overflow: visible; text-overflow: clip; }
   .back-link:disabled{ opacity: 0.5; cursor: default; }
   @media (hover: hover){
     .back-link:disabled:hover{ background: none; }
