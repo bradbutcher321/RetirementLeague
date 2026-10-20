@@ -6,6 +6,13 @@ on:
     # times a day is plenty. The script only rewrites league.json when the
     # data actually changed.
     - cron: '15 */3 * * *'
+  # Right after the Tuesday/Wednesday score sync writes to the Game Tracker.
+  # GitHub's cron runs hours late, so the sync can land after the last
+  # scheduled refresh and leave league.json a week behind when the Tuesday
+  # column routine reads it (2026-10-20: sync 09:34 UTC, refresh 08:32).
+  workflow_run:
+    workflows: ["Sync Scores to Sheet"]
+    types: [completed]
   workflow_dispatch: # Manual button inside GitHub web console
 
 permissions:
