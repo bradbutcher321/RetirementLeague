@@ -142,6 +142,32 @@
 @media (hover: hover){ .nav-search:hover{ color: var(--text); } }
 .nav-search:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 
+/* Phone search (site audit IV #6): round button in the top-right corner of
+   the page header, on the eyebrow line, left of the Updated stamp (nav.js
+   headerSearch sets `right`). Out of the flow so it never reflows the title.
+   34px drawn, 44px to tap; the bar's box takes over at 1080px. */
+.header-row, .wrap > header{ position: relative; }
+.hdr-search{
+  position: absolute;
+  top: -6px;
+  right: 0;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--item);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.hdr-search::after{ content: ''; position: absolute; inset: -5px; }
+.hdr-search.plain{ top: 0; }
+.hdr-search svg{ width: 16px; height: 16px; }
+.hdr-search:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (min-width: 1080px){ .hdr-search{ display: none; } }
+
 /* ---------- You (site audit II #36/#37) ----------
    The round button at the right end of the top bar (nav.js wireYou): your
    monogram in gold once you've picked your team, a person outline before.

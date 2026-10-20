@@ -105,9 +105,32 @@
       else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); openSearch(); }
     });
 
+    headerSearch();
     autoHide(mount.querySelector('.nav-bar'));
     wireYou(mount.querySelector('#nav-me'));
     wireYouTab(mount.querySelector('#tb-you'));
+  }
+
+  // Phone search (site audit IV #6): the top bar is desktop-only, so on a
+  // phone every page header gets a round search button on the eyebrow
+  // line, left of the Updated stamp. nav.css hides it at 1080px and up,
+  // where the bar has the box.
+  function headerSearch() {
+    const row = document.querySelector('.header-row') || document.querySelector('.wrap > header');
+    if (!row || document.getElementById('hub-q') || row.querySelector('.hdr-search')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'hdr-search';
+    btn.setAttribute('aria-label', 'Search');
+    btn.innerHTML = ICONS.search;
+    btn.addEventListener('click', openSearch);
+    if (!row.classList.contains('header-row')) btn.classList.add('plain');
+    row.appendChild(btn);
+    // Sits left of the Updated stamp (and the dashboard's week stepper).
+    const stamp = row.querySelector('.updated-block');
+    if (stamp && window.ResizeObserver) {
+      new ResizeObserver(() => { btn.style.right = (stamp.offsetWidth + 12) + 'px'; }).observe(stamp);
+    }
   }
 
   // ---------- Search (site audit III #10) ----------
