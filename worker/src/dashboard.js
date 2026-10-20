@@ -665,6 +665,9 @@ export async function buildDashboard(env, previous = null, opts = {}) {
     matchups.push({
       // Playoff weeks only: 'Play', 'Champ', '5th', '3rd', 'Sacko' or 'Cons'.
       ...(bracket ? { bracket } : {}),
+      // ESPN's team ids: the site's "Open in ESPN" links (audit V #15).
+      awayId: away.teamId,
+      homeId: home.teamId,
       awayName: awayTeam?.name || "",
       awayManager: managerNames.get(away.teamId) || "",
       awayRecord: awayTeam?.record || "",
@@ -705,6 +708,7 @@ export async function buildDashboard(env, previous = null, opts = {}) {
       return {
         name: t.name,
         manager: managerNames.get(t.teamId) || "",
+        teamId: t.teamId,
         record: t.record,
         current: live.current,
         projected: live.projected,

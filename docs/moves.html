@@ -26,7 +26,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=32">
+<link rel="stylesheet" href="theme.css?v=33">
 <link rel="stylesheet" href="nav.css?v=25">
 <link rel="stylesheet" href="features.css?v=7">
 </head>
@@ -48,6 +48,9 @@
 
     <div class="controls-row">
       <div class="tabs" id="tabs"></div>
+      <!-- Audit V #15: ESPN's app claims /football/players/add, so this opens
+           the waiver wire in the ESPN Fantasy app. -->
+      <a class="espn-link" href="https://fantasy.espn.com/football/players/add?leagueId=58101" target="_blank" rel="noopener"><i>ESPN</i>Waiver wire</a>
     </div>
     <div id="view"><span class="sr-only">Loading…</span></div>
     <footer id="site-footer"></footer>

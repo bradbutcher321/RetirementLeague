@@ -362,6 +362,11 @@ body{
    all, does the control drop to its own row, still flush right -- unless
    the track is a .scroll one, which narrows and scrolls beside the control
    instead of needing the full width. */
+/* A hand-off to the ESPN app (audit V #15): a pill the height of a track. */
+.espn-link{ display: inline-flex; align-items: center; gap: 8px; height: var(--track-h); padding: 0 16px 0 10px; border-radius: 999px; border: 1px solid var(--ctl-line); background: var(--ctl-bg); color: var(--text); font-weight: 700; font-size: 0.84rem; text-decoration: none; white-space: nowrap; }
+.espn-link i{ font-style: normal; background: #C9252C; color: #fff; font: 900 0.56rem/1 var(--body); padding: 4px 5px; border-radius: 5px; }
+.espn-link:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (hover: hover){ .espn-link:hover{ border-color: rgba(255,255,255,0.24); } }
 .controls-row{ display: flex; align-items: flex-end; justify-content: space-between; gap: 10px 16px; margin-bottom: 14px; }
 .controls-row > :first-child{ min-width: 0; }
 .controls-row > :last-child{ flex: none; margin-left: auto; }
@@ -847,14 +852,18 @@ h1{
 }
 
 section{ margin-bottom: 44px; }
+/* One heading voice (audit V #7): a section heading outside a card is
+   white and bold like the card titles, grey is for captions only. A quiet
+   state can sit at its right end (.h-state: "6 final", "Through Week 6"). */
 h2{
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  margin: 0 0 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--line);
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0 2px 12px;
 }
+h2 .h-state{ float: right; margin-top: 0.35em; color: var(--text-dim); font-size: 0.8rem; font-weight: 500; letter-spacing: 0; }
+h2 .h-state:empty{ display: none; }
 
 .qrow.lead{ border-color:var(--lead-line); background:var(--lead-tint); }
 .qrow.lead .rk, .qrow.lead .rec{ color:var(--gold); }

@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=32">
+<link rel="stylesheet" href="theme.css?v=33">
 <link rel="stylesheet" href="nav.css?v=25">
 <style>
   /* ---------- Matchup cards ----------
@@ -70,20 +70,71 @@
   .mu-head{ display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; gap: 12px; padding: 14px 14px 0; }
   .mu-side{ min-width: 0; display: flex; flex-direction: column; gap: 3px; }
   .mu-side.home{ align-items: flex-end; text-align: right; }
+  /* Managers lead (audit V #8): logo and name, the team name second on the
+     meta line, where it can be cut short without losing who's playing. */
+  .mu-who{ display: flex; align-items: center; gap: 8px; min-width: 0; align-self: stretch; }
+  .mu-side.home .mu-who{ flex-direction: row-reverse; }
+  .mu-lg{ flex: none; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: #1d1d1d; box-shadow: 0 0 0 1px rgba(255,255,255,0.14); font: 800 0.6rem/1 var(--body); color: var(--text-dim); }
+  .mu-lg img{ width: 100%; height: 100%; object-fit: cover; display: block; }
   .team-name{
-    font-weight: 600;
-    font-size: 0.95rem;
-    /* Stretched to the side's full width so there's a fixed box to measure
-       and truncate against. Stays right-aligned on the home side until JS
-       (see loadDashboard) finds this particular name overflowing and adds
-       .truncate, which flips just that one name to left-aligned so the cut
-       and the "…" land at the end instead of the start. */
-    align-self: stretch;
+    font-weight: 700;
+    font-size: 1.02rem;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .team-name.truncate{ text-align: left; }
+  /* The scoreboard (audit V #10): finished games, one row each. */
+  .sb{ padding: 6px; align-self: start; }
+  .sb-row{ display: grid; grid-template-columns: minmax(0,1fr) auto 10px auto minmax(0,1fr) 12px; align-items: center; gap: 8px; width: 100%; min-height: 54px; padding: 0 8px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 10px; }
+  .sb-row + .sb-row, .sb-open + .sb-row{ border-top: 1px solid var(--line); border-radius: 0; }
+  @media (hover: hover){ .sb-row:hover{ background: var(--item-hover); } }
+  .sb-row:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  .sb-row .n{ display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 600; font-size: 0.92rem; color: var(--text-dim); }
+  .sb-row .n.r{ justify-content: flex-end; text-align: right; }
+  .sb-row .n > span:not(.mu-lg){ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sb-row .n.w{ color: var(--text); }
+  .sb-row .mu-lg{ width: 24px; height: 24px; font-size: 0.5rem; }
+  .sb-row .v{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.3rem; font-variant-numeric: tabular-nums; color: var(--text-dim); }
+  .sb-row .v.w{ color: var(--gold); }
+  .sb-row .dash{ color: #555; text-align: center; }
+  .sb-row .chev{ justify-self: end; }
+  .sb-row[aria-expanded="true"] .chev{ transform: rotate(180deg); }
+  .sb-open{ padding: 2px 2px 8px; }
+  /* The ⋯ sheet: an iOS action list, a centred card from 721px. */
+  .more-sheet:focus{ outline: none; }
+  .more-sheet .sheet-body{ padding: 0 12px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .more-h{ display: flex; align-items: center; gap: 10px; padding: 2px 6px 12px; min-width: 0; }
+  .more-h > div{ min-width: 0; }
+  .more-h b{ display: block; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .more-h span{ display: block; color: var(--text-dim); font-size: 0.78rem; }
+  .more-list{ background: var(--item); border: 1px solid var(--item-line); border-radius: 14px; overflow: hidden; }
+  .more-it{ display: grid; grid-template-columns: 32px minmax(0,1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 0 14px; min-height: 58px; color: var(--text); text-decoration: none; text-align: left; background: none; border: 0; font: inherit; cursor: pointer; }
+  .more-it + .more-it{ border-top: 1px solid var(--line); }
+  @media (hover: hover){ .more-it:hover{ background: var(--item-hover); } }
+  .more-it:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  .more-it i{ width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: rgba(255,255,255,0.05); color: #D3D3CF; font-style: normal; }
+  .more-it i svg{ width: 17px; height: 17px; }
+  .more-it i.espn{ background: #C9252C; color: #fff; font: 900 0.6rem/1 var(--body); letter-spacing: 0.02em; }
+  .more-it b{ display: block; font-size: 0.92rem; font-weight: 600; }
+  .more-it small{ display: block; color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; }
+  .more-it em{ color: var(--text-dim); display: grid; }
+  .more-it em svg{ width: 14px; height: 14px; }
+  .more-cancel{ display: block; width: 100%; margin-top: 10px; height: 50px; border-radius: 25px; border: 0; background: rgba(255,255,255,0.07); color: var(--text); font: 700 0.92rem var(--body); cursor: pointer; }
+  .more-cancel:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  @media (min-width: 721px){
+    .more-sheet{ left: 0; right: 0; bottom: auto; top: 14vh; margin: 0 auto; width: 420px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
+    .more-sheet .sheet-grab{ visibility: hidden; height: 10px; padding: 0; }
+  }
+  /* A decided card: Final between the two names, no pips. */
+  .matchup-card.done .mu-head{ grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 8px; }
+  .mu-mid{ display: flex; flex-direction: column; align-items: center; padding-top: 4px; }
+  .mu-mid .mu-status{ font-size: 0.72rem; padding: 4px 8px; }
+  .mu-more{ position: relative; flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; padding: 0; background: rgba(255,255,255,0.06); border: 1px solid var(--line); color: var(--text); cursor: pointer; }
+  .mu-more::after{ content: ''; position: absolute; inset: -5px; }
+  .mu-more svg{ width: 16px; height: 16px; fill: currentColor; }
+  .mu-more:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  @media (hover: hover){ .mu-more:hover{ background: rgba(255,255,255,0.1); } }
   .mu-meta{ font-size: 0.76rem; color: var(--text-dim); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .mu-stk.win{ color: var(--turf); }
   .mu-stk.loss{ color: var(--loss); }
@@ -129,7 +180,7 @@
   .mu-proj.vs span{ color: var(--text-dim); }
   .mu-arrow{ width: 0.62em; height: 0.5em; margin-right: 3px; vertical-align: 0.05em; }
 
-  .mu-odds{ display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 12px 14px 0; font-size: 0.74rem; font-weight: 600; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .mu-odds{ display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 8px; padding: 12px 14px 0; font-size: 0.74rem; font-weight: 600; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .mu-odds .fav{ color: var(--gold); }
   .mu-bar{ display: flex; gap: 3px; height: 5px; }
   .mu-bar span{ border-radius: 3px; background: rgba(255,255,255,0.13); transition: flex-grow .68s cubic-bezier(0.34, 1.56, 0.64, 1), background-color .3s; }
@@ -139,10 +190,10 @@
   .mu-need{ margin: 10px 14px 0; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--item); font-size: 0.74rem; line-height: 1.4; color: #D3D3CF; font-variant-numeric: tabular-nums; text-wrap: balance; }
   .mu-need.home{ text-align: right; }
   .mu-need b{ color: var(--text); font-weight: 700; }
-  .mu-margin{ position: relative; padding: 12px 14px 0; text-align: center; font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-  /* A decided card's Share (share.js) rides the margin line's right end, out of the
-     flow so the card keeps its height; the text stays centered. */
-  .mu-margin .share-btn{ position: absolute; right: 10px; top: 5px; }
+  .mu-odds .mu-more{ margin-left: 4px; }
+  .mu-margin{ position: relative; display: flex; align-items: center; justify-content: center; min-height: 34px; padding: 10px 56px 12px; text-align: center; font-size: 0.78rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  /* The ⋯ rides the margin line's right end, out of the flow; the text stays centred. */
+  .mu-margin .mu-more{ position: absolute; right: 12px; top: 50%; margin-top: -17px; }
 
   /* Top-aligned, with each pip row pushed down to the status pill's
      midline ((27px pill - 5px pip) / 2), so both pip rows line up with
@@ -162,6 +213,9 @@
   .mu-lc-line{ display: flex; align-items: center; gap: 8px; min-width: 0; }
   .mu-lc-slot{ flex: none; min-width: 38px; text-align: center; font-size: 0.6rem; font-weight: 800; letter-spacing: 0.04em; color: var(--text-dim); border: 1px solid var(--line); border-radius: 5px; padding: 2px 4px; }
   .mu-lc-name{ flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mu-espn{ display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; margin-top: 2px; border-radius: 21px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.06); color: var(--text); font-weight: 700; font-size: 0.86rem; text-decoration: none; }
+  .mu-espn i{ font-style: normal; background: #C9252C; color: #fff; font: 900 0.56rem/1 var(--body); padding: 4px 5px; border-radius: 5px; }
+  .mu-espn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .mu-lc-tag{ flex: none; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; color: var(--loss); white-space: nowrap; }
   .mu-pips-wrap{ display: flex; flex-direction: column; gap: 5px; min-width: 0; margin-top: 11px; }
   .mu-pips-wrap.home{ align-items: flex-end; }
@@ -402,7 +456,8 @@
     .mu-w{ display: inline; }
     .mu-n{ display: none; }
     .mu-head{ padding: 16px 18px 0; }
-    .mu-odds, .mu-margin{ padding: 12px 18px 0; }
+    .mu-odds{ padding: 12px 18px 0; }
+    .mu-margin .mu-more{ right: 16px; }
     .mu-foot{ padding: 12px 18px; }
   }
   /* The "Updated" time goes gold when a refresh brings new data, then fades back. */
@@ -1158,6 +1213,7 @@
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px 18px;
   }
+  .rc-tools{ display: flex; align-items: center; gap: 8px; flex: none; }
   .rc-dek{ color: var(--rc-ctx); font-size: 0.82rem; line-height: 1.4; margin-top: 4px; text-wrap: balance; }
   .rc-ctx{ display: block; color: var(--rc-ctx); font-size: 0.7rem; line-height: 1.35; margin-top: 2px; }
   /* Your name, wherever it shows up in the card, in your ring color. Not
@@ -1399,7 +1455,7 @@
     </section>
 
     <section>
-      <h2 id="matchups-h">This week's matchups</h2>
+      <h2><span class="h-state" id="matchups-state"></span><span id="matchups-h">This week's matchups</span></h2>
       <div class="matchups" id="matchups-container">
         <span class="sr-only">Loading matchups…</span>
         <div class="sk" aria-hidden="true">
@@ -1463,7 +1519,7 @@
            heading and one Through / live / projected toggle. There are no
            separate "Superlatives" / "Current Standings" headings: the cards
            carry their own titles, and the standings panel has its own. -->
-      <h2>Superlatives</h2>
+      <h2><span class="h-state" id="season-state"></span>Superlatives</h2>
       <div id="season-toggle"></div>
       <div class="accolades-grid" id="accolades-container">
         <div class="loading-row">Loading accolades…</div>
@@ -1646,6 +1702,46 @@
     return (hIn + hRem === 0 && hs < as) || (aIn + aRem === 0 && as < hs);
   }
 
+  // The round ⋯ on every card (audit V #8, #15): Share a picture, Open in
+  // ESPN, Head to Head, in a sheet (a centred card on desktop).
+  const MU_MORE = '<button type="button" class="mu-more" data-more data-noshot aria-label="More: share, ESPN, head to head" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></svg></button>';
+  // A manager's team logo (Franchise's), or their monogram until it's known.
+  const mgrLogo = name => {
+    const p = name && franchiseData && franchiseData.players.find(x => x.name === name);
+    return (p && p.current_team_logo) || '';
+  };
+  const muLogoHtml = name => {
+    if (!name) return '';
+    const url = mgrLogo(name);
+    return `<span class="mu-lg" aria-hidden="true">${url ? `<img src="${esc(url)}" alt="" loading="lazy">` : esc(monogram(name))}</span>`;
+  };
+  // Every manager's record and streak once this week counts. The streak
+  // counts the median game too, as ESPN's does; when the two games split,
+  // their order isn't known, so the streak is left off.
+  let muAfterFor = null, muAfterMap = null;
+  function muAfter(m) {
+    if (muAfterFor !== shownData) {
+      muAfterFor = shownData;
+      muAfterMap = {};
+      const table = standingsAfter(shownData);
+      const median = shownData.medianGames === false ? null : shownData.currentMedian;
+      (shownData.matchups || []).forEach(x => {
+        [[x.awayManager, x.awayStreak, +x.awayScore, +x.homeScore], [x.homeManager, x.homeStreak, +x.homeScore, +x.awayScore]].forEach(([mgr, stk, own, opp]) => {
+          const row = mgr && table.get(mgr);
+          if (!row) return;
+          const res = [own > opp ? 'W' : 'L'].concat(typeof median === 'number' ? [own > median ? 'W' : 'L'] : []);
+          let streak = null;
+          if (own !== opp && res.every(r => r === res[0])) {
+            const k = res[0], n = stk && stk[0] === k ? parseInt(stk.slice(1), 10) || 0 : 0;
+            streak = k + (n + res.length);
+          }
+          muAfterMap[mgr] = { rec: row.rec, streak };
+        });
+      });
+    }
+    return muAfterMap;
+  }
+
   function renderMatchupCard(m) {
     const awayScore = parseFloat(m.awayScore) || 0;
     const homeScore = parseFloat(m.homeScore) || 0;
@@ -1661,11 +1757,19 @@
       ? (mine > theirs ? 'won' : mine < theirs ? 'lost' : '')
       : (mine < theirs ? 'trail' : '');
 
-    const metaParts = (manager, record, streak) => [
-      manager ? `<span>${manager}</span>` : '',
-      record ? `<span>${record}</span>` : '',
-      streak ? `<span class="mu-stk ${streak[0] === 'W' ? 'win' : 'loss'}">${streak}</span>` : '',
-    ].filter(Boolean);
+    // Managers lead, teams follow (audit V #8): the line under the name is
+    // record · streak · team. Once the whole week is over (#9) the record
+    // and streak already count this week, as Standings' final view does.
+    const after = weekFinal ? muAfter(m) : null;
+    const metaParts = (manager, record, streak, team) => {
+      const a = after && manager && after[manager];
+      if (a) { record = a.rec; streak = a.streak; }
+      return [
+        record ? `<span>${record}</span>` : '',
+        streak ? `<span class="mu-stk ${streak[0] === 'W' ? 'win' : 'loss'}">${streak}</span>` : '',
+        manager && team ? `<span>${esc(team)}</span>` : '',
+      ].filter(Boolean);
+    };
 
     // Once decided, the live projection has nothing left to say, so its line
     // reports how the team did against its starters' pregame projection
@@ -1681,9 +1785,9 @@
       return `<div class="mu-proj vs ${tone}" title="Projected ${fmtScore(proj)} before kickoff">${arrow}${fmtScore(Math.abs(diff))} <span>vs proj</span></div>`;
     };
 
-    const side = (cls, name, meta, score, theirScore, projected, players) => `
+    const side = (cls, name, manager, meta, score, theirScore, projected, players) => `
       <div class="mu-side ${cls}">
-        <div class="team-name">${name}</div>
+        <div class="mu-who">${muLogoHtml(manager)}<span class="team-name">${esc(manager || name)}</span></div>
         <div class="mu-meta">${meta.join(' · ')}</div>
         <div class="mu-score ${scoreClass(score, theirScore)}"><span class="mu-val">${fmtScore(score)}</span></div>
         ${isFinal ? vsProj(players, score) : `<div class="mu-proj">proj ${fmtScore(projected)}</div>`}
@@ -1694,11 +1798,11 @@
       : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : null;
     let oddsRow = '';
     if (isFinal) {
-      const winner = awayScore > homeScore ? m.awayName : homeScore > awayScore ? m.homeName : null;
+      const winner = awayScore > homeScore ? (m.awayManager || m.awayName) : homeScore > awayScore ? (m.homeManager || m.homeName) : null;
       // A past season's playoff games say which game they were.
       const tag = m.label ? `<b class="mu-label">${esc(m.label)}</b> · ` : '';
-      const said = winner ? `${tag}${winner} by ${fmtScore(Math.abs(awayScore - homeScore))}` : `${tag}Tied`;
-      oddsRow = `<div class="mu-margin">${said}${RLShare.BUTTON}</div>`;
+      const said = winner ? `${tag}${esc(winner)} by ${fmtScore(Math.abs(awayScore - homeScore))}` : `${tag}Tied`;
+      oddsRow = `<div class="mu-margin">${said}${MU_MORE}</div>`;
     } else if (awayWP !== null) {
       const a = Math.max(1, Math.min(99, Math.round(awayWP)));
       const h = 100 - a;
@@ -1708,7 +1812,10 @@
           <span class="${awayFav ? 'fav' : ''}">${a}%</span>
           <div class="mu-bar" role="img" aria-label="Win odds ${a}% to ${h}%"><span class="${awayFav ? 'fav' : ''}" style="flex-grow:${a}"></span><span class="${awayFav ? '' : 'fav'}" style="flex-grow:${h}"></span></div>
           <span class="${awayFav ? '' : 'fav'}">${h}%</span>
+          ${MU_MORE}
         </div>`;
+    } else {
+      oddsRow = `<div class="mu-margin">${MU_MORE}</div>`;
     }
 
     // What the trailing team has to do (audit IV #13): the points that pass
@@ -1753,18 +1860,19 @@
     const mine = isMe(m.awayManager) || isMe(m.homeManager);
 
     return `
-      <div class="matchup-card${expanded ? ' expanded' : ''}${mine ? ' me' : ''}" data-key="${encodeURIComponent(key)}">
+      <div class="matchup-card${expanded ? ' expanded' : ''}${mine ? ' me' : ''}${isFinal ? ' done' : ''}" data-key="${encodeURIComponent(key)}">
         <div class="mu-head">
-          ${side('away', m.awayName, metaParts(m.awayManager, m.awayRecord, m.awayStreak), awayScore, homeScore, m.awayProjected, m.awayPlayers || [])}
-          ${side('home', m.homeName, metaParts(m.homeManager, m.homeRecord, m.homeStreak).reverse(), homeScore, awayScore, m.homeProjected, m.homePlayers || [])}
+          ${side('away', m.awayName, m.awayManager, metaParts(m.awayManager, m.awayRecord, m.awayStreak, m.awayName), awayScore, homeScore, m.awayProjected, m.awayPlayers || [])}
+          ${isFinal ? `<div class="mu-mid">${status}</div>` : ''}
+          ${side('home', m.homeName, m.homeManager, metaParts(m.homeManager, m.homeRecord, m.homeStreak, m.homeName), homeScore, awayScore, m.homeProjected, m.homePlayers || [])}
         </div>
         ${oddsRow}
         ${needRow}
-        <div class="mu-foot">
+        ${isFinal ? '' : `<div class="mu-foot">
           ${pips(m.awayPlayers || [], awayInPlay, awayRemaining, 'away')}
           ${status}
           ${pips(m.homePlayers || [], homeInPlay, homeRemaining, 'home')}
-        </div>
+        </div>`}
         ${mine ? lineupHtml(m) : ''}
         ${recordHtml(m)}
         ${seriesHtml(m)}
@@ -3509,9 +3617,13 @@
     const players = isMe(m.awayManager) ? m.awayPlayers : m.homePlayers;
     const items = LineupCheck.problems(players, shownData, Date.now());
     if (!items.length) return '';
+    // Fix in ESPN (audit V #15): ESPN's app claims /football/team, so this
+    // opens your own team in the ESPN Fantasy app.
+    const teamId = isMe(m.awayManager) ? m.awayId : m.homeId;
+    const fix = teamId ? `<a class="mu-espn" href="${esc(espnUrl('team', { seasonId: leagueYear, teamId }))}" target="_blank" rel="noopener"><i>ESPN</i>Fix in ESPN</a>` : '';
     return `<div class="mu-lineup">${items.map(({ player, kind }) => `<div class="mu-lc-line">
         <span class="mu-lc-slot">${esc(player.slot)}</span><span class="mu-lc-name">${esc(player.name)}</span><span class="mu-lc-tag">${LC_TAGS[kind]}</span>
-      </div>`).join('')}</div>`;
+      </div>`).join('')}${fix}</div>`;
   }
 
   // Record Watch (site audit III #14): the matchup cards' gold box when a
@@ -4551,7 +4663,7 @@
       <div class="recap-card">
         <div class="acc-head">
           <div class="acc-title">Week ${rw.week} in Review</div>
-          ${playoff ? '<span class="badge dim">Playoffs</span>' : ''}
+          <div class="rc-tools">${playoff ? '<span class="badge dim">Playoffs</span>' : ''}<button type="button" class="share-btn" data-recap-share>Share</button></div>
         </div>
         ${story ? `<div class="rc-dek">${esc(story[1])}</div>` : ''}
         <div class="rc-strip">
@@ -4566,8 +4678,19 @@
         ${rows.length ? `<div class="rc-rows">${rows.join('')}</div>` : ''}
       </div>`;
     section.hidden = false;
+    section.dataset.week = rw.week;
     layoutRecapStrip();
   }
+  // Share the week (audit V #14): the card as a picture for the group chat.
+  const recapShot = RLShare.make({
+    nodes: () => [document.querySelector('#recap-section .recap-card')],
+    eyebrow: () => `Retirement League · ${(standingsData && standingsData.year) || leagueYear}`,
+    name: () => `week-${document.getElementById('recap-section').dataset.week || ''}-in-review.png`,
+  });
+  document.getElementById('recap-section').addEventListener('click', e => {
+    const b = e.target.closest('[data-recap-share]');
+    if (b) recapShot.share(b);
+  });
 
   // Places the strip's dots by score, stacking any that would touch
   // alternately above and below the line, so a crowd at the median stays
@@ -4855,6 +4978,8 @@
     if (!standingsData) return;
     const modes = seasonModes(standingsData);
     const active = activeSeasonMode();
+    // One view only (a finished week, a playoff week): its name sits in the heading.
+    document.getElementById('season-state').textContent = modes.length === 1 ? modes[0][1] : '';
     document.getElementById('season-toggle').innerHTML = modes.length > 1
       ? `<div class="sf-band"><div class="sup-seg">${modes.map(([k, l]) => `<button type="button" data-season="${k}" class="${k === active ? 'on' : ''}">${l}</button>`).join('')}</div></div>`
       : '';
@@ -6227,20 +6352,17 @@
         document.getElementById('my-matchup').innerHTML = onTop ? renderMatchupCard(mine) : '';
         renderMePrompt(onTop);
         renderStatusLine(data);
+        // Finished games other than yours fold into one scoreboard (audit V
+        // #10); a card folds only once its game is decided.
+        const folded = ordered.filter(m => m !== mine && matchupDecided(m));
+        const cards = ordered.filter(m => !folded.includes(m));
         document.getElementById('matchups-container').innerHTML =
-          ordered.length ? ordered.map(renderMatchupCard).join('') : '<div class="loading-row">No matchups found.</div>';
+          ordered.length ? cards.map(renderMatchupCard).join('') + scoreboardHtml(folded) : '<div class="loading-row">No matchups found.</div>';
+        const done = matchups.filter(matchupDecided).length;
+        document.getElementById('matchups-state').textContent = done && done === matchups.length ? `${done} final` : done ? `${done} of ${matchups.length} final` : '';
         holdScroll();
         if (prevMatchups) animateMatchupRefresh(prevMatchups);
 
-        // Team names stay right-aligned (matching every other short name)
-        // unless a specific one is actually too long for its box, in which
-        // case flip just that one to left-aligned so its ellipsis truncates
-        // from the end instead of the start. Reading scrollWidth here is a
-        // synchronous layout read, but it's a couple dozen elements at most
-        // and only runs on this periodic refresh, so the cost is negligible.
-        document.querySelectorAll('.matchups .team-name').forEach(el => {
-          if (el.scrollWidth > el.clientWidth) el.classList.add('truncate');
-        });
         markClippedNames(document);
 
         standingsData = data;
@@ -6310,16 +6432,101 @@
     name: () => `week-${dashWeek}-${shotKey ? decodeURIComponent(shotKey).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') : 'matchup'}.png`,
     prep: wrap => { const c = wrap.querySelector('.matchup-card'); if (c) c.classList.add('expanded'); },
   });
+  // ---------- The scoreboard (audit V #10) ----------
+  // One row per finished game: both managers, both scores, the winner's
+  // gold. A tap opens that game's full card under its row, and it stays
+  // open through polls.
+  const sbOpen = new Set();
+  function scoreboardHtml(list) {
+    if (!list.length) return '';
+    return `<div class="sb glass">${list.map(m => {
+      const key = matchupKey(m);
+      const as = parseFloat(m.awayScore) || 0, hs = parseFloat(m.homeScore) || 0;
+      const open = sbOpen.has(key);
+      const name = (mgr, team) => esc(mgr || team);
+      return `<button type="button" class="sb-row" data-sb="${encodeURIComponent(key)}" aria-expanded="${open}">
+          <span class="n${as > hs ? ' w' : ''}">${muLogoHtml(m.awayManager)}<span>${name(m.awayManager, m.awayName)}</span></span>
+          <span class="v${as > hs ? ' w' : ''}">${fmtScore(as)}</span><span class="dash">–</span><span class="v${hs > as ? ' w' : ''}">${fmtScore(hs)}</span>
+          <span class="n r${hs > as ? ' w' : ''}"><span>${name(m.homeManager, m.homeName)}</span>${muLogoHtml(m.homeManager)}</span>
+          <span class="chev" aria-hidden="true"></span>
+        </button>${open ? `<div class="sb-open">${renderMatchupCard(m)}</div>` : ''}`;
+    }).join('')}</div>`;
+  }
+
+  // ---------- The ⋯ sheet (audit V #8, #15) ----------
+  // ESPN's app claims fantasy.espn.com/football/fantasycast on an iPhone, so
+  // Open in ESPN lands on the ESPN Fantasy app's view of this matchup (or
+  // the website without the app).
+  const ESPN_LEAGUE = 58101;
+  const espnUrl = (path, params) => `https://fantasy.espn.com/football/${path}?${new URLSearchParams(Object.assign({ leagueId: ESPN_LEAGUE }, params))}`;
+  const MORE_IC = {
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>',
+    vs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.7-3.2 2.9-4.9 5.5-4.9s4.8 1.7 5.5 4.9"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M15.6 14.3c2.3.1 4.2 1.6 4.9 4.7"/></svg>',
+    out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+    chev: '<svg viewBox="0 0 8 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l4 4-4 4"/></svg>',
+  };
+  function closeMore() {
+    document.getElementById('more-sheet')?.remove();
+    document.getElementById('more-scrim')?.remove();
+  }
+  function openMore(card) {
+    closeMore();
+    const key = card.dataset.key;
+    const m = ((shownData && shownData.matchups) || []).find(x => encodeURIComponent(matchupKey(x)) === key);
+    if (!m) return;
+    const a = m.awayManager || m.awayName, b = m.homeManager || m.homeName;
+    const decided = card.classList.contains('done');
+    const year = (shownData && shownData.year) || leagueYear;
+    const mineId = isMe(m.homeManager) ? m.homeId : m.awayId;
+    // Only seasons ESPN still serves to the league page: this one.
+    const espn = year === leagueYear && (m.awayId || m.homeId)
+      ? espnUrl('fantasycast', { seasonId: year, matchupPeriodId: dashWeek, teamId: mineId || m.awayId }) : '';
+    const state = decided ? 'Final' : (parseInt(m.awayInPlay, 10) || 0) + (parseInt(m.homeInPlay, 10) || 0) ? 'Live' : 'This week';
+    document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="more-scrim"></div>
+      <div class="sheet more-sheet" id="more-sheet" role="dialog" aria-modal="true" aria-label="${esc(a)} vs ${esc(b)}" tabindex="-1">
+        <div class="sheet-grab"><span></span></div>
+        <div class="sheet-body">
+          <div class="more-h">${muLogoHtml(m.awayManager)}<div><b>${esc(a)} vs ${esc(b)}</b><span>Week ${dashWeek} · ${state}</span></div></div>
+          <div class="more-list">
+            <button type="button" class="more-it" data-act="share"><i>${MORE_IC.share}</i><span><b>Share a picture</b><small>${decided ? 'The final' : 'This matchup as it stands'}, ready for the group chat</small></span><em></em></button>
+            ${espn ? `<a class="more-it" href="${esc(espn)}" target="_blank" rel="noopener"><i class="espn">ESPN</i><span><b>Open in ESPN</b><small>Fantasycast for this matchup, in the ESPN app</small></span><em>${MORE_IC.out}</em></a>` : ''}
+            ${m.awayManager && m.homeManager ? `<a class="more-it" href="${esc(pageLink('head-to-head.html', { a, b }))}"><i>${MORE_IC.vs}</i><span><b>Head to Head</b><small>${esc(a)} vs ${esc(b)}, every game</small></span><em>${MORE_IC.chev}</em></a>` : ''}
+          </div>
+          <button type="button" class="more-cancel">Cancel</button>
+        </div>
+      </div>`);
+    const sheet = document.getElementById('more-sheet');
+    document.getElementById('more-scrim').addEventListener('click', closeMore);
+    sheet.querySelector('.more-cancel').addEventListener('click', closeMore);
+    sheet.querySelector('[data-act="share"]').addEventListener('click', () => {
+      shotKey = key;
+      closeMore();
+      matchupShot.share(null);
+    });
+    sheet.addEventListener('keydown', e => { if (e.key === 'Escape') closeMore(); });
+    sheet.focus({ preventScroll: true });
+  }
   const onMatchupClick = (e) => {
-    const sh = e.target.closest('[data-share]');
-    if (sh) {
-      shotKey = sh.closest('.matchup-card').dataset.key;
-      matchupShot.share(sh);
+    const more = e.target.closest('[data-more]');
+    if (more) { openMore(more.closest('.matchup-card')); return; }
+    const sb = e.target.closest('.sb-row');
+    if (sb) {
+      const key = decodeURIComponent(sb.dataset.sb);
+      const m = ((shownData && shownData.matchups) || []).find(x => matchupKey(x) === key);
+      const open = !sbOpen.has(key);
+      if (open) sbOpen.add(key); else sbOpen.delete(key);
+      sb.setAttribute('aria-expanded', open);
+      const next = sb.nextElementSibling;
+      if (next && next.classList.contains('sb-open')) next.remove();
+      if (open && m) {
+        sb.insertAdjacentHTML('afterend', `<div class="sb-open">${renderMatchupCard(m)}</div>`);
+        flDrawAll();
+      }
       return;
     }
     // The series line is a link to Head to Head on this pair instead, and
     // a tap on the Flow chart reads it.
-    if (e.target.closest('.mu-series') || e.target.closest('.fl-wrap')) return;
+    if (e.target.closest('.mu-series') || e.target.closest('.fl-wrap') || e.target.closest('.mu-espn')) return;
     const card = e.target.closest('.matchup-card');
     if (!card) return;
     // An open card's starters open their game logs instead of closing it.
