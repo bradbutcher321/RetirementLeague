@@ -226,7 +226,7 @@
     if (row.sacko > 0) return { text: 'Sacko', tone: 'loss' };
     if (row.final_rank === 2) return { text: 'Runner-up', tone: 'gold' };
     if (row.playoff > 0) return { text: `Playoffs · ${ord(row.final_rank)}`, tone: 'dim' };
-    return { text: `Missed playoffs · ${ord(row.final_rank)}`, tone: 'dim' };
+    return { text: 'Missed playoffs', tone: 'dim' };
   }
 
   function seasonLogo(m, y) {
@@ -263,7 +263,7 @@
     const side = [
       ['Record', rec],
       ['Finish', `${ord(row.final_rank)} of ${rows.length}`],
-      ['Points', row.tot_pf.toLocaleString(undefined, { maximumFractionDigits: 0 })],
+      ['Points', row.tot_pf.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })],
       ['Points Rank', ord(facts.pfRank)],
     ].map(([l, v]) => `<div class="fs"><div class="fs-v">${v}</div><div class="fs-l">${l}</div></div>`).join('');
     const hero = `
@@ -393,7 +393,7 @@
     x.font = `800 150px ${SB}`;
     fitText(x, s.fin.split(' · ')[0].toUpperCase(), 104, 520, W - 208, 150, SB);
     x.fillStyle = dim; x.font = `500 36px ${IN}`;
-    x.fillText(`${s.rec} record · ${Math.round(s.pf).toLocaleString()} points (${ord(s.pfRank)})`, 104, 584);
+    x.fillText(`${s.rec} record · ${s.pf.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} points (${ord(s.pfRank)})`, 104, 584);
 
     // Stat rows: label left, figure right.
     const rowsOut = [];
