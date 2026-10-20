@@ -62,7 +62,7 @@
   const $ = id => document.getElementById(id);
   const pct = n => n == null ? '—' : Math.round(n) + '%';
   const RUNS = 6000, SD = 22, SHRINK = 20;
-  let TEAMS, AHEAD, base, MU, sched, PICK_WEEK, DONE, REG, SPOTS, BYES, N, MEDIAN_ERA, LIVE_WEEK, BASELINE;
+  let LIVEPART = {}, TEAMS, AHEAD, base, MU, sched, PICK_WEEK, DONE, REG, SPOTS, BYES, N, MEDIAN_ERA, LIVE_WEEK, BASELINE;
   const picks = {};              // "a|b" -> winner, for PICK_WEEK only
 
   let seed = 1;
@@ -85,6 +85,17 @@
       live.matchups.forEach(m => games.push({ w: LIVE_WEEK, a: m.awayManager, b: m.homeManager, sa: m.awayScore, sb: m.homeScore, med: live.currentMedian }));
     }
     DONE = games.length ? Math.max(...games.map(g => g.w)) : 0;
+    // A live week still going: games already over lock in now, the rest start
+    // from their live score. The median win waits for the simulation.
+    LIVEPART = {};
+    if (!liveFinal && live.matchups && live.matchups.length && !games.some(g => g.w === LIVE_WEEK)) {
+      live.matchups.forEach(m => {
+        const fin = !m.awayRemaining && !m.homeRemaining && !m.awayInPlay && !m.homeInPlay;
+        LIVEPART[m.awayManager] = { s: m.awayScore, proj: m.awayProjected, fin };
+        LIVEPART[m.homeManager] = { s: m.homeScore, proj: m.homeProjected, fin };
+        if (fin) games.push({ w: LIVE_WEEK, a: m.awayManager, b: m.homeManager, sa: m.awayScore, sb: m.homeScore, med: null });
+      });
+    }
     PICK_WEEK = DONE + 1;
     base = Object.fromEntries(TEAMS.map(t => [t, { w: 0, l: 0, pf: 0, sc: [] }]));
     games.forEach(g => {
@@ -113,7 +124,7 @@
         if (!o || seen.has(t) || !TEAMS.includes(o)) return;
         seen.add(t); seen.add(o); pairs.push([t, o]);
       });
-      sched.push({ w, pairs });
+      sched.push({ w, pairs: w === LIVE_WEEK ? pairs.filter(([a, b]) => !(LIVEPART[a] && LIVEPART[a].fin)) : pairs });
     }
   }
 
@@ -126,7 +137,12 @@
       TEAMS.forEach(t => { w[t] = base[t].w; pf[t] = base[t].pf; });
       sched.forEach(({ w: wk, pairs }) => {
         const sc = {};
-        TEAMS.forEach(t => { sc[t] = MU[t] + SD * gauss(); });
+        TEAMS.forEach(t => {
+          const L = wk === LIVE_WEEK ? LIVEPART[t] : null;
+          if (L && L.fin) sc[t] = L.s;
+          else if (L) { const f = L.proj > 0 ? Math.min(1, Math.max(0.05, (L.proj - L.s) / L.proj)) : 1; sc[t] = Math.max(L.s, L.proj) + SD * Math.sqrt(f) * gauss(); }
+          else sc[t] = MU[t] + SD * gauss();
+        });
         pairs.forEach(([a, b]) => {
           const forced = wk === PICK_WEEK ? picks[a + '|' + b] : null;
           if (forced && ((forced === a) !== (sc[a] > sc[b]))) { const x = sc[a]; sc[a] = sc[b]; sc[b] = x; }
@@ -135,7 +151,7 @@
           if (wk === PICK_WEEK) { pickRes[a] = winner === a; pickRes[b] = winner === b; }
         });
         if (MEDIAN_ERA) TEAMS.slice().sort((x, y) => sc[y] - sc[x]).slice(0, N / 2).forEach(t => { w[t]++; });
-        TEAMS.forEach(t => { pf[t] += sc[t]; });
+        TEAMS.forEach(t => { if (!(wk === LIVE_WEEK && LIVEPART[t] && LIVEPART[t].fin)) pf[t] += sc[t]; });
       });
       const rank = TEAMS.slice().sort((x, y) => (w[y] - w[x]) || (pf[y] - pf[x]));
       rank.forEach((t, i) => {
