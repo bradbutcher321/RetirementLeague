@@ -43,14 +43,14 @@
   /* ---------- Week selector ----------
      .selector-row and .parlay-select styling both live in theme.css. */
   /* ---------- Gold outline button ----------
-     The page's two buttons ("Back to current" and the legs' Expand/Collapse
-     all) are the same control at two sizes, so they share one definition.
+     The page's two buttons ("Back to current" and the legs' Share) are the
+     same control at two sizes, so they share one definition.
      Pill-shaped like every other control on the site, and the hover tint is
      the current gold (212,180,106) rather than the retired #BA9B37 it used
      to be mixed from -- at 10% the two are close enough to miss side by
      side, and far enough apart to read as slightly off next to a real gold
      border. */
-  .back-link, .leg-expand-toggle{
+  .back-link, .pill-btn{
     background: none;
     border: 1px solid var(--gold);
     color: var(--gold);
@@ -60,10 +60,15 @@
     cursor: pointer;
   }
   @media (hover: hover){
-    .back-link:hover, .leg-expand-toggle:hover{ background: rgba(212,180,106,0.1); }
+    .back-link:hover, .pill-btn:hover{ background: rgba(212,180,106,0.1); }
   }
-  .back-link:focus-visible, .leg-expand-toggle:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .back-link:focus-visible, .pill-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .back-link{ font-size: 0.8rem; padding: 8px 14px; }
+  .pill-btn{ font-size: 0.78rem; padding: 7px 0; width: 84px; text-align: center; flex-shrink: 0; }
+  .legs-actions{ display: flex; gap: 8px; }
+  /* The Share button's picture (share.js) is a copy of the hero + legs card
+     as it reads on screen, minus the button itself. */
+  .share-shot .legs-actions{ display: none; }
   .back-link:disabled{ opacity: 0.5; cursor: default; }
   @media (hover: hover){
     .back-link:disabled:hover{ background: none; }
@@ -112,124 +117,98 @@
      it's a chip alongside Sacko now, same weight as the fact it carries. */
 
   /* ---------- Legs ----------
-     Collapsed to two lines: name + result share the top line, the bet gets
-     its own full line underneath with no truncation -- even the longest bet
-     on the board reads in full without a click. Sport/odds/kickoff move into
-     a detail panel that opens on click, the same pattern the dashboard's
-     matchup cards use (see index.html's .matchup-card / expandedMatchups). */
+     Every leg reads in full with nothing to open, in the spirit of Parlay
+     Legs' card with the result added. Legs sit under the day they're
+     played, each with a time rail on the left the way a TV listing reads:
+     the kickoff before the game, the clock and period while it's on, and
+     the kickoff again once it's decided. Name, odds, score and status share
+     the top line; the bet gets the full line underneath. One column at
+     every width -- on desktop each leg is a single ledger line with odds,
+     score and status in aligned columns. */
+  .legs-list{ display: grid; gap: 8px; }
+  .leg-day{ color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 2px 0; }
+  .leg-day:first-child{ margin-top: 0; }
   .leg{
+    display: grid; grid-template-columns: 60px minmax(0, 1fr);
     background: var(--item);
     border: 1px solid var(--item-line);
     border-radius: 10px;
-    margin-top: 8px;
-    cursor: pointer;
     overflow: hidden;
   }
-  .leg:first-child{ margin-top: 0; }
-  .leg.Win{ border-color: var(--win-line); background: var(--win-tint); }
-  .leg.Loss{ border-color: var(--loss-line); background: var(--loss-tint); }
-  .leg.live-up{ border-color: var(--win-line); background: var(--win-tint); }
-  .leg.live-down{ border-color: var(--loss-line); background: var(--loss-tint); }
-  .leg.missing{ cursor: default; }
-  /* Two columns on desktop (site audit #13): twelve legs one per row ran
-     ~950px wide and twice as tall as they needed to. Kickoff order reads
-     across, then down. align-items: start so opening a leg doesn't stretch
-     the one beside it. */
-  @media (min-width: 900px){
-    .legs-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
-    .legs-grid .leg{ margin-top: 0; }
-  }
+  .leg.Win, .leg.live-up{ border-color: var(--win-line); background: var(--win-tint); }
+  .leg.Loss, .leg.live-down{ border-color: var(--loss-line); background: var(--loss-tint); }
 
-  .leg-head{ padding: 12px 14px 11px; }
-  .leg-top{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-  .leg-name{ font-weight: 700; }
-  .leg-result-group{ display: flex; align-items: center; gap: 7px; flex-shrink: 1; min-width: 0; }
-  /* ---------- The graded result, beside the verdict ----------
-     Filled rather than outlined, matching .hero-chip at the top of this page,
-     so it's a shape the page already owns. Deliberately NOT tinted win/loss:
-     the word next to it already carries that, and a third green thing on a
-     winning row was too much. Nothing renders here until a leg is decided. */
+  /* The rail: sport, then the time big, then AM/PM -- or, live, the clock
+     big and the period under it in the sport's own words (liveRail). Red
+     while the game is on, as an "in progress" marker rather than a verdict;
+     the Live badge on the right carries the pulsing dot, so the rail
+     doesn't repeat it. */
+  .leg-rail{ background: rgba(0,0,0,0.22); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 2px; text-align: center; min-width: 0; }
+  .leg-rail .sp{ color: var(--gold); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .leg-rail .t{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.1rem; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .leg-rail .p{ color: var(--text-dim); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+  .leg-rail.live .t, .leg-rail.live .p{ color: var(--loss); }
+  .leg-rail .arrow{ font-size: 0.7em; margin-right: 2px; vertical-align: 0.12em; }
+
+  .leg-body{
+    padding: 10px 12px; min-width: 0;
+    display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "name odds score status" "bet bet bet bet";
+    column-gap: 8px; row-gap: 4px; align-items: center;
+  }
+  .leg.missing .leg-body{ grid-template-areas: "name odds score status"; }
+  .leg-name{ grid-area: name; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .leg.missing .leg-name{ color: var(--text-dim); font-weight: 600; }
+  .leg-odds{ grid-area: odds; font-family: var(--scoreboard); font-weight: 700; font-size: 0.92rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .leg-score{ grid-area: score; justify-self: end; display: flex; justify-content: flex-end; min-width: 0; max-width: 100%; }
+  .leg-status{ grid-area: status; justify-self: end; display: flex; }
+  .leg-status .badge{ display: inline-flex; align-items: center; gap: 5px; }
+  .leg-status .badge.dim{ border-color: var(--ctl-line); }
+  /* Grey and a size down from the name -- supporting text under a bold
+     headline. The bet type itself is white, the way Parlay Legs shows it. */
+  .leg-bet{ grid-area: bet; color: var(--text-dim); font-size: 0.86rem; line-height: 1.35; min-width: 0; overflow-wrap: anywhere; }
+  .leg-bet b{ color: var(--text); font-weight: 600; }
+
+  /* ---------- The score pill ----------
+     The number the leg rides on: the final once it's graded, the running
+     score or stat while it's live (green while covering, red otherwise).
+     Filled rather than outlined, matching .hero-chip at the top of this
+     page. Nothing renders here before kickoff. */
   .fin{
     font-family: var(--scoreboard); font-variant-numeric: tabular-nums;
-    font-size: 0.78rem; font-weight: 700; line-height: 1; color: var(--text);
-    background: rgba(255,255,255,0.06); border-radius: 999px; padding: 4px 10px;
-    white-space: nowrap; flex-shrink: 0;
+    font-size: 0.82rem; font-weight: 700; line-height: 1; color: var(--text);
+    background: rgba(255,255,255,0.06); border-radius: 999px; padding: 5px 10px;
+    white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis;
   }
-  /* Not every graded detail is a score -- a prop reads "Passing Yards: 390"
-     and a bout "Pereira · Round 1". The condensed scoreboard face is built
-     for numerals and turns to mush on words, so those take the body face a
-     size down, and they're the thing that shrinks on a narrow screen so the
-     verdict can never be pushed off the row. */
-  .fin.is-text{
-    font-family: var(--body); font-weight: 600; font-size: 0.7rem; letter-spacing: 0;
-    min-width: 0; flex-shrink: 1; overflow: hidden; text-overflow: ellipsis;
-  }
-  /* The name gives way before the chip does -- it's repeated down the column,
-     while the chip's content is unique to this row. */
-  .leg-name{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .leg-result{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); white-space: nowrap; }
-  .leg-result.turf{ color: var(--turf); }
-  .leg-result.loss{ color: var(--loss); }
-  .leg-result-group .chev{ color: var(--text-dim); }
-  /* Fixed width (measured against "Collapse all", the longer of the two
-     labels, at this font) so the pill doesn't resize when the label
-     changes -- a width that merely fit "Expand all" would grow on every
-     toggle. */
-  .leg-expand-toggle{
-    font-size: 0.78rem;
-    padding: 7px 0;
-    width: 104px;
-    text-align: center;
-    flex-shrink: 0;
-  }
-  .legs-actions{ display: flex; gap: 8px; }
-  #leg-share{ width: 84px; }
+  .fin.up{ color: var(--turf); }
+  .fin.down{ color: var(--loss); }
+  /* Not every graded detail is a number -- a bout reads "Pereira · Round 1".
+     The condensed scoreboard face is built for numerals and turns to mush
+     on words, so those take the body face a size down. */
+  .fin.is-text{ font-family: var(--body); font-weight: 600; font-size: 0.7rem; letter-spacing: 0; }
 
-  /* The Share button's picture (share.js): a copy of the hero + legs card as
-     it reads on screen, every leg expanded and the toggles gone. */
-  .share-shot .legs-actions{ display: none; }
-  /* Grey and a size down from the name -- this is supporting text under a
-     bold headline, not a second headline. */
-  .leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 4px; line-height: 1.35; }
-
-  .leg-detail{ max-height: 0; overflow: hidden; transition: max-height 0.22s ease; }
-  /* Room for .leg-stats wrapping onto a second line (see there). */
-  .leg.open .leg-detail{ max-height: 120px; }
-  @media (prefers-reduced-motion: reduce){ .leg-detail{ transition: none; } }
-  /* The rule and its padding live on this full-width wrapper, not on
-     .leg-stats itself -- .leg-stats is only as wide as its own content
-     (width: max-content, for the grid below), so a border on it would stop
-     wherever the content stopped instead of running to the card's edge. */
-  .leg-detail-in{ border-top: 1px solid var(--line); margin: 0 14px; padding: 10px 0 12px; }
-
-  /* Sport / Odds / Kickoff-or-Live / Matchup, each a label-over-value
-     block. Every block is built the same way (one label line, one value
-     line), so on a shared line "SPORT/ODDS/LIVE" still sit level with each
-     other and "NFL/-110/<score>" level below. It's a wrapping row rather
-     than the fixed one-line grid it used to be because a live prop's four
-     blocks ("0 TDs · 17-19 · 12:34 - 3rd" next to "ARI vs. NYG") sit right
-     at a phone's width -- on a narrower one, or with a long clock, the last
-     block drops to a second line instead of being clipped off the card. */
-  .leg-stats{ display: flex; flex-wrap: wrap; column-gap: 22px; row-gap: 10px; }
-  .leg-stats .st{ display: flex; flex-direction: column; gap: 4px; }
-  /* display:block + text-align:center so each label centers over ITS OWN
-     value even when the two are different widths (e.g. "LIVE" is narrower
-     than its live score). */
-  .leg-stats .l{ display: block; text-align: center; color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; }
-  .leg-stats .v{ display: block; text-align: center; font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  /* inline-flex so the dot sits beside the score as one inline unit that
-     the parent's text-align:center can still center as a whole.
-     The score itself says whether the leg is covering right now, matching
-     the tint on the whole leg card: green while it's winning, red otherwise.
-     The dot is deliberately NOT part of that -- it's a "this game is in
-     progress" marker, not a result, so it stays red whatever the score is
-     doing. It sets `background` rather than `color`, so it doesn't inherit
-     the green either. */
-  .leg-stats .live-wrap{ display: inline-flex; align-items: center; gap: 5px; color: var(--loss); }
-  .leg-stats .live-wrap.up{ color: var(--turf); }
-  .leg-stats .live-wrap .dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: leg-live-pulse 1.5s ease-in-out infinite; }
+  .live-dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: leg-live-pulse 1.5s ease-in-out infinite; }
   @keyframes leg-live-pulse{ 0%, 100%{ opacity: 1; } 50%{ opacity: 0.25; } }
-  @media (prefers-reduced-motion: reduce){ .leg-stats .live-wrap .dot{ animation: none; } }
+  @media (prefers-reduced-motion: reduce){ .live-dot{ animation: none; } }
+
+  /* Column labels for the desktop ledger; a phone's two-line legs don't
+     line up in columns, so it has none. */
+  .legs-head{ display: none; }
+  @media (min-width: 900px){
+    .leg{ grid-template-columns: 78px minmax(0, 1fr); }
+    .leg-rail .t{ font-size: 1.2rem; }
+    .leg-body, .leg.missing .leg-body{
+      grid-template-columns: 110px minmax(0, 1fr) 60px 120px 70px;
+      grid-template-areas: "name bet odds score status";
+      column-gap: 16px; padding: 12px 16px; min-height: 58px;
+    }
+    .leg-odds{ justify-self: end; color: var(--text); }
+    .leg-bet{ font-size: 0.9rem; }
+    .legs-head{ display: grid; grid-template-columns: 78px minmax(0, 1fr); color: var(--text-dim); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+    .legs-head > span{ text-align: center; }
+    .legs-head > div{ display: grid; grid-template-columns: 110px minmax(0, 1fr) 60px 120px 70px; column-gap: 16px; padding: 0 16px; }
+    .legs-head .r{ text-align: right; }
+  }
 
 </style>
 </head>
@@ -281,7 +260,6 @@
 <script src="share.js?v=1"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
-  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   function fmtOdds(o) {
     if (o === null || o === undefined) return '—';
@@ -295,13 +273,21 @@
   function fmtPct(n) {
     return n === null || n === undefined ? '—' : Number(n).toFixed(1) + '%';
   }
-  function fmtTime(iso) {
-    if (!iso) return 'TBD';
-    const d = new Date(iso);
-    const h = d.getHours();
-    const mins = String(d.getMinutes()).padStart(2, '0');
-    return `${DAYS[d.getDay()]} ${h % 12 || 12}:${mins}${h < 12 ? 'AM' : 'PM'}`;
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  // A sheet game time ("2026-10-18T13:00:00", Eastern, no zone) read as the
+  // text it is, so it shows the same kickoff wherever the page is opened.
+  function kickoff(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso || '');
+    if (!m) return null;
+    const [y, mo, d, h, min] = m.slice(1).map(Number);
+    return {
+      date: m.slice(1, 4).join('-'),
+      day: `${DAY_NAMES[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()]} ${mo}/${d}`,
+      time: `${h % 12 || 12}:${String(min).padStart(2, '0')}`,
+      ampm: h < 12 ? 'AM' : 'PM',
+    };
   }
+  const ordinal = n => n + ((n % 100 >= 11 && n % 100 <= 13) ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
   // ---------- Parlay (current / past) ----------
   function legsSorted(week, players) {
     return players.filter(p => week.picks[p])
@@ -332,27 +318,43 @@
     'Receptions': ['Rec', 'Rec'], 'Interceptions': ['INT', 'INTs'], 'Home Runs': ['HR', 'HRs'], 'Player Points': ['Pt', 'Pts'],
   };
 
-  // entry: {kind: 'team'|'prop', team_score, opponent_score, period, clock,
-  // detail, tone}, plus `stat` on a prop -- see publish_parlay_stats.py's
-  // build_live_scores. A totals bet shows the two scores added up, since
-  // the combined number IS the thing being bet on -- "17-27" makes you do
-  // the arithmetic yourself to see where it stands against the line. A prop
-  // leads with its own stat, then its player's game the way a team bet
-  // shows it: "0 TDs · 17-14 · Halftime".
-  function liveText(entry, p) {
-    // entry.detail is ESPN's own phrase for where the game stands --
-    // "Top 1st" for baseball, "4:32 - 2nd Quarter" for football -- which is
-    // already correct per sport. Falls back to the old quarter/clock guess
-    // only if ESPN didn't supply one (or for data cached before this field
-    // existed), which was never right for a sport without quarters anyway.
-    const state = entry.detail ? ` · ${entry.detail}` : (entry.period ? ` · Q${entry.period} ${entry.clock || ''}`.trim() : '');
-    const a = Math.round(entry.team_score), b = Math.round(entry.opponent_score);
-    if (entry.kind !== 'team') {
-      const stat = propStatText(entry, p);
-      // A prop published before props carried their game has no score.
-      return entry.team_score == null ? stat : `${stat} · ${a}-${b}${state}`;
+  // A period in the sport's own words, short enough for the rail:
+  // "3rd Qtr", "2nd Half", "2nd Per", "OT", "Rd 2".
+  function periodName(sport, n, detail) {
+    if (!n) return '';
+    const ot = k => (k > 1 ? `${k}OT` : 'OT');
+    if (sport === 'NCAAM' || sport === 'NCAAW') return n <= 2 ? `${ordinal(n)} Half` : ot(n - 2);
+    if (sport === 'NHL') return n <= 3 ? `${ordinal(n)} Per` : /shootout|\bSO\b/i.test(detail) ? 'SO' : ot(n - 3);
+    if (sport === 'Futbol') return n <= 2 ? `${ordinal(n)} Half` : n <= 4 ? 'ET' : 'Pens';
+    if (sport === 'UFC') return `Rd ${n}`;
+    if (sport === 'MLB') return ordinal(n);
+    return n <= 4 ? `${ordinal(n)} Qtr` : ot(n - 4);
+  }
+
+  // The rail of a game that's on: [big line, small line]. Built from
+  // ESPN's period number and clock (see publish_parlay_stats.py's
+  // build_live_scores), which mean the same thing in every sport, plus its
+  // shortDetail phrase -- read only for what the numbers can't say:
+  // halftime, the break at the end of a period, and which half of an
+  // inning it is. So football reads "8:12 / 3rd Qtr", college basketball
+  // "12:34 / 1st Half", hockey "4:10 / 2nd Per", baseball "▲ 9th" for the
+  // top of the ninth and "▼ 9th" for the bottom.
+  function liveRail(entry, sport) {
+    const d = String(entry.detail || '').trim();
+    const n = Number(entry.period) || 0;
+    const per = periodName(sport, n, d);
+    if (sport === 'MLB') {
+      if (/^top/i.test(d)) return ['<span class="arrow">▲</span>' + esc(per), ''];
+      if (/^bot/i.test(d)) return ['<span class="arrow">▼</span>' + esc(per), ''];
+      if (/^(mid|end)/i.test(d)) return [esc(d.slice(0, 3)), esc(per)];
+      return [esc(per || 'Live'), ''];
     }
-    return `${isTotalBet(p) ? a + b : `${a}-${b}`}${state}`;
+    if (/half\s*-?time|^HT$|^half$/i.test(d)) return ['Half', 'Time'];
+    if (/^end/i.test(d)) return ['End', esc(per)];
+    if (/delay|suspend/i.test(d)) return ['Delay', esc(per)];
+    const clock = String(entry.clock || '').trim();
+    if (clock && clock !== '0:00') return [esc(clock), esc(per)];
+    return [per ? esc(per) : 'Live', ''];
   }
 
   // "1 TD", "0 TDs", "64 Rec Yds".
@@ -376,10 +378,14 @@
     }
 
     // A player prop grades to "<player>: <stat>". The player's name is
-    // already on the bet line directly above, while what the number measures
-    // isn't -- so the bet type takes the label's place: "Passing Yards: 390".
+    // already on the bet line beside it, while what the number measures
+    // isn't -- so it reads the way the live stat did: "64 Rec Yds", "1 TD".
+    // A bet type with no unit takes the label's place: "Coin Toss: 1".
     if (PLAYER_BET_TYPES.has(bet)) {
-      detail = detail.replace(/^.+?:\s*(-?\d+(?:\.\d+)?)$/, (_m, n) => `${bet}: ${n}`);
+      detail = detail.replace(/^.+?:\s*(-?\d+(?:\.\d+)?)$/, (_m, n) => {
+        const units = PROP_STAT_UNITS[bet];
+        return units ? `${n} ${Number(n) === 1 ? units[0] : units[1]}` : `${bet}: ${n}`;
+      });
     }
 
     // A UFC bout grades to "Pereira won (round 1)" -- tightened to
@@ -392,11 +398,7 @@
     return detail;
   }
 
-  // The third stat slot is whichever of these is actually useful right now:
-  // the kickoff time before the game starts, the running score once it's
-  // live, or the graded final once it's decided -- never more than one of
-  // the three at once, which is what keeps a leg card to a single stat row.
-  // The chip beside the verdict: what the leg was graded from. Empty string
+  // The pill beside the status: what the leg was graded from. Empty string
   // until the leg is actually decided -- a live leg gets livePillHtml in the
   // same spot instead, and a leg that hasn't kicked off gets nothing.
   function finalChipHtml(p) {
@@ -408,10 +410,11 @@
     const raw = (p.detail || '').replace(/\s*\bfinal\b\s*$/i, '').trim();
     if (!raw) return '';
     const text = finalChipText(p, raw);
-    // Digits get the condensed scoreboard face; anything with words in it
-    // takes the body face a size down, and may shrink before the verdict
-    // does -- see .fin.is-text.
-    const cls = /^[\d\s.–—-]+$/.test(text) ? 'fin' : 'fin is-text';
+    // Digits, and a prop's short "64 Rec Yds", get the condensed scoreboard
+    // face; anything else with words in it takes the body face a size down
+    // -- see .fin.is-text. Either may shrink before the status does.
+    const unitText = PLAYER_BET_TYPES.has(betTypeOf(p)) && /^-?\d+(\.\d+)?\s\S/.test(text) && text.length <= 12;
+    const cls = /^[\d\s.–—-]+$/.test(text) || unitText ? 'fin' : 'fin is-text';
     return `<span class="${cls}" title="${esc(text)}">${esc(text)}</span>`;
   }
 
@@ -432,36 +435,43 @@
       text = isTotalBet(p) ? String(a + b) : `${a}-${b}`;
       if (LIVE_SPREAD_BET_TYPES.has(betTypeOf(p))) text += ` · ${a === b ? '±0' : `${a > b ? '-' : '+'}${Math.abs(a - b)}`}`;
     }
-    return `<span class="fin">${esc(text)}</span>`;
+    // Green while it's covering, red while it isn't, white when that can't
+    // be known yet (a 1st Half Spread, before the half ends).
+    return `<span class="fin${entry.tone ? ' ' + entry.tone : ''}">${esc(text)}</span>`;
   }
 
-  // The third stat slot, for a leg that hasn't been decided yet: the kickoff
-  // time before the game starts, or the running score once it's live. A
-  // graded leg has nothing here any more -- its score sits in the chip
-  // beside the verdict, and showing it in both places said it twice.
-  function thirdStat(p, entry) {
-    if (p.result === 'Pending' && entry) return ['Live', `<span class="live-wrap${entry.tone === 'up' ? ' up' : ''}"><span class="dot"></span>${esc(liveText(entry, p))}</span>`];
-    if (p.result === 'Pending') return ['Kickoff', esc(fmtTime(p.gametime))];
-    return null;
+  // The bet as Parlay Legs shows it: the bet type in white, then the rest.
+  // A prop's bet names only its player, so the game they're in follows when
+  // publish_parlay_stats.py found it ("Anytime TD · Zay Flowers · BAL vs. CLE").
+  function betHtml(p) {
+    const text = String(p.pick || ''), i = text.indexOf(':');
+    const body = i > 0 ? `<b>${esc(text.slice(0, i))}</b> · ${esc(text.slice(i + 1).trim())}` : esc(text);
+    return body + (p.matchup ? ` · ${esc(p.matchup)}` : '');
   }
 
-  function legStatsHtml(p, entry) {
-    const third = thirdStat(p, entry);
-    const st = (label, value) => `<div class="st"><span class="l">${label}</span><span class="v">${value}</span></div>`;
-    // A prop's bet line names only the player, so the game they're in gets
-    // a fourth slot -- a team bet's line already reads "Bears -3 vs. Jets".
-    // publish_parlay_stats.py only finds it for a still-Pending prop.
-    return st('Sport', p.sport ? esc(p.sport) : '—') +
-      st('Odds', esc(fmtOdds(p.odds))) +
-      (third ? st(third[0], third[1]) : '') +
-      (p.matchup ? st('Matchup', esc(p.matchup)) : '');
+  // The left rail: the sport, then the kickoff before the game -- the clock
+  // and period while it's on (liveRail) -- and the kickoff again once the
+  // leg is decided.
+  function railHtml(p, entry) {
+    const sport = p.sport ? `<span class="sp">${esc(p.sport)}</span>` : '';
+    if (entry) {
+      const [big, small] = liveRail(entry, p.sport);
+      return `<div class="leg-rail live">${sport}<span class="t">${big}</span>${small ? `<span class="p">${small}</span>` : ''}</div>`;
+    }
+    const k = kickoff(p.gametime);
+    return `<div class="leg-rail">${sport}<span class="t">${k ? k.time : 'TBD'}</span>${k ? `<span class="p">${k.ampm}</span>` : ''}</div>`;
   }
 
-  // Keyed like the live-score map (year:week:name) so expanding a leg
-  // survives the 2-minute live-score poll's re-render without carrying the
-  // state into a different week -- same pattern as index.html's
-  // expandedMatchups for the dashboard's matchup cards.
-  const expandedLegs = new Set();
+  // Top right of every leg. Live is red with the pulsing dot -- an "in
+  // progress" marker rather than a verdict either way. An Anytime TD that's
+  // already scored (entry.hit) can't un-hit, so it reads Win straight away
+  // rather than waiting for the final whistle.
+  function statusHtml(p, entry) {
+    if (p.result === 'Win' || (entry && entry.hit)) return '<span class="badge turf">Win</span>';
+    if (p.result === 'Loss') return '<span class="badge loss">Loss</span>';
+    if (entry) return '<span class="badge loss"><span class="live-dot"></span>Live</span>';
+    return '<span class="badge dim">Pending</span>';
+  }
 
   function renderParlay(week, players, live) {
     const legs = legsSorted(week, players);
@@ -491,65 +501,51 @@
         </div>
       </div>`;
 
-    const rows = legs.map(([name, p]) => {
-      const key = `${week.year}:${week.week}:${name}`;
-      const entry = p.result === 'Pending' ? (live || {})[key] : null;
+    // Kickoff order, under a heading for each day the legs are played.
+    const rows = [];
+    let lastDay = null;
+    legs.forEach(([name, p]) => {
+      const k = kickoff(p.gametime);
+      const day = k ? k.date : 'tbd';
+      if (day !== lastDay) {
+        rows.push(`<div class="leg-day">${k ? k.day : 'Time TBD'}</div>`);
+        lastDay = day;
+      }
+      const entry = p.result === 'Pending' ? (live || {})[`${week.year}:${week.week}:${name}`] : null;
       const tone = entry && entry.tone ? ` live-${entry.tone}` : '';
-      const open = expandedLegs.has(key) ? ' open' : '';
-      // A live leg says so where its Win/Loss will land -- red like the
-      // live dot, an "in progress" marker rather than a verdict either way.
-      // An Anytime TD that's already scored (entry.hit) can't un-hit, so it
-      // reads Win straight away rather than waiting for the final whistle.
-      const hit = entry && entry.hit;
-      const resultTone = p.result === 'Win' || hit ? 'turf' : p.result === 'Loss' || entry ? 'loss' : '';
-      const resultLabel = hit ? 'Win' : entry ? 'Live' : p.result === 'Pending' ? '—' : p.result;
-      return `
-      <div class="leg ${p.result}${tone}${open}" data-leg-key="${esc(key)}">
-        <div class="leg-head">
-          <div class="leg-top">
-            <div class="leg-name">${esc(name)}</div>
-            <div class="leg-result-group">
-              ${entry ? livePillHtml(p, entry) : finalChipHtml(p)}
-              <span class="leg-result ${resultTone}">${resultLabel}</span>
-              <span class="chev" aria-hidden="true"></span>
-            </div>
-          </div>
-          <div class="leg-bet">${esc(p.pick)}</div>
+      rows.push(`
+      <div class="leg ${p.result}${tone}${isMe(name) ? ' me' : ''}">
+        ${railHtml(p, entry)}
+        <div class="leg-body">
+          <span class="leg-name">${esc(name)}</span>
+          <span class="leg-odds">${esc(fmtOdds(p.odds))}</span>
+          <div class="leg-bet">${betHtml(p)}</div>
+          <span class="leg-score">${entry ? livePillHtml(p, entry) : finalChipHtml(p)}</span>
+          <span class="leg-status">${statusHtml(p, entry)}</span>
         </div>
-        <div class="leg-detail"><div class="leg-detail-in"><div class="leg-stats">${legStatsHtml(p, entry)}</div></div></div>
-      </div>`;
-    }).join('') +
-      // No pick, nothing to expand -- a flat row, not clickable.
-      missing.map(name => `
-      <div class="leg missing">
-        <div class="leg-head">
-          <div class="leg-top">
-            <div class="leg-name">${esc(name)}</div>
-            <span class="leg-result">—</span>
-          </div>
-          <div class="leg-bet">No pick yet</div>
-        </div>
-      </div>`).join('');
+      </div>`);
+    });
+    if (missing.length) {
+      rows.push('<div class="leg-day">No pick yet</div>');
+      missing.forEach(name => rows.push(`
+      <div class="leg missing${isMe(name) ? ' me' : ''}">
+        <div class="leg-rail"><span class="t">—</span></div>
+        <div class="leg-body"><span class="leg-name">${esc(name)}</span></div>
+      </div>`));
+    }
 
     // Hit/lost/live already live in the hero's Legs Hit/Legs Lost stats --
     // repeating them here was the same count twice on one screen.
-    //
-    // The all-toggle's label is computed from the same expandedLegs Set the
-    // per-row "open" class reads, so it's correct on first paint (e.g. after
-    // the 2-minute live-score poll re-renders while some legs are already
-    // expanded) rather than always starting at "Expand all".
-    const legKeys = legs.map(([name]) => `${week.year}:${week.week}:${name}`);
-    const allOpen = legKeys.length > 0 && legKeys.every(k => expandedLegs.has(k));
-    const toggleAll = legKeys.length
-      ? `<button type="button" class="leg-expand-toggle hit" id="leg-expand-toggle">${allOpen ? 'Collapse all' : 'Expand all'}</button>`
+    const head = legs.length
+      ? '<div class="legs-head" aria-hidden="true"><span>Game</span><div><span>Manager</span><span>Bet</span><span class="r">Odds</span><span class="r">Score</span><span class="r">Status</span></div></div>'
       : '';
-    const share = legKeys.length
-      ? `<button type="button" class="leg-expand-toggle hit" id="leg-share">Share</button>`
+    const share = legs.length
+      ? '<button type="button" class="pill-btn" id="leg-share">Share</button>'
       : '';
     return `${hero}
       <div class="glass" style="margin-top:14px">
-        <div class="panel-title">Legs<span class="legs-actions">${share}${toggleAll}</span></div>
-        <div class="panel-body legs-grid">${rows}</div>
+        <div class="panel-title">Legs<span class="legs-actions">${share}</span></div>
+        <div class="panel-body legs-list">${head}${rows.join('')}</div>
       </div>`;
   }
 
@@ -589,8 +585,8 @@
         weekSel.innerHTML = inYear.map(w => `<option value="${w.week}">Week ${w.week}</option>`).join('');
         if (preferred !== undefined && inYear.some(w => w.week === preferred)) weekSel.value = preferred;
       }
-      // The Share button's picture (share.js): the hero + legs card with
-      // every leg open. Redrawn a moment after every render -- a week
+      // The Share button's picture (share.js): the hero + legs card as it
+      // reads on screen. Redrawn a moment after every render -- a week
       // change, a live-score poll -- and dropped the instant the card
       // changes, so a tap never shares a stale picture.
       const shot = RLShare.make({
@@ -598,7 +594,6 @@
         nodes: () => [...container.children],
         eyebrow: 'Retirement League',
         name: () => `parlay-${yearSel.value}-week-${weekSel.value}.png`,
-        prep: wrap => wrap.querySelectorAll('.leg:not(.missing)').forEach(l => l.classList.add('open')),
       });
       function showSelected() {
         const w = weeks.find(x => x.year === Number(yearSel.value) && x.week === Number(weekSel.value));
@@ -608,42 +603,15 @@
         container.innerHTML = renderParlay(w, players, live);
         shot.queue();
       }
-      // Keeps the all-toggle's label matching the actual state after a
-      // per-row click, instead of waiting for the next full re-render.
-      function syncExpandAllLabel() {
-        const btn = container.querySelector('#leg-expand-toggle');
-        if (!btn) return;
-        const rows = [...container.querySelectorAll('.leg:not(.missing)')];
-        const allOpen = rows.length > 0 && rows.every(r => r.classList.contains('open'));
-        btn.textContent = allOpen ? 'Collapse all' : 'Expand all';
-      }
-      // Delegated once on the container rather than per-leg, since
-      // showSelected() rebuilds the legs' markup wholesale on every
-      // selection change and every 2-minute live-score poll.
+      // Delegated once on the container, since showSelected() rebuilds the
+      // legs' markup wholesale on every selection change and every 2-minute
+      // live-score poll. On a phone, the picture goes to the share sheet
+      // (straight into Messages); anywhere else, onto the clipboard to
+      // paste. If either is refused, the picture opens on screen to save by
+      // hand.
       container.addEventListener('click', e => {
-        // On a phone, the picture goes to the share sheet (straight into
-        // Messages); anywhere else, onto the clipboard to paste. If either
-        // is refused, the picture opens on screen to save by hand.
         const shareBtn = e.target.closest('#leg-share');
-        if (shareBtn) { shot.share(shareBtn); return; }
-        const toggleAll = e.target.closest('#leg-expand-toggle');
-        if (toggleAll) {
-          const rows = [...container.querySelectorAll('.leg:not(.missing)')];
-          const allOpen = rows.length > 0 && rows.every(r => r.classList.contains('open'));
-          rows.forEach(r => {
-            const key = r.dataset.legKey;
-            r.classList.toggle('open', !allOpen);
-            if (allOpen) expandedLegs.delete(key); else expandedLegs.add(key);
-          });
-          toggleAll.textContent = allOpen ? 'Expand all' : 'Collapse all';
-          return;
-        }
-        const leg = e.target.closest('.leg:not(.missing)');
-        if (!leg) return;
-        const key = leg.dataset.legKey;
-        if (expandedLegs.has(key)) expandedLegs.delete(key); else expandedLegs.add(key);
-        leg.classList.toggle('open');
-        syncExpandAllLabel();
+        if (shareBtn) shot.share(shareBtn);
       });
       function selectCurrent() {
         yearSel.value = current.year;
