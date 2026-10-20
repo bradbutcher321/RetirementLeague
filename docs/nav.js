@@ -326,15 +326,15 @@
   const PREFS_KEY = 'rl-push-prefs';
   // [pref, label, about your own games]
   const PUSH_TYPES = [
-    ['final', 'My matchup is final', true],
-    ['median', 'I clinch the median win', true],
-    ['lineup', 'A starter of mine is on bye or out', true],
+    ['final', 'Matchup goes Final', true],
+    ['median', 'Median Clinched', true],
+    ['lineup', 'Starter on Bye or Out', true],
     ['rival', 'Rival Game Alerts', true],
-    ['parlay', 'My parlay leg hits or dies', true],
-    ['legIn', "My leg isn't in yet<small>Wednesday 7 PM and Thursday 11 AM, only while it's missing</small>", true],
-    ['parlayAll', "Every leg that hits, until it's killed", false],
+    ['parlay', 'Parlay Leg Wins or Loses', true],
+    ['legIn', 'Missing Parlay Leg', true],
+    ['parlayAll', 'Parlay Status Updates', false],
     ['recap', 'Week in Review is up', false],
-    ['record', 'A league record falls (good or bad)', false],
+    ['record', 'League Record Falls', false],
   ];
   const PERSON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg>';
 
