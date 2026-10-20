@@ -1076,31 +1076,71 @@
   .ph-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
 
   /* ---------- Superlatives ---------- */
-  /* ---------- Week in Review (site audit 28) ----------
-     The dashboard card shape: white title top-left, chip top-right, then
-     six stat pods in bordered item boxes, two across on a phone and three
-     on desktop. Gold is each pod's figure; the two misses are red. */
+  /* ---------- Week in Review (site audit 28; audit V #1, #2) ----------
+     The dashboard card shape: white title top-left, chip top-right, and the
+     week's storyline under the title when there is one. Then the week on
+     one line -- every score a dot, the median a dashed line, the Sacko and
+     the top score at the two ends -- and the other awards as rows in League
+     History's records shape (type tile, caption, holder, value). Rows can't
+     leave a card over the way the old two-across grid did: one column on a
+     phone, two from 700px, where each award sits beside its opposite.
+     Gold is each award's figure; the misses are red. A line of context
+     (muted gold) only shows when it says something. */
   #recap-section{ margin-bottom: 14px; }
   #notice-section{ margin-bottom: 14px; }
   .notice-stack{ display: grid; gap: 10px; }
   .notice-chip{ font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); white-space: nowrap; }
   .notice-box{ padding: 12px 14px; font-size: 0.92rem; line-height: 1.4; }
   .recap-card{
+    --rc-ctx: color-mix(in srgb, var(--gold) 72%, var(--text-dim));
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px 18px;
   }
-  .recap-grid{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
-  @media (min-width: 700px){ .recap-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; } }
-  .rc-pod{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 10px 12px 11px; min-width: 0; }
-  .rc-l, .rc-n, .rc-s{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .rc-l{ font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); }
-  .rc-v{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.45rem; line-height: 1.1; margin-top: 5px; color: var(--gold); font-variant-numeric: tabular-nums; }
-  .rc-v.loss{ color: var(--loss); }
-  .rc-n{ font-weight: 700; font-size: 0.88rem; margin-top: 2px; }
-  .rc-s{ font-size: 0.72rem; color: var(--text-dim); margin-top: 1px; }
-  /* Left the win on the bench: a row of its own, names allowed to wrap. */
-  .rc-wide{ grid-column: 1 / -1; }
-  .rc-wide .rc-n, .rc-wide .rc-s{ white-space: normal; }
+  .rc-dek{ color: var(--rc-ctx); font-size: 0.82rem; line-height: 1.4; margin-top: 4px; text-wrap: balance; }
+  .rc-ctx{ display: block; color: var(--rc-ctx); font-size: 0.7rem; line-height: 1.35; margin-top: 2px; }
+  /* Your name, wherever it shows up in the card: underlined in your ring
+     color. Not .me, whose outline would ring the whole element. */
+  .rc-you{ box-shadow: inset 0 -1.5px 0 var(--me-ring); }
+
+  /* The week on one line. Dots are placed by renderRecap's layout pass
+     (left/top inline); --h and --ay come from how high the dots stack. */
+  .rc-strip{ margin-top: 12px; padding: 10px 12px 10px; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; }
+  .rc-ends{ display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .rc-end{ display: grid; gap: 1px; max-width: 48%; min-width: 0; line-height: 1.2; }
+  .rc-end.hi{ text-align: right; justify-items: end; }
+  .rc-end-l{ color: var(--text-dim); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .rc-end-v{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.4rem; line-height: 1.05; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .rc-end.lo .rc-end-v{ color: var(--loss); }
+  .rc-end-n{ font-weight: 700; font-size: 0.86rem; }
+  .rc-end-n em{ font-style: normal; font-weight: 500; color: var(--text-dim); }
+  .rc-plot{ position: relative; height: var(--h, 64px); margin-top: 4px; }
+  .rc-axis{ position: absolute; left: 0; right: 0; top: var(--ay, 28px); height: 1px; background: rgba(255,255,255,0.12); }
+  .rc-med{ position: absolute; top: 0; bottom: 16px; border-left: 1.5px dashed color-mix(in srgb, var(--gold) 70%, transparent); }
+  .rc-medl{ position: absolute; bottom: 0; transform: translateX(-50%); color: var(--gold); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+  .rc-dot{ position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; display: grid; place-items: center;
+           background: #151515; border: 1.5px solid rgba(255,255,255,0.35); color: var(--text); font: 800 0.5rem/1 var(--body); letter-spacing: 0.02em; }
+  .rc-dot.up{ border-color: var(--turf); }
+  .rc-dot.dn{ border-color: var(--loss); }
+  .rc-dot.you{ box-shadow: 0 0 0 2px #151515, 0 0 0 3.5px var(--me-ring); }
+  .rc-dot.cons{ opacity: 0.38; }
+  .rc-note{ display: flex; justify-content: center; flex-wrap: wrap; gap: 2px 14px; margin-top: 6px; font-size: 0.72rem; color: var(--text-dim); text-align: center; }
+  .rc-note b{ color: var(--text); font-weight: 700; }
+  .rc-note b.up{ color: var(--turf); }
+  .rc-note b.dn{ color: var(--loss); }
+  .rc-note + .rc-ctx{ text-align: center; }
+
+  /* The other awards: League History's record rows (overview.html .rec-row). */
+  .rc-rows{ display: grid; grid-template-columns: minmax(0, 1fr); margin-top: 10px; padding: 2px 12px; background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; }
+  @media (min-width: 700px){ .rc-rows{ grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; } }
+  .rc-row{ display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+  .rc-row:first-child{ border-top: none; }
+  @media (min-width: 700px){ .rc-row:nth-child(2){ border-top: none; } }
+  .rc-txt{ min-width: 0; }
+  .rc-cap{ display: block; color: var(--text-dim); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .rc-holder{ display: block; font-weight: 600; font-size: 0.88rem; margin-top: 2px; }
+  .rc-sub{ display: block; color: var(--text-dim); font-size: 0.7rem; margin-top: 1px; }
+  .rc-val{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.35rem; color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rc-val.loss{ color: var(--loss); }
 
   /* Top-aligned: Season Points Leader carries the points race, so making
      the two cards match heights left Season High Score half empty. */
@@ -4119,7 +4159,7 @@
       </div>`;
   }
 
-  // ---------- Week in Review (site audit 28) ----------
+  // ---------- Week in Review (site audit 28; audit V #1, #2) ----------
   // Between the last Monday night game and Thursday's kickoff the rest of
   // the dashboard is a frozen Sunday, so a recap of the finished week leads
   // the page. Two sources, whichever is current:
@@ -4185,88 +4225,313 @@
     return recapBestByWeek.get(rw.week);
   }
 
+  // ---------- The card (audit V #1, #2) ----------
+  // The week on one line, then the other awards as rows. Each row award
+  // comes with its opposite (blowout / closest, luckiest / unluckiest,
+  // perfect lineup / left the win on the bench), and a pair only shows when
+  // both halves exist, so desktop's two columns never end half empty. Any
+  // award can carry one line of context from league.json, shown only when
+  // it says something: a best since another season, a top three for the
+  // season, a top ten all time.
+  const RC_DOT = '<circle cx="{x}" cy="{y}" r="1.2" fill="currentColor" stroke="none"/>';
+  const RC_ICONS = {
+    blowout: '<path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/>',
+    closest: '<path d="M12 4v16M5 20h14M6 8h12"/><path d="m6 8-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z"/>',
+    luck: '<rect x="4" y="4" width="16" height="16" rx="3.5"/>' + [[9, 9], [15, 9], [12, 12], [9, 15], [15, 15]].map(([x, y]) => RC_DOT.replace('{x}', x).replace('{y}', y)).join(''),
+    perfect: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+    bench: '<path d="M4 10h16M6 10v8M18 10v8M4 14h16"/><path d="M7 10V6h10v4"/>',
+  };
+  // typeTile()'s tile (page-common.js), with the recap's own glyphs.
+  const rcTile = (kind, bad) => `<span class="type-tile${bad ? ' loss' : ''}" aria-hidden="true"><svg viewBox="0 0 24 24" ${TILE_STROKE}>${RC_ICONS[kind]}</svg></span>`;
+  // The weekly Sacko's money rule (generate_franchise_data_d1.py): from 2025
+  // the week's lowest scorer pays, at most 3 times a season; past that it
+  // falls to the next-lowest.
+  const SACKO_FROM = 2025, SACKO_CAP = 3;
+  const rcNth = (n, word) => (n === 1 ? word[0].toUpperCase() + word.slice(1) : `${ordinal(n)}-${word}`);
+  const plainNames = list => (list.length > 1 ? `${list.slice(0, -1).map(x => x.name).join(', ')} & ${list[list.length - 1].name}` : list[0].name);
+
   function renderRecap() {
     const section = document.getElementById('recap-section');
     const rw = standingsData && recapWeek(standingsData);
     if (!rw || !rw.games.length) { section.hidden = true; section.innerHTML = ''; return; }
     const r2 = v => Math.round(v * 100) / 100;
+    const year = (standingsData && standingsData.year) || leagueYear;
+    const regWeeks = (standingsData && standingsData.regularSeasonWeeks) || (leagueSettings[year] || {}).reg_weeks || 0;
+    const playoff = Boolean(standingsData && standingsData.playoffWeek) || (regWeeks > 0 && rw.week > regWeeks);
     const bestBy = recapBest(rw) || {};
-    const sides = rw.games.flatMap(g => [
-      { name: g.a, score: g.sa, opp: g.b, oppScore: g.sb, best: bestBy[g.a] },
-      { name: g.b, score: g.sb, opp: g.a, oppScore: g.sa, best: bestBy[g.b] },
-    ]);
+    // league.json's own copy of this week, when it has one: it knows each
+    // game's type (a consolation game counts for highs, never for lows), and
+    // it keeps the history below from counting the week twice.
+    const known = (leagueGames || []).filter(g => g.year === year && g.week === rw.week && g.p2);
+    const typeOf = (a, b) => {
+      const g = known.find(x => (x.p1 === a && x.p2 === b) || (x.p1 === b && x.p2 === a));
+      return g ? g.type : playoff ? '' : 'Reg';
+    };
+    const sides = rw.games.flatMap(g => {
+      const type = typeOf(g.a, g.b);
+      return [
+        { name: g.a, score: g.sa, opp: g.b, oppScore: g.sb, best: bestBy[g.a], type },
+        { name: g.b, score: g.sb, opp: g.a, oppScore: g.sa, best: bestBy[g.b], type },
+      ];
+    });
     const sorted = sides.map(s => s.score).sort((x, y) => x - y);
     const mid = sorted.length / 2;
-    const median = typeof rw.median === 'number' ? rw.median
+    // A playoff week has no median game, and neither did any week before 2025.
+    const median = playoff || year < medianEraYear ? null : typeof rw.median === 'number' ? rw.median
       : sorted.length % 2 ? sorted[Math.floor(mid)] : (sorted[mid - 1] + sorted[mid]) / 2;
     const others = sides.length - 1;
     const result = s => (s.score > s.oppScore ? `def. ${esc(s.opp)}` : s.score < s.oppScore ? `lost to ${esc(s.opp)}` : `tied ${esc(s.opp)}`);
     // Every manager at the top value, never just the first (League Lore's
-    // tie rule); the detail line is only spelled out for a single holder.
+    // tie rule); a line about one holder is only spelled out for one.
     const tops = (list, f) => {
       if (!list.length) return [];
       const best = Math.max(...list.map(x => r2(f(x))));
       return list.filter(x => r2(f(x)) === best);
     };
-    const names = list => esc(list.map(x => x.name).join(' & '));
-    const wins = sides.filter(s => s.score > s.oppScore).map(s => ({ ...s, margin: s.score - s.oppScore, beat: sides.filter(o => o !== s && o.score < s.score).length }));
-    const pod = (label, list, value, sub, tone, subForTies) => list.length ? `
-        <div class="rc-pod">
-          <div class="rc-l">${label}</div>
-          <div class="rc-v${tone ? ' ' + tone : ''}">${value(list[0])}</div>
-          <div class="rc-n">${names(list)}</div>
-          <div class="rc-s">${list.length > 1 && !subForTies ? `${list.length}-way tie` : sub(list[0])}</div>
-        </div>` : '';
-
-    // Losers whose best lineup would have beaten what their opponent
-    // scored, most points left first. Full width under the six pods so a
-    // long list of names has room.
-    const benchPod = () => {
-      const losers = sides.filter(s => s.score < s.oppScore);
-      const benched = losers.filter(s => typeof s.best === 'number' && r2(s.best) > r2(s.oppScore))
-        .sort((x, y) => (y.best - y.score) - (x.best - x.score));
-      if (!benched.length) return '';
-      const top = benched[0];
-      const who = benched.map(s => s.name);
-      const list = who.length > 1 ? `${who.slice(0, -1).join(', ')} & ${who[who.length - 1]}` : who[0];
-      return `
-        <div class="rc-pod rc-wide">
-          <div class="rc-l">Left the win on the bench</div>
-          <div class="rc-v loss">${benched.length} of ${losers.length}</div>
-          <div class="rc-n">${esc(list)}</div>
-          <div class="rc-s">${benched.length > 1 ? `${esc(top.name)} left the most, ${fmtScore(top.best - top.score)} points` : `best lineup ${fmtScore(top.best)} vs ${esc(top.opp)}’s ${fmtScore(top.oppScore)}`}</div>
-        </div>`;
+    const nameOf = n => (isMe(n) ? `<span class="rc-you">${esc(n)}</span>` : esc(n));
+    const who = list => {
+      const n = list.map(x => nameOf(x.name));
+      return n.length > 1 ? `${n.slice(0, -1).join(', ')} &amp; ${n[n.length - 1]}` : n[0];
     };
-    const playoffRecap = Boolean(standingsData && standingsData.playoffWeek);
+    const tie = (list, line) => (list.length > 1 ? `${list.length}-way tie` : line(list[0]));
+    const beatN = s => sides.filter(o => o !== s && o.score < s.score).length;
+    const wins = sides.filter(s => s.score > s.oppScore).map(s => ({ ...s, margin: s.score - s.oppScore, beat: beatN(s) }));
+    const losses = sides.filter(s => s.score < s.oppScore).map(s => ({ ...s, margin: s.oppScore - s.score, beat: beatN(s) }));
+    // Consolation games count for highs, never for lows, and like Game
+    // Records the margins leave them out: a lineup nobody set can make a
+    // blowout, a close game or a lucky win out of nothing.
+    const counts = s => s.type !== 'Cons';
     const high = tops(sides, s => s.score);
-    const low = tops(sides, s => -s.score);
-    const blowout = tops(wins, s => s.margin);
-    const closest = tops(wins, s => -s.margin);
-    const lucky = tops(wins, s => -s.beat);
-    const missed = tops(sides.filter(s => s.score < median), s => s.score);
-    const pods = [
-      pod('Top score', high, s => fmtScore(s.score), result),
-      pod('Biggest blowout', blowout, s => '+' + fmtScore(s.margin), s => `over ${esc(s.opp)}`),
-      pod('Closest game', closest, s => '+' + fmtScore(s.margin), s => `over ${esc(s.opp)}`),
-      // The win with the score that would have beaten the fewest teams.
-      // The count is what's shared in a tie, so it's the value, and the
-      // line under it holds for every tied manager.
-      pod('Luckiest win', lucky, s => `${s.beat} of ${others}`, () => 'teams outscored', '', true),
-      // A playoff week has no median game, and its Sacko is a game of its
-      // own (the card that says so), not the week's low score.
-      playoffRecap ? '' : pod('Just missed the median', missed, s => '−' + fmtScore(median - s.score), s => `scored ${fmtScore(s.score)}`, 'loss'),
-      pod(playoffRecap ? 'Low score' : 'Sacko', low, s => fmtScore(s.score), result, 'loss'),
-      benchPod(),
-    ].join('');
+    const lowPool = sides.filter(counts);
+    const low = tops(lowPool, s => -s.score);
+    const blowout = tops(wins.filter(counts), s => s.margin);
+    const closest = tops(wins.filter(counts), s => -s.margin);
+    // The win with the score that would have beaten the fewest teams, and
+    // the loss with the score that would have beaten the most. The count is
+    // what's shared in a tie, so it's the value.
+    const lucky = tops(wins.filter(counts), s => -s.beat);
+    const unlucky = tops(losses, s => s.beat);
+    const made = median === null ? [] : tops(sides.filter(s => s.score > median), s => -s.score);
+    const missed = median === null ? [] : tops(sides.filter(s => s.score < median), s => s.score);
+
+    // History for the context lines: league.json, plus this week until it's in.
+    const games = (leagueGames || [])
+      .filter(g => typeof g.s1 === 'number' && (!g.p2 || typeof g.s2 === 'number') && g.winner !== 'In Progress')
+      .concat(known.length ? [] : rw.games.map(g => ({ year, week: rw.week, type: typeOf(g.a, g.b), p1: g.a, p2: g.b, s1: g.sa, s2: g.sb, median })));
+    const isThisWeek = g => g.year === year && g.week === rw.week;
+    const isBefore = g => g.year < year || (g.year === year && g.week < rw.week);
+    const ctx = {};
+
+    // Top score: a best since an earlier season, or the season's high.
+    if (high.length === 1) {
+      const t = high[0], mine = [];
+      games.forEach(g => {
+        if (!g.p2 || isThisWeek(g)) return;
+        if (g.p1 === t.name) mine.push({ y: g.year, w: g.week, s: g.s1 });
+        else if (g.p2 === t.name) mine.push({ y: g.year, w: g.week, s: g.s2 });
+      });
+      const higher = mine.filter(x => r2(x.s) > r2(t.score));
+      const ever = mine.length > 0 && !higher.length;
+      const parts = [];
+      if (ever) parts.push(`${t.name}’s best score ever`);
+      else if (higher.length) {
+        const last = higher.reduce((a, b) => (b.y > a.y || (b.y === a.y && b.w > a.w) ? b : a));
+        if (last.y < year) parts.push(`${t.name}’s best since ${last.y} Week ${last.w}`);
+      }
+      const season = games.filter(g => g.year === year && g.p2).flatMap(g => [g.s1, g.s2]);
+      if (!ever && rw.week >= 3 && r2(t.score) >= r2(Math.max(...season))) parts.push(parts.length ? 'season high' : `Highest score of ${year}`);
+      ctx.top = parts.join(' · ');
+    }
+
+    // The weekly Sacko: the lowest scorer unless they've hit the cap.
+    let lowLabel = 'Low score';
+    if (!playoff && year >= SACKO_FROM && low.length) {
+      const count = {}, weeks = new Map();
+      games.forEach(g => {
+        if (g.year !== year || !isBefore(g)) return;
+        if (!weeks.has(g.week)) weeks.set(g.week, []);
+        weeks.get(g.week).push([g.p1, g.s1]);
+        if (g.p2) weeks.get(g.week).push([g.p2, g.s2]);
+      });
+      [...weeks.keys()].sort((a, b) => a - b).forEach(w => {
+        const pays = weeks.get(w).slice().sort((x, y) => x[1] - y[1]).find(([m]) => (count[m] || 0) < SACKO_CAP);
+        if (pays) count[pays[0]] = (count[pays[0]] || 0) + 1;
+      });
+      const payer = lowPool.slice().sort((x, y) => x.score - y.score).find(s => (count[s.name] || 0) < SACKO_CAP);
+      if (payer && low.includes(payer)) {
+        lowLabel = 'Sacko';
+        const n = (count[payer.name] || 0) + 1;
+        if (low.length === 1) ctx.low = `${payer.name}’s ${n === 1 ? 'first' : ordinal(n)} weekly Sacko of ${year}`;
+      } else if (payer) {
+        ctx.low = `${plainNames(low)} ${low.length > 1 ? 'are' : 'is'} capped at ${SACKO_CAP} Sackos, so ${payer.name} takes this one`;
+      }
+    }
+
+    // Margins, ranked the Game Records way (no consolation games): all time
+    // first, then this season once it's four weeks old.
+    const margins = games.filter(g => g.p2 && g.type !== 'Cons').map(g => Math.abs(g.s1 - g.s2));
+    const seasonMargins = games.filter(g => g.p2 && g.year === year && g.type === 'Reg').map(g => Math.abs(g.s1 - g.s2));
+    const marginCtx = (m, biggest) => {
+      const better = x => (biggest ? r2(x) > r2(m) : r2(x) < r2(m));
+      const word = biggest ? 'biggest' : 'closest', what = biggest ? 'margin' : 'game';
+      const all = 1 + margins.filter(better).length;
+      if (all <= 10) return `${rcNth(all, word)} ${what} in league history`;
+      if (playoff || rw.week < 4) return '';
+      const inSeason = 1 + seasonMargins.filter(better).length;
+      return inSeason <= 3 ? `${rcNth(inSeason, word)} ${what} of ${year}` : '';
+    };
+    if (blowout.length === 1) ctx.blowout = marginCtx(blowout[0].margin, true);
+    if (closest.length === 1) ctx.closest = marginCtx(closest[0].margin, false);
+
+    // The median call: this week's nearest miss against every earlier week's
+    // since median games began.
+    if (made.length && missed.length && year >= medianEraYear) {
+      const d = Math.min(made[0].score - median, median - missed[0].score);
+      const nearest = new Map();
+      games.forEach(g => {
+        if (g.type !== 'Reg' || g.year < medianEraYear || typeof g.median !== 'number' || !isBefore(g)) return;
+        const k = `${g.year}:${g.week}`;
+        const v = Math.min(Math.abs(g.s1 - g.median), g.p2 ? Math.abs(g.s2 - g.median) : Infinity);
+        nearest.set(k, Math.min(nearest.has(k) ? nearest.get(k) : Infinity, v));
+      });
+      const rank = 1 + [...nearest.values()].filter(v => r2(v) < r2(d)).length;
+      if (nearest.size >= 5 && rank <= 3) {
+        ctx.median = rank === 1 ? `Closest median call since median games began in ${medianEraYear}` : `${ordinal(rank)}-closest median call since ${medianEraYear}`;
+      }
+    }
+
+    // The storyline under the title: the longest head-to-head streak this
+    // week ended or stretched to 4+. League History's rule: every game with
+    // an opponent, across seasons, a tie a loss for both (franchise.json).
+    // Not ESPN's streak on the matchup cards, which counts median games.
+    const streakIn = m => {
+      const gs = games.filter(g => g.p2 && (g.p1 === m || g.p2 === m) && isBefore(g)).sort((a, b) => a.year - b.year || a.week - b.week);
+      let n = 0, won = null;
+      for (let i = gs.length - 1; i >= 0; i--) {
+        const g = gs[i], w = g.p1 === m ? g.s1 > g.s2 : g.s2 > g.s1;
+        if (won === null) won = w;
+        else if (w !== won) break;
+        n++;
+      }
+      return won ? n : -n;
+    };
+    const stories = [];
+    rw.games.forEach(g => {
+      if (r2(g.sa) === r2(g.sb)) return;
+      const [w, l] = g.sa > g.sb ? [g.a, g.b] : [g.b, g.a];
+      const ws = streakIn(w), ls = streakIn(l);
+      if (ls >= 4 && ws <= -4) stories.push([Math.max(ls, -ws) + 0.5, `${w} snapped a ${-ws}-game losing streak by ending ${l}’s ${ls}-game win streak.`]);
+      else if (ls >= 4) stories.push([ls + 0.5, `${w} ended ${l}’s ${ls}-game win streak.`]);
+      else if (ws <= -4) stories.push([-ws + 0.5, `${w} snapped a ${-ws}-game losing streak.`]);
+      if (ws >= 3) stories.push([ws + 1, `${w} has won ${ws + 1} straight.`]);
+      if (ls <= -3) stories.push([-ls + 1, `${l} has lost ${-ls + 1} straight.`]);
+    });
+    const story = stories.sort((x, y) => y[0] - x[0])[0];
+
+    // ---- the rows
+    const row = (kind, cap, list, sub, value, bad, note) => `<div class="rc-row">${rcTile(kind, bad)}<div class="rc-txt"><span class="rc-cap">${cap}</span><span class="rc-holder">${who(list)}</span>${sub ? `<span class="rc-sub">${sub}</span>` : ''}${note ? `<span class="rc-ctx">${esc(note)}</span>` : ''}</div><span class="rc-val${bad ? ' loss' : ''}">${value}</span></div>`;
+    const rows = [];
+    if (blowout.length && closest.length) {
+      rows.push(row('blowout', 'Biggest blowout', blowout, tie(blowout, s => `over ${esc(s.opp)}`), '+' + fmtScore(blowout[0].margin), false, ctx.blowout));
+      rows.push(row('closest', 'Closest game', closest, tie(closest, s => `over ${esc(s.opp)}`), '+' + fmtScore(closest[0].margin), false, ctx.closest));
+    }
+    if (lucky.length && unlucky.length) {
+      rows.push(row('luck', 'Luckiest win', lucky, 'teams outscored, and won', `${lucky[0].beat} of ${others}`));
+      rows.push(row('luck', 'Unluckiest loss', unlucky, 'teams outscored, and lost', `${unlucky[0].beat} of ${others}`, true));
+    }
+    // Lineup calls, once every team's best lineup is in (recapBest).
+    if (sides.every(s => typeof s.best === 'number')) {
+      const perfect = sides.filter(s => r2(s.best) <= r2(s.score));
+      const bestPct = tops(sides, s => s.score / s.best);
+      // Losers whose best lineup would have beaten what their opponent
+      // scored, most points left first.
+      const benched = losses.filter(s => r2(s.best) > r2(s.oppScore)).sort((x, y) => (y.best - y.score) - (x.best - x.score));
+      const mostLeft = tops(sides, s => s.best - s.score);
+      const lineup = perfect.length
+        ? row('perfect', 'Perfect lineup', perfect, 'started their best lineup', perfect.length === 1 ? fmtScore(perfect[0].score) : `${perfect.length} of ${sides.length}`)
+        : row('perfect', 'Best lineup call', bestPct, tie(bestPct, s => `${fmtScore(s.score)} of a possible ${fmtScore(s.best)}`), `${Math.round(bestPct[0].score / bestPct[0].best * 1000) / 10}%`);
+      let bench = '';
+      if (benched.length) {
+        const t = benched[0];
+        bench = row('bench', 'Left the win on the bench', benched,
+          benched.length > 1 ? `${esc(t.name)} left the most, ${fmtScore(t.best - t.score)} points` : `best lineup ${fmtScore(t.best)} vs ${esc(t.opp)}’s ${fmtScore(t.oppScore)}`,
+          `${benched.length} of ${losses.length}`, true);
+      } else if (r2(mostLeft[0].best - mostLeft[0].score) > 0) {
+        bench = row('bench', 'Most left on the bench', mostLeft, tie(mostLeft, s => `${s.score > s.oppScore ? 'won' : 'lost'} anyway`), fmtScore(mostLeft[0].best - mostLeft[0].score), true);
+      }
+      if (bench) rows.push(lineup, bench);
+    }
+
+    // ---- the strip: Sacko and top score at the ends, a dot per team
+    const end = (cls, label, list, line) => (list.length ? `<div class="rc-end ${cls}"><span class="rc-end-l">${label}</span><span class="rc-end-v">${fmtScore(list[0].score)}</span><span class="rc-end-n">${who(list)}${list.length === 1 ? `<em> · ${result(list[0])}</em>` : ''}</span>${line ? `<span class="rc-ctx">${esc(line)}</span>` : ''}</div>` : '<div></div>');
+    const byScore = sides.slice().sort((x, y) => x.score - y.score);
+    const dots = byScore.map(s => `<span class="rc-dot${median === null ? '' : s.score > median ? ' up' : ' dn'}${isMe(s.name) ? ' you' : ''}${s.type === 'Cons' ? ' cons' : ''}" data-x="${s.score}" title="${esc(s.name)} ${fmtScore(s.score)}">${esc(monogram(s.name))}</span>`).join('');
+    const plotLabel = `Week ${rw.week} scores, high to low: ${byScore.slice().reverse().map(s => `${s.name} ${fmtScore(s.score)}`).join(', ')}${median === null ? '' : `. Median ${fmtScore(median)}`}.`;
+    const note = made.length && missed.length
+      ? `<div class="rc-note"><span><b>${who(made)}</b> made it by <b class="up">+${fmtScore(made[0].score - median)}</b></span><span><b>${who(missed)}</b> missed by <b class="dn">−${fmtScore(median - missed[0].score)}</b></span></div>${ctx.median ? `<span class="rc-ctx">${esc(ctx.median)}</span>` : ''}`
+      : sides.some(s => s.type === 'Cons') ? '<div class="rc-note">Faded dots are consolation games: they count for highs, never for lows.</div>' : '';
+    // No median chip in the header: the dashed line carries it.
     section.innerHTML = `
       <div class="recap-card">
         <div class="acc-head">
           <div class="acc-title">Week ${rw.week} in Review</div>
-          <span class="badge dim">Median ${fmtScore(median)}</span>
+          ${playoff ? '<span class="badge dim">Playoffs</span>' : ''}
         </div>
-        <div class="recap-grid">${pods}</div>
+        ${story ? `<div class="rc-dek">${esc(story[1])}</div>` : ''}
+        <div class="rc-strip">
+          <div class="rc-ends">${end('lo', lowLabel, low, ctx.low)}${end('hi', 'Top score', high, ctx.top)}</div>
+          <div class="rc-plot" role="img" aria-label="${esc(plotLabel)}">
+            <span class="rc-axis"></span>
+            ${median === null ? '' : `<span class="rc-med" data-x="${median}"></span><span class="rc-medl" data-x="${median}">Median ${fmtScore(median)}</span>`}
+            ${dots}
+          </div>
+          ${note}
+        </div>
+        ${rows.length ? `<div class="rc-rows">${rows.join('')}</div>` : ''}
       </div>`;
     section.hidden = false;
+    layoutRecapStrip();
+  }
+
+  // Places the strip's dots by score, stacking any that would touch
+  // alternately above and below the line, so a crowd at the median stays
+  // short. Runs after each render and whenever the card changes width.
+  let rcPlotWidth = 0;
+  function layoutRecapStrip() {
+    const plot = document.querySelector('#recap-section .rc-plot');
+    const W = plot ? plot.clientWidth : 0;
+    if (!W) return;
+    rcPlotWidth = W;
+    const dots = [...plot.querySelectorAll('.rc-dot')];
+    const xs = dots.map(d => +d.dataset.x);
+    const lo = Math.min(...xs), hi = Math.max(...xs), pad = 14, D = 25;
+    const X = v => pad + (v - lo) / ((hi - lo) || 1) * (W - 2 * pad);
+    const placed = [];
+    dots.forEach(d => {
+      const x = X(+d.dataset.x);
+      let y = 0;
+      for (let k = 0; k < 24; k++) {
+        const c = k === 0 ? 0 : (k % 2 ? -1 : 1) * Math.ceil(k / 2) * D;
+        if (placed.every(p => Math.hypot(p.x - x, p.y - c) >= D - 1)) { y = c; break; }
+      }
+      placed.push({ x, y, d });
+    });
+    const up = Math.max(0, ...placed.map(p => -p.y)), down = Math.max(0, ...placed.map(p => p.y));
+    const axis = up + 16;
+    plot.style.setProperty('--h', `${axis + down + (plot.querySelector('.rc-medl') ? 34 : 16)}px`);
+    plot.style.setProperty('--ay', `${axis}px`);
+    placed.forEach(p => { p.d.style.left = `${p.x}px`; p.d.style.top = `${axis + p.y}px`; });
+    plot.querySelectorAll('.rc-med').forEach(e => { e.style.left = `${X(+e.dataset.x)}px`; });
+    plot.querySelectorAll('.rc-medl').forEach(e => {
+      const w = e.offsetWidth, x = X(+e.dataset.x);
+      e.style.left = `${Math.min(W - w / 2, Math.max(w / 2, x))}px`;
+    });
+  }
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      const plot = document.querySelector('#recap-section .rc-plot');
+      if (plot && plot.clientWidth !== rcPlotWidth) layoutRecapStrip();
+    }).observe(document.getElementById('recap-section'));
   }
 
   // Toggle-click path only -- assumes renderMedianStatic has already built
