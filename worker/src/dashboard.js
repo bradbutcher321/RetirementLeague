@@ -424,6 +424,34 @@ function opponentsAhead(schedule, fromPeriod, lastPeriod) {
   return out;
 }
 
+/** The league's own name for a playoff game, as league.json's game types
+ * have it: 'Play', 'Champ', '5th', '3rd', 'Sacko', or 'Cons' for a
+ * consolation game nothing rides on (consolation games count for highs,
+ * never for lows). ESPN only says which ladder a game is in
+ * (playoffTierType); the rest comes from the bracket's shape. Checked
+ * against every playoff game of 2023-2025 (six-team bracket, three weeks):
+ *   WINNERS_BRACKET            'Champ' in the last week, 'Play' before it
+ *   WINNERS_CONSOLATION_LADDER '5th' before the last week; in the last week
+ *                              the 5th-place game's rematch is 'Cons' and
+ *                              the other game is '3rd'
+ *   LOSERS_CONSOLATION_LADDER  'Cons', except the last week's game between
+ *                              the two lowest seeds: the Sacko game
+ * Null in the regular season. `previousPairs` are the teamId pairs of the
+ * week before; `lowestSeeds` the two lowest-seeded teamIds. */
+export function bracketLabel(tier, period, lastPeriod, ids, previousPairs, lowestSeeds) {
+  if (!tier || tier === "NONE") return null;
+  const last = period === lastPeriod;
+  const [a, b] = ids;
+  if (tier === "WINNERS_BRACKET") return last ? "Champ" : "Play";
+  if (tier === "WINNERS_CONSOLATION_LADDER") {
+    if (!last) return "5th";
+    const rematch = previousPairs.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+    return rematch ? "Cons" : "3rd";
+  }
+  if (tier === "LOSERS_CONSOLATION_LADDER") return last && lowestSeeds.includes(a) && lowestSeeds.includes(b) ? "Sacko" : "Cons";
+  return null;
+}
+
 /** Highest single-week score anywhere in the league, through `upToWeek`. */
 function findWeeklyHigh(weekScores, upToWeek) {
   let best = { teamId: null, week: null, score: -1 };
@@ -559,6 +587,18 @@ export async function buildDashboard(env, previous = null, opts = {}) {
   const regularPeriods = league.settings?.scheduleSettings?.matchupPeriodCount || 0;
   const aheadByTeam = opponentsAhead(schedule, matchupPeriod, regularPeriods);
   const slotCounts = league.settings?.rosterSettings?.lineupSlotCounts || {};
+  // For each playoff game's own name (bracketLabel): the season's last
+  // matchup period, last week's pairings, and the two lowest seeds (ESPN's
+  // playoffSeed, read before an archived build re-ranks the teams).
+  const lastPeriod = Math.max(0, ...Object.keys(matchupPeriodsObj).map(Number).filter(Number.isFinite));
+  const previousPairs = schedule
+    .filter((m) => m.matchupPeriodId === matchupPeriod - 1 && m.home && m.away)
+    .map((m) => [m.home.teamId, m.away.teamId]);
+  const lowestSeeds = (league.teams || [])
+    .filter((t) => typeof t.playoffSeed === "number")
+    .sort((x, y) => y.playoffSeed - x.playoffSeed)
+    .slice(0, 2)
+    .map((t) => t.id);
 
   let nflScoreboardError = null;
   const [boxData, nflScoreboard] = await Promise.all([
@@ -621,7 +661,10 @@ export async function buildDashboard(env, previous = null, opts = {}) {
     // rosters a second time for the same numbers.
     const awayStatus = teamStatusById.get(away.teamId);
     const homeStatus = teamStatusById.get(home.teamId);
+    const bracket = bracketLabel(boxMatchup.playoffTierType, matchupPeriod, lastPeriod, [home.teamId, away.teamId], previousPairs, lowestSeeds);
     matchups.push({
+      // Playoff weeks only: 'Play', 'Champ', '5th', '3rd', 'Sacko' or 'Cons'.
+      ...(bracket ? { bracket } : {}),
       awayName: awayTeam?.name || "",
       awayManager: managerNames.get(away.teamId) || "",
       awayRecord: awayTeam?.record || "",

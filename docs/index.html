@@ -1098,9 +1098,9 @@
   }
   .rc-dek{ color: var(--rc-ctx); font-size: 0.82rem; line-height: 1.4; margin-top: 4px; text-wrap: balance; }
   .rc-ctx{ display: block; color: var(--rc-ctx); font-size: 0.7rem; line-height: 1.35; margin-top: 2px; }
-  /* Your name, wherever it shows up in the card: underlined in your ring
-     color. Not .me, whose outline would ring the whole element. */
-  .rc-you{ box-shadow: inset 0 -1.5px 0 var(--me-ring); }
+  /* Your name, wherever it shows up in the card, in your ring color. Not
+     .me, whose outline would ring the whole element. */
+  .rc-you{ color: var(--me-ring); }
 
   /* The week on one line. Dots are placed by renderRecap's layout pass
      (left/top inline); --h and --ay come from how high the dots stack. */
@@ -4179,7 +4179,8 @@
     if (allDone && matchups.length) {
       return {
         week,
-        games: matchups.map(m => ({ a: m.awayManager || m.awayName, b: m.homeManager || m.homeName, sa: parseFloat(m.awayScore) || 0, sb: parseFloat(m.homeScore) || 0, ba: m.awayBest, bb: m.homeBest })),
+        // bracket: the Worker's name for a playoff game ('Cons', 'Sacko', ...).
+        games: matchups.map(m => ({ a: m.awayManager || m.awayName, b: m.homeManager || m.homeName, sa: parseFloat(m.awayScore) || 0, sb: parseFloat(m.homeScore) || 0, ba: m.awayBest, bb: m.homeBest, type: m.bracket || null })),
       };
     }
     if (scored && !FORCE_RECAP) return null;
@@ -4259,16 +4260,17 @@
     const regWeeks = (standingsData && standingsData.regularSeasonWeeks) || (leagueSettings[year] || {}).reg_weeks || 0;
     const playoff = Boolean(standingsData && standingsData.playoffWeek) || (regWeeks > 0 && rw.week > regWeeks);
     const bestBy = recapBest(rw) || {};
-    // league.json's own copy of this week, when it has one: it knows each
-    // game's type (a consolation game counts for highs, never for lows), and
-    // it keeps the history below from counting the week twice.
+    // Each game's type (a consolation game counts for highs, never for
+    // lows): league.json's copy of this week when it has one, else the
+    // Worker's playoff label (bracket). league.json's copy also keeps the
+    // history below from counting the week twice.
     const known = (leagueGames || []).filter(g => g.year === year && g.week === rw.week && g.p2);
-    const typeOf = (a, b) => {
-      const g = known.find(x => (x.p1 === a && x.p2 === b) || (x.p1 === b && x.p2 === a));
-      return g ? g.type : playoff ? '' : 'Reg';
+    const typeOf = game => {
+      const g = known.find(x => (x.p1 === game.a && x.p2 === game.b) || (x.p1 === game.b && x.p2 === game.a));
+      return g ? g.type : game.type || (playoff ? '' : 'Reg');
     };
     const sides = rw.games.flatMap(g => {
-      const type = typeOf(g.a, g.b);
+      const type = typeOf(g);
       return [
         { name: g.a, score: g.sa, opp: g.b, oppScore: g.sb, best: bestBy[g.a], type },
         { name: g.b, score: g.sb, opp: g.a, oppScore: g.sa, best: bestBy[g.b], type },
@@ -4317,7 +4319,7 @@
     // History for the context lines: league.json, plus this week until it's in.
     const games = (leagueGames || [])
       .filter(g => typeof g.s1 === 'number' && (!g.p2 || typeof g.s2 === 'number') && g.winner !== 'In Progress')
-      .concat(known.length ? [] : rw.games.map(g => ({ year, week: rw.week, type: typeOf(g.a, g.b), p1: g.a, p2: g.b, s1: g.sa, s2: g.sb, median })));
+      .concat(known.length ? [] : rw.games.map(g => ({ year, week: rw.week, type: typeOf(g), p1: g.a, p2: g.b, s1: g.sa, s2: g.sb, median })));
     const isThisWeek = g => g.year === year && g.week === rw.week;
     const isBefore = g => g.year < year || (g.year === year && g.week < rw.week);
     const ctx = {};
