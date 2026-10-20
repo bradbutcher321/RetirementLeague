@@ -225,7 +225,7 @@
     if (row.champ > 0) return { text: 'Champion', tone: 'gold' };
     if (row.sacko > 0) return { text: 'Sacko', tone: 'loss' };
     if (row.final_rank === 2) return { text: 'Runner-up', tone: 'gold' };
-    if (row.playoff > 0) return { text: `Playoffs · ${ord(row.final_rank)}`, tone: 'dim' };
+    if (row.playoff > 0) return { text: 'Playoffs', tone: 'dim' };
     return { text: 'Missed playoffs', tone: 'dim' };
   }
 
