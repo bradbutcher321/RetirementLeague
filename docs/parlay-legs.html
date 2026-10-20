@@ -144,7 +144,9 @@
   @media (min-width: 900px){
     .wrap.cm{ max-width: 980px; }
     .wrap.cm .cols{ grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "num board" "mine board" "paste board"; grid-template-rows: auto auto 1fr; }
-    #week-card{ grid-area: num; } #mine-sec{ grid-area: mine; } #board-sec{ grid-area: board; } #paste-sec{ grid-area: paste; }
+    /* Scoped to the commissioner's grid: unscoped, these named areas put a
+       member's Your leg card in the same cell as the board, under it. */
+    .wrap.cm #week-card{ grid-area: num; } .wrap.cm #mine-sec{ grid-area: mine; } .wrap.cm #board-sec{ grid-area: board; } .wrap.cm #paste-sec{ grid-area: paste; }
   }
   .stepper{ display: flex; gap: 4px; align-items: center; }
   .stepper .pick{ padding: 0 12px; }
