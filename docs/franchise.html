@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
      spacing and variants here. */
@@ -380,8 +380,8 @@
     <footer id="site-footer" data-note="Money Tracker from the league sheet · Updates Tuesday &amp; Thursday mornings"></footer>
   </div>
 
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
 <script src="achievements.js?v=3"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
@@ -1301,7 +1301,7 @@
       currentYear,
       foundingYear: Math.min(...d.players.map(x => x.founded_year).filter(y => y != null)),
     };
-    document.getElementById('updated-at').textContent = formatUpdated(d.generated_at);
+    setPageStatus(throughLabel(d.generated_at));
     const sel = document.getElementById('franchise-select');
     sel.innerHTML = d.players.map(p => `<option value="${esc(p.name)}">${esc(p.name)}</option>`).join('');
     const names = d.players.map(p => p.name);

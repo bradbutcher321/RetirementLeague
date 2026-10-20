@@ -13,11 +13,14 @@ const LG = (() => {
     const res = await fetch('data/league.json', { cache: 'no-cache' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const el = document.getElementById('updated-at');
-    if (el && data.generated_at) el.textContent = formatUpdated(data.generated_at);
     data.games = data.games.map(g => ({
       year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7], gid: g[8], median: g[9],
     }));
+    // The status line says how far the games go (audit V #11): the Game
+    // Tracker can trail the live site by a week, and this is what's here.
+    const last = Math.max(...data.games.map(g => g.year));
+    const lastGames = data.games.filter(g => g.year === last);
+    setPageStatus(lastGames.some(g => g.type === 'Champ') ? `${last} season` : `Through Week ${Math.max(...lastGames.map(g => g.week))}`);
     // A season counts as complete once its championship game has a result.
     data.completeYears = [...new Set(data.games.filter(g => g.type === 'Champ').map(g => g.year))].sort((a, b) => a - b);
     data.years = [...new Set(data.seasons.map(s => s.year))].sort((a, b) => a - b);

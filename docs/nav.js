@@ -75,7 +75,10 @@
     // Franchise lights History but isn't the History page.
     const cur = t => t.key === active ? ` class="on"${t.href === file ? ' aria-current="page"' : ''}` : '';
     const links = TABS.map(t => `<a${cur(t)} href="${t.href}">${t.label}</a>`).join('');
-    const tabs = TABS.map(t => `<a${cur(t)} href="${t.href}" data-tab="${t.key}"><span class="tb-ic">${t.icon}</span>${t.label}</a>`).join('');
+    const tabs = TABS.map(t => `<a${cur(t)} href="${t.href}" data-tab="${t.key}"><span class="tb-ic">${t.icon}</span><span class="tb-lab">${t.label}</span></a>`).join('');
+    // You lives in the title row (headerTools); a page without the usual
+    // header keeps it as a sixth tab.
+    const titled = !!document.querySelector('.wrap > header h1');
 
     mount.innerHTML = `
       <div class="nav-bar">
@@ -86,7 +89,7 @@
           <button class="nav-me" id="nav-me" type="button" aria-haspopup="dialog"></button>
         </div>
       </div>
-      <nav class="tabbar" aria-label="Pages"><div class="tb-in">${tabs}<button type="button" class="tb-you" id="tb-you" aria-haspopup="dialog"><span class="tb-ic"></span>You</button></div></nav>`;
+      <nav class="tabbar" aria-label="Pages"><div class="tb-in"><div class="tb-cap">${tabs}${titled ? '' : '<button type="button" class="tb-you" id="tb-you" aria-haspopup="dialog"><span class="tb-ic"></span><span class="tb-lab">You</span></button>'}</div><button type="button" class="tb-search" id="tb-search" aria-label="Search">${ICONS.search}</button></div></nav>`;
 
     // Tapping History while already on the hub goes to its search box.
     const histTab = mount.querySelector('.tabbar [data-tab="history"]');
@@ -105,44 +108,103 @@
       else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); openSearch(); }
     });
 
-    headerSearch();
+    // Search on a phone: the circle beside the tab bar. On the History hub,
+    // whose page is a search box, it goes to that box.
+    mount.querySelector('#tb-search').addEventListener('click', () => {
+      const q = document.getElementById('hub-q');
+      if (!q) { openSearch(); return; }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      q.focus();
+    });
+
     autoHide(mount.querySelector('.nav-bar'));
+    tabbarShrink(mount.querySelector('.tabbar'));
     wireYou(mount.querySelector('#nav-me'));
     wireYouTab(mount.querySelector('#tb-you'));
+    headerTools();
   }
 
-  // Phone search (site audit IV #6): the top bar is desktop-only, so on a
-  // phone every page header gets a round search button on the eyebrow
-  // line, left of the Updated stamp. nav.css hides it at 1080px and up,
-  // where the bar has the box.
-  function headerSearch() {
-    const row = document.querySelector('.header-row') || document.querySelector('.wrap > header');
-    if (!row || document.getElementById('hub-q') || row.querySelector('.hdr-search')) return;
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'hdr-search';
-    btn.setAttribute('aria-label', 'Search');
-    btn.innerHTML = ICONS.search;
-    btn.addEventListener('click', openSearch);
-    row.appendChild(btn);
-    // Centered on the dashboard's week stepper when it shows, else on the
-    // page title; left of the Updated stamp.
-    const stamp = row.querySelector('.updated-block');
-    const place = () => {
-      const step = row.querySelector('.wk-step:not([hidden])');
-      const t = step || row.querySelector('h1') || stamp;
-      if (!t) return;
-      const r = row.getBoundingClientRect(), q = t.getBoundingClientRect();
-      btn.style.top = (q.top + q.height / 2 - r.top - btn.offsetHeight / 2) + 'px';
-      btn.style.right = stamp ? (stamp.offsetWidth + 12) + 'px' : '0px';
+  // ---------- The title row and the folding title (audit V #4, #5) ----------
+  // The eyebrow line's right end holds the page's buttons: the dashboard's
+  // week stepper (moved out of the old Updated column), then your monogram,
+  // which opens You (nav.css hides it at 1080px, where the top bar has it).
+  // Past the title, a slim glass bar takes the title's place at the top,
+  // with the title (or the h1's data-fold, e.g. "Week 6") and the status line.
+  function meButton(cls) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = cls;
+    b.setAttribute('aria-haspopup', 'dialog');
+    const draw = () => {
+      const me = getMe();
+      b.classList.toggle('none', !me);
+      b.innerHTML = me ? esc(monogram(me)) : ICONS.person;
+      b.setAttribute('aria-label', me ? `You: ${me}` : 'You: pick your team');
     };
-    place();
-    if (window.ResizeObserver) {
-      const ro = new ResizeObserver(place);
-      ro.observe(row);
-      if (stamp) ro.observe(stamp);
-    }
-    window.addEventListener('load', place);
+    draw();
+    b.addEventListener('click', () => openYou());
+    window.addEventListener('rl-me', draw);
+    return b;
+  }
+  function headerTools() {
+    const hdr = document.querySelector('.wrap > header');
+    const h1 = hdr && hdr.querySelector('h1');
+    if (!h1) return;
+    const row = hdr.querySelector('.header-row') || hdr;
+    const tools = document.createElement('div');
+    tools.className = 'hdr-tools';
+    const step = row.querySelector('.wk-step');
+    if (step) tools.appendChild(step);
+    tools.appendChild(meButton('hdr-me'));
+    row.appendChild(tools);
+
+    document.body.insertAdjacentHTML('beforeend', '<div class="top-band" aria-hidden="true"></div><div class="fold" id="fold"><div class="fold-in"><span></span><button type="button" class="fold-t" aria-label="Back to the top"><b></b><span></span></button></div></div>');
+    const fold = document.getElementById('fold');
+    fold.querySelector('.fold-in').appendChild(meButton('fold-me'));
+    const tb = fold.querySelector('.fold-t b'), ts = fold.querySelector('.fold-t span');
+    fold.querySelector('.fold-t').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    const status = () => {
+      const st = hdr.querySelector('.updated-block');
+      return st ? st.textContent.replace(/\s+/g, ' ').trim() : '';
+    };
+    let shown = false, queued = false;
+    const update = () => {
+      queued = false;
+      if (!fold.offsetHeight) return; // desktop: hidden
+      const on = h1.getBoundingClientRect().bottom < fold.offsetHeight;
+      if (on) {
+        tb.textContent = h1.dataset.fold || h1.textContent.trim();
+        ts.textContent = status();
+      }
+      if (on === shown) return;
+      shown = on;
+      fold.classList.toggle('show', on);
+      fold.setAttribute('aria-hidden', String(!on));
+      document.documentElement.classList.toggle('folded', on);
+    };
+    const queue = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue);
+    fold.setAttribute('aria-hidden', 'true');
+    queue();
+  }
+
+  // The floating tab bar drops its labels and shrinks while you scroll
+  // down, and comes back on any scroll up or near the top (audit V #4).
+  function tabbarShrink(bar) {
+    if (!bar) return;
+    let lastY = window.scrollY, queued = false;
+    const update = () => {
+      queued = false;
+      const y = window.scrollY, max = document.documentElement.scrollHeight - window.innerHeight;
+      if (y < 0 || y > max) return; // iOS rubber-banding
+      if (y < 40) { bar.classList.remove('min'); lastY = y; return; }
+      const dy = y - lastY;
+      if (Math.abs(dy) < 6) return;
+      bar.classList.toggle('min', dy > 0 && y > 80);
+      lastY = y;
+    };
+    window.addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true });
   }
 
   // ---------- Search (site audit III #10) ----------

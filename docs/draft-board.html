@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <style>
   .wrap.wide{ max-width: 1180px; }
 
@@ -356,8 +356,8 @@
   </div>
   <button type="button" class="lv-exit" id="lv-exit" aria-label="Leave TV mode">✕</button>
 
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
 <script>
   const POSITION_COLORS = {
     QB: '#E0644F', RB: '#4C9A6B', WR: '#4A90D9', TE: '#D9852F', K: '#9B6BC4', 'D/ST': '#8A8A85',
@@ -747,7 +747,7 @@
       }
     }
     liveClock = liveInfo ? liveInfo.clock : null;
-    if (LIVE) document.getElementById('updated-at').textContent = formatUpdated(LIVE.updatedAt);
+    if (LIVE) { document.getElementById('updated-at').textContent = formatUpdated(LIVE.updatedAt); document.querySelector('.updated-label').textContent = 'Updated'; }
     tvFit();
   }
 
@@ -874,7 +874,7 @@
       else if (liveOn && !VIEWS[urlParam('view')] && (DEMO || first.status !== 'done')) boardView = 'live';
       [...viewToggle.children].forEach(b => b.classList.toggle('on', b.dataset.view === boardView));
       sel.innerHTML = data.years.map(y => `<option value="${y}">${y}</option>`).join('');
-      document.getElementById('updated-at').textContent = formatUpdated(data.generated_at);
+      setPageStatus(`Through the ${Math.max(...data.years)} draft`);
 
       function show(year) {
         const isLive = boardView === 'live';

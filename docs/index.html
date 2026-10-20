@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -62,7 +62,7 @@
     container: mu / inline-size;
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: var(--card-r); box-shadow: var(--card-edge);
     overflow: hidden;
     cursor: pointer;
   }
@@ -650,8 +650,9 @@
      the median and red below; raised so the glow sits over its neighbors. */
   .name-row .slot.locked{ z-index: 1; border-radius: 3px; }
   .name-row .slot.locked::after{ color: var(--gold); }
-  .name-row .slot.locked.above{ border-color: var(--turf); box-shadow: 0 0 8px rgba(76,154,107,0.9), inset 0 0 6px rgba(76,154,107,0.45); }
-  .name-row .slot.locked.below{ border-color: var(--loss); box-shadow: 0 0 8px rgba(192,87,75,0.9), inset 0 0 6px rgba(192,87,75,0.45); }
+  /* Audit V #6: a locked chip keeps its bright outline, without the halo. */
+  .name-row .slot.locked.above{ border-color: var(--turf); box-shadow: inset 0 0 0 0.5px var(--turf); }
+  .name-row .slot.locked.below{ border-color: var(--loss); box-shadow: inset 0 0 0 0.5px var(--loss); }
   .name-row .slot.above{ color: var(--turf); }
   .name-row .slot.below{ color: var(--loss); }
   /* Sits in .spread-col's own reserved padding, above/below .vplot's box
@@ -764,8 +765,8 @@
   .slot.slot-chip{ display: block; border-radius: 4px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
   .slot.slot-chip.above{ background: rgba(76,154,107,0.16); box-shadow: inset 0 0 0 1px var(--turf-dim); }
   .slot.slot-chip.below{ background: rgba(192,87,75,0.16); box-shadow: inset 0 0 0 1px rgba(192,87,75,0.45); }
-  .slot.slot-chip.locked.above{ box-shadow: inset 0 0 0 1px var(--turf), 0 0 8px rgba(76,154,107,0.9), inset 0 0 6px rgba(76,154,107,0.45); }
-  .slot.slot-chip.locked.below{ box-shadow: inset 0 0 0 1px var(--loss), 0 0 8px rgba(192,87,75,0.9), inset 0 0 6px rgba(192,87,75,0.45); }
+  .slot.slot-chip.locked.above{ box-shadow: inset 0 0 0 1.5px var(--turf); }
+  .slot.slot-chip.locked.below{ box-shadow: inset 0 0 0 1.5px var(--loss); }
   /* chipStyle only: the tick is correctly positioned exactly at a cluster's
      above/below boundary, but chips sit edge-to-edge with no gap between
      them, so the line ends up sitting exactly on a chip's own border
@@ -910,7 +911,7 @@
   #me-section{ margin-bottom: 28px; }
   /* Status line: one sentence in a box, your monogram on the left, the ✕ on the right. */
   #status-section{ margin: 4px 0 18px; }
-  .st-line{ display: flex; align-items: center; gap: 12px; padding: 12px 10px 12px 14px; border: 1px solid var(--item-line); border-radius: 14px; background: var(--item); }
+  .st-line{ display: flex; align-items: center; gap: 12px; padding: 12px 10px 12px 14px; border: 1px solid var(--item-line); border-radius: var(--card-r); box-shadow: var(--card-edge); background: var(--item); }
   .st-mono{ flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--me-ring); font: 800 0.8rem/1 var(--body); letter-spacing: 0.02em; }
   .st-text{ flex: 1; min-width: 0; margin: 0; font-size: 0.92rem; font-weight: 500; line-height: 1.4; }
   .st-text b{ font-weight: 700; }
@@ -919,7 +920,7 @@
   .st-x:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   /* Catch me up (audit IV #9): takes the status line's place when you come back
      to games in progress. Scores then and now, the median, the biggest plays. */
-  .cu{ padding: 14px 14px 12px; border: 1px solid var(--item-line); border-radius: 14px; background: linear-gradient(165deg, var(--surface-raised), var(--surface)); }
+  .cu{ padding: 14px 14px 12px; border: 1px solid var(--item-line); border-radius: var(--card-r); box-shadow: var(--card-edge); background: linear-gradient(165deg, var(--surface-raised), var(--surface)); }
   .cu-h{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .cu-h b{ font-size: 0.95rem; }
   .cu-chip{ flex: none; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -948,7 +949,7 @@
   /* Your week (audit V #12): the status line's place once the week is final.
      The dashboard card shape, with your result, what it moved and who's next.
      Two columns from 700px. */
-  .yw{ position: relative; overflow: hidden; padding: 14px 14px 12px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(165deg, var(--surface-2), var(--surface)); }
+  .yw{ position: relative; overflow: hidden; padding: 14px 14px 12px; border: 1px solid var(--line); border-radius: var(--card-r); box-shadow: var(--card-edge); background: linear-gradient(165deg, var(--surface-2), var(--surface)); }
   .yw-h{ display: flex; align-items: center; gap: 10px; }
   .yw-h b{ font-size: 0.95rem; margin-right: auto; }
   .yw-res{ flex: none; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--win-line); background: var(--win-tint); color: var(--turf); }
@@ -1066,7 +1067,7 @@
      changes height; clipped to the card so the taller version doesn't spill
      past its edge for the first few frames. */
   #accolades-container .accolade-card{ view-transition-class: sf-acc; }
-  ::view-transition-group(*.sf-acc){ overflow: clip; border-radius: 14px; }
+  ::view-transition-group(*.sf-acc){ overflow: clip; border-radius: var(--card-r); }
   /* The pinned mode toggle gets its own layer during the switch: left in
      the page's flat picture, the cards and rows gliding under it were
      drawn over it. Layers stack in paint order, and the toggle (z-index
@@ -1091,7 +1092,7 @@
     height: 100%;
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: var(--card-r); box-shadow: var(--card-edge);
     padding: 16px 18px 18px;
     display: flex;
     flex-direction: column;
@@ -1129,7 +1130,7 @@
     height: 100%;
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: var(--card-r); box-shadow: var(--card-edge);
     padding: 16px 18px 18px;
     transition: border-color 0.15s;
     display: flex;
@@ -1211,7 +1212,7 @@
   .recap-card{
     --rc-ctx: color-mix(in srgb, var(--gold) 72%, var(--text-dim));
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
-    border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px 18px;
+    border: 1px solid var(--line); border-radius: var(--card-r); box-shadow: var(--card-edge); padding: 16px 18px 18px;
   }
   .rc-tools{ display: flex; align-items: center; gap: 8px; flex: none; }
   .rc-dek{ color: var(--rc-ctx); font-size: 0.82rem; line-height: 1.4; margin-top: 4px; text-wrap: balance; }
@@ -1273,7 +1274,7 @@
   .accolade-card{
     background: linear-gradient(165deg, var(--surface-raised), var(--surface));
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: var(--card-r); box-shadow: var(--card-edge);
     padding: 16px 18px 18px;
     display: flex;
     flex-direction: column;
@@ -1310,7 +1311,7 @@
      nameSeasonRows), and Safari drew a captured *pinned* element nowhere,
      so the whole toggle vanished mid-switch on an iPhone. */
   #season-toggle{
-    position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px)); z-index: 20;
+    position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px) + var(--fold-shown, 0px)); z-index: 20;
     margin: 0 -20px 14px;
     transition: top .25s ease;
   }
@@ -1531,8 +1532,8 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
 <script src="race-sim.js?v=2"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
@@ -6317,6 +6318,8 @@
         // The line over the title names the season when it isn't this one.
         document.getElementById('week-header').textContent = archived ? `Week ${data.week} — Final`
           : data.week ? `Live Dashboard — Week ${data.week}` : 'Live Dashboard';
+        // The folding title bar's short name (nav.js headerTools).
+        document.querySelector('header h1').dataset.fold = data.week ? `${data.year && data.year !== leagueYear ? data.year + ' · ' : ''}Week ${data.week}` : 'Live';
         document.getElementById('dash-eyebrow').textContent = `Retirement League · ${data.year || leagueYear}`;
         // Playoff weeks have no median to watch.
         document.getElementById('median-container').style.display = data.playoffWeek ? 'none' : '';
@@ -6328,9 +6331,14 @@
         if (archived) {
           const live = (liveData && liveData.week) || data.liveWeek;
           document.getElementById('updated-label').textContent = 'Live now';
+          updatedEl.parentElement.classList.remove('live');
           updatedEl.innerHTML = `<button type="button" class="wk-live" data-wk-live>Week ${live} ›</button>`;
         } else {
-          document.getElementById('updated-label').textContent = 'Updated';
+          // The status line says what state the week is in (audit V #5, #9):
+          // Final once every starter is done, a red dot while games are on.
+          const on = !weekFinal && matchups.some(m => (parseInt(m.awayInPlay, 10) || 0) + (parseInt(m.homeInPlay, 10) || 0) > 0);
+          document.getElementById('updated-label').innerHTML = weekFinal ? '<b>Final</b> · updated' : on ? '<b>Live</b> · updated' : 'Updated';
+          updatedEl.parentElement.classList.toggle('live', on);
           const updatedText = data.updatedAt
             ? formatUpdated(data.updatedAt)
             : '—';

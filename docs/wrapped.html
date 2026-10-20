@@ -27,7 +27,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <style>
   /* ---------- Season Wrapped (site audit II #39) ----------
      One manager's finished season as a short run of cards, then a picture
@@ -46,7 +46,7 @@
 
   .wr-grid{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; margin-top:14px; }
   @media (min-width:721px){ .wr-grid{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; } }
-  .wr-card{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius:14px; padding:16px 18px 18px; display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .wr-card{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius: var(--card-r); box-shadow: var(--card-edge); padding:16px 18px 18px; display:flex; flex-direction:column; gap:12px; min-width:0; }
   .wr-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
   .wr-title{ font-weight:700; font-size:0.92rem; }
   .wr-box{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:12px 14px 13px; flex:1; }
@@ -99,9 +99,9 @@
     <footer id="site-footer" data-note="Money is dues and prizes from that year's payout rules; parlays aren't counted"></footer>
   </div>
 
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
-<script src="league-common.js?v=5"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
+<script src="league-common.js?v=6"></script>
 <script>
   const $ = id => document.getElementById(id);
   const f2 = n => Number(n).toFixed(2);

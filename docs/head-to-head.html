@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <style>
   /* ---------- Head to Head ----------
      Built phone-first around one idea: two sides, each with its own colour
@@ -76,7 +76,7 @@
   .panel{ min-width:0; }
 
   /* ---------- Panels ---------- */
-  .panel{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius:14px; }
+  .panel{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius: var(--card-r); box-shadow: var(--card-edge); }
   .p-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 16px 0; }
   .p-title{ font-weight:700; font-size:0.95rem; }
   .p-body{ padding:12px; }
@@ -244,10 +244,10 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
 <script src="share.js?v=1"></script>
-<script src="league-common.js?v=5"></script>
+<script src="league-common.js?v=6"></script>
 <script>
   let DATA, FR = null, NAMES = [];
   const $ = id => document.getElementById(id);

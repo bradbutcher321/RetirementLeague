@@ -19,6 +19,38 @@ function formatUpdated(iso) {
   return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} · ${time}`;
 }
 
+// ---------- What a page covers (audit V #11) ----------
+// A time in the status line only where it changes by the minute (Live,
+// Feed, Parlay Results). Everywhere else the line says what the page
+// covers, so a history page built on Friday doesn't look stale on Tuesday.
+// Week 1 kicks off the Thursday after Labor Day; a week is over once its
+// Monday night is (Tuesday, 4 AM Eastern, taken as 8 AM UTC).
+function seasonKickoff(year) {
+  const d = new Date(Date.UTC(year, 8, 1));
+  while (d.getUTCDay() !== 1) d.setUTCDate(d.getUTCDate() + 1); // Labor Day
+  d.setUTCDate(d.getUTCDate() + 3);
+  return d;
+}
+function throughLabel(iso, lastWeek = 17) {
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return '';
+  let year = t.getUTCFullYear();
+  if (t < seasonKickoff(year)) year--;
+  const firstEnd = seasonKickoff(year).getTime() + 5 * 864e5 + 8 * 36e5;
+  const weeks = Math.floor((t.getTime() - firstEnd) / (7 * 864e5)) + 1;
+  if (weeks < 1) return `Through the ${year - 1} season`;
+  if (weeks >= lastWeek) return `${year} season`;
+  return `Through Week ${weeks}`;
+}
+// Puts it in the header's status line in place of "Updated <time>".
+function setPageStatus(text) {
+  const el = document.getElementById('updated-at');
+  if (!el || !text) return;
+  el.textContent = text;
+  const label = el.parentElement && el.parentElement.querySelector('.updated-label');
+  if (label) label.textContent = '';
+}
+
 // Two-letter monogram per manager: first and last initial, as the league
 // knows everyone (TJ is just TJ). Shared so Game Records and Franchise's
 // Head to Head ledger always show the same letters for the same person.

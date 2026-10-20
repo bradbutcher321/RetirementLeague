@@ -27,7 +27,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <link rel="stylesheet" href="features.css?v=7">
 </head>
 <body>
@@ -49,8 +49,8 @@
     <div id="view"><span class="sr-only">Loading…</span></div>
     <footer id="site-footer"></footer>
   </div>
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
 <script src="race-sim.js?v=2"></script>
 <script>
   // Playoff Race (site audit III #2, IV #2). The simulation is the site's
@@ -93,7 +93,7 @@
           return `<div class="ft-tile${tone}"><div class="ft-tl">${k}-${total - k}</div><div class="ft-tv">${pct(p)}</div><div class="ft-ts">${Math.max(1, Math.round(share(k) * 100))}% of seasons</div></div>`;
         }).join('')}</div></div></div>`;
     }
-    $('view').innerHTML = `<div class="rc-intro">Pick this week’s winners, or leave a game open. Each change replays the rest of the season ${RUNS.toLocaleString('en-US')} times. Through Week ${DONE}.</div>
+    $('view').innerHTML = `<div class="rc-intro">Pick this week’s winners, or leave a game open. Each change replays the rest of the season ${RUNS.toLocaleString('en-US')} times.</div>
       <div class="rc-grid"><div>
         <div class="glass"><div class="panel-title">Week ${PICK_WEEK} <button type="button" class="ft-btn sm" data-reset${n ? '' : ' disabled'}>Reset</button></div>
           <div class="ft-body">${pk.pairs.map(([a, b]) => {
@@ -128,8 +128,19 @@
   window.addEventListener('rl-me', () => { if (BASELINE) render(); });
 
   fetch(WORKER_URL, { cache: 'no-store' }).then(r => r.json()).then(live => {
-    // Audit V #17: the Updated stamp was never written.
-    if (live.updatedAt) $('updated-at').textContent = formatUpdated(live.updatedAt);
+    // Audit V #11, #17: the stamp was never written. The odds count what's
+    // happened: last week's games before kickoff, this week's once all are
+    // over, and the live scores (with the time) while games are on.
+    const ts = live.teams || [];
+    const started = ts.some(t => (t.current || 0) > 0);
+    const over = started && ts.every(t => !(t.remaining || 0) && !(t.inPlay || 0));
+    if (!started && live.week > 1) setPageStatus(`Through Week ${live.week - 1}`);
+    else if (over) setPageStatus(`Through Week ${live.week}`);
+    else if (live.updatedAt) {
+      $('updated-at').textContent = formatUpdated(live.updatedAt);
+      document.querySelector('.updated-label').innerHTML = `<b>Week ${live.week} live</b> · updated`;
+      document.querySelector('.updated-block').classList.add('live');
+    }
     if (!setup(live) || !sched.length || !sched[0].pairs.length) {
       $('view').innerHTML = `<div class="glass"><div class="ft-empty">The regular season is over, so there’s nothing left to pick. See the Bracket tab on Standings.</div></div>`;
       return;

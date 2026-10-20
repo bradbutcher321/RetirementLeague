@@ -15,38 +15,69 @@
    viewport-fit=cover on every page reports). The body pads its foot by the
    bar's height so the last thing on a page scrolls clear of it. z-index
    sits under the Home Screen card (55) and the sheets (60). */
-:root{ --tabbar-h: calc(58px + env(safe-area-inset-bottom, 0px)); }
+/* iOS 26's floating bar (audit V #4): a glass capsule of five tabs inset
+   from the screen's edges, with search in its own circle at the right end,
+   where the thumb already is. You moved to the monogram in each page's
+   title row. While you scroll down it drops its labels and shrinks; any
+   scroll up brings it back (nav.js tabbarShrink). Glass only on what
+   floats: the cards under it stay solid. */
+:root{
+  --tb-gap: max(10px, calc(env(safe-area-inset-bottom, 0px) - 6px));
+  --tabbar-h: calc(64px + var(--tb-gap) + 8px);
+}
 .tabbar{
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 45;
+  pointer-events: none;
 }
-/* The bar's look sits on an inner .tb-in, which is named for view
+/* The bar's look sits on inner boxes, and .tb-in is named for view
    transitions: a dashboard toggle lifts its cards into a layer over the
    whole page, and the bar needs a layer of its own to stay above them.
    Named on the inner box, never the fixed bar, because Safari drew a
    captured pinned element nowhere (index.html's .sf-band, same reason). */
 .tb-in{
   display: flex;
-  padding: 4px max(6px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(6px, env(safe-area-inset-left, 0px));
-  background: rgba(17,17,17,0.94);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  border-top: 1px solid var(--line);
-  view-transition-name: tabbar;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 0 max(14px, env(safe-area-inset-right, 0px)) var(--tb-gap) max(14px, env(safe-area-inset-left, 0px));
 }
+/* Named on the glass pieces themselves: a named element is a backdrop root
+   for whatever is inside it, so a name on .tb-in left the glass with
+   nothing behind it to blur. */
+.tb-cap{ view-transition-name: tabbar; }
+.tb-search{ view-transition-name: tabbar-search; }
+.tb-cap, .tb-search{
+  pointer-events: auto;
+  background: rgba(30,30,30,0.55);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid rgba(255,255,255,0.11);
+  box-shadow: 0 14px 34px -10px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.12);
+  transition: height .32s cubic-bezier(0.34,1.56,0.64,1), width .32s cubic-bezier(0.34,1.56,0.64,1), border-radius .32s cubic-bezier(0.34,1.56,0.64,1);
+}
+.tb-cap{ flex: 1; min-width: 0; height: 64px; border-radius: 32px; display: flex; align-items: stretch; padding: 4px; }
+.tb-search{ flex: none; width: 64px; height: 64px; border-radius: 32px; display: grid; place-items: center; padding: 0; color: var(--text); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.tb-search svg{ width: 22px; height: 22px; }
+.tb-search:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+.tabbar .tb-cap a, .tabbar .tb-cap button{ border-radius: 28px; }
+.tb-lab{ max-height: 12px; overflow: hidden; transition: opacity .2s, max-height .3s; }
+.tabbar.min .tb-cap{ height: 50px; border-radius: 25px; }
+.tabbar.min .tb-search{ width: 50px; height: 50px; border-radius: 25px; }
+.tabbar.min .tb-lab{ opacity: 0; max-height: 0; }
+.tabbar.min .tb-cap a, .tabbar.min .tb-cap button{ gap: 0; }
+@media (prefers-reduced-motion: reduce){ .tb-cap, .tb-search, .tb-lab{ transition: none; } }
 /* Chrome stacks transition layers by paint order, Safari by page order,
    where the bar comes first; lift it above every card either way. It
    doesn't move or change, so it holds still rather than cross-fading. */
-::view-transition-group(tabbar){ z-index: 100; animation: none; }
-::view-transition-old(tabbar){ display: none; }
-::view-transition-new(tabbar){ animation: none; }
-.tabbar a, .tabbar button{
+::view-transition-group(tabbar), ::view-transition-group(tabbar-search){ z-index: 100; animation: none; }
+::view-transition-old(tabbar), ::view-transition-old(tabbar-search){ display: none; }
+::view-transition-new(tabbar), ::view-transition-new(tabbar-search){ animation: none; }
+.tabbar .tb-cap a, .tabbar .tb-cap button{
   flex: 1 1 0;
   min-width: 0;
-  min-height: 54px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -62,7 +93,8 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.tabbar .on{ color: var(--gold); }
+.tabbar .tb-cap a, .tabbar .tb-cap button{ color: #B4B4B0; font-size: 0.64rem; }
+.tabbar .tb-cap .on{ color: var(--gold); background: rgba(255,255,255,0.09); }
 .tb-ic{ width: 24px; height: 24px; display: grid; place-items: center; }
 .tb-ic svg{ width: 22px; height: 22px; }
 /* You, once picked: the monogram in a ring the size of the other icons. */
@@ -142,30 +174,66 @@
 @media (hover: hover){ .nav-search:hover{ color: var(--text); } }
 .nav-search:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 
-/* Phone search (site audit IV #6): round button in the top-right corner of
-   the page header, on the eyebrow line, left of the Updated stamp (nav.js
-   headerSearch sets `right`). Out of the flow so it never reflows the title.
-   34px drawn, 44px to tap; the bar's box takes over at 1080px. */
+/* ---------- The title row's buttons (audit V #4, #5) ----------
+   iOS gives buttons a row of their own and the title the full width: the
+   eyebrow line carries them at its right end (nav.js headerTools): the
+   dashboard's week stepper, then your monogram (You) on a phone. Glass,
+   because they're controls. 38px drawn, 44px to tap. */
 .header-row, .wrap > header{ position: relative; }
-.hdr-search{
-  position: absolute;
-  top: -6px;
-  right: 0;
-  width: 34px;
-  height: 34px;
+.hdr-tools{ position: absolute; right: 0; top: -10px; display: flex; align-items: center; gap: 8px; }
+.hdr-tools:empty{ display: none; }
+.header-row:has(.hdr-tools:not(:empty)) .eyebrow{ padding-right: 140px; }
+.hdr-tools .wk-step{ margin: 0; height: 38px; border-radius: 19px; background: rgba(40,40,40,0.55); border: 1px solid rgba(255,255,255,0.10); box-shadow: inset 0 1px 0 rgba(255,255,255,0.10); }
+.hdr-tools .wk-step button{ width: 36px; height: 36px; }
+.hdr-me, .fold-me{
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
   padding: 0;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  background: var(--item);
-  color: var(--text-dim);
+  border: 2px solid var(--me-ring, #7AAEDB);
+  background: color-mix(in srgb, var(--me-ring, #7AAEDB) 9%, transparent);
+  color: var(--text);
+  font: 800 0.74rem/1 var(--body);
+  letter-spacing: 0.02em;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.hdr-search::after{ content: ''; position: absolute; inset: -5px; }
-.hdr-search svg{ width: 16px; height: 16px; }
-.hdr-search:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
-@media (min-width: 1080px){ .hdr-search{ display: none; } }
+.hdr-me::after, .fold-me::after{ content: ''; position: absolute; inset: -5px; }
+.hdr-me.none, .fold-me.none{ border: 1px solid rgba(255,255,255,0.12); background: rgba(40,40,40,0.55); color: var(--text-dim); }
+.hdr-me svg, .fold-me svg{ width: 18px; height: 18px; }
+.hdr-me:focus-visible, .fold-me:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (min-width: 1080px){ .hdr-me{ display: none; } }
+
+/* The folding title (audit V #5): scroll past a page's title and a slim
+   glass bar takes its place at the top, with the title and its status line,
+   so you always know what you're looking at. It also covers the clock, so
+   content slides under it instead of running into the status bar. Phones
+   only; the desktop top bar does this job there. Pinned bands (Season So
+   Far, Standings, Feed) sit under it through --fold-shown. */
+.top-band{ position: fixed; left: 0; right: 0; top: 0; height: env(safe-area-inset-top, 0px); z-index: 44; background: var(--bg); pointer-events: none; }
+.fold{
+  position: fixed; left: 0; right: 0; top: 0; z-index: 46;
+  padding: env(safe-area-inset-top, 0px) max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px));
+  background: rgba(14,14,14,0.62);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  opacity: 0; transform: translateY(-8px); pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.fold.show{ opacity: 1; transform: none; pointer-events: auto; }
+.fold-in{ height: 50px; display: grid; grid-template-columns: 38px minmax(0,1fr) 38px; align-items: center; gap: 8px; }
+.fold-t{ text-align: center; line-height: 1.15; min-width: 0; background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.fold-t b{ display: block; font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fold-t span{ display: block; color: var(--text-dim); font-size: 0.72rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fold-me{ width: 34px; height: 34px; font-size: 0.68rem; justify-self: end; }
+html.folded{ --fold-shown: 50px; }
+@media (min-width: 1080px){ .fold, .top-band{ display: none; } html.folded{ --fold-shown: 0px; } }
+@media (prefers-reduced-motion: reduce){ .fold{ transition: none; } }
 
 /* ---------- You (site audit II #36/#37) ----------
    The round button at the right end of the top bar (nav.js wireYou): your
@@ -267,7 +335,7 @@
   min-height: 112px;
   min-width: 0;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: var(--card-r); box-shadow: var(--card-edge);
   border: 1px solid var(--line);
   background: linear-gradient(165deg, var(--surface-2), var(--surface));
   color: var(--text);

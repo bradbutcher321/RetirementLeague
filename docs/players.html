@@ -27,7 +27,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <link rel="stylesheet" href="features.css?v=7">
 </head>
 <body>
@@ -51,9 +51,9 @@
     <div id="view"><span class="sr-only">Loading…</span></div>
     <footer id="site-footer"></footer>
   </div>
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
-<script src="league-common.js?v=5"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
+<script src="league-common.js?v=6"></script>
 <script>
   // Players (site audit III #5). A search box over every player the league
   // has drafted or started (data/players-index.json), and one page per
@@ -136,7 +136,7 @@
   ]).then(([d]) => {
     INDEX = d.players.map(r => [...r, norm(r[1])]);
     SEASONS = d.draft_years || SEASONS;
-    if (d.generated_at) $('updated-at').textContent = formatUpdated(d.generated_at);
+    if (d.generated_at) setPageStatus(throughLabel(d.generated_at));
     $('q').placeholder = `Search ${INDEX.length} players`;
     $('q').addEventListener('input', search);
     $('q').addEventListener('keydown', e => { if (e.key === 'Enter') { const a = $('res').querySelector('.pl-hit'); if (a) location.href = a.href; } });

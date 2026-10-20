@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <style>
   /* ---------- Feed (site audit III #7; redesigned 2026-10-16) ----------
      Every change to a starter's points this week, newest first, the whole
@@ -57,7 +57,7 @@
   .fd-wrap{ --fd-soft: #C9C9C5; }
   body:has(.nav-bar:not(.tucked)){ --nav-shown: var(--nav-h, 0px); }
   .fd-band{
-    position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px)); z-index: 20;
+    position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px) + var(--fold-shown, 0px)); z-index: 20;
     margin: 0 -20px 12px; padding: 8px 20px 9px; background: var(--bg);
     display: grid; gap: 8px;
     transition: box-shadow .2s ease, top .25s ease, background-color .2s ease;
@@ -128,7 +128,7 @@
     .fd-grid.has-side{ display: grid; grid-template-columns: minmax(0,1fr) 320px; gap: 18px; align-items: start; }
     .fd-grid.has-side .fd-side{
       grid-column: 2; grid-row: 1; margin: 0;
-      position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px) + var(--band-h, 0px) + 4px);
+      position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px) + var(--fold-shown, 0px) + var(--band-h, 0px) + 4px);
       max-height: calc(100vh - var(--nav-shown, 0px) - var(--band-h, 0px) - 24px); overflow-y: auto; scrollbar-width: none;
       transition: top .25s ease;
     }
@@ -271,8 +271,8 @@
 
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
 <script>
   // The Worker saves a row each time a starter's points move
   // (worker/src/scoreFeed.js). Each poll asks only for the rows after the

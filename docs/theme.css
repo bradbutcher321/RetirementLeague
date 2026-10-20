@@ -25,6 +25,12 @@
      -- which is exactly why Head to Head's Postseason pods and its Every
      Game rows looked like two different surfaces. A translucent fill keeps
      the same relationship to whatever is behind it at any height. */
+  /* ---------- Cards: depth from light, not glow (audit V #6) ----------
+     A card's corner is its rows' corner (10px) plus the room around them,
+     so the curves nest the way an iOS grouped list's do, and a 1px lit top
+     edge is what makes it read as a surface. Content never glows. */
+  --card-r: 22px;
+  --card-edge: inset 0 1px 0 rgba(255,255,255,0.065);
   --item: rgba(255,255,255,0.025);
   --item-hover: rgba(255,255,255,0.05);
   --item-line: var(--line);
@@ -149,7 +155,7 @@ body{
 .glass, .stat-card, .rules-card, .median-card{
   background: linear-gradient(165deg, var(--surface-2), var(--surface));
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--card-r); box-shadow: var(--card-edge);
 }
 .glass{ overflow: hidden; }
 
@@ -826,30 +832,21 @@ h1{
   line-height: 1;
 }
 
-.header-row{
-  display: flex;
-  justify-content: space-between;
-  /* flex-end (not center) so the visible text bottoms line up — h1's own
-     bottom margin is zeroed below so that margin doesn't throw off where
-     its "bottom edge" actually is. */
-  align-items: flex-end;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
-}
-.header-row h1{ margin-bottom: 0; }
-.updated-block{ text-align: right; }
-.updated-label{
-  color: var(--text-dim);
-  font-size: 0.78rem;
-  margin-bottom: 2px;
-}
-.updated-value{
-  font-family: var(--scoreboard);
-  font-weight: 700;
-  font-size: 1.1rem;
-  font-variant-numeric: tabular-nums;
-}
+/* A large title (audit V #5): the eyebrow line with the page's buttons at
+   its right end (nav.css .hdr-tools), the title across the full width, and
+   under it one quiet status line in place of the big Updated stamp:
+   "Updated 12:03 AM" where the page changes by the minute, what it covers
+   ("Through Week 6") everywhere else. A red dot pulses while games are on. */
+.header-row{ margin-bottom: 26px; }
+.header-row h1{ margin: 12px 0 0; font-size: clamp(2.3rem, 9vw, 3.1rem); text-wrap: balance; }
+.updated-block{ display: flex; align-items: center; flex-wrap: wrap; gap: 0 6px; margin-top: 9px; color: var(--text-dim); font-size: 0.84rem; font-weight: 500; line-height: 1.35; }
+.updated-block::before{ content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: #7C7C7A; margin-right: 1px; }
+.updated-block.live::before{ background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce){ .updated-block.live::before{ animation: none; } }
+.updated-label{ color: inherit; font-size: inherit; }
+.updated-label b{ color: var(--text); font-weight: 600; }
+.updated-label:empty{ display: none; }
+.updated-value{ font-variant-numeric: tabular-nums; }
 
 section{ margin-bottom: 44px; }
 /* One heading voice (audit V #7): a section heading outside a card is
@@ -883,7 +880,7 @@ h2 .h-state:empty{ display: none; }
      .sk i      a shimmering bar -- width/height inline; .o makes it a circle, .p a pill, .area a chart
    Hidden from screen readers by aria-hidden on the outer element; the
    container keeps an sr-only "Loading…" so the state is still announced. */
-.sk{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 14px;
+.sk{ background: linear-gradient(165deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: var(--card-r); box-shadow: var(--card-edge);
      padding: 18px 20px; display: grid; gap: 12px; align-content: start; }
 .sk-stack{ display: grid; gap: 14px; }
 .sk-row{ display: flex; justify-content: space-between; align-items: center; gap: 12px; }
@@ -938,7 +935,7 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
    name (the logo is the colour here), and not clipped, so the logo
    previews can hang outside it. Phone: identity on top, a five-stat
    strip underneath. Desktop: the strip turns into a column on the right. */
-.fhero{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius:14px; display:grid; grid-template-columns:minmax(0,1fr); }
+.fhero{ background:linear-gradient(165deg, var(--surface-2), var(--surface)); border:1px solid var(--line); border-radius: var(--card-r); box-shadow: var(--card-edge); display:grid; grid-template-columns:minmax(0,1fr); }
 .fhero-main{ padding:18px 18px 16px; min-width:0; }
 .fhero-id{ display:flex; align-items:center; gap:14px; }
 .fhero-name{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.9rem, 8vw, 2.6rem); line-height:0.95; overflow-wrap:anywhere; }

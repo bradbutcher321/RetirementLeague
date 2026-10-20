@@ -27,7 +27,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <link rel="stylesheet" href="features.css?v=7">
 </head>
 <body>
@@ -55,9 +55,9 @@
     <div id="view"><span class="sr-only">Loading…</span></div>
     <footer id="site-footer"></footer>
   </div>
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
-<script src="league-common.js?v=5"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
+<script src="league-common.js?v=6"></script>
 <script>
   // Trades & Waivers (site audit III #1). Reads data/moves.json, written by
   // generate_moves_data.py: trades rebuilt from the roster change they
@@ -150,7 +150,7 @@
 
   fetch('data/moves.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
     M = d;
-    if (d.generated_at) $('updated-at').textContent = formatUpdated(d.generated_at);
+    if (d.generated_at) setPageStatus(throughLabel(d.generated_at));
     if (TABS.some(([k]) => k === urlParam('tab'))) tab = urlParam('tab');
     render();
     riseIn(document.querySelectorAll('#view .glass'));

@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=33">
-<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="nav.css?v=28">
 <link rel="stylesheet" href="league.css?v=7">
 <link rel="stylesheet" href="features.css?v=7">
 <style>
@@ -60,7 +60,7 @@
   /* Through Week N / Week N+1 projected (moved from the dashboard): pinned
      under the site nav while it shows, spanning the page gutter so rows
      pass cleanly beneath it. */
-  .sf-band{ position:sticky; top:calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px)); z-index:20; margin:0 -20px 14px; padding:8px 20px; background:var(--bg); transition:top .25s ease, box-shadow .2s ease; }
+  .sf-band{ position:sticky; top:calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px) + var(--fold-shown, 0px)); z-index:20; margin:0 -20px 14px; padding:8px 20px; background:var(--bg); transition:top .25s ease, box-shadow .2s ease; }
   body:has(.nav-bar:not(.tucked)) .sf-band{ --nav-shown:var(--nav-h, 0px); }
   .sf-band.stuck{ box-shadow:0 1px 0 var(--line), 0 12px 18px -14px rgba(0,0,0,0.9); }
   .sf-band .sup-seg{ margin:0; }
@@ -195,9 +195,9 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=35"></script>
-<script src="page-common.js?v=39"></script>
-<script src="league-common.js?v=5"></script>
+<script src="nav.js?v=36"></script>
+<script src="page-common.js?v=40"></script>
+<script src="league-common.js?v=6"></script>
 <script src="race-sim.js?v=2"></script>
 <script src="rivals.js?v=2"></script>
 <script>
@@ -356,6 +356,8 @@
     fetch(WORKER_URL, { cache: 'no-store' }).then(r => r.json()).then(d => {
       RaceSim.apply(d);
       LIVE = { week: d.week, raw: d, ahead: new Map((d.teams || []).filter(t => t.manager).map(t => [t.manager, t.ahead || []])) };
+      // The table now comes from the Worker (audit V #11): say what it counts.
+      if (bandOn()) setPageStatus(`Through Week ${liveFinal() ? d.week : d.week - 1}`);
       render();
     }).catch(err => console.error('Schedule left:', err));
   }
