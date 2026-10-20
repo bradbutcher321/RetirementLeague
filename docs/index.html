@@ -810,11 +810,10 @@
   /* ---------- Flow (site audit III #7) ----------
      A matchup's two projected totals through the week, from Median Watch's
      own snapshots, with the projected median dashed behind them. Left side
-     gold and right side Canaveral blue, as on Head to Head. Your matchup
-     carries it on the card; every other one at the top of its open roster.
+     gold and right side Canaveral blue, as on Head to Head. Every matchup, yours
+     included, carries it at the top of its open roster.
      The Feed itself is its own page (feed.html). */
   .fl-wrap{ cursor: default; }
-  .matchup-card > .fl-wrap{ border-top: 1px solid var(--line); padding: 10px 14px 12px; }
   .mu-det-body .fl-wrap{ padding: 10px 10px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
   .fl-top{ display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; min-height: 28px; }
   .fl-h{ color: var(--text-dim); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -1613,9 +1612,8 @@
         </div>
         ${mine ? lineupHtml(m) : ''}
         ${recordHtml(m)}
-        ${mine ? flowHtml(m) : ''}
         ${seriesHtml(m)}
-        ${renderMatchupDetails(m, mine ? '' : flowHtml(m))}
+        ${renderMatchupDetails(m, flowHtml(m))}
       </div>`;
   }
   // The pair's all-time series before this week (site audit 27), as a link
