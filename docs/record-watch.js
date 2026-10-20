@@ -30,7 +30,7 @@ const RecordWatch = (() => {
     const played = games.filter(g => g.p2 && g.type !== 'Bye' && g.s1 > 0 && g.s2 > 0 && g.winner !== 'In Progress');
     const reg = played.filter(g => g.type !== 'Cons');
     const decided = list => list.filter(g => g.winner === g.p1 || g.winner === g.p2);
-    const at = g => `${g.year} Wk ${g.week}`;
+    const at = g => `${g.year} Week ${g.week}`;
     const e = (v, who, g, extra) => ({ v, who, k: gk(g.year, g.week, g.p1, g.p2), at: `${who} ${at(g)}`, ...extra });
     const hi = (a, b) => b.v - a.v, lo = (a, b) => a.v - b.v;
     const sides = (list, fn) => list.flatMap(g => [e(g.s1, g.p1, g), e(g.s2, g.p2, g)]);
@@ -52,7 +52,7 @@ const RecordWatch = (() => {
     if (players && players.years) {
       // Each season holds its own top 10, so the best of them all is in there.
       const all = key => Object.values(players.years).flatMap(y => y[key] || [])
-        .map(r => ({ v: r.pts, who: r.m, k: `${r.y}:${r.w}:${r.m}:${r.p}`, at: `${r.p} for ${r.m}, ${r.y} Wk ${r.w}` }));
+        .map(r => ({ v: r.pts, who: r.m, k: `${r.y}:${r.w}:${r.m}:${r.p}`, at: `${r.p} for ${r.m}, ${r.y} Week ${r.w}` }));
       book.startHi = all('best').sort(hi).slice(0, 15);
       book.startLo = all('worst').sort(lo).slice(0, 15);
     }
