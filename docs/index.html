@@ -1320,9 +1320,9 @@
     </section>
 
     <!-- hidden until loadDashboard's first render, same as Current Parlay and
-         League Lore: without it the standings card and accolade
-         placeholders drew on their own while the rest of the page was still
-         loading, instead of appearing in step with it. -->
+         League Lore: without it the accolade placeholders drew on their own
+         while the rest of the page was still loading, instead of appearing
+         in step with it. -->
     <section id="season-section" hidden>
       <!-- Superlatives and standings answer the same question ("where does
            the season stand, counting this week as of X?"), so they share one
@@ -1334,15 +1334,8 @@
       <div class="accolades-grid" id="accolades-container">
         <div class="loading-row">Loading accolades…</div>
       </div>
-      <!-- Rows sit inside one glass panel rather than straight on the page
-           background, so they have an edge to line up against -- same
-           treatment the Standings page uses. -->
-      <div class="glass standings-card">
-        <div class="standings-title">Standings</div>
-        <div class="panel-body leaderboard" id="leaderboard-container">
-          <div class="loading-row">Loading standings…</div>
-        </div>
-      </div>
+      <!-- The standings table moved to the Standings page, which has the
+           same Through / projected switch. The toggle stays for the cards. -->
     </section>
 
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
@@ -4521,6 +4514,8 @@
     if (!data) return;
     const teams = data.teams || [];
     const container = document.getElementById('leaderboard-container');
+    // The table now lives on the Standings page; nothing to draw here.
+    if (!container) return;
     const week = data.week || 1;
     const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
     const spots = data.playoffTeamCount || 0;

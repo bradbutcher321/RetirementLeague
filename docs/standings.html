@@ -45,18 +45,40 @@
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
      (.selector-group) all live in theme.css. */
-  /* On a phone the caption goes, as on Parlay's rows (theme.css): "All-Time"
-     or "2025" already says it's a year, and its ~50px is what kept the
-     dropdown from fitting beside the tabs at 375-398px (site audit II #18).
-     Kept for screen readers. */
+  /* The "Year" caption goes at every width: "All-Time" or "2025" already
+     says it's a year, and its ~50px is what kept the dropdown from fitting
+     beside the tabs at 375-398px (site audit II #18). Kept for screen
+     readers. */
+  .controls-row .selector-label{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  /* With the caption gone the dropdown only has to hold "All-Time", so on a
+     phone it narrows (theme.css floors it at 140px) and stays beside the tabs. */
   @media (max-width:600px){
-    .controls-row .selector-label{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    .controls-row{ flex-wrap:nowrap; gap:10px; }
+    .controls-row .lg-select{ min-width:104px; }
   }
+
+  /* Through Week N / Week N+1 projected (moved from the dashboard): pinned
+     under the site nav while it shows, spanning the page gutter so rows
+     pass cleanly beneath it. */
+  .sf-band{ position:sticky; top:calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px)); z-index:20; margin:0 -20px 14px; padding:8px 20px; background:var(--bg); transition:top .25s ease, box-shadow .2s ease; }
+  body:has(.nav-bar:not(.tucked)) .sf-band{ --nav-shown:var(--nav-h, 0px); }
+  .sf-band.stuck{ box-shadow:0 1px 0 var(--line), 0 12px 18px -14px rgba(0,0,0,0.9); }
+  .sf-band .sup-seg{ margin:0; }
+  @media (max-width:480px){ .sf-band{ margin-inline:-14px; padding-inline:14px; } }
+  @media (prefers-reduced-motion:reduce){ .sf-band{ transition:none; } }
+  /* Playoff odds, beside the Move pill. */
+  .od{ flex:none; box-sizing:border-box; padding:2px 8px; border-radius:999px; border:1px solid var(--line); font-style:normal; font-size:0.68rem; font-weight:700; line-height:1.2; color:var(--text-dim); white-space:nowrap; }
+  .od.high{ border-color:var(--turf-dim); color:var(--turf); }
+  .od.low{ border-color:rgba(214,98,79,0.4); color:var(--loss); }
+  .qrow.in .rk{ color:var(--gold); }
   .legend{ display:flex; gap:16px; flex-wrap:wrap; color:var(--text-dim); font-size:0.74rem; padding:18px 24px 0; }
   .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
 
   .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; min-width:0; }
-  .qrow .tm .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  /* Manager names stay whole; the Move and Odds pills drop under one that
+     would not fit beside them. */
+  .qrow .tm{ flex-wrap:wrap; }
+  .qrow .tm .nm{ flex:none; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   /* Your Daddy / Your Bitch (rivals.js): on a line of its own, so it never squeezes the name. */
   .qrow .rv-row{ margin-top:4px; } .qrow .rv-row .rv-tag{ margin-left:0; }
   .qrow-main{ min-width:0; }
@@ -285,19 +307,25 @@
     if (!el) return;
     const { weeks, by } = ranksByWeek(Number(el.dataset.year));
     const names = [...by.keys()], n = names.length;
+    const cols = weeks.length + (bumpExt ? 1 : 0);
     const W = el.clientWidth - 24, left = 22, right = 66, top = 8, rowH = 22;
     const H = top + (n - 1) * rowH + 26;
-    const x = i => left + i * (W - left - right) / Math.max(1, weeks.length - 1);
+    const x = i => left + i * (W - left - right) / Math.max(1, cols - 1);
     const y = r => top + (r - 1) * rowH;
     let svg = '';
     for (let r = 1; r <= n; r++) svg += `<line class="grid" x1="${left}" x2="${W - right}" y1="${y(r)}" y2="${y(r)}"/><text class="ax" x="0" y="${y(r) + 3.5}">${r}</text>`;
     weeks.forEach((wk, i) => { svg += `<text class="ax" x="${x(i)}" y="${H - 4}" text-anchor="middle">${wk}</text>`; });
+    // Projected: this week as one more, dashed, point.
+    if (bumpExt) svg += `<text class="ax" x="${x(cols - 1)}" y="${H - 4}" text-anchor="middle" style="fill:var(--gold)">${weeks[weeks.length - 1] + 1}</text>`;
     const on = name => name === bumpPick ? ' on' : '';
     // The picked line last, so it draws over the rest.
     [...names].sort((a, b) => (a === bumpPick) - (b === bumpPick)).forEach(name => {
-      const rk = by.get(name), m = esc(name), picked = name === bumpPick;
-      const pts = rk.map((r, i) => r == null ? null : `${x(i).toFixed(1)},${y(r)}`).filter(Boolean).join(' ');
+      const rk = by.get(name).slice(), m = esc(name), picked = name === bumpPick;
+      if (bumpExt) rk.push(bumpExt.get(name) ?? null);
+      const all = rk.map((r, i) => r == null ? null : `${x(i).toFixed(1)},${y(r)}`).filter(Boolean);
+      const pts = (bumpExt ? all.slice(0, -1) : all).join(' ');
       svg += `<polyline class="ln${on(name)}" data-m="${m}" points="${pts}"/>`;
+      if (bumpExt && all.length > 1) svg += `<polyline class="ln${on(name)}" data-m="${m}" stroke-dasharray="3 4" points="${all.slice(-2).join(' ')}"/>`;
       svg += rk.map((r, i) => r == null ? '' : `<circle class="dt${on(name)}" data-m="${m}" cx="${x(i).toFixed(1)}" cy="${y(r)}" r="${picked ? 7 : 3}"/>` +
         (picked ? `<text class="rk-v" x="${x(i).toFixed(1)}" y="${y(r) + 3}" text-anchor="middle">${r}</text>` : '')).join('');
       svg += `<polyline class="hit" data-m="${m}" points="${pts}"><title>${m}</title></polyline>`;
@@ -325,17 +353,106 @@
     if (liveAsked) return;
     liveAsked = true;
     fetch(WORKER_URL, { cache: 'no-store' }).then(r => r.json()).then(d => {
-      LIVE = { week: d.week, ahead: new Map((d.teams || []).filter(t => t.manager).map(t => [t.manager, t.ahead || []])) };
+      LIVE = { week: d.week, raw: d, ahead: new Map((d.teams || []).filter(t => t.manager).map(t => [t.manager, t.ahead || []])) };
       render();
     }).catch(err => console.error('Schedule left:', err));
   }
 
-  let formerCount = 0, prevRank = null, lastWeek = 0;
+  // ---------- Through Week N / Week N+1 projected (moved from the dashboard) ----------
+  // Standings from the Worker's live numbers: every finished week
+  // (`prior`), or those plus this week as the projected scores would
+  // finish it -- head-to-head result and median result, points included.
+  // Live mode isn't offered here; the dashboard keeps it for Superlatives.
+  let sMode = 'through';
+  try { if (localStorage.getItem('standingsViewMode') === 'proj') sMode = 'proj'; } catch (e) {}
+
+  // The switch needs a season in progress, a finished week behind it, and
+  // the Worker's table in hand; in a playoff week or on a past week's
+  // archive the regular-season table stands as it is.
+  function bandOn() {
+    const d = LIVE && LIVE.raw;
+    return !!d && d.week > 1 && !d.playoffWeek && !d.archived && (d.teams || []).length > 0 && d.teams.every(t => t.prior);
+  }
+
+  // Every manager's rank after the games before `wk` (wins, then PF).
+  function ranksBefore(year, wk) {
+    if (wk < 2) return null;
+    const t = {};
+    D.games.filter(g => g.year === year && g.type === 'Reg' && g.week < wk).forEach(g => {
+      [[g.p1, g.s1], [g.p2, g.s2]].forEach(([p, s]) => {
+        if (!p) return;
+        const e = t[p] || (t[p] = { w: 0, pf: 0 });
+        e.pf += s || 0;
+        if (g.winner === p) e.w++;
+        if (year >= D.median_era_start_year && g.median != null && s > g.median) e.w++;
+      });
+    });
+    const order = Object.keys(t).sort((a, b) => t[b].w - t[a].w || t[b].pf - t[a].pf);
+    return order.length ? new Map(order.map((p, i) => [p, i + 1])) : null;
+  }
+
+  function liveRows(year, mode) {
+    const d = LIVE.raw, teams = d.teams;
+    const scoreOf = t => (mode === 'proj' ? Math.max(t.projected || 0, t.current || 0) : (t.current || 0));
+    const byName = new Map(teams.map(t => [t.name, t]));
+    const opp = new Map();
+    (d.matchups || []).forEach(m => { opp.set(m.homeName, m.awayName); opp.set(m.awayName, m.homeName); });
+    const ranked = [...teams].sort((a, b) => scoreOf(b) - scoreOf(a));
+    const half = Math.floor(ranked.length / 2);
+    const medianWin = new Map(ranked.map((t, i) => [t.name, i < half]));
+    const rows = teams.map(t => {
+      const p = t.prior, o = byName.get(opp.get(t.name)), own = scoreOf(t), os = o ? scoreOf(o) : null;
+      let w = p.w, l = p.l, ties = p.t || 0;
+      if (mode === 'proj') {
+        if (os !== null) { if (own > os) w++; else if (own < os) l++; else ties++; }
+        if (d.medianGames !== false) { if (medianWin.get(t.name)) w++; else l++; }
+      }
+      return { player: t.manager, w, l, ties, pf: p.pf + (mode === 'proj' ? own : 0), pa: p.pa + (mode === 'proj' && os !== null ? os : 0),
+        odds: mode === 'through' ? t.playoffPct : null, ahead: t.ahead || [] };
+    });
+    // Through keeps the Worker's own order (its tiebreakers); projected
+    // orders by wins, then points, as the dashboard did.
+    const ord = mode === 'through' ? rows : [...rows].sort((a, b) => b.w - a.w || b.pf - a.pf);
+    const spots = d.playoffTeamCount || 0;
+    const total = (d.medianGames === false ? 1 : 2) * (d.regularSeasonWeeks || 0);
+    const race = playoffRace(ord.map(r => ({ w: r.w, l: r.l, t: r.ties })), spots, total);
+    const rec = new Map(ord.map(r => [r.player, { w: r.w, l: r.l, t: r.ties }]));
+    const skip = mode === 'through' ? 0 : 1;
+    const sos = ord.map(r => scheduleLeft(r.ahead.slice(skip), n => rec.get(n)));
+    // Move: through compares with the week before; projected, with Through.
+    const prev = mode === 'through' ? ranksBefore(year, d.week - 1) : new Map(teams.map((t, i) => [t.manager, i + 1]));
+    const moveWk = mode === 'through' ? d.week - 2 : d.week - 1;
+    ord.forEach((r, i) => {
+      r.rank = i + 1; r.pct = r.w + r.l ? r.w / (r.w + r.l) : null; r.inSpot = spots > 0 && r.rank <= spots;
+      r.move = prev && prev.has(r.player) ? prev.get(r.player) - r.rank : null; r.moveWk = moveWk;
+    });
+    return { rows: ord, race, sos, hard: rankSchedules(sos), spots };
+  }
+  function bandHtml(d) {
+    const w = d.week;
+    return `<div class="sf-band" id="sf-band"><div class="sup-seg">${[['through', `Through Week ${w - 1}`], ['proj', `Week ${w} projected`]]
+      .map(([k, l]) => `<button type="button" data-sm="${k}" class="${k === sMode ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
+  }
+  // The pinned switch needs the nav bar's height to sit under it, and marks
+  // itself .stuck while pinned.
+  function watchBand() {
+    const el = document.getElementById('sf-band');
+    if (!el) return;
+    const bar = document.querySelector('.nav-bar');
+    if (bar) document.documentElement.style.setProperty('--nav-h', bar.offsetHeight + 'px');
+    const top = parseFloat(getComputedStyle(el).top) || 0;
+    el.classList.toggle('stuck', window.scrollY > 0 && el.getBoundingClientRect().top <= top + 1);
+  }
+  addEventListener('scroll', () => requestAnimationFrame(watchBand), { passive: true });
+  addEventListener('resize', () => requestAnimationFrame(watchBand));
+
+  let formerCount = 0, prevRank = null, lastWeek = 0, bumpExt = null;
   function row(r, k, n, type, complete, year, race, sos, hard, form) {
     const cls = ['qrow'];
     if (r.former) cls.push('former');
     else if (r.rank === 1) cls.push('top'); else if (r.rank === n - (year === 'all' ? formerCount : 0)) cls.push('last');
     else if (type === 'reg' && complete && r.s.playoff > 0) cls.push('po');
+    else if (r.inSpot) cls.push('in');
     if (isMe(r.player)) cls.push('me');
     const badges = [];
     if (year !== 'all' && complete && type === 'final') {
@@ -357,12 +474,17 @@
     if (race2) metaParts.push(`<span class="pfpa">${race2}</span>`);
     const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
     let moveHtml = '';
-    if (prevRank && prevRank.has(r.player) && r.rank) {
-      const mv = prevRank.get(r.player) - r.rank;
+    // A season with the Worker's data (renderLive) brings its own move and
+    // the week it is measured from; otherwise last week's ranks above.
+    const mvFrom = r.moveWk != null ? r.moveWk : lastWeek;
+    const mv = r.move != null ? r.move : (prevRank && prevRank.has(r.player) && r.rank ? prevRank.get(r.player) - r.rank : null);
+    if (mv != null) {
       const txt = mv > 0 ? `▲ ${mv}` : mv < 0 ? `▼ ${-mv}` : '–';
       const say = mv > 0 ? `Up ${mv}` : mv < 0 ? `Down ${-mv}` : 'No change';
-      moveHtml = `<i class="mv${mv > 0 ? ' up' : mv < 0 ? ' down' : ''}" title="${say} since Week ${lastWeek}" aria-label="${say} since Week ${lastWeek}">${txt}</i>`;
+      moveHtml = `<i class="mv${mv > 0 ? ' up' : mv < 0 ? ' down' : ''}" title="${say} since Week ${mvFrom}" aria-label="${say} since Week ${mvFrom}">${txt}</i>`;
     }
+    // Playoff odds as of the end of last week (Through mode only).
+    if (typeof r.odds === 'number') moveHtml += `<i class="od ${r.odds >= 50 ? 'high' : 'low'}" title="Playoff odds" aria-label="Playoff odds ${r.odds.toFixed(0)}%">${r.odds.toFixed(0)}%</i>`;
     // Your Daddy / Your Bitch (rivals.js), in your ring color, after the name.
     return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}" data-rv="${esc(r.player)}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline">${badges.join('')}</span></div>${Rivals.pill(r.player) ? `<div class="rv-row">${Rivals.pill(r.player)}</div>` : ''}` +
       `<div class="meta">${metaHtml}</div></div>` +
@@ -458,7 +580,7 @@
       $('standings-container').innerHTML = `<div class="glass"><div class="ft-body" style="padding:18px">${bracketView(year)}</div></div>`;
       return;
     }
-    const rows = build(year, tab);
+    let rows = build(year, tab);
     formerCount = rows.filter(r => r.former).length;
     prevRank = year === D.currentYear && !complete ? lastWeekRanks(year) : null;
     // The season in progress gets the playoff race (site audit 29): a
@@ -468,8 +590,8 @@
     // once the playoffs start too.
     const live = year === D.currentYear && !complete;
     const set = live && D.settings && D.settings[year];
-    const spots = set ? set.playoff_teams : 0;
-    const race = set ? playoffRace(rows.map(r => ({ w: r.s.reg_w + r.s.med_w, l: r.s.reg_l + r.s.med_l })), spots,
+    let spots = set ? set.playoff_teams : 0;
+    let race = set ? playoffRace(rows.map(r => ({ w: r.s.reg_w + r.s.med_w, l: r.s.reg_l + r.s.med_l })), spots,
       set.reg_weeks * (year >= D.median_era_start_year ? 2 : 1)) : null;
     // Schedule left, once the Worker answers: from next week on if
     // league.json already has the Worker's current week, else from it.
@@ -484,19 +606,31 @@
         hard = rankSchedules(sos);
       }
     }
+    // The season in progress with the Worker's numbers: the Through /
+    // projected switch, and its rows in place of league.json's.
+    const useBand = live && bandOn();
+    bumpExt = null;
+    if (useBand) {
+      const lv = liveRows(year, sMode);
+      rows = lv.rows; race = lv.race; sos = lv.sos; hard = lv.hard; spots = lv.spots; prevRank = null;
+      if (sMode === 'proj') bumpExt = new Map(rows.map(r => [r.player, r.rank]));
+    }
     const legend = tab === 'reg' && complete
       ? '<div class="legend"><span><i style="background:var(--turf)"></i>Made the playoffs</span><span><i style="background:var(--line)"></i>Missed the playoffs</span></div>'
       : '';
     const note = year === 'all' ? 'Every season combined, current teams ranked by win percentage (former teams listed after). Median games count from 2025 on.' : year >= 2025 ? 'Wins and losses include the weekly median game.' : '';
     $('tabs').innerHTML = TABS.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}"${k === tab && note ? ` title="${esc(note)}"` : ''}>${l}</button>`).join('');
     // 18px above the first row (or the legend) matches the rows' 18px sides.
-    $('standings-container').innerHTML = `<div class="glass">${legend}<div style="padding:${legend ? 14 : 18}px 18px 20px">${rows.map((r, k) => row(r, k, rows.length, tab, complete, year, race && race[k], sos && sos[k], hard && hard[k], live ? formOf(year, r.player) : null) + (spots && k === spots - 1 && rows.length > spots ? PLAYOFF_LINE : '')).join('')}</div></div>` +
+    $('standings-container').innerHTML = (useBand ? bandHtml(LIVE.raw) : '') + `<div class="glass">${legend}<div style="padding:${legend ? 14 : 18}px 18px 20px">${rows.map((r, k) => row(r, k, rows.length, tab, complete, year, race && race[k], sos && sos[k], hard && hard[k], live ? formOf(year, r.player) : null) + (spots && k === spots - 1 && rows.length > spots ? PLAYOFF_LINE : '')).join('')}</div></div>` +
       // Rank by Week: the season in progress, or a finished one's Regular Szn tab.
       (year !== 'all' && (live || tab === 'reg') ? bumpChart(year) : '');
     drawBump();
+    watchBand();
   }
 
   document.addEventListener('click', e => {
+    const sm = e.target.closest('[data-sm]');
+    if (sm) { sMode = sm.dataset.sm; try { localStorage.setItem('standingsViewMode', sMode); } catch (err) {} render(); return; }
     const t = e.target.closest('[data-t]');
     if (t) { tab = t.dataset.t; render(); return; }
     const b = e.target.closest('#bump [data-m]');
