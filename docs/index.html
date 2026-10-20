@@ -3876,9 +3876,9 @@
 
     const withDraftPos = players.filter(p => has(p, p => p.draft && p.draft.avg_position));
     const worstDraftPos = maxBy(withDraftPos, p => p.draft.avg_position);
-    add(worstDraftPos, `${worstDraftPos && worstDraftPos.name} has the league's worst average draft position, ${hi(fmtScore(worstDraftPos && worstDraftPos.draft.avg_position))}.`);
+    add(worstDraftPos, `${worstDraftPos && worstDraftPos.name} has the league's lowest average draft position, ${hi(fmtScore(worstDraftPos && worstDraftPos.draft.avg_position))}.`);
     const bestDraftPos = minBy(withDraftPos, p => p.draft.avg_position);
-    add(bestDraftPos, `${bestDraftPos && bestDraftPos.name} has the league's best average draft position, ${hi(fmtScore(bestDraftPos && bestDraftPos.draft.avg_position))}.`);
+    add(bestDraftPos, `${bestDraftPos && bestDraftPos.name} has the league's highest average draft position, ${hi(fmtScore(bestDraftPos && bestDraftPos.draft.avg_position))}.`);
 
     // ----- Per-manager: active streak (career-spanning, from completed
     // games only -- not tied to anything still in progress). -----
