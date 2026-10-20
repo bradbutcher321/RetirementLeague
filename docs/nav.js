@@ -124,13 +124,25 @@
     btn.setAttribute('aria-label', 'Search');
     btn.innerHTML = ICONS.search;
     btn.addEventListener('click', openSearch);
-    if (!row.classList.contains('header-row')) btn.classList.add('plain');
     row.appendChild(btn);
-    // Sits left of the Updated stamp (and the dashboard's week stepper).
+    // Centered on the dashboard's week stepper when it shows, else on the
+    // page title; left of the Updated stamp.
     const stamp = row.querySelector('.updated-block');
-    if (stamp && window.ResizeObserver) {
-      new ResizeObserver(() => { btn.style.right = (stamp.offsetWidth + 12) + 'px'; }).observe(stamp);
+    const place = () => {
+      const step = row.querySelector('.wk-step:not([hidden])');
+      const t = step || row.querySelector('h1') || stamp;
+      if (!t) return;
+      const r = row.getBoundingClientRect(), q = t.getBoundingClientRect();
+      btn.style.top = (q.top + q.height / 2 - r.top - btn.offsetHeight / 2) + 'px';
+      btn.style.right = stamp ? (stamp.offsetWidth + 12) + 'px' : '0px';
+    };
+    place();
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(place);
+      ro.observe(row);
+      if (stamp) ro.observe(stamp);
     }
+    window.addEventListener('load', place);
   }
 
   // ---------- Search (site audit III #10) ----------
