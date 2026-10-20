@@ -115,6 +115,13 @@
 
   /* ---------- Live now, and the list beside it on a wide screen ---------- */
   .fd-side:empty{ display: none; }
+  /* From 1080px the ticker lives in the side column as a list, so the
+     list keeps its width all week, live games or not. */
+  @media (min-width: 1080px){
+    .fd-side .tk{ flex-direction: column; overflow: visible; margin: 0; padding: 0; gap: 6px; }
+    .fd-side .tk-t, .fd-side .tk-t.all{ flex: none; width: 100%; min-width: 0; }
+    .fd-side .fd-live{ margin-top: 16px; }
+  }
   .fd-side{ margin-bottom: 12px; min-width: 0; }
   .fd-main{ min-width: 0; }
   @media (min-width: 900px){
@@ -286,6 +293,8 @@
     scope = localStorage.getItem('feedScope') || 'mine';
     filter = localStorage.getItem('feedFilter') === 'all' ? 'all' : 'big';
   } catch (e) {}
+  const WIDE = matchMedia('(min-width: 1080px)');
+  WIDE.addEventListener('change', () => { if (loaded) render(); });
   const ET = 'America/New_York';
   const fdTime = ms => new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: ET });
   const fdDay = ms => new Date(ms).toLocaleDateString('en-US', { weekday: 'long', timeZone: ET });
@@ -389,24 +398,27 @@
     };
     const tk = document.getElementById('fd-tk');
     const tkLeft = tk ? tk.scrollLeft : 0;
-    document.getElementById('fd-band').innerHTML =
+    const tkHtml =
       `<div class="tk" id="fd-tk" role="group" aria-label="Whose plays">
         <button type="button" class="tk-t all${pair ? '' : ' on'}" data-fd-scope="all" aria-pressed="${!pair}"><span class="tk-all">Everyone</span><span class="tk-sub">${live.length ? `${live.length} game${live.length === 1 ? '' : 's'} live` : `${order.length} matchups`}</span></button>
         ${order.map((p, i) => tile(p, i === 0 && mineP ? 'mine' : 'm:' + p[0])).join('')}
-      </div>
+      </div>`;
+    // On a wide screen the ticker moves out of the band into the side column.
+    const wide = WIDE.matches;
+    document.getElementById('fd-band').innerHTML = (wide ? '' : tkHtml) + `
       <div class="fd-row2">
         <div class="seg" role="group" aria-label="Which plays">${btn('filter', 'big', 'Big plays', filter === 'big')}${btn('filter', 'all', 'All', filter === 'all')}</div>
         <div class="seg" role="group" aria-label="Row detail">${btn('view', 'detailed', 'Detailed', view === 'detailed')}${btn('view', 'compact', 'Compact', view === 'compact')}</div>
       </div>`;
-    document.getElementById('fd-tk').scrollLeft = tkLeft;
+    if (!wide) document.getElementById('fd-tk').scrollLeft = tkLeft;
     // Whose score moved since the last poll: their ticker number flashes gold.
     managers.forEach(m => {
       const was = prevCur.get(m), now = cur.get(m) || 0;
-      if (was != null && Math.abs(was - now) >= 0.005) document.querySelectorAll(`#fd-band [data-tk="${CSS.escape(m)}"]`).forEach(el => el.classList.add('bump'));
+      if (was != null && Math.abs(was - now) >= 0.005) document.querySelectorAll(`.tk [data-tk="${CSS.escape(m)}"]`).forEach(el => el.classList.add('bump'));
       prevCur.set(m, now);
     });
     renderAsk();
-    renderSide(pair, me, opp, tone);
+    renderSide(pair, me, opp, tone, wide ? tkHtml : '', order.length);
 
     // ----- The list -----
     if (game && !games.some(g => g.key === game) && !events.some(e => gameKey(e.tm, e.op) === game)) game = null;
@@ -492,7 +504,7 @@
   // still to come. On a matchup, the same strip counting only its starters:
   // its games, its players in them, its starters per kickoff. On a wide
   // screen the same tiles stack beside the list.
-  function renderSide(pair, me, opp, tone) {
+  function renderSide(pair, me, opp, tone, tkHtml, nMatchups) {
     const side = document.getElementById('fd-side');
     const strip = document.getElementById('fd-lns');
     const left = strip ? strip.scrollLeft : 0;
@@ -533,6 +545,7 @@
       if (live.length || done.length || laterTile) html = `<div class="ln-h"><span class="ln-cap">${head}</span><span class="ln-sub">${sub}</span></div>
         <div class="ln-strip" id="fd-lns">${live.map(tileOf).join('')}${done.map(tileOf).join('')}${laterTile}</div>`;
     }
+    if (tkHtml) html = `<div class="ln-h"><span class="ln-cap">Scores</span><span class="ln-sub">${nMatchups} matchups</span></div>${tkHtml}` + (html ? `<div class="fd-live">${html}</div>` : '');
     side.innerHTML = html;
     document.getElementById('fd-grid').classList.toggle('has-side', !!html);
     const s = document.getElementById('fd-lns');
@@ -565,6 +578,8 @@
     if (s || f || v) { seen = 0; render(); }
   });
   document.getElementById('fd-side').addEventListener('click', e => {
+    const sc = e.target.closest('[data-fd-scope]');
+    if (sc) { scope = sc.dataset.fdScope; game = null; try { localStorage.setItem('feedScope', scope); } catch (err) {} seen = 0; render(); return; }
     const g = e.target.closest('[data-fd-game]');
     if (!g) return;
     game = game === g.dataset.fdGame ? null : g.dataset.fdGame;
