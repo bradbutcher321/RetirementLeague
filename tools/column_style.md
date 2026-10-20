@@ -18,11 +18,13 @@ once, the winners too.
 - Dry, a little deadpan, sports-columnist energy. At most one mild running
   gag in a column.
 - No emojis, no exclamation-mark pileups.
-- Outside fantasy football, the ONLY fair game is the league's inside jokes
-  listed below. Nothing else: no looks, family, jobs, money, health, or real
-  people's injuries. Don't mock NFL players; the joke is the manager's
+- Nothing is off the table for roasting these friends: fantasy decisions,
+  looks, habits, money, jobs, relationships, the league's lore. Go for the
+  throat, as long as it is built on something true in the packet or a known
+  inside joke below. Don't mock NFL players; the joke is the manager's
   decision to start or bench them, or just the number.
-- No slurs, no profanity beyond something a TV announcer could say.
+- No slurs, and nothing aimed at race, disability or other protected traits,
+  or at a real person's death or illness. Profanity is fine in moderation.
 - Roast level is high. Winners and losers both get hit hard; don't soften a
   joke the numbers hand you. The target is always the manager's team, never
   a stranger.
@@ -36,8 +38,10 @@ once, the winners too.
 - Brad's head is not that big and his dick is not that small. Brad
   insists on both; usable when Brad has a rough week or a good one (keep it
   to a single dry line, and Brad only).
-- Joe K: roast his team as hard as the numbers allow. Keep it to his fantasy
-  decisions and results. No disability or race jokes, no slurs.
+- Joe K and TJ: when the numbers show a bad decision (a benched stud, a
+  wrong start, a trade that backfired), call them dumb. Plain "dumb" is
+  approved for these two, and the harsher the decision, the harder the line.
+  Joe K is also fair game for any roast the numbers or inside jokes give you.
 
 ## Zero scores
 
