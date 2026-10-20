@@ -45,6 +45,8 @@
  * (scheduled() also runs healthCheck.js once a day; site audit III #26.)
  * POST /push/subscribe, /push/unsubscribe -> Home Screen app
  *                      notifications (see push.js, site audit II #37).
+ * GET /push/recent?me= -> the last seven days of alerts for that manager
+ *                      (You > Notifications > Recent; push.js, audit IV #11).
  * POST /auth/claim, GET /auth/me, POST /auth/signout, POST /auth/admin ->
  *                      manager sign-in (see auth.js, site audit III #24).
  * POST /admin, GET /site-info -> the Commissioner page's tools, and what the
@@ -66,7 +68,7 @@ import { getStats, recordHit } from "./analytics.js";
 import { dispatchParlayRefresh, dispatchParlayRefreshIfNeeded } from "./parlayRefresh.js";
 import { enterParlay, getParlayWeek } from "./parlayEntry.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
-import { checkPushEvents, subscribe, unsubscribe } from "./push.js";
+import { checkLegReminders, checkPushEvents, recent, subscribe, unsubscribe } from "./push.js";
 import { getPlayerLog } from "./playerLog.js";
 import { getDraft } from "./draft.js";
 import { feedBoard, getFeed, recordScoreEvents } from "./scoreFeed.js";
@@ -244,6 +246,11 @@ export default {
       const result = await getPlayerLog(env, new URL(request.url)).catch((err) => ({ status: 502, body: { error: String(err) } }));
       return jsonResponse(result.body, headers, result.status);
     }
+    if (path === "/push/recent") {
+      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await recent(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
+    }
     if (PUSH_ROUTES[path]) {
       if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await PUSH_ROUTES[path](request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
@@ -363,12 +370,14 @@ export default {
           await writeCache(env, now, dashboard, entry);
           feed = recordScoreEvents(env, entry?.data, dashboard).catch((err) => console.error("Feed write failed:", err));
         }
-        const [snap, push] = await Promise.allSettled([
+        const [snap, push, legs] = await Promise.allSettled([
           tenth ? recordMedianSnapshot(env, dashboard) : null,
           checkPushEvents(env, dashboard),
+          checkLegReminders(env),
           feed,
         ]);
         if (push.status === "rejected") console.error("Push check failed:", push.reason);
+        if (legs.status === "rejected") console.error("Leg reminder check failed:", legs.reason);
         if (snap.status === "rejected") throw snap.reason;
       })(),
     ]);

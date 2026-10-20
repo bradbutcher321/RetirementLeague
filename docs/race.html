@@ -27,8 +27,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=32">
-<link rel="stylesheet" href="nav.css?v=24">
-<link rel="stylesheet" href="features.css?v=3">
+<link rel="stylesheet" href="nav.css?v=25">
+<link rel="stylesheet" href="features.css?v=7">
 </head>
 <body>
   <div id="site-nav"></div>
@@ -49,9 +49,9 @@
     <div id="view"><span class="sr-only">Loading…</span></div>
     <footer id="site-footer"></footer>
   </div>
-<script src="nav.js?v=33"></script>
+<script src="nav.js?v=34"></script>
 <script src="page-common.js?v=39"></script>
-<script src="race-sim.js?v=1"></script>
+<script src="race-sim.js?v=2"></script>
 <script>
   // Playoff Race (site audit III #2, IV #2). The simulation is the site's
   // one, in race-sim.js, so these odds match every other page. Pick this
@@ -79,6 +79,20 @@
     const pk = sched[0];
     const swing = TEAMS.map(t => ({ t, d: (BASELINE[t].ifWin ?? 0) - (BASELINE[t].ifLoss ?? 0) })).filter(x => BASELINE[x.t].ifWin != null && BASELINE[x.t].ifLoss != null).sort((a, b) => b.d - a.d).slice(0, 3);
     const rec = t => `${base[t].w}-${base[t].l}`;
+    // Your path (audit IV #12): the records your season ends on most often, and how often each one makes it.
+    const meT = TEAMS.find(t => isMe(t));
+    let pathCard = '';
+    if (meT && res[meT].fw) {
+      const total = INP.reg * 2, fw = res[meT].fw;
+      const share = k => fw[k][0] / RUNS;
+      const common = Object.keys(fw).map(Number).sort((a, b) => share(b) - share(a)).slice(0, 6).sort((a, b) => b - a);
+      pathCard = `<div class="glass ft-sec"><div class="panel-title">Your path <span class="ft-chip">${rec(meT)} now</span></div>
+        <div class="ft-note">Your playoff odds for each record you could finish with, and how often the season ends there.</div>
+        <div class="ft-body"><div class="ft-tiles rc-path">${common.map(k => {
+          const p = fw[k][1] * 100 / fw[k][0], tone = p >= 90 ? ' good' : p <= 10 ? ' bad' : '';
+          return `<div class="ft-tile${tone}"><div class="ft-tl">${k}-${total - k}</div><div class="ft-tv">${pct(p)}</div><div class="ft-ts">${Math.max(1, Math.round(share(k) * 100))}% of seasons</div></div>`;
+        }).join('')}</div></div></div>`;
+    }
     $('view').innerHTML = `<div class="rc-intro">Pick this week’s winners, or leave a game open. Each change replays the rest of the season ${RUNS.toLocaleString('en-US')} times. Through Week ${DONE}.</div>
       <div class="rc-grid"><div>
         <div class="glass"><div class="panel-title">Week ${PICK_WEEK} <button type="button" class="ft-btn sm" data-reset${n ? '' : ' disabled'}>Reset</button></div>
@@ -90,6 +104,7 @@
           <div class="ft-note">Each team’s playoff odds with a win and with a loss.</div>
           <div class="ft-body">${swing.map(({ t, d }) => `<div class="ft-item rc-sw"><b>${esc(t)}</b>
             <div class="rc-sw-r"><span>Win <b class="turf">${pct(BASELINE[t].ifWin)}</b></span><span>Lose <b class="lossc">${pct(BASELINE[t].ifLoss)}</b></span><span>${Math.round(d)} pts</span></div></div>`).join('')}</div></div>` : ''}
+        ${pathCard}
       </div><div>
         <div class="glass"><div class="panel-title">Odds <span class="ft-chip">${RUNS.toLocaleString('en-US')} seasons</span></div>
           <div class="ft-body"><div class="rc-head"><span></span><span>Playoffs</span><span>Bye</span><span>Sacko</span></div>

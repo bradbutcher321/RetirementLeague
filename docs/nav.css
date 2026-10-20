@@ -380,6 +380,24 @@
 .you-copy.done .you-copy-lab{ background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--lead-line); }
 .you-row{ display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 0 4px; font-size: 0.9rem; cursor: pointer; }
 .you-row.dis{ color: var(--text-dim); cursor: default; }
+/* Hidden cards in Settings (audit IV #14) */
+.you-row.hid{ cursor: default; }
+.you-show{ flex: none; min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--gold); font: 700 0.8rem var(--body); cursor: pointer; }
+.you-show:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
+/* Recent alerts at the top of Notifications (audit IV #11) */
+#you-recent{ margin-bottom: 14px; }
+.you-als{ border-radius: 12px; overflow: hidden; }
+.you-al{ display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 12px; color: var(--text); text-decoration: none; }
+.you-al + .you-al{ border-top: 1px solid var(--line); }
+.you-al i{ width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: rgba(255,255,255,0.05); color: #D3D3CF; }
+.you-al i svg{ width: 16px; height: 16px; }
+.you-al b{ display: block; font-size: 0.82rem; font-weight: 600; line-height: 1.3; }
+.you-al > span > span{ display: block; color: var(--text-dim); font-size: 0.74rem; line-height: 1.35; margin-top: 1px; }
+.you-al time{ color: var(--text-dim); font-size: 0.68rem; white-space: nowrap; padding-top: 2px; }
+.you-al:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+@media (hover: hover){ .you-al:hover{ background: var(--item-hover); } }
+.you-more{ display: block; width: 100%; min-height: 44px; margin-top: 2px; border: 0; background: none; color: var(--gold); font: 600 0.8rem var(--body); cursor: pointer; }
+.you-more:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
 .you-types{ margin: 2px 0 0 0; padding-left: 10px; border-left: 1px solid var(--line); }
 .you-types .you-row{ font-size: 0.84rem; min-height: 40px; }
 .you-types .you-row:has(small){ padding-top: 7px; padding-bottom: 7px; }

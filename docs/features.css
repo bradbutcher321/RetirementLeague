@@ -28,6 +28,12 @@
 .ft-tile.lead{ border-color:var(--lead-line); background:var(--lead-tint); }
 .ft-tl{ color:var(--text-dim); font-size:0.6rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ft-tv{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; line-height:1.15; margin-top:3px; font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--gold); }
+.ft-ts{ color:var(--text-dim); font-size:0.66rem; line-height:1.35; margin-top:2px; }
+.ft-tile.good{ border-color:var(--win-line); background:var(--win-tint); } .ft-tile.good .ft-tv{ color:var(--turf); }
+.ft-tile.bad{ border-color:var(--loss-line); background:var(--loss-tint); } .ft-tile.bad .ft-tv{ color:var(--loss); }
+/* Playoff Race's Your path: the record is the tile's label, so it reads as a name, not a caption. */
+.rc-path .ft-tile{ padding:10px 6px; }
+.rc-path .ft-tl{ font-family:var(--scoreboard); font-size:1rem; color:var(--text); letter-spacing:0.02em; text-transform:none; font-weight:700; }
 .ft-ts{ color:var(--text-dim); font-size:0.66rem; line-height:1.35; margin-top:2px; overflow-wrap:anywhere; }
 
 /* Rows */

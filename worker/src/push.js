@@ -29,9 +29,16 @@
  *   parlayAll  every leg that hits while the parlay is alive, then one
  *          "killed" when it dies (killed_by in the parlay data); legs
  *          whose games start after the kill send nothing
+ *   legIn  your parlay leg isn't in yet (site audit IV #10): Wednesday from
+ *          7 PM ET and Thursday from 11 AM ET while Parlay Legs is open,
+ *          only to a manager with no leg, saying how many are in
+ *          (checkLegReminders, from the same cron run)
  * Each event is sent once: its key goes in push_sent the first time it is
  * seen, whether or not anyone was subscribed, so a new subscriber never
  * gets a backlog of things that already happened.
+ *
+ * What each event said is kept in push_log too (audit IV #11), so You >
+ * Notifications can list the last seven days: GET /push/recent?me= (recent).
  */
 import { sendPush } from "./webpush.js";
 // The records rules, shared with the dashboard (docs/record-watch.js).
@@ -41,8 +48,9 @@ import LineupCheck from "../../docs/lineup-check.js";
 // Who beats you most / who you beat most, shared with the standings tags and the tap-a-name sheet.
 import Rivals from "../../docs/rivals.js";
 import { commissioners } from "./roles.js";
+import { legsSummary } from "./legs.js";
 
-const PREF_KEYS = ["final", "median", "lineup", "rival", "recap", "record", "parlay", "parlayAll", "health"];
+const PREF_KEYS = ["final", "median", "lineup", "rival", "recap", "record", "parlay", "parlayAll", "legIn", "health"];
 // Off unless asked for: everyone else's legs is a lot of buzzing, and it
 // came after people had already subscribed with the four above on. "health"
 // is the commissioner's daily site check (healthCheck.js). "rival" is new
@@ -79,6 +87,44 @@ export async function unsubscribe(request, env) {
   if (!body || !body.endpoint) return { status: 400, body: { error: "no endpoint" } };
   await env.DB.prepare("DELETE FROM push_subs WHERE endpoint = ?1").bind(body.endpoint).run();
   return { status: 200, body: { ok: true } };
+}
+
+const LOG_KEEP_MS = 14 * 24 * 3600 * 1000;
+const logStmt = (env, e, ts) => env.DB.prepare(
+  "INSERT OR IGNORE INTO push_log (k, ts, to_mgr, pref, title, body, url, repl, about) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)"
+).bind(e.key, ts, e.to || null, e.pref, e.message.title, e.message.body, e.message.url || "", e.replaces || null, e.about || null);
+const inChunks = async (env, stmts) => { for (let i = 0; i < stmts.length; i += 50) await env.DB.batch(stmts.slice(i, i + 50)); };
+
+/** Marks events as sent, and keeps what they said. `merged` is `events` after
+ * mergeEvents (one message per group); the log gets those, push_sent every key.
+ * The sent keys go in first so an overlapping cron run sees them as sent. */
+async function recordSent(env, events, merged, ts) {
+  await inChunks(env, events.map((e) => env.DB.prepare("INSERT OR IGNORE INTO push_sent (k, ts) VALUES (?1, ?2)").bind(e.key, ts)));
+  await inChunks(env, merged.map((e) => logStmt(env, e, ts)));
+  await env.DB.prepare("DELETE FROM push_log WHERE ts < ?1").bind(ts - LOG_KEEP_MS).run().catch(() => {});
+}
+
+/** Once, the first time the log exists: logs the events push_sent already had
+ * (this week's), at the time each was first seen, so the list isn't empty
+ * until the next event. */
+async function backfillLog(env, events, seen) {
+  const done = await env.DB.prepare("SELECT v FROM site_settings WHERE k = 'push_log_backfill'").first().catch(() => ({}));
+  if (done) return;
+  const old = events.filter((e) => seen.has(e.key));
+  const merged = mergeEvents(old);
+  await inChunks(env, merged.map((e) => logStmt(env, e, seen.get(e.key))));
+  await env.DB.prepare("INSERT OR REPLACE INTO site_settings (k, v, updated) VALUES ('push_log_backfill', '1', ?1)").bind(Date.now()).run();
+}
+
+/** GET /push/recent?me=NAME -> the last seven days of alerts that went to
+ * everyone or to that manager, newest first. */
+export async function recent(request, env) {
+  const me = (new URL(request.url).searchParams.get("me") || "").slice(0, 40);
+  const { results } = await env.DB.prepare(
+    `SELECT k, ts, pref, title, body, url, repl, about FROM push_log
+     WHERE ts > ?1 AND (to_mgr IS NULL OR LOWER(to_mgr) = LOWER(?2)) ORDER BY ts DESC LIMIT 80`
+  ).bind(Date.now() - 7 * 24 * 3600 * 1000, me).all();
+  return { status: 200, body: { alerts: results.map((r) => ({ k: r.k, ts: r.ts, pref: r.pref, title: r.title, body: r.body, url: r.url, replaces: r.repl, about: r.about })) } };
 }
 
 /** Sends, and forgets a subscription the push service says is gone. */
@@ -410,18 +456,22 @@ export async function checkPushEvents(env, dashboard) {
   // Only the ones not seen before. The batch's INSERT OR IGNORE makes a
   // second overlapping cron run see them as already sent.
   const keys = events.map((e) => e.key);
-  const seen = new Set();
+  const seen = new Map();
   for (let i = 0; i < keys.length; i += 50) {
     const chunk = keys.slice(i, i + 50);
-    const { results } = await env.DB.prepare(`SELECT k FROM push_sent WHERE k IN (${chunk.map(() => "?").join(",")})`).bind(...chunk).all();
-    for (const r of results) seen.add(r.k);
+    const { results } = await env.DB.prepare(`SELECT k, ts FROM push_sent WHERE k IN (${chunk.map(() => "?").join(",")})`).bind(...chunk).all();
+    for (const r of results) seen.set(r.k, r.ts);
   }
+  await backfillLog(env, events, seen).catch((err) => console.error("Alert log backfill failed:", err && err.stack || err));
   const newEvents = events.filter((e) => !seen.has(e.key));
   if (!newEvents.length) return;
-  const now = Date.now();
-  await env.DB.batch(newEvents.map((e) => env.DB.prepare("INSERT OR IGNORE INTO push_sent (k, ts) VALUES (?1, ?2)").bind(e.key, now)));
   const fresh = mergeEvents(newEvents);
+  await recordSent(env, newEvents, fresh, Date.now());
+  await sendFresh(env, fresh);
+}
 
+/** Delivers each new event to the subscribers it's for. */
+async function sendFresh(env, fresh) {
   const { results: subs } = await env.DB.prepare("SELECT * FROM push_subs").all();
   if (!subs.length) return;
   const sends = [];
@@ -440,6 +490,51 @@ export async function checkPushEvents(env, dashboard) {
     }
   }
   await Promise.allSettled(sends);
+}
+
+// ---------- "Your leg isn't in yet" (site audit IV #10) ----------
+const ET_PARTS = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", hour: "2-digit", hourCycle: "h23" });
+
+/** Which reminder `now` is in the window of: "wed" from 7 PM Eastern
+ * Wednesday, "thu" from 11 AM Eastern Thursday (the legs lock at 1 PM), else
+ * null. The cron fires on the hour, so the first run in the window sends it
+ * and the key keeps the rest quiet. */
+export function legReminderSlot(now = new Date()) {
+  const p = Object.fromEntries(ET_PARTS.formatToParts(now).map((x) => [x.type, x.value]));
+  const hour = Number(p.hour);
+  if (p.weekday === "Wed" && hour >= 19) return "wed";
+  if (p.weekday === "Thu" && hour >= 11 && hour < 13) return "thu";
+  return null;
+}
+
+/** Tells each manager with no leg in that it isn't, while Parlay Legs is open. */
+export async function checkLegReminders(env, now = new Date()) {
+  if (!env.VAPID_PRIVATE_JWK) return;
+  const slot = legReminderSlot(now);
+  if (!slot) return;
+  const sum = await legsSummary(env);
+  if (!sum.windowOpen || sum.locked || !sum.missing.length) return;
+  const left = Math.max(0, sum.locksAt - now.getTime());
+  const hours = Math.round(left / 3600000);
+  const locks = slot === "wed" ? "Legs lock tomorrow at 1:00 PM ET." : hours <= 1 ? "Legs lock at 1:00 PM ET, in about an hour." : `Legs lock at 1:00 PM ET, in about ${hours} hours.`;
+  const events = sum.missing.map((name) => ({
+    key: `legin:${sum.year}:${sum.week}:${slot}:${name}`,
+    to: name,
+    pref: "legIn",
+    message: {
+      title: "Your parlay leg isn't in yet",
+      body: `${sum.legsIn.length} of ${sum.players.length} legs are in. ${locks}`,
+      url: "parlay-legs.html",
+      tag: `legin-${sum.year}-${sum.week}`,
+    },
+  }));
+  const keys = events.map((e) => e.key);
+  const { results } = await env.DB.prepare(`SELECT k FROM push_sent WHERE k IN (${keys.map(() => "?").join(",")})`).bind(...keys).all();
+  const seen = new Set(results.map((r) => r.k));
+  const fresh = events.filter((e) => !seen.has(e.key));
+  if (!fresh.length) return;
+  await recordSent(env, fresh, fresh, now.getTime());
+  await sendFresh(env, fresh);
 }
 
 /** Sends one message to every subscriber with `pref` on (no per-manager

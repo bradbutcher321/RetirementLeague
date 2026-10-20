@@ -54,19 +54,22 @@ compatibility_date = "2024-09-23"
 #   C) every minute, Sat/Sun 4pm-11:59pm UTC -- Saturday NCAAF and Sunday
 #      NFL afternoon/night (starts ~1hr early on Sunday: noon ET, not 1pm).
 #   D) hourly, Thu 12pm-11:59pm UTC -- Thursday daytime before kickoff.
-#   E) hourly, every hour, Mon/Fri/Sat/Sun -- the "otherwise" baseline for
-#      every remaining game day (redundant with A/B/C where they overlap).
+#   E) hourly, every hour, every day but Tuesday -- the "otherwise" baseline
+#      (redundant with A/B/C/D where they overlap). Wednesday and Thursday
+#      were added for the "your leg isn't in yet" reminders (src/push.js
+#      checkLegReminders, audit IV #10), which send from the first run after
+#      7 PM ET Wednesday and 11 AM ET Thursday: that is the 23:00 UTC run
+#      on Wednesday in EDT and the 00:00 UTC run on Thursday in EST.
 #
-# Nothing runs Tue 5am UTC (Tue 1am ET) through Thu noon UTC (Thu 8am ET,
-# when D takes over) -- that's the deliberate blackout window, and neither
-# Wednesday nor early Thursday appears in any entry below.
+# Tuesday after A's early-morning runs is the one blackout left: nothing runs
+# Tue 5am UTC (Tue 1am ET) through Wed 12am UTC.
 [triggers]
 crons = [
   "* 0-4 * * MON,TUE,FRI,SUN",    # A
   "* 23 * * MON,THU",             # B
   "* 16-23 * * SAT,SUN",          # C
   "0 12-23 * * THU",              # D
-  "0 * * * MON,FRI,SAT,SUN",      # E
+  "0 * * * MON,WED,THU,FRI,SAT,SUN", # E
 ]
 
 # Plain-text config (safe to commit — these are not secrets)

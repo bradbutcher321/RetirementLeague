@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=32">
-<link rel="stylesheet" href="nav.css?v=24">
+<link rel="stylesheet" href="nav.css?v=25">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -134,6 +134,11 @@
   .mu-bar{ display: flex; gap: 3px; height: 5px; }
   .mu-bar span{ border-radius: 3px; background: rgba(255,255,255,0.13); transition: flex-grow .68s cubic-bezier(0.34, 1.56, 0.64, 1), background-color .3s; }
   .mu-bar span.fav{ background: var(--gold); }
+  /* What the trailing team needs (audit IV #13): sits under the odds bar on the
+     trailing side's end, an item-fill strip like the other inline notes. */
+  .mu-need{ margin: 10px 14px 0; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--item); font-size: 0.74rem; line-height: 1.4; color: #D3D3CF; font-variant-numeric: tabular-nums; text-wrap: balance; }
+  .mu-need.home{ text-align: right; }
+  .mu-need b{ color: var(--text); font-weight: 700; }
   .mu-margin{ position: relative; padding: 12px 14px 0; text-align: center; font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   /* A decided card's Share (share.js) rides the margin line's right end, out of the
      flow so the card keeps its height; the text stays centered. */
@@ -855,6 +860,34 @@
   .st-x{ flex: none; align-self: flex-start; background: rgba(255,255,255,0.06); border: none; color: var(--text-dim); border-radius: 999px; width: 30px; height: 30px; font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; position: relative; }
   .st-x::before{ content: ''; position: absolute; inset: -7px; }
   .st-x:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* Catch me up (audit IV #9): takes the status line's place when you come back
+     to games in progress. Scores then and now, the median, the biggest plays. */
+  .cu{ padding: 14px 14px 12px; border: 1px solid var(--item-line); border-radius: 14px; background: linear-gradient(165deg, var(--surface-raised), var(--surface)); }
+  .cu-h{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .cu-h b{ font-size: 0.95rem; }
+  .cu-chip{ flex: none; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .cu-lines{ margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--item); }
+  .cu-row{ display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: 10px; padding: 8px 12px; }
+  .cu-row + .cu-row{ border-top: 1px solid var(--line); }
+  .cu-row .n{ font-weight: 600; font-size: 0.88rem; min-width: 0; }
+  .cu-row .n small{ display: block; font-weight: 400; font-size: 0.72rem; color: var(--text-dim); margin-top: 1px; }
+  .cu-row .from{ color: var(--text-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cu-row .to{ display: block; font-family: var(--scoreboard); font-weight: 800; font-size: 1.25rem; line-height: 1.15; font-variant-numeric: tabular-nums; text-align: right; min-width: 64px; }
+  .cu-row .to.mine{ color: var(--me-ring); }
+  .cu-row .to.dim{ color: var(--text-dim); }
+  .cu-row .d{ display: block; font-size: 0.68rem; font-weight: 700; text-align: right; color: #D3D3CF; font-variant-numeric: tabular-nums; }
+  .cu-plays{ margin-top: 10px; display: grid; gap: 6px; }
+  .cu-play{ display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--item); font-size: 0.8rem; }
+  .cu-play .t{ color: var(--text-dim); font-size: 0.7rem; white-space: nowrap; }
+  .cu-play .w{ min-width: 0; }
+  .cu-play .w b{ font-weight: 600; }
+  .cu-play .w span{ display: block; color: var(--text-dim); font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cu-play .p{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .cu-play.mine .p{ color: var(--me-ring); }
+  .cu-play.td{ border-color: var(--lead-line); }
+  .cu-foot{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
+  .cu-more{ color: var(--gold); font-weight: 600; font-size: 0.8rem; text-decoration: none; padding: 12px 0; }
+  .cu-got{ flex: none; height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid var(--lead-line); background: none; color: var(--gold); font: 700 0.8rem var(--body); cursor: pointer; }
   #me-section .matchups{ grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px){ #me-section .matchups{ max-width: calc(50% - 7px); margin: 0 auto; } }
   #me-section .matchups:empty{ display: none; }
@@ -1340,9 +1373,9 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=33"></script>
+<script src="nav.js?v=34"></script>
 <script src="page-common.js?v=39"></script>
-<script src="race-sim.js?v=1"></script>
+<script src="race-sim.js?v=2"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
 <script src="rivals.js?v=2"></script>
@@ -1576,6 +1609,24 @@
         </div>`;
     }
 
+    // What the trailing team has to do (audit IV #13): the points that pass
+    // the other score (a tie isn't a win, hence the extra cent), spread over
+    // the starters it has left, next to what its projection still expects.
+    // Only while the game is undecided and that team has someone left.
+    let needRow = '';
+    if (!isFinal && awayScore !== homeScore && awayScore + homeScore > 0) {
+      const awayBehind = awayScore < homeScore;
+      const left = awayBehind ? awayInPlay + awayRemaining : homeInPlay + homeRemaining;
+      if (left > 0) {
+        const mgr = awayBehind ? m.awayManager : m.homeManager;
+        const gap = Math.abs(awayScore - homeScore) + 0.01;
+        const proj = parseFloat(awayBehind ? m.awayProjected : m.homeProjected);
+        const toGo = Number.isFinite(proj) ? Math.max(0, proj - (awayBehind ? awayScore : homeScore)) : null;
+        const who = isMe(mgr) ? 'You need' : `${esc(mgr || (awayBehind ? m.awayName : m.homeName))} needs`;
+        needRow = `<div class="mu-need ${awayBehind ? 'away' : 'home'}"><b>${who} ${fmtScore(gap)}</b> from ${left} · about ${fmtScore(gap / left)} each${toGo === null ? '' : ` · projected ${fmtScore(toGo)}`}</div>`;
+      }
+    }
+
     const pips = (players, inPlay, remaining, cls) => {
       const bits = [];
       if (inPlay) bits.push(`<span class="n-live">${inPlay} live</span>`);
@@ -1606,6 +1657,7 @@
           ${side('home', m.homeName, metaParts(m.homeManager, m.homeRecord, m.homeStreak).reverse(), homeScore, awayScore, m.homeProjected, m.homePlayers || [])}
         </div>
         ${oddsRow}
+        ${needRow}
         <div class="mu-foot">
           ${pips(m.awayPlayers || [], awayInPlay, awayRemaining, 'away')}
           ${status}
@@ -2761,7 +2813,7 @@
         if (d && !Array.isArray(d.events)) { feed.missing = true; return; }
         const evs = d && d.week === week ? d.events : [];
         evs.forEach(e => { if (e.id > want.maxId) { want.events.push(e); want.maxId = e.id; } });
-        if (evs.length && feed === want) flDrawAll();
+        if (evs.length && feed === want) { flDrawAll(); if (catchup && shownData) renderStatusLine(shownData); }
       })
       .catch(() => {})
       .finally(() => { want.busy = false; });
@@ -5042,6 +5094,8 @@
     const el = document.getElementById('status-section');
     const teams = data.teams || [];
     const t = getMe() && !data.archived && !data.playoffWeek && data.week ? teams.find(x => x.manager && isMe(x.manager)) : null;
+    catchupTick(data, t);
+    if (t && renderCatchUp(el, data, t)) return;
     const key = `${data.year || leagueYear}:${data.week}`;
     let hidden = false;
     try { hidden = localStorage.getItem(STATUS_KEY) === key; } catch (e) {}
@@ -5069,10 +5123,82 @@
     el.dataset.key = key;
     el.hidden = false;
   }
+  // ---------- Catch me up (audit IV #9) ----------
+  // Every look at the live week leaves a snapshot behind (your score, your
+  // opponent's, the median, and when). Come back to games in progress after
+  // 20 minutes or more and the status line's place shows what changed since:
+  // the scores then and now, the median, and the four biggest plays of your
+  // matchup (the Feed's big plays, feedLoad). Got it puts the status line back,
+  // and so do the games ending. The first look after an app launch reads the
+  // snapshot from localStorage; one after the tab was hidden reads the last
+  // one in memory (a hidden tab doesn't poll).
+  const SEEN_KEY = 'rl-live-seen', AWAY_MS = 20 * 60 * 1000;
+  let catchup = null, lastSnap = null, snapFor = null;
+  const gamesOn = data => {
+    const ms = data.matchups || [];
+    return ms.length > 0 && !ms.every(matchupDecided) && (data.teams || []).some(t => (t.current || 0) > 0);
+  };
+  function liveSnap(data, t) {
+    const m = (data.matchups || []).find(x => isMe(x.awayManager) || isMe(x.homeManager));
+    if (!m || !t) return null;
+    const away = isMe(m.awayManager);
+    return {
+      at: Date.now(), ts: Date.parse(data.updatedAt) || Date.now(), key: `${data.year || leagueYear}:${data.week}`, me: t.manager,
+      opp: away ? m.homeManager : m.awayManager, my: Number(away ? m.awayScore : m.homeScore) || 0, theirs: Number(away ? m.homeScore : m.awayScore) || 0,
+      median: Number(data.currentMedian) || 0,
+    };
+  }
+  function catchupTick(data, t) {
+    if (data !== liveData || data === snapFor || data.archived || data.pastSeason || !t) return;
+    snapFor = data;
+    const snap = liveSnap(data, t);
+    if (!snap) return;
+    let before = lastSnap;
+    if (!before) { try { before = JSON.parse(localStorage.getItem(SEEN_KEY)); } catch (e) {} }
+    if (before && before.key === snap.key && before.me === snap.me && snap.at - before.at >= AWAY_MS && gamesOn(data)) catchup = { snap: before, dismissed: false };
+    if (!gamesOn(data)) catchup = null;
+    // Only a look at the screen counts as having looked.
+    if (!document.hidden) {
+      lastSnap = snap;
+      try { localStorage.setItem(SEEN_KEY, JSON.stringify(snap)); } catch (e) {}
+    }
+  }
+  const cuSigned = n => (n < 0 ? '\u2212' : '+') + Math.abs(n).toFixed(2);
+  function renderCatchUp(el, data, t) {
+    if (!catchup || catchup.dismissed || data !== liveData || !gamesOn(data)) return false;
+    const was = catchup.snap, now = liveSnap(data, t);
+    if (!now || now.key !== was.key) return false;
+    const plays = feedFor(data.week).filter(e => e.k !== 'p' && e.t > was.ts && (e.m === now.me || e.m === now.opp))
+      .sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+    if (Math.abs(now.my - was.my) < 0.005 && Math.abs(now.theirs - was.theirs) < 0.005 && !plays.length) return false;
+    const lead = now.my - now.theirs;
+    const chip = Math.abs(lead) < 0.005 ? 'Tied' : `You ${lead > 0 ? 'lead' : 'trail'} by ${Math.abs(lead).toFixed(2)}`;
+    const row = (label, sub, from, to, cls) => `<div class="cu-row"><span class="n">${label}${sub ? `<small>${sub}</small>` : ''}</span><span class="from">${fmtScore(from)} \u2192</span><span><span class="to ${cls}">${fmtScore(to)}</span><span class="d">${cuSigned(to - from)}</span></span></div>`;
+    const above = now.my - now.median;
+    const medianRow = data.playoffWeek ? '' : row('Median', `you\u2019re ${fmtScore(Math.abs(above))} ${above >= 0 ? 'above' : 'below'} it`, was.median, now.median, 'dim');
+    el.innerHTML = `<div class="cu glass">
+      <div class="cu-h"><b>Since you looked at ${esc(fdTime(was.ts))}</b><span class="cu-chip">${chip}</span></div>
+      <div class="cu-lines">${row(`You \u00b7 ${esc(now.me)}`, '', was.my, now.my, 'mine')}${row(esc(now.opp), '', was.theirs, now.theirs, '')}${medianRow}</div>
+      ${plays.length ? `<div class="cu-plays">${plays.slice(0, 4).map(e => {
+        const what = feedWhat(e);
+        return `<div class="cu-play${e.m === now.me ? ' mine' : ''}${e.d >= 6 && /TD/.test(what) ? ' td' : ''}"><span class="t">${esc(fdTime(e.t))}</span><span class="w"><b>${esc(e.n)}</b><span>${esc(what)} \u00b7 ${e.m === now.me ? 'yours' : esc(e.m) + '\u2019s'}</span></span><span class="p">${cuSigned(e.d)}</span></div>`;
+      }).join('')}</div>` : ''}
+      <div class="cu-foot">${plays.length ? `<a class="cu-more" href="feed.html">${plays.length > 4 ? `All ${plays.length} big plays` : 'Open the Feed'} \u203a</a>` : '<span></span>'}<button type="button" class="cu-got">Got it</button></div>
+    </div>`;
+    el.dataset.key = '';
+    el.hidden = false;
+    return true;
+  }
   document.getElementById('status-section').addEventListener('click', e => {
+    if (e.target.closest('.cu-got')) {
+      if (catchup) catchup.dismissed = true;
+      if (shownData) renderStatusLine(shownData);
+      return;
+    }
     if (!e.target.closest('.st-x')) return;
     const el = document.getElementById('status-section');
-    try { localStorage.setItem(STATUS_KEY, el.dataset.key || ''); } catch (err) {}
+    // The time lets You > Settings > Hidden cards tell this week's closing from an old one.
+    try { localStorage.setItem(STATUS_KEY, el.dataset.key || ''); localStorage.setItem(STATUS_KEY + '-at', String(Date.now())); } catch (err) {}
     el.hidden = true;
     el.innerHTML = '';
   });

@@ -75,7 +75,8 @@ const RaceSim = (() => {
     const gauss = () => { let u = 0, v = 0; while (u === 0) u = rnd(); while (v === 0) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
     const { teams, base, mu, live, sched, week, pickWeek, spots, byes } = inp;
     const N = teams.length;
-    const out = Object.fromEntries(teams.map(t => [t, { po: 0, bye: 0, sacko: 0 }]));
+    // fw: how often the season ends on each win total -> [seasons, seasons in the playoffs] (Playoff Race's Your path, audit IV #12).
+    const out = Object.fromEntries(teams.map(t => [t, { po: 0, bye: 0, sacko: 0, fw: {} }]));
     const cond = force ? { win: Object.fromEntries(teams.map(t => [t, [0, 0]])), loss: Object.fromEntries(teams.map(t => [t, [0, 0]])) } : null;
     for (let k = 0; k < n; k++) {
       const w = {}, pf = {}, pickRes = {};
@@ -102,6 +103,9 @@ const RaceSim = (() => {
       rank.forEach((t, i) => {
         const o = out[t];
         if (i < spots) o.po++;
+        const fw = o.fw[w[t]] || (o.fw[w[t]] = [0, 0]);
+        fw[0]++;
+        if (i < spots) fw[1]++;
         if (i < byes) o.bye++;
         if (i >= N - 2) o.sacko++;
         if (cond && pickRes[t] !== undefined) { const c = pickRes[t] ? cond.win[t] : cond.loss[t]; c[0]++; if (i < spots) c[1]++; }
@@ -125,6 +129,7 @@ const RaceSim = (() => {
     try { const c = JSON.parse(localStorage.getItem(STORE) || 'null'); if (c && c.k === key) odds = c.o; } catch (e) {}
     if (!odds) {
       odds = simulate(inp, RUNS);
+      Object.values(odds).forEach(o => { delete o.fw; }); // only Playoff Race wants these
       try { localStorage.setItem(STORE, JSON.stringify({ k: key, o: odds })); } catch (e) {}
     }
     d.teams.forEach(t => {

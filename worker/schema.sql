@@ -25,6 +25,20 @@ CREATE TABLE IF NOT EXISTS push_sent (
   k TEXT PRIMARY KEY,
   ts INTEGER NOT NULL
 );
+-- What each alert said, for You > Notifications > Recent (src/push.js, audit IV #11):
+-- the last seven days. to_mgr is NULL for an alert that goes to everyone.
+CREATE TABLE IF NOT EXISTS push_log (
+  k TEXT PRIMARY KEY,
+  ts INTEGER NOT NULL,
+  to_mgr TEXT,
+  pref TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  url TEXT NOT NULL DEFAULT '',
+  repl TEXT,
+  about TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_push_log_ts ON push_log(ts);
 -- Manager sign-in (src/auth.js, site audit III #24). A manager's link and
 -- app code are worked out from AUTH_SECRET, their name and gen, so a reset
 -- (gen + 1) replaces both. A session is one signed-in browser or app; only

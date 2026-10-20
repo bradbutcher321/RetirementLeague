@@ -331,6 +331,7 @@
     ['lineup', 'A starter of mine is on bye or out', true],
     ['rival', 'Rival Game Alerts', true],
     ['parlay', 'My parlay leg hits or dies', true],
+    ['legIn', "My leg isn't in yet<small>Wednesday 7 PM and Thursday 11 AM, only while it's missing</small>", true],
     ['parlayAll', "Every leg that hits, until it's killed", false],
     ['recap', 'Week in Review is up', false],
     ['record', 'A league record falls (good or bad)', false],
@@ -686,7 +687,8 @@
   function drawPushPanel() {
     const body = document.getElementById('you-body');
     if (!body) return;
-    body.innerHTML = '<div id="you-push"></div>';
+    body.innerHTML = '<div id="you-recent"></div><div id="you-push"></div>';
+    drawRecent();
     drawPush();
   }
 
@@ -698,6 +700,7 @@
     const set = getSettings();
     const me = getMe();
     const current = meColor()[0];
+    const hidden = hiddenCards();
     body.innerHTML = `
       <label class="you-row"><span>Your matchup at the top of the dashboard<small>Off: it leads the matchups list instead</small></span><input type="checkbox" role="switch" class="you-sw" id="you-set-top"${set.meTop ? ' checked' : ''}></label>
       <div class="you-sec">
@@ -706,7 +709,11 @@
         <div class="you-colors" role="radiogroup" aria-label="Your color">${ME_COLORS.map(([k, name, ring]) =>
           `<button type="button" role="radio" class="you-color${k === current ? ' on' : ''}" data-color="${k}" aria-checked="${k === current}" style="--ring:${ring}"><span class="you-swatch" aria-hidden="true"></span>${esc(name)}</button>`).join('')}</div>
         ${me ? '' : '<div class="you-note">Pick your team under You to see it on the site.</div>'}
-      </div>`;
+      </div>${hidden.length ? `
+      <div class="you-sec">
+        <div class="you-sec-t">Hidden cards</div>
+        ${hidden.map(h => `<div class="you-row hid"><span>${esc(h.label)}<small>${esc(h.note)}</small></span><button type="button" class="you-show" data-show="${h.id}">Show again</button></div>`).join('')}
+      </div>` : ''}`;
     body.querySelector('#you-set-top').addEventListener('change', e => setSetting('meTop', e.target.checked));
     body.querySelectorAll('[data-color]').forEach(b => b.addEventListener('click', () => {
       setSetting('meColor', b.dataset.color);
@@ -714,6 +721,76 @@
       const again = body.querySelector(`[data-color="${b.dataset.color}"]`);
       if (again) again.focus();
     }));
+    body.querySelectorAll('[data-show]').forEach(b => b.addEventListener('click', () => {
+      const card = hidden.find(h => h.id === b.dataset.show);
+      if (card) card.keys.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+      // The dashboard listens for settings changes and redraws, so the card is back before the sheet closes.
+      window.dispatchEvent(new CustomEvent('rl-settings'));
+      drawSettings();
+    }));
+  }
+
+  // Cards a ✕ put away (audit IV #14), each with the localStorage keys that keep it hidden.
+  // The status line is hidden for the week it was closed in, so it only counts for six days.
+  function hiddenCards() {
+    const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+    const out = [];
+    if (get('rl-status-hidden') && Date.now() - Number(get('rl-status-hidden-at') || 0) < 6 * 864e5) {
+      out.push({ id: 'status', label: 'Status line', note: 'Back next week', keys: ['rl-status-hidden', 'rl-status-hidden-at'] });
+    }
+    if (!getMe() && (get('rl-me-ask-hidden') || get('rl-feed-me-ask-hidden'))) {
+      out.push({ id: 'ask', label: 'Which team is yours?', note: 'The ask on the dashboard and the Feed', keys: ['rl-me-ask-hidden', 'rl-feed-me-ask-hidden'] });
+    }
+    if (ios() && !installed() && Number(get('rl-a2hs-hide-until')) > Date.now()) {
+      out.push({ id: 'a2hs', label: 'Add to Home Screen', note: 'Hidden for 30 days', keys: ['rl-a2hs-hide-until'] });
+    }
+    return out;
+  }
+
+  // Recent alerts (audit IV #11): the last seven days of what the Worker sent
+  // you and everyone, each opening the page it's about. Opening the app clears
+  // the icon badge and a swiped-away alert is gone from Notification Center,
+  // so this is where a final score or a dead leg can still be found. Shown
+  // for the switches you have on, as the alerts themselves would be.
+  const ALERT_ICONS = {
+    final: '<path d="M5 21V4M5 5h12l-2.5 3.8L17 12.5H5"/>',
+    rival: '<path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/>',
+    median: '<path d="M4 12h16M7 8l-3 4 3 4M17 8l3 4-3 4"/>',
+    lineup: '<path d="M12 4 3 19h18zM12 10v4M12 17h.01"/>',
+    parlay: '<path d="M5 8a2 2 0 0 0 0 4v1h14v-1a2 2 0 0 1 0-4V7H5zM5 13v4h14v-4M10 7v10"/>',
+    recap: '<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"/>',
+    record: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  };
+  ALERT_ICONS.parlayAll = ALERT_ICONS.legIn = ALERT_ICONS.parlay;
+  const alertWhen = ts => {
+    const tz = { timeZone: 'America/New_York' }, d = new Date(ts);
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', ...tz });
+    return d.toLocaleDateString('en-US', tz) === new Date().toLocaleDateString('en-US', tz) ? time : `${d.toLocaleDateString('en-US', { weekday: 'short', ...tz })} ${time}`;
+  };
+  async function drawRecent() {
+    let alerts = null;
+    try {
+      const res = await fetch(WORKER + '/push/recent?me=' + encodeURIComponent(getMe() || ''), { cache: 'no-store' });
+      if (res.ok) alerts = (await res.json()).alerts;
+    } catch (e) {}
+    const box = document.getElementById('you-recent');
+    if (!box) return;
+    if (!Array.isArray(alerts)) { box.innerHTML = ''; return; }
+    const prefs = getPrefs();
+    const me = (getMe() || '').toLowerCase();
+    // What the Worker would not have sent you: a switch that's off, a rival result that stood in for the plain final, your own leg when My parlay leg is on.
+    const stood = new Set(prefs.rival ? alerts.filter(a => a.replaces).map(a => a.replaces) : []);
+    const list = alerts.filter(a => prefs[a.pref] && !stood.has(a.k) && !(a.about && prefs.parlay && a.about.toLowerCase() === me));
+    const SHOW = 6;
+    const row = a => `<a class="you-al" href="${esc(a.url || 'index.html')}"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ALERT_ICONS[a.pref] || ALERT_ICONS.final}</svg></i><span><b>${esc(a.title)}</b><span>${esc(a.body)}</span></span><time>${esc(alertWhen(a.ts))}</time></a>`;
+    box.innerHTML = `<div class="you-sec-t">Recent · last 7 days</div>` + (list.length
+      ? `<div class="you-als item">${list.slice(0, SHOW).map(row).join('')}</div>${list.length > SHOW ? `<button type="button" class="you-more" data-more>Show ${list.length - SHOW} more</button>` : ''}`
+      : '<div class="you-note">Nothing yet this week.</div>');
+    const more = box.querySelector('[data-more]');
+    if (more) more.addEventListener('click', () => {
+      box.querySelector('.you-als').insertAdjacentHTML('beforeend', list.slice(SHOW).map(row).join(''));
+      more.remove();
+    });
   }
 
   async function drawPush() {
