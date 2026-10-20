@@ -241,7 +241,7 @@ function currentEvents(year, dashboard, parlay, book, rivals) {
             to: me,
             pref: "rival",
             message: {
-              title: k === "daddy" ? `Revenge game vs ${label}` : `${label} is up next`,
+              title: k === "daddy" ? `Revenge game vs. ${label}` : `${label} is up next`,
               body: `${opp} this week. ${said}`,
               url: "index.html",
               tag: `rival-${week}`,
@@ -254,7 +254,7 @@ function currentEvents(year, dashboard, parlay, book, rivals) {
             to: me,
             pref: "rival",
             message: {
-              title: `${label} is up on you`,
+              title: `${label} is pulling away from you`,
               body: `${opp} leads ${f2(theirs)}\u2013${f2(mine)}. ${said}`,
               url: "index.html",
               tag: `rival-${week}`,
@@ -308,7 +308,7 @@ function currentEvents(year, dashboard, parlay, book, rivals) {
   // A starter who can't score (the Lineup Check box, lineup-check.js). One
   // event per starter per week, so he is told about once; `merge` lets
   // checkPushEvents fold the new ones for a manager into a single message.
-  const LINEUP_SAY = { bye: "is on bye", out: "is out", zero: "is questionable and projected at 0" };
+  const LINEUP_SAY = { bye: "is on bye", out: "is out", zero: "is questionable and projected to score 0 points" };
   for (const m of dashboard.matchups || []) {
     for (const [me, players] of [[m.awayManager, m.awayPlayers], [m.homeManager, m.homePlayers]]) {
       if (!me) continue;
