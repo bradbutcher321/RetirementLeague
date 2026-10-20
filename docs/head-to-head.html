@@ -138,8 +138,8 @@
   .mo-base{ stroke:rgba(255,255,255,0.18); stroke-width:1; stroke-dasharray:4 4; vector-effect:non-scaling-stroke; }
   .mo-a{ fill:var(--a); opacity:0.28; } .mo-b{ fill:var(--b); opacity:0.28; }
   .mo-line{ fill:none; stroke:var(--text); stroke-width:1.6; vector-effect:non-scaling-stroke; }
-  .mo-tag{ position:absolute; left:10px; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
-  .mo-tag.a{ top:8px; color:var(--a); } .mo-tag.b{ bottom:24px; color:var(--b); }
+  .mo-tag{ display:block; padding:0 6px; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
+  .mo-tag.a{ color:var(--a); margin-bottom:6px; } .mo-tag.b{ color:var(--b); margin-top:6px; }
   .mo-x{ position:relative; height:16px; margin:2px 4px 0; }
   .mo-x span{ position:absolute; transform:translateX(-50%); color:var(--text-dim); font-size:0.6rem; }
   .leads{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
@@ -386,7 +386,7 @@
     };
     const pa = peak(1), pb = peak(-1);
     const leadFact = (p, name, s) => p ? fact('Biggest lead', `+${p.n}`, `${esc(name)} · ${p.g.year}`, s) : fact('Biggest lead', '—', `${esc(name)} never led`, '');
-    return panel("Who's Been on Top", `<div class="mo"><span class="mo-tag a">${esc(a)} ahead</span><span class="mo-tag b">${esc(b)} ahead</span>${svg}<div class="mo-x">${xl}</div></div>
+    return panel("Who's Been on Top", `<div class="mo"><span class="mo-tag a">${esc(a)} ahead</span>${svg}<span class="mo-tag b">${esc(b)} ahead</span><div class="mo-x">${xl}</div></div>
       <div class="leads">${leadFact(pa, a, 'a')}${leadFact(pb, b, 'b')}</div>`);
   }
 
