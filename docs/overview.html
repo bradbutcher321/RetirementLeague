@@ -158,29 +158,56 @@
   .legend .missed{ border-color:var(--loss-line); background:var(--loss-tint); }
   .legend .sacko{ border-color:var(--loss); background:color-mix(in srgb, var(--loss) 22%, transparent); box-shadow:0 0 5px color-mix(in srgb, var(--loss) 55%, transparent); }
 
-  /* ---------- Leaderboards (audit II #8) ----------
-     Every ranked list is a small card showing its top three, grouped in
-     one panel per subject. Tapping a card opens the whole list: a bottom
-     sheet on a phone, a popover under the card on desktop (the surfaces
-     are theme.css's "Detail panels", shared with Game Records). */
-  .lbg{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
-  @media (min-width:721px){ .lbg{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
-  .lb{ display:flex; flex-direction:column; min-width:0; width:100%; padding:10px 10px 8px; border-radius:10px; border:1px solid var(--item-line); background:var(--item); color:inherit; font:inherit; text-align:left; cursor:pointer; }
+  /* ---------- Leaderboards (audit II #8, redone as Game Records rows) ----------
+     One panel per subject, one row per ranked list: the leader's monogram, the
+     list's name as a caption, the leader and their number. A tie at the top is
+     a pair of monograms; a list with no one manager at the top (a year, a
+     game) keeps the record tile. Tapping a row opens the whole list: a bottom
+     sheet on a phone, a popover under its panel on desktop (the surfaces are
+     theme.css's "Detail panels", shared with Game Records). Signed in, a row
+     you lead gets your ring, and under any other leader a small tag says where
+     you stand. */
+  .lbsecs{ display:grid; grid-template-columns:minmax(0,1fr); gap:12px; align-items:start; }
+  @media (min-width:721px){ .lbsecs{ grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; } }
+  .lbsecs .panel{ scroll-margin-top:76px; }
+  .lbsecs .p-body{ padding:6px 6px 6px; }
+  .lbsecs .p-head{ padding:14px 16px 4px; }
+  .lb{ display:grid; grid-template-columns:36px minmax(0,1fr) auto 12px; gap:12px; align-items:center; width:100%; padding:10px; font:inherit; color:inherit; text-align:left; background:none; border:1px solid transparent; border-radius:10px; cursor:pointer; position:relative; }
+  .lb + .lb::before{ content:''; position:absolute; left:10px; right:10px; top:-1px; height:1px; background:var(--line); }
+  .lb.me{ outline-offset:-1.5px; }
+  .lb.me + .lb, .lb + .lb.me{ margin-top:3px; }
   @media (hover:hover){ .lb:hover{ background:var(--item-hover); } }
-  .lb:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  .lb:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
   .lb.open{ background:var(--lead-tint); border-color:var(--lead-line); }
-  .lb-t{ font-weight:700; font-size:0.78rem; margin-bottom:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .lb-r{ display:grid; grid-template-columns:14px minmax(0,1fr) auto; gap:6px; align-items:baseline; padding:2px 0; font-size:0.76rem; }
-  .lb.years .lb-r{ grid-template-columns:20px minmax(0,1fr) auto; }
-  .lb-r i{ font-style:normal; font-family:var(--scoreboard); font-weight:700; font-size:0.76rem; color:var(--text-dim); }
-  .lb-r span{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .lb-r b{ font-family:var(--scoreboard); font-weight:700; font-size:0.92rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .lb-r.lead i, .lb-r.lead b{ color:var(--gold); } .lb-r.low i, .lb-r.low b{ color:var(--loss); }
-  .lb-r b.up{ color:var(--turf); } .lb-r b.down{ color:var(--loss); }
-  .lb-f{ display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:auto; padding-top:5px; color:var(--text-dim); font-size:0.64rem; }
-  .lb.open .lb-f .chev{ color:var(--gold); }
+  .lb.open::before, .lb.open + .lb::before{ display:none; }
+  .lb .holder{ margin-top:2px; }
+  .lb .ctx{ margin-top:0; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; color:var(--gold); font-variant-numeric:tabular-nums; line-height:1; white-space:nowrap; }
+  .lb-v.bad, .lb-v.down{ color:var(--loss); } .lb-v.up{ color:var(--turf); }
+  .lb .chev{ color:var(--text-dim); justify-self:center; }
+  .lb.open .chev{ color:var(--gold); }
+  .pair{ width:36px; height:36px; flex:none; position:relative; }
+  .pair .mono-tile{ position:absolute; width:24px; height:24px; font-size:0.5rem; letter-spacing:0; background:#1c1c1c; }
+  .pair .mono-tile:first-child{ left:0; top:0; } .pair .mono-tile:last-child{ right:0; bottom:0; }
+  .you-tag{ display:inline-flex; align-items:center; margin-top:5px; padding:3px 8px; border-radius:999px; border:1px solid color-mix(in srgb, var(--me-ring) 55%, transparent); background:color-mix(in srgb, var(--me-ring) 9%, transparent); color:var(--me-ring); font-size:0.66rem; font-weight:700; white-space:nowrap; max-width:100%; }
+  .jump{ display:flex; gap:8px; overflow-x:auto; padding:2px 0; scrollbar-width:none; }
+  .jump::-webkit-scrollbar{ display:none; }
+  .jump button{ flex:none; border:1px solid var(--line); background:var(--item); color:var(--text-dim); border-radius:999px; padding:7px 13px; font:600 0.76rem var(--body); cursor:pointer; }
+  .stand{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
+  .stand div{ background:var(--item); border:1px solid var(--item-line); border-radius:12px; padding:10px 12px; }
+  .stand b{ display:block; font-family:var(--scoreboard); font-weight:800; font-size:1.9rem; line-height:1; color:var(--me-ring); }
+  .stand span{ display:block; margin-top:5px; color:var(--text-dim); font-size:0.68rem; line-height:1.35; }
   .lb-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px; }
   .lb-title{ font-weight:700; font-size:1.05rem; }
+
+  /* ---------- You: the .me ring, your name in its colour (theme.css) ---------- */
+  .reign-c.me{ outline-offset:3px; }
+  .rec-row.me{ outline-offset:-1.5px; border-radius:10px; border-top-color:transparent; }
+  .rec-row.me + .rec-row{ border-top-color:transparent; }
+  .rec-row.me + .rec-row.me{ margin-top:3px; }
+  .slot.me{ outline-offset:-2px; }
+  .heat-c.me{ outline:1px solid color-mix(in srgb, var(--me-ring) 70%, transparent); outline-offset:1px; }
+  .me-name a{ color:inherit; }
 
   /* ---------- A whole list, in the sheet or popover ----------
      The leader (or, on a "worst" list, the bottom) gets the outline + tint;
@@ -192,6 +219,7 @@
   .lr.lead{ background:var(--lead-tint); box-shadow:inset 0 0 0 1px var(--lead-line); }
   .lr.low{ background:var(--loss-tint); box-shadow:inset 0 0 0 1px var(--loss-line); }
   .lr-rk{ font-family:var(--scoreboard); font-weight:700; font-size:0.98rem; color:var(--text-dim); text-align:center; }
+  .lr.me{ outline-offset:-1.5px; border-radius:8px; }
   .lr.lead .lr-rk{ color:var(--gold); } .lr.low .lr-rk{ color:var(--loss); }
   .lr-nm{ font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .lr-sub{ color:var(--text-dim); font-size:0.7rem; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -241,12 +269,19 @@
   // inside a card that is itself one tap (the Leaderboards cards, the
   // Superlatives): there the whole list or the points come first.
   let MGRS = new Set();
-  const link = name => mgrLink(name, MGRS);
+  // A manager's name, linked; yours is in your ring colour (theme.css .me-name),
+  // and so is yours inside a longer line like "Chad def. Brad".
+  let MGR_RE = null;
+  const mgrNames = s => esc(s).replace(MGR_RE, m => (isMe(m) ? `<span class="me-name">${m}</span>` : m));
+  const mentionsMe = s => !!getMe() && [...String(s ?? '').matchAll(MGR_RE)].some(m => isMe(m[1]));
+  const link = name => (MGRS.has(name) ? (isMe(name) ? `<span class="me-name">${mgrLink(name, MGRS)}</span>` : mgrLink(name, MGRS)) : mgrNames(name));
+  const ordn = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
   const panel = (title, body, chip) => `<div class="panel">${title ? `<div class="p-head"><div class="p-title">${title}</div>${chip ? `<span class="chip">${chip}</span>` : ''}</div>` : ''}<div class="p-body">${body}</div></div>`;
   const nameList = names => names.length < 3 ? names.join(' and ') : `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 
   function build(D, F, R) {
     MGRS = new Set(D.seasons.map(s => s.player));
+    MGR_RE = new RegExp('\\b(' + [...MGRS].sort((a, b) => b.length - a.length).map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'g');
     // Payouts are stored as sparse "effective from this year on" snapshots
     // (see rule-changes.json) rather than one row per season -- resolve to
     // whichever snapshot was in force as of a given year, same as
@@ -493,8 +528,8 @@
     function summaryHtml() {
       const c = champs[0], sk = sackos[0];
       const reign = `<div class="reign">
-        <div class="reign-c champ"><div class="reign-l">Reigning Champion</div><div class="reign-n">${link(c.player)}</div><div class="reign-s">${c.year} · ${rec(c)}</div></div>
-        <div class="reign-c sacko"><div class="reign-l">Reigning Sacko</div><div class="reign-n">${link(sk.player)}</div><div class="reign-s">${sk.year} · ${regRec(sk)}</div></div>
+        <div class="reign-c champ${isMe(c.player) ? ' me' : ''}"><div class="reign-l">Reigning Champion</div><div class="reign-n">${link(c.player)}</div><div class="reign-s">${c.year} · ${rec(c)}</div></div>
+        <div class="reign-c sacko${isMe(sk.player) ? ' me' : ''}"><div class="reign-l">Reigning Sacko</div><div class="reign-n">${link(sk.player)}</div><div class="reign-s">${sk.year} · ${regRec(sk)}</div></div>
       </div>`;
 
       const managers = new Set(D.seasons.map(s => s.player));
@@ -507,7 +542,7 @@
       </div>`;
 
       // Every record names everyone tied at the top.
-      const row = (icon, cap, names, ctx, value, cls) => `<div class="rec-row">${typeTile(icon, cls)}<div style="min-width:0"><span class="cap">${cap}</span><span class="holder">${nameList(names.map(link))}</span>${ctx ? `<span class="ctx">${ctx}</span>` : ''}</div><span class="rec-v${cls ? ' ' + cls : ''}">${value}</span></div>`;
+      const row = (icon, cap, names, ctx, value, cls) => `<div class="rec-row${names.some(isMe) ? ' me' : ''}">${typeTile(icon, cls)}<div style="min-width:0"><span class="cap">${cap}</span><span class="holder">${nameList(names.map(link))}</span>${ctx ? `<span class="ctx">${ctx}</span>` : ''}</div><span class="rec-v${cls ? ' ' + cls : ''}">${value}</span></div>`;
       const yrs = list => list.map(s => s.year).sort((a, b) => b - a).map(y => `'${String(y).slice(2)}`).join(', ');
       const rows = [];
       { const t = topTied(champC, x => x.val); rows.push(row('trophy', 'Most titles', t.items.map(x => x.name), t.items.length === 1 ? t.items[0].sub : '', t.value)); }
@@ -537,16 +572,16 @@
       const logoUrl = name => { const p = F && F.players.find(x => x.name === name); return (p && p.current_team_logo) || ''; };
       const ord = r => r + (r === 1 ? 'st' : r === 2 ? 'nd' : r === 3 ? 'rd' : 'th');
 
-      const head = (y, sackoLabel, sackoName, chip) => `<div class="yr-h"><div class="yr-hl"><div class="yr-y">${y}</div>${chip || ''}</div>${sackoName ? `<span class="yr-sk"><span>${sackoLabel}</span><b>${link(sackoName)}</b></span>` : ''}</div>`;
+      const head = (y, sackoLabel, sackoName, chip) => `<div class="yr-h"><div class="yr-hl"><div class="yr-y">${y}</div>${chip || ''}</div>${sackoName ? `<span class="yr-sk${isMe(sackoName) ? ' me' : ''}"><span>${sackoLabel}</span><b>${link(sackoName)}</b></span>` : ''}</div>`;
       const podium = places => `<div class="podium">${places.map((x, i) => {
         const url = x.name ? esc(logoUrl(x.name)) : '';
         const lg = x.name ? `<div class="pd-lg">${url ? `<img src="${url}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}<span class="ph" style="${url ? '' : 'display:flex'}">${esc(monogram(x.name))}</span></div>` : '';
-        return `<div class="pd p${i + 1}">${lg}<div class="pd-r">${ord(i + 1)}</div><div class="pd-n">${x.name ? link(x.name) : '—'}</div><div class="pd-a">${x.sub || ''}</div></div>`;
+        return `<div class="pd p${i + 1}${isMe(x.name) ? ' me' : ''}">${lg}<div class="pd-r">${ord(i + 1)}</div><div class="pd-n">${x.name ? link(x.name) : '—'}</div><div class="pd-a">${x.sub || ''}</div></div>`;
       }).join('')}</div>`;
       // Nine slots (4th-12th) always, so an 8- or 10-team year is the same size.
       const standings = (label, rest) => `<div class="yr-sec"><span class="cap">${label}</span><div class="slots">${[...Array(9)].map((_, i) => {
         const x = rest[i];
-        return x ? `<div class="slot ${x.st}"><b>${x.r}</b><span>${link(x.name)}</span></div>` : '<div class="slot empty"></div>';
+        return x ? `<div class="slot ${x.st}${isMe(x.name) ? ' me' : ''}"><b>${x.r}</b><span>${link(x.name)}</span></div>` : '<div class="slot empty"></div>';
       }).join('')}</div></div>`;
       // The title carries the prize: "$200 ea" when both pay the same, both
       // amounts when they don't, nothing for the years before they paid.
@@ -554,7 +589,7 @@
         const w = pay['Highest Points (Week)'], s = pay['Highest Points (Season)'];
         return 'Superlatives' + (w && w === s ? ` · ${money(w)} ea` : w || s ? ` · ${[w, s].map(n => money(n || 0)).join(' / ')}` : '');
       };
-      const sup = (label, name, pts) => `<button type="button" class="sup" data-pts="${esc(pts)}" aria-label="${label}: ${esc(name)}, ${esc(pts)}"><span class="cap">${label}</span><b>${esc(name)}</b></button>`;
+      const sup = (label, name, pts) => `<button type="button" class="sup${mentionsMe(name) ? ' me' : ''}" data-pts="${esc(pts)}" aria-label="${label}: ${esc(name)}, ${esc(pts)}"><span class="cap">${label}</span><b>${mgrNames(name)}</b></button>`;
       const sups = (pay, a, b) => `<div class="yr-sec"><span class="cap">${supTitle(pay)}</span><div class="sups">${a}${b}</div></div>`;
 
       // The season in progress: the same card, filled with where things
@@ -633,7 +668,7 @@
         const s = done.find(x => x.player === name && x.year === y);
         const st = state(s);
         const ast = name === 'Flanders' && y === flandersFirst;
-        return `<div class="heat-c ${st}" title="${y}${s && s.final_rank ? ` — ${s.final_rank} of ${last[y]}` : ''}${ast ? ' (we all know this one doesn’t count)' : ''}">${st === 'none' ? '·' : s.final_rank}${ast ? '<span class="heat-ast">*</span>' : ''}</div>`;
+        return `<div class="heat-c ${st}${isMe(name) ? ' me' : ''}" title="${y}${s && s.final_rank ? ` — ${s.final_rank} of ${last[y]}` : ''}${ast ? ' (we all know this one doesn’t count)' : ''}">${st === 'none' ? '·' : s.final_rank}${ast ? '<span class="heat-ast">*</span>' : ''}</div>`;
       }).join('')).join('');
       const legend = `<div class="legend"><span><i class="champion"></i>Champion</span><span><i class="runner-up"></i>Runner-up</span><span><i class="playoffs"></i>Playoffs</span><span><i class="missed"></i>Missed</span><span><i class="sacko"></i>Sacko</span></div>`;
       return panel('Dynasty', `<div class="heat" style="grid-template-columns:62px repeat(${years.length}, minmax(0,1fr))">${head}${body}</div>${legend}`, 'Final finish');
@@ -701,7 +736,8 @@
     LISTS = LB.flatMap(g => g.lists);
     LISTS.forEach((l, i) => { l.id = i; });
 
-    const leaderboardsHtml = () => LB.map(g => panel(g.sec, `<div class="lbg">${g.lists.map(cardHtml).join('')}</div>`)).join('');
+    const leaderboardsHtml = () => leaderboardsTop() + `<div class="jump">${LB.map((g, gi) => `<button type="button" data-j="${gi}">${esc(g.sec)}</button>`).join('')}</div>` +
+      `<div class="lbsecs">${LB.map((g, gi) => panel(g.sec, g.lists.map(lbRowHtml).join('')).replace('<div class="panel">', `<div class="panel" id="lbs-${gi}">`)).join('')}</div>`;
 
     TABS = [
       { label: 'Summary', html: summaryHtml() },
@@ -716,22 +752,50 @@
   const rowState = (v, k) => v.leads.has(k) ? (v.bad ? 'low' : 'lead') : k === v.low ? 'low' : '';
   const leftCol = (v, i, k) => v.year ? `'${String(i.rank).slice(2)}` : v.ranks[k];
 
-  // A card: the list's top three (the latest three years on a by-year list).
-  function cardHtml(v) {
-    const rows = v.items.slice(0, 3).map((i, k) => {
-      const st = rowState(v, k);
-      return `<span class="lb-r${st ? ' ' + st : ''}"><i>${leftCol(v, i, k)}</i><span>${esc(i.short || i.name || i.sub)}</span><b${i.tone ? ` class="${i.tone}"` : ''}>${esc(i.val)}</b></span>`;
-    }).join('');
-    const more = v.items.length > 3 ? `+${v.items.length - 3} more` : '';
-    return `<button type="button" class="lb${v.year ? ' years' : ''}" data-lb="${v.id}" aria-haspopup="dialog" aria-expanded="false">` +
-      `<span class="lb-t">${esc(v.label)}</span>${rows}<span class="lb-f"><span>${more}</span><span class="chev" aria-hidden="true"></span></span></button>`;
+  // ---------- A list's row ----------
+  // The leader (and anyone tied with them) heads the row; a list with no
+  // marked leader (a year list, say) shows its first row. The same manager
+  // twice at the top (two 1-13 seasons) is one holder, not a tie.
+  const holderMgr = i => (MGRS.has(i.name) ? i.name : MGRS.has(i.short) ? i.short : null);
+  const youIdx = v => (!v.year && getMe() ? v.items.findIndex(i => isMe(i.name)) : -1);
+  function lbRowHtml(v) {
+    const picked = (v.leads.size ? [...v.leads] : [0]).map(k => v.items[k]).filter(Boolean);
+    const seen = new Set(), lead = picked.filter(i => !seen.has(i.name) && seen.add(i.name));
+    const twice = picked.length > 1 && lead.length === 1;
+    const it = lead[0], many = lead.length > 1;
+    const mgr = holderMgr(it);
+    const tile = many ? `<span class="pair" aria-hidden="true">${lead.slice(0, 2).map(i => `<span class="mono-tile">${esc(monogram(i.name))}</span>`).join('')}</span>`
+      : mgr ? `<span class="mono-tile" aria-hidden="true">${esc(monogram(mgr))}</span>` : typeTile('record', v.bad ? 'loss' : '');
+    const holder = many ? nameList(lead.map(i => link(i.name))) : it.name ? link(it.name) : `'${String(it.rank).slice(2)} season`;
+    const ctx = many ? `Tied at ${it.val}` : twice ? `Twice, at ${it.val}` : !it.name ? it.sub : v.year ? `'${String(it.rank).slice(2)} · ${it.sub}` : it.sub;
+    const mine = lead.some(i => isMe(holderMgr(i)));
+    const ix = youIdx(v);
+    const you = !mine && ix > 0 ? `<span class="you-tag">You · ${ordn(v.ranks[ix])} · ${esc(v.items[ix].val)}</span>` : '';
+    const tone = v.bad ? 'bad' : it.tone || '';
+    return `<button type="button" class="lb${mine ? ' me' : ''}" data-lb="${v.id}" aria-haspopup="dialog" aria-expanded="false">${tile}` +
+      `<span style="min-width:0"><span class="cap">${esc(v.label)}</span><span class="holder">${holder}</span><span class="ctx">${esc(ctx || '')}</span>${you}</span>` +
+      `<span class="lb-v${tone ? ' ' + tone : ''}">${esc(it.val)}</span><span class="chev" aria-hidden="true"></span></button>`;
+  }
+
+  // "Where you stand", signed in: how many lists you lead and sit top 3 in.
+  function leaderboardsTop() {
+    if (!getMe()) return '';
+    let lead = 0, top3 = 0, shame = 0;
+    LISTS.forEach(v => {
+      const ix = youIdx(v);
+      if (ix < 0) return;
+      if (v.bad) { if (v.ranks[ix] <= 3) shame++; return; }
+      if (v.leads.has(ix)) lead++;
+      if (v.ranks[ix] <= 3) top3++;
+    });
+    return panel('Where you stand', `<div class="stand"><div><b>${lead}</b><span>lists you lead</span></div><div><b>${top3}</b><span>lists you're top 3 in</span></div><div><b>${shame}</b><span>bad lists you're top 3 in</span></div></div>`);
   }
 
   // One row of a whole list. Year lists show the year in the left column,
   // ranked lists the rank (managers tied on a value share it).
   function rowHtml(i, k, v) {
     const state = rowState(v, k);
-    return `<div class="lr${state ? ' ' + state : ''}"><div class="lr-rk">${leftCol(v, i, k)}</div><div style="min-width:0">${i.name ? `<div class="lr-nm">${link(i.name)}</div>` : ''}${i.sub ? `<div class="lr-sub">${esc(i.sub)}</div>` : ''}</div><div class="lr-v${i.tone ? ' ' + i.tone : ''}">${esc(i.val)}</div></div>`;
+    return `<div class="lr${state ? ' ' + state : ''}${isMe(holderMgr(i)) ? ' me' : ''}"><div class="lr-rk">${leftCol(v, i, k)}</div><div style="min-width:0">${i.name ? `<div class="lr-nm">${link(i.name)}</div>` : ''}${i.sub ? `<div class="lr-sub">${esc(i.sub)}</div>` : ''}</div><div class="lr-v${i.tone ? ' ' + i.tone : ''}">${esc(i.val)}</div></div>`;
   }
 
   function render() {
@@ -798,7 +862,8 @@
   function lbPlace() {
     const pop = document.getElementById('lb-pop');
     if (!pop) return;
-    const card = lbOpen !== null && document.querySelector(`.lb[data-lb="${lbOpen}"]`);
+    const row = lbOpen !== null && document.querySelector(`.lb[data-lb="${lbOpen}"]`);
+    const card = row && (row.closest('.panel') || row);
     if (!card) { lbHide(); return; }
     for (let pass = 0; pass < 2; pass++) {
       const r = card.getBoundingClientRect(), vw = document.documentElement.clientWidth;
@@ -816,6 +881,8 @@
     const sp = e.target.closest('.sup');
     document.querySelectorAll('.sup.show').forEach(x => { if (x !== sp) x.classList.remove('show'); });
     if (sp) { sp.classList.toggle('show'); return; }
+    const j = e.target.closest('[data-j]');
+    if (j) { const s = document.getElementById('lbs-' + j.dataset.j); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     const t = e.target.closest('.tab');
     if (t) { tab = Number(t.dataset.i); render(); return; }
     if (e.target.closest('[data-close]')) { lbHide(); return; }
@@ -834,7 +901,13 @@
     fetch('data/franchise.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
     fetch('data/rule-changes.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
   ])
-    .then(([D, F, R]) => { build(D, F, R); render(); riseIn(document.getElementById('overview').children); })
+    .then(([D, F, R]) => {
+      build(D, F, R); render(); riseIn(document.getElementById('overview').children);
+      // Picking your team, or its ring colour, in the You sheet redraws every tab.
+      const redo = () => { build(D, F, R); render(); };
+      addEventListener('rl-me', redo);
+      addEventListener('rl-settings', redo);
+    })
     .catch(err => LG.showError('overview', err));
 </script>
 <script src="track.js?v=2" defer></script>
