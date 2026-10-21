@@ -425,7 +425,9 @@
     let list = events.filter(e => !e.undo);
     if (pair) list = list.filter(e => pair.includes(e.m));
     if (game) list = list.filter(e => gameKey(e.tm, e.op) === game);
-    if (filter === 'big') list = list.filter(e => Math.abs(e.d) > 3);
+    // Big plays are real plays worth 5 points or more: a lineup change or other
+    // projection note (k 'p') is never one, however far it moves the projection.
+    if (filter === 'big') list = list.filter(e => e.k !== 'p' && Math.abs(e.d) >= 5);
     list = list.slice().reverse();
     const gp = game ? (games.find(g => g.key === game)?.teams || game.split('-')) : null;
     document.getElementById('fd-gpill').innerHTML = gp ? `<button type="button" class="fd-gpill" data-fd-cleargame>${esc(gp.join(' vs '))} plays<i aria-hidden="true">✕</i></button>` : '';
