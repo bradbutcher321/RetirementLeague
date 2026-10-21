@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=34">
+<link rel="stylesheet" href="theme.css?v=35">
 <link rel="stylesheet" href="nav.css?v=28">
 <link rel="stylesheet" href="league.css?v=7">
 <style>
@@ -405,7 +405,7 @@
     const solo = !many && MGRS.has(i.m.a);
     const mine = lead.some(x => isMe(x.m.a));
     return `<button type="button" class="rec${mine ? ' me' : ''}${isOpen ? ' open' : ''}" data-panel="${panel}" data-rec="${key}" aria-haspopup="dialog" aria-expanded="${!!isOpen}">` +
-      (solo ? `<span class="mono-tile" aria-hidden="true">${esc(monogram(i.m.a))}</span>` : typeTile(tile)) +
+      (solo ? `<span class="mono-tile${isMe(i.m.a) ? ' me-mono' : ''}" aria-hidden="true">${esc(monogram(i.m.a))}</span>` : typeTile(tile)) +
       `<span style="min-width:0"><span class="cap">${kind}</span><span class="holder">${holder}</span><span class="ctx">${ctx}</span></span>` +
       `<span class="rec-val">${shown(i)}</span><span class="chev" aria-hidden="true"></span></button>`;
   }

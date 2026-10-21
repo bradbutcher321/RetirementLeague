@@ -813,9 +813,11 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
    carries a ring of its own (double-ring gotcha). */
 .mono-tile{
   width: 36px; height: 36px; flex: none; border-radius: 50%; border: 1px solid var(--item-line);
-  background: var(--item); color: var(--text); display: grid; place-items: center;
+  background: var(--item); color: var(--gold); display: grid; place-items: center;
   font: 800 0.72rem/1 var(--body); letter-spacing: 0.02em;
 }
+/* Gold, like any record; your own is your ring colour. */
+.mono-tile.me-mono{ color: var(--me-ring, #7AAEDB); }
 /* Your name wherever it appears in text: the ring colour, not an underline. */
 .me-name{ color: var(--me-ring, #7AAEDB); }
 
