@@ -137,7 +137,7 @@
      width, so all the seasons fit a phone without scrolling. States are
      the same ones the Franchise page uses for a season. */
   .heat{ display:grid; gap:3px; align-items:center; }
-  .heat-n{ font-weight:600; font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:4px; }
+  .heat-n{ font-weight:600; font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:5px 4px 5px 8px; }
   .heat-y{ text-align:center; color:var(--text-dim); font-size:0.58rem; }
   .heat-c{ height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:0.78rem; color:var(--text-dim); background:var(--item); border:1px solid var(--item-line); min-width:0; }
   .heat-ast{ font-family:var(--body); font-weight:700; font-size:0.95em; line-height:1; margin-left:1px; align-self:flex-start; margin-top:5px; }
@@ -183,7 +183,6 @@
   .lb .holder{ margin-top:2px; }
   .lb .ctx{ margin-top:0; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .lb-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; color:var(--gold); font-variant-numeric:tabular-nums; line-height:1; white-space:nowrap; }
-  .lb-v.bad, .lb-v.down{ color:var(--loss); } .lb-v.up{ color:var(--turf); }
   .lb .chev{ color:var(--text-dim); justify-self:center; }
   .lb.open .chev{ color:var(--gold); }
   .pair{ width:36px; height:36px; flex:none; position:relative; }
@@ -206,7 +205,7 @@
   .rec-row.me + .rec-row{ border-top-color:transparent; }
   .rec-row.me + .rec-row.me{ margin-top:3px; }
   .slot.me{ outline-offset:-2px; }
-  .heat-c.me{ outline:1px solid color-mix(in srgb, var(--me-ring) 70%, transparent); outline-offset:1px; }
+  .heat-n.me{ outline-offset:-1.5px; border-radius:8px; }
   .me-name a{ color:inherit; }
 
   /* ---------- A whole list, in the sheet or popover ----------
@@ -664,14 +663,14 @@
       // League joke (same one as the dashboard's "3*" easter egg): Flanders's
       // first title gets an asterisk.
       const flandersFirst = Math.min(...done.filter(s => s.player === 'Flanders' && s.final_rank === 1).map(s => s.year));
-      const body = list.map(name => `<div class="heat-n">${link(name)}</div>` + years.map(y => {
+      const body = list.map(name => `<div class="heat-n${isMe(name) ? ' me' : ''}">${link(name)}</div>` + years.map(y => {
         const s = done.find(x => x.player === name && x.year === y);
         const st = state(s);
         const ast = name === 'Flanders' && y === flandersFirst;
-        return `<div class="heat-c ${st}${isMe(name) ? ' me' : ''}" title="${y}${s && s.final_rank ? ` — ${s.final_rank} of ${last[y]}` : ''}${ast ? ' (we all know this one doesn’t count)' : ''}">${st === 'none' ? '·' : s.final_rank}${ast ? '<span class="heat-ast">*</span>' : ''}</div>`;
+        return `<div class="heat-c ${st}" title="${y}${s && s.final_rank ? ` — ${s.final_rank} of ${last[y]}` : ''}${ast ? ' (we all know this one doesn’t count)' : ''}">${st === 'none' ? '·' : s.final_rank}${ast ? '<span class="heat-ast">*</span>' : ''}</div>`;
       }).join('')).join('');
       const legend = `<div class="legend"><span><i class="champion"></i>Champion</span><span><i class="runner-up"></i>Runner-up</span><span><i class="playoffs"></i>Playoffs</span><span><i class="missed"></i>Missed</span><span><i class="sacko"></i>Sacko</span></div>`;
-      return panel('Dynasty', `<div class="heat" style="grid-template-columns:62px repeat(${years.length}, minmax(0,1fr))">${head}${body}</div>${legend}`, 'Final finish');
+      return panel('Dynasty', `<div class="heat" style="grid-template-columns:74px repeat(${years.length}, minmax(0,1fr))">${head}${body}</div>${legend}`, 'Final finish');
     }
 
     // Audit II #8: the six list tabs (Champions, Sackos, Scoring, Rankings,
@@ -771,10 +770,9 @@
     const mine = lead.some(i => isMe(holderMgr(i)));
     const ix = youIdx(v);
     const you = !mine && ix > 0 ? `<span class="you-tag">You · ${ordn(v.ranks[ix])} · ${esc(v.items[ix].val)}</span>` : '';
-    const tone = v.bad ? 'bad' : it.tone || '';
     return `<button type="button" class="lb${mine ? ' me' : ''}" data-lb="${v.id}" aria-haspopup="dialog" aria-expanded="false">${tile}` +
       `<span style="min-width:0"><span class="cap">${esc(v.label)}</span><span class="holder">${holder}</span><span class="ctx">${esc(ctx || '')}</span>${you}</span>` +
-      `<span class="lb-v${tone ? ' ' + tone : ''}">${esc(it.val)}</span><span class="chev" aria-hidden="true"></span></button>`;
+      `<span class="lb-v">${esc(it.val)}</span><span class="chev" aria-hidden="true"></span></button>`;
   }
 
   // "Where you stand", signed in: how many lists you lead and sit top 3 in.
@@ -837,11 +835,13 @@
       body.scrollTop = 0;
       existing.setAttribute('aria-label', v.label);
       lbPlace();
+      lbReveal();
       return;
     }
     if (!lbOneColumn.matches) {
       document.body.insertAdjacentHTML('beforeend', `<div class="pop" id="lb-pop" role="dialog" aria-label="${esc(v.label)}"><div data-head>${l.head}</div><div data-body>${l.rows}</div></div>`);
       lbPlace();
+      lbReveal();
       return;
     }
     document.body.insertAdjacentHTML('beforeend', `<div class="scrim" data-close></div><div class="sheet" id="lb-sheet" role="dialog" aria-modal="true" aria-label="${esc(v.label)}">
@@ -856,14 +856,23 @@
     document.querySelectorAll('#lb-sheet, #lb-pop, .scrim').forEach(el => el.remove());
   }
 
+  // The popover opens under the row you tapped; if that leaves its lower part
+  // below the screen, the page scrolls just far enough to bring it all in.
+  function lbReveal() {
+    const pop = document.getElementById('lb-pop');
+    if (!pop) return;
+    const r = pop.getBoundingClientRect();
+    const over = r.bottom - (innerHeight - 16);
+    if (over > 0) scrollBy({ top: Math.min(over, Math.max(r.top - 72, 0)), behavior: 'smooth' });
+  }
+
   // Under the card, at least 360px wide and never off the side of the
   // screen, with the arrow on the card's center. Two passes: placing it can
   // add a scrollbar, which shifts the card.
   function lbPlace() {
     const pop = document.getElementById('lb-pop');
     if (!pop) return;
-    const row = lbOpen !== null && document.querySelector(`.lb[data-lb="${lbOpen}"]`);
-    const card = row && (row.closest('.panel') || row);
+    const card = lbOpen !== null && document.querySelector(`.lb[data-lb="${lbOpen}"]`);
     if (!card) { lbHide(); return; }
     for (let pass = 0; pass < 2; pass++) {
       const r = card.getBoundingClientRect(), vw = document.documentElement.clientWidth;
