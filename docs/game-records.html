@@ -37,14 +37,14 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=33">
+<link rel="stylesheet" href="theme.css?v=34">
 <link rel="stylesheet" href="nav.css?v=28">
 <link rel="stylesheet" href="league.css?v=7">
 <style>
   /* ---------- Game Records: one card per group of records ----------
      Built phone-first. Each card holds two or three related records as
-     rows. A tile with an up or down arrow says which end a row is (no
-     initials: the name is right beside it), the record type is a small dim
+     rows. The holder's monogram heads a row (a tile with an up or down arrow
+     where no single manager holds it), the record type is a small dim
      caption, and every value is gold -- a low-end record is still a
      record, so no row of a card outranks another. The holder's name is the
      one bright line of text in a row. Tapping a record opens its top 10: a
@@ -70,6 +70,10 @@
   .rec.open{ background:var(--lead-tint); border-color:var(--lead-line); }
   .rec.open::before, .rec.open + .rec::before{ display:none; }
   .rec.empty{ cursor:default; }
+  /* Your ring sits just inside the row, so two of your rows in a card (TJ's high and low)
+     get a hairline gap instead of one fat shared line. */
+  .rec.me, .crow.me{ outline-offset:-1.5px; }
+  .rec.me + .rec, .rec + .rec.me{ margin-top:3px; }
   .cap{ display:block; color:var(--text-dim); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
   .holder{ display:block; font-weight:600; font-size:0.88rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .own{ color:var(--text-dim); font-weight:500; }
@@ -337,7 +341,11 @@
   // rows and over a game's lineups, not on the record cards or a game row
   // (those open the list and the lineups).
   let MGRS = new Set();
-  const nm = (n, link) => (link ? mgrLink(n, MGRS) : esc(n));
+  // Your own name, wherever it appears here, is in your ring colour.
+  const nm = (n, link) => {
+    const h = link ? mgrLink(n, MGRS) : esc(n);
+    return isMe(n) ? `<span class="me-name">${h}</span>` : h;
+  };
   const versus = (i, link) => (i.m.b ? `vs ${nm(i.m.b, link)} ${f2(i.m.bs)}` : '');
   const shown = i => i.label || f2(i.v);
   const nameList = n => n.length < 3 ? n.join(' and ') : `${n.slice(0, -1).join(', ')}, and ${n[n.length - 1]}`;
@@ -389,11 +397,15 @@
     if (!i) return `<div class="rec empty"><span></span><span><span class="cap">${kind}</span><span class="ctx">${c.empty || 'No games yet'}</span></span><span class="rec-val">—</span><span></span></div>`;
     const lead = c.ties ? c.items.filter(x => shown(x) === shown(i)) : [i];
     const many = lead.length > 1;
-    const holder = c.ties ? esc(nameList(lead.map(x => x.m.a))) : withScore(c, i);
+    const holder = c.ties ? nameList(lead.map(x => nm(x.m.a))) : withScore(c, i);
     const ctx = [versus(i), many ? 'Tied' : '', i.meta.replace(/ · Week (\d+)/, ' Wk $1')].filter(Boolean).join(' · ');
     const isOpen = open && open.panel === panel && open.key === key;
-    return `<button type="button" class="rec${isOpen ? ' open' : ''}" data-panel="${panel}" data-rec="${key}" aria-haspopup="dialog" aria-expanded="${!!isOpen}">` +
-      typeTile(tile) +
+    // A single manager holds it: their monogram heads the row. A tie, or a
+    // record held by a week rather than a manager, keeps the hi/lo tile.
+    const solo = !many && MGRS.has(i.m.a);
+    const mine = lead.some(x => isMe(x.m.a));
+    return `<button type="button" class="rec${mine ? ' me' : ''}${isOpen ? ' open' : ''}" data-panel="${panel}" data-rec="${key}" aria-haspopup="dialog" aria-expanded="${!!isOpen}">` +
+      (solo ? `<span class="mono-tile" aria-hidden="true">${esc(monogram(i.m.a))}</span>` : typeTile(tile)) +
       `<span style="min-width:0"><span class="cap">${kind}</span><span class="holder">${holder}</span><span class="ctx">${ctx}</span></span>` +
       `<span class="rec-val">${shown(i)}</span><span class="chev" aria-hidden="true"></span></button>`;
   }
@@ -408,7 +420,7 @@
     const games = c.items.some(i => i.g);
     const rows = c.items.length
       ? c.items.map((i, k) => {
-        const cls = `crow${games ? ' g' : ''}${r[k] === 1 ? ' top' : ''}`;
+        const cls = `crow${games ? ' g' : ''}${r[k] === 1 ? ' top' : ''}${isMe(i.m.a) ? ' me' : ''}`;
         const link = !hasLineup(i);
         const inner = `<div class="rk">${r[k]}</div><div style="min-width:0"><div class="nm">${withScore(c, i, link)}</div>${c.ties ? '' : `<div class="mt">${[versus(i, link), i.meta].filter(Boolean).join(' · ')}</div>`}</div><div class="vl">${shown(i)}</div>`;
         if (link) return `<div class="${cls}">${inner}${games ? '<div></div>' : ''}</div>`;
@@ -613,6 +625,10 @@
   addEventListener('resize', placePop);
   // Crossing between one and two columns swaps sheet for popover: close it.
   oneColumn.addEventListener('change', hideList);
+  // Picking your team (or its ring colour) in the You sheet redraws the cards.
+  const redraw = () => { if (C) render(); };
+  addEventListener('rl-me', redraw);
+  addEventListener('rl-settings', redraw);
 
   // Small (top 10s only), so it loads with the page rather than on demand.
   // Without it the player and projection cards say so; the rest still work.

@@ -805,6 +805,20 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
 .type-tile svg{ width: 18px; height: 18px; }
 .type-tile.loss{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
 
+/* ---------- Monogram tile (Game Records) ----------
+   Heads a record row when a manager holds it: their two letters in a circle,
+   the same monogram the Feed, Head to Head and the You button use. Rows
+   with no single manager (a tie, a whole week) keep the type tile above.
+   A row held by you takes the .me ring as a whole, so the circle never
+   carries a ring of its own (double-ring gotcha). */
+.mono-tile{
+  width: 36px; height: 36px; flex: none; border-radius: 50%; border: 1px solid var(--item-line);
+  background: var(--item); color: var(--text); display: grid; place-items: center;
+  font: 800 0.72rem/1 var(--body); letter-spacing: 0.02em;
+}
+/* Your name wherever it appears in text: the ring colour, not an underline. */
+.me-name{ color: var(--me-ring, #7AAEDB); }
+
 
 /* ---------- Live pulse (Dashboard, Parlay) ---------- */
 .pulse-dot{ width:7px; height:7px; border-radius:50%; background:var(--loss); animation:pulse 1.6s ease-in-out infinite; display:inline-block; }
