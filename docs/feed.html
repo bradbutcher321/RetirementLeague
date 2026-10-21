@@ -170,10 +170,33 @@
   .pl b{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
   .pl b.mc{ color: var(--me-ring); }
   .gt-more{ font-size: 0.66rem; color: var(--text-dim); }
-  .gt.later{ width: 150px; gap: 5px; }
-  .lt{ display: grid; gap: 3px; font-size: 0.72rem; color: var(--fd-soft); }
-  .lt span{ display: flex; justify-content: space-between; gap: 6px; white-space: nowrap; }
-  .lt em{ font-style: normal; color: var(--text-dim); }
+  /* Up next: every kickoff still to come opens with a gold lead-in card (day,
+     time, how many starters play in that window), then that window's games.
+     A game tile says whose starters are in it. */
+  .ln-strip .ko{
+    flex: none; width: 96px; padding: 9px 10px; border-radius: 14px; border: 1px solid var(--lead-line); background: var(--lead-tint);
+    display: grid; align-content: space-between; gap: 6px;
+  }
+  .ln-strip .ko:not(:first-child){ margin-left: 6px; }
+  .ko-d{ font-family: var(--scoreboard); font-weight: 800; font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  .ko-t{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.3rem; line-height: 1; margin-top: 2px; }
+  .ko-n{ font-family: var(--scoreboard); font-weight: 800; font-size: 2.2rem; line-height: 0.9; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .ko-l, .ko-g{ font-size: 0.62rem; color: var(--text-dim); }
+  .ko-l{ margin-top: 2px; }
+  .gt.pre{ width: 158px; align-content: start; }
+  .gt.pre .gt-top{ color: var(--text); }
+  .gt.pre .gt-tm{ font-weight: 700; font-size: 0.9rem; }
+  .gt-pl.own{ display: flex; flex-wrap: wrap; gap: 5px 9px; min-height: 30px; }
+  .own-c{ display: inline-flex; align-items: center; gap: 4px; }
+  .own-c b{ font: 700 0.74rem var(--body); font-variant-numeric: tabular-nums; color: var(--fd-soft); }
+  .own-c b.mc{ color: var(--me-ring); } .own-c b.wt{ color: var(--text); }
+  .own-more{ font-size: 0.68rem; color: var(--text-dim); align-self: center; }
+  @media (min-width: 900px){
+    .fd-grid.has-side .ln-strip .ko{ width: auto; grid-template-columns: 1fr auto; align-items: end; align-content: center; padding: 9px 14px; margin-left: 0; }
+    .fd-grid.has-side .ln-strip .ko .ko-n, .fd-grid.has-side .ln-strip .ko .ko-l{ text-align: right; }
+    .fd-grid.has-side .ln-strip .ko .ko-g{ display: none; }
+    .fd-grid.has-side .gt.pre{ width: auto; }
+  }
   .fd-gpill{
     display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 6px 0 14px; margin-bottom: 10px;
     border-radius: 999px; border: 1px solid var(--gold); background: var(--lead-tint); color: var(--gold);
@@ -533,19 +556,33 @@
     if (games.length) {
       const today = fdDay(Date.now());
       const done = games.filter(g => g.state === 'post' && fdDay(Date.parse(g.ko)) === today && inScope(g));
-      // Starters still to play per kickoff (on a matchup, only its own).
-      const starters = g => (g.ms || []).filter(m => !pair || pair.includes(m)).length || (pair ? 0 : g.count || 0);
-      const later = games.filter(g => g.state === 'pre' && starters(g)).sort((x, y) => Date.parse(x.ko) - Date.parse(y.ko));
-      const byKo = new Map();
-      later.forEach(g => {
-        const t = Date.parse(g.ko), k = (fdDay(t) === today ? '' : fdDay(t).slice(0, 3) + ' ') + fdTime(t);
-        byKo.set(k, (byKo.get(k) || 0) + starters(g));
-      });
-      const laterTile = byKo.size ? `<div class="gt later"><div class="gt-top done"><span>Later</span></div><div class="lt">${[...byKo].slice(0, 5).map(([k, n]) => `<span>${esc(k)}<em>${n} starter${n === 1 ? '' : 's'}</em></span>`).join('')}</div></div>` : '';
+      // Starters still to play per game (on a matchup, only its own), then the
+      // games grouped by kickoff, each group led by its starter total.
+      const mgrs = g => (g.ms || []).filter(m => !pair || pair.includes(m));
+      const starters = g => mgrs(g).length || (pair ? 0 : g.count || 0);
+      const later = games.filter(g => g.state === 'pre' && starters(g)).sort((x, y) => Date.parse(x.ko) - Date.parse(y.ko) || starters(y) - starters(x));
+      const preTile = g => {
+        const by = new Map();
+        mgrs(g).forEach(m => by.set(m, (by.get(m) || 0) + 1));
+        const own = [...by].sort((x, y) => (y[0] === me) - (x[0] === me) || (y[0] === opp) - (x[0] === opp) || y[1] - x[1]);
+        const max = pair ? 2 : 3, n = starters(g);
+        const chips = own.slice(0, max).map(([m, c]) => `<span class="own-c"><span class="pl-m ${tone(m)}">${esc(monogram(m))}</span><b class="${tone(m)}">${c}</b></span>`).join('')
+          + (own.length > max ? `<span class="own-more">+${own.length - max}</span>` : '');
+        const [a, h] = g.key.split('-');
+        return `<div class="gt pre"><div class="gt-top"><span>${fdTime(Date.parse(g.ko))}</span><em>${n} starter${n === 1 ? '' : 's'}</em></div>
+          <div class="gt-sc"><span class="gt-tm">${esc(a)}</span><span class="gt-tm">${esc(h)}</span></div><div class="gt-pl own">${chips}</div></div>`;
+      };
+      const slots = new Map();
+      later.forEach(g => { const k = Date.parse(g.ko); if (!slots.has(k)) slots.set(k, []); slots.get(k).push(g); });
+      const laterHtml = [...slots].map(([ko, list]) => {
+        const n = list.reduce((s, g) => s + starters(g), 0);
+        return `<div class="ko"><div><div class="ko-d">${fdDay(ko).slice(0, 3)}</div><div class="ko-t">${fdTime(ko)}</div></div><div><div class="ko-n">${n}</div><div class="ko-l">starter${n === 1 ? '' : 's'}</div></div><div class="ko-g">${list.length} game${list.length === 1 ? '' : 's'}</div></div>${list.map(preTile).join('')}`;
+      }).join('');
+      const nLater = later.reduce((s, g) => s + starters(g), 0);
       const head = live.length ? 'Live now' : done.length ? 'Today' : 'Up next';
-      const sub = live.length ? `${live.length} game${live.length === 1 ? '' : 's'} · ${nLive} starter${nLive === 1 ? '' : 's'}` : done.length ? `${done.length} final` : '';
-      if (live.length || done.length || laterTile) html = `<div class="ln-h"><span class="ln-cap">${head}</span><span class="ln-sub">${sub}</span></div>
-        <div class="ln-strip" id="fd-lns">${live.map(tileOf).join('')}${done.map(tileOf).join('')}${laterTile}</div>`;
+      const sub = live.length ? `${live.length} game${live.length === 1 ? '' : 's'} · ${nLive} starter${nLive === 1 ? '' : 's'}` : done.length ? `${done.length} final` : later.length ? `${later.length} game${later.length === 1 ? '' : 's'} · ${nLater} starter${nLater === 1 ? '' : 's'}` : '';
+      if (live.length || done.length || laterHtml) html = `<div class="ln-h"><span class="ln-cap">${head}</span><span class="ln-sub">${sub}</span></div>
+        <div class="ln-strip" id="fd-lns">${live.map(tileOf).join('')}${done.map(tileOf).join('')}${laterHtml}</div>`;
     }
     if (tkHtml) html = `<div class="ln-h"><span class="ln-cap">Scores</span><span class="ln-sub">${nMatchups} matchups</span></div>${tkHtml}` + (html ? `<div class="fd-live">${html}</div>` : '');
     side.innerHTML = html;
