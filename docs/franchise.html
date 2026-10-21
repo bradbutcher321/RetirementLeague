@@ -789,7 +789,7 @@
       const res = live ? '' : g.winner === name ? 'w' : g.winner === opp ? 'l' : 't';
       const kind = GAME_KIND[g.type] ? `<span class="${g.type === 'Champ' ? 'gold' : ''}">${GAME_KIND[g.type]}</span>` : '';
       const med = !live && g.type === 'Reg' && g.median != null && year >= era
-        ? (my > g.median ? `<span class="up">Beat the median ${fmt(g.median, 2)}</span>` : `<span class="dn">Missed the median ${fmt(g.median, 2)}</span>`) : '';
+        ? (my > g.median ? `<span class="up">Beat the median score of ${fmt(g.median, 2)}</span>` : `<span class="dn">Lost to the median score of ${fmt(g.median, 2)}</span>`) : '';
       const sub = [kind, med].filter(Boolean).join(' · ');
       return `<div class="sg-g"><div class="sg-wk">Wk ${g.week}</div><div style="min-width:0"><div class="sg-op">vs ${esc(opp)}</div>${sub ? `<div class="sg-sub">${sub}</div>` : ''}</div>` +
         `<div class="sg-sc">${live ? '<i>In progress</i>' : `${fmt(my, 2)} <i>–</i> ${fmt(their, 2)}`}</div><div class="sg-r ${res}">${live ? '' : res.toUpperCase()}</div></div>`;
