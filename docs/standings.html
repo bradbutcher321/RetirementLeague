@@ -116,7 +116,7 @@
      pill as the dashboard's Move column. It sits beside the name, where a
      finished season's Champion/Sacko badge goes -- a column of its own
      beside W/L/Win % pushed the stats into the PF/PA line at phone width. */
-  .mv{ flex:none; box-sizing:border-box; width:40px; padding:2px 0; border-radius:999px; border:1px solid var(--line); text-align:center;
+  .mv{ flex:none; box-sizing:border-box; min-width:28px; padding:2px 6px; border-radius:999px; border:1px solid var(--line); text-align:center;
        color:var(--text-dim); font-style:normal; font-size:0.68rem; font-weight:700; line-height:1.2; white-space:nowrap; }
   .mv.up{ border-color:var(--turf-dim); color:var(--turf); }
   .mv.down{ border-color:rgba(214,98,79,0.4); color:var(--loss); }
@@ -159,8 +159,10 @@
      place and the Sacko spot keep their tints, you keep your ring. */
   .st-list{ padding:12px 10px 14px; }
   .st-h, .st-r{ display:grid; grid-template-columns:22px minmax(0,1fr) 54px 54px 46px; gap:8px; align-items:center; }
-  .st-h{ padding:0 10px 6px; color:var(--text-dim); font-size:0.58rem; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; }
-  .st-h span:nth-child(n+3){ text-align:right; }
+  /* 11px: the rows' 10px padding plus their 1px border, so the columns line up. */
+  .st-h{ padding:0 11px 6px; color:var(--text-dim); font-size:0.58rem; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; }
+  /* W-L, PF and Odds: header and numbers centred on the same line. */
+  .st-h span:nth-child(n+3){ text-align:center; }
   .st-h span:first-child{ text-align:center; }
   .st-r{ padding:9px 10px; min-height:58px; color:inherit; text-decoration:none; border:1px solid transparent; border-radius:12px; }
   .st-r + .st-r{ border-top-color:var(--line); border-top-left-radius:0; border-top-right-radius:0; }
@@ -178,16 +180,17 @@
   .st-main{ min-width:0; display:block; }
   .st-nm{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; }
   .st-nm .nm{ font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-  .st-nm .rv-tag{ margin-left:0; }
+  /* Tighter than nav.css's, so Daddy / Bitch fits on the name line. */
+  .st-nm .rv-tag{ margin-left:0; padding:3px 5px; letter-spacing:0.05em; }
   .st-sub{ display:flex; align-items:center; gap:4px 7px; flex-wrap:wrap; color:var(--text-dim); font-size:0.68rem; margin-top:3px; }
   .st-sub .t{ color:var(--gold); font-weight:600; } .st-sub .s{ color:var(--loss); font-weight:600; }
   .st-dots{ display:inline-flex; gap:2px; }
   .st-dots i{ width:6px; height:6px; border-radius:50%; background:var(--text-dim); }
   .st-dots i.w{ background:var(--turf); } .st-dots i.l{ background:var(--loss); }
-  .st-wl{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .st-pf{ text-align:right; color:var(--text); font-size:0.78rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .st-wl{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; text-align:center; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .st-pf{ text-align:center; color:var(--text); font-size:0.78rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .st-pf small{ display:block; color:var(--text-dim); font-size:0.62rem; }
-  .st-od{ text-align:right; }
+  .st-od{ text-align:center; }
   .st-od .od{ padding:2px 6px; }
   /* Playoff odds open Playoff Race: a bigger tap area than the pill. */
   .od.go{ position:relative; cursor:pointer; }
@@ -198,6 +201,11 @@
   .st-dim{ color:var(--text-dim); }
   /* All-Time records run to three digits a side. */
   .st-list.wide .st-h, .st-list.wide .st-r{ grid-template-columns:22px minmax(0,1fr) 68px 58px 46px; }
+  /* Phones: the stat columns at their widest content (W-L 18-10, PA 1,654,
+     100%), so the name line has room for Daddy / Bitch beside the name. */
+  @media (max-width:480px){
+    .st-h, .st-r{ grid-template-columns:22px minmax(0,1fr) 42px 46px 42px; gap:6px; }
+  }
   #standings-container .po-line{ margin:6px 4px; }
 </style>
 </head>
@@ -241,7 +249,7 @@
 <script src="page-common.js?v=41"></script>
 <script src="league-common.js?v=6"></script>
 <script src="race-sim.js?v=3"></script>
-<script src="rivals.js?v=3"></script>
+<script src="rivals.js?v=4"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
   const { pct } = LG;

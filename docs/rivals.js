@@ -14,8 +14,8 @@
 const Rivals = (() => {
   const MIN_GAMES = 3;
   const LABEL = { daddy: 'Your Daddy', bitch: 'Your Bitch' };
-  // The standings pill's shorter words, so it fits on the name line more often.
-  const PILL = { daddy: 'Yo Daddy', bitch: 'Yo Bitch' };
+  // The standings pill's one word, so it fits on the name line.
+  const PILL = { daddy: 'Daddy', bitch: 'Bitch' };
 
   // rows: [{ year, week, type, p1, p2, s1, s2, winner }] (league.json games)
   // active: this season's managers.
@@ -93,7 +93,7 @@ const Rivals = (() => {
     return loading;
   }
 
-  // "Yo Daddy" / "Yo Bitch" on a standings row, in your ring color; ''
+  // "Daddy" / "Bitch" on a standings row, in your ring color; ''
   // for your own row, a manager who is neither, or before the history lands.
   function pill(name) {
     if (!book || typeof getMe !== 'function') return '';
