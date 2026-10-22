@@ -1,35 +1,18 @@
 """
-Looks up a team-based pick's real kickoff/start time from ESPN's public
-scoreboard API, so parlay_gui.py doesn't need Gametime typed in by hand for
-the common case.
+ESPN's public scoreboard/box-score API, for grading finished parlay legs
+(auto_grade_results.py) and showing live ones (publish_parlay_stats.py).
 
-Picks are always entered between Tuesday and Thursday for games that can
-only be Thursday through the following Monday -- so instead of needing to
-know each sport's own "week number" convention (which, confirmed directly,
-doesn't line up with the NFL's for college football), this just checks
-every date in that 5-day window.
+find_final_score (full-game score, the common case), find_half_score (1st
+Half Spread), find_prop_stat (every player prop, via PROP_STAT_SPECS) and
+find_individual_result (UFC) each look up one already-known game, by the
+sport and game time the leg was saved with. Player props first need the
+player's team: find_player_team uses ESPN's player search, narrowed by the
+sports the bet type could plausibly be (a "Receiving Yards" prop can only be
+NFL/NCAAF); if more than one person is still left, it's left unresolved
+rather than guessed.
 
-Attempts every sport currently in use, not just NFL/NCAAF -- most either
-work directly or fail closed (no match, no crash) if ESPN's endpoint for
-that sport doesn't exist or doesn't return the expected shape. Soccer
-("Futbol") tries a short list of the leagues the league has actually bet
-on rather than every league in the world.
-
-Player props (Anytime TD, Receiving Yards, etc.) are also covered: ESPN's
-player search returns both the person's sport and current team in one
-call, which then feeds the same team-matching logic. Same-named people in
-different sports (confirmed directly, e.g. multiple "Josh Jacobs") get
-narrowed using what sports the bet type itself could plausibly be
-(a "Receiving Yards" prop can only be NFL/NCAAF) -- if that still leaves
-more than one person, it's left unresolved rather than guessing.
-
-Also holds the box-score/half-score lookups auto_grade_results.py uses to
-grade a finished game -- find_final_score (full-game score, the common
-case), find_half_score (1st Half Spread), and find_prop_stat (every player
-prop, via PROP_STAT_SPECS). All three are built on the same underlying
-event lookup (_find_event/_find_event_for_team) as the gametime functions
-above, just checking a specific already-known game instead of searching a
-whole week's window.
+Finding a new pick's game time when it's entered now happens in the browser
+(docs/parlay-note.js), not here.
 """
 import re
 import time
@@ -37,7 +20,7 @@ import unicodedata
 import urllib.parse
 import urllib.request
 import json
-from datetime import date, timedelta, datetime, timezone
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 # A bare "Mozilla/5.0" doesn't match any real browser's actual UA string,
@@ -164,7 +147,7 @@ TEAM_NICKNAMES = {
     "miss st": "mississippi state",
     # The entries below aren't tied to a specific real pick that failed
     # (unlike everything above) -- added proactively after the Oct 2026
-    # window-skip bug (see thursday_to_monday_window) turned out to be the
+    # window-skip bug (in the old pick-entry game-time search) turned out to be the
     # real cause of a run of "unmatched" picks that looked like a coverage
     # gap. Same reasoning as the confirmed ones though: each is a common
     # betting-shorthand nickname that isn't a substring of any of ESPN's
@@ -285,26 +268,6 @@ def _nickname_variant(name):
         return None
     rest = parts[1] if len(parts) > 1 else ""
     return f"{formal.capitalize()} {rest}".strip()
-
-
-def thursday_to_monday_window(today=None):
-    """Thursday through the following Monday for whichever of those windows
-    is currently relevant -- the one already in progress if today is Thu-Mon,
-    otherwise the upcoming one (only reachable on a Tue/Wed, the only days a
-    pick is entered before its window has started)."""
-    today = today or date.today()
-    days_since_thursday = (today.weekday() - 3) % 7  # Mon=0 .. Sun=6, Thu=3
-    if days_since_thursday <= 4:  # Thu(0)/Fri(1)/Sat(2)/Sun(3)/Mon(4): window already started
-        thursday = today - timedelta(days=days_since_thursday)
-    else:  # Tue(5)/Wed(6): window hasn't started yet
-        thursday = today + timedelta(days=7 - days_since_thursday)
-    monday = thursday + timedelta(days=4)
-    days = []
-    d = thursday
-    while d <= monday:
-        days.append(d)
-        d += timedelta(days=1)
-    return days
 
 
 def _fetch(espn_path, date_str):
@@ -587,125 +550,6 @@ def find_player_team(player_name, bet_type=None):
         return None, None
     sport, team = next(iter(distinct))
     return team, sport if sport in SPORT_ESPN_PATHS else None
-
-
-def find_gametime_for_team(team, sport, days=None):
-    """Like find_gametime, but for a single known team (no opponent to
-    check against) -- used for player props, where we only know which
-    team the player is on, not who they're playing."""
-    if not team or not sport:
-        return None
-    team = re.sub(r"^#\d+\s*", "", team)
-    days = days or thursday_to_monday_window()
-
-    for d in days:
-        date_str = d.strftime("%Y%m%d")
-        for espn_path in SPORT_ESPN_PATHS.get(sport, []):
-            data = _fetch(espn_path, date_str)
-            if not data:
-                continue
-            for event in data.get("events", []):
-                try:
-                    comp = event["competitions"][0]
-                    competitors = comp["competitors"]
-                except (KeyError, IndexError):
-                    continue
-                if any(_team_matches(team, c.get("team", {})) for c in competitors):
-                    try:
-                        return _to_eastern_iso(comp["date"])
-                    except (KeyError, ValueError):
-                        continue
-    return None
-
-
-def find_gametime(team, opponent, sport=None, days=None):
-    """Returns (gametime_iso, matched_sport, resolved_team, resolved_opponent),
-    or (None, None, None, None) if no confident match was found (never
-    raises -- any ESPN hiccup just means no match). Never fed a specific
-    sport -- the shared note doesn't mention one -- so this can search
-    across every sport currently in use and hand back whichever one
-    actually matched, letting the GUI auto-fill Sport too, not just
-    Gametime. Pass sport to restrict the search once it's already known
-    (e.g. re-checking one row by hand).
-
-    resolved_team/resolved_opponent are ESPN's own clean names for
-    whichever real game was matched (see _canonical_name) -- overwriting
-    the note's raw text with these fixes typos, non-canonical alternates
-    ("Carolina" -> "Panthers"), and adds a ranking prefix for ranked
-    college teams, all in one pass, rather than just confirming the note's
-    text was directionally right.
-
-    A full team+opponent match is always preferred. But a note can
-    misspell one side (confirmed directly: "Gaytors" for "Gators") while
-    getting the other side right -- so if nothing matches both sides,
-    fall back to whichever single side (team or opponent) does match,
-    as long as that side matches exactly one game across the whole
-    window. That uniqueness check is what keeps this safe: a misspelled
-    "Gaytors" paired with a correctly-spelled, one-game-this-week "Ole
-    Miss" still confidently identifies the game, but a single-side match
-    that could mean more than one real game stays unresolved rather than
-    guessed."""
-    if not team or not opponent:
-        return None, None, None, None
-    team = re.sub(r"^#\d+\s*", "", team)
-    opponent = re.sub(r"^#\d+\s*", "", opponent)
-    days = days or thursday_to_monday_window()
-    sports = [sport] if sport else list(SPORT_ESPN_PATHS)
-
-    # [(gametime_iso, sport, resolved_team, resolved_opponent)] for games
-    # matching exactly one side.
-    partial_matches = []
-    for d in days:
-        date_str = d.strftime("%Y%m%d")
-        for s in sports:
-            for espn_path in SPORT_ESPN_PATHS.get(s, []):
-                data = _fetch(espn_path, date_str)
-                if not data:
-                    continue
-                for event in data.get("events", []):
-                    try:
-                        comp = event["competitions"][0]
-                        competitors = comp["competitors"]
-                        if len(competitors) != 2:
-                            continue
-                        c0, c1 = competitors
-                        t0, t1 = c0["team"], c1["team"]
-                    except (KeyError, IndexError):
-                        continue
-
-                    team_t0, team_t1 = _team_matches(team, t0), _team_matches(team, t1)
-                    opp_t0, opp_t1 = _team_matches(opponent, t0), _team_matches(opponent, t1)
-
-                    if team_t0 and opp_t1:
-                        try:
-                            return (_to_eastern_iso(comp["date"]), s,
-                                    _canonical_name(t0, c0), _canonical_name(t1, c1))
-                        except (KeyError, ValueError):
-                            continue
-                    if team_t1 and opp_t0:
-                        try:
-                            return (_to_eastern_iso(comp["date"]), s,
-                                    _canonical_name(t1, c1), _canonical_name(t0, c0))
-                        except (KeyError, ValueError):
-                            continue
-
-                    if team_t0 or opp_t1:
-                        team_side, opp_side = (t0, c0), (t1, c1)
-                    elif team_t1 or opp_t0:
-                        team_side, opp_side = (t1, c1), (t0, c0)
-                    else:
-                        continue
-                    try:
-                        partial_matches.append((
-                            _to_eastern_iso(comp["date"]), s,
-                            _canonical_name(*team_side), _canonical_name(*opp_side),
-                        ))
-                    except (KeyError, ValueError):
-                        continue
-
-    if len(partial_matches) == 1:
-        return partial_matches[0]
-    return None, None, None, None
 
 
 def _find_event(team, opponent, sport, gametime_iso):

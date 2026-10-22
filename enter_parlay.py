@@ -1,9 +1,10 @@
 """
 Writes one week of parlay picks to "Auto Parlay Tracker" from the site's
-Enter Picks page (docs/parlay-entry.html). The page parses the note and finds
-every game on ESPN in the browser, the Worker checks the PIN and dispatches
-enter_parlay.yml with the result as the PICKS input, and this writes it with
-the same SheetClient.save_week the desktop tool uses.
+Parlay Legs page (docs/parlay-legs.html; the old Enter Picks address
+redirects there). The page parses the note and finds every game on ESPN in
+the browser, the Worker checks the commissioner's sign-in (or the PIN) and
+dispatches enter_parlay.yml with the result as the PICKS input, and this
+writes it with SheetClient.save_week.
 
 PICKS is JSON: {year, week, sacko, final_odds, final_payout, dry_run, mode,
 rows: {player: {sport, bet_type, team, opponent, player_prop, line, side,
@@ -19,7 +20,7 @@ Mode "legs" is Parlay Legs (docs/parlay-legs.html), run by sync_legs.yml:
 rows holds every leg the managers have entered for the week, or
 {removed: true, raw_pick} for one taken back. Only a row whose Raw Pick
 differs from the sheet's is written (as Pending), so a pick a commissioner
-fixed on Enter Picks, which keeps its Raw Pick, is left alone; a removed
+fixed with Edit pick, which keeps its Raw Pick, is left alone; a removed
 leg's row is cleared only if it still holds that leg. Sacko and the final
 odds and payout are left alone unless the payload has "meta" ({sacko,
 final_odds, final_payout}, a commissioner's save on Parlay Legs).
@@ -54,7 +55,7 @@ def clean_rows(rows, players, edit):
         if clean["gametime"] and not GAMETIME_RE.match(clean["gametime"]):
             fail(f"{player}: game time {clean['gametime']!r} isn't YYYY-MM-DDTHH:MM:SS")
         odds = row.get("odds")
-        # save_week parses odds from text, the way the GUI's field hands it over.
+        # save_week parses odds from text.
         clean["odds"] = str(odds) if isinstance(odds, (int, float)) else ""
         clean["result"] = "Pending"
         if edit:

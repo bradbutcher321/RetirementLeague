@@ -1,10 +1,10 @@
-/* The Enter Picks page's parser and game finder (site audit II #11).
+/* Parlay Legs' note parser and game finder (site audit II #11).
  *
- * parse() is a straight port of parlay_note_parser.py, and findGame() of the
- * game-time half of espn_gametime_lookup.py (find_gametime,
- * find_player_team, find_gametime_for_team), so the page finds the same
- * games the desktop tool did, with the same "flag, don't guess" rules. A fix
- * to one belongs in the other too.
+ * Ported from the desktop entry tool's Python parser and game-time search,
+ * both removed since picks are only entered on the site, with the same
+ * "flag, don't guess" rules. Grading still resolves a prop player's team in
+ * Python (find_player_team in espn_gametime_lookup.py), so a fix to player
+ * matching belongs in both.
  *
  * ESPN's site API answers any origin, so this runs in the browser: every
  * leg is looked up while you look at the preview, nothing waits on an
@@ -213,7 +213,7 @@
   }
 
   /** Thursday through Monday, as YYYYMMDD: the one in progress on Thu-Mon,
-   *  else the coming one (thursday_to_monday_window, in Eastern time). */
+   *  else the coming one, in Eastern time. */
   function windowDays(now = new Date()) {
     const [y, m, d] = easternIso(now).slice(0, 10).split('-').map(Number);
     const today = new Date(Date.UTC(y, m - 1, d));
@@ -283,7 +283,8 @@
   };
 
   /** A team pick: {gametime, sport, team, opponent, matchup} or
-   *  {failed} -- find_gametime, including its one-side-only fallback. */
+   *  {failed}. Both teams must match, unless only one side matches and it
+   *  matches exactly one game in the window (a misspelled opponent). */
   async function findTeamGame(team, opponent, days) {
     team = stripRank(team);
     opponent = stripRank(opponent);
@@ -375,7 +376,7 @@
     return { ambiguous: distinct.length > 1 };
   }
 
-  /** The player's team's game in the window (find_gametime_for_team). */
+  /** The player's team's game in the window. */
   async function findTeamOnly(team, sport, days) {
     team = stripRank(team);
     let failed = false;

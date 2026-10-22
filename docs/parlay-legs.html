@@ -753,7 +753,7 @@
   const BET_TYPES = ['Money Line', 'Spread', 'Alt Spread', '1st Half Spread', 'Anytime TD', 'Total Points', 'Total Goals',
     'Total Rounds', 'Receiving Yards', 'Passing TD', 'Passing Yards', 'Receptions', 'Total Yards', 'Home Runs',
     'Player Points', 'Interceptions', 'Coin Toss'];
-  // Which boxes a bet type uses (parlay_gui.py's FIELD_RELEVANCE).
+  // Which boxes a bet type uses.
   const FIELDS_FOR = {};
   ['Spread', 'Alt Spread', '1st Half Spread'].forEach(b => { FIELDS_FOR[b] = ['team', 'opponent', 'line']; });
   FIELDS_FOR['Money Line'] = ['team', 'opponent'];
@@ -874,7 +874,7 @@
 
   // ---------- Finding the game ----------
   // Sport and kickoff come from ESPN for every row whose teams or player
-  // changed (parlay-note.js, the same lookup the desktop tool used). A game
+  // changed (parlay-note.js). A game
   // it can't find leaves the boxes as they are and says why.
   async function lookRow(n, canon){
     const r = ed.cur && ed.cur.rows[n];

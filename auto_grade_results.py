@@ -17,7 +17,7 @@ depending what the bet actually needs to settle:
     Yards, Player Points, Home Runs): a box-score stat line for that
     specific player, via find_prop_stat(). The player's team isn't
     recorded in the sheet for these (only Sport and Player Prop are), so
-    this re-resolves it the same way parlay_gui.py did when the pick was
+    this re-resolves it the same way the pick-entry lookup did when the pick was
     first entered (ESPN player search), then locates that team's specific
     game on Gametime's date. A player who can't be confidently found in
     the finished game's box score at all is left for manual review rather

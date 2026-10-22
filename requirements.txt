@@ -1,4 +1,3 @@
 gspread
 google-auth
-customtkinter
 tzdata

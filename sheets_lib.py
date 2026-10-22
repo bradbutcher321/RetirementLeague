@@ -14,7 +14,7 @@ what the file is named for.
 
 Nothing here writes to the sheet. `authorize()` asks for read-only scopes; the
 handful of scripts that do write (auto_grade_results.py, sync_scores_to_sheet.py,
-parlay_gui.py and the one-off sheet-setup tools) build their own read/write
+enter_parlay.py and the one-off sheet-setup tools) build their own read/write
 client and take only SHEET_ID/CREDS_PATH from here.
 """
 import os

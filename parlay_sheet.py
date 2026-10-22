@@ -1,12 +1,8 @@
 """
-The "Auto Parlay Tracker" tab's week writer, shared by the desktop entry
-tool (parlay_gui.py) and the site's Enter Picks page (enter_parlay.py, run
-by the enter_parlay.yml Action the Worker dispatches). Kept free of any GUI
-import so the Action only needs gspread.
+The "Auto Parlay Tracker" tab's week writer, used by enter_parlay.py (run by
+the enter_parlay.yml and sync_legs.yml Actions the Worker dispatches when a
+week or a leg is saved on the site's Parlay Legs page).
 """
-import re
-from datetime import datetime
-
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -16,52 +12,11 @@ from parlay_note_parser import parse_signed_number
 TARGET_TAB = "Auto Parlay Tracker"
 PLAYERS_PER_WEEK = 12
 
-# Visible grid columns (E..N) -- what the user actually edits. Raw Pick
-# (O) tags along as a data field with no visible widget: it's the original
-# note text a pick was parsed from, useful as an audit trail, but not
-# something meant to be hand-typed. ROW_FIELDS is the full save/load field
-# order matching tools/migrate_parlay_tracker.py's HEADER for columns E..O.
-VISIBLE_ROW_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "odds", "gametime", "result"]
-ROW_FIELDS = VISIBLE_ROW_FIELDS + ["raw_pick"]
-
-GAMETIME_ISO_FMT = "%Y-%m-%dT%H:%M:%S"
-GAMETIME_DISPLAY_FMT = "%a %m/%d/%Y %I:%M %p"
-
-
-def _gametime_to_display(iso_text):
-    """'2026-09-26T15:30:00' -> 'Sat 09/26/2026 03:30 PM' for on-screen
-    editing -- typing a human time by hand is much less error-prone than
-    the sheet's strict ISO format. Text that isn't valid ISO (blank, or
-    something a person already typed) is shown as-is rather than hidden,
-    since it still needs to round-trip back out unchanged."""
-    iso_text = (iso_text or "").strip()
-    if not iso_text:
-        return ""
-    try:
-        dt = datetime.strptime(iso_text, GAMETIME_ISO_FMT)
-    except ValueError:
-        return iso_text
-    return dt.strftime(GAMETIME_DISPLAY_FMT)
-
-
-def _gametime_to_iso(display_text):
-    """Inverse of _gametime_to_display -- converts back to the sheet's
-    exact ISO format right before writing. Also accepts ISO typed directly
-    (a power user, or text that round-tripped through unchanged), and
-    tolerates the leading weekday abbreviation being edited out or left
-    off, since it's only there for readability."""
-    display_text = (display_text or "").strip()
-    if not display_text:
-        return ""
-    stripped = re.sub(r"^[A-Za-z]{3},?\s+", "", display_text)
-    for fmt in ("%m/%d/%Y %I:%M %p", GAMETIME_ISO_FMT):
-        try:
-            dt = datetime.strptime(stripped, fmt)
-            return dt.strftime(GAMETIME_ISO_FMT)
-        except ValueError:
-            continue
-    return display_text  # unrecognized -- pass through; sheet validation will flag it
-
+# Columns E..O in save/load order, matching tools/migrate_parlay_tracker.py's
+# HEADER. Raw Pick (O) is the note text a pick was parsed from, kept as an
+# audit trail.
+ROW_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "odds", "gametime", "result",
+              "raw_pick"]
 
 def authorize_write():
     scopes = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -145,19 +100,13 @@ class SheetClient:
 
 
 def _row_values(data):
-    """One player's E..O cells, in ROW_FIELDS order."""
+    """One player's E..O cells, in ROW_FIELDS order. Game times arrive as
+    the sheet's ISO text already (enter_parlay.py rejects anything else)."""
     row_values = []
     for f in ROW_FIELDS:
         v = data.get(f, "")
         if f == "odds" and v != "":
             v = parse_signed_number(v)
             v = v if v is not None else ""
-        elif f == "gametime" and v != "":
-            # Converted here too (not just in WeekGrid.player_rows)
-            # so save_week is correct regardless of what shape of
-            # dict a caller hands it -- confirmed directly this
-            # matters: a human-readable display string written
-            # as-is would fail the sheet's strict ISO validation.
-            v = _gametime_to_iso(v)
         row_values.append(v)
     return row_values

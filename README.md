@@ -179,9 +179,8 @@ theme.css instead.
   minutes while cloud grading was blocked, removed now that it isn't;
   re-register it the same way if `site.web.api.espn.com` ever gets
   blocked too. See [tools/PARLAY_DATA_MIGRATION.md](tools/PARLAY_DATA_MIGRATION.md) for the full
-  story of this migration (now complete) and
-  [PARLAY_GUI_SETUP.md](PARLAY_GUI_SETUP.md) to set up `parlay_gui.py`,
-  the desktop tool for entering/grading picks.
+  story of this migration (now complete). Picks are entered, fixed and
+  graded on the site's Parlay Legs page; the old desktop entry tool is gone.
 
 - **`generate_league_data_d1.py`** — writes `docs/data/league.json`'s
   per-season rollups and draft order from D1 (`teams`/`matchups`/
