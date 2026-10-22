@@ -111,8 +111,11 @@
      headroom rather than whatever theme.css's default .hero2-side padding
      happens to leave. Desktop only: once the hero stacks (theme.css, 700px)
      the side strip sits below the payout, nowhere near the ribbon, and this
-     padding was just a 46px empty band above the stats. */
-  @media (min-width: 701px){ .hero2-side{ padding-top: 46px; } }
+     padding was just a 46px empty band above the stats. Range syntax, not
+     min-width: 701px -- at a fractional width like 700.5px (display scaling,
+     zoom) neither that nor theme.css's max-width: 700px matched, and the
+     side-by-side card lost this padding so the ribbon sat on Legs Hit. */
+  @media (width > 700px){ .hero2-side{ padding-top: 46px; } }
 
   .hero-chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
   .hero-chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); }
