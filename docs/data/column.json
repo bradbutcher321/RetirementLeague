@@ -1,6 +1,55 @@
 {
- "generated_at": "2026-10-21T04:40:02+00:00",
+ "generated_at": "2026-10-22T12:18:05+00:00",
  "columns": [
+  {
+   "id": "2026-w07-preview",
+   "kind": "preview",
+   "season": 2026,
+   "week": 7,
+   "published_at": "2026-10-22T08:18:05-04:00",
+   "headline": "Chad vs Brad: 20 Meetings, Dead Even, Somebody Finally Blinks",
+   "dek": "The all-time series is tied 10-10, Chad has the league's biggest points total, and Brad is riding a three-game heater. ESPN likes Chad. Brad likes Brad.",
+   "body": [
+    "The game of the week is Chad against Brad, and it isn't close as a choice. The all-time series is tied 10-10, which means twenty meetings have settled exactly nothing. Chad sits second at 8-4 with <b>744.8</b> points for, the biggest pile in the league, and a playoff chance of <b>87.65%</b>. Brad is 6-6, seventh, on a W3 streak, and sitting at <b>43.48%</b>, which is fantasy for \"we'll see.\"",
+    "ESPN projects Chad at <b>118.01</b> to Brad's <b>98.4</b> and gives Chad a <b>60%</b> win chance. That's the projection talking, not the verdict, and Brad will tell you the number undersells him the same way he insists his head isn't that big. Win this and the series finally has a leader. Lose it and Brad's heater goes back in the drawer with the rest of his 6-6 season.",
+    "The closest projection on the board is Jon against Ben, a gap of <b>0.99</b> with ESPN calling it <b>51%</b> to <b>49%</b>. Jon is first at 9-3 and projected for <b>102.86</b>; Ben is tenth at 5-7 and projected for <b>101.87</b>. So the league leader, the man with the most expensive weekly video budget in fantasy history, is projected to beat a 5-7 team by less than a point. Great production values, coin-flip product. Jon leads the series 3-2.",
+    "The biggest mismatch is Jared against Joe K, a projected gap of <b>22.65</b>. Joe K is projected for <b>105.13</b> and a <b>64%</b> win chance, which is ESPN trusting Joe K with something, a bold choice. Jared is 3-9, on an L2 skid, projected for <b>82.48</b>, and staring at a <b>15.13%</b> playoff chance. Joe K leads that series 13-7, so if Jared loses this one too, it's tradition, not news. If Joe K blows it, that's a whole different column.",
+    "Kris and Jeff are both 7-5 and both live in the playoff bubble, Kris fourth and Jeff sixth. ESPN has Jeff at <b>91.4</b> to Kris's <b>88.39</b>, a <b>52%</b> to <b>48%</b> lean, and Jeff brings a W2 streak against Kris's L1. Kris leads the series 9-5 and has the points edge, <b>613.76</b> to <b>567.94</b>, but neither of them is projected to clear the projected median of <b>100.01</b>. Somebody wins ugly.",
+    "Joe G gets TJ, who is 8-4 and third. Joe G is projected for <b>101.98</b> and a <b>55%</b> chance despite an L2 streak, and he leads the series 4-2. Down at the bottom, Collin is 2-10, alone in last, on an L3 run with a <b>4.35%</b> playoff chance. ESPN still makes him a <b>51%</b> favorite over Flanders, <b>100.66</b> to <b>99.35</b>, which is either a sign of life or a projection system with a sense of humor. Flanders leads that series 9-5."
+   ],
+   "games": [
+    {
+     "a": "Kris",
+     "b": "Jeff",
+     "note": "Both 7-5. ESPN leans Jeff 52% on a W2 streak, but Kris owns the series 9-5 and the points edge."
+    },
+    {
+     "a": "Jon",
+     "b": "Ben",
+     "note": "First place projected to win by 0.99. The league leader and a 5-7 team, separated by a rounding error."
+    },
+    {
+     "a": "Jared",
+     "b": "Joe K",
+     "note": "Biggest gap of the week at 22.65. Joe K leads 13-7 and gets 64%; anything else is on Joe K."
+    },
+    {
+     "a": "Joe G",
+     "b": "TJ",
+     "note": "Joe G favored at 55% on an L2 slide against 8-4 TJ. Joe G leads the series 4-2."
+    },
+    {
+     "a": "Chad",
+     "b": "Brad",
+     "note": "Series tied 10-10. Chad projected 118.01, Brad on a W3 heater. Game of the week."
+    },
+    {
+     "a": "Flanders",
+     "b": "Collin",
+     "note": "Last-place Collin, 2-10 and L3, is somehow a 51% favorite. Flanders leads 9-5."
+    }
+   ]
+  },
   {
    "id": "2026-w06-recap",
    "kind": "recap",
