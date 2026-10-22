@@ -18,10 +18,8 @@
  *                      week stepper); cached for three hours. N at or past
  *                      the live week is just the live dashboard.
  * GET /player?id=&week=&last= -> one player's game log (see playerLog.js).
- * POST /hit, GET /stats -> site analytics (see analytics.js).
- * POST /refresh-parlay -> dispatches the Parlay data refresh Action on
- *                      demand (see parlayRefresh.js); used by the "Refresh
- *                      Data" button on the Parlay Results page.
+ * POST /hit       -> records a page view (see analytics.js; the numbers are
+ *                      read on the Commissioner page, through /admin).
  * POST /parlay-entry -> Parlay Legs' commissioner save: checks a signed-in
  *                      commissioner (or the PIN) and dispatches the Action
  *                      that writes the week to the sheet (see parlayEntry.js).
@@ -64,8 +62,8 @@
  *   - D1 table `cache` in DB (schema.sql)
  */
 import { buildDashboard } from "./dashboard.js";
-import { getStats, recordHit } from "./analytics.js";
-import { dispatchParlayRefresh, dispatchParlayRefreshIfNeeded } from "./parlayRefresh.js";
+import { recordHit } from "./analytics.js";
+import { dispatchParlayRefreshIfNeeded } from "./parlayRefresh.js";
 import { enterParlay, getParlayWeek } from "./parlayEntry.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 import { checkLegReminders, checkPushEvents, recent, subscribe, unsubscribe } from "./push.js";
@@ -202,15 +200,6 @@ export default {
       const ok = await recordHit(request, env).catch(() => false);
       return new Response(null, { status: ok ? 204 : 400, headers });
     }
-    if (path === "/stats") {
-      if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
-      return jsonResponse(await getStats(env).catch((err) => ({ error: String(err) })), headers);
-    }
-    if (path === "/refresh-parlay") {
-      if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
-      const result = await dispatchParlayRefresh(env).catch((err) => ({ status: 502, body: { error: String(err) } }));
-      return jsonResponse(result.body, headers, result.status);
-    }
     if (path === "/parlay-entry") {
       if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       // A signed-in commissioner needs no PIN; anyone else still does.
@@ -286,7 +275,7 @@ export default {
     }
     if (path === "/parlay-stats") {
       // Precomputed elsewhere (publish_parlay_stats.py, run on a schedule
-      // or via /refresh-parlay) and pushed straight into this same KV
+      // or from the Commissioner page's Data Refresh) and pushed straight into this same KV
       // namespace -- this route is just a plain read, no live computation
       // here, since reproducing the Python stats logic in JS would be a
       // large duplicate-maintenance risk for no real benefit at this

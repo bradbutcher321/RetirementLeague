@@ -1037,7 +1037,6 @@
     ]));
     // Single-game highs and lows moved to Weekly's Best and Worst Weeks,
     // where they come with the opponent and the week.
-    const recTone = (w, l) => w > l ? 'win' : w < l ? 'loss' : '';
     const margins = card('Margins', tiles([
       ['Close Games', rec(ex.close_wins, ex.close_losses), { tone: signTone(ex.close_wins - ex.close_losses), sub: 'Under 5 pts' }],
       ['Blowouts', rec(ex.blowout_wins, ex.blowout_losses), { tone: signTone(ex.blowout_wins - ex.blowout_losses), sub: '50+ pts' }],

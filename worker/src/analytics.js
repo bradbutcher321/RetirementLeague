@@ -3,7 +3,7 @@
  * sends a random id it keeps in localStorage, plus which page was opened.
  *
  *   POST /hit    body (text/plain JSON) { vid, page, kind }  kind: "view" | "ping"
- *   GET  /stats  today's unique visitors / page views, active now, last 7 days, top pages
+ *   getStats()   today's unique visitors / page views, active now, last 7 days, top pages
  *
  * "Days" are Eastern-time days, since that is when the league is playing.
  */

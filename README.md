@@ -122,9 +122,9 @@ theme.css instead.
   dropped, worst right at `:00`/`:30` when everyone else's crons also
   fire). The Cron Trigger dispatches
   `.github/workflows/refresh_parlay_data.yml` (`workflow_dispatch`-only
-  now) the same way the "Refresh Data" button on the Parlay Results page
-  already did — `worker/src/parlayRefresh.js`, `POST /refresh-parlay` —
-  so both paths share one dispatch function and its cooldown. Also syncs
+  now) the same way the Commissioner page's Data Refresh does
+  (`worker/src/parlayRefresh.js`), so both paths share one dispatch
+  function and its cooldown. Also syncs
   picks into a dedicated D1 database (`sync_parlay_to_d1.py`) for
   durable, queryable storage — only the rows that actually changed since
   the last sync, since re-syncing all of them on a 10-minute cadence would

@@ -764,24 +764,9 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
 .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
 
-/* ---------- Collapsible tray (Site Activity, Jon's Table) ----------
-   A <details> whose summary reads as a section heading with a chevron, so an
-   aside can sit on the page closed without competing with the real content. */
-.tray > summary{
-  list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 12px;
-  padding-bottom: 10px; border-bottom: 1px solid var(--line); color: var(--text-dim); font-size: 1rem; font-weight: 600;
-}
-.tray > summary::-webkit-details-marker{ display: none; }
-@media (hover: hover){
-  .tray > summary:hover .tray-title{ color: var(--text); }
-}
-.tray-summary{ flex: 1; text-align: right; font-size: 0.78rem; font-weight: 500; }
-.tray > summary .chev{ color: var(--gold); align-self: center; }
-.tray-body{ margin-top: 16px; }
-
 /* ---------- Disclosure chevron ----------
    The one arrow on everything that opens -- matchup cards, parlay legs, Game
-   Records rows, the trays: points down closed, flips up open. A mask rather
+   Records rows: points down closed, flips up open. A mask rather
    than a text glyph, so it's the same shape in every font and takes the
    host's text color. */
 .chev{

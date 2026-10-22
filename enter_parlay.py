@@ -22,8 +22,8 @@ rows holds every leg the managers have entered for the week, or
 differs from the sheet's is written (as Pending), so a pick a commissioner
 fixed with Edit pick, which keeps its Raw Pick, is left alone; a removed
 leg's row is cleared only if it still holds that leg. Sacko and the final
-odds and payout are left alone unless the payload has "meta" ({sacko,
-final_odds, final_payout}, a commissioner's save on Parlay Legs).
+odds and payout are left alone (a commissioner saves those with the whole
+week, mode "new"/"edit").
 
 Usage: PICKS='{...}' python enter_parlay.py
 """
@@ -67,7 +67,7 @@ def clean_rows(rows, players, edit):
     return out
 
 
-def save_legs(client, year, week, rows, dry_run, meta=None):
+def save_legs(client, year, week, rows, dry_run):
     removed = {p for p, r in rows.items() if r.get("removed")}
     unknown = [p for p in rows if p not in client.players]
     if unknown:
@@ -89,24 +89,13 @@ def save_legs(client, year, week, rows, dry_run, meta=None):
           f"{len(writes)} row(s) to write ({'existing week, row ' + str(start_row) if start_row else 'new week'})")
     for player, r in writes.items():
         print(f"  {player:8} " + (" | ".join(str(r[f]) for f in ROW_FIELDS) if r else "(cleared)"))
-    num = lambda v: float(v) if isinstance(v, (int, float)) else None
-    if meta:
-        print(f"  Sacko {meta.get('sacko') or '-'} | Final odds {meta.get('final_odds')} | Final payout {meta.get('final_payout')}")
-    if dry_run or not (writes or meta):
+    if dry_run or not writes:
         print("Dry run: nothing written." if dry_run else "Sheet already matches.")
         return
-    m = meta or {}
-    cell = lambda v: "" if num(v) is None else num(v)
     if start_row:
-        if writes:
-            client.save_rows(start_row, writes)
-        if meta:
-            client.ws.update([[str(m.get("sacko") or "")]], f"C{start_row}")
-            client.ws.update([[cell(m.get("final_odds"))]], f"P{start_row}")
-            client.ws.update([[cell(m.get("final_payout"))]], f"Q{start_row}")
+        client.save_rows(start_row, writes)
     else:
-        client.save_week(client.next_new_week_row(), year, week, str(m.get("sacko") or ""),
-                         num(m.get("final_odds")), num(m.get("final_payout")), writes)
+        client.save_week(client.next_new_week_row(), year, week, "", None, None, writes)
     print("Saved.")
 
 
@@ -119,7 +108,7 @@ def main():
     num = lambda v: float(v) if isinstance(v, (int, float)) else None
 
     if payload.get("mode") == "legs":
-        return save_legs(SheetClient(), year, week, payload.get("rows") or {}, payload.get("dry_run"), payload.get("meta"))
+        return save_legs(SheetClient(), year, week, payload.get("rows") or {}, payload.get("dry_run"))
 
     edit = payload.get("mode") == "edit"
     client = SheetClient()
