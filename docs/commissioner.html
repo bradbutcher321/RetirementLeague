@@ -373,6 +373,20 @@
   }
 
   // ---------- Parlay ----------
+  // What Lock legs found on Hard Rock: the legs it repriced, and the ones it
+  // left as entered, to check against the bet slip by hand.
+  function pricedHtml(P) {
+    const p = P.locked && P.priced;
+    if (!p || !p.legs || !p.legs.length) return '';
+    const found = p.legs.filter(x => x.how === 'updated' || x.how === 'same');
+    const changed = p.legs.filter(x => x.how === 'updated'), check = p.legs.filter(x => x.how === 'moved' || x.how === 'kept');
+    const row = (x, odds) => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(x.player)}</div><div class="cm-sub">${esc(x.why || x.pick)}</div></div><span class="cm-val">${odds}</span></div>`;
+    const when = new Date(p.at).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }).replace(',', '');
+    return `<p class="cm-fine">Hard Rock odds pulled ${esc(when)}: <b>${found.length} of ${p.legs.length}</b> legs found, ${changed.length ? `${changed.length} changed` : 'none changed'}.</p>
+      ${changed.length ? `<p class="cm-fine"><b>Changed</b></p><div class="cm-rows">${changed.map(x => row(x, `<s style="color:var(--text-dim);margin-right:4px">${fmtOdds(x.was)}</s><span style="color:var(--gold)">${fmtOdds(x.odds)}</span>`)).join('')}</div>` : ''}
+      ${check.length ? `<p class="cm-fine"><b>Check by hand</b></p><div class="cm-rows">${check.map(x => row(x, esc(fmtOdds(x.was) || '—'))).join('')}</div>` : ''}`;
+  }
+
   function viewParlay() {
     const P = ov.parlay;
     if (!P) return { title: 'Parlay Management', html: panel('Legs', '<div class="cm-empty">Couldn\'t read this week\'s legs. Try again in a minute.</div>') };
@@ -386,7 +400,7 @@
         <p class="cm-fine">${P.missing.length ? `<b>Missing:</b> ${esc(list(P.missing))}.` : 'Every leg is in.'}${cant.length ? ` ${esc(list(cant))} ${cant.length > 1 ? "haven't" : "hasn't"} signed in, so they can't enter ${cant.length > 1 ? 'theirs' : 'one'} themselves.` : ''}</p>
         <p class="cm-fine">${P.locked ? 'Locked. Managers can no longer change their legs. You still can.' : `Locks ${esc(etDay(P.locksAt))} ET on its own. Lock now to shut the board once the bet is placed.`}</p>
         <div class="cm-wrap">${access === 'session' ? `<button type="button" class="cm-btn${P.locked ? ' dim' : ''}" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>${P.locked ? 'Unlock legs' : 'Lock legs'}</button>` : ''}<a class="cm-btn dim" href="parlay-legs.html">Open the board</a></div>
-        ${access === 'session' ? '' : '<p class="cm-fine">Sign in as a commissioner to lock the legs.</p>'}`;
+        ${access === 'session' ? '' : '<p class="cm-fine">Sign in as a commissioner to lock the legs.</p>'}${pricedHtml(P)}`;
     }
     const refreshed = wfAt('refresh_parlay_data.yml');
     const left = P.oddsLeft;
@@ -846,7 +860,8 @@
         const res = await fetch(WORKER_URL + '/legs/lock', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ locked: !ov.parlay.locked }) });
         if (!res.ok) throw { message: "Couldn't change the lock. Try again." };
         await loadOverview();
-        toast(ov.parlay.locked ? 'Legs locked for everyone else' : 'Legs unlocked');
+        const pr = ov.parlay.locked && ov.parlay.priced, changed = pr ? pr.legs.filter(x => x.how === 'updated').length : 0;
+        toast(!ov.parlay.locked ? 'Legs unlocked' : pr ? `Legs locked · Hard Rock odds changed on ${plural(changed, 'leg', 'legs')}` : 'Legs locked for everyone else');
       });
     }
     else if (a === 'run') {

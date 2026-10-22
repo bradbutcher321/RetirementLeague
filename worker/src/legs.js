@@ -28,7 +28,9 @@
  * GET  /legs/props?sport=&event= -> { odds: {player: price} } for Anytime TD
  * POST /legs/lock { locked } -> a commissioner locks the week's legs for
  *                              everyone else once the bet is live (or unlocks
- *                              them); commissioners can still edit
+ *                              them); commissioners can still edit. Locking
+ *                              also reprices every leg at Hard Rock's odds
+ *                              of that minute (priceAtLock)
  * POST /legs/week { sacko, final_odds, final_payout } -> a commissioner sets
  *                              the week's Sacko and final numbers (locked or
  *                              not: the final odds only exist once the
@@ -243,6 +245,8 @@ async function board(env, request) {
     locked: win.open && locked, locksAt: win.locksAt, opensAt: win.opensAt,
     days: win.days, players: stats?.players || [], legs: await weekLegs(env, wk, win), me: me ? me.manager : null,
     commish, asOf: Date.now(),
+    // Hard Rock's odds from the last Lock legs, for commissioners to check the slip against.
+    priced: commish && locked ? await env.COOLDOWN_KV.get(pricedKey(wk), "json") : null,
     _wk: wk, _win: win,
   };
 }
@@ -297,9 +301,19 @@ async function saveLock(request, env) {
   const body = await request.json().catch(() => null);
   if (!body || typeof body.locked !== "boolean") return { status: 400, body: { error: "bad_json" } };
   const b = await board(env, null);
-  if (body.locked) await env.COOLDOWN_KV.put(lockKey(b._wk), "1", { expirationTtl: 14 * 24 * 3600 });
-  else await env.COOLDOWN_KV.delete(lockKey(b._wk));
-  await logAction(env, who.manager, "parlay", `${body.locked ? "Locked" : "Unlocked"} the legs for week ${b._wk.week}`);
+  let note = "";
+  if (body.locked) {
+    await env.COOLDOWN_KV.put(lockKey(b._wk), "1", { expirationTtl: 14 * 24 * 3600 });
+    // Hard Rock's odds right now, for the bet about to be placed.
+    const report = await priceAtLock(env, b).catch((err) => { console.error("Lock odds:", err); return null; });
+    if (report) {
+      await env.COOLDOWN_KV.put(pricedKey(b._wk), JSON.stringify({ at: Date.now(), legs: report }), { expirationTtl: 14 * 24 * 3600 });
+      if (await savePrices(env, b, report)) await dispatchSync(env, b._wk).catch((err) => console.error("Lock sync dispatch failed:", err));
+      const n = (h) => report.filter((r) => h.includes(r.how)).length;
+      note = ` · Hard Rock odds on ${n(["updated", "same"])} of ${report.length}, ${n(["updated"])} changed`;
+    }
+  } else await env.COOLDOWN_KV.delete(lockKey(b._wk));
+  await logAction(env, who.manager, "parlay", `${body.locked ? "Locked" : "Unlocked"} the legs for week ${b._wk.week}${note}`);
   return { status: 200, body: { ok: true, ...publicBoard(await board(env, request)), me: who.manager } };
 }
 
@@ -406,15 +420,25 @@ const oddsWindow = (win) => {
 /** Hard Rock's lines for a sport's window: [{id, at, home, away, markets}],
  * Florida's book where it has the game, Hard Rock's main book otherwise. */
 function hardRock(env, sport, win) {
-  const key = ODDS_KEYS[sport];
-  if (!env.ODDS_API_KEY || !key) return Promise.resolve([]);
-  return cached(env, `legs:hr:${sport}:${win.days[0]}`, 4 * 3600, async () => {
-    const events = await oddsApi(env, `${ODDS_API}/${key}/odds?bookmakers=${BOOKS.join(",")}&markets=h2h,spreads,totals&oddsFormat=american&${oddsWindow(win)}`);
-    return events.map((e) => {
-      const book = BOOKS.map((k) => e.bookmakers.find((b) => b.key === k)).find(Boolean);
-      return { id: e.id, at: Date.parse(e.commence_time), home: e.home_team, away: e.away_team, markets: book ? book.markets : [] };
-    }).filter((e) => e.markets.length);
-  }).catch((err) => { console.error("Hard Rock lines:", String(err)); return []; });
+  if (!env.ODDS_API_KEY || !ODDS_KEYS[sport]) return Promise.resolve([]);
+  return cached(env, linesKey(sport, win), 4 * 3600, () => fetchLines(env, sport, win))
+    .catch((err) => { console.error("Hard Rock lines:", String(err)); return []; });
+}
+const linesKey = (sport, win) => `legs:hr:${sport}:${win.days[0]}`;
+async function fetchLines(env, sport, win) {
+  const events = await oddsApi(env, `${ODDS_API}/${ODDS_KEYS[sport]}/odds?bookmakers=${BOOKS.join(",")}&markets=h2h,spreads,totals&oddsFormat=american&${oddsWindow(win)}`);
+  return events.map((e) => {
+    const book = BOOKS.map((k) => e.bookmakers.find((b) => b.key === k)).find(Boolean);
+    return { id: e.id, at: Date.parse(e.commence_time), home: e.home_team, away: e.away_team, markets: book ? book.markets : [] };
+  }).filter((e) => e.markets.length);
+}
+/** This minute's lines, never the cache's (a failed call throws instead of
+ * falling back to an old copy); the board's cache takes them too. */
+async function freshLines(env, sport, win) {
+  if (!env.ODDS_API_KEY) throw new Error("no_key");
+  const events = await fetchLines(env, sport, win);
+  await cached(env, linesKey(sport, win), 0, async () => events);
+  return events;
 }
 
 async function getGames(request, env) {
@@ -441,6 +465,190 @@ async function getProps(request, env) {
   return { status: 200, body: { odds } };
 }
 
+// ---------- Hard Rock's odds at lock ----------
+// Locking the legs pulls Hard Rock's price for every leg right then, so the
+// board matches the bet slip the Sacko places next. A price only counts at
+// the leg's own line: Hard Rock's main line, else its alternate lines. A leg
+// it doesn't list, or whose line it has moved off, keeps the odds entered,
+// and the report says why, so a commissioner knows which to check by hand.
+
+// The Odds API's markets for each bet type, tried in order. h2h, spreads and
+// totals come with the sport's lines; the rest cost a credit each per game.
+const LOCK_MARKETS = {
+  "Money Line": ["h2h"], Spread: ["spreads", "alternate_spreads"], "Alt Spread": ["spreads", "alternate_spreads"],
+  "1st Half Spread": ["spreads_h1"], "Total Points": ["totals", "alternate_totals"], "Total Goals": ["totals", "alternate_totals"],
+  "Anytime TD": ["player_anytime_td"], "Passing TD": ["player_pass_tds", "player_pass_tds_alternate"],
+  "Passing Yards": ["player_pass_yds", "player_pass_yds_alternate"], "Receiving Yards": ["player_reception_yds", "player_reception_yds_alternate"],
+  Receptions: ["player_receptions", "player_receptions_alternate"], "Total Yards": ["player_rush_reception_yds", "player_rush_reception_yds_alternate"],
+  Interceptions: ["player_pass_interceptions"], "Player Points": ["player_points", "player_points_alternate"],
+  "Home Runs": ["batter_home_runs", "batter_home_runs_alternate"],
+};
+const TEAM_BETS = ["Money Line", ...TEAM_LINE_VS];
+const GAME_BETS = [...TEAM_BETS, ...TOTAL_VS];
+// ESPN's page-data host for one game (cdn.espn.com answers the Worker; see
+// fetchNflScoreboard in espn.js).
+const ESPN_CORE = { NFL: "nfl", NCAAF: "college-football", NBA: "nba", NCAAM: "mens-college-basketball", NHL: "nhl", MLB: "mlb" };
+const pricedKey = (wk) => `legs:priced:${wk.year}:${wk.week}`;
+const signed = (n) => (n > 0 ? "+" : "") + n;
+
+/** A book's team name against the board's ("Buffalo Bills" / "Bills", "#5 Georgia"). */
+const nameHit = (book, name) => { const b = fold(book), n = fold(name); return !!n && (b === n || b.startsWith(n) || b.endsWith(n)); };
+/** A book's team name against ESPN's [displayName, location, name] (sameTeam on the page). */
+const sameTeam = (name, [display, location, nick]) => {
+  const n = fold(name);
+  return n === fold(display) || (!!fold(location) && n.startsWith(fold(location)) && n.endsWith(fold(nick))) || n === fold(location);
+};
+/** The event team the leg backs: the one its name matches, or the one its opponent's doesn't. */
+function legTeam(ev, l) {
+  const hit = [ev.home, ev.away].filter((n) => nameHit(n, l.team));
+  if (hit.length === 1) return hit[0];
+  const opp = [ev.home, ev.away].filter((n) => nameHit(n, l.opponent));
+  return opp.length === 1 ? (opp[0] === ev.home ? ev.away : ev.home) : null;
+}
+/** The leg's game among Hard Rock's events, within 3 hours of kickoff: by
+ * ESPN's names for the game when we have them, else the leg's two teams. */
+export function findEvent(events, l, game) {
+  const at = game ? game.at : etMs(l.gametime);
+  const near = events.filter((e) => Math.abs(e.at - at) < 3 * 3600 * 1000);
+  if (game) {
+    const both = near.find((e) => (sameTeam(e.away, game.away) && sameTeam(e.home, game.home)) || (sameTeam(e.away, game.home) && sameTeam(e.home, game.away)));
+    if (both) return both;
+    const one = near.filter((e) => [e.away, e.home].some((n) => sameTeam(n, game.away) || sameTeam(n, game.home)));
+    return one.length === 1 ? one[0] : null;
+  }
+  if (!l.team || !l.opponent) return null;
+  const has = (e, name) => nameHit(e.home, name) || nameHit(e.away, name);
+  const hits = near.filter((e) => has(e, l.team) && has(e, l.opponent));
+  return hits.length === 1 ? hits[0] : null;
+}
+
+/** ESPN's two teams and kickoff for a game id, or null. */
+async function espnGame(sport, id) {
+  if (!ESPN_CORE[sport] || !/^\d+$/.test(id || "")) return null;
+  const res = await fetch(`https://cdn.espn.com/core/${ESPN_CORE[sport]}/game?xhr=1&gameId=${id}`, { headers: { Accept: "application/json" } });
+  if (!res.ok) return null;
+  const c = (await res.json())?.gamepackageJSON?.header?.competitions?.[0];
+  const side = (k) => { const t = c?.competitors?.find((x) => x.homeAway === k)?.team; return t ? [t.displayName, t.location, t.name] : null; };
+  const home = side("home"), away = side("away");
+  return home && away && c.date ? { home, away, at: Date.parse(c.date) } : null;
+}
+
+/** One game's extra markets from Hard Rock, Florida's book first, market by
+ * market. A sport that doesn't have one of the markets fails the whole call,
+ * so then each is asked for on its own. */
+async function eventMarkets(env, sport, id, keys) {
+  const ask = async (list) => {
+    const data = await oddsApi(env, `${ODDS_API}/${ODDS_KEYS[sport]}/events/${id}/odds?bookmakers=${BOOKS.join(",")}&markets=${list.join(",")}&oddsFormat=american`);
+    return list.map((k) => BOOKS.map((bk) => (data.bookmakers || []).find((b) => b.key === bk)?.markets?.find((m) => m.key === k)).find(Boolean)).filter(Boolean);
+  };
+  try { return await ask(keys); } catch (err) {
+    if (keys.length === 1 || String(err.message) === "odds_budget") throw err;
+    return (await Promise.all(keys.map((k) => ask([k]).catch(() => [])))).flat();
+  }
+}
+
+/** The leg's price in one market: {hit} at its own line, and {near}, the
+ * line Hard Rock has for that side now (for the report). */
+function priceIn(market, l, team) {
+  const line = l.line === "" ? null : Number(l.line);
+  const side = l.bet_type === "Anytime TD" ? "Yes" : l.side;
+  const mine = (market.outcomes || []).filter((o) => TEAM_BETS.includes(l.bet_type) ? o.name === team
+    : GAME_BETS.includes(l.bet_type) ? o.name === side
+    : o.name === side && fold(o.description) === fold(l.player_prop));
+  return { hit: line == null ? mine[0] : mine.find((o) => Number(o.point) === line), near: mine[0] };
+}
+function tryPrice(x, markets) {
+  for (const k of LOCK_MARKETS[x.l.bet_type]) {
+    const m = markets.find((mm) => mm.key === k);
+    if (!m) continue;
+    const { hit, near } = priceIn(m, x.l, x.team);
+    if (hit) {
+      Object.assign(x.r, { odds: hit.price, how: hit.price === Number(x.l.odds) ? "same" : "updated", why: "" });
+      return true;
+    }
+    if (near && near.point != null && k === LOCK_MARKETS[x.l.bet_type][0]) x.now = `${TEAM_LINE_VS.includes(x.l.bet_type) ? signed(near.point) : `${x.l.side} ${near.point}`} (${fmtOdds(near.price)})`;
+  }
+  return false;
+}
+
+/** Every leg's price on Hard Rock right now: [{player, pick, was, odds, how, why}],
+ * how "updated" | "same" | "moved" (Hard Rock is on another line) | "kept". */
+export async function priceAtLock(env, b) {
+  const now = Date.now();
+  const rows = b.legs.map((l) => ({ l, r: { player: l.player, pick: pickText(l), was: l.odds, odds: l.odds, how: "kept", why: "" } }));
+  const todo = [];
+  for (const x of rows) {
+    const l = x.l;
+    if (l.bet_type === "Other") x.r.why = "Typed in";
+    else if (!LOCK_MARKETS[l.bet_type] || !ODDS_KEYS[l.sport] || /^\d+x\s/i.test(l.player_prop)) x.r.why = "Hard Rock's line isn't pulled for this bet";
+    else if (!l.gametime || etMs(l.gametime) <= now) x.r.why = "The game has started";
+    else todo.push(x);
+  }
+
+  // Each sport's lines once (3 credits), then each leg's game in them.
+  const sports = [...new Set(todo.map((x) => x.l.sport))];
+  const lines = Object.fromEntries(await Promise.all(sports.map(async (s) =>
+    [s, await freshLines(env, s, b._win).catch((err) => { console.error("Lock lines:", s, String(err)); return String(err.message) === "odds_budget" ? "budget" : null; })])));
+  const games = {};
+  await Promise.all(todo.map(async (x) => {
+    const l = x.l, events = lines[l.sport];
+    if (!Array.isArray(events)) { x.r.why = events === "budget" ? "Odds credits are almost out for the month" : "Couldn't reach Hard Rock"; return; }
+    let ev = GAME_BETS.includes(l.bet_type) ? findEvent(events, l, null) : null;
+    if (!ev && l.game_id) ev = findEvent(events, l, await (games[l.game_id] ??= espnGame(l.sport, l.game_id).catch(() => null)));
+    if (!ev) { x.r.why = l.game_id || GAME_BETS.includes(l.bet_type) ? "Hard Rock doesn't list this game" : "No game saved with this leg to look it up"; return; }
+    if (TEAM_BETS.includes(l.bet_type) && !(x.team = legTeam(ev, l))) { x.r.why = "Couldn't tell which team it is on Hard Rock"; return; }
+    x.ev = ev;
+  }));
+
+  // The sport's lines first; what they don't have (an alternate line, a half,
+  // a player) from the game's own markets, one call per game.
+  const extra = new Map();
+  for (const x of todo) {
+    if (!x.ev || tryPrice(x, x.ev.markets)) continue;
+    const more = LOCK_MARKETS[x.l.bet_type].filter((k) => !x.ev.markets.some((m) => m.key === k));
+    if (!more.length) continue;
+    const e = extra.get(x.ev.id) || { sport: x.l.sport, keys: new Set() };
+    more.forEach((k) => e.keys.add(k));
+    extra.set(x.ev.id, e);
+    x.more = true;
+  }
+  const fetched = {};
+  await Promise.all([...extra].map(async ([id, e]) => {
+    fetched[id] = await eventMarkets(env, e.sport, id, [...e.keys]).catch((err) => { console.error("Lock props:", String(err)); return null; });
+  }));
+  for (const x of todo) {
+    if (!x.ev || x.r.how !== "kept") continue;
+    if (x.more && fetched[x.ev.id]) tryPrice(x, fetched[x.ev.id]);
+    if (x.r.how !== "kept") continue;
+    if (x.more && !fetched[x.ev.id]) x.r.why = "Couldn't reach Hard Rock";
+    else if (x.now) Object.assign(x.r, { how: "moved", why: `Hard Rock has ${x.now} now` });
+    else x.r.why = GAME_BETS.includes(x.l.bet_type) ? "Hard Rock doesn't offer this line" : "Hard Rock doesn't offer this player bet";
+  }
+  return rows.map((x) => x.r);
+}
+
+/** The new prices into the board's copy (leg_entries), so the sheet sync
+ * carries them; true if any leg changed. */
+async function savePrices(env, b, report) {
+  const now = Date.now();
+  const stmts = [];
+  for (const r of report.filter((x) => x.how === "updated")) {
+    const l = b.legs.find((x) => x.player === r.player);
+    if (!l) continue;
+    stmts.push(env.PARLAY_DB.prepare(
+      `INSERT INTO leg_entries (year, week, player, win, sport, bet_type, team, opponent, player_prop, line, side, odds, gametime, raw_pick, game_id, removed, updated)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, 0, ?16)
+       ON CONFLICT(year, week, player) DO UPDATE SET win = excluded.win, sport = excluded.sport, bet_type = excluded.bet_type,
+         team = excluded.team, opponent = excluded.opponent, player_prop = excluded.player_prop, line = excluded.line,
+         side = excluded.side, odds = excluded.odds, gametime = excluded.gametime, raw_pick = excluded.raw_pick,
+         game_id = excluded.game_id, removed = 0, updated = excluded.updated`
+    ).bind(b.year, b.week, l.player, b._win.tue, l.sport, l.bet_type, l.team, l.opponent, l.player_prop, l.line, l.side,
+      r.odds, l.gametime, `${pickText(l)} (${fmtOdds(r.odds)})`, l.game_id || "", now));
+  }
+  if (stmts.length) await env.PARLAY_DB.batch(stmts);
+  return stmts.length > 0;
+}
+
 /** What the Commissioner page shows about the week: who has a leg in, whether
  * the board is open or locked, and the Odds API credits left. */
 export async function legsSummary(env) {
@@ -453,6 +661,7 @@ export async function legsSummary(env) {
     locksAt: b.locksAt, opensAt: b.opensAt, players: b.players,
     legsIn: b.players.filter((p) => inNow.has(p)), missing: b.players.filter((p) => !inNow.has(p)),
     oddsLeft: left == null ? null : Number(left),
+    priced: locked ? await env.COOLDOWN_KV.get(pricedKey(b._wk), "json") : null,
   };
 }
 

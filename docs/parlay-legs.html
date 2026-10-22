@@ -132,6 +132,16 @@
   .msg b{ color: var(--text); font-weight: 600; }
   .msg.ok::before{ content: '✓ '; color: var(--gold); font-weight: 700; }
 
+  /* Hard Rock's odds pulled at Lock legs: what changed, and what to check by hand. */
+  .priced{ margin-top: 12px; }
+  .priced h4{ margin: 12px 0 6px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+  .pr-row{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 8px 12px; margin-top: 6px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,0.025); font-size: 0.86rem; }
+  .pr-row > span:first-child{ min-width: 0; overflow-wrap: anywhere; }
+  .pr-row small{ display: block; color: var(--text-dim); font-size: 0.76rem; }
+  .pr-row .pr-odds{ flex: none; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pr-row .pr-odds b{ color: var(--gold); }
+  .pr-row .pr-odds s{ color: var(--text-dim); margin-right: 4px; }
+
   /* ---------- Commissioner view ----------
      A signed-in commissioner gets the week's list with every row opening
      into its text boxes, the week's numbers on top (with a week stepper),
@@ -984,9 +994,22 @@
         <label class="field"><span>Sacko</span><select class="in" data-w="sacko">${['', ...roster()].map(p => `<option value="${esc(p)}"${p === c.sacko ? ' selected' : ''}>${esc(p || '—')}</option>`).join('')}</select></label>
         <label class="field"><span>Final odds</span><input class="in" data-w="final_odds" value="${esc(c.final_odds)}" inputmode="numbers-and-punctuation" autocomplete="off" placeholder="+478887"></label>
         <label class="field"><span>Final payout</span><input class="in" data-w="final_payout" value="${esc(c.final_payout)}" inputmode="decimal" autocomplete="off" placeholder="95797.48"></label>
-      </div>${onBoardWeek() && board.open ? `<div class="acts"><button type="button" class="gold-btn" id="m-lock"${cmSaving ? ' disabled' : ''}>${board.locked ? 'Unlock legs' : 'Lock legs'}</button></div>` : ''}
-      ${lockMsg ? `<p class="fine">${esc(lockMsg)}</p>` : ''}`;
+      </div>${onBoardWeek() && board.open ? `<div class="acts"><button type="button" class="gold-btn" id="m-lock"${cmSaving ? ' disabled' : ''}>${cmSaving === 'lock' ? 'Pulling Hard Rock odds…' : board.locked ? 'Unlock legs' : 'Lock legs'}</button></div>` : ''}
+      ${lockMsg ? `<p class="fine">${esc(lockMsg)}</p>` : ''}${onBoardWeek() ? pricedHtml() : ''}`;
     return [`<span>Week numbers</span>${stepperHtml()}`, body];
+  }
+
+  // What Lock legs found on Hard Rock: the legs it repriced, and the ones it
+  // left as entered, to check against the bet slip by hand.
+  function pricedHtml(){
+    const p = board.locked && board.priced;
+    if (!p || !p.legs || !p.legs.length) return '';
+    const found = p.legs.filter(x => x.how === 'updated' || x.how === 'same');
+    const changed = p.legs.filter(x => x.how === 'updated'), check = p.legs.filter(x => x.how === 'moved' || x.how === 'kept');
+    const row = (x, odds) => `<div class="pr-row"><span>${esc(x.player)}<small>${esc(x.why || x.pick)}</small></span><span class="pr-odds">${odds}</span></div>`;
+    return `<div class="priced"><p class="fine" style="margin-top:0">Hard Rock odds pulled ${esc(etWhen(p.at))}: <b>${found.length} of ${p.legs.length}</b> legs found, ${changed.length ? `${changed.length} changed` : 'none changed'}.</p>
+      ${changed.length ? `<h4>Changed</h4>${changed.map(x => row(x, `<s>${fmtOdds(x.was)}</s><b>${fmtOdds(x.odds)}</b>`)).join('')}` : ''}
+      ${check.length ? `<h4>Check by hand</h4>${check.map(x => row(x, fmtOdds(x.was) || '—')).join('')}` : ''}</div>`;
   }
 
   function pasteHtml(){
@@ -1049,7 +1072,7 @@
     const step = e.target.closest('[data-step]');
     if (step && !step.disabled) { const w = weekList()[Number(step.dataset.step)]; if (w) goToWeek(w.year, w.week); return; }
     if (!e.target.closest('#m-lock') || cmSaving) return;
-    cmSaving = true; lockMsg = ''; renderCm();
+    cmSaving = board.locked ? true : 'lock'; lockMsg = ''; renderCm();
     let res = null, out = {};
     try {
       res = await fetch(WORKER_URL + '/legs/lock', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ locked: !board.locked }) });
@@ -1060,6 +1083,8 @@
     lockMsg = res && res.ok ? (board.locked ? 'Legs locked. Only commissioners can change them now.' : 'Legs unlocked.')
       : `Couldn't change the lock (${res ? out.error || res.status : 'no connection'}).`;
     render();
+    // Repriced legs land in the rows you haven't touched.
+    if (out.legs) refreshFromBoard();
   });
   document.getElementById('week-card').addEventListener('change', e => {
     if (e.target.id === 'wk-select') {
