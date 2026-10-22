@@ -186,11 +186,14 @@
   .gt.pre{ width: 158px; align-content: start; }
   .gt.pre .gt-top{ color: var(--text); }
   .gt.pre .gt-tm{ font-weight: 700; font-size: 0.9rem; }
-  .gt-pl.own{ display: flex; flex-wrap: wrap; gap: 5px 9px; min-height: 30px; }
-  .own-c{ display: inline-flex; align-items: center; gap: 4px; }
-  .own-c b{ font: 700 0.74rem var(--body); font-variant-numeric: tabular-nums; color: var(--fd-soft); }
-  .own-c b.mc{ color: var(--me-ring); } .own-c b.wt{ color: var(--text); }
-  .own-more{ font-size: 0.68rem; color: var(--text-dim); align-self: center; }
+  /* Every manager with a starter in the game, five to a row on a phone; the
+     count rides the ring as a badge when it's more than one. */
+  .gt-pl.own{ display: flex; flex-wrap: wrap; gap: 7px 4px; padding-top: 15px; }
+  .own-r{ position: relative; flex: none; }
+  .own-r .pl-m{ width: 22px; height: 22px; }
+  .own-r sup{ position: absolute; top: -5px; right: -3px; min-width: 13px; height: 13px; padding: 0 3px; border-radius: 7px; display: grid; place-items: center; font: 800 0.56rem/1 var(--body); font-variant-numeric: tabular-nums; background: #2A2A28; color: var(--text); box-shadow: 0 0 0 2px var(--surface); }
+  .own-r sup.mc{ background: var(--me-ring); color: var(--ink, #0A0A08); }
+  .own-r sup.wt{ background: var(--text); color: var(--ink, #0A0A08); }
   @media (min-width: 900px){
     .fd-grid.has-side .ln-strip .ko{ width: auto; grid-template-columns: 1fr auto; align-items: end; align-content: center; padding: 9px 14px; margin-left: 0; }
     .fd-grid.has-side .ln-strip .ko .ko-n, .fd-grid.has-side .ln-strip .ko .ko-l{ text-align: right; }
@@ -565,12 +568,13 @@
         const by = new Map();
         mgrs(g).forEach(m => by.set(m, (by.get(m) || 0) + 1));
         const own = [...by].sort((x, y) => (y[0] === me) - (x[0] === me) || (y[0] === opp) - (x[0] === opp) || y[1] - x[1]);
-        const max = pair ? 2 : 3, n = starters(g);
-        const chips = own.slice(0, max).map(([m, c]) => `<span class="own-c"><span class="pl-m ${tone(m)}">${esc(monogram(m))}</span><b class="${tone(m)}">${c}</b></span>`).join('')
-          + (own.length > max ? `<span class="own-more">+${own.length - max}</span>` : '');
+        const n = starters(g);
+        // Everyone in the game, one monogram each; more than one starter puts
+        // the count on the ring (audit follow-up, mockup B).
+        const rings = own.map(([m, c]) => `<span class="own-r" role="img" aria-label="${esc(m)}, ${c} starter${c === 1 ? '' : 's'}" title="${esc(m)}: ${c} starter${c === 1 ? '' : 's'}"><span class="pl-m ${tone(m)}">${esc(monogram(m))}</span>${c > 1 ? `<sup class="${tone(m)}">${c}</sup>` : ''}</span>`).join('');
         const [a, h] = g.key.split('-');
         return `<div class="gt pre"><div class="gt-top"><span>${fdTime(Date.parse(g.ko))}</span><em>${n} starter${n === 1 ? '' : 's'}</em></div>
-          <div class="gt-sc"><span class="gt-tm">${esc(a)}</span><span class="gt-tm">${esc(h)}</span></div><div class="gt-pl own">${chips}</div></div>`;
+          <div class="gt-sc"><span class="gt-tm">${esc(a)}</span><span class="gt-tm">${esc(h)}</span></div><div class="gt-pl own">${rings}</div></div>`;
       };
       const slots = new Map();
       later.forEach(g => { const k = Date.parse(g.ko); if (!slots.has(k)) slots.set(k, []); slots.get(k).push(g); });
