@@ -323,7 +323,7 @@ function openRival(name) {
   if (typeof Rivals !== 'undefined') return Rivals.openSheet(name);
   return new Promise(done => {
     const s = document.createElement('script');
-    s.src = 'rivals.js?v=2';
+    s.src = 'rivals.js?v=3';
     s.onload = s.onerror = done;
     document.head.appendChild(s);
   }).then(() => (typeof Rivals !== 'undefined' ? Rivals.openSheet(name) : null));

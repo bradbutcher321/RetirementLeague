@@ -111,6 +111,14 @@
   .psb-row .mini .mu-bar{ height: 4px; gap: 2px; }
   .psb-row .mini small{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.62rem; font-weight: 700; font-variant-numeric: tabular-nums; }
   .psb-row .mini small .fav{ color: var(--gold); }
+  /* Who to root for (audit VII #3): a line of its own under logo and name, in your ring color. */
+  .psb-row .n{ display: grid; grid-template-columns: auto minmax(0,1fr); gap: 0 8px; }
+  .psb-row .n.r{ grid-template-columns: minmax(0,1fr) auto; justify-items: end; }
+  .psb-root{ grid-column: 1 / -1; font: 800 0.56rem/1.2 var(--body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--me-ring); margin-top: 3px; white-space: nowrap; }
+  .psb-root:empty{ display: none; }
+  .psb-ft{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 6px 2px 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--me-ring) 35%, transparent); background: color-mix(in srgb, var(--me-ring) 6%, transparent); font-size: 0.78rem; color: var(--text-dim); }
+  .psb-ft b{ font-family: var(--scoreboard); font-size: 1.05rem; color: var(--text); font-variant-numeric: tabular-nums; }
+  .psb-ft b.up{ color: var(--turf); }
   /* Your matchup before kickoff (site audit VI #7): the projection as the
      score, the first kickoff between, both of your games, who plays when,
      the edge by position and the NFL games with starters on both sides. */
@@ -132,6 +140,13 @@
   .pre-two .v{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.4rem; line-height: 1.15; margin-top: 2px; color: var(--loss); font-variant-numeric: tabular-nums; }
   .pre-two .v.good{ color: var(--turf); }
   .pre-two .s{ color: var(--text-dim); font-size: 0.7rem; }
+  /* What the week is worth (audit VII #2): your playoff odds now, if you win, if you lose. */
+  .pre-worth{ margin-top: 8px; padding: 9px 11px 10px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--me-ring) 35%, transparent); background: color-mix(in srgb, var(--me-ring) 6%, transparent); }
+  .pre-worth .k{ color: var(--me-ring); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+  .pre-worth .g3{ display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; margin-top: 4px; text-align: center; }
+  .pre-worth .g3 b{ display: block; font-family: var(--scoreboard); font-weight: 800; font-size: 1.4rem; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
+  .pre-worth .g3 span{ display: block; color: var(--text-dim); font-size: 0.66rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pre-worth .up b{ color: var(--turf); } .pre-worth .dn b{ color: var(--loss); }
   .pre-blk{ margin-top: 14px; }
   .pre-bt{ display: flex; justify-content: space-between; gap: 8px; margin: 0 2px 6px; color: var(--text-dim); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
   .pre-lane{ display: grid; grid-template-columns: minmax(0,1fr) 84px minmax(0,1fr); gap: 8px; align-items: center; padding: 6px 2px; }
@@ -1601,7 +1616,7 @@
 <script src="race-sim.js?v=3"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
-<script src="rivals.js?v=2"></script>
+<script src="rivals.js?v=3"></script>
 <script src="lineup-check.js?v=1"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
@@ -1637,7 +1652,17 @@
   // than array index so expansion survives the list re-sorting finals to
   // the bottom, or the whole innerHTML being rebuilt on the next poll.
   const expandedMatchups = new Set();
-  const matchupKey = (m) => `${m.awayName}::${m.homeName}`;
+  const matchupKey = (m) => m._key || `${m.awayName}::${m.homeName}`;
+  // Your own matchup has you on the left every week (site audit VII #1):
+  // ESPN's away/home order flips week to week, so a card with you at home is
+  // drawn from a copy with the sides swapped. The copy keeps ESPN's key, so
+  // the ⋯ sheet, open rosters and Flow still find the game.
+  function meLeft(m) {
+    if (!m || m._key || !isMe(m.homeManager)) return m;
+    const s = { _key: matchupKey(m) };
+    Object.keys(m).forEach(k => { s[/^away/.test(k) ? 'home' + k.slice(4) : /^home/.test(k) ? 'away' + k.slice(4) : k] = m[k]; });
+    return s;
+  }
 
   // Four states a starter's real NFL game can be in: hasn't kicked off
   // yet, in progress, in progress AND their team has the ball (the single
@@ -1808,6 +1833,7 @@
   }
 
   function renderMatchupCard(m) {
+    m = meLeft(m);
     const awayScore = parseFloat(m.awayScore) || 0;
     const homeScore = parseFloat(m.homeScore) || 0;
     const homeInPlay = parseInt(m.homeInPlay, 10) || 0;
@@ -1971,6 +1997,7 @@
   const lastName = n => { const p = String(n || '').replace(/ (Jr\.|Sr\.|II|III|IV)$/, '').split(' '); return /D\/ST/.test(n) ? p[0] : p.length > 1 ? p.slice(1).join(' ') : n; };
   const PRE_POS = ['QB', 'RB', 'WR', 'TE', 'FLEX'];
   function renderPreviewCard(m) {
+    m = meLeft(m);
     const A = m.awayPlayers || [], B = m.homePlayers || [];
     const meHome = isMe(m.homeManager);
     const nameOf = (mgr, team) => esc(mgr || team);
@@ -2031,6 +2058,7 @@
         </div>
         <div class="pre-body">
           ${two}
+          <div class="pre-worth" data-worth${rootNow && rootNow.me ? '' : ' hidden'}>${worthHtml(rootNow)}</div>
           ${lanes ? `<div class="pre-blk"><div class="pre-bt"><span>${labels[0]}</span><span>Kickoffs</span><span>${labels[1]}</span></div>${lanes}</div>` : ''}
           ${edgeHtml ? `<div class="pre-blk"><div class="pre-bt"><span>${labels[0]}</span><span>Projected by position</span><span>${labels[1]}</span></div>${edgeHtml}</div>` : ''}
           ${sameHtml ? `<div class="pre-blk"><div class="pre-bt"><span>Same game, both sides</span></div>${sameHtml}</div>` : ''}
@@ -2052,14 +2080,82 @@
       const awp = typeof m.awayWinProbability === 'number' ? m.awayWinProbability : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : 50;
       const wa = Math.max(1, Math.min(99, Math.round(awp))), wb = 100 - wa, fa = wa >= 50;
       const nm = (mgr, team) => `<span class="${isMe(mgr) ? 'you' : ''}">${esc(mgr || team)}</span>`;
+      const root = mgr => `<b class="psb-root" data-root="${esc(mgr || '')}">${rootMark(rootNow, mgr)}</b>`;
       return `<button type="button" class="sb-row psb-row" data-sb="${encodeURIComponent(key)}" aria-expanded="${open}" aria-label="${esc(m.awayManager || m.awayName)} ${fmtScore(ap)} projected, ${wa}%, against ${esc(m.homeManager || m.homeName)} ${fmtScore(hp)}, ${wb}%">
-          <span class="n">${muLogoHtml(m.awayManager)}${nm(m.awayManager, m.awayName)}</span>
+          <span class="n">${muLogoHtml(m.awayManager)}${nm(m.awayManager, m.awayName)}${root(m.awayManager)}</span>
           <span class="pj${ap >= hp ? ' fav' : ''}">${fmtScore(ap)}</span>
           <span class="mini"><span class="mu-bar"><span class="${fa ? 'fav' : ''}" style="flex-grow:${wa}"></span><span class="${fa ? '' : 'fav'}" style="flex-grow:${wb}"></span></span><small><span class="${fa ? 'fav' : ''}">${wa}%</span><span class="${fa ? '' : 'fav'}">${wb}%</span></small></span>
           <span class="pj${hp > ap ? ' fav' : ''}">${fmtScore(hp)}</span>
-          <span class="n r">${nm(m.homeManager, m.homeName)}${muLogoHtml(m.homeManager)}</span>
+          <span class="n r">${nm(m.homeManager, m.homeName)}${muLogoHtml(m.homeManager)}${root(m.homeManager)}</span>
         </button>${open ? `<div class="sb-open">${renderMatchupCard(m)}</div>` : ''}`;
-    }).join('')}</div>`;
+    }).join('')}<div class="psb-ft" data-root-all${rootAllHtml(rootNow, list) ? '' : ' hidden'}>${rootAllHtml(rootNow, list)}</div></div>`;
+  }
+
+  // ---------- What the week is worth (site audit VII #2, #3) ----------
+  // The playoff sim (race-sim.js) asked a few more questions: your odds if
+  // you win or lose this week, and for every other game this week, which
+  // result helps you and by how much. One sim per question, each a short
+  // task after the page has painted (about 150ms apiece), kept per payload
+  // like RaceSim.apply's, so a poll with the same numbers costs nothing.
+  const ROOT_STORE = 'rl-root-odds';
+  // rootCur: the answer for the newest payload (filled in as its sims finish);
+  // rootNow: the one the cards on the page were drawn with (null: none apply).
+  let rootCur = null, rootNow = null;
+  function rootFor(data, me) {
+    const inp = data && !data.archived && me && typeof RaceSim !== 'undefined' ? RaceSim.inputs(data) : null;
+    const wk = inp && inp.sched[0];
+    if (!wk || wk.w !== inp.week) return null; // the week is over: nothing left to pick
+    const mine = wk.pairs.find(p => p.includes(me));
+    if (!mine) return null;
+    const key = JSON.stringify([inp.base, inp.live, inp.sched, inp.week, inp.spots, me]);
+    if (rootCur && rootCur.k === key) return rootCur;
+    try { const c = JSON.parse(localStorage.getItem(ROOT_STORE) || 'null'); if (c && c.k === key) return (rootCur = c); } catch (e) {}
+    const R = rootCur = { k: key, opp: mine[0] === me ? mine[1] : mine[0], me: null, games: [], allPo: null };
+    const pk = (p, w) => ({ [wk.w + '|' + p[0] + '|' + p[1]]: w });
+    const steps = [() => { const o = RaceSim.simulate(inp, RaceSim.RUNS, null, true)[me]; R.me = { po: o.po, ifWin: o.ifWin, ifLoss: o.ifLoss }; rootPaint(R); }];
+    wk.pairs.filter(p => p !== mine).forEach(p => steps.push(() => {
+      const [x, y] = p.map(w => RaceSim.simulate(inp, RaceSim.RUNS, pk(p, w))[me].po);
+      R.games.push({ a: p[0], b: p[1], root: x >= y ? p[0] : p[1], swing: Math.abs(x - y) });
+    }));
+    steps.push(() => {
+      R.allPo = RaceSim.simulate(inp, RaceSim.RUNS, Object.assign({}, ...R.games.map(g => pk([g.a, g.b], g.root))))[me].po;
+      try { localStorage.setItem(ROOT_STORE, JSON.stringify(R)); } catch (e) {}
+      rootPaint(R);
+    });
+    // A newer payload replaces the job; the first sim waits for the page to settle.
+    const next = () => { if (rootCur !== R) return; steps.shift()(); if (steps.length) setTimeout(next, 0); };
+    (window.requestIdleCallback || (f => setTimeout(f, 400)))(next, { timeout: 2000 });
+    return R;
+  }
+  const wholePct = v => (v == null ? '—' : v > 99.5 && v < 100 ? '>99%' : v > 0 && v < 0.5 ? '<1%' : Math.round(v) + '%');
+  function worthHtml(R) {
+    if (!R || !R.me) return '';
+    const p = wholePct;
+    return `<div class="k">Your playoff odds</div><div class="g3">
+        <div><b>${p(R.me.po)}</b><span>Now</span></div>
+        <div class="up"><b>${p(R.me.ifWin)}</b><span>Beat ${esc(R.opp)}</span></div>
+        <div class="dn"><b>${p(R.me.ifLoss)}</b><span>Lose</span></div></div>`;
+  }
+  // Under the name to pull for, once the swing is worth saying (half a point).
+  function rootMark(R, mgr) {
+    const g = R && R.allPo != null && mgr && R.games.find(x => x.root === mgr);
+    return g && g.swing >= 0.5 ? `Root +${g.swing.toFixed(1)}%` : '';
+  }
+  // The total, only while the board holds every other game of the week.
+  const ROOT_N = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+  function rootAllHtml(R, list) {
+    if (!R || R.allPo == null || R.games.length < 2 || list.length !== R.games.length) return '';
+    return `<span>All ${ROOT_N[R.games.length] || R.games.length} go your way</span><span><b>${wholePct(R.me.po)}</b> → <b class="up">${wholePct(R.allPo)}</b></span>`;
+  }
+  function rootPaint(R) {
+    if (R !== rootNow) return;
+    document.querySelectorAll('[data-worth]').forEach(el => { el.innerHTML = worthHtml(R); el.hidden = !el.innerHTML; });
+    document.querySelectorAll('.psb-root[data-root]').forEach(el => { el.textContent = rootMark(R, el.dataset.root); });
+    document.querySelectorAll('[data-root-all]').forEach(el => {
+      const n = el.parentElement.querySelectorAll('.psb-row').length;
+      el.innerHTML = rootAllHtml(R, { length: n });
+      el.hidden = !el.innerHTML;
+    });
   }
 
   // The pair's all-time series before this week (site audit 27), as a link
@@ -3048,6 +3144,7 @@
     });
   }
   function flDraw(wrap, m) {
+    m = meLeft(m);
     const A = m && m.awayManager, B = m && m.homeManager;
     const has = metric => (m ? mhPts(metric).filter(p => typeof mhVal(p, A, metric) === 'number' && typeof mhVal(p, B, metric) === 'number') : []);
     const projPts = has('projected'), curPts = has('current');
@@ -6595,6 +6692,10 @@
         // the matchups.
         const pre = m => !archived && !weekFinal && matchupPregame(m);
         const minePre = Boolean(mine && pre(mine));
+        // What the week is worth and who to root for (audit VII #2, #3), for
+        // the preview card and the pregame scoreboard; their sims run after paint.
+        rootNow = mine && (minePre || matchups.some(m => m !== mine && pre(m)))
+          ? rootFor(data, isMe(mine.awayManager) ? mine.awayManager : mine.homeManager) : null;
         const mineCard = m => (minePre && m === mine ? renderPreviewCard(m) : renderMatchupCard(m));
         const onTop = Boolean(mine && getSettings().meTop);
         const rest = matchups.filter(m => m !== mine);

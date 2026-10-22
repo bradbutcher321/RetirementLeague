@@ -14,6 +14,8 @@
 const Rivals = (() => {
   const MIN_GAMES = 3;
   const LABEL = { daddy: 'Your Daddy', bitch: 'Your Bitch' };
+  // The standings pill's shorter words, so it fits on the name line more often.
+  const PILL = { daddy: 'Yo Daddy', bitch: 'Yo Bitch' };
 
   // rows: [{ year, week, type, p1, p2, s1, s2, winner }] (league.json games)
   // active: this season's managers.
@@ -91,14 +93,14 @@ const Rivals = (() => {
     return loading;
   }
 
-  // "Your Daddy" / "Your Bitch" on a standings row, in your ring color; ''
+  // "Yo Daddy" / "Yo Bitch" on a standings row, in your ring color; ''
   // for your own row, a manager who is neither, or before the history lands.
   function pill(name) {
     if (!book || typeof getMe !== 'function') return '';
     const me = getMe();
     if (!me || !name || isMe(name)) return '';
     const k = book.kind(me, name);
-    return k ? `<span class="rv-tag">${LABEL[k]}</span>` : '';
+    return k ? `<span class="rv-tag">${PILL[k]}</span>` : '';
   }
 
   // The streak and margins as a sentence-sized stat box.
