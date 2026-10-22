@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="description" content="Byes ahead, free agents who would have started, and where every team's starters rank.">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Retirement League">
+<meta property="og:title" content="Retirement League — Your Roster">
+<meta property="og:description" content="Byes ahead, free agents who would have started, and where every team's starters rank.">
+<meta property="og:url" content="https://bradbutcher321.github.io/RetirementLeague/roster.html">
+<meta property="og:image" content="https://bradbutcher321.github.io/RetirementLeague/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<style>html{background:#050505}</style>
+<title>Retirement League — Your Roster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=36">
+<link rel="stylesheet" href="nav.css?v=29">
+<link rel="stylesheet" href="features.css?v=8">
+<style>
+  /* Your Roster (site audit VI #11, #12, #13). Every card is one glass
+     panel; the league-wide grid for a card sits right under it. */
+  .ro-grid{ display:grid; gap:14px; }
+  .ro-grid > div > .glass:first-child{ margin-top:0; }
+  .ro-grid > div:empty{ display:none; }
+  @media (min-width:860px){ .ro-grid{ grid-template-columns:1fr 1fr; align-items:start; } }
+  .pos{ display:inline-block; min-width:34px; text-align:center; font:800 0.56rem/1 var(--body); letter-spacing:0.05em; padding:4px 5px; border-radius:5px; margin-right:8px; color:#111; vertical-align:1px; }
+  .pos.QB{ background:#E0705C; } .pos.RB{ background:#5DBB85; } .pos.WR{ background:#5D9BE0; } .pos.TE{ background:#E39A4E; } .pos.FLEX{ background:#B9B6AE; } .pos.BENCH{ background:#6f6f6c; color:#eee; }
+  .ro-you{ color:var(--me-ring); }
+
+  /* Byes ahead: a strip of the weeks left, the count of your starters off. */
+  .wks{ display:grid; grid-template-columns:repeat(var(--n,7),minmax(0,1fr)); gap:6px; }
+  .wks button{ border:1px solid var(--item-line); background:var(--item); border-radius:12px; padding:8px 0 7px; min-height:54px; color:var(--text); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; font:inherit; }
+  .wks button small{ color:var(--text-dim); font:700 0.56rem/1 var(--body); letter-spacing:0.06em; white-space:nowrap; }
+  .wks button b{ font-family:var(--scoreboard); font-weight:800; font-size:1.35rem; line-height:1; }
+  .wks button.z b{ color:#4d4d4b; }
+  .wks button.hot{ border-color:var(--loss-line); background:var(--loss-tint); } .wks button.hot b{ color:var(--loss); }
+  .wks button.on{ outline:2px solid var(--gold); outline-offset:1px; }
+  .wks button:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  .bx{ background:var(--item); border:1px solid var(--item-line); border-radius:12px; padding:12px; }
+  .bx-t{ font-weight:700; font-size:0.92rem; }
+  .bx-t small{ color:var(--text-dim); font-weight:500; font-size:0.74rem; margin-left:6px; }
+  .pl{ display:flex; justify-content:space-between; gap:10px; padding:8px 0; font-size:0.86rem; min-width:0; }
+  .pl + .pl{ border-top:1px solid var(--line); }
+  .pl > span:first-child{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pl .dim{ color:var(--text-dim); flex:none; }
+  .cov{ margin-top:10px; color:var(--text); font-size:0.8rem; line-height:1.55; }
+  .cov .no{ color:var(--loss); font-weight:700; }
+
+  /* The whole league's byes: starters off per week, deeper red for more. */
+  .heat{ display:grid; grid-template-columns:64px repeat(var(--n,7),minmax(0,1fr)); gap:4px; font-size:0.7rem; }
+  .heat .h{ color:var(--text-dim); font-weight:800; font-size:0.56rem; text-align:center; letter-spacing:0.05em; padding-bottom:2px; white-space:nowrap; }
+  .heat .m{ font-weight:700; font-size:0.78rem; align-self:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .heat .c{ height:32px; border-radius:7px; display:grid; place-items:center; font-family:var(--scoreboard); font-weight:800; font-size:0.95rem; background:rgba(255,255,255,0.03); color:#4d4d4b; border:0; padding:0; cursor:pointer; }
+  .heat .c.n1{ background:rgba(214,98,79,0.12); color:#d9a093; }
+  .heat .c.n2{ background:rgba(214,98,79,0.28); color:#f0c2b8; }
+  .heat .c.n3{ background:rgba(214,98,79,0.48); color:#fff; }
+  .heat .c.n4{ background:rgba(214,98,79,0.7); color:#fff; }
+  .heat .c.on{ outline:2px solid var(--gold); outline-offset:-1px; }
+  .heat .c:focus-visible{ outline:2px solid var(--gold); outline-offset:1px; }
+
+  /* Free agents who would have started. */
+  .fa{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 12px; align-items:center; padding:10px 12px; }
+  .fa + .fa{ border-top:1px solid var(--line); }
+  .fa b{ font-size:0.88rem; font-weight:600; }
+  .fa .s{ grid-column:1; color:var(--text-dim); font-size:0.72rem; line-height:1.4; }
+  .fa .v{ grid-row:span 2; text-align:right; font-family:var(--scoreboard); font-weight:800; font-size:1.25rem; color:var(--gold); font-variant-numeric:tabular-nums; }
+  .fa .v small{ display:block; font:600 0.6rem/1.2 var(--body); color:var(--text-dim); }
+  .espn-row{ display:flex; justify-content:center; padding-top:4px; }
+  .espn-link{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 16px; border-radius:999px; border:1px solid var(--lead-line); color:var(--gold); font-weight:700; font-size:0.82rem; text-decoration:none; }
+  .espn-link i{ font-style:normal; font:900 0.56rem/1 var(--body); background:#C9252C; color:#fff; border-radius:5px; padding:4px 5px; }
+
+  /* Where your starters rank. */
+  .pr{ display:grid; grid-template-columns:48px minmax(0,1fr) 54px; gap:10px; align-items:center; padding:6px 2px; }
+  .pr .pos{ margin:0; }
+  .pbar{ height:10px; border-radius:5px; background:rgba(255,255,255,0.06); position:relative; overflow:hidden; }
+  .pbar span{ position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:rgba(255,255,255,0.22); }
+  .pbar span.top{ background:var(--gold); } .pbar span.low{ background:var(--loss); }
+  .pr .rk{ text-align:right; font:800 0.84rem/1 var(--body); }
+  .pr .rk small{ display:block; color:var(--text-dim); font:500 0.64rem/1.4 var(--body); }
+  .pr .rk.top{ color:var(--gold); } .pr .rk.low{ color:var(--loss); }
+
+  /* The league's position ranks. */
+  .g6{ display:grid; grid-template-columns:64px repeat(6,minmax(0,1fr)); gap:3px; }
+  .g6 .h{ color:var(--text-dim); font-weight:800; font-size:0.54rem; text-align:center; letter-spacing:0.04em; padding-bottom:2px; }
+  .g6 .m{ font-weight:700; font-size:0.78rem; align-self:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .g6 .c{ height:30px; border-radius:6px; display:grid; place-items:center; font:800 0.76rem/1 var(--body); background:rgba(255,255,255,0.04); color:var(--text); font-variant-numeric:tabular-nums; }
+  .g6 .c.top{ background:rgba(212,180,106,0.22); color:#f3e2b5; }
+  .g6 .c.low{ background:rgba(214,98,79,0.22); color:#f0c2b8; }
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>Your Roster</h1>
+        </div>
+        <div class="updated-block">
+          <div class="updated-label">Updated</div>
+          <div class="updated-value" id="updated-at">—</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- No section headings: each card names itself. The manager picker
+         stands in for "whose roster" until you've picked your team. -->
+    <div class="ft-ctl"><select class="lg-select" id="who" aria-label="Manager"></select></div>
+    <div id="view"><span class="sr-only">Loading…</span></div>
+    <footer id="site-footer"></footer>
+  </div>
+<script src="nav.js?v=37"></script>
+<script src="page-common.js?v=41"></script>
+<script src="league-common.js?v=6"></script>
+<script>
+  // Your Roster (site audit VI #11, #12, #13): what ESPN's app doesn't add up.
+  //   Byes ahead: your starters whose NFL team is off, week by week, and who
+  //     on your bench could cover; the whole league's under it.
+  //   Free agents who would have started: last week's free agents and
+  //     players on waivers who outscored one of your starters at a spot they
+  //     could fill.
+  //   Where your starters rank: points your starters scored per week at each
+  //     spot, against the other eleven; the whole league's grid under it.
+  // The lineups file (data/lineups/YEAR.json) has every week's lineups; the
+  // Worker's /roster has today's rosters, ESPN's bye weeks and the free agents.
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const $ = id => document.getElementById(id);
+  const f1 = n => Number(n).toFixed(1), f2 = n => Number(n).toFixed(2);
+  const ord = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
+  const SLOT = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', 'RB/WR/TE': 'FLEX', FLEX: 'FLEX', BE: 'BENCH' };
+  const FITS = { QB: ['QB'], RB: ['RB'], WR: ['WR'], TE: ['TE'], FLEX: ['RB', 'WR', 'TE'] };
+  const POS = ['QB', 'RB', 'WR', 'TE', 'FLEX', 'BENCH'];
+  const REG_WEEKS = 14;
+  let D = null, L = null, R = null, year, done = 0, order = [], who = '';
+  let byeWeek = null, byeCell = null;
+
+  // ---------- Byes ahead ----------
+  const starters = m => ((R && R.rosters[m]) || []).filter(p => p.slot !== 'BE' && p.slot !== 'IR');
+  const weeksLeft = () => {
+    const from = Math.max(1, (R && R.liveWeek) || done + 1);
+    const out = [];
+    for (let w = from; w <= REG_WEEKS; w++) out.push(w);
+    return out;
+  };
+  const outIn = (m, w) => starters(m).filter(p => R.byes[p.tm] === w);
+  function byesCard() {
+    const weeks = weeksLeft();
+    if (!R || !weeks.length) return '';
+    const counts = weeks.map(w => outIn(who, w).length);
+    if (byeWeek === null || !weeks.includes(byeWeek)) byeWeek = weeks[counts.indexOf(Math.max(...counts))];
+    const out = outIn(who, byeWeek);
+    const bench = ((R.rosters[who]) || []).filter(p => p.slot === 'BE' && R.byes[p.tm] !== byeWeek);
+    const cover = out.map(p => {
+      const slot = SLOT[p.slot] || p.slot;
+      const ok = bench.filter(b => (FITS[slot] || [slot]).includes(b.pos));
+      return { p, slot, ok };
+    });
+    const last = n => { const x = String(n).replace(/ (Jr\.|Sr\.|II|III|IV)$/, '').split(' '); return x.length > 1 ? x.slice(1).join(' ') : n; };
+    return `<div class="glass"><div class="panel-title">Byes ahead</div>
+      <div class="ft-note">Your starters whose team is off. Tap a week.</div>
+      <div class="ft-body">
+        <div class="wks" style="--n:${weeks.length}">${weeks.map((w, i) => `<button type="button" data-bw="${w}" class="${counts[i] === 0 ? 'z' : ''}${counts[i] >= 2 ? ' hot' : ''}${w === byeWeek ? ' on' : ''}" aria-pressed="${w === byeWeek}" aria-label="Week ${w}: ${counts[i]} starter${counts[i] === 1 ? '' : 's'} on bye"><small>WK ${w}</small><b>${counts[i]}</b></button>`).join('')}</div>
+        <div class="bx"><div class="bx-t">Week ${byeWeek}<small>${out.length ? `${out.length} starter${out.length === 1 ? '' : 's'} out` : 'everyone plays'}</small></div>
+          ${cover.map(c => `<div class="pl"><span><span class="pos ${c.slot}">${c.slot}</span>${esc(c.p.n)}</span><span class="dim">${esc(c.p.tm)} bye</span></div>`).join('')}
+          ${cover.length ? `<div class="cov">${cover.map(c => c.ok.length
+            ? `For <b>${esc(last(c.p.n))}</b>: ${c.ok.map(b => `${esc(b.n)} (${b.pos})`).join(', ')} on your bench.`
+            : `For <b>${esc(last(c.p.n))}</b>: <span class="no">no ${c.slot === 'FLEX' ? 'RB, WR or TE' : c.slot} on your bench</span>.`).join('<br>')}</div>` : ''}
+        </div>
+      </div></div>`;
+  }
+  function byeGrid() {
+    const weeks = weeksLeft();
+    if (!R || !weeks.length) return '';
+    const ms = order.filter(m => R.rosters[m]);
+    const c = byeCell && outIn(byeCell.m, byeCell.w);
+    return `<div class="glass ft-sec"><div class="panel-title">Bye weeks, whole league</div>
+      <div class="ft-note">Starters off each week. Tap a square.</div>
+      <div class="ft-body"><div class="heat" style="--n:${weeks.length}"><span></span>${weeks.map(w => `<span class="h">WK ${w}</span>`).join('')}
+        ${ms.map(m => `<span class="m${isMe(m) ? ' ro-you' : ''}">${esc(m)}</span>${weeks.map(w => { const n = outIn(m, w).length, on = byeCell && byeCell.m === m && byeCell.w === w;
+          return `<button type="button" class="c n${Math.min(n, 4)}${on ? ' on' : ''}" data-bm="${esc(m)}" data-bw2="${w}" aria-label="${esc(m)}, week ${w}: ${n} starter${n === 1 ? '' : 's'} off">${n || '·'}</button>`; }).join('')}`).join('')}</div>
+        ${c ? `<div class="bx"><div class="bx-t">${esc(byeCell.m)}, Week ${byeCell.w}<small>${c.length || 'no'} starter${c.length === 1 ? '' : 's'} off</small></div>${c.map(p => { const s = SLOT[p.slot] || p.slot; return `<div class="pl"><span><span class="pos ${s}">${s}</span>${esc(p.n)}</span><span class="dim">${esc(p.tm)}</span></div>`; }).join('')}</div>` : ''}
+      </div></div>`;
+  }
+
+  // ---------- Free agents who would have started ----------
+  function faCard() {
+    if (!R || !R.fa || !R.fa.week || !L.weeks[R.fa.week]) return '';
+    const wk = R.fa.week;
+    const lineup = L.weeks[wk][who] || [];
+    const rostered = new Set(Object.values(L.weeks[wk]).flat().map(r => r[6]));
+    const st = lineup.filter(r => FITS[SLOT[r[2]]]).map(r => ({ n: r[0], slot: SLOT[r[2]], pts: r[3] || 0 }));
+    const rows = [];
+    R.fa.players.forEach(f => {
+      if (rostered.has(f.id)) return;
+      const fits = st.filter(s => FITS[s.slot].includes(f.pos));
+      if (!fits.length) return;
+      const low = fits.reduce((a, b) => (b.pts < a.pts ? b : a));
+      if (f.pts > low.pts) rows.push({ f, low, more: f.pts - low.pts });
+    });
+    rows.sort((a, b) => b.more - a.more);
+    const body = rows.length
+      ? `<div class="ft-item">${rows.slice(0, 6).map(r => `<div class="fa"><b>${esc(r.f.n)} <span class="pos ${r.f.pos}" style="margin:0 0 0 4px">${r.f.pos}</span></b><span class="v">+${f2(r.more)}<small>${f2(r.f.pts)} pts</small></span>
+          <span class="s">Instead of ${esc(r.low.n)} (${r.low.slot}, ${f2(r.low.pts)})${r.f.tm ? ` · ${esc(r.f.tm)}` : ''}${r.f.st === 'WAIVERS' ? ' · on waivers' : ''}</span></div>`).join('')}</div>`
+      : `<div class="ft-empty" style="padding:6px 4px">No free agent beat one of ${isMe(who) ? 'your' : esc(who) + '’s'} starters in Week ${wk}.</div>`;
+    return `<div class="glass ft-sec"><div class="panel-title">Free agents who would have started</div>
+      <div class="ft-note">Week ${wk}: players nobody had who outscored ${isMe(who) ? 'one of your starters' : 'a starter'} at a spot they could fill.</div>
+      <div class="ft-body">${body}
+        <div class="espn-row"><a class="espn-link" href="https://fantasy.espn.com/football/players/add?leagueId=58101" target="_blank" rel="noopener"><i>ESPN</i>Waiver wire</a></div>
+      </div></div>`;
+  }
+
+  // ---------- Where the starters rank ----------
+  let RANKS = null;
+  function ranks() {
+    if (RANKS) return RANKS;
+    const tot = {}, n = {};
+    for (let w = 1; w <= done; w++) {
+      const wk = L.weeks[w];
+      if (!wk) continue;
+      Object.entries(wk).forEach(([m, rows]) => {
+        const t = tot[m] || (tot[m] = Object.fromEntries(POS.map(p => [p, 0])));
+        n[m] = (n[m] || 0) + 1;
+        rows.forEach(r => { const s = SLOT[r[2]]; if (s) t[s] += r[3] || 0; });
+      });
+    }
+    const avg = {}, rk = {};
+    Object.keys(tot).forEach(m => { avg[m] = Object.fromEntries(POS.map(p => [p, tot[m][p] / n[m]])); rk[m] = {}; });
+    POS.forEach(p => Object.keys(avg).sort((a, b) => avg[b][p] - avg[a][p]).forEach((m, i) => { rk[m][p] = i + 1; }));
+    const max = Object.fromEntries(POS.map(p => [p, Math.max(...Object.values(avg).map(x => x[p]))]));
+    RANKS = { avg, rk, max, teams: Object.keys(avg).length };
+    return RANKS;
+  }
+  const tone = (r, of) => r <= 3 ? 'top' : r > of - 3 ? 'low' : '';
+  function rankCard() {
+    if (!done) return '';
+    const { avg, rk, max, teams } = ranks();
+    if (!avg[who]) return '';
+    return `<div class="glass ft-sec"><div class="panel-title">Where ${isMe(who) ? 'your' : esc(who) + '’s'} starters rank <span class="ft-chip">Weeks 1–${done}</span></div>
+      <div class="ft-note">Points ${isMe(who) ? 'your' : 'their'} starters scored per week at each spot, against the other ${teams - 1}.</div>
+      <div class="ft-body" style="gap:2px">${POS.map(p => { const r = rk[who][p], t = tone(r, teams);
+        return `<div class="pr"><span class="pos ${p}">${p === 'BENCH' ? 'Bench' : p}</span><div class="pbar"><span class="${t}" style="width:${(avg[who][p] / max[p] * 100).toFixed(0)}%"></span></div><span class="rk ${t}">${ord(r)}<small>${f1(avg[who][p])}</small></span></div>`; }).join('')}</div></div>`;
+  }
+  function rankGrid() {
+    if (!done) return '';
+    const { rk, teams } = ranks();
+    const ms = order.filter(m => rk[m]);
+    return `<div class="glass ft-sec"><div class="panel-title">Position ranks, whole league</div>
+      <div class="ft-note">1 is the most points per week at that spot, Weeks 1–${done}.</div>
+      <div class="ft-body"><div class="g6"><span></span>${POS.map(p => `<span class="h">${p === 'BENCH' ? 'BENCH' : p}</span>`).join('')}
+        ${ms.map(m => `<span class="m${isMe(m) ? ' ro-you' : ''}">${esc(m)}</span>${POS.map(p => `<span class="c ${tone(rk[m][p], teams)}">${rk[m][p]}</span>`).join('')}`).join('')}</div></div></div>`;
+  }
+
+  function render() {
+    $('view').innerHTML = `<div class="ro-grid"><div>${byesCard()}${byeGrid()}</div><div>${faCard()}${rankCard()}${rankGrid()}</div></div>`;
+  }
+
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-bw]');
+    if (b) { byeWeek = Number(b.dataset.bw); render(); const again = document.querySelector(`[data-bw="${byeWeek}"]`); if (again) again.focus({ preventScroll: true }); return; }
+    const c = e.target.closest('[data-bm]');
+    if (c) {
+      const m = c.dataset.bm, w = Number(c.dataset.bw2);
+      byeCell = byeCell && byeCell.m === m && byeCell.w === w ? null : { m, w };
+      render();
+    }
+  });
+  window.addEventListener('rl-me', () => { if (L) { const me = getMe(); if (me && order.includes(me)) { who = me; $('who').value = me; } render(); } });
+
+  LG.load().then(async data => {
+    D = data;
+    year = D.currentYear;
+    const reg = D.games.filter(g => g.year === year && g.type === 'Reg' && g.winner !== 'In Progress');
+    done = Math.max(0, ...reg.map(g => g.week));
+    // Standings order for the league grids: this season's regular-season rank.
+    order = D.seasons.filter(s => s.year === year).sort((a, b) => (a.reg_rank || 99) - (b.reg_rank || 99)).map(s => s.player);
+    const me = getMe();
+    who = urlParam('m') && order.includes(urlParam('m')) ? urlParam('m') : me && order.includes(me) ? me : order[0];
+    $('who').innerHTML = order.slice().sort().map(m => `<option value="${esc(m)}"${m === who ? ' selected' : ''}>${esc(m)}</option>`).join('');
+    $('who').addEventListener('change', () => { who = $('who').value; setUrlParams({ m: isMe(who) ? null : who }); byeWeek = null; render(); });
+    const [lineups, roster] = await Promise.all([
+      fetch(`data/lineups/${year}.json`, { cache: 'no-cache' }).then(r => r.json()),
+      fetch(`${WORKER_URL}/roster?week=${done}`).then(r => r.json()).catch(() => null),
+    ]);
+    L = lineups;
+    R = roster && roster.rosters ? roster : null;
+    setPageStatus(done ? `Through Week ${done}` : `${year} season`);
+    render();
+    riseIn(document.querySelectorAll('#view .glass'));
+  }).catch(err => { $('view').innerHTML = `<div class="loading-row">Couldn’t load your roster (${esc(err.message)}).</div>`; });
+</script>
+<script src="track.js?v=2" defer></script>
+</body>
+</html>

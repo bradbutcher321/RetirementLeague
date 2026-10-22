@@ -90,7 +90,8 @@ const RaceSim = (() => {
           else sc[t] = mu[t] + SD * gauss();
         });
         pairs.forEach(([a, b]) => {
-          const forced = wk === pickWeek && picks ? picks[a + '|' + b] : null;
+          // picks: "week|a|b" -> the winner you chose (Playoff Race, any week left).
+          const forced = picks ? picks[wk + '|' + a + '|' + b] : null;
           if (forced && ((forced === a) !== (sc[a] > sc[b]))) { const x = sc[a]; sc[a] = sc[b]; sc[b] = x; }
           const winner = sc[a] > sc[b] ? a : b;
           w[winner]++;

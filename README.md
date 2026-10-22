@@ -173,12 +173,7 @@ theme.css instead.
   unaffected by browser-real headers, an authenticated ESPN session
   cookie, or a 37s retry/backoff schedule; `site.web.api.espn.com` just
   works — `search_player()` in the same file was already on that host).
-  **`tools/run_parlay_refresh.ps1`** runs the same three steps (grade, publish,
-  sync) locally as a fallback, but isn't currently scheduled — it was a
-  Windows Scheduled Task ("RetirementLeague Parlay Refresh") every 30
-  minutes while cloud grading was blocked, removed now that it isn't;
-  re-register it the same way if `site.web.api.espn.com` ever gets
-  blocked too. See [tools/PARLAY_DATA_MIGRATION.md](tools/PARLAY_DATA_MIGRATION.md) for the full
+  See [tools/PARLAY_DATA_MIGRATION.md](tools/PARLAY_DATA_MIGRATION.md) for the full
   story of this migration (now complete). Picks are entered, fixed and
   graded on the site's Parlay Legs page; the old desktop entry tool is gone.
 
@@ -261,13 +256,9 @@ Each has a full docstring; short version:
 - **`database/compare_sheet_vs_d1.py`** — cross-checks Game Tracker
   against D1 for weekly matchup discrepancies (wrong scores/opponents,
   missing games in either source).
-- **`tools/`** — one-off Google Sheet setup for the Auto Parlay Tracker
-  (`setup_player_autofill.py`, `add_parlay_validation.py`,
-  `format_parlay_sheet.py`), the unscheduled local parlay refresh
-  (`run_parlay_refresh.ps1`), and the finished sheet migration
-  (`migrate_parlay_tracker.py`, don't re-run it) with its write-up
-  `PARLAY_DATA_MIGRATION.md`. Run the scripts from the repo root, e.g.
-  `python tools/format_parlay_sheet.py`.
+- **`tools/`** — The Column's helpers (`column_packet.py`, `column_add.py`,
+  `column_style.md`) and `PARLAY_DATA_MIGRATION.md`, the write-up of the
+  finished parlay sheet migration.
 
 ## Repo layout
 
@@ -285,6 +276,6 @@ generate_old_lineup_data.py   One-off export of the 2017-2018 lineups straight f
 generate_rule_changes_data.py Rule Changes page data pipeline
 database/history_lib.py       Shared D1 row-building + final-standings + wrangler-CLI logic, used by every D1-writing script above
 database/update_history_d1.py Daily D1 sync from ESPN -- the foundation every *_d1.py script above reads from
-tools/                  One-off parlay sheet setup scripts, the local refresh fallback, and the finished migration
+tools/                  The Column helpers and the parlay migration write-up
 .github/workflows/      Scheduled + manual automation
 ```

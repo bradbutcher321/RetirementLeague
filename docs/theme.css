@@ -95,6 +95,8 @@
    button/tab/toggle/select on the site keeps working exactly as before --
    this only turns off drag-selecting the text itself. */
 html{ user-select: none; }
+/* Text keeps its size when the phone turns sideways. */
+html{ -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* ---------- Scrollbars ----------
    The OS default is a light, arrow-buttoned bar that reads as a Windows
@@ -604,6 +606,14 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
 .lg-select option, .parlay-select option, .franchise-select option, .board-select option{
   background: var(--surface);
   color: var(--text);
+}
+/* iPhone zooms the page into any field or dropdown whose text is under
+   16px the moment it gets focus, and never zooms back out (site audit VI
+   #1). On a touch screen every dropdown takes 16px (the Players search,
+   features.css, is 16px everywhere);
+   the pill keeps its height. */
+@media (pointer: coarse){
+  .lg-select, .parlay-select, .franchise-select, .board-select{ font-size: 1rem; }
 }
 
 /* ---------- The open dropdown ----------

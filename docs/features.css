@@ -88,7 +88,7 @@ a.plink{ border-bottom:1px dotted rgba(255,255,255,0.25); }
 
 /* ---------- Players ---------- */
 .pl-searchwrap{ position:relative; margin:0 0 12px; }
-.pl-search{ width:100%; height:48px; border-radius:24px; border:1px solid var(--track-line); background:#1A1A1A; color:var(--text); padding:0 16px; font:500 0.95rem var(--body); outline:none; -webkit-appearance:none; appearance:none; }
+.pl-search{ width:100%; height:48px; border-radius:24px; border:1px solid var(--track-line); background:#1A1A1A; color:var(--text); padding:0 16px; font:500 1rem var(--body); outline:none; -webkit-appearance:none; appearance:none; }
 .pl-search:focus{ border-color:var(--lead-line); }
 .pl-res{ padding:4px; margin-bottom:12px; display:grid; }
 .pl-res[hidden]{ display:none; }
@@ -172,10 +172,31 @@ svg.elo{ width:100%; height:auto; display:block; }
 
 /* ---------- Playoff Race ---------- */
 .rc-intro{ color:var(--text-dim); font-size:0.82rem; line-height:1.45; margin:0 0 12px; }
-.rc-pick{ display:flex; width:100%; gap:4px; padding:4px; background:var(--track-bg); border:1px solid var(--track-line); border-radius:var(--track-r); }
-.rc-pick button{ flex:1 1 0; min-width:0; height:44px; border:0; border-radius:var(--ctl-r); background:none; color:var(--text-dim); font:600 0.8rem var(--body); cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 6px; }
-.rc-pick button.mid{ flex:0 0 64px; font-size:0.7rem; }
-.rc-pick button.on{ background:var(--gold); color:#0A0A08; font-weight:700; }
+.rc-pick + .rc-pick{ margin-top:8px; }
+/* One game: two sides and "vs". Unpicked is quiet; a pick outlines the
+   winner in gold and dims the loser (site audit VI #10). */
+.rc-pick{ display:grid; grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr); gap:6px; align-items:center; }
+.rc-pick .vs{ text-align:center; color:var(--text-dim); font-size:0.7rem; font-weight:700; }
+.rc-pick button{ min-width:0; height:48px; display:flex; align-items:center; justify-content:center; gap:7px; padding:0 8px; border-radius:14px; border:1px solid var(--item-line); background:var(--item); color:var(--text); font:600 0.88rem var(--body); cursor:pointer; }
+.rc-pick button .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.rc-pick button .pc{ flex:none; color:var(--text-dim); font-size:0.68rem; font-weight:700; font-variant-numeric:tabular-nums; }
+.rc-pick button.you .nm{ color:var(--me-ring); }
+.rc-pick button.on{ border-color:var(--gold); background:var(--lead-tint); }
+.rc-pick button.on .nm, .rc-pick button.on .pc{ color:var(--gold); }
+.rc-pick button.off{ opacity:0.5; }
+@media (hover:hover){ .rc-pick button:hover:not(.on){ background:var(--item-hover); } }
+/* The week strip, 7 to 14, with a count on each week you've picked in. */
+.rc-weeks{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding:6px 2px 12px; margin:0 -2px; }
+.rc-weeks::-webkit-scrollbar{ display:none; }
+.rc-weeks button{ position:relative; flex:none; height:36px; min-width:56px; padding:0 12px; border-radius:18px; border:1px solid var(--track-line); background:var(--track-bg); color:var(--text-dim); font:700 0.8rem var(--body); cursor:pointer; }
+.rc-weeks button.on{ background:var(--gold); border-color:var(--gold); color:var(--ctl-on-ink); }
+.rc-weeks .ct{ position:absolute; top:-6px; right:-4px; min-width:18px; height:18px; padding:0 4px; border-radius:9px; background:var(--text); color:#111; font:800 0.6rem/18px var(--body); text-align:center; }
+/* Your odds, pinned above the picks. */
+.rc-you{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px; margin-bottom:6px; }
+.rc-you-v{ font-family:var(--scoreboard); font-weight:800; font-size:2.2rem; line-height:1; font-variant-numeric:tabular-nums; }
+.rc-you-v span{ font-family:var(--body); font-size:0.78rem; font-weight:700; margin-left:8px; vertical-align:middle; }
+.rc-you-v span.up{ color:var(--turf); } .rc-you-v span.dn{ color:var(--loss); }
+.rc-you-s{ color:var(--text-dim); font-size:0.76rem; margin-top:4px; }
 .rc-head, .rc-tr{ display:grid; grid-template-columns:minmax(0,1fr) 84px 46px 52px; gap:6px; align-items:center; }
 .rc-head{ color:var(--text-dim); font-size:0.58rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; text-align:center; padding:0 10px 6px; }
 .rc-list{ display:grid; gap:6px; }

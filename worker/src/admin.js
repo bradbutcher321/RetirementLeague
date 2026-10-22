@@ -17,6 +17,8 @@
  *   videos_list { season } / videos_hide { id, hidden }
  *   activity               visits, and when each manager was last here
  *   log                    the latest hundred things a commissioner did
+ *   feedback_list / feedback_set { id, status, reply } / feedback_delete { id }
+ *                          what managers sent from their You sheet (feedback.js)
  *
  * GET /site-info (public) -> { announcement, draft }, what the Live page shows.
  */
@@ -29,6 +31,7 @@ import { broadcast, subscriberSummary } from "./push.js";
 import { dispatchParlayRefresh } from "./parlayRefresh.js";
 import { cached } from "./cache.js";
 import { fetchPlaylist, hiddenVideos, playlistId, playlists } from "./videos.js";
+import { feedbackAdmin, feedbackNew } from "./feedback.js";
 
 const REPO = "bradbutcher321/RetirementLeague";
 const WORKFLOWS = {
@@ -52,7 +55,7 @@ export async function siteInfo(env) {
 
 async function overview(env, body) {
   const names = await ensureManagers(env, body.names);
-  const [mgr, sess, subs, ann, draft, last, snap, stats, parlay, lists, hidden, comms] = await Promise.all([
+  const [mgr, sess, subs, ann, draft, last, snap, stats, parlay, lists, hidden, comms, fbNew] = await Promise.all([
     env.DB.prepare("SELECT manager FROM auth_managers").all(),
     env.DB.prepare("SELECT DISTINCT manager FROM auth_sessions").all(),
     subscriberSummary(env).catch(() => []),
@@ -65,6 +68,7 @@ async function overview(env, body) {
     playlists(env),
     hiddenVideos(env),
     commissioners(env),
+    feedbackNew(env).catch(() => null),
   ]);
   const all = mgr.results.map((r) => r.manager).filter((m) => !names.length || names.includes(m));
   const signed = new Set(sess.results.map((r) => r.manager));
@@ -84,6 +88,7 @@ async function overview(env, body) {
       visits: stats && !stats.error ? { visitors: stats.visitorsToday, views: stats.viewsToday, activeNow: stats.activeNow } : null,
       playlists: Object.keys(lists).map(Number).sort((a, b) => a - b),
       hiddenVideos: hidden.size,
+      feedbackNew: fbNew,
     },
   };
 }
@@ -247,6 +252,7 @@ async function adminRoute(request, env) {
     case "log": return log(env);
   }
   if (a.startsWith("videos_")) return videos(env, body, who);
+  if (a.startsWith("feedback_")) return feedbackAdmin(env, body, who);
   return fail(400, "bad_action");
 }
 

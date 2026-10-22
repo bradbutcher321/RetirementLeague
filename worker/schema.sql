@@ -93,3 +93,19 @@ CREATE TABLE IF NOT EXISTS admin_log (
   kind TEXT NOT NULL,
   text TEXT NOT NULL
 );
+-- Feedback (src/feedback.js): what signed-in managers send from their You
+-- sheet, read and answered on the Commissioner page. status: new | planned
+-- | done | no.
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts INTEGER NOT NULL,
+  manager TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  text TEXT NOT NULL,
+  page TEXT,
+  status TEXT NOT NULL DEFAULT 'new',
+  reply TEXT,
+  updated INTEGER,
+  updated_by TEXT
+);
+CREATE INDEX IF NOT EXISTS feedback_manager ON feedback (manager, ts);

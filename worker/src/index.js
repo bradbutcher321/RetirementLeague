@@ -53,6 +53,10 @@
  *                      (see videos.js; secret VIDEO_PLAYLISTS).
  * GET/POST /legs, GET /legs/games, GET /legs/props -> Parlay Legs, each
  *                      manager entering their own leg (see legs.js).
+ * GET /roster?week= -> bye weeks, every roster and the week's best free
+ *                      agents, for the Your Roster page (see roster.js).
+ * POST /feedback, GET /feedback/mine -> bug reports and ideas from a
+ *                      signed-in manager's You sheet (see feedback.js).
  *
  * Required setup:
  *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT, PARLAY_PIN, AUTH_SECRET,
@@ -76,6 +80,8 @@ import { LEG_ROUTES, guardSavedWeek, mirrorSavedWeek } from "./legs.js";
 import { isCommissioner } from "./roles.js";
 import { ADMIN_ROUTES, siteInfo } from "./admin.js";
 import { VIDEO_ROUTES } from "./videos.js";
+import { FEEDBACK_ROUTES } from "./feedback.js";
+import { ROSTER_ROUTES } from "./roster.js";
 import { runHealthCheck } from "./healthCheck.js";
 
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
@@ -260,6 +266,12 @@ export default {
     if (path === "/site-info") {
       if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       return jsonResponse(await siteInfo(env).catch(() => ({ announcement: null, draft: null })), { ...headers, "Cache-Control": "public, max-age=60" });
+    }
+    if (FEEDBACK_ROUTES[path] || ROSTER_ROUTES[path]) {
+      const [method, route] = FEEDBACK_ROUTES[path] || ROSTER_ROUTES[path];
+      if (request.method !== method) return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
     }
     if (VIDEO_ROUTES[path]) {
       const [method, route] = VIDEO_ROUTES[path];

@@ -17,8 +17,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=35">
-<link rel="stylesheet" href="nav.css?v=28">
+<link rel="stylesheet" href="theme.css?v=36">
+<link rel="stylesheet" href="nav.css?v=29">
 <style>
   /* ---------- Commissioner: a hub of tools ----------
      The page opens on a hub (grouped rows, one panel per group, a live status
@@ -107,6 +107,13 @@
   .cm-pill{ height: 32px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--ctl-line); background: var(--ctl-bg); color: var(--text); font: 600 0.78rem var(--body); cursor: pointer; }
   .cm-pill:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .cm-box{ padding: 12px 14px; font-size: 0.9rem; line-height: 1.4; }
+  /* Feedback rows: who and when, the text (three lines until opened), any reply. */
+  .cm-fb{ display: block; width: 100%; padding: 10px 12px 12px; text-align: left; color: var(--text); font: inherit; cursor: pointer; min-width: 0; }
+  .cm-fb.open{ cursor: default; }
+  .cm-fb-h{ display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .cm-fb-t{ margin-top: 6px; font-size: 0.88rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .cm-fb-t.clamp{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .cm-fb-r{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--text-dim); font-size: 0.8rem; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 
   /* The PIN, asked once per browser, only when nobody is signed in as a commissioner. */
   .pin-row{ display: flex; gap: 8px; align-items: center; margin-top: 12px; }
@@ -134,6 +141,8 @@
 
   /* Jon's Tables */
   .cm-pills .cm-pill.on{ background: var(--gold); border-color: var(--gold); color: var(--ctl-on-ink); }
+  /* A filter above another row of pills is an outlined chip, so only one gold fill shows. */
+  .cm-pills.outline .cm-pill.on{ background: var(--lead-tint); color: var(--gold); }
   .cm-table-wrap{ overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; margin-top: 14px; }
   .cm-table{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }
   .cm-table th, .cm-table td{ padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -177,8 +186,8 @@
     <footer id="site-footer" data-source="Tools kept by the league's Worker"></footer>
   </div>
 
-<script src="nav.js?v=36"></script>
-<script src="page-common.js?v=40"></script>
+<script src="nav.js?v=37"></script>
+<script src="page-common.js?v=41"></script>
 <script>
 (function () {
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
@@ -207,6 +216,7 @@
     chart: SVG('<path d="M4 19h16"/><path d="m5 15 4-5 4 3 6-7"/>'),
     chev: SVG('<path d="m9 6 6 6-6 6"/>'),
     back: SVG('<path d="m15 6-6 6 6 6"/>'),
+    chat: SVG('<path d="M4 5.5h16v10H9.5L5 19.5v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/>'),
     lock: SVG('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
   };
 
@@ -315,12 +325,13 @@
     health:   { label: 'Site Health', icon: I.shield },
     refresh:  { label: 'Data Refresh', icon: I.sync },
     activity: { label: 'Activity', icon: I.chart },
+    feedback: { label: 'Feedback', icon: I.chat },
   };
   const GROUPS = [
     ['Parlay', ['parlay', 'tables']],
     ['People', ['signins', 'members', 'push', 'announce', 'audit']],
     ['League', ['videos', 'season']],
-    ['Site', ['health', 'refresh', 'activity']],
+    ['Site', ['feedback', 'health', 'refresh', 'activity']],
   ];
   const failing = () => ((health || (ov && ov.health)) ? (health || ov.health).checks : []).filter(c => !c.ok);
   const wfAt = file => { const c = ((health || (ov && ov.health)) ? (health || ov.health).checks : []).find(x => x.file === file); return c && c.at; };
@@ -347,6 +358,7 @@
       }
       case 'refresh': { const at = wfAt('refresh_league_data.yml'); return { t: at ? `League data · ${ago(at)}` : 'Run any refresh now' }; }
       case 'activity': return { t: ov.visits ? `${plural(ov.visits.visitors, 'visitor', 'visitors')} today` : 'Visits and last seen' };
+      case 'feedback': return { t: ov.feedbackNew ? `${ov.feedbackNew} new` : 'Bugs and ideas from managers' };
     }
     return { t: '' };
   }
@@ -356,6 +368,7 @@
     const f = failing();
     if (f.length) out.push({ go: 'health', cls: 'is-loss', t: f.length === 1 ? `${f[0].name}: ${f[0].detail}` : `${f.length} site checks are failing`, s: f.length === 1 ? 'Tap to see all the checks' : list(f.map(c => c.name)) });
     if (P && P.windowOpen && !P.locked && P.missing.length) out.push({ go: 'parlay', cls: 'is-lead', t: plural(P.missing.length, 'leg', 'legs') + ' still missing', s: `${list(P.missing)} · locks ${etDay(P.locksAt)}` });
+    if (ov.feedbackNew) out.push({ go: 'feedback', cls: 'is-lead', t: ov.feedbackNew === 1 ? 'New feedback' : `${ov.feedbackNew} new feedback`, s: 'Bugs and ideas from managers' });
     if (ov.unsigned.length) out.push({ go: 'signins', cls: 'is-lead', t: ov.unsigned.length === 1 ? `${ov.unsigned[0]} isn't signed in` : `${ov.unsigned.length} managers aren't signed in`, s: ov.unsigned.length === 1 ? 'Send a sign-in text' : list(ov.unsigned) });
     return out;
   }
@@ -687,8 +700,52 @@
     return { title: 'Activity', html: `<div class="cm-split"><div>${panel('Visits, last 7 days', tiles)}${panel('Top pages today', top)}</div>${panel('Managers', mrows)}</div>` };
   }
 
+  // ---------- Feedback (worker/src/feedback.js) ----------
+  // What managers sent from their You sheet. New first; tap one to set where
+  // it stands and write a reply, which the sender sees under their form.
+  const FB_KIND = { bug: 'Bug', improve: 'Improvement', feature: 'Feature idea', other: 'Other' };
+  const FB_ST = [['new', 'New'], ['planned', 'Planned'], ['done', 'Done'], ['no', "Won't do"]];
+  let fbOpen = 0, fbScope = 'open', fbAsk = 0;
+  function viewFeedback() {
+    const all = screenData.feedback;
+    if (!all) return { title: 'Feedback', html: panel('From managers', loading) };
+    const open = all.filter(f => f.status === 'new' || f.status === 'planned');
+    const shown = fbScope === 'open' ? open : fbScope === 'closed' ? all.filter(f => f.status === 'done' || f.status === 'no') : all.slice();
+    const order = { new: 0, planned: 1, done: 2, no: 3 };
+    shown.sort((a, b) => (fbScope === 'open' ? order[a.status] - order[b.status] : 0) || b.id - a.id);
+    const stName = s => (FB_ST.find(x => x[0] === s) || FB_ST[0])[1];
+    const row = f => {
+      const head = `<div class="cm-name">${esc(FB_KIND[f.kind] || 'Other')} · ${esc(f.manager)}</div><div class="cm-sub">${esc(when(f.ts))}${f.page ? ' · ' + esc(f.page.replace(/\.html$/, '')) : ''}</div>`;
+      const chip = `<span class="cm-count ${f.status === 'new' ? '' : f.status === 'done' ? 'green' : 'dim'}">${stName(f.status)}</span>`;
+      if (fbOpen !== f.id) {
+        return `<button type="button" class="cm-fb item${f.status === 'new' ? ' is-lead' : ''}" data-act="fb-open" data-id="${f.id}"><div class="cm-fb-h"><div class="cm-main">${head}</div>${chip}</div><div class="cm-fb-t clamp">${esc(f.text)}</div>${f.reply ? `<div class="cm-fb-r">${esc(f.reply)}</div>` : ''}</button>`;
+      }
+      const id = 'fb-reply-' + f.id;
+      return `<div class="cm-fb item open"><div class="cm-fb-h"><div class="cm-main">${head}</div><button type="button" class="cm-btn dim" data-act="fb-close">Close</button></div>
+        <div class="cm-fb-t">${esc(f.text)}</div>
+        <div class="cm-pills" role="radiogroup" aria-label="Status" style="margin-top:12px">${FB_ST.map(([k, l]) => `<button type="button" role="radio" class="cm-pill${f.status === k ? ' on' : ''}" aria-checked="${f.status === k}" data-act="fb-status" data-id="${f.id}" data-st="${k}"${busy ? ' disabled' : ''}>${l}</button>`).join('')}</div>
+        <label class="cm-field"><span>Reply (${esc(f.manager)} sees it)</span><textarea class="cm-in" id="${id}" data-keep maxlength="400" placeholder="Fixed, thanks">${esc(drafts[id] !== undefined ? drafts[id] : f.reply)}</textarea></label>
+        ${fbAsk === f.id ? `<div class="cm-line item is-loss" style="margin-top:12px"><div class="cm-main"><div class="cm-name">Delete this?</div><div class="cm-sub">It's gone for ${esc(f.manager)} too.</div></div><div class="cm-btns"><button type="button" class="cm-btn dim" data-act="fb-del-no">Cancel</button><button type="button" class="cm-btn danger" data-act="fb-del-yes" data-id="${f.id}"${busy ? ' disabled' : ''}>Delete</button></div></div>`
+          : `<div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="fb-save" data-id="${f.id}"${busy ? ' disabled' : ''}>Save reply</button><button type="button" class="cm-btn danger" data-act="fb-del" data-id="${f.id}">Delete</button></div>`}</div>`;
+    };
+    const scopes = [['open', `Open · ${open.length}`], ['closed', 'Closed'], ['all', 'All']];
+    const pills = `<div class="cm-pills outline" role="group" aria-label="Show" style="margin-bottom:12px">${scopes.map(([k, l]) => `<button type="button" class="cm-pill${k === fbScope ? ' on' : ''}" data-act="fb-scope" data-scope="${k}" aria-pressed="${k === fbScope}">${l}</button>`).join('')}</div>`;
+    return { title: 'Feedback',
+      html: panel('From managers', pills + (shown.length ? `<div class="cm-rows">${shown.map(row).join('')}</div>` : `<div class="cm-empty">${fbScope === 'open' ? 'Nothing open.' : 'Nothing here yet.'}</div>`), '', 'Signed-in managers send these from You › Send feedback. Commissioners with notifications on get a push for each one.') };
+  }
+  async function fbUpdate(id, status) {
+    const f = screenData.feedback.find(x => x.id === id);
+    if (!f) return;
+    const box = $('fb-reply-' + id);
+    const reply = box ? box.value.trim() : f.reply;
+    await call('feedback_set', { id, status, reply });
+    f.status = status; f.reply = reply;
+    delete drafts['fb-reply-' + id];
+    ov.feedbackNew = screenData.feedback.filter(x => x.status === 'new').length;
+  }
+
   // ---------- Drawing ----------
-  const VIEWS = { hub: viewHub, parlay: viewParlay, tables: viewTables, announce: viewAnnounce, signins: viewSignins, members: viewMembers, push: viewPush, audit: viewAudit, videos: viewVideos, season: viewSeason, health: viewHealth, refresh: viewRefresh, activity: viewActivity };
+  const VIEWS = { hub: viewHub, parlay: viewParlay, tables: viewTables, announce: viewAnnounce, signins: viewSignins, members: viewMembers, push: viewPush, audit: viewAudit, videos: viewVideos, season: viewSeason, health: viewHealth, refresh: viewRefresh, activity: viewActivity, feedback: viewFeedback };
   const route = () => { const r = location.hash.slice(1); return VIEWS[r] ? r : 'hub'; };
 
   function draw() {
@@ -745,6 +802,7 @@
       else if (r === 'push') screenData.push = await call('push_info');
       else if (r === 'audit') screenData.log = (await call('log')).entries;
       else if (r === 'activity') screenData.activity = await call('activity');
+      else if (r === 'feedback') screenData.feedback = (await call('feedback_list')).items;
       else if (r === 'videos') {
         screenData.videos = await call('videos_get');
         const seasons = screenData.videos.playlists.map(p => p.season);
@@ -872,6 +930,20 @@
       });
     }
     else if (a === 'tscope') { tScope = d.scope; draw(); }
+    else if (a === 'fb-scope') { fbScope = d.scope; fbOpen = 0; draw(); }
+    else if (a === 'fb-open') { fbOpen = Number(d.id); fbAsk = 0; draw(); }
+    else if (a === 'fb-close') { fbOpen = 0; fbAsk = 0; draw(); }
+    else if (a === 'fb-status') await act('fb', async () => { await fbUpdate(Number(d.id), d.st); toast('Saved'); });
+    else if (a === 'fb-save') await act('fb', async () => { const f = screenData.feedback.find(x => x.id === Number(d.id)); await fbUpdate(Number(d.id), f.status); toast('Reply saved'); });
+    else if (a === 'fb-del') { fbAsk = Number(d.id); draw(); }
+    else if (a === 'fb-del-no') { fbAsk = 0; draw(); }
+    else if (a === 'fb-del-yes') await act('fb', async () => {
+      await call('feedback_delete', { id: Number(d.id) });
+      screenData.feedback = screenData.feedback.filter(x => x.id !== Number(d.id));
+      fbOpen = 0; fbAsk = 0;
+      ov.feedbackNew = screenData.feedback.filter(x => x.status === 'new').length;
+      toast('Deleted');
+    });
     else if (a === 'tcopy') {
       const data = screenData.tables;
       const lines = d.which === 'j'

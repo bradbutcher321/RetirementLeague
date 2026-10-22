@@ -26,8 +26,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=35">
-<link rel="stylesheet" href="nav.css?v=28">
+<link rel="stylesheet" href="theme.css?v=36">
+<link rel="stylesheet" href="nav.css?v=29">
 <style>
   /* ---------- Season Wrapped (site audit II #39) ----------
      One manager's finished season as a short run of cards, then a picture
@@ -99,8 +99,8 @@
     <footer id="site-footer" data-note="Money is dues and prizes from that year's payout rules; parlays aren't counted"></footer>
   </div>
 
-<script src="nav.js?v=36"></script>
-<script src="page-common.js?v=40"></script>
+<script src="nav.js?v=37"></script>
+<script src="page-common.js?v=41"></script>
 <script src="league-common.js?v=6"></script>
 <script>
   const $ = id => document.getElementById(id);
@@ -247,6 +247,9 @@
   async function render() {
     const m = $('wr-m').value, y = Number($('wr-y').value);
     setUrlParams({ m, year: y });
+    // The status line names the season shown, not league.json's newest
+    // week, which sat under a finished season (site audit VI #16).
+    setPageStatus(`${y} season`);
     const out = $('wr-out');
     const facts = seasonFacts(m, y);
     if (!facts.row) { out.innerHTML = '<div class="loading-row">No season on record.</div>'; return; }

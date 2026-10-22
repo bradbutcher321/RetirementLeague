@@ -92,7 +92,7 @@ def reconstruct_pick_text(bet_type, team, opponent, player_prop, line, side):
     """Rebuilds the canonical "{Bet Type}: {details}" text compute_stats()
     parses (bet-type breakdown via pick.split(":")[0], over/under side via
     regex) from Auto Parlay Tracker's structured columns, matching the
-    exact shape tools/migrate_parlay_tracker.py's historical rows already used --
+    exact shape the sheet's historical rows already used --
     so compute_stats() needed zero changes for the new tab. Deliberately
     not using the Raw Pick column for this: it holds whatever text a pick
     was actually entered from (clean for historically-migrated rows,
@@ -117,7 +117,7 @@ def reconstruct_pick_text(bet_type, team, opponent, player_prop, line, side):
 def load_tracker(spreadsheet):
     ws = spreadsheet.worksheet(TARGET_TAB)
     # Canonical 12-player order from the same named-range helper list the
-    # Player auto-fill formula reads (see tools/setup_player_autofill.py) --
+    # Player auto-fill formula reads (the sheet's U2:U13 helper list) --
     # more robust than deriving the roster from which names happen to
     # appear in the data, since a short/gapped week (see the Chad/Jeff
     # incident in tools/PARLAY_DATA_MIGRATION.md) would otherwise misorder it.
@@ -141,7 +141,7 @@ def load_tracker(spreadsheet):
                 "picks": {},
                 # Split is computed here rather than read from column R --
                 # that column is itself just a sheet formula (Final Payout
-                # / 12, see tools/setup_player_autofill.py), and computing it
+                # / 12), and computing it
                 # directly avoids a real bug this had: the loader never
                 # read column R at all, so every week's Split silently
                 # showed "--" on the site (fmtMoney(undefined)) after the

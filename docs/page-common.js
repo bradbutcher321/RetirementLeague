@@ -862,9 +862,11 @@ function riseIn(els, cap = 8, elapsed = 0) {
 // Screen icon the site has no reload button and iOS gives web apps no pull
 // to refresh, so a stale page could only be fixed by force-quitting it.
 // Pulling down from the very top drops a round arrow in from above; past
-// ARM it turns gold, and letting go there reloads the page. Only the Home
-// Screen app gets it (Safari and Chrome have their own); add ?ptr to any
-// URL to force it for testing.
+// ARM it turns gold, and letting go there refreshes. A page with live data
+// (Live, Feed, Parlay Results) sets window.pageRefresh to its own poll, so a
+// pull fetches new numbers without closing anything you opened (site audit
+// VI #5); every other page reloads. Only the Home Screen app gets it (Safari
+// and Chrome have their own); add ?ptr to any URL to force it for testing.
 (() => {
   const installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
   if (!installed && !/[?&]ptr\b/.test(location.search)) return;
@@ -931,8 +933,17 @@ function riseIn(els, cap = 8, elapsed = 0) {
     haptic();
     el.classList.add('settle', 'busy');
     draw(ARM);
-    // Long enough to see the spin start, so the reload reads as an answer.
-    setTimeout(() => location.reload(), 350);
+    if (typeof window.pageRefresh !== 'function') {
+      // Long enough to see the spin start, so the reload reads as an answer.
+      setTimeout(() => location.reload(), 350);
+      return;
+    }
+    // Spin until the page's poll answers (at least long enough to read as
+    // an answer, at most 8 seconds), then put the arrow away.
+    const t0 = Date.now();
+    Promise.race([Promise.resolve().then(window.pageRefresh), new Promise(r => setTimeout(r, 8000))])
+      .catch(() => {})
+      .then(() => setTimeout(() => { el.classList.remove('busy'); reset(); }, Math.max(0, 600 - (Date.now() - t0))));
   };
   addEventListener('touchend', end);
   addEventListener('touchcancel', reset);

@@ -55,7 +55,7 @@ const ODDS_LEFT_KEY = "legs:odds-left";
 // Who may enter any manager's leg, not just their own, and save a whole week:
 // isCommissioner() in roles.js (Brad and Jon, plus whoever they add).
 
-// The sheet's Bet Type list (tools/add_parlay_validation.py), plus "Other"
+// The sheet's Bet Type dropdown list, plus "Other"
 // for a typed-in leg.
 export const BET_TYPES = ["Money Line", "Spread", "Alt Spread", "1st Half Spread", "Anytime TD", "Total Points",
   "Total Goals", "Total Rounds", "Receiving Yards", "Passing TD", "Passing Yards", "Receptions", "Total Yards",

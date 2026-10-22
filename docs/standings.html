@@ -37,10 +37,10 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=35">
-<link rel="stylesheet" href="nav.css?v=28">
+<link rel="stylesheet" href="theme.css?v=36">
+<link rel="stylesheet" href="nav.css?v=29">
 <link rel="stylesheet" href="league.css?v=7">
-<link rel="stylesheet" href="features.css?v=7">
+<link rel="stylesheet" href="features.css?v=8">
 <style>
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
@@ -154,9 +154,46 @@
   .bump .nm.on{ fill:var(--gold); }
   .bump .rk-v{ fill:#111; font-size:8px; font-weight:800; font-family:var(--body); pointer-events:none; }
   @media (hover:hover){ .bump .nm:hover{ fill:var(--gold); } }
-  /* Rows sit 6px apart (each .qrow's margin-top); the Playoff line takes
-     10px either side of it, counting the next row's own 6px. */
-  #standings-container .po-line{ margin:10px 0 4px; }
+  /* The compact table (site audit VI #9): one header row, then each team on
+     one row of a hairline-divided list, about half the old height. First
+     place and the Sacko spot keep their tints, you keep your ring. */
+  .st-list{ padding:12px 10px 14px; }
+  .st-h, .st-r{ display:grid; grid-template-columns:22px minmax(0,1fr) 54px 54px 46px; gap:8px; align-items:center; }
+  .st-h{ padding:0 10px 6px; color:var(--text-dim); font-size:0.58rem; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; }
+  .st-h span:nth-child(n+3){ text-align:right; }
+  .st-h span:first-child{ text-align:center; }
+  .st-r{ padding:9px 10px; min-height:58px; color:inherit; text-decoration:none; border:1px solid transparent; border-radius:12px; }
+  .st-r + .st-r{ border-top-color:var(--line); border-top-left-radius:0; border-top-right-radius:0; }
+  @media (hover:hover){ .st-r:hover{ background:var(--item-hover); } }
+  .st-r:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .st-r .rk{ font-family:var(--scoreboard); font-weight:700; font-size:1.05rem; color:var(--text-dim); text-align:center; font-variant-numeric:tabular-nums; }
+  .st-r.in .rk{ color:var(--gold); }
+  .st-r.top, .st-r.last{ border-radius:12px; }
+  .st-r.top{ border-color:var(--win-line); background:var(--win-tint); } .st-r.top .rk, .st-r.po .rk{ color:var(--turf); }
+  .st-r.last{ border-color:var(--loss-line); background:var(--loss-tint); } .st-r.last .rk{ color:var(--loss); }
+  .st-r.top + .st-r, .st-r.last + .st-r{ border-top-color:transparent; }
+  .st-r.me{ border-radius:12px; outline-offset:-1px; }
+  .st-r.me + .st-r{ border-top-color:transparent; }
+  .st-r.former{ opacity:0.55; }
+  .st-main{ min-width:0; display:block; }
+  .st-nm{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; }
+  .st-nm .nm{ font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .st-nm .rv-tag{ margin-left:0; }
+  .st-sub{ display:flex; align-items:center; gap:4px 7px; flex-wrap:wrap; color:var(--text-dim); font-size:0.68rem; margin-top:3px; }
+  .st-sub .t{ color:var(--gold); font-weight:600; } .st-sub .s{ color:var(--loss); font-weight:600; }
+  .st-dots{ display:inline-flex; gap:2px; }
+  .st-dots i{ width:6px; height:6px; border-radius:50%; background:var(--text-dim); }
+  .st-dots i.w{ background:var(--turf); } .st-dots i.l{ background:var(--loss); }
+  .st-wl{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .st-pf{ text-align:right; color:var(--text); font-size:0.78rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .st-pf small{ display:block; color:var(--text-dim); font-size:0.62rem; }
+  .st-od{ text-align:right; }
+  .st-od .od{ padding:2px 6px; }
+  .st-pct{ font-family:var(--scoreboard); font-weight:700; font-size:0.95rem; font-variant-numeric:tabular-nums; }
+  .st-dim{ color:var(--text-dim); }
+  /* All-Time records run to three digits a side. */
+  .st-list.wide .st-h, .st-list.wide .st-r{ grid-template-columns:22px minmax(0,1fr) 68px 58px 46px; }
+  #standings-container .po-line{ margin:6px 4px; }
 </style>
 </head>
 <body>
@@ -195,10 +232,10 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=36"></script>
-<script src="page-common.js?v=40"></script>
+<script src="nav.js?v=37"></script>
+<script src="page-common.js?v=41"></script>
 <script src="league-common.js?v=6"></script>
-<script src="race-sim.js?v=2"></script>
+<script src="race-sim.js?v=3"></script>
 <script src="rivals.js?v=2"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -458,8 +495,13 @@
   addEventListener('resize', () => requestAnimationFrame(watchBand));
 
   let formerCount = 0, prevRank = null, lastWeek = 0, bumpExt = null;
-  function row(r, k, n, type, complete, year, race, sos, hard, form) {
-    const cls = ['qrow'];
+  // One compact row (site audit VI #9): rank, the name with its move and
+  // tags, a line of form dots / schedule left / race under it; then the
+  // record as 9-3, PF over PA, and the odds (or win % without them). The
+  // column names sit in one header row above the list instead of under every
+  // row's numbers.
+  function row(r, k, n, type, complete, year, race, sos, hard, form, oddsCol) {
+    const cls = ['st-r'];
     if (r.former) cls.push('former');
     else if (r.rank === 1) cls.push('top'); else if (r.rank === n - (year === 'all' ? formerCount : 0)) cls.push('last');
     else if (type === 'reg' && complete && r.s.playoff > 0) cls.push('po');
@@ -470,20 +512,18 @@
       if (r.s.champ) badges.push('<span class="badge gold">Champion</span>');
       else if (r.s.sacko) badges.push('<span class="badge loss">Sacko</span>');
     }
-    const metaParts = [];
+    const sub = [];
+    if (form && form.length) sub.push(`<span class="st-dots" aria-label="Last ${form.length}: ${form.map(f => f.toUpperCase()).join(' ')}">${form.map(f => `<i class="${f}"></i>`).join('')}</span>`);
     if (year === 'all') {
-      const tally = [`<span>${r.seasons} szns</span>`];
+      sub.push(`<span>${r.seasons} szns</span>`);
       if (type === 'final') {
-        if (r.s.champ) tally.push(`<span class="t">${r.s.champ} title${r.s.champ === 1 ? '' : 's'}</span>`);
-        if (r.s.sacko) tally.push(`<span class="s">${r.s.sacko} Sacko${r.s.sacko === 1 ? '' : 's'}</span>`);
+        if (r.s.champ) sub.push(`<span class="t">${r.s.champ} title${r.s.champ === 1 ? '' : 's'}</span>`);
+        if (r.s.sacko) sub.push(`<span class="s">${r.s.sacko} Sacko${r.s.sacko === 1 ? '' : 's'}</span>`);
       }
-      metaParts.push(`<span class="tally">${tally.join('')}</span>`);
     }
-    metaParts.push(`<span class="pfpa"><span>PF ${n0(r.pf)}</span><span>PA ${n0(r.pa)}</span></span>`);
-    // Schedule left and the race marker get a line of their own.
-    const race2 = sosMark(sos, hard) + raceMark(race);
-    if (race2) metaParts.push(`<span class="pfpa">${race2}</span>`);
-    const metaHtml = metaParts.map(p => `<span class="meta-seg">${p}</span>`).join('<span class="meta-sep"> · </span>');
+    const sm = sosMark(sos, hard), rm = raceMark(race);
+    if (sm) sub.push(sm);
+    if (rm) sub.push(rm);
     let moveHtml = '';
     // A season with the Worker's data (renderLive) brings its own move and
     // the week it is measured from; otherwise last week's ranks above.
@@ -494,14 +534,19 @@
       const say = mv > 0 ? `Up ${mv}` : mv < 0 ? `Down ${-mv}` : 'No change';
       moveHtml = `<i class="mv${mv > 0 ? ' up' : mv < 0 ? ' down' : ''}" title="${say} since Week ${mvFrom}" aria-label="${say} since Week ${mvFrom}">${txt}</i>`;
     }
-    // Playoff odds as of the end of last week (Through mode only).
-    if (typeof r.odds === 'number') moveHtml += `<i class="od ${r.odds >= 50 ? 'high' : 'low'}" title="Playoff odds" aria-label="Playoff odds ${r.odds.toFixed(0)}%">${r.odds.toFixed(0)}%</i>`;
+    const rec = `${r.w}-${r.l}${r.ties ? '-' + r.ties : ''}`;
+    // Playoff odds as of the end of last week (Through mode only); win % otherwise.
+    const last = oddsCol
+      ? (typeof r.odds === 'number' ? `<i class="od ${r.odds >= 50 ? 'high' : 'low'}" aria-label="Playoff odds ${r.odds.toFixed(0)}%">${r.odds.toFixed(0)}%</i>` : '<span class="st-dim">—</span>')
+      : `<span class="st-pct">${pct(r.pct)}</span>`;
     // Your Daddy / Your Bitch (rivals.js), in your ring color, after the name.
-    return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}" data-rv="${esc(r.player)}"><div class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</div><div class="qrow-main"><div class="tm"><span class="nm">${esc(r.player)}</span>${moveHtml}<span class="badges-inline">${badges.join('')}</span></div>${Rivals.pill(r.player) ? `<div class="rv-row">${Rivals.pill(r.player)}</div>` : ''}` +
-      `<div class="meta">${metaHtml}</div></div>` +
-      `<div class="stats-col"><div class="stats"><div><b>${r.w}</b><span>W</span></div><div><b>${r.l}</b><span>L</span></div><div><b>${pct(r.pct)}</b><span>Win %</span></div></div>` +
-      (form && form.length ? `<div class="form" aria-label="Last ${form.length}: ${form.map(f => f.toUpperCase()).join(' ')}">${form.map(f => `<i class="${f}" aria-hidden="true">${f.toUpperCase()}</i>`).join('')}</div>` : '') +
-      `</div></a>`;
+    return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}" data-rv="${esc(r.player)}"><span class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</span>` +
+      `<span class="st-main"><span class="st-nm"><span class="nm">${esc(r.player)}</span>${moveHtml}${badges.join('')}${Rivals.pill(r.player)}</span>` +
+      (sub.length ? `<span class="st-sub">${sub.join('')}</span>` : '') + `</span>` +
+      `<span class="st-wl">${rec}</span><span class="st-pf">${n0(r.pf)}<small>PA ${n0(r.pa)}</small></span><span class="st-od">${last}</span></a>`;
+  }
+  function header(oddsCol) {
+    return `<div class="st-h" aria-hidden="true"><span>#</span><span>Team</span><span>W-L</span><span>PF</span><span>${oddsCol ? 'Odds' : 'Win %'}</span></div>`;
   }
 
 
@@ -639,7 +684,8 @@
     const note = year === 'all' ? 'Every season combined, current teams ranked by win percentage (former teams listed after). Median games count from 2025 on.' : year >= 2025 ? 'Wins and losses include the weekly median game.' : '';
     $('tabs').innerHTML = tabs.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}"${k === tab && note ? ` title="${esc(note)}"` : ''}>${l}</button>`).join('');
     // 18px above the first row (or the legend) matches the rows' 18px sides.
-    $('standings-container').innerHTML = (useBand ? bandHtml(LIVE.raw) : '') + `<div class="glass">${legend}<div style="padding:${legend ? 14 : 18}px 18px 20px">${rows.map((r, k) => row(r, k, rows.length, tab, complete, year, race && race[k], sos && sos[k], hard && hard[k], live ? formOf(year, r.player) : null) + (spots && k === spots - 1 && rows.length > spots ? PLAYOFF_LINE : '')).join('')}</div></div>` +
+    const oddsCol = rows.some(r => typeof r.odds === 'number');
+    $('standings-container').innerHTML = (useBand ? bandHtml(LIVE.raw) : '') + `<div class="glass">${legend}<div class="st-list${year === 'all' ? ' wide' : ''}">${header(oddsCol)}${rows.map((r, k) => row(r, k, rows.length, tab, complete, year, race && race[k], sos && sos[k], hard && hard[k], live ? formOf(year, r.player) : null, oddsCol) + (spots && k === spots - 1 && rows.length > spots ? PLAYOFF_LINE : '')).join('')}</div></div>` +
       // Rank by Week: the season in progress, or a finished one's Regular Szn tab.
       (year !== 'all' && (live || tab === 'reg') ? bumpChart(year) : '');
     drawBump();
@@ -665,7 +711,7 @@
     if (data.years.includes(Number(y)) || (y === 'all' && tab !== 'bracket')) $('year-select').value = y;
     $('year-select').addEventListener('change', render);
     render();
-    riseIn(document.querySelectorAll('#standings-container .qrow'));
+    riseIn(document.querySelectorAll('#standings-container .st-r'));
   }).catch(err => LG.showError('standings-container', err));
 </script>
 <script src="track.js?v=2" defer></script>

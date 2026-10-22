@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=35">
-<link rel="stylesheet" href="nav.css?v=28">
+<link rel="stylesheet" href="theme.css?v=36">
+<link rel="stylesheet" href="nav.css?v=29">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -101,6 +101,61 @@
   .sb-row .chev{ justify-self: end; }
   .sb-row[aria-expanded="true"] .chev{ transform: rotate(180deg); }
   .sb-open{ padding: 2px 2px 8px; }
+  /* Before kickoff (site audit VI #8): the other matchups as projected rows. */
+  .psb-row{ grid-template-columns: minmax(0,1fr) 52px 66px 52px minmax(0,1fr); gap: 6px; min-height: 58px; }
+  .psb-row .n{ color: var(--text); }
+  .psb-row .n .you{ color: var(--me-ring); }
+  .psb-row .pj{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.05rem; text-align: center; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .psb-row .pj.fav{ color: var(--text); }
+  .psb-row .mini{ display: flex; flex-direction: column; gap: 4px; }
+  .psb-row .mini .mu-bar{ height: 4px; gap: 2px; }
+  .psb-row .mini small{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.62rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .psb-row .mini small .fav{ color: var(--gold); }
+  /* Your matchup before kickoff (site audit VI #7): the projection as the
+     score, the first kickoff between, both of your games, who plays when,
+     the edge by position and the NFL games with starters on both sides. */
+  .pre-h{ display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 8px; align-items: start; padding: 14px 14px 0; }
+  .pre-s{ min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .pre-s.home{ align-items: flex-end; text-align: right; }
+  .pre-s.home .mu-who{ flex-direction: row-reverse; }
+  .pre-v{ font-family: var(--scoreboard); font-weight: 700; font-size: 2.5rem; line-height: 0.95; margin-top: 6px; color: rgba(245,245,243,0.7); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pre-v.fav{ color: var(--text); }
+  .pre-v small{ font: 700 0.58rem/1 var(--body); letter-spacing: 0.08em; color: var(--text-dim); margin-left: 4px; vertical-align: 0.9em; }
+  .pre-s.home .pre-v small{ margin: 0 4px 0 0; }
+  .pre-mid{ padding-top: 4px; text-align: center; }
+  .pre-ko{ display: inline-block; font: 700 0.6rem/1.3 var(--body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-dim); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; }
+  .pre-ko b{ display: block; color: var(--text); font-size: 0.78rem; letter-spacing: 0; text-transform: none; }
+  .pre-body{ padding: 0 14px; }
+  .pre-two{ display: grid; grid-template-columns: repeat(auto-fit, minmax(0,1fr)); gap: 8px; margin-top: 12px; }
+  .pre-two .item{ padding: 9px 11px; border-radius: 12px; min-width: 0; }
+  .pre-two .k{ color: var(--text-dim); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pre-two .v{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.4rem; line-height: 1.15; margin-top: 2px; color: var(--loss); font-variant-numeric: tabular-nums; }
+  .pre-two .v.good{ color: var(--turf); }
+  .pre-two .s{ color: var(--text-dim); font-size: 0.7rem; }
+  .pre-blk{ margin-top: 14px; }
+  .pre-bt{ display: flex; justify-content: space-between; gap: 8px; margin: 0 2px 6px; color: var(--text-dim); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+  .pre-lane{ display: grid; grid-template-columns: minmax(0,1fr) 84px minmax(0,1fr); gap: 8px; align-items: center; padding: 6px 2px; }
+  .pre-lane + .pre-lane{ border-top: 1px solid var(--line); }
+  .pre-when{ text-align: center; font-weight: 700; font-size: 0.72rem; line-height: 1.2; color: var(--text); }
+  .pre-when small{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.64rem; }
+  .pre-ppl{ display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+  .pre-lane > .pre-ppl:last-child{ justify-content: flex-end; }
+  .pre-ppl em{ font-style: normal; font-size: 0.68rem; padding: 3px 6px; border-radius: 6px; background: var(--item); border: 1px solid var(--item-line); color: var(--text); white-space: nowrap; }
+  .pre-ppl.mine em{ border-color: color-mix(in srgb, var(--me-ring) 45%, transparent); }
+  .pre-edge{ display: grid; grid-template-columns: 38px minmax(0,1fr) 38px minmax(0,1fr) 38px; gap: 6px; align-items: center; padding: 4px 2px; }
+  .pre-edge .p{ text-align: center; color: var(--text-dim); font-weight: 700; font-size: 0.64rem; }
+  .pre-edge .n{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; color: var(--text); font-variant-numeric: tabular-nums; }
+  .pre-edge .n.r{ text-align: right; }
+  .pre-edge .bl, .pre-edge .br{ height: 8px; display: flex; }
+  .pre-edge .bl{ justify-content: flex-end; }
+  .pre-edge .bl span, .pre-edge .br span{ border-radius: 4px; background: rgba(255,255,255,0.14); }
+  .pre-edge span.win{ background: var(--gold); }
+  .pre-same{ display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 8px; align-items: center; padding: 7px 2px; font-size: 0.76rem; color: var(--text-dim); }
+  .pre-same + .pre-same{ border-top: 1px solid var(--line); }
+  .pre-same b{ color: var(--text); font-size: 0.72rem; white-space: nowrap; }
+  .pre-same .r{ text-align: right; }
+  .pre-same .mine{ color: var(--me-ring); }
+  .pre-card .mu-series{ margin-top: 12px; }
   /* The ⋯ sheet: an iOS action list, a centred card from 721px. */
   .more-sheet:focus{ outline: none; }
   .more-sheet .sheet-body{ padding: 0 12px calc(16px + env(safe-area-inset-bottom, 0px)); }
@@ -1112,6 +1167,16 @@
   .stat-moment-text b{ font-family: var(--scoreboard); color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
   .stat-moment-fine{ display: block; font-size: 0.62rem; font-weight: 400; color: var(--text-dim); margin-top: 4px; }
   .stat-moment-attrib{ display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-dim); margin-top: 10px; }
+  /* Easter eggs only (commissioners, site audit VI #15): title and chip on
+     one row like Current Parlay's, then ‹ n of 16 › under the box. */
+  .stat-moment-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .stat-moment-head .stat-moment-eyebrow{ margin-bottom: 0; }
+  .stat-moment-chip{ font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--lead-line); background: var(--lead-tint); color: var(--gold); white-space: nowrap; }
+  .stat-moment-nav{ display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+  .stat-moment-count{ color: var(--text-dim); font-size: 0.8rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat-moment-step{ width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: var(--item); color: var(--text); display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .stat-moment-step svg{ width: 18px; height: 18px; }
+  @media (hover: hover){ .stat-moment-step:hover{ border-color: var(--lead-line); color: var(--gold); } }
 
   /* ---------- Current Parlay highlight ----------
      Sits left of League Lore, in the row this shares with it. Reuses the
@@ -1531,9 +1596,9 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=36"></script>
-<script src="page-common.js?v=40"></script>
-<script src="race-sim.js?v=2"></script>
+<script src="nav.js?v=37"></script>
+<script src="page-common.js?v=41"></script>
+<script src="race-sim.js?v=3"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
 <script src="rivals.js?v=2"></script>
@@ -1879,6 +1944,124 @@
         ${renderMatchupDetails(m, flowHtml(m))}
       </div>`;
   }
+  // ---------- Before kickoff (site audit VI #7, #8) ----------
+  // From the Tuesday rollover to the week's first kickoff every card read
+  // 0.00 to 0.00. A matchup is pregame while none of its starters' games has
+  // started (and nobody has a point). Yours becomes a preview at the top of
+  // the page; the rest fold into a projected scoreboard, and each turns back
+  // into its full card at its own first kickoff.
+  function matchupPregame(m) {
+    if (!medianStatusKnown || (parseFloat(m.awayScore) || 0) + (parseFloat(m.homeScore) || 0) > 0) return false;
+    const ps = [...(m.awayPlayers || []), ...(m.homePlayers || [])];
+    return ps.length > 0 && ps.every(p => !p.game || p.game.state === 'pre');
+  }
+  const ET_PARTS = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  function etKick(iso) {
+    const p = {};
+    ET_PARTS.formatToParts(new Date(iso)).forEach(x => { p[x.type] = x.value; });
+    return { day: p.weekday, time: `${p.hour}:${p.minute}`, ap: (p.dayPeriod || '').toLowerCase().slice(0, 1) };
+  }
+  // The chance a score with this projection clears `line`, with the playoff
+  // sim's spread (race-sim.js, SD 22).
+  function chanceOver(proj, line) {
+    const x = (proj - line) / (22 * Math.SQRT2), s = Math.sign(x), a = Math.abs(x), t = 1 / (1 + 0.3275911 * a);
+    const erf = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-a * a);
+    return 50 * (1 + s * erf);
+  }
+  const lastName = n => { const p = String(n || '').replace(/ (Jr\.|Sr\.|II|III|IV)$/, '').split(' '); return /D\/ST/.test(n) ? p[0] : p.length > 1 ? p.slice(1).join(' ') : n; };
+  const PRE_POS = ['QB', 'RB', 'WR', 'TE', 'FLEX'];
+  function renderPreviewCard(m) {
+    const A = m.awayPlayers || [], B = m.homePlayers || [];
+    const meHome = isMe(m.homeManager);
+    const nameOf = (mgr, team) => esc(mgr || team);
+    const aProj = parseFloat(m.awayProjected) || 0, bProj = parseFloat(m.homeProjected) || 0;
+    const kicks = [...A, ...B].map(p => p.game && p.game.date).filter(Boolean).sort();
+    const first = kicks[0] ? etKick(kicks[0]) : null;
+    const awayWP = typeof m.awayWinProbability === 'number' ? m.awayWinProbability : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : 50;
+    const wa = Math.max(1, Math.min(99, Math.round(awayWP))), wb = 100 - wa, aFav = wa >= 50;
+    const meta = (rec, stk, team) => [rec ? `<span>${rec}</span>` : '', stk ? `<span class="mu-stk ${stk[0] === 'W' ? 'win' : 'loss'}">${stk}</span>` : '', team ? `<span>${esc(team)}</span>` : ''].filter(Boolean).join(' · ');
+    const side = (cls, mgr, team, rec, stk, proj, fav) => `<div class="pre-s ${cls}">
+        <div class="mu-who">${muLogoHtml(mgr)}<span class="team-name">${nameOf(mgr, team)}</span></div>
+        <div class="mu-meta">${meta(rec, stk, team)}</div>
+        <div class="pre-v${fav ? ' fav' : ''}">${cls === 'home' ? '<small>PROJ</small>' : ''}${fmtScore(proj)}${cls === 'away' ? '<small>PROJ</small>' : ''}</div></div>`;
+    // Your two games: the one against your opponent, and the one against the median.
+    const meProj = meHome ? bProj : aProj, oppProj = meHome ? aProj : bProj;
+    const meWP = meHome ? wb : wa, opp = meHome ? (m.awayManager || m.awayName) : (m.homeManager || m.homeName);
+    const med = shownData && shownData.medianGames !== false && typeof shownData.projectedMedian === 'number' && shownData.projectedMedian > 0 ? shownData.projectedMedian : null;
+    const gap = meProj - oppProj;
+    const two = `<div class="pre-two">
+        <div class="item"><div class="k">Your game vs ${esc(opp)}</div><div class="v${meWP >= 50 ? ' good' : ''}">${meWP}%</div><div class="s">${Math.abs(gap) < 0.005 ? 'Even on projection' : `${fmtScore(Math.abs(gap))} ${gap > 0 ? 'ahead' : 'behind'} on projection`}</div></div>
+        ${med ? (() => { const p = Math.round(chanceOver(meProj, med)); return `<div class="item"><div class="k">Your median game</div><div class="v${p >= 50 ? ' good' : ''}">${p}%</div><div class="s">Projected median ${fmtScore(med)}</div></div>`; })() : ''}
+      </div>`;
+    const labels = [meHome ? esc(m.awayManager || m.awayName) : 'You', meHome ? 'You' : esc(m.homeManager || m.homeName)];
+    // Kickoffs: who plays when, both sides.
+    const win = new Map();
+    [[A, 'a'], [B, 'b']].forEach(([ps, s]) => ps.forEach(p => { if (!p.game || !p.game.date) return; const k = p.game.date; if (!win.has(k)) win.set(k, { a: [], b: [] }); win.get(k)[s].push(p); }));
+    const lanes = [...win.keys()].sort().map(k => {
+      const t = etKick(k), w = win.get(k), n = w.a.length + w.b.length;
+      const ppl = (ps, mine) => `<div class="pre-ppl${mine ? ' mine' : ''}">${ps.map(p => `<em>${esc(lastName(p.name))}</em>`).join('')}</div>`;
+      return `<div class="pre-lane">${ppl(w.a, !meHome)}<div class="pre-when">${t.day} ${t.time.replace(':00', '')}${t.ap}<small>${n} starter${n === 1 ? '' : 's'}</small></div>${ppl(w.b, meHome)}</div>`;
+    }).join('');
+    // Projected by position.
+    const sum = (ps, s) => ps.filter(p => p.slot === s).reduce((t, p) => t + (p.projectedPoints || 0), 0);
+    const edge = PRE_POS.map(s => ({ s, a: sum(A, s), b: sum(B, s) })).filter(e => e.a || e.b);
+    const maxE = Math.max(1, ...edge.map(e => Math.max(e.a, e.b)));
+    const edgeHtml = edge.map(e => `<div class="pre-edge"><span class="n">${e.a.toFixed(1)}</span><div class="bl"><span class="${e.a > e.b ? 'win' : ''}" style="width:${(e.a / maxE * 100).toFixed(0)}%"></span></div><span class="p">${e.s}</span><div class="br"><span class="${e.b > e.a ? 'win' : ''}" style="width:${(e.b / maxE * 100).toFixed(0)}%"></span></div><span class="n r">${e.b.toFixed(1)}</span></div>`).join('');
+    // The same NFL game on both sides: the one to put on.
+    const gk = p => p.game && p.game.team && p.game.opponent ? [p.game.team, p.game.opponent].sort().join('–') : null;
+    const same = new Map();
+    A.forEach(p => { const k = gk(p); if (k) { if (!same.has(k)) same.set(k, { a: [], b: [], date: p.game.date }); same.get(k).a.push(p); } });
+    B.forEach(p => { const k = gk(p); if (k && same.has(k)) same.get(k).b.push(p); });
+    const sameRows = [...same.entries()].filter(([, v]) => v.b.length).sort((x, y) => String(x[1].date).localeCompare(String(y[1].date)));
+    const sameHtml = sameRows.map(([k, v]) => `<div class="pre-same"><span class="${meHome ? '' : 'mine'}">${v.a.map(p => esc(p.name)).join(', ')}</span><b>${esc(k)}</b><span class="r${meHome ? ' mine' : ''}">${v.b.map(p => esc(p.name)).join(', ')}</span></div>`).join('');
+    const key = matchupKey(m);
+    const expanded = expandedMatchups.has(key);
+    return `
+      <div class="matchup-card pre-card me${expanded ? ' expanded' : ''}" data-key="${encodeURIComponent(key)}">
+        <div class="pre-h">
+          ${side('away', m.awayManager, m.awayName, m.awayRecord, m.awayStreak, aProj, aProj >= bProj)}
+          <div class="pre-mid">${first ? `<span class="pre-ko">${first.day}<b>${first.time}${first.ap}</b></span>` : ''}</div>
+          ${side('home', m.homeManager, m.homeName, m.homeRecord, m.homeStreak, bProj, bProj > aProj)}
+        </div>
+        <div class="mu-odds">
+          <span class="${aFav ? 'fav' : ''}">${wa}%</span>
+          <div class="mu-bar" role="img" aria-label="Win odds ${wa}% to ${wb}%"><span class="${aFav ? 'fav' : ''}" style="flex-grow:${wa}"></span><span class="${aFav ? '' : 'fav'}" style="flex-grow:${wb}"></span></div>
+          <span class="${aFav ? '' : 'fav'}">${wb}%</span>
+          ${MU_MORE}
+        </div>
+        <div class="pre-body">
+          ${two}
+          ${lanes ? `<div class="pre-blk"><div class="pre-bt"><span>${labels[0]}</span><span>Kickoffs</span><span>${labels[1]}</span></div>${lanes}</div>` : ''}
+          ${edgeHtml ? `<div class="pre-blk"><div class="pre-bt"><span>${labels[0]}</span><span>Projected by position</span><span>${labels[1]}</span></div>${edgeHtml}</div>` : ''}
+          ${sameHtml ? `<div class="pre-blk"><div class="pre-bt"><span>Same game, both sides</span></div>${sameHtml}</div>` : ''}
+        </div>
+        ${lineupHtml(m)}
+        ${seriesHtml(m)}
+        ${renderMatchupDetails(m)}
+      </div>`;
+  }
+  // The other pregame matchups: one row each, both projections and the win
+  // odds; a tap opens the full card under its row, as the finished
+  // scoreboard does.
+  function preBoardHtml(list) {
+    if (!list.length) return '';
+    return `<div class="sb psb glass">${list.map(m => {
+      const key = matchupKey(m);
+      const open = sbOpen.has(key);
+      const ap = parseFloat(m.awayProjected) || 0, hp = parseFloat(m.homeProjected) || 0;
+      const awp = typeof m.awayWinProbability === 'number' ? m.awayWinProbability : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : 50;
+      const wa = Math.max(1, Math.min(99, Math.round(awp))), wb = 100 - wa, fa = wa >= 50;
+      const nm = (mgr, team) => `<span class="${isMe(mgr) ? 'you' : ''}">${esc(mgr || team)}</span>`;
+      return `<button type="button" class="sb-row psb-row" data-sb="${encodeURIComponent(key)}" aria-expanded="${open}" aria-label="${esc(m.awayManager || m.awayName)} ${fmtScore(ap)} projected, ${wa}%, against ${esc(m.homeManager || m.homeName)} ${fmtScore(hp)}, ${wb}%">
+          <span class="n">${muLogoHtml(m.awayManager)}${nm(m.awayManager, m.awayName)}</span>
+          <span class="pj${ap >= hp ? ' fav' : ''}">${fmtScore(ap)}</span>
+          <span class="mini"><span class="mu-bar"><span class="${fa ? 'fav' : ''}" style="flex-grow:${wa}"></span><span class="${fa ? '' : 'fav'}" style="flex-grow:${wb}"></span></span><small><span class="${fa ? 'fav' : ''}">${wa}%</span><span class="${fa ? '' : 'fav'}">${wb}%</span></small></span>
+          <span class="pj${hp > ap ? ' fav' : ''}">${fmtScore(hp)}</span>
+          <span class="n r">${nm(m.homeManager, m.homeName)}${muLogoHtml(m.homeManager)}</span>
+        </button>${open ? `<div class="sb-open">${renderMatchupCard(m)}</div>` : ''}`;
+    }).join('')}</div>`;
+  }
+
   // The pair's all-time series before this week (site audit 27), as a link
   // to Head to Head with the two managers preselected, away side on the left.
   let dashWeek = 1;
@@ -3668,7 +3851,7 @@
   let parlayLoadAt = 0;
   function loadParlayHighlight() {
     parlayLoadAt = Date.now();
-    fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
+    return fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
       .then(res => res.json())
       .then(d => {
         parlayData = d;
@@ -4308,14 +4491,63 @@
     return `Will ${p.name} ever win a ship? Find out next time on Dragon Ball Z.`;
   }
 
+  // Easter eggs only (site audit VI #15): a commissioner's switch in You ›
+  // Settings (nav.js, rl-lore-eggs on this phone). Honored only while signed
+  // in as a commissioner, so signing out turns it off. The card then shows
+  // every egg in order, plus one Dragon Ball Z line per current manager
+  // without a title, with ‹ › to flip through them. Nobody else gets buttons.
+  const loreEggsOnly = () => {
+    try { return isCommissioner(getAuth()) && localStorage.getItem('rl-lore-eggs') === '1'; } catch (e) { return false; }
+  };
+  function eggDeck() {
+    const players = ((franchiseData && franchiseData.players) || []).filter(p => !PAST_MEMBERS.has(p.name));
+    const neverWon = players.filter(p => !(p.career && p.career.standings && p.career.standings.championships > 0));
+    return [
+      ...EASTER_EGG_FACTS.map(text => ({ text, egg: true })),
+      ...neverWon.map(p => ({ text: `Will ${p.name} ever win a ship? Find out next time on Dragon Ball Z.`, egg: false })),
+    ];
+  }
+  let eggAt = 0;
+  function renderEggs(container) {
+    const deck = eggDeck();
+    eggAt = ((eggAt % deck.length) + deck.length) % deck.length;
+    const f = deck[eggAt];
+    const arrow = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+    container.innerHTML = `
+      <div class="stat-moment">
+        <div class="stat-moment-head"><span class="stat-moment-eyebrow">Lore me daddy</span><span class="stat-moment-chip">Eggs only</span></div>
+        <div class="stat-moment-box${f.egg ? ' egg' : ''}"><div class="stat-moment-text">${f.text}</div></div>
+        <div class="stat-moment-nav">
+          <button type="button" class="stat-moment-step" data-egg="-1" aria-label="Previous">${arrow('m15 6-6 6 6 6')}</button>
+          <span class="stat-moment-count">${eggAt + 1} of ${deck.length}</span>
+          <button type="button" class="stat-moment-step" data-egg="1" aria-label="Next">${arrow('m9 6 6 6-6 6')}</button>
+        </div>
+      </div>`;
+    container.querySelectorAll('[data-egg]').forEach(b => b.addEventListener('click', () => {
+      eggAt += Number(b.dataset.egg);
+      renderEggs(container);
+      const again = container.querySelector(`[data-egg="${b.dataset.egg}"]`);
+      if (again) again.focus({ preventScroll: true });
+    }));
+  }
+
   const STAT_REROLL_MS = 2 * 60 * 1000;
-  let statRolledAt = 0;
+  let statRolledAt = 0, statEggMode = null;
   // `poll`: from the live refresh, which keeps the current fact until
-  // STAT_REROLL_MS is up instead of flipping it every 15 seconds.
+  // STAT_REROLL_MS is up instead of flipping it every 15 seconds. Turning
+  // easter eggs only on or off redraws at once.
   function renderStatOfMoment(poll) {
     const container = document.getElementById('stat-of-moment-container');
     if (!container) return;
-    if (poll && container.innerHTML.trim() && Date.now() - statRolledAt < STAT_REROLL_MS) return;
+    const eggs = loreEggsOnly();
+    const switched = eggs !== statEggMode;
+    statEggMode = eggs;
+    if (eggs) {
+      // The poll leaves it alone, so a fact never changes under you.
+      if (switched || !poll || !container.innerHTML.trim()) renderEggs(container);
+      return;
+    }
+    if (!switched && poll && container.innerHTML.trim() && Date.now() - statRolledAt < STAT_REROLL_MS) return;
     statRolledAt = Date.now();
     const data = standingsData;
     let text, isEgg = false;
@@ -6246,7 +6478,7 @@
 
   let dashboardShown = false, riseStartedAt = 0;
   function loadDashboard() {
-    Promise.all([fetch(WORKER_URL, { cache: 'no-store' }).then(res => res.json()), leagueReady])
+    return Promise.all([fetch(WORKER_URL, { cache: 'no-store' }).then(res => res.json()), leagueReady])
       .then(([data]) => {
         if (!data.teams) throw new Error(data.error || 'Empty response from Worker');
         RaceSim.apply(data);
@@ -6355,18 +6587,23 @@
         // the whole page, with the You sheet's meTop setting on.
         const prevMatchups = animate ? captureMatchupState() : null;
         const mine = matchups.find(m => isMe(m.awayManager) || isMe(m.homeManager));
-        const onTop = Boolean(mine && getSettings().meTop);
+        // Before kickoff your matchup is a preview at the top (audit VI #7).
+        const pre = m => !archived && !weekFinal && matchupPregame(m);
+        const minePre = Boolean(mine && pre(mine));
+        const onTop = Boolean(mine && (getSettings().meTop || minePre));
         const rest = matchups.filter(m => m !== mine);
         const ordered = onTop ? rest : mine ? [mine, ...rest] : matchups;
-        document.getElementById('my-matchup').innerHTML = onTop ? renderMatchupCard(mine) : '';
+        document.getElementById('my-matchup').innerHTML = onTop ? (minePre ? renderPreviewCard(mine) : renderMatchupCard(mine)) : '';
         renderMePrompt(onTop);
         renderStatusLine(data);
         // Finished games other than yours fold into one scoreboard (audit V
         // #10); a card folds only once its game is decided.
         const folded = ordered.filter(m => m !== mine && matchupDecided(m));
-        const cards = ordered.filter(m => !folded.includes(m));
+        // Not kicked off yet: a projected scoreboard row each (audit VI #8).
+        const preRows = ordered.filter(m => m !== mine && pre(m));
+        const cards = ordered.filter(m => !folded.includes(m) && !preRows.includes(m));
         document.getElementById('matchups-container').innerHTML =
-          ordered.length ? cards.map(renderMatchupCard).join('') + scoreboardHtml(folded) : '<div class="loading-row">No matchups found.</div>';
+          ordered.length ? cards.map(renderMatchupCard).join('') + preBoardHtml(preRows) + scoreboardHtml(folded) : '<div class="loading-row">No matchups found.</div>';
         const done = matchups.filter(matchupDecided).length;
         document.getElementById('matchups-state').textContent = done && done === matchups.length ? `${done} final` : done ? `${done} of ${matchups.length} final` : '';
         holdScroll();
@@ -6571,7 +6808,10 @@
   // Background tabs don't poll (each poll costs Worker/KV quota); coming
   // back to the tab refreshes right away if the data is stale.
   let lastLoadAt = 0;
-  const loadDashboardTracked = () => { lastLoadAt = Date.now(); loadDashboard(); };
+  const loadDashboardTracked = () => { lastLoadAt = Date.now(); return loadDashboard(); };
+  // Pull to refresh (page-common.js) polls instead of reloading, so open
+  // matchup cards stay open.
+  window.pageRefresh = () => Promise.all([loadDashboardTracked(), typeof loadParlayHighlight === 'function' ? loadParlayHighlight() : null]);
   paintFromCache();
   loadDashboardTracked();
   setInterval(() => { if (!document.hidden) loadDashboardTracked(); }, AUTO_REFRESH_MS);

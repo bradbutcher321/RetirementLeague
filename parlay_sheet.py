@@ -12,8 +12,8 @@ from parlay_note_parser import parse_signed_number
 TARGET_TAB = "Auto Parlay Tracker"
 PLAYERS_PER_WEEK = 12
 
-# Columns E..O in save/load order, matching tools/migrate_parlay_tracker.py's
-# HEADER. Raw Pick (O) is the note text a pick was parsed from, kept as an
+# Columns E..O in save/load order, matching the Auto Parlay Tracker
+# header. Raw Pick (O) is the note text a pick was parsed from, kept as an
 # audit trail.
 ROW_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "odds", "gametime", "result",
               "raw_pick"]
@@ -64,7 +64,7 @@ class SheetClient:
         with a space instead of "T", silently breaking both the strict
         format validation and every downstream string-sort that relies on
         the literal text). gspread's real default (effectively RAW) is
-        what tools/migrate_parlay_tracker.py already relies on for the exact
+        what the sheet's historical rows were written with for the exact
         same reason -- it stores strings exactly as given. Genuinely
         numeric fields (Year/Week/Odds/Final Odds/Final Payout) still come
         through as real numbers because they're passed as actual Python

@@ -26,6 +26,7 @@
     jersey: SVG('<path d="M8.5 4 4 6.2l1.6 4 2.4-1V20h8V9.2l2.4 1 1.6-4L15.5 4a3.6 3.6 0 0 1-7 0z"/>'),
     flag: SVG('<path d="M5 21V4M5 5h12l-2.5 3.8L17 12.5H5"/>'),
     pen: SVG('<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14 7l3 3"/>'),
+    clip: SVG('<rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 4.5V3.5h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4"/>'),
     spark: SVG('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>'),
   };
 
@@ -34,7 +35,7 @@
   const TABS = [
     { key: 'live', href: 'index.html', label: 'Live', icon: ICONS.live, pages: ['index.html'] },
     { key: 'feed', href: 'feed.html', label: 'Feed', icon: ICONS.feed, pages: ['feed.html'] },
-    { key: 'parlay', href: 'parlay-results.html', label: 'Parlay', icon: ICONS.ticket, pages: ['parlay-results.html', 'parlay-legs.html', 'parlay-entry.html'] },
+    { key: 'parlay', href: 'parlay-results.html', label: 'Parlay', icon: ICONS.ticket, pages: ['parlay-results.html', 'parlay-legs.html'] },
     { key: 'standings', href: 'standings.html', label: 'Standings', icon: ICONS.list, pages: ['standings.html'] },
     { key: 'history', href: 'history.html', label: 'History', icon: ICONS.book, pages: [] },
   ];
@@ -54,6 +55,7 @@
     { href: 'draft-board.html', label: 'Draft Board', sub: 'Every draft since 2015', icon: ICONS.grid, group: 'Drafts & rules' },
     { href: 'players.html', label: 'Players', sub: 'Every player’s story in this league', icon: ICONS.jersey, group: 'Managers' },
     { href: 'moves.html', label: 'Trades & Waivers', sub: 'Every trade graded, best pickups', icon: ICONS.swap, group: 'This season' },
+    { href: 'roster.html', label: 'Your Roster', sub: 'Byes ahead, free agents, position ranks', icon: ICONS.clip, group: 'This season' },
     { href: 'race.html', label: 'Playoff Race', sub: 'Pick winners, watch the odds move', icon: ICONS.flag, group: 'This season' },
     { href: 'rule-changes.html', label: 'Rule Changes', sub: 'How the league has changed', icon: ICONS.cal, group: 'Drafts & rules' },
     { href: 'videos.html', label: 'League Videos', sub: 'Weekly recaps, sign-in required', icon: ICONS.play, group: 'This season' },
@@ -122,7 +124,61 @@
     wireYou(mount.querySelector('#nav-me'));
     wireYouTab(mount.querySelector('#tb-you'));
     headerTools();
+    backButton(file);
   }
+
+  // ---------- A way back (site audit VI #2) ----------
+  // The Home Screen app has no Back button, so every page under a tab puts
+  // one where "Retirement League" was, named for the page you came from:
+  // ‹ History, ‹ Standings. The five tab pages keep their label. A short
+  // trail of pages lives in sessionStorage; when the page before this one is
+  // on the site, the button is history.back(), so the page you return to
+  // keeps its scroll and open cards. With no trail (a shared link, a push)
+  // it goes to the History hub.
+  const TRAIL_KEY = 'rl-trail';
+  const TAB_FILES = TABS.map(t => t.href);
+  const here = () => currentFile() + location.search;
+  function pageName(file) {
+    const t = TABS.find(x => x.href === file);
+    if (t) return t.label;
+    const h = HISTORY.find(x => x.href === file);
+    if (h) return h.label;
+    const h1 = document.querySelector('.wrap > header h1');
+    return h1 ? h1.textContent.trim() : 'Back';
+  }
+  function noteTrail() {
+    let trail = [];
+    try { trail = JSON.parse(sessionStorage.getItem(TRAIL_KEY)) || []; } catch (e) {}
+    const cur = here(), file = currentFile();
+    // Back from the page after this one: drop it. Otherwise this page goes on the end.
+    if (trail.length >= 2 && trail[trail.length - 2].f === cur) trail.pop();
+    else if (!trail.length || trail[trail.length - 1].f !== cur) trail.push({ f: cur, t: pageName(file) });
+    trail = trail.slice(-15);
+    try { sessionStorage.setItem(TRAIL_KEY, JSON.stringify(trail)); } catch (e) {}
+    return trail;
+  }
+  function backButton(file) {
+    const trail = noteTrail();
+    if (TAB_FILES.includes(file) || NO_TAB.includes(file)) return;
+    const eb = document.querySelector('.wrap > header .eyebrow');
+    if (!eb) return;
+    const prev = trail.length >= 2 ? trail[trail.length - 2] : null;
+    const label = prev ? prev.t : 'History';
+    const a = document.createElement('a');
+    a.className = 'hdr-back';
+    a.href = prev ? prev.f : 'history.html';
+    a.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>${esc(label)}</span>`;
+    a.setAttribute('aria-label', `Back to ${label}`);
+    a.addEventListener('click', e => {
+      // The page before is still in this tab's history: go back to it as it was.
+      if (!prev || history.length < 2 || !document.referrer || new URL(document.referrer).origin !== location.origin) return;
+      e.preventDefault();
+      history.back();
+    });
+    eb.replaceWith(a);
+  }
+  // A page restored from the back/forward cache didn't run its scripts again.
+  addEventListener('pageshow', e => { if (e.persisted) noteTrail(); });
 
   // ---------- The title row and the folding title (audit V #4, #5) ----------
   // The eyebrow line's right end holds the page's buttons: the dashboard's
@@ -350,12 +406,15 @@
   };
 
   // Search from any page at 1080px and up: a card near the top of the
-  // screen, opened from the bar's button, ⌘K/Ctrl K or /.
+  // screen, opened from the bar's button, ⌘K/Ctrl K or /. Under 1080px the
+  // field opens at the bottom, where the search circle is, lifted above the
+  // keyboard, with the results stacked up toward it (site audit VI #3).
   function openSearch() {
     if (document.getElementById('search-sheet')) return;
     // On the hub the box is already on the page.
     const hub = document.getElementById('hub-q');
     if (hub) { hub.focus(); return; }
+    if (!matchMedia('(min-width: 1080px)').matches) { openBottomSearch(); return; }
     const back = document.activeElement;
     document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="search-scrim"></div>
       <div class="sheet search-sheet" id="search-sheet" role="dialog" aria-modal="true" aria-label="Search">
@@ -373,6 +432,74 @@
     const input = document.getElementById('search-q');
     wireSearch(input, document.getElementById('search-results'));
     input.focus();
+  }
+
+  // The phone's search: the list over the field, the field over the keyboard.
+  // Before you type, Jump to: your matchup, the head-to-head with this week's
+  // opponent, Playoff Race and your Franchise page, then this season's
+  // managers. The Jump rows read the Worker's last answer (the service
+  // worker keeps it), or ask for it.
+  function openBottomSearch() {
+    const back = document.activeElement;
+    document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="search-scrim"></div>
+      <div class="search-bottom" id="search-sheet" role="dialog" aria-modal="true" aria-label="Search">
+        <div class="sb-list glass"><div id="search-jump"></div><div class="sr-results" id="search-results" hidden></div></div>
+        <div class="sb-field">${searchBox('search-q')}<button type="button" class="sb-cancel">Cancel</button></div>
+      </div>`);
+    const panel = document.getElementById('search-sheet');
+    document.documentElement.classList.add('searching');
+    const vv = window.visualViewport;
+    // Lift the panel by the keyboard's height as it opens and closes.
+    const lift = () => {
+      const kb = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+      panel.style.setProperty('--kb', kb + 'px');
+      panel.style.setProperty('--vvh', (vv ? vv.height : window.innerHeight) + 'px');
+      panel.classList.toggle('kb', kb > 40);
+    };
+    if (vv) { vv.addEventListener('resize', lift); vv.addEventListener('scroll', lift); }
+    lift();
+    const close = () => {
+      document.documentElement.classList.remove('searching');
+      panel.remove();
+      document.getElementById('search-scrim')?.remove();
+      document.removeEventListener('keydown', onEsc);
+      if (vv) { vv.removeEventListener('resize', lift); vv.removeEventListener('scroll', lift); }
+      if (back && back.focus) back.focus({ preventScroll: true });
+    };
+    const onEsc = e => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onEsc);
+    document.getElementById('search-scrim').addEventListener('click', close);
+    panel.querySelector('.sb-cancel').addEventListener('click', close);
+    const input = document.getElementById('search-q');
+    const jump = document.getElementById('search-jump');
+    wireSearch(input, document.getElementById('search-results'), has => { jump.hidden = has; });
+    drawJump(jump);
+    input.focus();
+  }
+  async function drawJump(box) {
+    const me = getMe();
+    const names = await loadManagers();
+    let live = null;
+    try {
+      const hit = 'caches' in window ? await caches.match(WORKER, { ignoreVary: true }) : null;
+      live = hit ? await hit.json() : null;
+      if (!live || !live.teams) live = await fetch(WORKER, { cache: 'no-store' }).then(r => r.json());
+    } catch (e) {}
+    if (!document.body.contains(box)) return;
+    const rows = [];
+    const t = me && live && (live.teams || []).find(x => x.manager === me);
+    const mu = me && live && (live.matchups || []).find(m => m.awayManager === me || m.homeManager === me);
+    if (mu) {
+      const home = mu.homeManager === me, opp = home ? mu.awayManager : mu.homeManager;
+      const wp = home ? mu.homeWinProbability : mu.awayWinProbability;
+      rows.push({ k: 'This week', name: `You vs ${opp}`, sub: `Week ${live.week}${typeof wp === 'number' ? ` · ${Math.round(wp)}% to win` : ''}`, href: 'index.html' });
+      rows.push({ k: 'Rivalry', name: `Head to Head: ${me} vs ${opp}`, sub: 'Every game you two have played', href: pageLink('head-to-head.html', { a: me, b: opp }) });
+    }
+    rows.push({ k: 'Odds', name: 'Playoff Race', sub: t ? `${t.record} · pick winners, watch your odds move` : 'Pick winners, watch the odds move', href: 'race.html' });
+    if (me) rows.push({ k: 'You', name: 'Your Franchise page', sub: `${me}'s whole career`, href: pageLink('franchise.html', { m: me }) });
+    const hit = r => `<a class="sr-hit" href="${esc(r.href)}"><span class="sr-k">${r.k}</span><b>${esc(r.name)}</b><span class="sr-s">${esc(r.sub)}</span></a>`;
+    box.innerHTML = `<div class="sb-grp">Jump to</div>${rows.map(hit).join('')}
+      ${names.length ? `<div class="sb-grp">Managers</div><div class="sb-mgrs">${names.map(n => `<a href="${esc(pageLink('franchise.html', { m: n }))}"><span class="sb-mono${n === me ? ' you' : ''}">${esc(monogram(n))}</span>${esc(n)}</a>`).join('')}</div>` : ''}`;
   }
 
   // ---------- You (site audit II #36 and #37) ----------
@@ -553,6 +680,7 @@
 
   function drawPanel() {
     drawTabs();
+    if (youPanel !== 'you') youFeedback = false;
     if (youPanel === 'push') drawPushPanel();
     else if (youPanel === 'settings') drawSettings();
     else drawYou(youNames);
@@ -622,6 +750,7 @@
     const body = document.getElementById('you-body');
     if (!body) return;
     const auth = getAuth();
+    if (auth && youFeedback) { drawFeedback(body, auth); return; }
     if (auth) { signinNote = ''; drawSignedIn(body, auth); return; }
     const me = getMe();
     const picks = names.map(n => `<button type="button" class="you-pick${n === me ? ' on' : ''}" data-me="${esc(n)}" aria-pressed="${n === me}">${esc(n)}</button>`).join('');
@@ -687,6 +816,70 @@
     });
   }
 
+  // ---------- Feedback ----------
+  // A signed-in manager reports a bug or suggests something; the
+  // commissioners get a push and answer on the Commissioner page's Feedback
+  // tool (worker/src/feedback.js). Under the form: what you've sent, with
+  // where it stands and any reply.
+  let youFeedback = false;
+  const FB_KINDS = [['bug', 'Bug', 'What happened, and on which page?'], ['improve', 'Improvement', 'What would make the site better?'], ['feature', 'Feature idea', 'What should the site do?'], ['other', 'Other', "What's on your mind?"]];
+  const FB_STATUS = { new: 'Sent', planned: 'Planned', done: 'Done', no: "Won't do" };
+  let fbKind = 'bug', fbDraft = '', fbNote = '';
+  function drawFeedback(body, auth) {
+    const kind = FB_KINDS.find(k => k[0] === fbKind) || FB_KINDS[0];
+    body.innerHTML = `
+      <button type="button" class="you-back" id="you-fb-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>You</button>
+      <div class="you-sec-h">Send feedback</div>
+      <div class="you-sub">Brad and Jon get it right away.</div>
+      <div class="you-picks you-fb-kinds" role="radiogroup" aria-label="Kind">${FB_KINDS.map(([k, label]) =>
+        `<button type="button" role="radio" class="you-pick${k === fbKind ? ' on' : ''}" data-fb-kind="${k}" aria-checked="${k === fbKind}">${label}</button>`).join('')}</div>
+      <textarea class="you-code you-fb-text" id="you-fb-text" maxlength="1000" placeholder="${esc(kind[2])}" aria-label="Your feedback">${esc(fbDraft)}</textarea>
+      <div class="you-fb-send"><span class="you-note${fbNote && fbNote !== 'sent' ? ' err' : ''}" id="you-fb-note" role="status">${fbNote === 'sent' ? "Thanks. It's in." : esc(fbNote)}</span><button type="button" class="you-btn" id="you-fb-go">Send</button></div>
+      <div class="you-sec" id="you-fb-mine"></div>`;
+    body.querySelector('#you-fb-back').addEventListener('click', () => { youFeedback = false; fbNote = ''; drawPanel(); });
+    const ta = body.querySelector('#you-fb-text');
+    ta.addEventListener('input', () => { fbDraft = ta.value; });
+    body.querySelectorAll('[data-fb-kind]').forEach(b => b.addEventListener('click', () => {
+      fbKind = b.dataset.fbKind;
+      fbDraft = ta.value;
+      drawFeedback(body, auth);
+      const again = body.querySelector(`[data-fb-kind="${fbKind}"]`);
+      if (again) again.focus();
+    }));
+    const go = body.querySelector('#you-fb-go');
+    go.addEventListener('click', async () => {
+      const text = ta.value.trim();
+      if (text.length < 3) { fbNote = 'Write a few words first.'; drawFeedback(body, auth); body.querySelector('#you-fb-text').focus(); return; }
+      go.disabled = true;
+      go.textContent = 'Sending…';
+      let res = null;
+      try {
+        res = await fetch(WORKER + '/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ kind: fbKind, text, page: currentFile() }) });
+      } catch (e) {}
+      const out = res ? await res.json().catch(() => ({})) : {};
+      if (res && res.ok) { fbDraft = ''; fbNote = 'sent'; }
+      else fbNote = out.error === 'too_many' ? "That's a lot for one day. Try again tomorrow." : out.error === 'signed_out' ? 'You were signed out. Sign in again to send it.' : "Couldn't send it. Try again.";
+      if (document.body.contains(body)) drawFeedback(body, auth);
+    });
+    drawMine(body.querySelector('#you-fb-mine'));
+  }
+  async function drawMine(box) {
+    let items = null;
+    try {
+      const res = await fetch(WORKER + '/feedback/mine', { headers: authHeaders(), cache: 'no-store' });
+      if (res.ok) items = (await res.json()).items;
+    } catch (e) {}
+    if (!document.body.contains(box)) return;
+    if (!Array.isArray(items) || !items.length) { box.remove(); return; }
+    const label = k => (FB_KINDS.find(x => x[0] === k) || FB_KINDS[3])[1];
+    box.innerHTML = `<div class="you-sec-t">You sent</div><div class="you-fbs">${items.map(f => `
+      <div class="you-fb item">
+        <div class="you-fb-h"><span>${esc(label(f.kind))} · ${esc(alertWhen(f.ts))}</span><span class="you-fb-st ${esc(f.status)}">${esc(FB_STATUS[f.status] || 'Sent')}</span></div>
+        <div class="you-fb-t">${esc(f.text)}</div>
+        ${f.reply ? `<div class="you-fb-r">${esc(f.reply)}</div>` : ''}
+      </div>`).join('')}</div>`;
+  }
+
   function drawSignedIn(body, auth) {
     // The app can't be opened by a link, so the website hands over a code
     // for it. Inside the app there's nobody left to hand it to.
@@ -699,11 +892,13 @@
         <button type="button" class="you-txt" id="you-signout">Sign out</button>
       </div>
       ${isCommissioner(auth) && currentFile() !== 'commissioner.html' ? `<a class="you-link item" id="you-commish" href="commissioner.html">Commissioner<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>` : ''}
+      <button type="button" class="you-link item" id="you-fb">Send feedback<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
       ${web ? `<div class="you-sec" id="you-handoff">
         <div class="you-sec-h">Use the app on your home screen?</div>
         <div class="you-sub">It signs in on its own. Copy your code, open the app, tap You and paste.</div>
         <button type="button" class="you-copy" id="you-copy"${known ? '' : ' disabled'}><span class="you-copy-code">${known ? fmtCode(known) : '····-····'}</span><span class="you-copy-lab">Copy</span></button>
       </div>` : ''}`;
+    body.querySelector('#you-fb').addEventListener('click', () => { youFeedback = true; drawPanel(); });
     body.querySelector('#you-signout').addEventListener('click', () => {
       fetch(WORKER + '/auth/signout', { method: 'POST', headers: authHeaders(), keepalive: true }).catch(() => {});
       setAuth(null);
@@ -763,6 +958,8 @@
     const me = getMe();
     const current = meColor()[0];
     const hidden = hiddenCards();
+    const commish = isCommissioner(getAuth());
+    const loreEggs = (() => { try { return localStorage.getItem('rl-lore-eggs') === '1'; } catch (e) { return false; } })();
     body.innerHTML = `
       <label class="you-row"><span>Your matchup at the top of the dashboard<small>Off: it leads the matchups list instead</small></span><input type="checkbox" role="switch" class="you-sw" id="you-set-top"${set.meTop ? ' checked' : ''}></label>
       <div class="you-sec">
@@ -775,8 +972,19 @@
       <div class="you-sec">
         <div class="you-sec-t">Hidden cards</div>
         ${hidden.map(h => `<div class="you-row hid"><span>${esc(h.label)}<small>${esc(h.note)}</small></span><button type="button" class="you-show" data-show="${h.id}">Show again</button></div>`).join('')}
+      </div>` : ''}${commish ? `
+      <div class="you-sec">
+        <div class="you-sec-t">Commissioner</div>
+        <label class="you-row"><span>League Lore: easter eggs only<small>On this phone. Flip through them on the card.</small></span><input type="checkbox" role="switch" class="you-sw" id="you-set-eggs"${loreEggs ? ' checked' : ''}></label>
       </div>` : ''}`;
     body.querySelector('#you-set-top').addEventListener('change', e => setSetting('meTop', e.target.checked));
+    // Easter eggs only (site audit VI #15): index.html reads rl-lore-eggs,
+    // and honors it only while you're signed in as a commissioner.
+    const eggs = body.querySelector('#you-set-eggs');
+    if (eggs) eggs.addEventListener('change', () => {
+      try { if (eggs.checked) localStorage.setItem('rl-lore-eggs', '1'); else localStorage.removeItem('rl-lore-eggs'); } catch (e) {}
+      window.dispatchEvent(new CustomEvent('rl-settings'));
+    });
     body.querySelectorAll('[data-color]').forEach(b => b.addEventListener('click', () => {
       setSetting('meColor', b.dataset.color);
       drawSettings();
