@@ -189,6 +189,11 @@
   .st-pf small{ display:block; color:var(--text-dim); font-size:0.62rem; }
   .st-od{ text-align:right; }
   .st-od .od{ padding:2px 6px; }
+  /* Playoff odds open Playoff Race: a bigger tap area than the pill. */
+  .od.go{ position:relative; cursor:pointer; }
+  .od.go::after{ content:''; position:absolute; inset:-14px -8px; }
+  .od.go:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  @media (hover:hover){ .od.go:hover{ background:rgba(255,255,255,0.05); } }
   .st-pct{ font-family:var(--scoreboard); font-weight:700; font-size:0.95rem; font-variant-numeric:tabular-nums; }
   .st-dim{ color:var(--text-dim); }
   /* All-Time records run to three digits a side. */
@@ -537,7 +542,7 @@
     const rec = `${r.w}-${r.l}${r.ties ? '-' + r.ties : ''}`;
     // Playoff odds as of the end of last week (Through mode only); win % otherwise.
     const last = oddsCol
-      ? (typeof r.odds === 'number' ? `<i class="od ${r.odds >= 50 ? 'high' : 'low'}" aria-label="Playoff odds ${r.odds.toFixed(0)}%">${r.odds.toFixed(0)}%</i>` : '<span class="st-dim">—</span>')
+      ? (typeof r.odds === 'number' ? `<i class="od go ${r.odds >= 50 ? 'high' : 'low'}" data-race role="link" tabindex="0" aria-label="Playoff odds ${r.odds.toFixed(0)}%: open Playoff Race">${r.odds.toFixed(0)}%</i>` : '<span class="st-dim">—</span>')
       : `<span class="st-pct">${pct(r.pct)}</span>`;
     // Your Daddy / Your Bitch (rivals.js), in your ring color, after the name.
     return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}" data-rv="${esc(r.player)}"><span class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</span>` +
@@ -692,6 +697,17 @@
     watchBand();
   }
 
+  // The odds open Playoff Race, not the row's Franchise page or rival sheet.
+  // Caught on window, before page-common.js's rival tap on the document.
+  const toRace = e => {
+    if (!e.target.closest || !e.target.closest('[data-race]')) return;
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    e.stopPropagation();
+    location.href = 'race.html';
+  };
+  window.addEventListener('click', toRace, true);
+  window.addEventListener('keydown', toRace, true);
   document.addEventListener('click', e => {
     const sm = e.target.closest('[data-sm]');
     if (sm) { sMode = sm.dataset.sm; try { localStorage.setItem('standingsViewMode', sMode); } catch (err) {} render(); return; }

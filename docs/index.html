@@ -4584,9 +4584,12 @@
   //   - this week from the Worker, once every starter on every team is done
   //     (Monday night, before ESPN rolls the week over);
   //   - last week from league.json, once the new week is up but nobody has
-  //     scored yet (and only when league.json has that week).
+  //     scored yet (and only when league.json has that week), until
+  //     Thursday at 12 AM Eastern, when the new week takes over the page.
   // Add ?recap to the URL to show the latest finished week at any time.
   const FORCE_RECAP = /[?&]recap\b/.test(location.search);
+  // Thursday through Sunday, Eastern: last week's recap is put away.
+  const recapOver = () => ['Thu', 'Fri', 'Sat', 'Sun'].includes(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' }).format(new Date()));
 
   function recapWeek(data) {
     const week = data.week || 1;
@@ -4601,7 +4604,7 @@
         games: matchups.map(m => ({ a: m.awayManager || m.awayName, b: m.homeManager || m.homeName, sa: parseFloat(m.awayScore) || 0, sb: parseFloat(m.homeScore) || 0, ba: m.awayBest, bb: m.homeBest, type: m.bracket || null })),
       };
     }
-    if (scored && !FORCE_RECAP) return null;
+    if ((scored || recapOver()) && !FORCE_RECAP) return null;
     for (let w = week - 1; w >= 1; w--) {
       const gs = weekGames(w);
       if (gs.length) {
@@ -6587,13 +6590,16 @@
         // the whole page, with the You sheet's meTop setting on.
         const prevMatchups = animate ? captureMatchupState() : null;
         const mine = matchups.find(m => isMe(m.awayManager) || isMe(m.homeManager));
-        // Before kickoff your matchup is a preview at the top (audit VI #7).
+        // Before kickoff your matchup is a preview (audit VI #7), where your
+        // card goes: at the top with the You sheet's setting on, else leading
+        // the matchups.
         const pre = m => !archived && !weekFinal && matchupPregame(m);
         const minePre = Boolean(mine && pre(mine));
-        const onTop = Boolean(mine && (getSettings().meTop || minePre));
+        const mineCard = m => (minePre && m === mine ? renderPreviewCard(m) : renderMatchupCard(m));
+        const onTop = Boolean(mine && getSettings().meTop);
         const rest = matchups.filter(m => m !== mine);
         const ordered = onTop ? rest : mine ? [mine, ...rest] : matchups;
-        document.getElementById('my-matchup').innerHTML = onTop ? (minePre ? renderPreviewCard(mine) : renderMatchupCard(mine)) : '';
+        document.getElementById('my-matchup').innerHTML = onTop ? mineCard(mine) : '';
         renderMePrompt(onTop);
         renderStatusLine(data);
         // Finished games other than yours fold into one scoreboard (audit V
@@ -6603,7 +6609,7 @@
         const preRows = ordered.filter(m => m !== mine && pre(m));
         const cards = ordered.filter(m => !folded.includes(m) && !preRows.includes(m));
         document.getElementById('matchups-container').innerHTML =
-          ordered.length ? cards.map(renderMatchupCard).join('') + preBoardHtml(preRows) + scoreboardHtml(folded) : '<div class="loading-row">No matchups found.</div>';
+          ordered.length ? cards.map(mineCard).join('') + preBoardHtml(preRows) + scoreboardHtml(folded) : '<div class="loading-row">No matchups found.</div>';
         const done = matchups.filter(matchupDecided).length;
         document.getElementById('matchups-state').textContent = done && done === matchups.length ? `${done} final` : done ? `${done} of ${matchups.length} final` : '';
         holdScroll();
