@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=36">
+<link rel="stylesheet" href="theme.css?v=37">
 <link rel="stylesheet" href="nav.css?v=29">
 <style>
   /* One tab row (the four groups of stats) with the Year beside it. Each group's
@@ -84,6 +84,89 @@
   .hist-count{ text-align: right; font-weight: 600; }
   .hist-count.zero{ color: var(--text-dim); font-weight: 400; }
 
+  /* ---------- Managers tab ----------
+     One manager's parlay franchise (mockup option A, 2026-10-22): the
+     shared .fhero up top, then Overview / Splits / Legs. Everything is
+     worked out here from the Worker's `weeks`, so the Year scope applies
+     to all of it. Legs use the shared leg card from theme.css. */
+  .mgr-row{ margin: -2px 0 14px; }
+  .mgr-view{ display: grid; gap: 14px; }
+  .mgr-view > .tabs{ margin: 0; justify-self: start; max-width: 100%; }
+  .pm-avatar{ position: relative; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid var(--gold); }
+  .pm-avatar img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pm-ph{ position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--scoreboard); font-weight: 800; font-size: 1.3rem; color: #fff; }
+  .pm-avatar img + .pm-ph{ display: none; }
+  .stat-card-title.split{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+  /* $100 on every leg: one gold line, the ground above $0 green and below
+     it red, a dot per graded leg in its result's colour. */
+  .pm-chart{ position: relative; padding: 4px 0 0; }
+  .pm-chart svg{ display: block; width: 100%; overflow: visible; }
+  .pm-chart .ax{ fill: var(--text-dim); font-size: 10px; font-family: var(--body); font-variant-numeric: tabular-nums; }
+  .pm-chart .grid{ stroke: rgba(255,255,255,0.06); }
+  .pm-chart .zero{ stroke: rgba(255,255,255,0.28); stroke-dasharray: 3 3; }
+  .pm-chart .yr{ stroke: rgba(255,255,255,0.14); }
+  .pm-chart .gain{ fill: rgba(79,174,122,0.16); }
+  .pm-chart .lose{ fill: rgba(214,98,79,0.13); }
+  .pm-chart .line{ fill: none; stroke: var(--gold); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .pm-chart .dot{ stroke: #121212; stroke-width: 1; }
+  .pm-chart .dot.Win{ fill: var(--turf); }
+  .pm-chart .dot.Loss{ fill: var(--loss); }
+  .pm-chart .end{ fill: var(--gold); stroke: #121212; stroke-width: 2; }
+  .pm-chart .xh{ stroke: rgba(255,255,255,0.35); }
+  .pm-chart .xd{ fill: none; stroke: var(--text); stroke-width: 2; }
+  .pm-tip{ position: absolute; top: 0; width: 200px; pointer-events: none; z-index: 2; background: #1C1C1B; border: 1px solid var(--ctl-line); border-radius: 10px; padding: 7px 9px; font-size: 0.74rem; line-height: 1.35; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .pm-tip .t1{ color: var(--text-dim); font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pm-tip .t2{ font-weight: 600; margin: 2px 0; }
+  .pm-tip .t3{ color: var(--text-dim); font-size: 0.72rem; }
+  .pm-tip .t4{ margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .pm-tip .up{ color: var(--turf); } .pm-tip .down{ color: var(--loss); }
+
+  /* Last 8 legs, oldest on the left, and the three runs under them. */
+  .pm-form{ display: flex; gap: 5px; }
+  .pm-form > div{ flex: 1; min-width: 0; text-align: center; }
+  .pm-form i{ display: grid; place-items: center; height: 30px; border-radius: 8px; border: 1px solid var(--ctl-line); font-style: normal; font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; color: var(--text-dim); }
+  .pm-form i.Win{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
+  .pm-form i.Loss{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
+  .pm-form span{ display: block; color: var(--text-dim); font-size: 0.6rem; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pm-pods{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .pm-pod{ padding: 10px 6px; text-align: center; min-width: 0; }
+  .pm-pod b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.6rem; line-height: 1.05; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .pm-pod b.up{ color: var(--turf); } .pm-pod b.down{ color: var(--loss); }
+  .pm-pod small{ display: block; color: var(--text-dim); font-size: 0.7rem; margin-top: 3px; }
+  .pm-cap{ display: block; color: var(--text-dim); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+
+  /* Longest odds hit / safest miss. */
+  .pm-pair{ display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  @media (min-width: 721px){ .pm-pair{ grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .pm-pick{ padding: 11px 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 12px; align-items: center; border-radius: 10px; }
+  .pm-pick .pm-cap{ grid-column: 1 / -1; margin: 0; }
+  .pm-pick .what{ font-size: 0.88rem; color: var(--text-dim); min-width: 0; overflow-wrap: anywhere; }
+  .pm-pick .what b{ color: var(--text); font-weight: 600; }
+  .pm-pick .when{ color: var(--text-dim); font-size: 0.74rem; }
+  .pm-pick .odds{ grid-column: 2; grid-row: 2 / span 2; font-family: var(--scoreboard); font-weight: 700; font-size: 1.5rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+  /* Splits: a tile per sport / bet type / odds range / side, W-L big. */
+  .pm-tiles{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .pm-tile{ padding: 9px 10px 10px; min-width: 0; }
+  .pm-tile .tl{ color: var(--text-dim); font-size: 0.72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pm-tile b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.55rem; line-height: 1.1; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .pm-tile b.up{ color: var(--turf); } .pm-tile b.down{ color: var(--loss); }
+  .pm-tile small{ display: block; color: var(--text-dim); font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+
+  /* Every leg: the shared leg card, with the bet type where Parlay Results
+     puts the manager, and a third row for "Killed it" / "Sacko week". */
+  .pm-legs .scope-row{ margin: 0 0 12px; }
+  .pm-legs .leg-day{ display: flex; justify-content: space-between; margin-top: 8px; }
+  .pm-legs .leg-day:first-child{ margin-top: 0; }
+  .pm-legs .leg-day .r{ font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+  .leg-body.tagged{ grid-template-areas: "name odds score status" "bet bet bet bet" "tags tags tags tags"; }
+  .leg-tags{ grid-area: tags; display: flex; flex-wrap: wrap; gap: 5px; }
+  .leg-tags .badge.dim{ border-color: var(--ctl-line); }
+  @media (min-width: 900px){
+    .leg-body.tagged{ grid-template-areas: "name bet odds score status" "name tags odds score status"; }
+  }
+
 </style>
 </head>
 <body>
@@ -114,6 +197,11 @@
           <select class="parlay-select" id="scope-select" autocomplete="off"></select>
         </div>
       </div>
+      <!-- Managers tab only. No caption: the names say what it picks. -->
+      <div class="mgr-row" id="mgr-row" hidden>
+        <label class="sr-only" for="mgr-select">Manager</label>
+        <select class="parlay-select" id="mgr-select" autocomplete="off"></select>
+      </div>
       <div class="card-grid stats-cards" id="stats-container"><div class="loading-row">Loading stats…</div></div>
     </section>
 
@@ -122,6 +210,7 @@
 
 <script src="nav.js?v=37"></script>
 <script src="page-common.js?v=41"></script>
+<script src="parlay-common.js?v=1"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
 
@@ -320,6 +409,292 @@
     })), { podium: false }),
   };
 
+  // ---------- Managers tab ----------
+  // One manager's parlay franchise, worked out from the Worker's `weeks`
+  // (every pick ever placed) so it agrees with the cards on the other tabs:
+  // "Flat $100" is the same $100-a-leg sum as Flat Bet Profit, and a shared
+  // kill is split the way Parlays Killed splits it.
+  const MGR = { sub: 0, res: 'all', teams: null, teamsAsked: false };
+  const MGR_SUBS = ['Overview', 'Splits', 'Legs'];
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const legWin = odds => (odds > 0 ? odds : 10000 / -odds);
+  const impliedProb = odds => (odds > 0 ? 100 / (odds + 100) : -odds / (-odds + 100));
+  const flatTxt = n => { const r = Math.round(n); return (r < 0 ? '−' : r > 0 ? '+' : '') + fmtMoney(Math.abs(r)); };
+  const wlTone = (w, l) => (w > l ? 'up' : w < l ? 'down' : '');
+  const hashColor = name => { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0; return `hsl(${h % 360}, 45%, 32%)`; };
+  const pickRest = p => { const t = String(p.pick || ''), i = t.indexOf(':'); return i > 0 ? t.slice(i + 1).trim() : ''; };
+  const ODDS_BUCKETS = ['Heavy Favorite', 'Favorite', 'Toss-Up', 'Underdog', 'Longshot'];
+  // generate_parlay_data.py's odds_bucket and over_under_side.
+  const oddsBucket = o => (o <= -250 ? 'Heavy Favorite' : o <= -150 ? 'Favorite' : o < 125 ? 'Toss-Up' : o < 200 ? 'Underdog' : 'Longshot');
+  const overUnder = p => { const m = /\b(Over|Under)\b/i.exec(pickRest(p)); return m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : null; };
+
+  // Every leg one manager placed in the scope, oldest first: what $100 on it
+  // won or lost (net) and the running total after it (run).
+  function mgrLegs(weeks, name, scope) {
+    let run = 0;
+    const out = [];
+    weeks.forEach(w => {
+      if (scope !== 'all' && String(w.year) !== scope) return;
+      const p = w.picks[name];
+      if (!p) return;
+      const graded = p.result === 'Win' || p.result === 'Loss';
+      const net = graded && p.odds ? (p.result === 'Win' ? legWin(p.odds) : -100) : null;
+      if (net !== null) run += net;
+      const killers = w.killed_by || [];
+      out.push({ ...p, year: w.year, week: w.week, graded, net, run: net === null ? null : run,
+        kill: killers.includes(name) ? 1 / killers.length : 0, shared: killers.length > 1, sacko: w.sacko === name });
+    });
+    return out;
+  }
+
+  function mgrSummary(data, name, scope) {
+    const legs = mgrLegs(data.weeks, name, scope);
+    const g = legs.filter(x => x.graded);
+    const w = g.filter(x => x.result === 'Win').length, l = g.length - w;
+    let cur = 0, longW = 0, longL = 0;
+    g.forEach(x => {
+      if (x.result === 'Win') { cur = cur > 0 ? cur + 1 : 1; longW = Math.max(longW, cur); }
+      else { cur = cur < 0 ? cur - 1 : -1; longL = Math.max(longL, -cur); }
+    });
+    const s = data.stats[scope] || {};
+    const avg = (s.average_odds || []).find(r => r.player === name);
+    const sk = (s.weekly_sackos || []).find(r => r.player === name);
+    const byProb = (a, b) => impliedProb(a.odds) - impliedProb(b.odds);
+    return {
+      name, legs, w, l, pct: w + l ? w / (w + l) * 100 : null, cur, longW, longL,
+      kills: Math.round(legs.reduce((a, x) => a + x.kill, 0) * 100) / 100,
+      flat: g.reduce((a, x) => a + (x.net || 0), 0),
+      avg: avg ? avg.avg_odds : null, sackos: sk ? sk.sackos : 0,
+      best: g.filter(x => x.result === 'Win' && x.odds).sort(byProb)[0] || null,
+      worst: g.filter(x => x.result === 'Loss' && x.odds).sort(byProb).pop() || null,
+    };
+  }
+
+  // Franchise's "#N in X" pills: top 3 only, ties sharing a rank, gold for
+  // the good end and red for the bad.
+  function mgrRanks(all, s) {
+    const out = [];
+    const add = (get, higher, ok, label, bad) => {
+      const v = get(s);
+      if (!ok || v === null || v === undefined) return;
+      const r = all.filter(o => { const x = get(o); return x !== null && x !== undefined && (higher ? x > v : x < v); }).length + 1;
+      if (r <= 3) out.push({ label: `#${r} in ${label}`, bad });
+    };
+    add(o => o.pct, true, s.pct !== null, 'Win %', false);
+    add(o => Math.round(o.flat), true, s.flat > 0, 'Flat Bet Profit', false);
+    add(o => o.longW, true, s.longW > 0, 'Win Streak', false);
+    add(o => o.pct, false, s.pct !== null, 'Lowest Win %', true);
+    add(o => Math.round(o.flat), false, s.flat < 0, 'Flat Bet Losses', true);
+    add(o => o.kills, true, s.kills > 0, 'Parlays Killed', true);
+    add(o => o.longL, true, s.longL > 0, 'Losing Streak', true);
+    return out.sort((a, b) => a.bad - b.bad);
+  }
+
+  // The shared .fhero, as on Franchise: team logo and name (the dropdown
+  // above already names the manager), the rank pills, then the stat strip.
+  function mgrHero(s, all) {
+    const team = (MGR.teams || {})[s.name] || {};
+    const years = [...new Set(s.legs.map(x => x.year))];
+    const span = years.length > 1 ? `${years[0]}–${years[years.length - 1]}` : String(years[0] || '');
+    const sub = [plural(s.legs.length, 'leg'), span].filter(Boolean).join(' · ');
+    const ranks = mgrRanks(all, s).map(b => `<span class="rank-badge${b.bad ? ' bad' : ''}">${esc(b.label)}</span>`).join('');
+    const logo = team.logo ? `<img src="${esc(team.logo)}" alt="" onerror="this.remove()">` : '';
+    const side = [
+      ['Record', `${s.w}-${s.l}`],
+      ['Win %', fmtPct(s.pct)],
+      ['Avg Odds', fmtOdds(s.avg)],
+      ['Flat $100', flatTxt(s.flat)],
+      ['Kills', s.kills.toFixed(1)],
+      [s.sackos === 1 ? 'Sacko' : 'Sackos', s.sackos],
+    ].map(([label, v]) => `<div class="fs"><div class="fs-v">${esc(v)}</div><div class="fs-l">${label}</div></div>`).join('');
+    return `
+      <div class="fhero">
+        <div class="fhero-main">
+          <div class="fhero-id">
+            <span class="pm-avatar">${logo}<span class="pm-ph" style="background:${hashColor(s.name)}">${esc(monogram(s.name))}</span></span>
+            <div style="min-width:0">
+              <div class="fhero-name">${esc(team.team || s.name)}</div>
+              <div class="fhero-sub">${esc(sub)}</div>
+            </div>
+          </div>
+          ${ranks ? `<div class="hero-pills scroll">${ranks}</div>` : ''}
+        </div>
+        <div class="fhero-stats">${side}</div>
+      </div>`;
+  }
+
+  function mgrOverview(s) {
+    const graded = s.legs.filter(x => x.net !== null).length;
+    const last = s.legs.slice(-8);
+    const cur = s.cur > 0 ? `<b class="up">W${s.cur}</b>` : s.cur < 0 ? `<b class="down">L${-s.cur}</b>` : '<b>—</b>';
+    const form = last.map(x => `<div><i class="${x.result}">${x.result === 'Win' ? 'W' : x.result === 'Loss' ? 'L' : '·'}</i><span>'${String(x.year).slice(2)} Wk ${x.week}</span></div>`).join('');
+    const pickPod = (x, label) => x ? `
+      <div class="item pm-pick ${x.result === 'Win' ? 'is-win' : 'is-loss'}">
+        <span class="pm-cap">${label}</span>
+        <div class="what"><b>${esc(betTypeOf(x))}</b> · ${esc(pickRest(x))}</div>
+        <div class="odds">${esc(fmtOdds(x.odds))}</div>
+        <div class="when">${x.year} · Week ${x.week}${x.sport ? ' · ' + esc(x.sport) : ''}</div>
+      </div>` : '';
+    const pair = pickPod(s.best, 'Longest odds hit') + pickPod(s.worst, 'Safest miss');
+    return `
+      <div class="card-grid">
+        <div class="stat-card">
+          <div class="stat-card-title split">$100 on every leg ${graded ? pill(flatTxt(s.flat), s.flat >= 0) : ''}</div>
+          <div class="stat-card-body">${graded ? '<div class="pm-chart" id="pm-chart"></div>' : '<div class="empty-note">No legs graded yet.</div>'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-title">Last ${plural(last.length, 'leg')}</div>
+          <div class="stat-card-body">
+            <div class="pm-form">${form}</div>
+            <div class="pm-pods">
+              <div class="item pm-pod"><span class="pm-cap">Current</span>${cur}<small>in a row</small></div>
+              <div class="item pm-pod"><span class="pm-cap">Best run</span><b>${s.longW}</b><small>straight wins</small></div>
+              <div class="item pm-pod"><span class="pm-cap">Worst run</span><b>${s.longL}</b><small>straight losses</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${pair ? `<div class="stat-card"><div class="stat-card-title">Best and worst</div><div class="stat-card-body"><div class="pm-pair">${pair}</div></div></div>` : ''}`;
+  }
+
+  function mgrSplits(s) {
+    const g = s.legs.filter(x => x.graded);
+    const tally = (keyOf, order) => {
+      const m = new Map();
+      g.forEach(x => {
+        const k = keyOf(x);
+        if (!k) return;
+        const t = m.get(k) || { k, w: 0, l: 0 };
+        if (x.result === 'Win') t.w++; else t.l++;
+        m.set(k, t);
+      });
+      return order ? order.map(k => m.get(k)).filter(Boolean) : [...m.values()].sort((a, b) => (b.w + b.l) - (a.w + a.l) || b.w - a.w);
+    };
+    const groups = [
+      ['Sport', tally(x => x.sport)],
+      ['Bet Type', tally(x => betTypeOf(x) || null)],
+      ['Odds', tally(x => (x.odds ? oddsBucket(x.odds) : null), ODDS_BUCKETS)],
+      ['Over / Under', tally(overUnder, ['Over', 'Under'])],
+    ].filter(([, rows]) => rows.length);
+    if (!groups.length) return '<div class="stat-card"><div class="empty-note">No legs graded yet.</div></div>';
+    const tile = r => `<div class="item pm-tile"><div class="tl">${esc(r.k)}</div><b class="${wlTone(r.w, r.l)}">${r.w}-${r.l}</b><small>${fmtPct(r.w / (r.w + r.l) * 100)}</small></div>`;
+    return `<div class="card-grid">${groups.map(([title, rows]) => `
+      <div class="stat-card"><div class="stat-card-title">${title}</div><div class="stat-card-body"><div class="pm-tiles">${rows.map(tile).join('')}</div></div></div>`).join('')}</div>`;
+  }
+
+  // The leg card from Parlay Results, with the bet type where that page
+  // puts the manager and the week where it puts the kickoff.
+  function mgrLegRow(x) {
+    const d = x.gametime ? new Date(x.gametime) : null;
+    const status = x.result === 'Win' ? '<span class="badge turf">Win</span>'
+      : x.result === 'Loss' ? '<span class="badge loss">Loss</span>' : '<span class="badge dim">Pending</span>';
+    const tags = (x.kill ? `<span class="badge loss">${x.shared ? 'Shared kill' : 'Killed it'}</span>` : '')
+      + (x.sacko ? '<span class="badge dim">Sacko week</span>' : '');
+    const rest = pickRest(x);
+    return `
+      <div class="leg ${x.result}">
+        <div class="leg-rail">${x.sport ? `<span class="sp">${esc(x.sport)}</span>` : ''}<span class="t">Wk ${x.week}</span>${d && !Number.isNaN(d.getTime()) ? `<span class="p">${MONTHS[d.getMonth()]} ${d.getDate()}</span>` : ''}</div>
+        <div class="leg-body${tags ? ' tagged' : ''}">
+          <span class="leg-name">${esc(betTypeOf(x) || x.pick)}</span>
+          <span class="leg-odds">${esc(fmtOdds(x.odds))}</span>
+          <div class="leg-bet">${esc(rest)}${x.matchup ? `${rest ? ' · ' : ''}${esc(x.matchup)}` : ''}</div>
+          <span class="leg-score">${finalChipHtml(x)}</span>
+          <span class="leg-status">${status}</span>
+          ${tags ? `<div class="leg-tags">${tags}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function mgrLegList(s) {
+    const n = r => s.legs.filter(x => x.result === r).length;
+    const opts = [['all', 'All', s.legs.length], ['Win', 'Wins', n('Win')], ['Loss', 'Losses', n('Loss')]];
+    const seg = `<div class="scope-row" id="pm-res">${opts.map(([k, label, c]) => `<button type="button" class="scope-btn${MGR.res === k ? ' on' : ''}" data-res="${k}">${label} ${c}</button>`).join('')}</div>`;
+    const rows = s.legs.filter(x => MGR.res === 'all' || x.result === MGR.res).reverse();
+    const years = [...new Set(rows.map(x => x.year))];
+    const list = years.map(y => {
+      const ys = s.legs.filter(x => x.year === y);
+      const rec = `${ys.filter(x => x.result === 'Win').length}-${ys.filter(x => x.result === 'Loss').length}`;
+      return `<div class="leg-day"><span>${y}</span><span class="r">${rec}</span></div>${rows.filter(x => x.year === y).map(mgrLegRow).join('')}`;
+    }).join('');
+    return `<div class="stat-card pm-legs"><div class="stat-card-body">${seg}<div class="legs-list">${list || '<div class="empty-note">No legs here.</div>'}</div></div></div>`;
+  }
+
+  function renderManager(data, scope, name) {
+    const all = data.players.map(p => mgrSummary(data, p, scope));
+    const s = all.find(x => x.name === name);
+    const body = !s.legs.length ? '<div class="stat-card"><div class="empty-note">No legs this season.</div></div>'
+      : [mgrOverview, mgrSplits, mgrLegList][MGR.sub](s);
+    const tabs = MGR_SUBS.map((t, i) => `<button type="button" class="tab${i === MGR.sub ? ' on' : ''}" data-sub="${i}">${t}</button>`).join('');
+    return { html: `${mgrHero(s, all)}<div class="tabs" id="mgr-tabs" data-glide-panel="mgr-body">${tabs}</div><div id="mgr-body">${body}</div>`, s };
+  }
+
+  // The running total, one point per graded leg, a season's first leg
+  // marked with a line. Hover or touch for the leg under the finger.
+  function drawMgrChart(s) {
+    const el = document.getElementById('pm-chart');
+    if (!el) return;
+    const g = s.legs.filter(x => x.net !== null);
+    const W = el.clientWidth || 360, H = 160, padL = 46, padR = 10, padT = 10, padB = 22;
+    const vals = [0, ...g.map(x => x.run)];
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    const raw = (hi - lo || 100) / 4, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map(f => f * mag).find(v => v >= raw);
+    lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    const x = i => padL + (i + 1) / g.length * (W - padL - padR);
+    const y = v => padT + (hi - v) / (hi - lo) * (H - padT - padB);
+    let grid = '';
+    for (let v = lo; v <= hi + step / 2; v += step) {
+      grid += `<line class="${Math.abs(v) < step / 2 ? 'zero' : 'grid'}" x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}"/>`
+        + `<text class="ax" x="${padL - 7}" y="${y(v) + 3.5}" text-anchor="end">${Math.abs(v) < step / 2 ? '$0' : flatTxt(v)}</text>`;
+    }
+    [...new Set(g.map(p => p.year))].forEach((yr, k) => {
+      const first = g.findIndex(p => p.year === yr);
+      const at = k === 0 ? padL : (x(first - 1) + x(first)) / 2;
+      if (k) grid += `<line class="yr" x1="${at}" x2="${at}" y1="${padT}" y2="${H - padB}"/>`;
+      grid += `<text class="ax" x="${at + (k ? 5 : 0)}" y="${H - 6}">${yr}</text>`;
+    });
+    const line = `M${padL},${y(0)}` + g.map((p, i) => `L${x(i).toFixed(1)},${y(p.run).toFixed(1)}`).join('');
+    const area = `${line}L${x(g.length - 1).toFixed(1)},${y(0)}Z`;
+    const end = g[g.length - 1];
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Running total of $100 on every leg: ${esc(flatTxt(end.run))}">
+      <defs><clipPath id="pm-up"><rect x="0" y="0" width="${W}" height="${y(0)}"/></clipPath><clipPath id="pm-dn"><rect x="0" y="${y(0)}" width="${W}" height="${H}"/></clipPath></defs>
+      ${grid}
+      <path class="gain" d="${area}" clip-path="url(#pm-up)"/><path class="lose" d="${area}" clip-path="url(#pm-dn)"/>
+      <path class="line" d="${line}"/>
+      ${g.map((p, i) => `<circle class="dot ${p.result}" cx="${x(i)}" cy="${y(p.run)}" r="2.6"/>`).join('')}
+      <circle class="end" cx="${x(g.length - 1)}" cy="${y(end.run)}" r="5"/>
+      <line class="xh" x1="0" x2="0" y1="${padT}" y2="${H - padB}" visibility="hidden"/>
+      <circle class="xd" r="5" visibility="hidden"/>
+    </svg><div class="pm-tip" hidden></div>`;
+    const svg = el.querySelector('svg'), tip = el.querySelector('.pm-tip');
+    const xh = svg.querySelector('.xh'), xd = svg.querySelector('.xd');
+    const show = ev => {
+      const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (W / r.width);
+      const i = Math.max(0, Math.min(g.length - 1, Math.round((px - padL) / (W - padL - padR) * g.length - 1)));
+      const p = g[i], cx = x(i), cy = y(p.run);
+      xh.setAttribute('x1', cx); xh.setAttribute('x2', cx); xh.setAttribute('visibility', 'visible');
+      xd.setAttribute('cx', cx); xd.setAttribute('cy', cy); xd.setAttribute('visibility', 'visible');
+      tip.innerHTML = `<div class="t1">${p.year} · Week ${p.week}${p.sport ? ' · ' + esc(p.sport) : ''}</div>`
+        + `<div class="t2">${esc(betTypeOf(p))} ${esc(fmtOdds(p.odds))}</div><div class="t3">${esc(pickRest(p))}</div>`
+        + `<div class="t4"><span class="${p.net >= 0 ? 'up' : 'down'}">${p.result} ${flatTxt(p.net)}</span> · Total ${flatTxt(p.run)}</div>`;
+      tip.hidden = false;
+      const sx = r.width / W, sy = r.height / H;
+      tip.style.left = Math.max(0, Math.min(r.width - tip.offsetWidth, cx * sx - tip.offsetWidth / 2)) + 'px';
+      tip.style.top = (cy * sy < r.height / 2 ? cy * sy + 14 : cy * sy - tip.offsetHeight - 14) + 'px';
+    };
+    svg.addEventListener('pointermove', show);
+    svg.addEventListener('pointerdown', show);
+    const hide = () => { tip.hidden = true; xh.setAttribute('visibility', 'hidden'); xd.setAttribute('visibility', 'hidden'); };
+    // A finger lifting is a pointerleave too, so on a phone the leg stays
+    // up until the next tap somewhere else.
+    svg.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
+    el.hideTip = hide;
+  }
+  document.addEventListener('pointerdown', e => {
+    const el = document.getElementById('pm-chart');
+    if (el && el.hideTip && !el.contains(e.target)) el.hideTip();
+  });
+
   // ---------- Category > subsection structure ----------
   const CATEGORIES = [
     {
@@ -352,22 +727,45 @@
         { label: 'Notable Weeks', cards: ['biggestMisses', 'closestCalls'] },
       ],
     },
+    // One manager at a time, with the manager dropdown under the tabs.
+    { label: 'Managers', managers: true },
   ];
 
   // ---------- Wiring ----------
   // The tab names in the address (#betting) so a link or Back lands on the same group.
-  const TAB_KEYS = ['legs', 'betting', 'breakdowns', 'misc'];
+  const TAB_KEYS = ['legs', 'betting', 'breakdowns', 'misc', 'managers'];
 
   fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
     .then(res => res.json())
     .then(data => {
       const { stats } = data;
-      let activeCategory = Math.max(0, TAB_KEYS.indexOf(location.hash.slice(1)));
+      data.weeks = [...(data.weeks || [])].sort((a, b) => a.year - b.year || a.week - b.week);
+      // A link with a manager in it (?m=Brad) opens on that manager.
+      const linkedTab = location.hash ? location.hash.slice(1) : (urlParam('m') ? 'managers' : '');
+      let activeCategory = Math.max(0, TAB_KEYS.indexOf(linkedTab));
       let activeScope = 'all';
 
       const scopeSelect = document.getElementById('scope-select');
       const categoryTabRow = document.getElementById('category-tab-row');
       const statsContainer = document.getElementById('stats-container');
+      const mgrRow = document.getElementById('mgr-row');
+      const mgrSelect = document.getElementById('mgr-select');
+      const names = [...data.players].sort((a, b) => a.localeCompare(b));
+      mgrSelect.innerHTML = names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+      // A link (?m=) first, then you, then the first name.
+      mgrSelect.value = matchName(names, urlParam('m')) || matchName(names, getMe()) || names[0];
+
+      // Team names and logos come from franchise.json, asked for the first
+      // time the tab opens; until then (or if it fails) the hero shows the
+      // manager's name and monogram.
+      function loadTeams() {
+        if (MGR.teamsAsked) return;
+        MGR.teamsAsked = true;
+        fetch('data/franchise.json', { cache: 'no-cache' }).then(r => r.json()).then(d => {
+          MGR.teams = Object.fromEntries((d.players || []).map(p => [p.name, { team: p.current_team_name, logo: p.current_team_logo }]));
+          if (CATEGORIES[activeCategory].managers) renderStats();
+        }).catch(() => {});
+      }
 
       const scopes = ['all', ...[...(data.years || [])].sort((a, b) => b - a).map(String)];
       scopeSelect.innerHTML = scopes.map(s => `<option value="${s}">${s === 'all' ? 'All-Time' : s}</option>`).join('');
@@ -377,10 +775,41 @@
       function renderStats() {
         const s = stats[activeScope];
         if (!s) return;
-        const keys = CATEGORIES[activeCategory].subsections.flatMap(sub => sub.cards);
-        statsContainer.innerHTML = keys.map(key => CARD[key](s)).join('');
+        const managers = !!CATEGORIES[activeCategory].managers;
+        mgrRow.hidden = !managers;
+        statsContainer.className = managers ? 'stats-cards mgr-view' : 'card-grid stats-cards';
+        if (managers) {
+          loadTeams();
+          const view = renderManager(data, activeScope, mgrSelect.value);
+          statsContainer.innerHTML = view.html;
+          drawMgrChart(view.s);
+          keepSelectedInView(document.getElementById('mgr-tabs'));
+        } else {
+          const keys = CATEGORIES[activeCategory].subsections.flatMap(sub => sub.cards);
+          statsContainer.innerHTML = keys.map(key => CARD[key](s)).join('');
+        }
         keepSelectedInView(categoryTabRow);
       }
+      mgrSelect.addEventListener('change', () => {
+        setUrlParams({ m: mgrSelect.value });
+        renderStats();
+      });
+      // Overview / Splits / Legs, and the All / Wins / Losses filter.
+      statsContainer.addEventListener('click', e => {
+        const sub = e.target.closest('[data-sub]');
+        const res = e.target.closest('[data-res]');
+        if (sub) MGR.sub = Number(sub.dataset.sub);
+        else if (res) MGR.res = res.dataset.res;
+        else return;
+        renderStats();
+      });
+      let resizeTimer;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          if (CATEGORIES[activeCategory].managers && MGR.sub === 0) drawMgrChart(mgrSummary(data, mgrSelect.value, activeScope));
+        }, 150);
+      });
       scopeSelect.addEventListener('change', () => {
         activeScope = scopeSelect.value;
         renderStats();
@@ -391,6 +820,7 @@
         activeCategory = Number(btn.dataset.i);
         [...categoryTabRow.children].forEach((b, i) => b.classList.toggle('on', i === activeCategory));
         history.replaceState(null, '', '#' + TAB_KEYS[activeCategory]);
+        setUrlParams({ m: CATEGORIES[activeCategory].managers ? mgrSelect.value : null });
         renderStats();
       });
       renderStats();

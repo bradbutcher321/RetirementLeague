@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=36">
+<link rel="stylesheet" href="theme.css?v=37">
 <link rel="stylesheet" href="nav.css?v=29">
 <style>
   /* ---------- Week selector ----------
@@ -124,94 +124,12 @@
   /* The old .memoriam block was a full-width bordered panel for one name;
      it's a chip alongside Sacko now, same weight as the fact it carries. */
 
-  /* ---------- Legs ----------
-     Every leg reads in full with nothing to open, in the spirit of Parlay
-     Legs' card with the result added. Legs sit under the day they're
-     played, each with a time rail on the left the way a TV listing reads:
-     the kickoff before the game, the clock and period while it's on, and
-     the kickoff again once it's decided. Name, odds, score and status share
-     the top line; the bet gets the full line underneath. One column at
-     every width -- on desktop each leg is a single ledger line with odds,
-     score and status in aligned columns. */
-  .legs-list{ display: grid; gap: 8px; }
-  .leg-day{ color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 2px 0; }
-  .leg-day:first-child{ margin-top: 0; }
-  .leg{
-    display: grid; grid-template-columns: 60px minmax(0, 1fr);
-    background: var(--item);
-    border: 1px solid var(--item-line);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .leg.Win, .leg.live-up{ border-color: var(--win-line); background: var(--win-tint); }
-  .leg.Loss, .leg.live-down{ border-color: var(--loss-line); background: var(--loss-tint); }
-
-  /* The rail: sport, then the time big, then AM/PM -- or, live, the clock
-     big and the period under it in the sport's own words (liveRail). Red
-     while the game is on, as an "in progress" marker rather than a verdict;
-     the Live badge on the right carries the pulsing dot, so the rail
-     doesn't repeat it. */
-  .leg-rail{ background: rgba(0,0,0,0.22); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 2px; text-align: center; min-width: 0; }
-  .leg-rail .sp{ color: var(--gold); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .leg-rail .t{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.1rem; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .leg-rail .p{ color: var(--text-dim); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
-  .leg-rail.live .t, .leg-rail.live .p{ color: var(--loss); }
-  .leg-rail .arrow{ font-size: 0.7em; margin-right: 2px; vertical-align: 0.12em; }
-
-  .leg-body{
-    padding: 10px 12px; min-width: 0;
-    display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto;
-    grid-template-areas: "name odds score status" "bet bet bet bet";
-    column-gap: 8px; row-gap: 4px; align-items: center;
-  }
-  .leg.missing .leg-body{ grid-template-areas: "name odds score status"; }
-  .leg-name{ grid-area: name; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .leg.missing .leg-name{ color: var(--text-dim); font-weight: 600; }
-  .leg-odds{ grid-area: odds; font-family: var(--scoreboard); font-weight: 700; font-size: 0.92rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .leg-score{ grid-area: score; justify-self: end; display: flex; justify-content: flex-end; min-width: 0; max-width: 100%; }
-  .leg-status{ grid-area: status; justify-self: end; display: flex; }
-  .leg-status .badge{ display: inline-flex; align-items: center; gap: 5px; }
-  .leg-status .badge.dim{ border-color: var(--ctl-line); }
-  /* Grey and a size down from the name -- supporting text under a bold
-     headline. The bet type itself is white, the way Parlay Legs shows it. */
-  .leg-bet{ grid-area: bet; color: var(--text-dim); font-size: 0.86rem; line-height: 1.35; min-width: 0; overflow-wrap: anywhere; }
-  .leg-bet b{ color: var(--text); font-weight: 600; }
-
-  /* ---------- The score pill ----------
-     The number the leg rides on: the final once it's graded, the running
-     score or stat while it's live (green while covering, red otherwise).
-     Filled rather than outlined, matching .hero-chip at the top of this
-     page. Nothing renders here before kickoff. */
-  .fin{
-    font-family: var(--scoreboard); font-variant-numeric: tabular-nums;
-    font-size: 0.82rem; font-weight: 700; line-height: 1; color: var(--text);
-    background: rgba(255,255,255,0.06); border-radius: 999px; padding: 5px 10px;
-    white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis;
-  }
-  .fin.up{ color: var(--turf); }
-  .fin.down{ color: var(--loss); }
-  /* Not every graded detail is a number -- a bout reads "Pereira · Round 1".
-     The condensed scoreboard face is built for numerals and turns to mush
-     on words, so those take the body face a size down. */
-  .fin.is-text{ font-family: var(--body); font-weight: 600; font-size: 0.7rem; letter-spacing: 0; }
-
-  .live-dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: leg-live-pulse 1.5s ease-in-out infinite; }
-  @keyframes leg-live-pulse{ 0%, 100%{ opacity: 1; } 50%{ opacity: 0.25; } }
-  @media (prefers-reduced-motion: reduce){ .live-dot{ animation: none; } }
-
+  /* The leg card (.leg, .leg-rail, .leg-body, .fin, .leg-day) lives in
+     theme.css, shared with Parlay Stats' Managers tab. */
   /* Column labels for the desktop ledger; a phone's two-line legs don't
      line up in columns, so it has none. */
   .legs-head{ display: none; }
   @media (min-width: 900px){
-    .leg{ grid-template-columns: 78px minmax(0, 1fr); }
-    .leg-rail .t{ font-size: 1.2rem; }
-    .leg-body, .leg.missing .leg-body{
-      grid-template-columns: 110px minmax(0, 1fr) 60px 120px 70px;
-      grid-template-areas: "name bet odds score status";
-      column-gap: 16px; padding: 12px 16px; min-height: 58px;
-    }
-    .leg-odds{ justify-self: end; color: var(--text); }
-    .leg-bet{ font-size: 0.9rem; }
     .legs-head{ display: grid; grid-template-columns: 78px minmax(0, 1fr); color: var(--text-dim); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
     .legs-head > span{ text-align: center; }
     .legs-head > div{ display: grid; grid-template-columns: 110px minmax(0, 1fr) 60px 120px 70px; column-gap: 16px; padding: 0 16px; }
@@ -266,6 +184,7 @@
 <script src="nav.js?v=37"></script>
 <script src="page-common.js?v=41"></script>
 <script src="share.js?v=1"></script>
+<script src="parlay-common.js?v=1"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
 
@@ -303,28 +222,8 @@
       .sort((a, b) => (a[1].gametime || '9999').localeCompare(b[1].gametime || '9999'));
   }
 
-  // reconstruct_pick_text (generate_parlay_data.py) writes every pick as
-  // "{bet type}: {details}", for bet types it knows and for ones it doesn't,
-  // and a pick with no bet type is never published -- so the prefix is always
-  // there to read.
-  const betTypeOf = p => String(p.pick || '').split(':')[0].trim();
-  // An over/under on a game's combined score. Mirrors parlay_note_parser.py's
-  // TOTAL_VS. A UFC "Total Rounds" bet is in that set but has no two scores to
-  // add -- the round a fight ended in is the one number there, and its graded
-  // detail reads "<winner> won (round 3)" -- so it simply never matches the
-  // two-score shape the sum below looks for.
-  const TOTAL_BET_TYPES = new Set(['Total Points', 'Total Goals', 'Total Rounds']);
-  // The bets that grade off one player's stat line rather than a game's score
-  // -- parlay_note_parser.py's PLAYER_OU plus PLAYER_ONLY.
-  const PLAYER_BET_TYPES = new Set(['Receiving Yards', 'Passing TD', 'Home Runs', 'Player Points',
-    'Interceptions', 'Total Yards', 'Receptions', 'Passing Yards', 'Anytime TD', 'Coin Toss']);
-  const isTotalBet = p => TOTAL_BET_TYPES.has(betTypeOf(p));
-  // What a live prop's running stat counts, [one, many] -- "1 TD", "0 TDs".
-  const PROP_STAT_UNITS = {
-    'Anytime TD': ['TD', 'TDs'], 'Passing TD': ['Pass TD', 'Pass TDs'],
-    'Passing Yards': ['Pass Yd', 'Pass Yds'], 'Receiving Yards': ['Rec Yd', 'Rec Yds'], 'Total Yards': ['Yd', 'Yds'],
-    'Receptions': ['Rec', 'Rec'], 'Interceptions': ['INT', 'INTs'], 'Home Runs': ['HR', 'HRs'], 'Player Points': ['Pt', 'Pts'],
-  };
+  // betTypeOf, TOTAL_BET_TYPES, PLAYER_BET_TYPES, isTotalBet and
+  // PROP_STAT_UNITS live in parlay-common.js, shared with Parlay Stats.
 
   // A period in the sport's own words, short enough for the rail:
   // "3rd Qtr", "2nd Half", "2nd Per", "OT", "Rd 2".
@@ -372,59 +271,8 @@
     return `${n} ${entry.stat === 1 ? one : many}`.trim();
   }
 
-  // Rewrites the graded detail -- free text out of the sheet's Grade Detail
-  // column, written by auto_grade_results.py -- into what the chip shows.
-  // The sheet keeps the original wording as the audit trail; this is purely
-  // how it reads on the page, which is also why every past leg picks these
-  // up with no backfill.
-  function finalChipText(p, detail) {
-    const bet = betTypeOf(p);
-
-    // A totals bet is about the combined number, so "17-27" becomes 44.
-    if (TOTAL_BET_TYPES.has(bet)) {
-      detail = detail.replace(/^(\d+)\s*-\s*(\d+)\b/, (_m, a, b) => String(Number(a) + Number(b)));
-    }
-
-    // A player prop grades to "<player>: <stat>". The player's name is
-    // already on the bet line beside it, while what the number measures
-    // isn't -- so it reads the way the live stat did: "64 Rec Yds", "1 TD".
-    // A bet type with no unit takes the label's place: "Coin Toss: 1".
-    if (PLAYER_BET_TYPES.has(bet)) {
-      detail = detail.replace(/^.+?:\s*(-?\d+(?:\.\d+)?)$/, (_m, n) => {
-        const units = PROP_STAT_UNITS[bet];
-        return units ? `${n} ${Number(n) === 1 ? units[0] : units[1]}` : `${bet}: ${n}`;
-      });
-    }
-
-    // A UFC bout grades to "Pereira won (round 1)" -- tightened to
-    // "Pereira · Round 1", the same middot separator the rest of the site
-    // uses between a fact and its qualifier. A decision with no round
-    // recorded keeps its plain "<winner> won".
-    detail = detail.replace(/^(.+?)\s+won\s*\(round\s*(\d+(?:\.\d+)?)\)$/i,
-      (_m, who, round) => `${who} · Round ${round}`);
-
-    return detail;
-  }
-
-  // The pill beside the status: what the leg was graded from. Empty string
-  // until the leg is actually decided -- a live leg gets livePillHtml in the
-  // same spot instead, and a leg that hasn't kicked off gets nothing.
-  function finalChipHtml(p) {
-    if (p.result !== 'Win' && p.result !== 'Loss') return '';
-    // auto_grade_results.py writes a score-graded detail as "17-10 final";
-    // the chip is already in the verdict's own slot, so a trailing "final"
-    // in the value would be saying it twice. Other shapes (a prop's
-    // "Player: 2", a 1st-half score, a UFC result) never end in that word.
-    const raw = (p.detail || '').replace(/\s*\bfinal\b\s*$/i, '').trim();
-    if (!raw) return '';
-    const text = finalChipText(p, raw);
-    // Digits, and a prop's short "64 Rec Yds", get the condensed scoreboard
-    // face; anything else with words in it takes the body face a size down
-    // -- see .fin.is-text. Either may shrink before the status does.
-    const unitText = PLAYER_BET_TYPES.has(betTypeOf(p)) && /^-?\d+(\.\d+)?\s\S/.test(text) && text.length <= 12;
-    const cls = /^[\d\s.–—-]+$/.test(text) || unitText ? 'fin' : 'fin is-text';
-    return `<span class="${cls}" title="${esc(text)}">${esc(text)}</span>`;
-  }
+  // finalChipText / finalChipHtml (the graded leg's pill) live in
+  // parlay-common.js too.
 
   // finalChipHtml's live counterpart, in the same pill: the number the leg
   // is riding on right now -- the score, a total's combined points, a

@@ -972,6 +972,100 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
   .fs-l{ order:1; font-size:0.76rem; text-transform:none; letter-spacing:0; margin:0; }
 }
 
+/* The "#N in X" rank pills under a .fhero's name (Franchise, Parlay Stats' Managers tab). */
+.hero-pills{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+@media (max-width:720px){ .hero-pills.scroll{ flex-wrap:nowrap; margin-left:-18px; margin-right:-18px; padding:0 18px; scroll-padding:0 18px; } }
+.rank-badge{ background: rgba(212,180,106,0.14); border: 1px solid var(--gold); color: var(--gold); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.rank-badge.bad{ background: rgba(214,98,79,0.14); border-color: var(--loss); color: var(--loss); }
+
+/* ---------- Parlay leg card ----------
+   Shared by Parlay Results (one leg per manager) and Parlay Stats' Managers
+   tab (every leg one manager placed). Moved here from parlay-results.html.
+   Every leg reads in full with nothing to open, in the spirit of Parlay
+   Legs' card with the result added. Legs sit under the day they're
+   played, each with a time rail on the left the way a TV listing reads:
+   the kickoff before the game, the clock and period while it's on, and
+   the kickoff again once it's decided. Name, odds, score and status share
+   the top line; the bet gets the full line underneath. One column at
+   every width -- on desktop each leg is a single ledger line with odds,
+   score and status in aligned columns. */
+.legs-list{ display: grid; gap: 8px; }
+.leg-day{ color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 2px 0; }
+.leg-day:first-child{ margin-top: 0; }
+.leg{
+  display: grid; grid-template-columns: 60px minmax(0, 1fr);
+  background: var(--item);
+  border: 1px solid var(--item-line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.leg.Win, .leg.live-up{ border-color: var(--win-line); background: var(--win-tint); }
+.leg.Loss, .leg.live-down{ border-color: var(--loss-line); background: var(--loss-tint); }
+
+/* The rail: sport, then the time big, then AM/PM -- or, live, the clock
+   big and the period under it in the sport's own words (liveRail). Red
+   while the game is on, as an "in progress" marker rather than a verdict;
+   the Live badge on the right carries the pulsing dot, so the rail
+   doesn't repeat it. */
+.leg-rail{ background: rgba(0,0,0,0.22); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 2px; text-align: center; min-width: 0; }
+.leg-rail .sp{ color: var(--gold); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.leg-rail .t{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.1rem; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.leg-rail .p{ color: var(--text-dim); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.leg-rail.live .t, .leg-rail.live .p{ color: var(--loss); }
+.leg-rail .arrow{ font-size: 0.7em; margin-right: 2px; vertical-align: 0.12em; }
+
+.leg-body{
+  padding: 10px 12px; min-width: 0;
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "name odds score status" "bet bet bet bet";
+  column-gap: 8px; row-gap: 4px; align-items: center;
+}
+.leg.missing .leg-body{ grid-template-areas: "name odds score status"; }
+.leg-name{ grid-area: name; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.leg.missing .leg-name{ color: var(--text-dim); font-weight: 600; }
+.leg-odds{ grid-area: odds; font-family: var(--scoreboard); font-weight: 700; font-size: 0.92rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.leg-score{ grid-area: score; justify-self: end; display: flex; justify-content: flex-end; min-width: 0; max-width: 100%; }
+.leg-status{ grid-area: status; justify-self: end; display: flex; }
+.leg-status .badge{ display: inline-flex; align-items: center; gap: 5px; }
+.leg-status .badge.dim{ border-color: var(--ctl-line); }
+/* Grey and a size down from the name -- supporting text under a bold
+   headline. The bet type itself is white, the way Parlay Legs shows it. */
+.leg-bet{ grid-area: bet; color: var(--text-dim); font-size: 0.86rem; line-height: 1.35; min-width: 0; overflow-wrap: anywhere; }
+.leg-bet b{ color: var(--text); font-weight: 600; }
+
+/* ---------- The score pill ----------
+   The number the leg rides on: the final once it's graded, the running
+   score or stat while it's live (green while covering, red otherwise).
+   Filled rather than outlined, matching Parlay Results' .hero-chip. Nothing renders here before kickoff. */
+.fin{
+  font-family: var(--scoreboard); font-variant-numeric: tabular-nums;
+  font-size: 0.82rem; font-weight: 700; line-height: 1; color: var(--text);
+  background: rgba(255,255,255,0.06); border-radius: 999px; padding: 5px 10px;
+  white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+.fin.up{ color: var(--turf); }
+.fin.down{ color: var(--loss); }
+/* Not every graded detail is a number -- a bout reads "Pereira · Round 1".
+   The condensed scoreboard face is built for numerals and turns to mush
+   on words, so those take the body face a size down. */
+.fin.is-text{ font-family: var(--body); font-weight: 600; font-size: 0.7rem; letter-spacing: 0; }
+
+.live-dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: leg-live-pulse 1.5s ease-in-out infinite; }
+@keyframes leg-live-pulse{ 0%, 100%{ opacity: 1; } 50%{ opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce){ .live-dot{ animation: none; } }
+
+@media (min-width: 900px){
+  .leg{ grid-template-columns: 78px minmax(0, 1fr); }
+  .leg-rail .t{ font-size: 1.2rem; }
+  .leg-body, .leg.missing .leg-body{
+    grid-template-columns: 110px minmax(0, 1fr) 60px 120px 70px;
+    grid-template-areas: "name bet odds score status";
+    column-gap: 16px; padding: 12px 16px; min-height: 58px;
+  }
+  .leg-odds{ justify-self: end; color: var(--text); }
+  .leg-bet{ font-size: 0.9rem; }
+}
+
 /* ---------- You (site audit II #36) ----------
    The visitor's own card or row, once they've picked their team in the You
    sheet (nav.js): a ring just outside it, in the color picked in Settings

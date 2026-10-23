@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=36">
+<link rel="stylesheet" href="theme.css?v=37">
 <link rel="stylesheet" href="nav.css?v=29">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
@@ -48,10 +48,7 @@
   /* Rank pills and past teams: each one row that swipes sideways on a
      phone (theme.css .scroll, edge fades from page-common.js) instead of
      wrapping into a block of pills three rows deep. Desktop still wraps. */
-  .hero-pills{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  @media (max-width:720px){ .hero-pills.scroll{ flex-wrap:nowrap; margin-left:-18px; margin-right:-18px; padding:0 18px; scroll-padding:0 18px; } }
-  .rank-badge{ background: rgba(212,180,106,0.14); border: 1px solid var(--gold); color: var(--gold); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
-  .rank-badge.bad{ background: rgba(214,98,79,0.14); border-color: var(--loss); color: var(--loss); }
+  /* .hero-pills and .rank-badge live in theme.css with .fhero (shared with Parlay Stats). */
 
   /* ---------- Team logos -- current team gets one next to its headline
      name, past teams get the framed hover-tile list below (a polaroid grid
