@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-22T09:31:59.204028+00:00",
+  "generated_at": "2026-10-23T09:28:06.394441+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -184,8 +184,8 @@
         ]
       },
       "moves": {
-        "total": 262,
-        "avg_per_season": 21.8,
+        "total": 263,
+        "avg_per_season": 21.9,
         "busiest_season": {
           "year": 2015,
           "moves": 46
@@ -651,7 +651,7 @@
         "best_position": 1,
         "worst_position": 10
       },
-      "weekly_sackos": 2,
+      "weekly_sackos": 1,
       "money": {
         "total_dues": 1600.0,
         "net_result": 2730.0,
@@ -1061,8 +1061,8 @@
         ]
       },
       "moves": {
-        "total": 152,
-        "avg_per_season": 12.7,
+        "total": 154,
+        "avg_per_season": 12.8,
         "busiest_season": {
           "year": 2015,
           "moves": 28
@@ -1954,8 +1954,8 @@
         ]
       },
       "moves": {
-        "total": 291,
-        "avg_per_season": 24.2,
+        "total": 292,
+        "avg_per_season": 24.3,
         "busiest_season": {
           "year": 2019,
           "moves": 38
@@ -2869,7 +2869,7 @@
         "best_position": 1,
         "worst_position": 11
       },
-      "weekly_sackos": 3,
+      "weekly_sackos": 4,
       "money": {
         "total_dues": 1600.0,
         "net_result": -1010.0,
@@ -3277,8 +3277,8 @@
         ]
       },
       "moves": {
-        "total": 185,
-        "avg_per_season": 18.5,
+        "total": 186,
+        "avg_per_season": 18.6,
         "busiest_season": {
           "year": 2020,
           "moves": 31
