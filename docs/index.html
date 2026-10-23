@@ -923,7 +923,9 @@
   .mwa-small .up{ color: var(--turf); font-weight: 700; }
   .mwa-small .dn{ color: var(--loss); font-weight: 700; }
   .mwa-div{ font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); padding: 12px 0 4px; border-top: 1px solid var(--line); }
-  .mwa-row.fin .mwa-nm, .mwa-row.fin .mwa-val{ color: #bdbdbb; }
+  /* Not ".fin": that's the parlay leg's score pill in theme.css, which
+     turned a finished row into a pill in the scoreboard face. */
+  .mwa-row.is-done .mwa-nm, .mwa-row.is-done .mwa-val{ color: #bdbdbb; }
 
   /* ---------- Median Watch: a manager's starters ----------
      Every card opens its starters -- in the shared bottom sheet on a
@@ -2360,7 +2362,7 @@
       val = live ? num(fmtScore(p.livePoints || 0)) : num('—', ' none');
       small = proj('gold');
     }
-    return mwRowHtml(p, sub, val, small, done ? ' fin' : '');
+    return mwRowHtml(p, sub, val, small, done ? ' is-done' : '');
   }
 
   // Players still to come first (live ones before those yet to kick off),
