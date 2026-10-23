@@ -1306,17 +1306,24 @@
   .santa-h b{ color: var(--gold-hi); font-weight: 800; }
   .santa-s{ display: block; color: var(--text-dim); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .santa-r{ position: relative; z-index: 1; width: 132px; height: 96px; }
-  .santa-r img{ position: absolute; left: 50%; top: 50%; width: 80px; height: auto; filter: drop-shadow(0 8px 14px rgba(0,0,0,0.65)); animation: santa-sway 5s ease-in-out infinite; }
-  .santa-r img:nth-child(1){ transform: translate(-92%, -50%) rotate(-15deg); animation-delay: -1s; }
-  .santa-r img:nth-child(2){ transform: translate(-18%, -56%) rotate(13deg); animation-delay: -2.5s; }
-  .santa-r img:nth-child(3){ transform: translate(-50%, -44%) rotate(-2deg) scale(1.12); z-index: 2; animation-delay: -4s; }
+  /* Each shirt sits in a slot that places it; the img inside sways, and the
+     side ones get swapped out by the script (a poof, then a new one flies in). */
+  .santa-slot{ position: absolute; left: 50%; top: 50%; width: 80px; }
+  .santa-slot.l{ transform: translate(-92%, -50%) rotate(-15deg); }
+  .santa-slot.r{ transform: translate(-18%, -56%) rotate(13deg); }
+  .santa-slot.c{ transform: translate(-50%, -44%) rotate(-2deg) scale(1.12); z-index: 2; }
+  .santa-slot img{ display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 14px rgba(0,0,0,0.65)); animation: santa-sway 5s ease-in-out infinite; }
+  .santa-slot.l img{ animation-delay: -1s; }
+  .santa-slot.r img{ animation-delay: -2.5s; }
+  .santa-slot.c img{ animation-delay: -4s; }
+  .santa-puff{ position: absolute; z-index: 3; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(255,246,220,0.95), rgba(243,226,179,0.45) 45%, transparent 70%); }
   @keyframes santa-sway{ 50%{ translate: 0 -5px; rotate: 4deg; } }
   .santa-go{ position: relative; z-index: 1; color: var(--gold); font-size: 1.4rem; padding-left: 2px; }
   .santa-tk:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   @media (hover: hover){ .santa-tk:hover{ border-color: rgba(212,180,106,0.6); } }
   @media (max-width: 400px){ .santa-s{ white-space: normal; } }
-  @media (max-width: 380px){ .santa-r{ width: 104px; } .santa-r img{ width: 64px; } .santa-h{ font-size: 1.6rem; } }
-  @media (prefers-reduced-motion: reduce){ .santa-tk::after, .santa-snow, .santa-r img{ animation: none; } }
+  @media (max-width: 380px){ .santa-r{ width: 104px; } .santa-slot{ width: 64px; } .santa-h{ font-size: 1.6rem; } }
+  @media (prefers-reduced-motion: reduce){ .santa-tk::after, .santa-snow, .santa-slot img{ animation: none; } }
   .ss-sheet:focus{ outline: none; }
   .ss-sheet .sheet-body{ padding: 4px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
   .ss-shirts{ position: relative; height: 150px; margin: 6px 0 4px; }
@@ -1540,8 +1547,8 @@
     <section id="santa-section">
       <button type="button" class="santa-tk" id="santa-tk" aria-haspopup="dialog">
         <span class="santa-snow" aria-hidden="true"></span>
-        <span class="santa-l"><span class="santa-k">Secret Santa 2026</span><span class="santa-h">Coming <b>soon</b></span><span class="santa-s">One shirt from Good Shirts · $40&nbsp;max</span></span>
-        <span class="santa-r" aria-hidden="true"><img src="icons/santa/palmer.webp" alt="" width="294" height="251"><img src="icons/santa/sweetie.webp" alt="" width="300" height="289"><img src="icons/santa/downtown.webp" alt="" width="300" height="254"></span>
+        <span class="santa-l"><span class="santa-k">Secret Santa 2026</span><span class="santa-h">Coming <b>soon</b></span><span class="santa-s">One shirt from Good Shirts</span></span>
+        <span class="santa-r" aria-hidden="true"><span class="santa-slot l"><img src="icons/santa/shirts/31.webp" alt=""></span><span class="santa-slot r"><img src="icons/santa/shirts/10.webp" alt=""></span><span class="santa-slot c"><img src="icons/santa/downtown.webp" alt="" width="300" height="254"></span></span>
         <span class="santa-go" aria-hidden="true">›</span>
       </button>
     </section>
@@ -7020,6 +7027,71 @@
     const sec = document.getElementById('santa-section');
     if (!sec) return;
     if (new Date() >= new Date(2027, 0, 1)) { sec.remove(); return; }
+
+    // The two side shirts take turns: one poofs away and a new one flies in,
+    // from the cutouts in icons/santa/shirts (NN.webp) in a shuffled order.
+    // Paused while the card is off screen, the tab is hidden or the sheet is
+    // open. Making My Way Downtown stays in front.
+    const SHIRTS = 49;
+    const holder = sec.querySelector('.santa-r');
+    const slots = [...sec.querySelectorAll('.santa-slot.l img, .santa-slot.r img')];
+    const file = n => `icons/santa/shirts/${String(n).padStart(2, '0')}.webp`;
+    const sides = () => slots.map(i => i.getAttribute('src'));
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let order = [], k = 0, side = 0, busy = false, onScreen = true;
+    function nextFile() {
+      if (k >= order.length) {
+        const showing = sides();
+        order = [...Array(SHIRTS).keys()].filter(n => !showing.includes(file(n)));
+        for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+        k = 0;
+      }
+      return file(order[k++]);
+    }
+    function puff(img) {
+      const r = img.getBoundingClientRect(), box = holder.getBoundingClientRect();
+      const cx = r.left - box.left + r.width / 2, cy = r.top - box.top + r.height / 2;
+      for (let i = 0; i < 9; i++) {
+        const d = document.createElement('i');
+        d.className = 'santa-puff'; d.style.left = cx + 'px'; d.style.top = cy + 'px';
+        holder.appendChild(d);
+        const a = i / 9 * Math.PI * 2 + Math.random() * 0.5, dist = 24 + Math.random() * 22;
+        d.animate([{ transform: 'translate(0,0) scale(.4)', opacity: 1 }, { transform: `translate(${Math.cos(a) * dist}px,${Math.sin(a) * dist}px) scale(${0.8 + Math.random() * 1.4})`, opacity: 0 }],
+          { duration: 520 + Math.random() * 200, easing: 'cubic-bezier(.2,.7,.3,1)' }).finished.then(() => d.remove(), () => d.remove());
+      }
+    }
+    async function swap() {
+      if (busy || document.hidden || !onScreen || document.getElementById('ss-sheet')) return;
+      busy = true;
+      try {
+        const img = slots[side], left = side === 0;
+        side ^= 1;
+        const src = nextFile();
+        const pre = new Image(); pre.src = src; await pre.decode();
+        if (reduce) {
+          const out = img.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' });
+          await out.finished;
+          img.src = src;
+          out.cancel();
+          await img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 }).finished;
+          return;
+        }
+        puff(img);
+        const shadow = 'drop-shadow(0 8px 14px rgba(0,0,0,0.65))';
+        const poof = img.animate([{ transform: 'scale(1)', opacity: 1, filter: `${shadow} blur(0px)` }, { transform: 'scale(1.3)', opacity: 0, filter: `${shadow} blur(5px)` }],
+          { duration: 320, easing: 'ease-in', fill: 'forwards' });
+        await poof.finished;
+        img.src = src;
+        const from = left ? 'translate(-70px,-110px) rotate(-70deg) scale(.5)' : 'translate(90px,-100px) rotate(70deg) scale(.5)';
+        const fly = img.animate([{ transform: from, opacity: 0 }, { opacity: 1, offset: 0.25 }, { transform: 'none', opacity: 1 }],
+          { duration: 720, easing: 'cubic-bezier(.2,1.35,.4,1)' });
+        poof.cancel();
+        await fly.finished;
+      } catch (e) { /* a shirt that won't load: skip this turn */ }
+      finally { busy = false; }
+    }
+    if ('IntersectionObserver' in window) new IntersectionObserver(es => { onScreen = es[0].isIntersecting; }).observe(sec);
+    setInterval(swap, 3200);
     let lastFocus = null;
     const onKey = e => { if (e.key === 'Escape') close(); };
     function close() {
@@ -7035,10 +7107,10 @@
         <div class="sheet ss-sheet" id="ss-sheet" role="dialog" aria-modal="true" aria-label="Secret Santa 2026" tabindex="-1">
           <div class="sheet-grab"><span></span></div>
           <div class="sheet-body">
-            <div class="ss-shirts" aria-hidden="true"><img src="icons/santa/palmer.webp" alt=""><img src="icons/santa/sweetie.webp" alt=""><img src="icons/santa/downtown.webp" alt=""></div>
+            <div class="ss-shirts" aria-hidden="true">${sides().map(src => `<img src="${src}" alt="">`).join('')}<img src="icons/santa/downtown.webp" alt=""></div>
             <h2>Secret Santa 2026</h2>
             <ul class="ss-list">
-              <li>Everyone gets <b>one shirt</b> from thegoodshirts.com, <b>$40 max</b>.</li>
+              <li>Everyone gets <b>one shirt</b> from thegoodshirts.com.</li>
               <li>You'll sign up here with your size and where to ship it. Then a secret draw picks who you're shopping for.</li>
               <li>Sign-ups open soon.</li>
             </ul>
