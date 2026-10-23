@@ -1305,12 +1305,12 @@
   .santa-h{ display: block; margin: 8px 0 6px; font: 800 1.85rem/1 var(--scoreboard); letter-spacing: 0.01em; white-space: nowrap; }
   .santa-h b{ color: var(--gold-hi); font-weight: 800; }
   .santa-s{ display: block; color: var(--text-dim); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .santa-r{ position: relative; z-index: 1; width: 132px; height: 96px; }
+  .santa-r{ position: relative; z-index: 1; width: 176px; height: 96px; }
   /* Each shirt sits in a slot that places it; the img inside sways, and the
      side ones get swapped out by the script (a poof, then a new one flies in). */
   .santa-slot{ position: absolute; left: 50%; top: 50%; width: 80px; }
-  .santa-slot.l{ transform: translate(-92%, -50%) rotate(-15deg); }
-  .santa-slot.r{ transform: translate(-18%, -56%) rotate(13deg); }
+  .santa-slot.l{ transform: translate(-115%, -50%) rotate(-15deg); }
+  .santa-slot.r{ transform: translate(15%, -56%) rotate(13deg); }
   .santa-slot.c{ transform: translate(-50%, -44%) rotate(-2deg) scale(1.12); z-index: 2; }
   .santa-slot img{ display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 14px rgba(0,0,0,0.65)); animation: santa-sway 5s ease-in-out infinite; }
   .santa-slot.l img{ animation-delay: -1s; }
@@ -1322,14 +1322,15 @@
   .santa-tk:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   @media (hover: hover){ .santa-tk:hover{ border-color: rgba(212,180,106,0.6); } }
   @media (max-width: 400px){ .santa-s{ white-space: normal; } }
-  @media (max-width: 380px){ .santa-r{ width: 104px; } .santa-slot{ width: 64px; } .santa-h{ font-size: 1.6rem; } }
+  @media (min-width: 721px){ .santa-tk{ min-height: 132px; } .santa-r{ width: 232px; height: 120px; } .santa-slot{ width: 106px; } .santa-slot.l{ transform: translate(-110%, -50%) rotate(-15deg); } .santa-slot.r{ transform: translate(9%, -56%) rotate(13deg); } }
+  @media (max-width: 380px){ .santa-r{ width: 140px; } .santa-slot{ width: 64px; } .santa-h{ font-size: 1.6rem; } }
   @media (prefers-reduced-motion: reduce){ .santa-tk::after, .santa-snow, .santa-slot img{ animation: none; } }
   .ss-sheet:focus{ outline: none; }
   .ss-sheet .sheet-body{ padding: 4px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
   .ss-shirts{ position: relative; height: 150px; margin: 6px 0 4px; }
   .ss-shirts img{ position: absolute; left: 50%; top: 50%; width: 128px; height: auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,0.7)); }
-  .ss-shirts img:nth-child(1){ transform: translate(-112%, -50%) rotate(-12deg); }
-  .ss-shirts img:nth-child(2){ transform: translate(12%, -52%) rotate(12deg); }
+  .ss-shirts img:nth-child(1){ transform: translate(-130%, -50%) rotate(-12deg); }
+  .ss-shirts img:nth-child(2){ transform: translate(30%, -52%) rotate(12deg); }
   .ss-shirts img:nth-child(3){ transform: translate(-50%, -46%) scale(1.15); z-index: 1; }
   .ss-sheet h2{ margin: 6px 0 10px; text-align: center; font: 800 2rem/1 var(--scoreboard); }
   .ss-list{ margin: 0 0 14px; padding: 0; list-style: none; display: grid; gap: 8px; }
@@ -1548,7 +1549,7 @@
       <button type="button" class="santa-tk" id="santa-tk" aria-haspopup="dialog">
         <span class="santa-snow" aria-hidden="true"></span>
         <span class="santa-l"><span class="santa-k">Secret Santa 2026</span><span class="santa-h">Coming <b>soon</b></span><span class="santa-s">One shirt from Good Shirts</span></span>
-        <span class="santa-r" aria-hidden="true"><span class="santa-slot l"><img src="icons/santa/shirts/31.webp" alt=""></span><span class="santa-slot r"><img src="icons/santa/shirts/10.webp" alt=""></span><span class="santa-slot c"><img src="icons/santa/downtown.webp" alt="" width="300" height="254"></span></span>
+        <span class="santa-r" aria-hidden="true"><span class="santa-slot l"><img src="icons/santa/shirts/081.webp" alt=""></span><span class="santa-slot r"><img src="icons/santa/shirts/038.webp" alt=""></span><span class="santa-slot c"><img src="icons/santa/downtown.webp" alt="" width="300" height="254"></span></span>
         <span class="santa-go" aria-hidden="true">›</span>
       </button>
     </section>
@@ -7029,13 +7030,14 @@
     if (new Date() >= new Date(2027, 0, 1)) { sec.remove(); return; }
 
     // The two side shirts take turns: one poofs away and a new one flies in,
-    // from the cutouts in icons/santa/shirts (NN.webp) in a shuffled order.
+    // from every shirt design on thegoodshirts.com (icons/santa/shirts/NNN.webp)
+    // in a shuffled order.
     // Paused while the card is off screen, the tab is hidden or the sheet is
     // open. Making My Way Downtown stays in front.
-    const SHIRTS = 49;
+    const SHIRTS = 956;
     const holder = sec.querySelector('.santa-r');
     const slots = [...sec.querySelectorAll('.santa-slot.l img, .santa-slot.r img')];
-    const file = n => `icons/santa/shirts/${String(n).padStart(2, '0')}.webp`;
+    const file = n => `icons/santa/shirts/${String(n).padStart(3, '0')}.webp`;
     const sides = () => slots.map(i => i.getAttribute('src'));
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let order = [], k = 0, side = 0, busy = false, onScreen = true;
