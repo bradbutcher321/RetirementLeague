@@ -117,6 +117,35 @@
      side-by-side card lost this padding so the ribbon sat on Legs Hit. */
   @media (width > 700px){ .hero2-side{ padding-top: 46px; } }
 
+  /* ---------- Parlay hero, how alive it is (audit VII #11) ----------
+     Payout on the left, the chance to cash on the right, then one pip per
+     leg in game order -- gold once it has hit, red once it has missed, the
+     next one outlined -- with the weekday under each. The old Legs Hit/Lost/
+     Combined Odds/Split strip is folded into these. */
+  .hero2{ grid-template-columns: 1fr; }
+  .hero2-main > *{ position: relative; }
+  .pr-top{ display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; }
+  .pr-top .hero2-v{ margin-bottom: 0; }
+  .pr-chance{ text-align: right; min-width: 0; flex: none; }
+  .pr-chance .k{ color: var(--text-dim); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .pr-chance .v{ font-family: var(--scoreboard); font-weight: 800; font-size: clamp(1.4rem, 6vw, 1.9rem); line-height: 1.05; white-space: nowrap; }
+  .pr-chance .s{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; white-space: nowrap; }
+  .pr-pips{ display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); gap: 4px; margin-top: 16px; }
+  .pr-pips i{ position: relative; height: 30px; border-radius: 7px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); display: grid; place-items: center; font: 800 0.56rem/1 var(--body); font-style: normal; color: var(--text-dim); }
+  .pr-pips i.hit{ background: var(--gold); border-color: var(--gold); color: var(--ctl-on-ink); }
+  .pr-pips i.miss{ background: var(--loss-tint); border-color: var(--loss); color: var(--loss); }
+  .pr-pips i.next{ border-color: var(--gold); color: var(--gold); box-shadow: 0 0 0 3px rgba(212,180,106,0.15); }
+  .pr-pips i.mine{ box-shadow: inset 0 -3px 0 var(--me-ring, #7AAEDB); }
+  .pr-pips i.next.mine{ box-shadow: 0 0 0 3px rgba(212,180,106,0.15), inset 0 -3px 0 var(--me-ring, #7AAEDB); }
+  .pr-pips i.rec::after{ content: ''; position: absolute; top: -6px; bottom: -6px; left: -3px; border-left: 2px dotted rgba(212,180,106,0.7); }
+  .pr-days{ display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); gap: 4px; margin-top: 6px; font-size: 0.56rem; color: var(--text-dim); font-weight: 700; text-align: center; letter-spacing: 0.04em; text-transform: uppercase; }
+  .pr-line{ display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--item); font-size: 0.8rem; line-height: 1.4; color: var(--text-dim); }
+  .pr-line b{ color: var(--text); font-weight: 600; }
+  .pr-line.rec{ border-color: var(--lead-line); background: var(--lead-tint); }
+  .pr-line svg{ flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--gold); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .pr-split{ margin-top: 12px; text-align: right; color: var(--text-dim); font-size: 0.78rem; }
+  .pr-split b{ font-family: var(--scoreboard); font-weight: 800; font-size: 1rem; color: var(--gold); }
+
   .hero-chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
   .hero-chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); }
   .hero-chip.loss{ border-color: rgba(214,98,79,0.4); background: rgba(214,98,79,0.08); color: var(--loss); font-weight: 600; }
@@ -181,7 +210,7 @@
     <footer id="site-footer" data-source="Data from the league sheet" data-note="Refreshes every 10 minutes"></footer>
   </div>
 
-<script src="nav.js?v=38"></script>
+<script src="nav.js?v=39"></script>
 <script src="page-common.js?v=41"></script>
 <script src="share.js?v=1"></script>
 <script src="parlay-common.js?v=1"></script>
@@ -329,7 +358,88 @@
     return '<span class="badge dim">Pending</span>';
   }
 
-  function renderParlay(week, players, live) {
+  // ---------- Parlay hero (audit VII #11) ----------
+  const decOdds = o => 1 + (o > 0 ? o / 100 : 100 / -o);
+  const amerOdds = d => {
+    const x = d - 1;
+    return x >= 1 ? '+' + Math.round(x * 100).toLocaleString() : '−' + Math.round(100 / x).toLocaleString();
+  };
+  const HERO_ICON = {
+    chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
+    trophy: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M9 20h6"/></svg>',
+  };
+  // The most legs any parlay has won before its first loss, how many times
+  // that happened, and how many weeks have been graded -- from the all-time
+  // legs_won_before_loss table in /parlay-stats.
+  function furthestRecord(stats) {
+    const rows = stats && stats.all && stats.all.legs_won_before_loss;
+    if (!rows || !rows.length) return null;
+    const graded = rows.reduce((t, r) => t + r.occurrences, 0);
+    const top = rows.filter(r => r.occurrences > 0).reduce((m, r) => Math.max(m, r.legs), 0);
+    const best = rows.find(r => r.legs === top);
+    return graded ? { legs: top, times: best.occurrences, graded } : null;
+  }
+
+  function heroHtml(week, legs, wins, losses, status, statusTone, live, record) {
+    const alive = status === 'Alive';
+    const pending = legs.filter(([, p]) => p.result === 'Pending');
+    const nextI = alive ? legs.findIndex(([, p]) => p.result === 'Pending') : -1;
+    const far = record ? record.legs : -1;
+
+    // Everything still to come, as one number: the chance is the product of
+    // each pending leg's implied probability (the odds carry the book's cut,
+    // so the true chance is a little worse than this).
+    const priced = pending.every(([, p]) => typeof p.odds === 'number');
+    const dLeft = pending.reduce((t, [, p]) => t * decOdds(p.odds), 1);
+    const chance = alive && pending.length && priced
+      ? `<div class="pr-chance"><div class="k">Chance to cash</div><div class="v">1 in ${Math.round(dLeft).toLocaleString()}</div><div class="s">${pending.length} left at ${amerOdds(dLeft)}</div></div>`
+      : `<div class="pr-chance"><div class="k">Combined odds</div><div class="v">${fmtOdds(week.final.odds)}</div><div class="s">${wins} of ${legs.length} legs hit</div></div>`;
+
+    const pips = legs.map(([name, p], i) => {
+      const cls = [p.result === 'Win' ? 'hit' : p.result === 'Loss' ? 'miss' : i === nextI ? 'next' : '',
+        isMe(name) ? 'mine' : '', alive && far > 0 && wins <= far && i === far ? 'rec' : ''].filter(Boolean).join(' ');
+      return `<i class="${cls}" title="${esc(name)}">${esc(monogram(name))}</i>`;
+    }).join('');
+    const days = legs.map(([, p]) => { const k = kickoff(p.gametime); return `<span>${k ? k.day.slice(0, 3) : ''}</span>`; }).join('');
+
+    let lines = '';
+    if (nextI >= 0) {
+      const [name, p] = legs[nextI], k = kickoff(p.gametime);
+      const on = (live || {})[`${week.year}:${week.week}:${name}`];
+      const when = on ? 'on now' : k ? `${k.day.slice(0, 3)} ${k.time} ${k.ampm}` : 'time TBD';
+      const pct = typeof p.odds === 'number' ? ` · <b>${Math.round(100 / decOdds(p.odds))}%</b> by the odds` : '';
+      lines += `<div class="pr-line">${HERO_ICON.chev}<span>${on ? 'Live' : 'Next'}: <b>${esc(name)}</b> · ${esc(betTypeOf(p))} · ${when}${pct}</span></div>`;
+    }
+    if (alive && record) {
+      const n = record.legs, legWord = n === 1 ? 'leg' : 'legs';
+      lines += wins > n
+        ? `<div class="pr-line rec">${HERO_ICON.trophy}<span><b>${wins} legs in and counting</b> — the furthest a parlay has ever gotten. The old best was ${n}.</span></div>`
+        : wins === n
+          ? `<div class="pr-line rec">${HERO_ICON.trophy}<span>One more hit and this is <b>the furthest a parlay has ever gotten</b>. In ${record.graded} weeks none has won more than ${n} ${legWord} before its first loss.</span></div>`
+          : `<div class="pr-line">${HERO_ICON.trophy}<span>Furthest any parlay has gotten: <b>${n} ${legWord}</b> before the first loss (${record.times} ${record.times === 1 ? 'time' : 'times'} in ${record.graded} weeks). Leg ${n + 1} would be a first.</span></div>`;
+    }
+    const split = week.final.split ? `<div class="pr-split">Split <b>${fmtMoney(week.final.split)}</b> each</div>` : '';
+
+    return `
+      <div class="glass hero2" style="position:relative">
+        <span class="badge week-ribbon">${esc(week.year)} · Week ${esc(week.week)}</span>
+        <span class="badge status-ribbon ${statusTone}">${alive && legs.length ? `Alive · ${wins} of ${legs.length}` : status}</span>
+        <div class="hero2-main glow">
+          <div class="pr-top">
+            <div><div class="gold-label-xl">Payout</div><div class="hero2-v">${fmtMoney(week.final.payout)}</div></div>
+            ${chance}
+          </div>
+          <div class="hero-chips">
+            ${week.sacko ? `<span class="hero-chip loss">Sacko: ${esc(week.sacko)}</span>` : ''}
+            ${week.killed_by.length ? `<span class="hero-chip loss">Killed by: ${esc(week.killed_by.join(' & '))}</span>` : ''}
+          </div>
+          ${legs.length ? `<div class="pr-pips" style="--n:${legs.length}" role="img" aria-label="${wins} of ${legs.length} legs hit${losses ? `, ${losses} lost` : ''}">${pips}</div><div class="pr-days" style="--n:${legs.length}" aria-hidden="true">${days}</div>` : ''}
+          ${lines}${split}
+        </div>
+      </div>`;
+  }
+
+  function renderParlay(week, players, live, record) {
     const legs = legsSorted(week, players);
     const wins = legs.filter(([, p]) => p.result === 'Win').length;
     const losses = legs.filter(([, p]) => p.result === 'Loss').length;
@@ -337,25 +447,7 @@
     const result = week.final.result;
     const status = result === 'Loss' ? 'Dead' : result === 'Win' ? 'Hit' : 'Alive';
     const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
-    const hero = `
-      <div class="glass hero2" style="position:relative">
-        <span class="badge week-ribbon">${esc(week.year)} · Week ${esc(week.week)}</span>
-        <span class="badge status-ribbon ${statusTone}">${status}</span>
-        <div class="hero2-main glow">
-          <div class="gold-label-xl">Payout</div>
-          <div class="hero2-v">${fmtMoney(week.final.payout)}</div>
-          <div class="hero-chips">
-            ${week.sacko ? `<span class="hero-chip loss">Sacko: ${esc(week.sacko)}</span>` : ''}
-            ${week.killed_by.length ? `<span class="hero-chip loss">Killed by: ${esc(week.killed_by.join(' & '))}</span>` : ''}
-          </div>
-        </div>
-        <div class="hero2-side">
-          <div class="hs"><div class="hs-l">Legs Hit</div><div class="hs-r"><div class="hs-v gold">${wins}</div></div></div>
-          <div class="hs"><div class="hs-l">Legs Lost</div><div class="hs-r"><div class="hs-v${losses > 0 ? ' loss' : ''}">${losses}</div></div></div>
-          <div class="hs"><div class="hs-l">Combined Odds</div><div class="hs-r"><div class="hs-v">${fmtOdds(week.final.odds)}</div></div></div>
-          <div class="hs"><div class="hs-l">Split</div><div class="hs-r"><div class="hs-v">${fmtMoney(week.final.split)}</div></div></div>
-        </div>
-      </div>`;
+    const hero = heroHtml(week, legs, wins, losses, status, statusTone, live, record);
 
     // Kickoff order, under a heading for each day the legs are played.
     const rows = [];
@@ -428,6 +520,7 @@
     .then(data => {
       const { players, weeks, stats } = data;
       let live = data.live || {};
+      const record = furthestRecord(stats);
       const current = weeks[weeks.length - 1];
       const years = [...new Set(weeks.map(w => w.year))].sort((a, b) => b - a);
       const yearSel = document.getElementById('year-select');
@@ -456,7 +549,7 @@
         if (!w) return;
         const isCurrent = w === current;
         backBtn.hidden = isCurrent;
-        container.innerHTML = renderParlay(w, players, live);
+        container.innerHTML = renderParlay(w, players, live, record);
         shot.queue();
       }
       // Delegated once on the container, since showSelected() rebuilds the

@@ -134,7 +134,7 @@
   // trail of pages lives in sessionStorage; when the page before this one is
   // on the site, the button is history.back(), so the page you return to
   // keeps its scroll and open cards. With no trail (a shared link, a push)
-  // it goes to the History hub.
+  // it goes to the page's own tab, or the History hub if it has none.
   const TRAIL_KEY = 'rl-trail';
   const TAB_FILES = TABS.map(t => t.href);
   const here = () => currentFile() + location.search;
@@ -163,10 +163,14 @@
     const eb = document.querySelector('.wrap > header .eyebrow');
     if (!eb) return;
     const prev = trail.length >= 2 ? trail[trail.length - 2] : null;
-    const label = prev ? prev.t : 'History';
+    // No page before this one (a push, a shared link, the Home Screen): go to
+    // the tab the page lives under -- Parlay Legs is a Parlay page -- and only
+    // to the History hub for a page that belongs to no tab.
+    const own = TABS.find(t => t.pages.includes(file));
+    const label = prev ? prev.t : own ? own.label : 'History';
     const a = document.createElement('a');
     a.className = 'hdr-back';
-    a.href = prev ? prev.f : 'history.html';
+    a.href = prev ? prev.f : own ? own.href : 'history.html';
     a.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>${esc(label)}</span>`;
     a.setAttribute('aria-label', `Back to ${label}`);
     a.addEventListener('click', e => {

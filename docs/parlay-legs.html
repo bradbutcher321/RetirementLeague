@@ -218,7 +218,7 @@
     <footer id="site-footer" data-source="Lines from Hard Rock Bet · Games from ESPN"></footer>
   </div>
 
-<script src="nav.js?v=38"></script>
+<script src="nav.js?v=39"></script>
 <script src="page-common.js?v=41"></script>
 <script src="parlay-note.js?v=2"></script>
 <script>
@@ -630,7 +630,7 @@
     document.getElementById('mine-title').innerHTML = other
       ? `<span>${esc(forWhom())}'s leg</span><button type="button" class="link-btn" id="back-mine" style="padding:0;min-height:32px">Back to mine</button>` : 'Your leg';
     document.getElementById('chips').innerHTML = board ? `<span class="chip gold">${board.year} · Week ${board.week}</span>
-      <span class="chip${board.open && !board.locked ? '' : ' loss'}">${board.locked ? 'Locked · legs confirmed' : board.open ? `Locks ${esc(etWhen(board.locksAt))}` : `Locked · opens ${esc(etWhen(board.opensAt))}`}</span>
+      <span class="chip">${board.locked ? 'Locked · legs confirmed' : board.open ? `Locks ${esc(etWhen(board.locksAt))}` : `Locked · opens ${esc(etWhen(board.opensAt))}`}</span>
       <span class="chip">${board.legs.length} of ${board.players.length} in</span>` : '';
     if (cm) renderCm();
     else {
