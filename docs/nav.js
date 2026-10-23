@@ -828,7 +828,7 @@
   function drawFeedback(body, auth) {
     const kind = FB_KINDS.find(k => k[0] === fbKind) || FB_KINDS[0];
     body.innerHTML = `
-      <button type="button" class="you-back" id="you-fb-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>You</button>
+      <button type="button" class="you-back" id="you-fb-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>You</span></button>
       <div class="you-sec-h">Send feedback</div>
       <div class="you-sub">Brad and Jon get it right away.</div>
       <div class="you-picks you-fb-kinds" role="radiogroup" aria-label="Kind">${FB_KINDS.map(([k, label]) =>
