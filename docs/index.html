@@ -1287,6 +1287,51 @@
      (muted gold) only shows when it says something. */
   #recap-section{ margin-bottom: 14px; }
   #notice-section{ margin-bottom: 14px; }
+
+  /* Secret Santa teaser (mockup part 2, option B): a ticket card under the
+     title with three Good Shirts swaying on the right. Until the real page
+     exists, a tap opens a short sheet about what's coming. */
+  #santa-section{ margin: -8px 0 18px; }
+  .santa-tk{ --gold-hi: #F3E2B3; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; width: 100%; min-height: 112px; padding: 14px 8px 14px 18px; border-radius: var(--card-r, 22px); border: 1px solid rgba(212,180,106,0.38); text-align: left; overflow: hidden; cursor: pointer; color: var(--text); font: inherit;
+    background: radial-gradient(120% 150% at 100% 50%, rgba(212,180,106,0.17), transparent 55%), linear-gradient(160deg, #17140f, #0c0b09);
+    box-shadow: var(--card-edge, inset 0 1px 0 rgba(255,255,255,0.065)), 0 18px 40px -24px rgba(212,180,106,0.45); }
+  .santa-tk::after{ content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 40%, rgba(255,240,200,0.08) 50%, transparent 60%); background-size: 250% 100%; animation: santa-sheen 6s ease-in-out infinite; }
+  @keyframes santa-sheen{ 0%{ background-position: 120% 0; } 60%, 100%{ background-position: -60% 0; } }
+  .santa-snow{ position: absolute; inset: 0; pointer-events: none; opacity: 0.75; background-size: 150px 120px; animation: santa-snow 8s linear infinite;
+    background-image: radial-gradient(1.6px 1.6px at 20% 30%, rgba(214,230,242,0.7), transparent), radial-gradient(1px 1px at 62% 72%, rgba(214,230,242,0.6), transparent), radial-gradient(1.3px 1.3px at 82% 18%, rgba(214,230,242,0.6), transparent), radial-gradient(1px 1px at 40% 88%, rgba(214,230,242,0.5), transparent); }
+  @keyframes santa-snow{ to{ background-position: 24px 120px; } }
+  .santa-l{ position: relative; z-index: 1; min-width: 0; }
+  .santa-k{ display: block; color: var(--gold); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
+  .santa-h{ display: block; margin: 8px 0 6px; font: 800 1.85rem/1 var(--scoreboard); letter-spacing: 0.01em; white-space: nowrap; }
+  .santa-h b{ color: var(--gold-hi); font-weight: 800; }
+  .santa-s{ display: block; color: var(--text-dim); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .santa-r{ position: relative; z-index: 1; width: 132px; height: 96px; }
+  .santa-r img{ position: absolute; left: 50%; top: 50%; width: 80px; height: auto; filter: drop-shadow(0 8px 14px rgba(0,0,0,0.65)); animation: santa-sway 5s ease-in-out infinite; }
+  .santa-r img:nth-child(1){ transform: translate(-92%, -50%) rotate(-15deg); animation-delay: -1s; }
+  .santa-r img:nth-child(2){ transform: translate(-18%, -56%) rotate(13deg); animation-delay: -2.5s; }
+  .santa-r img:nth-child(3){ transform: translate(-50%, -44%) rotate(-2deg) scale(1.12); z-index: 2; animation-delay: -4s; }
+  @keyframes santa-sway{ 50%{ translate: 0 -5px; rotate: 4deg; } }
+  .santa-go{ position: relative; z-index: 1; color: var(--gold); font-size: 1.4rem; padding-left: 2px; }
+  .santa-tk:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  @media (hover: hover){ .santa-tk:hover{ border-color: rgba(212,180,106,0.6); } }
+  @media (max-width: 400px){ .santa-s{ white-space: normal; } }
+  @media (max-width: 380px){ .santa-r{ width: 104px; } .santa-r img{ width: 64px; } .santa-h{ font-size: 1.6rem; } }
+  @media (prefers-reduced-motion: reduce){ .santa-tk::after, .santa-snow, .santa-r img{ animation: none; } }
+  .ss-sheet:focus{ outline: none; }
+  .ss-sheet .sheet-body{ padding: 4px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
+  .ss-shirts{ position: relative; height: 150px; margin: 6px 0 4px; }
+  .ss-shirts img{ position: absolute; left: 50%; top: 50%; width: 128px; height: auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,0.7)); }
+  .ss-shirts img:nth-child(1){ transform: translate(-112%, -50%) rotate(-12deg); }
+  .ss-shirts img:nth-child(2){ transform: translate(12%, -52%) rotate(12deg); }
+  .ss-shirts img:nth-child(3){ transform: translate(-50%, -46%) scale(1.15); z-index: 1; }
+  .ss-sheet h2{ margin: 6px 0 10px; text-align: center; font: 800 2rem/1 var(--scoreboard); }
+  .ss-list{ margin: 0 0 14px; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .ss-list li{ padding: 10px 12px; border: 1px solid var(--item-line, var(--line)); border-radius: 12px; background: var(--item, rgba(255,255,255,0.025)); font-size: 0.9rem; line-height: 1.4; }
+  .ss-list b{ color: var(--gold); font-weight: 600; }
+  @media (min-width: 721px){
+    .ss-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: 440px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
+    .ss-sheet .sheet-grab{ visibility: hidden; height: 8px; padding: 0; }
+  }
   .notice-stack{ display: grid; gap: 10px; }
   .notice-chip{ font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); white-space: nowrap; }
   .notice-box{ padding: 12px 14px; font-size: 0.92rem; line-height: 1.4; }
@@ -1489,6 +1534,17 @@
         </div>
       </div>
     </header>
+
+    <!-- Secret Santa teaser: up through Dec 31 (the script below hides it
+         after that). The real Secret Santa page will replace the sheet. -->
+    <section id="santa-section">
+      <button type="button" class="santa-tk" id="santa-tk" aria-haspopup="dialog">
+        <span class="santa-snow" aria-hidden="true"></span>
+        <span class="santa-l"><span class="santa-k">Secret Santa 2026</span><span class="santa-h">Coming <b>soon</b></span><span class="santa-s">One shirt from Good Shirts · $40&nbsp;max</span></span>
+        <span class="santa-r" aria-hidden="true"><img src="icons/santa/palmer.webp" alt="" width="294" height="251"><img src="icons/santa/sweetie.webp" alt="" width="300" height="289"><img src="icons/santa/downtown.webp" alt="" width="300" height="254"></span>
+        <span class="santa-go" aria-hidden="true">›</span>
+      </button>
+    </section>
 
     <!-- Your standing, once you've picked your team (renderStatusLine): where
          you sit, how far from the playoff line, your odds, who you play. Its
@@ -6955,6 +7011,47 @@
       sec.innerHTML = `<div class="notice-stack">${html}</div>`;
       sec.hidden = false;
     }).catch(() => {});
+  })();
+</script>
+<script>
+  // Secret Santa teaser. Gone after Dec 31; until the real page exists, a
+  // tap opens a short sheet about what's coming.
+  (function () {
+    const sec = document.getElementById('santa-section');
+    if (!sec) return;
+    if (new Date() >= new Date(2027, 0, 1)) { sec.remove(); return; }
+    let lastFocus = null;
+    const onKey = e => { if (e.key === 'Escape') close(); };
+    function close() {
+      document.getElementById('ss-sheet')?.remove();
+      document.getElementById('ss-scrim')?.remove();
+      document.removeEventListener('keydown', onKey);
+      if (lastFocus && document.contains(lastFocus)) lastFocus.focus({ preventScroll: true });
+    }
+    document.getElementById('santa-tk').addEventListener('click', () => {
+      if (document.getElementById('ss-sheet')) return;
+      lastFocus = document.activeElement;
+      document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="ss-scrim"></div>
+        <div class="sheet ss-sheet" id="ss-sheet" role="dialog" aria-modal="true" aria-label="Secret Santa 2026" tabindex="-1">
+          <div class="sheet-grab"><span></span></div>
+          <div class="sheet-body">
+            <div class="ss-shirts" aria-hidden="true"><img src="icons/santa/palmer.webp" alt=""><img src="icons/santa/sweetie.webp" alt=""><img src="icons/santa/downtown.webp" alt=""></div>
+            <h2>Secret Santa 2026</h2>
+            <ul class="ss-list">
+              <li>Everyone gets <b>one shirt</b> from thegoodshirts.com, <b>$40 max</b>.</li>
+              <li>You'll sign up here with your size and where to ship it. Then a secret draw picks who you're shopping for.</li>
+              <li>Sign-ups open soon.</li>
+            </ul>
+            <a class="rv-go" href="https://thegoodshirts.com/" target="_blank" rel="noopener">Browse Good Shirts</a>
+            <button type="button" class="rv-done">Done</button>
+          </div>
+        </div>`);
+      const sheet = document.getElementById('ss-sheet');
+      document.getElementById('ss-scrim').addEventListener('click', close);
+      sheet.querySelector('.rv-done').addEventListener('click', close);
+      document.addEventListener('keydown', onKey);
+      sheet.focus({ preventScroll: true });
+    });
   })();
 </script>
 <script src="track.js?v=2" defer></script>
