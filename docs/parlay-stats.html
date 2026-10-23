@@ -40,50 +40,127 @@
 <link rel="stylesheet" href="theme.css?v=37">
 <link rel="stylesheet" href="nav.css?v=29">
 <style>
-  /* One tab row (the four groups of stats) with the Year beside it. Each group's
-     cards sit in pairs in the grid below, so no second row of tabs is needed. */
+  /* Four tabs and the Year on one row (redesign 2026-10-22): Parlays (the
+     parlay itself), Leaders (every manager ranking, one card a stat),
+     Bets (what kinds of bets win) and Managers (one manager at a time).
+     A little less padding than the shared tab so all four fit beside the
+     Year on an iPhone without the track scrolling. */
+  #category-tab-row .tab{ padding: 0 8px; }
+  /* The Year only ever holds All-Time or a year, so it needn't keep the
+     shared 140px floor (sized for manager names). Fixed rather than
+     shrink-to-fit, so it doesn't change size between options either. */
+  @media (max-width: 600px){ #scope-select{ min-width: 0; width: 102px; padding: 0 10px 0 12px; white-space: nowrap; } }
   .stats-cards{ margin-top: 4px; }
-
-  /* ---------- Stat cards ----------
-     .card-grid, the .stat-card family and .pill all live in theme.css; what
-     stays here is this page's two departures from them. */
+  .tab-view{ display: grid; gap: 14px; }
   .stat-card{ overflow: hidden; }
-  .pill.flat{ color: var(--text-dim); border-color: var(--line); }
+  .stat-card-title.split{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .pm-cap{ display: block; color: var(--text-dim); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
 
-  /* Ranked rows: Game Records' .cols/.ln pattern -- a plain two-column list,
-     the record holder picked out with the shared outline accent. */
-  .cols{ display: flex; flex-direction: column; }
-  .ln{
-    display: grid; grid-template-columns: 30px minmax(0,1fr) auto; align-items: center; gap: 12px;
-    background: var(--item); border: 1px solid var(--item-line); border-radius: 10px;
-    padding: 9px 12px; margin-top: 6px; min-height: 58px;
+  /* ---------- Parlays ---------- */
+  .ph-big{ font-family: var(--scoreboard); font-weight: 800; font-size: 3.4rem; line-height: 0.95; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .ph-big small{ font-size: 0.5em; color: var(--text-dim); font-weight: 700; margin-left: 4px; }
+  .ph-sub{ color: var(--text-dim); font-size: 0.84rem; margin-top: 8px; line-height: 1.45; }
+  .ph-sub b{ color: var(--text); font-weight: 600; }
+
+  /* Every parlay: a row per week, a square per leg in kickoff order, the
+     first loss crossed and everything after it faded. */
+  .pg-yr{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 12px 4px 4px; }
+  .pg-yr:first-child{ margin-top: 0; }
+  .pg-yr .r{ font-variant-numeric: tabular-nums; }
+  .pg-row{ display: grid; grid-template-columns: 38px minmax(0, 1fr) 40px; gap: 8px; align-items: center; width: 100%; padding: 3px 4px; margin: 1px 0; border: 1px solid transparent; border-radius: 8px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .pg-row.sel{ background: rgba(255,255,255,0.04); border-color: var(--ctl-line); }
+  @media (hover: hover){ .pg-row:hover{ background: rgba(255,255,255,0.04); } }
+  .pg-wk{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; color: var(--text-dim); }
+  .pg-cells{ display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; }
+  .pc{ height: 18px; border-radius: 4px; border: 1px solid var(--ctl-line); position: relative; }
+  .pc.Win{ background: var(--turf); border-color: var(--turf); }
+  .pc.Loss{ background: var(--loss); border-color: var(--loss); }
+  .pc.after{ opacity: 0.28; }
+  .pc.Pending{ border-style: dashed; }
+  .pc.kill::after{ content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 800; line-height: 1; color: #1A0A07; }
+  .pg-n{ font-family: var(--scoreboard); font-weight: 700; font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
+  .pg-n small{ color: var(--text-dim); font-size: 0.75em; }
+  .pg-key{ display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--text-dim); font-size: 0.72rem; margin-top: 12px; }
+  .pg-key span{ display: inline-flex; align-items: center; gap: 6px; }
+  .pg-key .pc{ width: 14px; height: 14px; }
+  .pg-key .pc.kill::after{ font-size: 9px; }
+  .pg-detail{ margin-top: 12px; padding: 10px 12px; font-size: 0.84rem; line-height: 1.5; }
+  .pg-detail .dim{ color: var(--text-dim); }
+  .pg-detail a{ color: var(--gold); font-weight: 600; text-decoration: none; }
+  @media (min-width: 721px){
+    .pg-cells{ grid-template-columns: repeat(12, minmax(0, 40px)); gap: 5px; }
+    .pg-row{ grid-template-columns: 44px auto minmax(0, 1fr); }
   }
-  .ln.norank{ grid-template-columns: minmax(0,1fr) auto; }
-  .ln .rk{ font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); text-align: center; font-size: 1.2rem; }
-  .ln .tm{ font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ln .meta{ color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ln.rec.up{ border-color: var(--win-line); background: var(--win-tint); }
-  .ln.rec.up .rk{ color: var(--turf); }
-  .ln.rec.down{ border-color: var(--loss-line); background: var(--loss-tint); }
-  .ln.rec.down .rk{ color: var(--loss); }
-  .row-stats{ display: flex; gap: 14px; }
-  .row-stat{ text-align: center; min-width: 34px; }
-  .row-stat b.up{ color: var(--turf); }
-  .row-stat b.down{ color: var(--loss); }
-  .ln-val{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 
-  /* ---------- Histograms ---------- */
-  .hist-row{ display: grid; grid-template-columns: 26px 1fr 30px; align-items: center; gap: 10px; padding: 5px 16px; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
-    .hist-row:last-child{ padding-bottom: 12px; }
-  .hist-label{ color: var(--text-dim); text-align: right; }
-  .hist-track{ height: 10px; }
-  .hist-bar{ height: 100%; border-radius: 0 4px 4px 0; min-width: 0; }
-  .hist-bar.low{ background: var(--loss); }
-  .hist-bar.mid{ background: var(--turf); }
-  .hist-bar.full{ background: var(--gold); }
-  .hist-count{ text-align: right; font-weight: 600; }
-  .hist-count.zero{ color: var(--text-dim); font-weight: 400; }
+  /* How far they got: one dot per finished parlay over its legs-hit count. */
+  .uc{ display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 4px; align-items: end; }
+  .uc-col{ display: flex; flex-direction: column-reverse; gap: 3px; align-items: center; }
+  .uc-dot{ width: 100%; max-width: 22px; aspect-ratio: 1; border-radius: 50%; background: rgba(212,180,106,0.35); }
+  .uc-dot.most{ background: var(--gold); }
+  .uc-ax{ display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 4px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 5px; }
+  .uc-ax span{ text-align: center; color: var(--text-dim); font-size: 0.66rem; font-variant-numeric: tabular-nums; }
+  .uc-cap{ display: flex; justify-content: space-between; gap: 10px; color: var(--text-dim); font-size: 0.72rem; margin-top: 8px; }
+  .uc-cap b{ color: var(--gold); }
+  .stat-card-title .scope-row{ margin: 0; }
 
+  .wk-list{ display: grid; gap: 6px; }
+  a.wk{ display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 12px; align-items: center; color: inherit; text-decoration: none; }
+  @media (hover: hover){ a.wk:hover{ background: var(--item-hover); } }
+  .wk-t{ font-weight: 700; font-size: 0.9rem; }
+  .wk-s{ color: var(--text-dim); font-size: 0.76rem; grid-column: 1; }
+  .wk-v{ grid-column: 2; grid-row: 1 / span 2; text-align: right; }
+  .wk-v b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.35rem; color: var(--gold); line-height: 1; font-variant-numeric: tabular-nums; }
+  .wk-v span{ display: block; margin-top: 3px; color: var(--text-dim); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ---------- Leaders: a card per stat ----------
+     The leader big (every tied name), #2 and #3 under it, the full 12 in a
+     sheet (phone) or a popover under the card (desktop), as Game Records
+     opens a record's top 10. Any name opens that manager's tab. */
+  .lgrid{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  /* Ten stats: two columns on a phone, five on a desktop (two full rows). */
+  @media (min-width: 900px){ .lgrid{ grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; } }
+  .lc{ display: flex; flex-direction: column; min-width: 0; }
+  .lc-t{ padding: 13px 14px 0; font-weight: 700; font-size: 0.84rem; }
+  .lc-lead{ padding: 8px 14px 0; }
+  .lc-lead .v{ font-family: var(--scoreboard); font-weight: 800; font-size: 2rem; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lc.bad .lc-lead .v{ color: var(--loss); }
+  .lc-lead .n{ font-weight: 700; font-size: 0.9rem; margin-top: 4px; overflow-wrap: anywhere; }
+  .lc-lead .s{ color: var(--text-dim); font-size: 0.7rem; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lc-next{ margin: 10px 10px 0; display: grid; gap: 2px; }
+  .lc-next > div{ display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 6px; font-size: 0.76rem; padding: 3px 4px; }
+  .lc-next .rk{ color: var(--text-dim); font-family: var(--scoreboard); font-weight: 700; }
+  .lc-next .n{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lc-next .v{ font-family: var(--scoreboard); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .lc-all{ margin: auto 10px 10px; padding-top: 10px; }
+  .lc-all button{ width: 100%; height: 32px; border-radius: 16px; border: 1px solid var(--ctl-line); background: none; color: var(--text-dim); font: inherit; font-size: 0.76rem; font-weight: 600; cursor: pointer; }
+  .lc-all button.on{ color: var(--gold); border-color: var(--lead-line); }
+  @media (hover: hover){ .lc-all button:hover{ color: var(--text); background: rgba(255,255,255,0.05); } }
+  .lc .mgr-tap{ background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+  .lc.has-pop{ border-color: var(--lead-line); }
+
+  .ls-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .ls-title{ font-weight: 700; font-size: 1rem; }
+  .ls-note{ color: var(--text-dim); font-size: 0.76rem; line-height: 1.4; margin: 4px 0 10px; }
+  .ls-rows{ display: grid; gap: 4px; padding-bottom: 6px; }
+  .ls-row{ display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 12px; min-height: 44px; width: 100%; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  @media (hover: hover){ .ls-row:hover{ background: var(--item-hover); } }
+  .ls-row.top{ border-color: var(--lead-line); background: var(--lead-tint); }
+  .ls-row.top.bad{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .ls-row .rk{ font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); text-align: center; font-size: 1.05rem; }
+  .ls-row .n{ font-weight: 700; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ls-row .s{ color: var(--text-dim); font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ls-row .v{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.15rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ls-row .v.up{ color: var(--turf); } .ls-row .v.down{ color: var(--loss); }
+  #ls-pop{ max-height: 70vh; overflow-y: auto; }
+
+  /* ---------- Bets ---------- */
+  .bets-head{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  @media (min-width: 721px){ .bets-head{ grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .bh{ padding: 12px; min-width: 0; }
+  .bh .v{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; line-height: 1.05; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bh .v.up{ color: var(--turf); } .bh .v.down{ color: var(--loss); }
+  .bh .s{ color: var(--text-dim); font-size: 0.74rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .pm-tile.thin b{ color: var(--text-dim); }
   /* ---------- Managers tab ----------
      One manager's parlay franchise (mockup option A, 2026-10-22): the
      shared .fhero up top, then Overview / Splits / Legs. Everything is
@@ -96,7 +173,6 @@
   .pm-avatar img{ width: 100%; height: 100%; object-fit: cover; display: block; }
   .pm-ph{ position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--scoreboard); font-weight: 800; font-size: 1.3rem; color: #fff; }
   .pm-avatar img + .pm-ph{ display: none; }
-  .stat-card-title.split{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 
   /* $100 on every leg: one gold line, the ground above $0 green and below
      it red, a dot per graded leg in its result's colour. */
@@ -134,7 +210,6 @@
   .pm-pod b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.6rem; line-height: 1.05; color: var(--gold); font-variant-numeric: tabular-nums; }
   .pm-pod b.up{ color: var(--turf); } .pm-pod b.down{ color: var(--loss); }
   .pm-pod small{ display: block; color: var(--text-dim); font-size: 0.7rem; margin-top: 3px; }
-  .pm-cap{ display: block; color: var(--text-dim); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
 
   /* Longest odds hit / safest miss. */
   .pm-pair{ display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
@@ -229,186 +304,228 @@
   // ---------- Stat cards ----------
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const pill = (text, up) => `<span class="pill ${up ? 'up' : 'down'}">${text}</span>`;
-  const winPill = pct => pct === null || pct === undefined ? '<span class="pill flat">—</span>' : pill(fmtPct(pct), pct >= 50);
-  const signedMoney = n => (n < 0 ? '-' : '') + fmtMoney(Math.abs(n));
-  // list entries are [value, label, tone?] -- tone 'up'/'down' colors just that number.
-  const stats = list => `<div class="row-stats">${list.map(([v, l, tone]) => `<div class="row-stat"><b class="${tone || ''}">${v}</b><span>${l}</span></div>`).join('')}</div>`;
-  // Highlights every item tied for the max (or min) of valueFn's result, by
-  // setting item.highlight to the given tone -- used so "tied for the lead"
-  // (or "tied for last") picks out every row that qualifies, not just one.
-  function highlightExtreme(items, valueFn, which, tone) {
-    if (!items.length) return;
-    const vals = items.map(valueFn);
-    const target = which === 'max' ? Math.max(...vals) : Math.min(...vals);
-    items.forEach((it, i) => { if (vals[i] === target) it.highlight = tone; });
-  }
-
-  // items: { name, sub/detail, right, unranked, highlight }. Ranked lists
-  // (the default) number every row; unless an item sets `highlight`
-  // ('up'/'down') explicitly, #1 is picked out the way Game Records does --
-  // a colored left border, no separate "top 3" tile treatment. Pass
-  // podium: false for lists that are buckets, not rankings (e.g. Favorite
-  // vs. Underdog), which renders as a plain unnumbered list instead.
-  function rankedCard(title, items, opts = {}) {
-    const ranked = opts.podium !== false;
-    let rank = 0;
-    const rows = items.map(it => {
-      const body = `<div style="min-width:0"><div class="tm">${esc(it.name)}</div>${it.detail || it.sub ? `<div class="meta">${esc(it.detail || it.sub)}</div>` : ''}</div>${it.right || '<span></span>'}`;
-      if (!ranked) return `<div class="ln norank">${body}</div>`;
-      if (!it.unranked) rank++;
-      const auto = rank === 1 && !it.unranked ? 'up' : null;
-      const tone = it.highlight !== undefined ? it.highlight : auto;
-      return `<div class="ln${tone ? ` rec ${tone}` : ''}"><div class="rk">${it.unranked ? '–' : rank}</div>${body}</div>`;
-    });
-    const cols = `<div class="cols">${rows.join('')}</div>`;
-    return `
-      <div class="stat-card">
-        <div class="stat-card-title">${title}</div>
-        ${opts.note ? `<div class="stat-card-note">${opts.note}</div>` : ''}
-        <div class="stat-card-body">${cols}</div>
-      </div>`;
-  }
-
-  // Keeps the 10 most-bet categories (ordered by win %) and folds the rest
-  // into a single "All Others" row so the card can't grow without bound.
-  function condensedWlItems(rows, key, limit = 10) {
-    if (rows.length <= limit) return wlItems(rows, key);
-    const byVolume = [...rows].sort((a, b) => (b.w + b.l) - (a.w + a.l));
-    const kept = new Set(byVolume.slice(0, limit));
-    const others = rows.filter(r => !kept.has(r));
-    const w = others.reduce((a, r) => a + r.w, 0);
-    const l = others.reduce((a, r) => a + r.l, 0);
-    const items = wlItems(rows.filter(r => kept.has(r)), key);
-    items.push({
-      name: 'All Others', unranked: true, sub: `${w}-${l} · ${others.length} more`, big: fmtPct(w + l ? w / (w + l) * 100 : null),
-      right: winPill(w + l ? w / (w + l) * 100 : 0),
-    });
-    return items;
-  }
-
-  function wlItems(rows, key) {
-    return rows.map(r => ({ name: r[key], sub: `${r.w}-${r.l}`, big: fmtPct(r.win_pct), right: winPill(r.win_pct) }));
-  }
-
-  function histCard(title, rows, note) {
-    const max = Math.max(1, ...rows.map(r => r.occurrences));
-    const body = rows.map(r => `
-      <div class="hist-row">
-        <div class="hist-label">${r.legs}</div>
-        <div class="hist-track"><div class="hist-bar ${r.legs < 6 ? 'low' : r.legs < 12 ? 'mid' : 'full'}" style="width:${r.occurrences / max * 100}%"></div></div>
-        <div class="hist-count${r.occurrences ? '' : ' zero'}">${r.occurrences}</div>
-      </div>`).join('');
-    return `<div class="stat-card"><div class="stat-card-title">${title}</div><div class="stat-card-note">${note}</div><div class="stat-card-body">${body}</div></div>`;
-  }
-
-  function withTotal(rows, key) {
-    const tw = rows.reduce((a, r) => a + r.w, 0);
-    const tl = rows.reduce((a, r) => a + r.l, 0);
-    const items = wlItems(rows, key);
-    items.push({ name: 'Total', sub: `${tw}-${tl}`, right: winPill(tw + tl ? tw / (tw + tl) * 100 : null) });
-    return items;
-  }
-
-  function weekLabel(r) {
-    return `${r.year} · Week ${r.week}`;
-  }
-
-  // ---------- Individual cards, one function per card, keyed by name ----------
-  const CARD = {
-    legsPerParlay: s => histCard('Legs Won per Parlay', s.legs_won_per_parlay, 'Weeks by how many of the legs hit, once every leg was graded.'),
-    legsBeforeLoss: s => histCard('Legs Won Before First Loss', s.legs_won_before_loss, 'Weeks by how many legs won, in game-time order, before the first loss.'),
-
-    individualWL: s => rankedCard('Individual W/L', wlItems(s.individual_wl, 'player')),
-    averageOdds: s => rankedCard('Average Odds', s.average_odds.map(r => ({
-      name: r.player, right: `<span class="ln-val">${fmtOdds(r.avg_odds)}</span>`,
-    }))),
-    winStreaks: s => {
-      const rows = [...s.streaks].sort((a, b) => b.longest_win - a.longest_win || b.current - a.current)
-        .map(r => ({ player: r.player, longest_win: r.longest_win, curWin: Math.max(r.current, 0) }));
-      const maxLongest = Math.max(...rows.map(r => r.longest_win));
-      const maxCurrent = Math.max(...rows.map(r => r.curWin));
-      return rankedCard('Win Streaks', rows.map(r => {
-        const longestTie = r.longest_win === maxLongest;
-        const currentTie = maxCurrent > 0 && r.curWin === maxCurrent;
-        return {
-          name: r.player, sub: `Current ${r.curWin}`,
-          right: stats([[r.longest_win, 'Longest', longestTie ? 'up' : null], [r.curWin, 'Current', currentTie ? 'up' : null]]),
-          highlight: (longestTie || currentTie) ? 'up' : null,
-        };
-      }));
-    },
-    lossStreaks: s => {
-      const rows = [...s.streaks].sort((a, b) => b.longest_loss - a.longest_loss || a.current - b.current)
-        .map(r => ({ player: r.player, longest_loss: r.longest_loss, curLoss: Math.max(-r.current, 0) }));
-      const maxLongest = Math.max(...rows.map(r => r.longest_loss));
-      const maxCurrent = Math.max(...rows.map(r => r.curLoss));
-      return rankedCard('Losing Streaks', rows.map(r => {
-        const longestTie = r.longest_loss === maxLongest;
-        const currentTie = maxCurrent > 0 && r.curLoss === maxCurrent;
-        return {
-          name: r.player, sub: `Current ${r.curLoss}`,
-          right: stats([[r.longest_loss, 'Longest', longestTie ? 'down' : null], [r.curLoss, 'Current', currentTie ? 'down' : null]]),
-          highlight: (longestTie || currentTie) ? 'down' : null,
-        };
-      }));
-    },
-
-    potentialEarnings: s => {
-      const earnings = s.potential_earnings.map(r => ({ player: r.player, net: r.winnings - r.losses })).sort((a, b) => b.net - a.net);
-      const items = earnings.map(r => ({ name: r.player, right: pill(signedMoney(r.net), r.net >= 0), net: r.net }));
-      highlightExtreme(items, it => it.net, 'min', 'down');
-      return rankedCard('Potential Earnings', items);
-    },
-    flatBetProfit: s => {
-      const items = s.flat_bet_profit.map(r => ({ name: r.player, sub: plural(r.bets, 'bet'), right: pill(signedMoney(r.profit), r.profit >= 0), profit: r.profit }));
-      highlightExtreme(items, it => it.profit, 'min', 'down');
-      return rankedCard('Flat Bet Profit', items);
-    },
-
-    biggestHit: s => {
-      const items = s.biggest_hits.map(r => ({ name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick, odds: r.odds }));
-      highlightExtreme(items, it => it.odds, 'max', 'up');
-      return rankedCard('Biggest Hit', items);
-    },
-    safestLoss: s => {
-      const items = s.safest_losses.map(r => ({ name: r.player, sub: r.sport || '', right: stats([[fmtOdds(r.odds), 'Odds']]), detail: r.pick, odds: r.odds }));
-      highlightExtreme(items, it => it.odds, 'min', 'down');
-      return rankedCard('Safest Loss', items);
-    },
-
-    weeklySackos: s => {
-      const items = s.weekly_sackos.map(r => ({ name: r.player, sub: fmtMoney(r.cost), right: stats([[r.sackos, r.sackos === 1 ? 'Sacko' : 'Sackos']]), sackos: r.sackos }));
-      highlightExtreme(items, it => it.sackos, 'max', 'down');
-      highlightExtreme(items, it => it.sackos, 'min', 'up');
-      return rankedCard('Weekly Sacko Count', items);
-    },
-    parlaysKilled: s => {
-      const items = s.parlays_killed.map(r => ({
-        name: r.player, sub: plural(r.kill_chances, 'chance'),
-        right: stats([[r.kills.toFixed(1), 'Kills'], [r.avg_bet_position === null ? '—' : r.avg_bet_position.toFixed(1), 'Avg Pos']]),
-        kills: r.kills,
-      }));
-      highlightExtreme(items, it => it.kills, 'max', 'down');
-      highlightExtreme(items, it => it.kills, 'min', 'up');
-      return rankedCard('Parlays Killed', items);
-    },
-
-    sportWL: s => rankedCard('Sport W/L', condensedWlItems(s.sport_wl, 'sport')),
-    betTypeWL: s => rankedCard('Bet Type W/L', condensedWlItems(s.bet_type_wl, 'bet_type')),
-    favoriteUnderdog: s => rankedCard('Favorite vs. Underdog', withTotal(s.odds_type_wl, 'odds_type'), { podium: false }),
-    oddsRange: s => rankedCard('Odds Range', wlItems(s.odds_range_wl, 'range'), { podium: false }),
-    overUnder: s => rankedCard('Over vs. Under', withTotal(s.over_under_wl, 'side'), { podium: false }),
-    dayOfWeek: s => rankedCard('Day of Week', wlItems(s.day_of_week_wl, 'day'), { podium: false }),
-    biggestMisses: s => rankedCard('Biggest Misses', s.biggest_misses.map(r => ({
-      name: weekLabel(r), sub: `Killed by ${r.killed_by.join(' & ')}`,
-      right: stats([[fmtMoney(r.payout), 'Payout']]),
-    })), { podium: false }),
-    closestCalls: s => rankedCard('Closest Calls', s.closest_calls.map(r => ({
-      name: weekLabel(r), sub: `Missed by ${r.lost_by.join(', ')}`,
-      right: stats([[`${r.legs_hit}/12`, 'Legs Hit']]),
-    })), { podium: false }),
+  const short$ = n => {
+    const a = Math.abs(n);
+    const t = a >= 1e6 ? (a / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M' : a >= 1e3 ? Math.round(a / 1e3) + 'K' : String(Math.round(a));
+    return (n < 0 ? '−' : '') + '$' + t;
   };
+  const nameHtml = n => `<span class="${isMe(n) ? 'me-name' : ''}">${esc(n)}</span>`;
+  const scoped = (data, scope) => data.weeks.filter(w => scope === 'all' || String(w.year) === scope);
+  // A week's legs in kickoff order (the sheet's manager order breaks ties),
+  // the way Parlay Results lists them.
+  const legsOf = (w, players) => players.filter(p => w.picks[p]).map(p => ({ who: p, ...w.picks[p] }))
+    .sort((a, b) => (a.gametime || '9999').localeCompare(b.gametime || '9999'));
+  const weekHref = w => pageLink('parlay-results.html', { year: w.year, week: w.week });
 
+  // ---------- Parlays ----------
+  const PS = { pick: null, uc: 'all' };
+
+  function parlaysView(data, scope) {
+    const ws = scoped(data, scope), st = data.stats[scope];
+    const done = ws.filter(w => w.final.result !== 'Pending');
+    const hit = done.filter(w => w.final.result === 'Win').length;
+    const legs = ws.flatMap(w => Object.values(w.picks)).filter(p => p.result === 'Win' || p.result === 'Loss');
+    const lw = legs.filter(p => p.result === 'Win').length, ll = legs.length - lw;
+    const close = st.closest_calls[0], miss = st.biggest_misses[0];
+    const wins = w => Object.values(w.picks).filter(p => p.result === 'Win').length;
+    const avgHit = done.length ? done.reduce((a, w) => a + wins(w), 0) / done.length : null;
+    const live = ws.find(w => w.final.result === 'Pending');
+    const sub = [
+      close ? `Closest: <b>${close.legs_hit} of 12</b> legs, ${close.year} Week ${close.week}.` : '',
+      live ? `Week ${live.week} is still alive.` : '',
+    ].filter(Boolean).join(' ');
+    const side = [
+      ['Legs', `${lw}-${ll}`], ['Leg Win %', fmtPct(lw + ll ? lw / (lw + ll) * 100 : null)],
+      ['Avg Legs Hit', avgHit === null ? '—' : avgHit.toFixed(1)], ['Biggest Miss', miss ? short$(miss.payout) : '—'],
+    ].map(([l, v]) => `<div class="fs"><div class="fs-v">${v}</div><div class="fs-l">${l}</div></div>`).join('');
+    const hero = `<div class="fhero"><div class="fhero-main"><span class="pm-cap">Parlays hit</span><div class="ph-big">${hit}<small>of ${done.length}</small></div>${sub ? `<div class="ph-sub">${sub}</div>` : ''}</div><div class="fhero-stats">${side}</div></div>`;
+
+    const years = [...new Set(ws.map(w => w.year))].sort((a, b) => b - a);
+    const grid = years.map(yr => {
+      const yw = ws.filter(w => w.year === yr).sort((a, b) => b.week - a.week);
+      const rows = yw.map(w => {
+        const L = legsOf(w, data.players), killers = new Set(w.killed_by || []);
+        const killed = L.find(x => killers.has(x.who));
+        const cells = L.map(x => {
+          const after = killed && x.result !== 'Pending' && (x.gametime || '') > (killed.gametime || '');
+          return `<span class="pc ${x.result}${killers.has(x.who) ? ' kill' : ''}${after ? ' after' : ''}"></span>`;
+        }).join('');
+        const id = `${w.year}-${w.week}`;
+        return `<button type="button" class="pg-row${PS.pick === id ? ' sel' : ''}" data-wk="${id}" aria-label="${w.year} Week ${w.week}: ${wins(w)} of ${L.length} legs hit"><span class="pg-wk">Wk ${w.week}</span><span class="pg-cells">${cells}</span><span class="pg-n">${wins(w)}<small>/${L.length}</small></span></button>`;
+      }).join('');
+      const rec = `${yw.filter(w => w.final.result === 'Win').length}-${yw.filter(w => w.final.result === 'Loss').length}`;
+      return `<div class="pg-yr"><span>${yr}</span><span class="r">${rec}</span></div>${rows}`;
+    }).join('');
+    const picked = PS.pick && ws.find(w => `${w.year}-${w.week}` === PS.pick);
+    const detail = picked ? weekDetail(picked, data.players)
+      : '<span class="dim">Tap a week for who killed it and what it would have paid.</span>';
+
+    const notable = (title, rows, val, sub2) => `<div class="stat-card"><div class="stat-card-title">${title}</div><div class="stat-card-body"><div class="wk-list">${rows.map(r =>
+      `<a class="item wk" href="${esc(weekHref(r))}"><div class="wk-t">${r.year} · Week ${r.week}</div><div class="wk-s">${sub2(r)}</div><div class="wk-v">${val(r)}</div></a>`).join('') || '<div class="empty-note">None yet.</div>'}</div></div></div>`;
+    const ucSeg = `<div class="scope-row" id="uc-mode">${[['all', 'Legs hit'], ['first', 'Before first loss']].map(([k, l]) => `<button type="button" class="scope-btn${PS.uc === k ? ' on' : ''}" data-uc="${k}">${l}</button>`).join('')}</div>`;
+    return `<div class="tab-view">${hero}
+      <div class="stat-card"><div class="stat-card-title">Every parlay</div><div class="stat-card-note">A square per leg in kickoff order. ✕ is the first loss; the legs after it are faded.</div>
+        <div class="stat-card-body">${grid || '<div class="empty-note">No parlays yet.</div>'}
+          <div class="pg-key"><span><i class="pc Win"></i>Win</span><span><i class="pc Loss"></i>Loss</span><span><i class="pc Loss kill"></i>Killed it</span><span><i class="pc Win after"></i>After it died</span><span><i class="pc Pending"></i>Pending</span></div>
+          <div class="item pg-detail" aria-live="polite">${detail}</div></div></div>
+      <div class="stat-card"><div class="stat-card-title split">How far they got ${ucSeg}</div><div class="stat-card-body">${unitChart(done, data.players)}</div></div>
+      <div class="card-grid">
+        ${notable('Biggest Misses', st.biggest_misses, r => `<b>${short$(r.payout)}</b><span>Payout</span>`, r => `Killed by ${r.killed_by.map(nameHtml).join(' & ')} · ${r.legs_hit}/12 hit`)}
+        ${notable('Closest Calls', st.closest_calls, r => `<b>${r.legs_hit}/12</b><span>Legs hit</span>`, r => `Missed: ${r.lost_by.map(nameHtml).join(', ')}`)}
+      </div></div>`;
+  }
+
+  function weekDetail(w, players) {
+    const L = legsOf(w, players), killers = w.killed_by || [];
+    const hitN = L.filter(x => x.result === 'Win').length;
+    const k = L.filter(x => killers.includes(x.who)).map(x =>
+      `${nameHtml(x.who)} · ${esc(x.pick)} ${esc(fmtOdds(x.odds))}${x.detail ? ` <span class="dim">(${esc(x.detail)})</span>` : ''}`).join('<br>');
+    const head = `<span class="pm-cap">${w.year} · Week ${w.week} · ${hitN}/${L.length} hit · would have paid ${short$(w.final.payout || 0)}</span>`;
+    const body = k ? `<span class="dim">Killed by</span> ${k}` : `<span class="dim">${w.final.result === 'Pending' ? 'Still alive.' : 'Nobody lost a leg.'}</span>`;
+    return `${head}${body}<br><a href="${esc(weekHref(w))}">Open the week ›</a>`;
+  }
+
+  // Legs hit, or legs hit before the first loss (generate_parlay_data.py's
+  // before_loss: won before the earliest losing kickoff), one dot a week.
+  function unitChart(done, players) {
+    const cols = Array.from({ length: 13 }, () => []);
+    done.forEach(w => {
+      const L = legsOf(w, players);
+      const losses = L.filter(x => x.result === 'Loss' && x.gametime).map(x => x.gametime).sort();
+      const n = L.filter(x => x.result === 'Win' && (PS.uc === 'all' || !losses.length || (x.gametime && x.gametime < losses[0]))).length;
+      cols[Math.min(12, n)].push(w);
+    });
+    if (!done.length) return '<div class="empty-note">No finished parlays yet.</div>';
+    const most = Math.max(...cols.map(c => c.length));
+    const avg = cols.reduce((a, c, i) => a + c.length * i, 0) / done.length;
+    return `<div class="uc">${cols.map((c, i) => `<div class="uc-col">${c.map(w => `<span class="uc-dot${c.length === most ? ' most' : ''}" title="${w.year} Week ${w.week}: ${i}"></span>`).join('')}</div>`).join('')}</div>
+      <div class="uc-ax">${cols.map((_, i) => `<span>${i}</span>`).join('')}</div>
+      <div class="uc-cap"><span>One dot per parlay</span><span>Average <b>${avg.toFixed(1)}</b></span></div>`;
+  }
+
+  // ---------- Leaders ----------
+  // One card a stat. `val` ranks (high first), `tb` orders within a tie
+  // without breaking it; `v` is what shows, `s` the line under a name.
+  const BOARDS = [
+    { k: 'winpct', title: 'Leg Win %', note: 'Share of their legs that won.', rows: s => s.individual_wl.map(r => ({ n: r.player, val: r.win_pct, v: fmtPct(r.win_pct), s: `${r.w}-${r.l}` })) },
+    { k: 'flat', title: 'Flat Bet Profit', note: 'What $100 on every one of their legs would have made.', rows: s => s.flat_bet_profit.map(r => ({ n: r.player, val: Math.round(r.profit), v: flatTxt(r.profit), s: plural(r.bets, 'leg'), t: r.profit >= 0 ? 'up' : 'down' })) },
+    { k: 'odds', title: 'Average Odds', note: 'How long their legs are on average. Higher is riskier.', rows: s => s.average_odds.map(r => ({ n: r.player, val: r.avg_odds, v: fmtOdds(r.avg_odds), s: '' })) },
+    { k: 'wstreak', title: 'Longest Win Streak', note: 'Most legs won in a row. "Now" is a run still going.', rows: s => s.streaks.map(r => ({ n: r.player, val: r.longest_win, tb: Math.max(r.current, 0), v: r.longest_win, s: r.current > 0 ? `Now W${r.current}` : '' })) },
+    { k: 'hit', title: 'Biggest Hit', note: 'Their longest-odds leg that won.', rows: s => s.biggest_hits.map(r => ({ n: r.player, val: -impliedProb(r.odds), v: fmtOdds(r.odds), s: r.pick })) },
+    { k: 'potential', title: 'Potential Earnings', note: 'Payouts of the weeks their leg won, minus the weeks it lost. High means they came through when the parlay was worth the most.', rows: s => s.potential_earnings.map(r => ({ n: r.player, val: Math.round(r.winnings - r.losses), v: short$(r.winnings - r.losses), s: '', t: r.winnings >= r.losses ? 'up' : 'down' })) },
+    { k: 'lstreak', bad: true, title: 'Longest Losing Streak', note: 'Most legs lost in a row. "Now" is a run still going.', rows: s => s.streaks.map(r => ({ n: r.player, val: r.longest_loss, tb: Math.max(-r.current, 0), v: r.longest_loss, s: r.current < 0 ? `Now L${-r.current}` : '' })) },
+    { k: 'kills', bad: true, title: 'Parlays Killed', note: 'Times their leg was the first loss of the week; a shared first loss is split. "Plays" is where their leg usually falls in kickoff order.', rows: s => s.parlays_killed.map(r => ({ n: r.player, val: Math.round(r.kills * 100), v: r.kills.toFixed(1), s: r.avg_bet_position === null ? plural(r.kill_chances, 'chance') : `Plays #${r.avg_bet_position.toFixed(1)} of 12` })) },
+    { k: 'safe', bad: true, title: 'Safest Loss', note: 'Their heaviest favorite that still lost.', rows: s => s.safest_losses.map(r => ({ n: r.player, val: impliedProb(r.odds), v: fmtOdds(r.odds), s: r.pick })) },
+    { k: 'sackos', bad: true, title: 'Weekly Sackos', note: 'Weeks they finished last in fantasy and bought the parlay.', rows: s => s.weekly_sackos.map(r => ({ n: r.player, val: r.sackos, v: r.sackos, s: `${fmtMoney(r.cost)} spent` })) },
+  ];
+  // High to low; ties share a rank (Franchise's rule: the number of rows strictly ahead, plus one).
+  function ranked(b, st) {
+    const rows = b.rows(st).slice().sort((x, y) => y.val - x.val || (y.tb || 0) - (x.tb || 0));
+    rows.forEach(r => { r.r = rows.filter(o => o.val > r.val).length + 1; r.tie = rows.filter(o => o.val === r.val).length > 1; });
+    return rows;
+  }
+  const rkTxt = r => (r.tie ? 'T' : '') + r.r;
+  const LS = { open: null };
+
+  function leadersView(data, scope) {
+    const st = data.stats[scope];
+    return `<div class="lgrid">${BOARDS.map(b => {
+      const rows = ranked(b, st);
+      if (!rows.length) return '';
+      const top = rows.filter(r => r.r === 1), next = rows.filter(r => r.r > 1).slice(0, 2);
+      const names = top.map(r => `<button type="button" class="mgr-tap" data-mgr="${esc(r.n)}">${nameHtml(r.n)}</button>`).join(' & ');
+      const sub = top.length > 1 ? 'Tied' : top[0].s;
+      return `<div class="stat-card lc${b.bad ? ' bad' : ''}${LS.open === b.k ? ' has-pop' : ''}" data-board="${b.k}">
+        <div class="lc-t">${b.title}</div>
+        <div class="lc-lead"><div class="v">${esc(top[0].v)}</div><div class="n">${names}</div>${sub ? `<div class="s" title="${esc(sub)}">${esc(sub)}</div>` : ''}</div>
+        <div class="lc-next">${next.map(r => `<div><span class="rk">${rkTxt(r)}</span><button type="button" class="mgr-tap n" data-mgr="${esc(r.n)}">${nameHtml(r.n)}</button><span class="v">${esc(r.v)}</span></div>`).join('')}</div>
+        <div class="lc-all"><button type="button" class="${LS.open === b.k ? 'on' : ''}" data-list="${b.k}" aria-expanded="${LS.open === b.k}">All ${rows.length}</button></div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  function listHtml(b, st) {
+    const rows = ranked(b, st).map(r => `
+      <button type="button" class="item ls-row${r.r === 1 ? ' top' : ''}${b.bad ? ' bad' : ''}${isMe(r.n) ? ' me' : ''}" data-mgr="${esc(r.n)}">
+        <span class="rk">${rkTxt(r)}</span>
+        <span style="min-width:0"><span class="n" style="display:block">${esc(r.n)}</span>${r.s ? `<span class="s" style="display:block">${esc(r.s)}</span>` : ''}</span>
+        <span class="v ${r.t || ''}">${esc(r.v)}</span>
+      </button>`).join('');
+    return {
+      head: `<div class="ls-head"><div class="ls-title">${b.title}</div><button type="button" class="x" data-close aria-label="Close">&times;</button></div><div class="ls-note">${b.note}</div>`,
+      rows: `<div class="ls-rows">${rows}</div>`,
+    };
+  }
+  const oneColumn = matchMedia('(max-width:720px)');
+  function closeList() {
+    LS.open = null;
+    document.querySelectorAll('#ls-sheet, #ls-pop, .scrim').forEach(el => el.remove());
+    document.querySelectorAll('.lc.has-pop').forEach(c => c.classList.remove('has-pop'));
+    document.querySelectorAll('[data-list]').forEach(b => { b.classList.remove('on'); b.setAttribute('aria-expanded', 'false'); });
+  }
+  // Phone: a bottom sheet (page-common.js lets it swipe down). Desktop: a
+  // popover under the card, its width, the way Game Records does it.
+  function openList(k, st) {
+    closeList();
+    const b = BOARDS.find(x => x.k === k);
+    LS.open = k;
+    const l = listHtml(b, st);
+    const card = document.querySelector(`.lc[data-board="${k}"]`);
+    card.classList.add('has-pop');
+    const btn = card.querySelector('[data-list]');
+    btn.classList.add('on'); btn.setAttribute('aria-expanded', 'true');
+    if (oneColumn.matches) {
+      document.body.insertAdjacentHTML('beforeend', `<div class="scrim" data-close></div><div class="sheet" id="ls-sheet" role="dialog" aria-modal="true" aria-label="${esc(b.title)}">
+        <div class="sheet-grab"><span></span></div><div class="sheet-head">${l.head}</div><div class="sheet-body">${l.rows}</div></div>`);
+      return;
+    }
+    document.body.insertAdjacentHTML('beforeend', `<div class="pop" id="ls-pop" role="dialog" aria-label="${esc(b.title)}">${l.head}${l.rows}</div>`);
+    const pop = document.getElementById('ls-pop'), r = card.getBoundingClientRect();
+    const w = Math.max(r.width, 360), left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+    pop.style.width = w + 'px';
+    pop.style.left = (left + scrollX) + 'px';
+    pop.style.top = (r.bottom + scrollY + 10) + 'px';
+    pop.style.setProperty('--arrow-x', (r.left + r.width / 2 - left) + 'px');
+    const below = pop.getBoundingClientRect().bottom - innerHeight + 16;
+    if (below > 0) scrollBy({ top: Math.min(below, r.top - 80), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+
+  // ---------- Bets ----------
+  function betsView(data, scope) {
+    const s = data.stats[scope];
+    const FEW = 5, ENOUGH = 8;
+    const byVolume = rows => rows.slice().sort((a, b) => (b.w + b.l) - (a.w + a.l) || b.win_pct - a.win_pct);
+    // The most-bet `keep`, then everything else folded into one tile.
+    const fold = (rows, key, keep) => {
+      const v = byVolume(rows);
+      if (v.length <= keep + 1) return v;
+      const rest = v.slice(keep), w = rest.reduce((a, r) => a + r.w, 0), l = rest.reduce((a, r) => a + r.l, 0);
+      return [...v.slice(0, keep), { [key]: `${rest.length} others`, w, l, win_pct: w + l ? w / (w + l) * 100 : null }];
+    };
+    const tiles = (rows, key) => rows.map(r => {
+      const n = r.w + r.l, thin = n < FEW;
+      return `<div class="item pm-tile${thin ? ' thin' : ''}"><div class="tl" title="${esc(r[key])}">${esc(r[key])}</div><b class="${thin ? '' : wlTone(r.w, r.l)}">${r.w}-${r.l}</b><small>${fmtPct(r.win_pct)}${thin ? ' · few' : ''}</small></div>`;
+    }).join('');
+    const card = (title, rows, key, note) => rows.length ? `<div class="stat-card"><div class="stat-card-title">${title}</div>${note ? `<div class="stat-card-note">${note}</div>` : ''}<div class="stat-card-body"><div class="pm-tiles">${tiles(rows, key)}</div></div></div>` : '';
+    const pool = [...s.sport_wl.map(r => ({ ...r, k: r.sport })), ...s.bet_type_wl.map(r => ({ ...r, k: r.bet_type }))].filter(r => r.w + r.l >= ENOUGH);
+    const best = pool.slice().sort((a, b) => b.win_pct - a.win_pct)[0], worst = pool.slice().sort((a, b) => a.win_pct - b.win_pct)[0];
+    const fav = s.odds_type_wl.find(r => r.odds_type === 'Favorite'), dog = s.odds_type_wl.find(r => r.odds_type === 'Underdog');
+    // A best/worst names the bet, so its record goes underneath; favorites and
+    // underdogs already show the record big, so only the % goes there.
+    const head = (cap, r, label, cls) => `<div class="item bh"><span class="pm-cap">${cap}</span><div class="v ${cls || ''}">${r ? esc(label(r)) : '—'}</div><div class="s">${r ? (r.k ? `${r.w}-${r.l} · ` : '') + fmtPct(r.win_pct) : ''}</div></div>`;
+    return `<div class="tab-view">
+      <div class="stat-card"><div class="stat-card-body" style="padding:14px">
+        <div class="bets-head">${head('Best bet', best, r => r.k, 'up')}${head('Worst bet', worst, r => r.k, 'down')}${head('Favorites', fav, r => `${r.w}-${r.l}`)}${head('Underdogs', dog, r => `${r.w}-${r.l}`)}</div>
+        <div class="stat-card-note" style="padding:10px 2px 0">Best and worst count only sports and bet types with ${ENOUGH}+ legs.</div>
+      </div></div>
+      <div class="card-grid">
+        ${card('Sport', fold(s.sport_wl, 'sport', 5), 'sport', `Most-bet first. Grey is under ${FEW} legs.`)}
+        ${card('Bet Type', fold(s.bet_type_wl, 'bet_type', 8), 'bet_type')}
+        ${card('Odds', s.odds_range_wl, 'range')}
+        ${card('Day', s.day_of_week_wl, 'day')}
+        ${card('Over / Under', s.over_under_wl, 'side')}
+      </div></div>`;
+  }
   // ---------- Managers tab ----------
   // One manager's parlay franchise, worked out from the Worker's `weeks`
   // (every pick ever placed) so it agrees with the cards on the other tabs:
@@ -695,45 +812,16 @@
     if (el && el.hideTip && !el.contains(e.target)) el.hideTip();
   });
 
-  // ---------- Category > subsection structure ----------
-  const CATEGORIES = [
-    {
-      label: 'Legs',
-      subsections: [
-        { label: 'Per Parlay', cards: ['legsPerParlay'] },
-        { label: 'Before First Loss', cards: ['legsBeforeLoss'] },
-      ],
-    },
-    {
-      label: 'Betting',
-      subsections: [
-        { label: 'Record', cards: ['individualWL', 'averageOdds'] },
-        { label: 'Streaks', cards: ['winStreaks', 'lossStreaks'] },
-        { label: 'Picks', cards: ['biggestHit', 'safestLoss'] },
-        { label: 'Sacko & Kills', cards: ['weeklySackos', 'parlaysKilled'] },
-      ],
-    },
-    {
-      label: 'Breakdowns',
-      subsections: [
-        { label: 'Bet Type', cards: ['sportWL', 'betTypeWL'] },
-        { label: 'Odds', cards: ['favoriteUnderdog', 'overUnder', 'dayOfWeek', 'oddsRange'] },
-      ],
-    },
-    {
-      label: 'Misc',
-      subsections: [
-        { label: 'Money', cards: ['potentialEarnings', 'flatBetProfit'] },
-        { label: 'Notable Weeks', cards: ['biggestMisses', 'closestCalls'] },
-      ],
-    },
-    // One manager at a time, with the manager dropdown under the tabs.
-    { label: 'Managers', managers: true },
+  // ---------- Tabs ----------
+  // The tab's name in the address (#leaders) so a link or Back lands on it.
+  // The old tabs' names still land on where their stats went.
+  const TABS = [
+    { key: 'parlays', label: 'Parlays', view: parlaysView },
+    { key: 'leaders', label: 'Leaders', view: leadersView },
+    { key: 'bets', label: 'Bets', view: betsView },
+    { key: 'managers', label: 'Managers', managers: true },
   ];
-
-  // ---------- Wiring ----------
-  // The tab names in the address (#betting) so a link or Back lands on the same group.
-  const TAB_KEYS = ['legs', 'betting', 'breakdowns', 'misc', 'managers'];
+  const OLD_TABS = { legs: 'parlays', betting: 'leaders', misc: 'leaders', breakdowns: 'bets' };
 
   fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
     .then(res => res.json())
@@ -741,9 +829,11 @@
       const { stats } = data;
       data.weeks = [...(data.weeks || [])].sort((a, b) => a.year - b.year || a.week - b.week);
       // A link with a manager in it (?m=Brad) opens on that manager.
-      const linkedTab = location.hash ? location.hash.slice(1) : (urlParam('m') ? 'managers' : '');
-      let activeCategory = Math.max(0, TAB_KEYS.indexOf(linkedTab));
+      const hash = location.hash.slice(1);
+      const linkedTab = OLD_TABS[hash] || hash || (urlParam('m') ? 'managers' : '');
+      let activeCategory = Math.max(0, TABS.findIndex(t => t.key === linkedTab));
       let activeScope = 'all';
+      if (OLD_TABS[hash]) history.replaceState(null, '', '#' + TABS[activeCategory].key);
 
       const scopeSelect = document.getElementById('scope-select');
       const categoryTabRow = document.getElementById('category-tab-row');
@@ -763,21 +853,22 @@
         MGR.teamsAsked = true;
         fetch('data/franchise.json', { cache: 'no-cache' }).then(r => r.json()).then(d => {
           MGR.teams = Object.fromEntries((d.players || []).map(p => [p.name, { team: p.current_team_name, logo: p.current_team_logo }]));
-          if (CATEGORIES[activeCategory].managers) renderStats();
+          if (TABS[activeCategory].managers) renderStats();
         }).catch(() => {});
       }
 
       const scopes = ['all', ...[...(data.years || [])].sort((a, b) => b - a).map(String)];
       scopeSelect.innerHTML = scopes.map(s => `<option value="${s}">${s === 'all' ? 'All-Time' : s}</option>`).join('');
       scopeSelect.value = activeScope;
-      categoryTabRow.innerHTML = CATEGORIES.map((c, i) => `<button type="button" class="tab${i === activeCategory ? ' on' : ''}" data-i="${i}">${c.label}</button>`).join('');
+      categoryTabRow.innerHTML = TABS.map((c, i) => `<button type="button" class="tab${i === activeCategory ? ' on' : ''}" data-i="${i}">${c.label}</button>`).join('');
 
       function renderStats() {
         const s = stats[activeScope];
         if (!s) return;
-        const managers = !!CATEGORIES[activeCategory].managers;
+        const managers = !!TABS[activeCategory].managers;
+        closeList();
         mgrRow.hidden = !managers;
-        statsContainer.className = managers ? 'stats-cards mgr-view' : 'card-grid stats-cards';
+        statsContainer.className = managers ? 'stats-cards mgr-view' : 'stats-cards';
         if (managers) {
           loadTeams();
           const view = renderManager(data, activeScope, mgrSelect.value);
@@ -785,8 +876,7 @@
           drawMgrChart(view.s);
           keepSelectedInView(document.getElementById('mgr-tabs'));
         } else {
-          const keys = CATEGORIES[activeCategory].subsections.flatMap(sub => sub.cards);
-          statsContainer.innerHTML = keys.map(key => CARD[key](s)).join('');
+          statsContainer.innerHTML = TABS[activeCategory].view(data, activeScope);
         }
         keepSelectedInView(categoryTabRow);
       }
@@ -794,24 +884,58 @@
         setUrlParams({ m: mgrSelect.value });
         renderStats();
       });
-      // Overview / Splits / Legs, and the All / Wins / Losses filter.
+      // A name on Leaders (or in its list) opens that manager's tab.
+      function showManager(name) {
+        mgrSelect.value = name;
+        activeCategory = TABS.findIndex(t => t.managers);
+        MGR.sub = 0;
+        [...categoryTabRow.children].forEach((b, i) => b.classList.toggle('on', i === activeCategory));
+        history.replaceState(null, '', '#managers');
+        setUrlParams({ m: name });
+        renderStats();
+        scrollTo({ top: 0 });
+      }
+      // Overview / Splits / Legs and All / Wins / Losses (Managers); a week
+      // and Legs hit / Before first loss (Parlays); All 12 (Leaders).
       statsContainer.addEventListener('click', e => {
-        const sub = e.target.closest('[data-sub]');
-        const res = e.target.closest('[data-res]');
-        if (sub) MGR.sub = Number(sub.dataset.sub);
+        const t = e.target;
+        const mgr = t.closest('[data-mgr]');
+        if (mgr) { showManager(mgr.dataset.mgr); return; }
+        const list = t.closest('[data-list]');
+        if (list) { if (LS.open === list.dataset.list) closeList(); else openList(list.dataset.list, stats[activeScope]); return; }
+        const wk = t.closest('[data-wk]');
+        const uc = t.closest('[data-uc]');
+        const sub = t.closest('[data-sub]');
+        const res = t.closest('[data-res]');
+        if (wk) PS.pick = PS.pick === wk.dataset.wk ? null : wk.dataset.wk;
+        else if (uc) PS.uc = uc.dataset.uc;
+        else if (sub) MGR.sub = Number(sub.dataset.sub);
         else if (res) MGR.res = res.dataset.res;
         else return;
         renderStats();
       });
+      // The All 12 list lives outside the panel: its names, its close button,
+      // a tap anywhere else (desktop popover) and Escape.
+      document.addEventListener('click', e => {
+        if (!LS.open || e.target.closest('[data-list]')) return;
+        const inList = e.target.closest('#ls-sheet, #ls-pop');
+        const mgr = inList && e.target.closest('[data-mgr]');
+        if (mgr) { closeList(); showManager(mgr.dataset.mgr); return; }
+        if (e.target.closest('[data-close]') || !inList) closeList();
+      });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && LS.open) closeList(); });
+      oneColumn.addEventListener('change', closeList);
       let resizeTimer;
       window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-          if (CATEGORIES[activeCategory].managers && MGR.sub === 0) drawMgrChart(mgrSummary(data, mgrSelect.value, activeScope));
+          if (TABS[activeCategory].managers && MGR.sub === 0) drawMgrChart(mgrSummary(data, mgrSelect.value, activeScope));
+          if (LS.open && !oneColumn.matches) openList(LS.open, stats[activeScope]);
         }, 150);
       });
       scopeSelect.addEventListener('change', () => {
         activeScope = scopeSelect.value;
+        PS.pick = null;
         renderStats();
       });
       categoryTabRow.addEventListener('click', e => {
@@ -819,8 +943,8 @@
         if (!btn) return;
         activeCategory = Number(btn.dataset.i);
         [...categoryTabRow.children].forEach((b, i) => b.classList.toggle('on', i === activeCategory));
-        history.replaceState(null, '', '#' + TAB_KEYS[activeCategory]);
-        setUrlParams({ m: CATEGORIES[activeCategory].managers ? mgrSelect.value : null });
+        history.replaceState(null, '', '#' + TABS[activeCategory].key);
+        setUrlParams({ m: TABS[activeCategory].managers ? mgrSelect.value : null });
         renderStats();
       });
       renderStats();
