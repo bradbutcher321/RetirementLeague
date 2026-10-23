@@ -36,10 +36,6 @@
   .cm-fine.bad{ color: var(--loss); font-weight: 600; }
   .cm-empty{ padding: 18px 10px; color: var(--text-dim); font-size: 0.85rem; text-align: center; }
 
-  .back{ background: none; border: 0; padding: 0; min-height: 24px; display: inline-flex; align-items: center; gap: 2px; color: var(--gold); font: 600 0.8rem var(--body); letter-spacing: 0.02em; text-decoration: none; cursor: pointer; }
-  .back svg{ width: 14px; height: 14px; margin-left: -4px; }
-  .back:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 6px; }
-
   .cm-rows{ display: grid; gap: 6px; }
   .cm-cols{ display: grid; gap: 6px; }
   .cm-split{ display: grid; gap: 14px; }
@@ -215,7 +211,6 @@
     table: SVG('<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 10h17M3.5 14.5h17M9.5 10v9"/>'),
     chart: SVG('<path d="M4 19h16"/><path d="m5 15 4-5 4 3 6-7"/>'),
     chev: SVG('<path d="m9 6 6 6-6 6"/>'),
-    back: SVG('<path d="m15 6-6 6 6 6"/>'),
     chat: SVG('<path d="M4 5.5h16v10H9.5L5 19.5v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/>'),
     lock: SVG('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
   };
@@ -753,7 +748,7 @@
     document.querySelectorAll('#cm-main [data-keep]').forEach(el => { drafts[el.id] = el.value; });
     const r = route();
     const v = VIEWS[r]();
-    $('cm-eyebrow').outerHTML = r === 'hub' ? '<div class="eyebrow" id="cm-eyebrow">Retirement League</div>' : `<a class="back" id="cm-eyebrow" href="#">${I.back}Commissioner</a>`;
+    $('cm-eyebrow').outerHTML = r === 'hub' ? '<div class="eyebrow" id="cm-eyebrow">Retirement League</div>' : `<a class="hdr-back" id="cm-eyebrow" href="#" aria-label="Back to Commissioner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>Commissioner</span></a>`;
     $('cm-title').textContent = v.title;
     $('cm-right').innerHTML = v.right || '';
     document.title = r === 'hub' ? 'Retirement League — Commissioner' : `Retirement League — ${v.title}`;
