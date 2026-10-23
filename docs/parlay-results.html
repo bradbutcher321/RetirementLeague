@@ -143,7 +143,9 @@
   .pr-line b{ color: var(--text); font-weight: 600; }
   .pr-line.rec{ border-color: var(--lead-line); background: var(--lead-tint); }
   .pr-line svg{ flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--gold); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .pr-split{ margin-top: 12px; text-align: right; color: var(--text-dim); font-size: 0.78rem; }
+  .pr-foot{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 14px; }
+  .pr-foot .hero-chips{ margin-top: 0; }
+  .pr-split{ margin-left: auto; text-align: right; color: var(--text-dim); font-size: 0.78rem; white-space: nowrap; }
   .pr-split b{ font-family: var(--scoreboard); font-weight: 800; font-size: 1rem; color: var(--gold); }
 
   .hero-chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
@@ -419,6 +421,8 @@
           : `<div class="pr-line">${HERO_ICON.trophy}<span>Furthest any parlay has gotten: <b>${n} ${legWord}</b> before the first loss (${record.times} ${record.times === 1 ? 'time' : 'times'} in ${record.graded} weeks). Leg ${n + 1} would be a first.</span></div>`;
     }
     const split = week.final.split ? `<div class="pr-split">Split <b>${fmtMoney(week.final.split)}</b> each</div>` : '';
+    const chips = (week.sacko ? `<span class="hero-chip loss">Sacko: ${esc(week.sacko)}</span>` : '')
+      + (week.killed_by.length ? `<span class="hero-chip loss">Killed by: ${esc(week.killed_by.join(' & '))}</span>` : '');
 
     return `
       <div class="glass hero2" style="position:relative">
@@ -429,12 +433,9 @@
             <div><div class="gold-label-xl">Payout</div><div class="hero2-v">${fmtMoney(week.final.payout)}</div></div>
             ${chance}
           </div>
-          <div class="hero-chips">
-            ${week.sacko ? `<span class="hero-chip loss">Sacko: ${esc(week.sacko)}</span>` : ''}
-            ${week.killed_by.length ? `<span class="hero-chip loss">Killed by: ${esc(week.killed_by.join(' & '))}</span>` : ''}
-          </div>
           ${legs.length ? `<div class="pr-pips" style="--n:${legs.length}" role="img" aria-label="${wins} of ${legs.length} legs hit${losses ? `, ${losses} lost` : ''}">${pips}</div><div class="pr-days" style="--n:${legs.length}" aria-hidden="true">${days}</div>` : ''}
-          ${lines}${split}
+          ${lines}
+          ${chips || split ? `<div class="pr-foot">${chips ? `<div class="hero-chips">${chips}</div>` : ''}${split}</div>` : ''}
         </div>
       </div>`;
   }
