@@ -48,18 +48,18 @@
   .empty{ color: var(--text-dim); font-size: 0.86rem; padding: 6px 2px; margin: 0; }
   .empty.bad{ color: var(--loss); font-weight: 600; }
 
-  .leg{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 11px 13px 10px; margin-top: 8px; }
-  .leg:first-child{ margin-top: 0; }
-  .leg.out{ padding-block: 9px; }
-  .leg-top{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-  .leg-name{ font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .leg.out .leg-name{ color: var(--text-dim); font-weight: 600; }
-  .leg-odds{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .leg.out .leg-odds{ font-family: var(--body); font-weight: 500; font-size: 0.78rem; color: var(--text-dim); }
-  .leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 3px; overflow-wrap: anywhere; }
-  .leg-bet b{ color: var(--text); font-weight: 600; }
-  .leg-game{ display: flex; align-items: center; gap: 10px; margin-top: 7px; font-size: 0.8rem; color: var(--text-dim); }
-  .leg-game .sport{ color: var(--gold); font-weight: 700; }
+  .pl-leg{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 11px 13px 10px; margin-top: 8px; }
+  .pl-leg:first-child{ margin-top: 0; }
+  .pl-leg.out{ padding-block: 9px; }
+  .pl-leg-top{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .pl-leg-name{ font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl-leg.out .pl-leg-name{ color: var(--text-dim); font-weight: 600; }
+  .pl-leg-odds{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pl-leg.out .pl-leg-odds{ font-family: var(--body); font-weight: 500; font-size: 0.78rem; color: var(--text-dim); }
+  .pl-leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 3px; overflow-wrap: anywhere; }
+  .pl-leg-bet b{ color: var(--text); font-weight: 600; }
+  .pl-leg-game{ display: flex; align-items: center; gap: 10px; margin-top: 7px; font-size: 0.8rem; color: var(--text-dim); }
+  .pl-leg-game .sport{ color: var(--gold); font-weight: 700; }
   .badge.gold{ background: none; }
 
   .gold-btn{ background: none; border: 1px solid var(--gold); color: var(--gold); font-family: var(--body); font-weight: 600; font-size: 0.86rem; border-radius: 999px; padding: 0 16px; height: 44px; cursor: pointer; }
@@ -162,8 +162,8 @@
   .stepper .pick{ padding: 0 12px; }
   .stepper .pick:disabled{ opacity: 0.35; cursor: default; }
   .stepper select.in{ width: auto; min-width: 118px; height: 44px; border-radius: 22px; font-weight: 600; font-size: 0.86rem; padding-left: 14px; }
-  .leg.changed{ border-color: var(--lead-line); background: var(--lead-tint); }
-  .leg.bad{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .pl-leg.changed{ border-color: var(--lead-line); background: var(--lead-tint); }
+  .pl-leg.bad{ border-color: var(--loss-line); background: var(--loss-tint); }
   .leg-why{ color: var(--loss); font-size: 0.8rem; font-weight: 600; margin-top: 6px; }
   .leg-wait{ color: var(--text-dim); display: inline-flex; align-items: center; gap: 7px; }
   .leg-wait::before{ content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: blink 1s ease-in-out infinite; }
@@ -502,16 +502,16 @@
   function legRow(l){
     const when = l.bet_type === 'Other' ? '<span class="badge gold">Typed in</span>'
       : l.gametime ? `<span><span class="sport">${esc(l.sport)}</span> · ${esc(kick(l.gametime))}</span>` : '';
-    return `<div class="leg${l.player === me() ? ' me' : ''}">
-      <div class="leg-top"><span class="leg-name">${esc(l.player)}</span><span class="leg-odds">${fmtOdds(l.odds) || '—'}</span></div>
-      <div class="leg-bet">${betHtml(l)}</div>${when ? `<div class="leg-game">${when}</div>` : ''}</div>`;
+    return `<div class="pl-leg${l.player === me() ? ' me' : ''}">
+      <div class="pl-leg-top"><span class="pl-leg-name">${esc(l.player)}</span><span class="pl-leg-odds">${fmtOdds(l.odds) || '—'}</span></div>
+      <div class="pl-leg-bet">${betHtml(l)}</div>${when ? `<div class="pl-leg-game">${when}</div>` : ''}</div>`;
   }
   function drawBoard(){
     if (!board) return loadError ? `<p class="empty bad">${esc(loadError)}</p>` : '<p class="empty">Loading…</p>';
     const inn = board.legs.slice().sort((a, b) => (a.gametime || '9').localeCompare(b.gametime || '9') || a.player.localeCompare(b.player));
     const out = board.players.filter(p => !board.legs.some(l => l.player === p));
     return inn.map(legRow).join('')
-      + out.map(p => `<div class="leg out${p === me() ? ' me' : ''}"><div class="leg-top"><span class="leg-name">${esc(p)}</span><span class="leg-odds">Not in yet</span></div></div>`).join('');
+      + out.map(p => `<div class="pl-leg out${p === me() ? ' me' : ''}"><div class="pl-leg-top"><span class="pl-leg-name">${esc(p)}</span><span class="pl-leg-odds">Not in yet</span></div></div>`).join('');
   }
 
   const sportChips = () => `<div class="picks">${SPORTS.map(k => `<button type="button" class="pick${st.sport === k ? ' on' : ''}" data-sport="${k}">${k}</button>`).join('')}</div>`;
@@ -969,10 +969,10 @@
       ? `<div class="seg" data-res="${esc(n)}">${RESULTS.map(x => `<button type="button" data-v="${x}" class="${(r.result || 'Pending') === x ? 'on' : ''}">${x}</button>`).join('')}</div>` : '<span></span>';
     const btns = (canPick() ? act('pick', n, has ? 'Re-pick' : 'Pick') : '') + act('edit', n, open ? 'Done' : has ? 'Edit pick' : 'Edit');
     const l = { ...r, odds: parseOdds(r.odds) };
-    return `<div class="leg${has ? '' : ' out'}${isChanged(n) ? ' changed' : ''}${bad ? ' bad' : ''}${n === me() ? ' me' : ''}">
-      <div class="leg-top"><span class="leg-name">${esc(n)}</span><span class="leg-odds">${has ? fmtRowOdds(r) : 'Not in yet'}</span></div>
-      ${has ? `<div class="leg-bet">${betHtml(l)}</div>` : ''}
-      ${game ? `<div class="leg-game">${game}</div>` : ''}
+    return `<div class="pl-leg${has ? '' : ' out'}${isChanged(n) ? ' changed' : ''}${bad ? ' bad' : ''}${n === me() ? ' me' : ''}">
+      <div class="pl-leg-top"><span class="pl-leg-name">${esc(n)}</span><span class="pl-leg-odds">${has ? fmtRowOdds(r) : 'Not in yet'}</span></div>
+      ${has ? `<div class="pl-leg-bet">${betHtml(l)}</div>` : ''}
+      ${game ? `<div class="pl-leg-game">${game}</div>` : ''}
       ${has ? why.map(w => `<div class="leg-why">${esc(w)}</div>`).join('') : ''}
       <div class="res-row">${results}<span class="btns">${btns}</span></div>
       ${open ? editForm(n) : ''}</div>`;
