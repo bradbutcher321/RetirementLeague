@@ -1288,14 +1288,14 @@
   #recap-section{ margin-bottom: 14px; }
   #notice-section{ margin-bottom: 14px; }
 
-  /* Secret Santa teaser: a ticket under the title. A header row (the label,
+  /* Secret Santa teaser: a card under the title. A header row (the label,
      and the league crest swinging from the top edge above the shirts), then
-     the words on the left and three Good Shirts on the right, then a
-     perforated stub with the countdown. Words and shirts are separate grid
-     columns, so text never lands on a shirt. Press and hold rerolls the
-     shirts like slot reels; a tap opens a short sheet. */
+     the words on the left (what's next and a live countdown) and three Good
+     Shirts on the right. Words and shirts are separate grid columns, so text
+     never lands on a shirt. Press and hold rerolls the shirts like slot
+     reels; a tap opens a short sheet. */
   #santa-section{ margin: -8px 0 18px; }
-  .santa-tk{ --gold-hi: #F3E2B3; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "k o ." "l r go" "stub stub stub"; align-items: center; width: 100%; padding: 12px 8px 0 18px; border-radius: var(--card-r, 22px); border: 1px solid rgba(212,180,106,0.38); text-align: left; overflow: hidden; cursor: pointer; color: var(--text); font: inherit; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: pan-y;
+  .santa-tk{ --gold-hi: #F3E2B3; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "k o ." "l r go"; align-items: center; width: 100%; padding: 12px 8px 14px 18px; border-radius: var(--card-r, 22px); border: 1px solid rgba(212,180,106,0.38); text-align: left; overflow: hidden; cursor: pointer; color: var(--text); font: inherit; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: pan-y;
     background: radial-gradient(120% 150% at 100% 40%, rgba(212,180,106,0.17), transparent 55%), linear-gradient(160deg, #17140f, #0c0b09);
     box-shadow: var(--card-edge, inset 0 1px 0 rgba(255,255,255,0.065)), 0 18px 40px -24px rgba(212,180,106,0.45); }
   .santa-tk::after{ content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 40%, rgba(255,240,200,0.08) 50%, transparent 60%); background-size: 250% 100%; animation: santa-sheen 6s ease-in-out infinite; }
@@ -1312,16 +1312,19 @@
   .santa-orn img{ display: block; width: 30px; height: auto; margin-top: -1px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)); }
   @keyframes santa-swing{ 0%, 100%{ rotate: -5deg; } 50%{ rotate: 5deg; } }
   .santa-l{ grid-area: l; position: relative; z-index: 2; min-width: 0; padding: 6px 12px 4px 0; }
+  .santa-pre{ display: block; margin: 0 0 4px; color: var(--text); font-size: 0.82rem; font-weight: 600; }
+  .santa-pre:empty{ display: none; }
   .santa-h{ display: block; margin: 0 0 6px; font: 800 1.85rem/1 var(--scoreboard); letter-spacing: 0.01em; text-wrap: balance; }
   .santa-h b{ color: var(--gold-hi); font-weight: 800; }
+  .santa-cd{ color: var(--gold-hi); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; white-space: nowrap; }
+  .santa-cd small{ font-size: 0.68em; color: var(--gold); margin-left: 1px; }
   .santa-h .santa-blur{ filter: blur(6px); }
   .santa-s{ display: block; color: var(--text-dim); font-size: 0.8rem; line-height: 1.35; }
   .santa-hint{ display: flex; align-items: center; gap: 7px; margin-top: 9px; color: var(--text-dim); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; }
   .santa-hint::before{ content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--gold); animation: santa-ping 2.4s ease-out infinite; }
   @keyframes santa-ping{ 0%{ box-shadow: 0 0 0 0 rgba(212,180,106,0.55); } 70%, 100%{ box-shadow: 0 0 0 7px rgba(212,180,106,0); } }
   .santa-r{ grid-area: r; position: relative; z-index: 1; width: 176px; height: 96px; }
-  /* Each shirt sits in a slot that places it; the img inside sways, and the
-     script swaps them (a poof, then a new one flies in). */
+  /* Each shirt sits in a slot that places it; the img inside sways. */
   .santa-slot{ position: absolute; left: 50%; top: 50%; width: 80px; }
   .santa-slot.l{ transform: translate(-115%, -50%) rotate(-15deg); }
   .santa-slot.r{ transform: translate(15%, -56%) rotate(13deg); }
@@ -1331,18 +1334,8 @@
   .santa-slot.r img{ animation-delay: -2.5s; }
   .santa-slot.c img{ animation-delay: -4s; }
   .santa-tk.spinning .santa-slot img{ filter: drop-shadow(0 8px 14px rgba(0,0,0,0.65)) blur(2px); }
-  .santa-puff{ position: absolute; z-index: 3; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(255,246,220,0.95), rgba(243,226,179,0.45) 45%, transparent 70%); }
   @keyframes santa-sway{ 50%{ translate: 0 -5px; rotate: 4deg; } }
   .santa-go{ grid-area: go; position: relative; z-index: 2; color: var(--gold); font-size: 1.4rem; padding-left: 2px; }
-  /* The stub: a dashed tear line with a notch at each end, then the countdown. */
-  .santa-stub{ grid-area: stub; position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 10px -8px 0 -18px; padding: 10px 18px 12px; border-top: 1px dashed rgba(212,180,106,0.35); }
-  .santa-stub[hidden]{ display: none; }
-  .santa-stub::before, .santa-stub::after{ content: ''; position: absolute; top: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); border: 1px solid rgba(212,180,106,0.38); }
-  .santa-stub::before{ left: -9px; }
-  .santa-stub::after{ right: -9px; }
-  .santa-stub-l{ color: var(--text-dim); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-  .santa-cd{ font: 700 1.3rem/1 var(--scoreboard); color: var(--gold-hi); font-variant-numeric: tabular-nums; letter-spacing: 0.03em; white-space: nowrap; }
-  .santa-cd small{ font-size: 0.72em; color: var(--gold); margin-left: 1px; }
   .santa-glare{ position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .3s; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255,240,200,0.15), transparent 45%); }
   .santa-tk:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   @media (hover: hover){ .santa-tk:hover{ border-color: rgba(212,180,106,0.6); } }
@@ -1575,10 +1568,9 @@
         <span class="santa-snow" aria-hidden="true"></span>
         <span class="santa-k">Secret Santa 2026</span>
         <span class="santa-orn" id="santa-orn" aria-hidden="true"><i></i><img src="icons/santa/crest.webp" alt="" width="120" height="108"></span>
-        <span class="santa-l"><span class="santa-h" id="santa-h">Coming <b>soon</b></span><span class="santa-s" id="santa-s">One shirt from Good Shirts</span><span class="santa-hint">Press and hold to reroll</span></span>
+        <span class="santa-l"><span class="santa-pre" id="santa-pre">Sign-ups open in</span><span class="santa-h" id="santa-h"><span class="santa-cd">7<small>d</small> 00:00:00</span></span><span class="santa-s" id="santa-s">One shirt from Good Shirts</span><span class="santa-hint">Press and hold to reroll</span></span>
         <span class="santa-r" aria-hidden="true"><span class="santa-slot l"><img src="icons/santa/shirts/081.webp" alt=""></span><span class="santa-slot r"><img src="icons/santa/shirts/038.webp" alt=""></span><span class="santa-slot c"><img src="icons/santa/downtown.webp" alt="" width="300" height="254"></span></span>
         <span class="santa-go" aria-hidden="true">›</span>
-        <span class="santa-stub" id="santa-stub" hidden><span class="santa-stub-l" id="santa-stub-l">Sign-ups open in</span><span class="santa-cd" id="santa-cd"></span></span>
         <span class="santa-glare" aria-hidden="true"></span>
       </button>
     </section>
@@ -7063,34 +7055,37 @@
     const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
     const gap = (lo, hi) => lo + Math.random() * (hi - lo);
     const clamp01 = v => Math.max(0, Math.min(1, v));
-    const isCss = a => typeof CSSAnimation !== 'undefined' && a instanceof CSSAnimation;
 
     // ---- What the card says ----
-    // Only the teaser is real for now. The others are how it will read once
-    // sign-ups exist (their numbers and dates are stand-ins); preview them
-    // with ?santa=signup, ?santa=in, ?santa=drawn or ?santa=shipped.
+    // A small line, the big line and a sub line; {cd} is a live countdown to
+    // `at`. Only the teaser is real for now. The others are how it will read
+    // once sign-ups exist (their numbers and dates are stand-ins); preview
+    // them with ?santa=signup, ?santa=in, ?santa=drawn or ?santa=shipped.
     const SIGNUPS_OPEN = new Date('2026-11-01T00:00:00-04:00');
     const DAY = 864e5, soon = d => new Date(Date.now() + d * DAY);
     const me = getMe();
     const STATES = {
-      teaser:  { h: 'Coming <b>soon</b>', s: 'One shirt from Good Shirts', cd: 'Sign-ups open in', at: SIGNUPS_OPEN },
-      signup:  { h: 'Sign-ups are <b>open</b>', s: '9 of 12 in so far', cd: 'Sign-ups close in', at: soon(6.4) },
-      in:      { h: me ? `<span class="me-name">${esc(me)}</span>, you're in` : 'You\'re in', s: '11 of 12 in so far', cd: 'The draw in', at: soon(3.2) },
-      drawn:   { h: 'Shopping for <b class="santa-blur">Santa</b>', s: 'Open it to see who', cd: 'Ship it within', at: soon(9.5) },
-      shipped: { h: 'Your shirt <b>shipped</b>', s: 'From your Santa', cd: 'Unwrap night in', at: soon(5.1) },
+      teaser:  { pre: 'Sign-ups open in', h: '{cd}', s: 'One shirt from Good Shirts', at: SIGNUPS_OPEN,
+                 after: { pre: '', h: 'Coming <b>soon</b>', s: 'One shirt from Good Shirts' } },
+      signup:  { pre: 'Sign-ups close in', h: '{cd}', s: '9 of 12 in so far', at: soon(6.4) },
+      in:      { pre: '', h: me ? `<span class="me-name">${esc(me)}</span>, you're in` : 'You\'re in', s: 'The draw in {cd}', at: soon(3.2) },
+      drawn:   { pre: '', h: 'Shopping for <b class="santa-blur">Santa</b>', s: 'Ship it within {cd}', at: soon(9.5) },
+      shipped: { pre: '', h: 'Your shirt <b>shipped</b>', s: 'Unwrap night in {cd}', at: soon(5.1) },
     };
     const state = STATES[urlParam('santa')] || STATES.teaser;
-    document.getElementById('santa-h').innerHTML = state.h;
-    document.getElementById('santa-s').textContent = state.s;
-    document.getElementById('santa-stub-l').textContent = state.cd;
-    const stub = document.getElementById('santa-stub'), cd = document.getElementById('santa-cd');
+    const elPre = document.getElementById('santa-pre'), elH = document.getElementById('santa-h'), elS = document.getElementById('santa-s');
     const pad = n => String(n).padStart(2, '0');
+    const fill = (str, cdHtml) => str.replace('{cd}', `<span class="santa-cd">${cdHtml}</span>`);
     function tick() {
       const s = Math.round((state.at - Date.now()) / 1000);
-      if (s <= 0) { stub.hidden = true; return false; }
+      if (s <= 0) {
+        const a = state.after || { pre: '', h: state.h.replace('{cd}', 'now'), s: state.s.replace(' {cd}', '') };
+        elPre.textContent = a.pre; elH.innerHTML = a.h; elS.textContent = a.s;
+        return false;
+      }
       const d = Math.floor(s / 86400);
-      cd.innerHTML = `${d ? `${d}<small>d</small> ` : ''}${pad(Math.floor(s % 86400 / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(s % 60)}`;
-      stub.hidden = false;
+      const cd = `${d ? `${d}<small>d</small> ` : ''}${pad(Math.floor(s % 86400 / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(s % 60)}`;
+      elPre.textContent = state.pre; elH.innerHTML = fill(state.h, cd); elS.innerHTML = fill(esc(state.s), cd);
       return true;
     }
     if (tick()) { const id = setInterval(() => { if (!tick()) clearInterval(id); }, 1000); }
@@ -7112,12 +7107,10 @@
     };
 
     // ---- The shirts ----
-    // Every few seconds all three poof away, one after another in a random
-    // order, then three new designs fly in the same way, drawn from every
-    // shirt design on thegoodshirts.com (icons/santa/shirts/NNN.webp) in a
-    // shuffled order. Making My Way Downtown is only the first front shirt.
-    // Paused while the card is off screen, the tab is hidden, the sheet is
-    // open or someone is holding the card.
+    // Three designs from every shirt design on thegoodshirts.com
+    // (icons/santa/shirts/NNN.webp), dealt in a shuffled order. They only
+    // change when someone presses and holds the card. Making My Way Downtown
+    // is the first front shirt.
     const SHIRTS = 957;
     const holder = sec.querySelector('.santa-r');
     const [left, right] = [...sec.querySelectorAll('.santa-slot.l img, .santa-slot.r img')];
@@ -7126,9 +7119,7 @@
     const file = n => `icons/santa/shirts/${String(n).padStart(3, '0')}.webp`;
     const sides = () => imgs.map(i => i.getAttribute('src'));
     const SHADOW = 'drop-shadow(0 8px 14px rgba(0,0,0,0.65))';
-    // Where each shirt flies in from: left, right, front.
-    const FROM = ['translate(-70px,-110px) rotate(-70deg) scale(.5)', 'translate(90px,-100px) rotate(70deg) scale(.5)', 'translate(0,-130px) rotate(25deg) scale(.5)'];
-    let order = [], k = 0, busy = false, onScreen = true, run = 0, quietUntil = 0;
+    let order = [], k = 0, onScreen = true;
     function nextFile() {
       if (k >= order.length) {
         const showing = sides();
@@ -7141,60 +7132,7 @@
     // don't fetch a new image every frame.
     const pool = [];
     setTimeout(() => { for (let i = 0; i < 16; i++) { const src = nextFile(), im = new Image(); im.src = src; pool.push(src); } }, 1500);
-    function puff(img) {
-      const r = img.getBoundingClientRect(), box = holder.getBoundingClientRect();
-      const cx = r.left - box.left + r.width / 2, cy = r.top - box.top + r.height / 2;
-      for (let i = 0; i < 9; i++) {
-        const d = document.createElement('i');
-        d.className = 'santa-puff'; d.style.left = cx + 'px'; d.style.top = cy + 'px';
-        holder.appendChild(d);
-        const a = i / 9 * Math.PI * 2 + Math.random() * 0.5, dist = 24 + Math.random() * 22;
-        d.animate([{ transform: 'translate(0,0) scale(.4)', opacity: 1 }, { transform: `translate(${Math.cos(a) * dist}px,${Math.sin(a) * dist}px) scale(${0.8 + Math.random() * 1.4})`, opacity: 0 }],
-          { duration: 520 + Math.random() * 200, easing: 'cubic-bezier(.2,.7,.3,1)' }).finished.then(() => d.remove(), () => d.remove());
-      }
-    }
-    async function cycle() {
-      if (busy || spinning || Date.now() < quietUntil || document.hidden || !onScreen || document.getElementById('ss-sheet')) return;
-      busy = true;
-      const me = run;
-      try {
-        const srcs = [nextFile(), nextFile(), nextFile()];
-        await Promise.all(srcs.map(src => { const im = new Image(); im.src = src; return im.decode(); }));
-        if (me !== run) return;
-        if (reduce) {
-          const outs = imgs.map(img => img.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }));
-          await Promise.all(outs.map(a => a.finished));
-          imgs.forEach((img, i) => { img.src = srcs[i]; outs[i].cancel(); });
-          await Promise.all(imgs.map(img => img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 }).finished));
-          return;
-        }
-        const poofs = [];
-        let t = 0;
-        for (const i of shuffle([0, 1, 2])) {
-          const img = imgs[i], at = t;
-          setTimeout(() => { if (me === run) puff(img); }, at);
-          poofs[i] = img.animate([{ transform: 'scale(1)', opacity: 1, filter: `${SHADOW} blur(0px)` }, { transform: 'scale(1.3)', opacity: 0, filter: `${SHADOW} blur(5px)` }],
-            { duration: 320, delay: at, easing: 'ease-in', fill: 'both' });
-          t += gap(90, 230);
-        }
-        await Promise.all(poofs.map(a => a.finished));
-        await sleep(gap(220, 420));
-        if (me !== run) return;
-        imgs.forEach((img, i) => { img.src = srcs[i]; });
-        const flies = [];
-        t = 0;
-        for (const i of shuffle([0, 1, 2])) {
-          flies.push(imgs[i].animate([{ transform: FROM[i], opacity: 0 }, { opacity: 1, offset: 0.25 }, { transform: 'none', opacity: 1 }],
-            { duration: 720, delay: t, easing: 'cubic-bezier(.2,1.35,.4,1)', fill: 'backwards' }).finished);
-          poofs[i].cancel();
-          t += gap(110, 260);
-        }
-        await Promise.all(flies);
-      } catch (e) { /* a shirt that won't load, or a hold cut in: skip this turn */ }
-      finally { busy = false; }
-    }
     if ('IntersectionObserver' in window) new IntersectionObserver(es => { onScreen = es[0].isIntersecting; }).observe(sec);
-    setInterval(cycle, 5000);
 
     // ---- Press and hold to reroll ----
     // Held past HOLD_MS without moving, the shirts spin like slot reels until
@@ -7205,9 +7143,7 @@
     let hold = null, spinning = false, swallow = false, spinTimer = 0, stopped = new Set(), finals = [];
     const reelSrc = () => { const list = pool.length ? pool : sides(); return list[Math.floor(Math.random() * list.length)]; };
     function startSpin() {
-      spinning = true; swallow = true; run++;
-      imgs.forEach(img => { img.getAnimations().forEach(a => isCss(a) || a.cancel()); img.style.opacity = ''; });
-      holder.querySelectorAll('.santa-puff').forEach(d => d.remove());
+      spinning = true; swallow = true;
       finals = [nextFile(), nextFile(), nextFile()];
       finals.forEach(src => { const im = new Image(); im.src = src; });
       stopped = new Set();
@@ -7236,7 +7172,6 @@
       tk.classList.remove('spinning');
       imgs.forEach(img => { img.style.filter = ''; });
       spinning = false;
-      quietUntil = Date.now() + 5000;
     }
     tk.addEventListener('pointerdown', e => {
       if (e.button !== 0 || spinning || e.target.closest('.santa-orn')) return;
