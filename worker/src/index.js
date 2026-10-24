@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Live Dashboard data endpoint.
  *
  * Replaces the old "proxy that dispatches a GitHub Action to update a
  * Google Sheet" design. This Worker now talks to ESPN directly and caches
- * the result (see readCache/writeCache), so the site reads straight from here — no Sheets, no
+ * the result (see readCache/writeCache), so the site reads straight from here â€” no Sheets, no
  * GitHub Actions, no CSV parsing, and no multi-minute lag between a visit
  * and fresh data (Workers cold-start in single-digit milliseconds; the
  * only real latency left is the ESPN call itself and, when the cooldown is
@@ -55,7 +55,7 @@
  *                      manager entering their own leg (see legs.js).
  * GET /roster?week= -> bye weeks, every roster and the week's best free
  *                      agents, for the Your Roster page (see roster.js).
- * GET/POST /santa, POST /santa/nudge -> Secret Santa sign-ups (see santa.js).
+ * /santa and /santa/* -> Secret Santa, sign-ups to Unwrap night (see santa.js).
  * POST /feedback, GET /feedback/mine -> bug reports and ideas from a
  *                      signed-in manager's You sheet (see feedback.js).
  *
@@ -82,7 +82,7 @@ import { isCommissioner } from "./roles.js";
 import { ADMIN_ROUTES, siteInfo } from "./admin.js";
 import { VIDEO_ROUTES } from "./videos.js";
 import { FEEDBACK_ROUTES } from "./feedback.js";
-import { SANTA_ROUTES } from "./santa.js";
+import { SANTA_ROUTES, checkSantaReminder } from "./santa.js";
 import { ROSTER_ROUTES } from "./roster.js";
 import { runHealthCheck } from "./healthCheck.js";
 
@@ -383,6 +383,7 @@ export default {
           tenth ? recordMedianSnapshot(env, dashboard) : null,
           checkPushEvents(env, dashboard),
           checkLegReminders(env),
+          checkSantaReminder(env),
           feed,
         ]);
         if (push.status === "rejected") console.error("Push check failed:", push.reason);

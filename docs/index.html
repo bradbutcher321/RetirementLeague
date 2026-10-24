@@ -1541,7 +1541,7 @@
       <button type="button" class="santa-tk" id="santa-tk">
         <span class="santa-ss" aria-hidden="true"></span>
         <span class="santa-snow" aria-hidden="true"></span>
-        <span class="santa-l"><span class="santa-k">Secret Santa 2026</span><span class="santa-h" id="santa-h">Sign-ups open <b>Nov 1</b></span><span class="santa-s" id="santa-s">Press and hold to reroll</span></span>
+        <span class="santa-l"><span class="santa-k">Secret Santa 2026</span><span class="santa-h" id="santa-h">Sign-ups open <b>Nov 1</b></span><span class="santa-s" id="santa-s">Press and hold to reroll shirts!</span></span>
         <span class="santa-r" aria-hidden="true"><span class="santa-slot l"><img src="icons/santa/shirts/081.webp" alt=""></span><span class="santa-slot r"><img src="icons/santa/shirts/038.webp" alt=""></span><span class="santa-slot c"><img src="icons/santa/downtown.webp" alt="" width="300" height="254"></span></span>
         <span class="santa-go" aria-hidden="true">›</span>
         <span class="santa-glare" aria-hidden="true"></span>
@@ -1671,7 +1671,7 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=40"></script>
+<script src="nav.js?v=41"></script>
 <script src="page-common.js?v=41"></script>
 <script src="race-sim.js?v=3"></script>
 <script src="share.js?v=1"></script>
@@ -7031,17 +7031,22 @@
 
     // ---- What the card says ----
     // Sign-ups open Sun, Nov 1 at 12:00 AM ET and close at 12:00 AM on
-    // Sun, Nov 15, so the last day to sign up is Sat, Nov 14. The headline
-    // follows the clock (checked every minute). ?santa=in, ?santa=drawn or
-    // ?santa=shipped previews how it will read later on.
-    const OPENS = new Date('2026-11-01T00:00:00-04:00'), CLOSES = new Date('2026-11-15T00:00:00-05:00');
+    // Fri, Nov 13, so the last day to sign up is Thu, Nov 12. Reveal night
+    // is that Friday at 9:00 PM. The headline follows the clock (checked
+    // every minute). ?santa=in or ?santa=drawn previews how it will read.
+    const OPENS = new Date('2026-11-01T00:00:00-04:00'), CLOSES = new Date('2026-11-13T00:00:00-05:00'), REVEAL = new Date('2026-11-13T21:00:00-05:00');
     const me = getMe();
     const PREVIEW = {
       in: me ? `${esc(me)}, you're in` : 'You\'re in',
       drawn: 'Shopping for <b class="santa-blur">Santa</b>',
-      shipped: 'Your shirt <b>shipped</b>',
     };
-    const phase = () => { const now = new Date(); return now < OPENS ? 'before' : now < CLOSES ? 'open' : 'closed'; };
+    const phase = () => {
+      const now = new Date();
+      if (now < OPENS) return 'before';
+      if (now < CLOSES) return 'open';
+      if (now < REVEAL) return now.getDate() === 13 ? 'tonight' : 'closed';
+      return now - REVEAL < 3 * 3600 * 1000 ? 'room' : 'drawn';
+    };
     const elH = document.getElementById('santa-h');
     const leftSlot = sec.querySelector('.santa-slot.l');
     function fitWords() {
@@ -7052,7 +7057,7 @@
       if (elH.scrollWidth > room) elH.classList.add('two');
     }
     function setWords() {
-      elH.innerHTML = PREVIEW[urlParam('santa')] || { before: 'Sign-ups open <b>Nov 1</b>', open: 'Sign up by <b>Nov 14</b>', closed: 'Sign-ups <b>closed</b>' }[phase()];
+      elH.innerHTML = PREVIEW[urlParam('santa')] || { before: 'Sign-ups open <b>Nov 1</b>', open: 'Sign up by <b>Nov 12</b>', closed: 'Reveal night <b>Nov 13</b>', tonight: 'Tonight at <b>9:00 PM</b>', room: 'The Room is <b>open</b>', drawn: PREVIEW.drawn }[phase()];
       fitWords();
     }
     setWords();

@@ -124,3 +124,53 @@ CREATE TABLE IF NOT EXISTS santa_cards (
   dates TEXT NOT NULL DEFAULT '[]',
   updated INTEGER NOT NULL
 );
+-- After the draw (src/santa.js). The draw itself, the Room's start and the
+-- commissioners' dates live in site_settings (santa_draw, santa_start, santa).
+-- santa_people: the 15-minute reminder switch (on unless turned off), the last
+-- visit (Been by today), when you opened your envelope, and your guess.
+CREATE TABLE IF NOT EXISTS santa_people (
+  manager TEXT PRIMARY KEY,
+  remind INTEGER NOT NULL DEFAULT 1,
+  seen INTEGER,
+  opened INTEGER,
+  in_room INTEGER NOT NULL DEFAULT 0,
+  guess TEXT
+);
+-- The Room on reveal night: a heartbeat every few seconds, every ~0.7s while holding the seal.
+CREATE TABLE IF NOT EXISTS santa_room (
+  manager TEXT PRIMARY KEY,
+  seen INTEGER NOT NULL,
+  holding INTEGER NOT NULL DEFAULT 0
+);
+-- Joins and emoji in the Room.
+CREATE TABLE IF NOT EXISTS santa_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  manager TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  emoji TEXT,
+  at INTEGER NOT NULL
+);
+-- Each Santa's shirt: which one (shirt = index into docs/data/santa-shirts.json,
+-- or NULL for a pasted link), and the order, estimated and delivered dates (YYYY-MM-DD).
+CREATE TABLE IF NOT EXISTS santa_gifts (
+  santa TEXT PRIMARY KEY,
+  shirt INTEGER,
+  title TEXT,
+  url TEXT,
+  size TEXT,
+  price REAL,
+  ordered TEXT,
+  eta TEXT,
+  delivered TEXT,
+  updated INTEGER NOT NULL
+);
+-- The anonymous mailbox: one thread per Santa and giftee. from_santa says which side wrote it.
+CREATE TABLE IF NOT EXISTS santa_msgs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  santa TEXT NOT NULL,
+  giftee TEXT NOT NULL,
+  from_santa INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS santa_msgs_pair ON santa_msgs (santa, giftee, id);

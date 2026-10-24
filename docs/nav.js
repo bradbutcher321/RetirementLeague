@@ -41,6 +41,9 @@
   ];
   // Pages that belong to no tab, so none lights up.
   const NO_TAB = ['commissioner.html'];
+  // Pages that keep their eyebrow instead of a back link: Secret Santa lights
+  // the Live tab, which already goes back to Live.
+  const NO_BACK = ['secret-santa.html'];
   // The History hub's tiles (history.html). `group` files each under a heading;
   // the tiles show in the order below within it.
   const HISTORY = [
@@ -159,8 +162,8 @@
   }
   function backButton(file) {
     const trail = noteTrail();
-    if (TAB_FILES.includes(file) || NO_TAB.includes(file)) return;
-    const eb = document.querySelector('.wrap > header .eyebrow');
+    if (TAB_FILES.includes(file) || NO_TAB.includes(file) || NO_BACK.includes(file)) return;
+    const eb =document.querySelector('.wrap > header .eyebrow');
     if (!eb) return;
     const prev = trail.length >= 2 ? trail[trail.length - 2] : null;
     // No page before this one (a push, a shared link, the Home Screen): go to

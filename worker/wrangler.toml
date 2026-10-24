@@ -47,8 +47,11 @@ compatibility_date = "2024-09-23"
 # and Sunday NFL only got the hourly baseline (confirmed from the
 # workflow's run history, 2026-10-04).
 #
-#   A) every minute, Mon/Tue/Fri/Sun 12am-4:59am UTC -- tail end of a
-#      Sunday-night or Thursday-night game (or MNF) that ran past midnight.
+#   A) every minute, Mon/Tue/Fri/Sat/Sun 12am-4:59am UTC -- tail end of a
+#      Sunday-night or Thursday-night game (or MNF) that ran past midnight,
+#      and Friday night ET (Sat UTC), added so the Secret Santa "starts in 15
+#      minutes" push (santa.js checkSantaReminder) goes out at 8:45 PM ET on
+#      Fri, Nov 13 rather than on the next hourly run.
 #   B) every minute, Mon/Thu 11pm UTC -- kickoff hour for MNF and
 #      Thursday-night NCAAF/NFL.
 #   C) every minute, Sat/Sun 4pm-11:59pm UTC -- Saturday NCAAF and Sunday
@@ -65,7 +68,7 @@ compatibility_date = "2024-09-23"
 # Tue 5am UTC (Tue 1am ET) through Wed 12am UTC.
 [triggers]
 crons = [
-  "* 0-4 * * MON,TUE,FRI,SUN",    # A
+  "* 0-4 * * MON,TUE,FRI,SAT,SUN", # A
   "* 23 * * MON,THU",             # B
   "* 16-23 * * SAT,SUN",          # C
   "0 12-23 * * THU",              # D
