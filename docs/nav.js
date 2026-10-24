@@ -33,7 +33,7 @@
   // The tab bar, left to right. `pages` are the files that light a tab up;
   // anything not listed (every history page) lights History.
   const TABS = [
-    { key: 'live', href: 'index.html', label: 'Live', icon: ICONS.live, pages: ['index.html'] },
+    { key: 'live', href: 'index.html', label: 'Live', icon: ICONS.live, pages: ['index.html', 'secret-santa.html'] },
     { key: 'feed', href: 'feed.html', label: 'Feed', icon: ICONS.feed, pages: ['feed.html'] },
     { key: 'parlay', href: 'parlay-results.html', label: 'Parlay', icon: ICONS.ticket, pages: ['parlay-results.html', 'parlay-legs.html'] },
     { key: 'standings', href: 'standings.html', label: 'Standings', icon: ICONS.list, pages: ['standings.html'] },

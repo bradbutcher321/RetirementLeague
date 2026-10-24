@@ -1332,21 +1332,6 @@
   @media (min-width: 721px){ .santa-tk{ min-height: 132px; } .santa-r{ width: 232px; height: 120px; } .santa-slot{ width: 106px; } .santa-slot.l{ transform: translate(-110%, -50%) rotate(-15deg); } .santa-slot.r{ transform: translate(9%, -56%) rotate(13deg); } }
   @media (max-width: 380px){ .santa-r{ width: 140px; } .santa-slot{ width: 64px; } .santa-h{ font-size: 1.6rem; } }
   @media (prefers-reduced-motion: reduce){ .santa-tk::after, .santa-snow, .santa-slot img{ animation: none; } .santa-ss{ display: none; } }
-  .ss-sheet:focus{ outline: none; }
-  .ss-sheet .sheet-body{ padding: 4px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
-  .ss-shirts{ position: relative; height: 150px; margin: 6px 0 4px; }
-  .ss-shirts img{ position: absolute; left: 50%; top: 50%; width: 128px; height: auto; filter: drop-shadow(0 10px 18px rgba(0,0,0,0.7)); }
-  .ss-shirts img:nth-child(1){ transform: translate(-130%, -50%) rotate(-12deg); }
-  .ss-shirts img:nth-child(2){ transform: translate(30%, -52%) rotate(12deg); }
-  .ss-shirts img:nth-child(3){ transform: translate(-50%, -46%) scale(1.15); z-index: 1; }
-  .ss-sheet h2{ margin: 6px 0 10px; text-align: center; font: 800 2rem/1 var(--scoreboard); }
-  .ss-list{ margin: 0 0 14px; padding: 0; list-style: none; display: grid; gap: 8px; }
-  .ss-list li{ padding: 10px 12px; border: 1px solid var(--item-line, var(--line)); border-radius: 12px; background: var(--item, rgba(255,255,255,0.025)); font-size: 0.9rem; line-height: 1.4; }
-  .ss-list b{ color: var(--gold); font-weight: 600; }
-  @media (min-width: 721px){
-    .ss-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: 440px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
-    .ss-sheet .sheet-grab{ visibility: hidden; height: 8px; padding: 0; }
-  }
   .notice-stack{ display: grid; gap: 10px; }
   .notice-chip{ font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); white-space: nowrap; }
   .notice-box{ padding: 12px 14px; font-size: 0.92rem; line-height: 1.4; }
@@ -1551,9 +1536,9 @@
     </header>
 
     <!-- Secret Santa teaser: up through Dec 31 (the script below hides it
-         after that). The real Secret Santa page will replace the sheet. -->
+         after that). A tap opens secret-santa.html. -->
     <section id="santa-section">
-      <button type="button" class="santa-tk" id="santa-tk" aria-haspopup="dialog">
+      <button type="button" class="santa-tk" id="santa-tk">
         <span class="santa-ss" aria-hidden="true"></span>
         <span class="santa-snow" aria-hidden="true"></span>
         <span class="santa-l"><span class="santa-k">Secret Santa 2026</span><span class="santa-h" id="santa-h">Sign-ups open <b>Nov 1</b></span><span class="santa-s" id="santa-s">Press and hold to reroll</span></span>
@@ -1686,7 +1671,7 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=39"></script>
+<script src="nav.js?v=40"></script>
 <script src="page-common.js?v=41"></script>
 <script src="race-sim.js?v=3"></script>
 <script src="share.js?v=1"></script>
@@ -7031,8 +7016,8 @@
   })();
 </script>
 <script>
-  // Secret Santa teaser on the Live dashboard. Gone after Dec 31; until the
-  // real page exists, a tap opens a short sheet about what's coming.
+  // Secret Santa teaser on the Live dashboard. Gone after Dec 31; a tap opens
+  // the sign-up page.
   (function () {
     const sec = document.getElementById('santa-section');
     if (!sec) return;
@@ -7052,7 +7037,7 @@
     const OPENS = new Date('2026-11-01T00:00:00-04:00'), CLOSES = new Date('2026-11-15T00:00:00-05:00');
     const me = getMe();
     const PREVIEW = {
-      in: me ? `<span class="me-name">${esc(me)}</span>, you're in` : 'You\'re in',
+      in: me ? `${esc(me)}, you're in` : 'You\'re in',
       drawn: 'Shopping for <b class="santa-blur">Santa</b>',
       shipped: 'Your shirt <b>shipped</b>',
     };
@@ -7213,39 +7198,13 @@
         { duration: 6500 + Math.random() * 3000, easing: 'linear' }).finished.then(() => im.remove(), () => im.remove());
     }, 520);
 
-    // ---- The sheet ----
-    let lastFocus = null;
-    const onKey = e => { if (e.key === 'Escape') close(); };
-    function close() {
-      document.getElementById('ss-sheet')?.remove();
-      document.getElementById('ss-scrim')?.remove();
-      document.removeEventListener('keydown', onKey);
-      if (lastFocus && document.contains(lastFocus)) lastFocus.focus({ preventScroll: true });
-    }
-    tk.addEventListener('click', e => {
+    // ---- Opening the page ----
+    // A plain tap goes to the sign-up page (secret-santa.html); the click
+    // that ends a press-and-hold is swallowed.
+    tk.addEventListener('click', () => {
       if (swallow) { swallow = false; return; }
-      if (spinning || document.getElementById('ss-sheet')) return;
-      lastFocus = document.activeElement;
-      document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="ss-scrim"></div>
-        <div class="sheet ss-sheet" id="ss-sheet" role="dialog" aria-modal="true" aria-label="Secret Santa 2026" tabindex="-1">
-          <div class="sheet-grab"><span></span></div>
-          <div class="sheet-body">
-            <div class="ss-shirts" aria-hidden="true">${sides().map(src => `<img src="${src}" alt="">`).join('')}</div>
-            <h2>Secret Santa 2026</h2>
-            <ul class="ss-list">
-              <li>Everyone gets <b>one shirt</b> from thegoodshirts.com.</li>
-              <li>You'll sign up here with your size and where to ship it. Then a secret draw picks who you're shopping for.</li>
-              <li>${{ before: 'Sign-ups open <b>Sunday, Nov 1</b>.', open: 'Sign up by <b>Saturday, Nov 14</b>.', closed: 'Sign-ups are closed.' }[phase()]}</li>
-            </ul>
-            <a class="rv-go" href="https://thegoodshirts.com/" target="_blank" rel="noopener">Browse Good Shirts</a>
-            <button type="button" class="rv-done">Done</button>
-          </div>
-        </div>`);
-      const sheet = document.getElementById('ss-sheet');
-      document.getElementById('ss-scrim').addEventListener('click', close);
-      sheet.querySelector('.rv-done').addEventListener('click', close);
-      document.addEventListener('keydown', onKey);
-      sheet.focus({ preventScroll: true });
+      if (spinning) return;
+      location.href = 'secret-santa.html';
     });
   })();
 </script>

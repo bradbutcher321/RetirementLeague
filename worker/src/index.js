@@ -55,6 +55,7 @@
  *                      manager entering their own leg (see legs.js).
  * GET /roster?week= -> bye weeks, every roster and the week's best free
  *                      agents, for the Your Roster page (see roster.js).
+ * GET/POST /santa, POST /santa/nudge -> Secret Santa sign-ups (see santa.js).
  * POST /feedback, GET /feedback/mine -> bug reports and ideas from a
  *                      signed-in manager's You sheet (see feedback.js).
  *
@@ -81,6 +82,7 @@ import { isCommissioner } from "./roles.js";
 import { ADMIN_ROUTES, siteInfo } from "./admin.js";
 import { VIDEO_ROUTES } from "./videos.js";
 import { FEEDBACK_ROUTES } from "./feedback.js";
+import { SANTA_ROUTES } from "./santa.js";
 import { ROSTER_ROUTES } from "./roster.js";
 import { runHealthCheck } from "./healthCheck.js";
 
@@ -277,6 +279,12 @@ export default {
       const [method, route] = VIDEO_ROUTES[path];
       if (request.method !== method) return jsonResponse({ error: "Method not allowed" }, headers, 405);
       const result = await route(request, env).catch((err) => ({ status: 502, body: { error: String(err) } }));
+      return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
+    }
+    if (SANTA_ROUTES[path]) {
+      const route = SANTA_ROUTES[path][request.method];
+      if (!route) return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
       return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
     }
     if (LEG_ROUTES[path]) {

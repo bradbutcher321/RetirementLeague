@@ -109,3 +109,18 @@ CREATE TABLE IF NOT EXISTS feedback (
   updated_by TEXT
 );
 CREATE INDEX IF NOT EXISTS feedback_manager ON feedback (manager, ts);
+-- Secret Santa sign-ups (src/santa.js): one card per manager. colors and
+-- dates are JSON arrays (shirt colors; December days as YYYY-MM-DD).
+CREATE TABLE IF NOT EXISTS santa_cards (
+  manager TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  street TEXT NOT NULL,
+  apt TEXT,
+  city TEXT NOT NULL,
+  state TEXT NOT NULL,
+  zip TEXT NOT NULL,
+  size TEXT NOT NULL,
+  colors TEXT NOT NULL DEFAULT '[]',
+  dates TEXT NOT NULL DEFAULT '[]',
+  updated INTEGER NOT NULL
+);
