@@ -7030,17 +7030,17 @@
     if (new Date() >= new Date(2027, 0, 1)) { sec.remove(); return; }
 
     // Every few seconds all three shirts poof away, one after another in a
-    // random order, then fly back in the same way: two new designs on the
-    // sides, drawn from every shirt design on thegoodshirts.com
-    // (icons/santa/shirts/NNN.webp) in a shuffled order, and Making My Way
-    // Downtown back in front. Paused while the card is off screen, the tab
-    // is hidden or the sheet is open.
-    const SHIRTS = 956;
+    // random order, then fly back in the same way as three new designs, drawn
+    // from every shirt design on thegoodshirts.com (icons/santa/shirts/NNN.webp)
+    // in a shuffled order. Making My Way Downtown is only the first front
+    // shirt. Paused while the card is off screen, the tab is hidden or the
+    // sheet is open.
+    const SHIRTS = 957;
     const holder = sec.querySelector('.santa-r');
     const slots = [...sec.querySelectorAll('.santa-slot.l img, .santa-slot.r img')];
     const front = sec.querySelector('.santa-slot.c img');
     const file = n => `icons/santa/shirts/${String(n).padStart(3, '0')}.webp`;
-    const sides = () => slots.map(i => i.getAttribute('src'));
+    const sides = () => [...slots, front].map(i => i.getAttribute('src'));
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
     const gap = (lo, hi) => lo + Math.random() * (hi - lo);
@@ -7072,14 +7072,14 @@
       if (busy || document.hidden || !onScreen || document.getElementById('ss-sheet')) return;
       busy = true;
       try {
-        const next = [nextFile(), nextFile()];
-        await Promise.all(next.map(src => { const im = new Image(); im.src = src; return im.decode(); }));
-        const imgs = [slots[0], slots[1], front], srcs = [next[0], next[1], front.getAttribute('src')];
+        const srcs = [nextFile(), nextFile(), nextFile()];
+        await Promise.all(srcs.map(src => { const im = new Image(); im.src = src; return im.decode(); }));
+        const imgs = [slots[0], slots[1], front];
         if (reduce) {
-          const outs = slots.map(img => img.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }));
+          const outs = imgs.map(img => img.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }));
           await Promise.all(outs.map(a => a.finished));
-          slots.forEach((img, i) => { img.src = next[i]; outs[i].cancel(); });
-          await Promise.all(slots.map(img => img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 }).finished));
+          imgs.forEach((img, i) => { img.src = srcs[i]; outs[i].cancel(); });
+          await Promise.all(imgs.map(img => img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 }).finished));
           return;
         }
         const poofs = [];
@@ -7093,7 +7093,7 @@
         }
         await Promise.all(poofs.map(a => a.finished));
         await new Promise(r => setTimeout(r, gap(220, 420)));
-        imgs.forEach((img, i) => { if (img.getAttribute('src') !== srcs[i]) img.src = srcs[i]; });
+        imgs.forEach((img, i) => { img.src = srcs[i]; });
         const flies = [];
         t = 0;
         for (const i of shuffle([0, 1, 2])) {
