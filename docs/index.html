@@ -1288,15 +1288,13 @@
   #recap-section{ margin-bottom: 14px; }
   #notice-section{ margin-bottom: 14px; }
 
-  /* Secret Santa teaser: a card under the title. A header row (the label,
-     and the league crest swinging from the top edge above the shirts), then
-     the words on the left (what's next and a live countdown) and three Good
-     Shirts on the right. Words and shirts are separate grid columns, so text
-     never lands on a shirt. Press and hold rerolls the shirts like slot
-     reels; a tap opens a short sheet. */
+  /* Secret Santa teaser (mockup part 2, option B): a ticket card under the
+     title, the words on the left and three Good Shirts on the right. The
+     shirts sit in front, so a long headline runs behind them. Press and hold
+     rerolls the shirts like slot reels; a tap opens a short sheet. */
   #santa-section{ margin: -8px 0 18px; }
-  .santa-tk{ --gold-hi: #F3E2B3; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "k o ." "l r go"; align-items: center; width: 100%; padding: 12px 8px 14px 18px; border-radius: var(--card-r, 22px); border: 1px solid rgba(212,180,106,0.38); text-align: left; overflow: hidden; cursor: pointer; color: var(--text); font: inherit; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: pan-y;
-    background: radial-gradient(120% 150% at 100% 40%, rgba(212,180,106,0.17), transparent 55%), linear-gradient(160deg, #17140f, #0c0b09);
+  .santa-tk{ --gold-hi: #F3E2B3; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; width: 100%; min-height: 112px; padding: 14px 8px 14px 18px; border-radius: var(--card-r, 22px); border: 1px solid rgba(212,180,106,0.38); text-align: left; overflow: hidden; cursor: pointer; color: var(--text); font: inherit; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: pan-y;
+    background: radial-gradient(120% 150% at 100% 50%, rgba(212,180,106,0.17), transparent 55%), linear-gradient(160deg, #17140f, #0c0b09);
     box-shadow: var(--card-edge, inset 0 1px 0 rgba(255,255,255,0.065)), 0 18px 40px -24px rgba(212,180,106,0.45); }
   .santa-tk::after{ content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 40%, rgba(255,240,200,0.08) 50%, transparent 60%); background-size: 250% 100%; animation: santa-sheen 6s ease-in-out infinite; }
   @keyframes santa-sheen{ 0%{ background-position: 120% 0; } 60%, 100%{ background-position: -60% 0; } }
@@ -1306,25 +1304,16 @@
   /* Tiny shirts drifting down behind everything, like the snow. */
   .santa-ss{ position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .santa-ss img{ position: absolute; top: 0; opacity: 0.2; height: auto; }
-  .santa-k{ grid-area: k; position: relative; z-index: 2; align-self: center; min-height: 26px; display: flex; align-items: center; color: var(--gold); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
-  .santa-orn{ grid-area: o; justify-self: center; align-self: start; position: relative; z-index: 3; margin-top: -13px; transform-origin: 50% 0; animation: santa-swing 2.8s ease-in-out infinite; cursor: pointer; }
-  .santa-orn i{ display: block; width: 1.5px; height: 9px; margin: 0 auto; background: linear-gradient(#F3E2B3, #8A7342); }
-  .santa-orn img{ display: block; width: 30px; height: auto; margin-top: -1px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)); }
-  @keyframes santa-swing{ 0%, 100%{ rotate: -5deg; } 50%{ rotate: 5deg; } }
-  .santa-l{ grid-area: l; position: relative; z-index: 2; min-width: 0; padding: 6px 12px 4px 0; }
-  .santa-pre{ display: block; margin: 0 0 4px; color: var(--text); font-size: 0.82rem; font-weight: 600; }
-  .santa-pre:empty{ display: none; }
-  .santa-h{ display: block; margin: 0 0 6px; font: 800 1.85rem/1 var(--scoreboard); letter-spacing: 0.01em; text-wrap: balance; }
+  .santa-l{ position: relative; z-index: 1; min-width: 0; }
+  .santa-k{ display: block; color: var(--gold); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
+  .santa-h{ display: block; margin: 8px 0 6px; font: 800 1.85rem/1 var(--scoreboard); letter-spacing: 0.01em; white-space: nowrap; }
   .santa-h b{ color: var(--gold-hi); font-weight: 800; }
-  .santa-cd{ color: var(--gold-hi); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; white-space: nowrap; }
-  .santa-cd small{ font-size: 0.68em; color: var(--gold); margin-left: 1px; }
   .santa-h .santa-blur{ filter: blur(6px); }
-  .santa-s{ display: block; color: var(--text-dim); font-size: 0.8rem; line-height: 1.35; }
-  .santa-s:empty{ display: none; }
-  .santa-hint{ display: flex; align-items: center; gap: 7px; margin-top: 9px; color: var(--text-dim); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; }
-  .santa-hint::before{ content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--gold); animation: santa-ping 2.4s ease-out infinite; }
-  @keyframes santa-ping{ 0%{ box-shadow: 0 0 0 0 rgba(212,180,106,0.55); } 70%, 100%{ box-shadow: 0 0 0 7px rgba(212,180,106,0); } }
-  .santa-r{ grid-area: r; position: relative; z-index: 1; width: 176px; height: 96px; }
+  /* When the headline would run under the shirts far enough to hide the
+     date, the date takes its own line (the script decides). */
+  .santa-h.two b{ display: block; margin-top: 3px; }
+  .santa-s{ display: block; color: var(--text-dim); font-size: 0.8rem; white-space: nowrap; }
+  .santa-r{ position: relative; z-index: 1; width: 176px; height: 96px; }
   /* Each shirt sits in a slot that places it; the img inside sways. */
   .santa-slot{ position: absolute; left: 50%; top: 50%; width: 80px; }
   .santa-slot.l{ transform: translate(-115%, -50%) rotate(-15deg); }
@@ -1336,13 +1325,13 @@
   .santa-slot.c img{ animation-delay: -4s; }
   .santa-tk.spinning .santa-slot img{ filter: drop-shadow(0 8px 14px rgba(0,0,0,0.65)) blur(2px); }
   @keyframes santa-sway{ 50%{ translate: 0 -5px; rotate: 4deg; } }
-  .santa-go{ grid-area: go; position: relative; z-index: 2; color: var(--gold); font-size: 1.4rem; padding-left: 2px; }
+  .santa-go{ position: relative; z-index: 1; color: var(--gold); font-size: 1.4rem; padding-left: 2px; }
   .santa-glare{ position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .3s; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255,240,200,0.15), transparent 45%); }
   .santa-tk:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   @media (hover: hover){ .santa-tk:hover{ border-color: rgba(212,180,106,0.6); } }
-  @media (min-width: 721px){ .santa-r{ width: 232px; height: 120px; } .santa-slot{ width: 106px; } .santa-slot.l{ transform: translate(-110%, -50%) rotate(-15deg); } .santa-slot.r{ transform: translate(9%, -56%) rotate(13deg); } .santa-orn img{ width: 34px; } }
+  @media (min-width: 721px){ .santa-tk{ min-height: 132px; } .santa-r{ width: 232px; height: 120px; } .santa-slot{ width: 106px; } .santa-slot.l{ transform: translate(-110%, -50%) rotate(-15deg); } .santa-slot.r{ transform: translate(9%, -56%) rotate(13deg); } }
   @media (max-width: 380px){ .santa-r{ width: 140px; } .santa-slot{ width: 64px; } .santa-h{ font-size: 1.6rem; } }
-  @media (prefers-reduced-motion: reduce){ .santa-tk::after, .santa-snow, .santa-slot img, .santa-orn, .santa-hint::before{ animation: none; } .santa-ss{ display: none; } }
+  @media (prefers-reduced-motion: reduce){ .santa-tk::after, .santa-snow, .santa-slot img{ animation: none; } .santa-ss{ display: none; } }
   .ss-sheet:focus{ outline: none; }
   .ss-sheet .sheet-body{ padding: 4px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
   .ss-shirts{ position: relative; height: 150px; margin: 6px 0 4px; }
@@ -1567,9 +1556,7 @@
       <button type="button" class="santa-tk" id="santa-tk" aria-haspopup="dialog">
         <span class="santa-ss" aria-hidden="true"></span>
         <span class="santa-snow" aria-hidden="true"></span>
-        <span class="santa-k">Secret Santa 2026</span>
-        <span class="santa-orn" id="santa-orn" aria-hidden="true"><i></i><img src="icons/santa/crest.webp" alt="" width="120" height="108"></span>
-        <span class="santa-l"><span class="santa-pre" id="santa-pre">Sign-ups open in</span><span class="santa-h" id="santa-h"><span class="santa-cd">7<small>d</small> 00:00:00</span></span><span class="santa-s" id="santa-s"></span><span class="santa-hint">Press and hold to reroll</span></span>
+        <span class="santa-l"><span class="santa-k">Secret Santa 2026</span><span class="santa-h" id="santa-h">Sign-ups open <b>Nov 1</b></span><span class="santa-s" id="santa-s">Press and hold to reroll</span></span>
         <span class="santa-r" aria-hidden="true"><span class="santa-slot l"><img src="icons/santa/shirts/081.webp" alt=""></span><span class="santa-slot r"><img src="icons/santa/shirts/038.webp" alt=""></span><span class="santa-slot c"><img src="icons/santa/downtown.webp" alt="" width="300" height="254"></span></span>
         <span class="santa-go" aria-hidden="true">›</span>
         <span class="santa-glare" aria-hidden="true"></span>
@@ -7058,38 +7045,35 @@
     const clamp01 = v => Math.max(0, Math.min(1, v));
 
     // ---- What the card says ----
-    // A small line, the big line and a sub line; {cd} is a live countdown to
-    // `at`. Only the teaser is real for now. The others are how it will read
-    // once sign-ups exist (their numbers and dates are stand-ins); preview
-    // them with ?santa=signup, ?santa=in, ?santa=drawn or ?santa=shipped.
-    const SIGNUPS_OPEN = new Date('2026-11-01T00:00:00-04:00');
-    const DAY = 864e5, soon = d => new Date(Date.now() + d * DAY);
+    // Sign-ups open Sun, Nov 1 at 12:00 AM ET and close at 12:00 AM on
+    // Sun, Nov 15, so the last day to sign up is Sat, Nov 14. The headline
+    // follows the clock (checked every minute). ?santa=in, ?santa=drawn or
+    // ?santa=shipped previews how it will read later on.
+    const OPENS = new Date('2026-11-01T00:00:00-04:00'), CLOSES = new Date('2026-11-15T00:00:00-05:00');
     const me = getMe();
-    const STATES = {
-      teaser:  { pre: 'Sign-ups open in', h: '{cd}', s: '', at: SIGNUPS_OPEN,
-                 after: { pre: '', h: 'Coming <b>soon</b>', s: '' } },
-      signup:  { pre: 'Sign-ups close in', h: '{cd}', s: '9 of 12 in so far', at: soon(6.4) },
-      in:      { pre: '', h: me ? `<span class="me-name">${esc(me)}</span>, you're in` : 'You\'re in', s: 'The draw in {cd}', at: soon(3.2) },
-      drawn:   { pre: '', h: 'Shopping for <b class="santa-blur">Santa</b>', s: 'Ship it within {cd}', at: soon(9.5) },
-      shipped: { pre: '', h: 'Your shirt <b>shipped</b>', s: 'Unwrap night in {cd}', at: soon(5.1) },
+    const PREVIEW = {
+      in: me ? `<span class="me-name">${esc(me)}</span>, you're in` : 'You\'re in',
+      drawn: 'Shopping for <b class="santa-blur">Santa</b>',
+      shipped: 'Your shirt <b>shipped</b>',
     };
-    const state = STATES[urlParam('santa')] || STATES.teaser;
-    const elPre = document.getElementById('santa-pre'), elH = document.getElementById('santa-h'), elS = document.getElementById('santa-s');
-    const pad = n => String(n).padStart(2, '0');
-    const fill = (str, cdHtml) => str.replace('{cd}', `<span class="santa-cd">${cdHtml}</span>`);
-    function tick() {
-      const s = Math.round((state.at - Date.now()) / 1000);
-      if (s <= 0) {
-        const a = state.after || { pre: '', h: state.h.replace('{cd}', 'now'), s: state.s.replace(' {cd}', '') };
-        elPre.textContent = a.pre; elH.innerHTML = a.h; elS.textContent = a.s;
-        return false;
-      }
-      const d = Math.floor(s / 86400);
-      const cd = `${d ? `${d}<small>d</small> ` : ''}${pad(Math.floor(s % 86400 / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(s % 60)}`;
-      elPre.textContent = state.pre; elH.innerHTML = fill(state.h, cd); elS.innerHTML = fill(esc(state.s), cd);
-      return true;
+    const phase = () => { const now = new Date(); return now < OPENS ? 'before' : now < CLOSES ? 'open' : 'closed'; };
+    const elH = document.getElementById('santa-h');
+    const leftSlot = sec.querySelector('.santa-slot.l');
+    function fitWords() {
+      elH.classList.remove('two');
+      if (!elH.querySelector('b')) return;
+      // A little tuck under the left shirt is fine; more than that hides the date.
+      const room = leftSlot.getBoundingClientRect().left - elH.getBoundingClientRect().left + 28;
+      if (elH.scrollWidth > room) elH.classList.add('two');
     }
-    if (tick()) { const id = setInterval(() => { if (!tick()) clearInterval(id); }, 1000); }
+    function setWords() {
+      elH.innerHTML = PREVIEW[urlParam('santa')] || { before: 'Sign-ups open <b>Nov 1</b>', open: 'Sign up by <b>Nov 14</b>', closed: 'Sign-ups <b>closed</b>' }[phase()];
+      fitWords();
+    }
+    setWords();
+    setInterval(setWords, 60 * 1000);
+    addEventListener('resize', fitWords);
+    if (document.fonts) document.fonts.ready.then(fitWords);
 
     // ---- Sound (only ever after a press) ----
     const sfx = {
@@ -7104,7 +7088,6 @@
       },
       tick() { this.tone(1600 + Math.random() * 400, 'square', 0.012, 0.03); },
       ding() { [1318, 1760, 2637].forEach((f, i) => this.tone(f, 'sine', 0.04, 0.8, i * 0.03)); },
-      jingle() { for (let i = 0; i < 12; i++) { const w = i * 0.045 + Math.random() * 0.02; this.tone(2600 + Math.random() * 1800, 'sine', 0.03, 0.22, w); } },
     };
 
     // ---- The shirts ----
@@ -7175,7 +7158,7 @@
       spinning = false;
     }
     tk.addEventListener('pointerdown', e => {
-      if (e.button !== 0 || spinning || e.target.closest('.santa-orn')) return;
+      if (e.button !== 0 || spinning) return;
       swallow = false;
       sfx.init();
       hold = { x: e.clientX, y: e.clientY, timer: setTimeout(startSpin, HOLD_MS) };
@@ -7216,25 +7199,6 @@
       tk.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') untilt(); });
     }
 
-    // ---- The crest ornament ----
-    // Sways on its own; a fast scroll swings it hard, a tap spins it round.
-    const orn = document.getElementById('santa-orn');
-    const swingBy = amp => orn.animate([{ rotate: '0deg' }, { rotate: `${amp}deg` }, { rotate: `${-amp * 0.8}deg` }, { rotate: `${amp * 0.55}deg` }, { rotate: `${-amp * 0.3}deg` }, { rotate: '0deg' }],
-      { duration: 2200, easing: 'ease-out', composite: 'add' });
-    if (!reduce) {
-      let lastY = scrollY, lastKick = 0;
-      addEventListener('scroll', () => {
-        const v = Math.abs(scrollY - lastY); lastY = scrollY;
-        const now = performance.now();
-        if (onScreen && v > 18 && now - lastKick > 900) { lastKick = now; swingBy(Math.min(28, v / 2)); }
-      }, { passive: true });
-    }
-    orn.addEventListener('click', e => {
-      e.stopPropagation(); e.preventDefault();
-      sfx.init(); sfx.jingle();
-      if (!reduce) orn.animate([{ rotate: '0deg' }, { rotate: '360deg' }], { duration: 900, easing: 'cubic-bezier(.3,1.3,.5,1)', composite: 'add' });
-    });
-
     // ---- Shirts falling like snow, behind everything ----
     const ss = sec.querySelector('.santa-ss');
     if (!reduce) setInterval(() => {
@@ -7260,7 +7224,7 @@
     }
     tk.addEventListener('click', e => {
       if (swallow) { swallow = false; return; }
-      if (spinning || e.target.closest('.santa-orn') || document.getElementById('ss-sheet')) return;
+      if (spinning || document.getElementById('ss-sheet')) return;
       lastFocus = document.activeElement;
       document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="ss-scrim"></div>
         <div class="sheet ss-sheet" id="ss-sheet" role="dialog" aria-modal="true" aria-label="Secret Santa 2026" tabindex="-1">
@@ -7271,7 +7235,7 @@
             <ul class="ss-list">
               <li>Everyone gets <b>one shirt</b> from thegoodshirts.com.</li>
               <li>You'll sign up here with your size and where to ship it. Then a secret draw picks who you're shopping for.</li>
-              <li>Sign-ups open <b>Sunday, Nov 1</b>.</li>
+              <li>${{ before: 'Sign-ups open <b>Sunday, Nov 1</b>.', open: 'Sign up by <b>Saturday, Nov 14</b>.', closed: 'Sign-ups are closed.' }[phase()]}</li>
             </ul>
             <a class="rv-go" href="https://thegoodshirts.com/" target="_blank" rel="noopener">Browse Good Shirts</a>
             <button type="button" class="rv-done">Done</button>
