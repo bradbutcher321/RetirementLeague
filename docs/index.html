@@ -7029,23 +7029,29 @@
     if (!sec) return;
     if (new Date() >= new Date(2027, 0, 1)) { sec.remove(); return; }
 
-    // The two side shirts take turns: one poofs away and a new one flies in,
-    // from every shirt design on thegoodshirts.com (icons/santa/shirts/NNN.webp)
-    // in a shuffled order.
-    // Paused while the card is off screen, the tab is hidden or the sheet is
-    // open. Making My Way Downtown stays in front.
+    // Every few seconds all three shirts poof away, one after another in a
+    // random order, then fly back in the same way: two new designs on the
+    // sides, drawn from every shirt design on thegoodshirts.com
+    // (icons/santa/shirts/NNN.webp) in a shuffled order, and Making My Way
+    // Downtown back in front. Paused while the card is off screen, the tab
+    // is hidden or the sheet is open.
     const SHIRTS = 956;
     const holder = sec.querySelector('.santa-r');
     const slots = [...sec.querySelectorAll('.santa-slot.l img, .santa-slot.r img')];
+    const front = sec.querySelector('.santa-slot.c img');
     const file = n => `icons/santa/shirts/${String(n).padStart(3, '0')}.webp`;
     const sides = () => slots.map(i => i.getAttribute('src'));
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let order = [], k = 0, side = 0, busy = false, onScreen = true;
+    const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const gap = (lo, hi) => lo + Math.random() * (hi - lo);
+    const SHADOW = 'drop-shadow(0 8px 14px rgba(0,0,0,0.65))';
+    // Where each shirt flies in from: left, right, front.
+    const FROM = ['translate(-70px,-110px) rotate(-70deg) scale(.5)', 'translate(90px,-100px) rotate(70deg) scale(.5)', 'translate(0,-130px) rotate(25deg) scale(.5)'];
+    let order = [], k = 0, busy = false, onScreen = true;
     function nextFile() {
       if (k >= order.length) {
         const showing = sides();
-        order = [...Array(SHIRTS).keys()].filter(n => !showing.includes(file(n)));
-        for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+        order = shuffle([...Array(SHIRTS).keys()].filter(n => !showing.includes(file(n))));
         k = 0;
       }
       return file(order[k++]);
@@ -7062,38 +7068,46 @@
           { duration: 520 + Math.random() * 200, easing: 'cubic-bezier(.2,.7,.3,1)' }).finished.then(() => d.remove(), () => d.remove());
       }
     }
-    async function swap() {
+    async function cycle() {
       if (busy || document.hidden || !onScreen || document.getElementById('ss-sheet')) return;
       busy = true;
       try {
-        const img = slots[side], left = side === 0;
-        side ^= 1;
-        const src = nextFile();
-        const pre = new Image(); pre.src = src; await pre.decode();
+        const next = [nextFile(), nextFile()];
+        await Promise.all(next.map(src => { const im = new Image(); im.src = src; return im.decode(); }));
+        const imgs = [slots[0], slots[1], front], srcs = [next[0], next[1], front.getAttribute('src')];
         if (reduce) {
-          const out = img.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' });
-          await out.finished;
-          img.src = src;
-          out.cancel();
-          await img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 }).finished;
+          const outs = slots.map(img => img.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' }));
+          await Promise.all(outs.map(a => a.finished));
+          slots.forEach((img, i) => { img.src = next[i]; outs[i].cancel(); });
+          await Promise.all(slots.map(img => img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 }).finished));
           return;
         }
-        puff(img);
-        const shadow = 'drop-shadow(0 8px 14px rgba(0,0,0,0.65))';
-        const poof = img.animate([{ transform: 'scale(1)', opacity: 1, filter: `${shadow} blur(0px)` }, { transform: 'scale(1.3)', opacity: 0, filter: `${shadow} blur(5px)` }],
-          { duration: 320, easing: 'ease-in', fill: 'forwards' });
-        await poof.finished;
-        img.src = src;
-        const from = left ? 'translate(-70px,-110px) rotate(-70deg) scale(.5)' : 'translate(90px,-100px) rotate(70deg) scale(.5)';
-        const fly = img.animate([{ transform: from, opacity: 0 }, { opacity: 1, offset: 0.25 }, { transform: 'none', opacity: 1 }],
-          { duration: 720, easing: 'cubic-bezier(.2,1.35,.4,1)' });
-        poof.cancel();
-        await fly.finished;
+        const poofs = [];
+        let t = 0;
+        for (const i of shuffle([0, 1, 2])) {
+          const img = imgs[i], at = t;
+          setTimeout(() => puff(img), at);
+          poofs[i] = img.animate([{ transform: 'scale(1)', opacity: 1, filter: `${SHADOW} blur(0px)` }, { transform: 'scale(1.3)', opacity: 0, filter: `${SHADOW} blur(5px)` }],
+            { duration: 320, delay: at, easing: 'ease-in', fill: 'both' });
+          t += gap(90, 230);
+        }
+        await Promise.all(poofs.map(a => a.finished));
+        await new Promise(r => setTimeout(r, gap(220, 420)));
+        imgs.forEach((img, i) => { if (img.getAttribute('src') !== srcs[i]) img.src = srcs[i]; });
+        const flies = [];
+        t = 0;
+        for (const i of shuffle([0, 1, 2])) {
+          flies.push(imgs[i].animate([{ transform: FROM[i], opacity: 0 }, { opacity: 1, offset: 0.25 }, { transform: 'none', opacity: 1 }],
+            { duration: 720, delay: t, easing: 'cubic-bezier(.2,1.35,.4,1)', fill: 'backwards' }).finished);
+          poofs[i].cancel();
+          t += gap(110, 260);
+        }
+        await Promise.all(flies);
       } catch (e) { /* a shirt that won't load: skip this turn */ }
       finally { busy = false; }
     }
     if ('IntersectionObserver' in window) new IntersectionObserver(es => { onScreen = es[0].isIntersecting; }).observe(sec);
-    setInterval(swap, 3200);
+    setInterval(cycle, 5000);
     let lastFocus = null;
     const onKey = e => { if (e.key === 'Escape') close(); };
     function close() {
