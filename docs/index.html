@@ -1320,6 +1320,7 @@
   .santa-cd small{ font-size: 0.68em; color: var(--gold); margin-left: 1px; }
   .santa-h .santa-blur{ filter: blur(6px); }
   .santa-s{ display: block; color: var(--text-dim); font-size: 0.8rem; line-height: 1.35; }
+  .santa-s:empty{ display: none; }
   .santa-hint{ display: flex; align-items: center; gap: 7px; margin-top: 9px; color: var(--text-dim); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; }
   .santa-hint::before{ content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--gold); animation: santa-ping 2.4s ease-out infinite; }
   @keyframes santa-ping{ 0%{ box-shadow: 0 0 0 0 rgba(212,180,106,0.55); } 70%, 100%{ box-shadow: 0 0 0 7px rgba(212,180,106,0); } }
@@ -1568,7 +1569,7 @@
         <span class="santa-snow" aria-hidden="true"></span>
         <span class="santa-k">Secret Santa 2026</span>
         <span class="santa-orn" id="santa-orn" aria-hidden="true"><i></i><img src="icons/santa/crest.webp" alt="" width="120" height="108"></span>
-        <span class="santa-l"><span class="santa-pre" id="santa-pre">Sign-ups open in</span><span class="santa-h" id="santa-h"><span class="santa-cd">7<small>d</small> 00:00:00</span></span><span class="santa-s" id="santa-s">One shirt from Good Shirts</span><span class="santa-hint">Press and hold to reroll</span></span>
+        <span class="santa-l"><span class="santa-pre" id="santa-pre">Sign-ups open in</span><span class="santa-h" id="santa-h"><span class="santa-cd">7<small>d</small> 00:00:00</span></span><span class="santa-s" id="santa-s"></span><span class="santa-hint">Press and hold to reroll</span></span>
         <span class="santa-r" aria-hidden="true"><span class="santa-slot l"><img src="icons/santa/shirts/081.webp" alt=""></span><span class="santa-slot r"><img src="icons/santa/shirts/038.webp" alt=""></span><span class="santa-slot c"><img src="icons/santa/downtown.webp" alt="" width="300" height="254"></span></span>
         <span class="santa-go" aria-hidden="true">›</span>
         <span class="santa-glare" aria-hidden="true"></span>
@@ -7065,8 +7066,8 @@
     const DAY = 864e5, soon = d => new Date(Date.now() + d * DAY);
     const me = getMe();
     const STATES = {
-      teaser:  { pre: 'Sign-ups open in', h: '{cd}', s: 'One shirt from Good Shirts', at: SIGNUPS_OPEN,
-                 after: { pre: '', h: 'Coming <b>soon</b>', s: 'One shirt from Good Shirts' } },
+      teaser:  { pre: 'Sign-ups open in', h: '{cd}', s: '', at: SIGNUPS_OPEN,
+                 after: { pre: '', h: 'Coming <b>soon</b>', s: '' } },
       signup:  { pre: 'Sign-ups close in', h: '{cd}', s: '9 of 12 in so far', at: soon(6.4) },
       in:      { pre: '', h: me ? `<span class="me-name">${esc(me)}</span>, you're in` : 'You\'re in', s: 'The draw in {cd}', at: soon(3.2) },
       drawn:   { pre: '', h: 'Shopping for <b class="santa-blur">Santa</b>', s: 'Ship it within {cd}', at: soon(9.5) },
