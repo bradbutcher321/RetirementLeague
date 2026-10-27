@@ -203,7 +203,7 @@ def week_state(week, players):
 
 def kill_info(week, players):
     """A parlay's 'killer' is whoever's leg lost at the earliest game time of
-    the week (ties split the kill). 'Chances' are legs graded at or before
+    the week (a tie gives every one of them a full kill). 'Chances' are legs graded at or before
     that moment (all graded legs if nothing has lost)."""
     picks = week["picks"]
     loss_times = [p["gametime"] for p in picks.values() if p["result"] == "Loss" and p["gametime"]]
@@ -285,7 +285,7 @@ def compute_stats(players, weeks):
     sports, bet_types = {}, {}
     odds_type = {"Favorite": [0, 0], "Underdog": [0, 0]}
     odds_lists = {p: [] for p in players}
-    kills = {p: 0.0 for p in players}
+    kills = {p: 0 for p in players}
     chances = {p: 0 for p in players}
     positions = {p: [] for p in players}
     winnings = {p: 0.0 for p in players}
@@ -310,7 +310,7 @@ def compute_stats(players, weeks):
 
         killers, chance_names = kill_info(week, players)
         for k in killers:
-            kills[k] += 1 / len(killers)
+            kills[k] += 1
         for n in chance_names:
             chances[n] += 1
         for n, pos in bet_positions(week).items():
@@ -402,7 +402,7 @@ def compute_stats(players, weeks):
         "parlays_killed": by_desc([
             {
                 "player": n,
-                "kills": round(kills[n], 2),
+                "kills": kills[n],
                 "kill_chances": chances[n],
                 "avg_bet_position": round(sum(positions[n]) / len(positions[n]), 2) if positions[n] else None,
             }

@@ -406,7 +406,8 @@
 
   // ---------- Leaders ----------
   // One card a stat. `val` ranks (high first), `tb` orders within a tie
-  // without breaking it; `v` is what shows, `s` the line under a name.
+  // without breaking it; `v` is what shows, `s` the line under a name (an
+  // array is one short line each, so neither half gets cut off).
   const BOARDS = [
     { k: 'winpct', title: 'Leg Win %', note: 'Share of their legs that won.', rows: s => s.individual_wl.map(r => ({ n: r.player, val: r.win_pct, v: fmtPct(r.win_pct), s: `${r.w}-${r.l}` })) },
     { k: 'flat', title: 'Flat Bet Profit', note: 'What $100 on every one of their legs would have made.', rows: s => s.flat_bet_profit.map(r => ({ n: r.player, val: Math.round(r.profit), v: flatTxt(r.profit), s: plural(r.bets, 'leg'), t: r.profit >= 0 ? 'up' : 'down' })) },
@@ -415,7 +416,7 @@
     { k: 'hit', title: 'Biggest Hit', note: 'Their longest-odds leg that won.', rows: s => s.biggest_hits.map(r => ({ n: r.player, val: -impliedProb(r.odds), v: fmtOdds(r.odds), s: r.pick })) },
     { k: 'potential', title: 'Potential Earnings', note: 'Payouts of the weeks their leg won, minus the weeks it lost. High means they came through when the parlay was worth the most.', rows: s => s.potential_earnings.map(r => ({ n: r.player, val: Math.round(r.winnings - r.losses), v: short$(r.winnings - r.losses), s: '', t: r.winnings >= r.losses ? 'up' : 'down' })) },
     { k: 'lstreak', bad: true, title: 'Longest Losing Streak', note: 'Most legs lost in a row. "Now" is a run still going.', rows: s => s.streaks.map(r => ({ n: r.player, val: r.longest_loss, tb: Math.max(-r.current, 0), v: r.longest_loss, s: r.current < 0 ? `Now L${-r.current}` : '' })) },
-    { k: 'kills', bad: true, title: 'Parlays Killed', note: 'Times their leg was the first loss of the week; a shared first loss is split. "Plays" is where their leg usually falls in kickoff order.', rows: s => s.parlays_killed.map(r => ({ n: r.player, val: Math.round(r.kills * 100), v: r.kills.toFixed(1), s: r.avg_bet_position === null ? plural(r.kill_chances, 'chance') : `Plays #${r.avg_bet_position.toFixed(1)} of 12` })) },
+    { k: 'kills', bad: true, title: 'Parlays Killed', note: 'Times their leg was the first loss of the week; legs that lose at the same kickoff each get a full kill. "Plays" is where their leg usually falls in kickoff order. A kill chance is a week the parlay was still alive when their game ended: a win kept it going, a loss killed it.', rows: s => s.parlays_killed.map(r => ({ n: r.player, val: Math.round(r.kills), v: Math.round(r.kills), s: [r.avg_bet_position === null ? '' : `Plays ${r.avg_bet_position.toFixed(1)} of 12`, plural(r.kill_chances, 'kill chance')].filter(Boolean) })) },
     { k: 'safe', bad: true, title: 'Safest Loss', note: 'Their heaviest favorite that still lost.', rows: s => s.safest_losses.map(r => ({ n: r.player, val: impliedProb(r.odds), v: fmtOdds(r.odds), s: r.pick })) },
     { k: 'sackos', bad: true, title: 'Weekly Sackos', note: 'Weeks they finished last in fantasy and bought the parlay.', rows: s => s.weekly_sackos.map(r => ({ n: r.player, val: r.sackos, v: r.sackos, s: `${fmtMoney(r.cost)} spent` })) },
   ];
@@ -435,10 +436,10 @@
       if (!rows.length) return '';
       const top = rows.filter(r => r.r === 1), next = rows.filter(r => r.r > 1).slice(0, 2);
       const names = top.map(r => `<button type="button" class="mgr-tap" data-mgr="${esc(r.n)}">${nameHtml(r.n)}</button>`).join(' & ');
-      const sub = top.length > 1 ? 'Tied' : top[0].s;
+      const sub = top.length > 1 ? ['Tied'] : [].concat(top[0].s || []);
       return `<div class="stat-card lc${b.bad ? ' bad' : ''}${LS.open === b.k ? ' has-pop' : ''}" data-board="${b.k}">
         <div class="lc-t">${b.title}</div>
-        <div class="lc-lead"><div class="v">${esc(top[0].v)}</div><div class="n">${names}</div>${sub ? `<div class="s" title="${esc(sub)}">${esc(sub)}</div>` : ''}</div>
+        <div class="lc-lead"><div class="v">${esc(top[0].v)}</div><div class="n">${names}</div>${sub.map(t => `<div class="s" title="${esc(t)}">${esc(t)}</div>`).join('')}</div>
         <div class="lc-next">${next.map(r => `<div><span class="rk">${rkTxt(r)}</span><button type="button" class="mgr-tap n" data-mgr="${esc(r.n)}">${nameHtml(r.n)}</button><span class="v">${esc(r.v)}</span></div>`).join('')}</div>
         <div class="lc-all"><button type="button" class="${LS.open === b.k ? 'on' : ''}" data-list="${b.k}" aria-expanded="${LS.open === b.k}">All ${rows.length}</button></div>
       </div>`;
@@ -449,7 +450,7 @@
     const rows = ranked(b, st).map(r => `
       <button type="button" class="item ls-row${r.r === 1 ? ' top' : ''}${b.bad ? ' bad' : ''}${isMe(r.n) ? ' me' : ''}" data-mgr="${esc(r.n)}">
         <span class="rk">${rkTxt(r)}</span>
-        <span style="min-width:0"><span class="n" style="display:block">${esc(r.n)}</span>${r.s ? `<span class="s" style="display:block">${esc(r.s)}</span>` : ''}</span>
+        <span style="min-width:0"><span class="n" style="display:block">${esc(r.n)}</span>${r.s && r.s.length ? `<span class="s" style="display:block">${esc([].concat(r.s).join(' · '))}</span>` : ''}</span>
         <span class="v ${r.t || ''}">${esc(r.v)}</span>
       </button>`).join('');
     return {
@@ -531,7 +532,7 @@
   // One manager's parlay franchise, worked out from the Worker's `weeks`
   // (every pick ever placed) so it agrees with the cards on the other tabs:
   // "Flat $100" is the same $100-a-leg sum as Flat Bet Profit, and a shared
-  // kill is split the way Parlays Killed splits it.
+  // kill is a full kill for each, as on Parlays Killed.
   const MGR = { sub: 0, res: 'all', teams: null, teamsAsked: false };
   const MGR_SUBS = ['Overview', 'Splits', 'Legs'];
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -563,7 +564,7 @@
       if (net !== null) run += net;
       const killers = w.killed_by || [];
       out.push({ ...p, year: w.year, week: w.week, graded, net, run: net === null ? null : run,
-        kill: killers.includes(name) ? 1 / killers.length : 0, shared: killers.length > 1, sacko: w.sacko === name });
+        kill: killers.includes(name) ? 1 : 0, shared: killers.length > 1, sacko: w.sacko === name });
     });
     return out;
   }
@@ -583,7 +584,7 @@
     const byProb = (a, b) => impliedProb(a.odds) - impliedProb(b.odds);
     return {
       name, legs, w, l, pct: w + l ? w / (w + l) * 100 : null, cur, longW, longL,
-      kills: Math.round(legs.reduce((a, x) => a + x.kill, 0) * 100) / 100,
+      kills: legs.reduce((a, x) => a + x.kill, 0),
       flat: g.reduce((a, x) => a + (x.net || 0), 0),
       avg: avg ? avg.avg_odds : null, sackos: sk ? sk.sackos : 0,
       best: g.filter(x => x.result === 'Win' && x.odds).sort(byProb)[0] || null,
@@ -625,7 +626,7 @@
       ['Win %', fmtPct(s.pct)],
       ['Avg Odds', fmtOdds(s.avg)],
       ['Flat $100', flatTxt(s.flat)],
-      ['Kills', s.kills.toFixed(1)],
+      ['Kills', s.kills],
       [s.sackos === 1 ? 'Sacko' : 'Sackos', s.sackos],
     ].map(([label, v]) => `<div class="fs"><div class="fs-v">${esc(v)}</div><div class="fs-l">${label}</div></div>`).join('');
     return `
