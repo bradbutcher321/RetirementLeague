@@ -225,6 +225,7 @@
   .pm-tiles{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
   .pm-tile{ padding: 9px 10px 10px; min-width: 0; }
   .pm-tile .tl{ color: var(--text-dim); font-size: 0.72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pm-tile .tr{ color: var(--text-dim); opacity: 0.75; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; margin-top: 1px; }
   .pm-tile b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.55rem; line-height: 1.1; margin-top: 3px; font-variant-numeric: tabular-nums; }
   .pm-tile b.up{ color: var(--turf); } .pm-tile b.down{ color: var(--loss); }
   .pm-tile small{ display: block; color: var(--text-dim); font-size: 0.68rem; font-variant-numeric: tabular-nums; }
@@ -504,7 +505,7 @@
     };
     const tiles = (rows, key) => rows.map(r => {
       const n = r.w + r.l, thin = n < FEW;
-      return `<div class="item pm-tile${thin ? ' thin' : ''}"><div class="tl" title="${esc(r[key])}">${esc(r[key])}</div><b class="${thin ? '' : wlTone(r.w, r.l)}">${r.w}-${r.l}</b><small>${fmtPct(r.win_pct)}${thin ? ' · few' : ''}</small></div>`;
+      return `<div class="item pm-tile${thin ? ' thin' : ''}"><div class="tl" title="${esc(r[key])}">${esc(r[key])}</div>${key === 'range' ? oddsRangeHtml(r[key]) : ''}<b class="${thin ? '' : wlTone(r.w, r.l)}">${r.w}-${r.l}</b><small>${fmtPct(r.win_pct)}${thin ? ' · few' : ''}</small></div>`;
     }).join('');
     const card = (title, rows, key, note) => rows.length ? `<div class="stat-card"><div class="stat-card-title">${title}</div>${note ? `<div class="stat-card-note">${note}</div>` : ''}<div class="stat-card-body"><div class="pm-tiles">${tiles(rows, key)}</div></div></div>` : '';
     const pool = [...s.sport_wl.map(r => ({ ...r, k: r.sport })), ...s.bet_type_wl.map(r => ({ ...r, k: r.bet_type }))].filter(r => r.w + r.l >= ENOUGH);
@@ -541,6 +542,9 @@
   const hashColor = name => { let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0; return `hsl(${h % 360}, 45%, 32%)`; };
   const pickRest = p => { const t = String(p.pick || ''), i = t.indexOf(':'); return i > 0 ? t.slice(i + 1).trim() : ''; };
   const ODDS_BUCKETS = ['Heavy Favorite', 'Favorite', 'Toss-Up', 'Underdog', 'Longshot'];
+  // The line each bucket covers, printed small under its name on the tiles.
+  const ODDS_RANGE = { 'Heavy Favorite': '≤ −250', 'Favorite': '−249 to −150', 'Toss-Up': '−149 to +124', 'Underdog': '+125 to +199', 'Longshot': '≥ +200' };
+  const oddsRangeHtml = k => (ODDS_RANGE[k] ? `<div class="tr">${ODDS_RANGE[k]}</div>` : '');
   // generate_parlay_data.py's odds_bucket and over_under_side.
   const oddsBucket = o => (o <= -250 ? 'Heavy Favorite' : o <= -150 ? 'Favorite' : o < 125 ? 'Toss-Up' : o < 200 ? 'Underdog' : 'Longshot');
   const overUnder = p => { const m = /\b(Over|Under)\b/i.exec(pickRest(p)); return m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : null; };
@@ -694,7 +698,7 @@
       ['Over / Under', tally(overUnder, ['Over', 'Under'])],
     ].filter(([, rows]) => rows.length);
     if (!groups.length) return '<div class="stat-card"><div class="empty-note">No legs graded yet.</div></div>';
-    const tile = r => `<div class="item pm-tile"><div class="tl">${esc(r.k)}</div><b class="${wlTone(r.w, r.l)}">${r.w}-${r.l}</b><small>${fmtPct(r.w / (r.w + r.l) * 100)}</small></div>`;
+    const tile = r => `<div class="item pm-tile"><div class="tl">${esc(r.k)}</div>${oddsRangeHtml(r.k)}<b class="${wlTone(r.w, r.l)}">${r.w}-${r.l}</b><small>${fmtPct(r.w / (r.w + r.l) * 100)}</small></div>`;
     return `<div class="card-grid">${groups.map(([title, rows]) => `
       <div class="stat-card"><div class="stat-card-title">${title}</div><div class="stat-card-body"><div class="pm-tiles">${rows.map(tile).join('')}</div></div></div>`).join('')}</div>`;
   }
