@@ -1983,7 +1983,16 @@
         const proj = parseFloat(awayBehind ? m.awayProjected : m.homeProjected);
         const toGo = Number.isFinite(proj) ? Math.max(0, proj - (awayBehind ? awayScore : homeScore)) : null;
         const who = isMe(mgr) ? 'You need' : `${esc(mgr || (awayBehind ? m.awayName : m.homeName))} needs`;
-        needRow = `<div class="mu-need ${awayBehind ? 'away' : 'home'}"><b>${who} ${fmtScore(gap)}</b> from ${left} · about ${fmtScore(gap / left)} each${toGo === null ? '' : ` · projected ${fmtScore(toGo)}`}</div>`;
+        // One player left reads as that player ("from J. Allen"), not
+        // "from 1 · about 6.45 each"; more than one gets the per-player split.
+        let from;
+        if (left === 1) {
+          const lastOne = ((awayBehind ? m.awayPlayers : m.homePlayers) || []).filter(p => { const st = playerState(p); return st && st !== 'final'; });
+          from = `from ${lastOne.length === 1 ? esc(shortName(lastOne[0])) : 'the last player'}${toGo === null ? '' : ` · projected ${fmtScore(toGo)}`}`;
+        } else {
+          from = `from ${left} players · ${fmtScore(gap / left)} each${toGo === null ? '' : ` · projected ${fmtScore(toGo)} combined`}`;
+        }
+        needRow = `<div class="mu-need ${awayBehind ? 'away' : 'home'}"><b>${who} ${fmtScore(gap)}</b> ${from}</div>`;
       }
     }
 
