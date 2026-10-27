@@ -137,8 +137,10 @@
   .pr-pips i.hit{ background: var(--gold); border-color: var(--gold); color: var(--ctl-on-ink); }
   .pr-pips i.miss{ background: var(--loss-tint); border-color: var(--loss); color: var(--loss); }
   .pr-pips i.next{ border-color: var(--gold); color: var(--gold); box-shadow: 0 0 0 3px rgba(212,180,106,0.15); }
-  .pr-pips i.mine{ box-shadow: inset 0 -3px 0 var(--me-ring, #7AAEDB); }
-  .pr-pips i.next.mine{ box-shadow: 0 0 0 3px rgba(212,180,106,0.15), inset 0 -3px 0 var(--me-ring, #7AAEDB); }
+  /* Your leg: your color as the pip's whole edge (2px, drawn as border +
+     inset ring so the pip doesn't change size). */
+  .pr-pips i.mine{ border-color: var(--me-ring, #7AAEDB); box-shadow: inset 0 0 0 1px var(--me-ring, #7AAEDB); }
+  .pr-pips i.next.mine{ box-shadow: 0 0 0 3px rgba(212,180,106,0.15), inset 0 0 0 1px var(--me-ring, #7AAEDB); }
   .pr-pips i.rec::after{ content: ''; position: absolute; top: -6px; bottom: -6px; left: -3px; border-left: 2px dotted rgba(212,180,106,0.7); }
   .pr-days{ display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); gap: 4px; margin-top: 6px; font-size: 0.56rem; color: var(--text-dim); font-weight: 700; text-align: center; letter-spacing: 0.04em; text-transform: uppercase; }
   .pr-line{ display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--item); font-size: 0.8rem; line-height: 1.4; color: var(--text-dim); }
