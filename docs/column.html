@@ -131,7 +131,9 @@
   const gamesP = fetch('data/league.json').then(r => r.ok ? r.json() : null).then(d => { GAMES = (d && d.games) || []; }).catch(() => {});
   fetch('data/column.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(async d => {
     await gamesP;
-    C = d.columns || [];
+    // Newest first, whatever order column_add.py wrote them in (a recap added
+    // after its week's preview used to sit second, so the page opened on the preview).
+    C = (d.columns || []).slice().sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
     if (d.generated_at) setPageStatus(throughLabel(d.generated_at));
     if (!C.length) { $('view').innerHTML = '<div class="glass"><div class="ft-empty">The first column goes up Tuesday, after Monday Night Football.</div></div>'; return; }
     cur = C.find(x => x.id === urlParam('id')) || C[0];
