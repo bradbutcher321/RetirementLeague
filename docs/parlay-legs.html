@@ -492,7 +492,11 @@
   // promise so the search and the sport chips share one read.
   const sched = {};           // sport -> Promise<[games]>, each with ESPN's (DraftKings) line as g.dk
   function loadSchedule(sport){
-    if (!sched[sport]) sched[sport] = Promise.all(board.days.flatMap(day => SCOREBOARDS[sport].map(([path, q]) => scoreboard(path, q, day)))).then(lists => {
+    // One league-day that won't answer (ESPN sometimes serves one without the
+    // header browsers need) is skipped; the sport fails only if every one does.
+    if (!sched[sport]) sched[sport] = Promise.all(board.days.flatMap(day => SCOREBOARDS[sport].map(([path, q]) => scoreboard(path, q, day).catch(() => null)))).then(lists => {
+      if (lists.every(l => l === null)) throw new Error('espn');
+      lists = lists.filter(Boolean);
       const seen = new Map();
       for (const ev of lists.flat()){
         const comp = ev.competitions && ev.competitions[0];
