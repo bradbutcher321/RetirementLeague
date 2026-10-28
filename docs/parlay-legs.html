@@ -18,7 +18,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=37">
-<link rel="stylesheet" href="nav.css?v=30">
+<link rel="stylesheet" href="nav.css?v=31">
 <style>
   /* ---------- Parlay Legs ----------
      Each manager enters their own leg for the coming week (worker/src/legs.js).
@@ -159,6 +159,14 @@
   .pickbar .pb-text small{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.74rem; }
   .pickbar .gold-btn{ flex: none; }
 
+  /* After a save, an offer of notifications (audit VIII #16). */
+  .ask{ margin-top: 14px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--lead-line); background: var(--lead-tint); }
+  .ask b{ display: block; font-size: 0.92rem; }
+  .ask p{ margin: 3px 0 0; color: var(--text-dim); font-size: 0.8rem; line-height: 1.45; }
+  .ask ol{ margin: 10px 0 0; padding-left: 1.3em; color: var(--text); font-size: 0.84rem; display: grid; gap: 4px; }
+  .ask .acts{ margin-top: 12px; }
+  .ask .acts .gold-btn{ flex: 0 0 auto; padding: 0 20px; }
+
   /* The leg as it will be saved, with the line and odds still editable. */
   .slip{ margin: 8px 0 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--lead-line); background: var(--lead-tint); }
   .slip-text{ font-weight: 700; font-size: 0.98rem; overflow-wrap: anywhere; }
@@ -257,7 +265,7 @@
     <footer id="site-footer" data-source="Lines from Hard Rock Bet · Games from ESPN"></footer>
   </div>
 
-<script src="nav.js?v=41"></script>
+<script src="nav.js?v=42"></script>
 <script src="page-common.js?v=41"></script>
 <script src="parlay-note.js?v=2"></script>
 <script>
@@ -737,6 +745,23 @@
   // What a taken leg is about, short: the game for a game bet, the player
   // for a prop, the text for a typed one.
   const takenWhat = l => l.bet_type === 'Other' ? l.player_prop : isProp(l.bet_type) ? `${l.player_prop}, ${l.bet_type}` : `${l.team}–${l.opponent}`;
+  // ---------- After a save: notifications (audit VIII #16) ----------
+  // Most managers come here once a week and have no notifications on, so
+  // right after their leg is saved is when to offer them: the leg's result,
+  // the lock reminder, the Monday final. On iPhone Safari that means the
+  // Home Screen app first. "Not now" hides it for a month.
+  let pushHow = null, askNow = false;
+  const ASK_KEY = 'rl-push-ask-until';
+  const askHidden = () => { try { return Date.now() < Number(localStorage.getItem(ASK_KEY) || 0); } catch { return false; } };
+  if (window.rlPush) rlPush.how().then(h => { pushHow = h; }).catch(() => {});
+  function askHtml(){
+    if (!askNow || askHidden() || !['ask', 'install', 'blocked'].includes(pushHow)) return '';
+    const later = '<button type="button" class="gold-btn quiet" data-act="push-later">Not now</button>';
+    if (pushHow === 'blocked') return `<div class="ask"><b>Notifications are blocked for this site</b><p>Turn them on in ${/iPhone|iPad/.test(navigator.userAgent) ? 'Settings › Notifications › League' : 'your browser settings'} to hear when your leg hits.</p><div class="acts">${later}</div></div>`;
+    const head = '<b>Get a ping when your leg hits or dies?</b><p>Plus a reminder before legs lock, and your final score Monday night.</p>';
+    if (pushHow === 'install') return `<div class="ask">${head}<ol><li>Tap Share at the bottom of Safari</li><li>Choose Add to Home Screen</li><li>Open League from your Home Screen, then You › Notifications › Notify me</li></ol><div class="acts">${later}</div></div>`;
+    return `<div class="ask">${head}<div class="acts"><button type="button" class="gold-btn solid" data-act="push-on">Turn on</button>${later}</div></div>`;
+  }
   function drawMine(){
     if (!board) return loadError ? '' : '<p class="empty">Loading…</p>';
     const auth = getAuth(), m = mine();
@@ -746,7 +771,7 @@
     const lockedAt = board.locked ? 'The legs are locked in' : `Locked ${etWhen(board.locksAt)}`;
     if (!board.canEnter) return m ? legRow(m) + `<p class="fine">${esc(lockedAt)}. Text the group chat if it needs a fix.</p>`
       : `<p class="empty">${esc(board.locked ? 'The legs are locked in' : `Legs locked ${etWhen(board.locksAt)}`)} and yours isn't in. Text it to the group chat.</p>`;
-    if (m && !editing) return legRow(m) + `<div class="acts"><button type="button" class="gold-btn" data-act="change">Change</button>${m.sheet ? '' : '<button type="button" class="gold-btn quiet" data-act="remove">Remove</button>'}</div>
+    if (m && !editing) return legRow(m) + askHtml() + `<div class="acts"><button type="button" class="gold-btn" data-act="change">Change</button>${m.sheet ? '' : '<button type="button" class="gold-btn quiet" data-act="remove">Remove</button>'}</div>
       <p class="fine">${saveMsg ? `<b>${esc(saveMsg)}</b> ` : ''}${board.open ? `Everyone can see it. You can change it until <b>${esc(etWhen(board.locksAt))}</b>.` : 'Locked for members. You can still change it as commissioner.'}</p>`;
     if (st.typed) return typedForm();
     const taken = others().slice().sort((a, b) => (a.gametime || '9').localeCompare(b.gametime || '9'));
@@ -845,11 +870,15 @@
       editing = false;
       st = { ...blank(), sport: st.sport };
       saveMsg = body.remove ? '' : 'Saved.';
+      askNow = !body.remove;
       if (navigator.vibrate) navigator.vibrate(10);
     } else {
       saveMsg = ERRORS[out.error] ? ERRORS[out.error](out) : `Couldn't save it (${res ? out.error || res.status : 'no connection'}). Try again.`;
     }
     render();
+    // Saved from the pinned bar, the leg (and what comes with it) is up above.
+    const top = document.getElementById('mine-title');
+    if (res && res.ok && top && top.getBoundingClientRect().top < 60) top.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
 
   // ---------- Taps and typing ----------
@@ -905,6 +934,13 @@
       send({ leg: v.d });
       return;
     }
+    else if (d.act === 'push-on'){
+      // Straight from the tap: Safari only shows the permission prompt then.
+      rlPush.enable().then(ok => { pushHow = ok ? 'on' : Notification.permission === 'denied' ? 'blocked' : 'ask'; askNow = !ok; saveMsg = ok ? 'Notifications are on. Pick which ones under You › Notifications.' : saveMsg; render(); })
+        .catch(() => { askNow = false; render(); });
+      return;
+    }
+    else if (d.act === 'push-later'){ try { localStorage.setItem(ASK_KEY, String(Date.now() + 30 * 864e5)); } catch { /* private mode */ } askNow = false; }
     else if (d.act === 'type') Object.assign(st, { typed: true, odds: '' });
     else if (d.act === 'untype') st.typed = false;
     else if (d.act === 'change'){ editing = true; st = blank(); }

@@ -209,6 +209,37 @@
     window.addEventListener('rl-me', draw);
     return b;
   }
+  // ---------- Inbox bell (audit VIII #16) ----------
+  // Every alert the site would have pushed you, kept by the Worker for a
+  // week (GET /push/recent), whether or not this phone has notifications on.
+  // The bell shows only while some are unread, with the count; it opens
+  // You › Notifications, where they're listed, and opening that marks them read.
+  const INBOX_READ = 'rl-inbox-read';
+  const BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17v-6a6 6 0 0 1 12 0v6l1.5 2h-15L6 17z"/><path d="M10 21h4"/></svg>';
+  const inboxRead = () => { try { return Number(localStorage.getItem(INBOX_READ)) || 0; } catch (e) { return 0; } };
+  function markInboxRead() {
+    try { localStorage.setItem(INBOX_READ, String(Date.now())); } catch (e) {}
+    document.querySelectorAll('.hdr-bell').forEach(b => { b.hidden = true; });
+  }
+  function bellButton() {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'hdr-bell';
+    b.hidden = true;
+    b.addEventListener('click', () => { markInboxRead(); openYou('push'); });
+    const draw = async () => {
+      if (!getMe()) { b.hidden = true; return; }
+      const alerts = await recentAlerts();
+      const n = alerts ? inboxList(alerts).filter(a => a.ts > inboxRead()).length : 0;
+      b.hidden = !n;
+      b.innerHTML = `${BELL}<i>${n > 9 ? '9+' : n}</i>`;
+      b.setAttribute('aria-label', `${n} new alert${n === 1 ? '' : 's'}`);
+    };
+    draw();
+    window.addEventListener('rl-me', draw);
+    return b;
+  }
+
   function headerTools() {
     const hdr = document.querySelector('.wrap > header');
     const h1 = hdr && hdr.querySelector('h1');
@@ -218,6 +249,7 @@
     tools.className = 'hdr-tools';
     const step = row.querySelector('.wk-step');
     if (step) tools.appendChild(step);
+    tools.appendChild(bellButton());
     tools.appendChild(meButton('hdr-me'));
     row.appendChild(tools);
 
@@ -569,6 +601,24 @@
       return (await currentSub().catch(() => null)) ? 'on' : 'off';
     },
     get: key => !!getPrefs()[key],
+    // For a prompt elsewhere (Parlay Legs after a save, audit VIII #16):
+    // 'ask' (one tap turns them on), 'install' (iPhone Safari: Home Screen
+    // app first), 'blocked', 'on', or 'no' (this browser can't).
+    async how() {
+      if (!pushReady()) return ios() && !installed() ? 'install' : 'no';
+      if (Notification.permission === 'denied') return 'blocked';
+      return (await currentSub().catch(() => null)) ? 'on' : 'ask';
+    },
+    // Straight from a tap: Safari only shows the permission prompt then.
+    async enable() {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return false;
+      const reg = (await navigator.serviceWorker.getRegistration()) || (await navigator.serviceWorker.register('sw.js'));
+      await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(VAPID_PUBLIC) });
+      await post('/push/subscribe', { sub: sub.toJSON(), me: getMe(), prefs: getPrefs() });
+      return true;
+    },
     async set(key, on) {
       let p = {};
       try { p = JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch (e) {}
@@ -1044,20 +1094,36 @@
     const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', ...tz });
     return d.toLocaleDateString('en-US', tz) === new Date().toLocaleDateString('en-US', tz) ? time : `${d.toLocaleDateString('en-US', { weekday: 'short', ...tz })} ${time}`;
   };
-  async function drawRecent() {
-    let alerts = null;
+  // GET /push/recent, kept for a few minutes this tab so every page's bell
+  // doesn't ask again. `fresh` asks anyway (the Recent list itself).
+  const ALERTS_KEY = 'rl-recent';
+  async function recentAlerts(fresh) {
+    const me = getMe() || '';
+    if (!fresh) {
+      try { const c = JSON.parse(sessionStorage.getItem(ALERTS_KEY)); if (c && c.me === me && Date.now() - c.at < 3 * 60 * 1000) return c.alerts; } catch (e) {}
+    }
     try {
-      const res = await fetch(WORKER + '/push/recent?me=' + encodeURIComponent(getMe() || ''), { cache: 'no-store' });
-      if (res.ok) alerts = (await res.json()).alerts;
-    } catch (e) {}
+      const res = await fetch(WORKER + '/push/recent?me=' + encodeURIComponent(me), { cache: 'no-store' });
+      if (!res.ok) return null;
+      const alerts = (await res.json()).alerts;
+      try { sessionStorage.setItem(ALERTS_KEY, JSON.stringify({ me, at: Date.now(), alerts })); } catch (e) {}
+      return Array.isArray(alerts) ? alerts : null;
+    } catch (e) { return null; }
+  }
+  // What the Worker would not have sent you: a switch that's off, a rival result that stood in for the plain final, your own leg when My parlay leg is on.
+  function inboxList(alerts) {
+    const prefs = getPrefs();
+    const me = (getMe() || '').toLowerCase();
+    const stood = new Set(prefs.rival ? alerts.filter(a => a.replaces).map(a => a.replaces) : []);
+    return alerts.filter(a => prefs[a.pref] && !stood.has(a.k) && !(a.about && prefs.parlay && a.about.toLowerCase() === me));
+  }
+  async function drawRecent() {
+    const alerts = await recentAlerts(true);
     const box = document.getElementById('you-recent');
     if (!box) return;
     if (!Array.isArray(alerts)) { box.innerHTML = ''; return; }
-    const prefs = getPrefs();
-    const me = (getMe() || '').toLowerCase();
-    // What the Worker would not have sent you: a switch that's off, a rival result that stood in for the plain final, your own leg when My parlay leg is on.
-    const stood = new Set(prefs.rival ? alerts.filter(a => a.replaces).map(a => a.replaces) : []);
-    const list = alerts.filter(a => prefs[a.pref] && !stood.has(a.k) && !(a.about && prefs.parlay && a.about.toLowerCase() === me));
+    markInboxRead();
+    const list = inboxList(alerts);
     const SHOW = 6;
     const row = a => `<a class="you-al" href="${esc(a.url || 'index.html')}"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ALERT_ICONS[a.pref] || ALERT_ICONS.final}</svg></i><span><b>${esc(a.title)}</b><span>${esc(a.body)}</span></span><time>${esc(alertWhen(a.ts))}</time></a>`;
     box.innerHTML = `<div class="you-sec-t">Recent · last 7 days</div>` + (list.length

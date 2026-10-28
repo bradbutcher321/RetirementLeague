@@ -215,6 +215,16 @@
 .hdr-me svg, .fold-me svg{ width: 18px; height: 18px; }
 .hdr-me:focus-visible, .fold-me:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (min-width: 1080px){ .hdr-me{ display: none; } }
+/* The inbox bell (audit VIII #16): only while alerts are unread, the count
+   in loss red like an app icon's badge. */
+.hdr-bell{ position: relative; flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,0.10); background: rgba(40,40,40,0.55); box-shadow: inset 0 1px 0 rgba(255,255,255,0.10); color: var(--text); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.hdr-bell[hidden]{ display: none; }
+.hdr-bell::after{ content: ''; position: absolute; inset: -5px; }
+.hdr-bell svg{ width: 18px; height: 18px; }
+.hdr-bell i{ position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--loss); color: #fff; font: 800 0.62rem/18px var(--body); font-style: normal; text-align: center; }
+.hdr-bell:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+.header-row:has(.hdr-bell:not([hidden])) .eyebrow{ padding-right: 190px; }
+@media (min-width: 1080px){ .hdr-bell{ display: none; } }
 
 /* The folding title (audit V #5): scroll past a page's title and a slim
    glass bar takes its place at the top, with the title and its status line,
