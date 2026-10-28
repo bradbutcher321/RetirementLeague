@@ -621,14 +621,22 @@
   /* ---------- Median Watch ----------
      The card surface itself comes from theme.css's shared card rule. */
   .median-card{ padding: 18px 20px; }
+  /* Title, mode switch, fold button in a row; on a phone the switch drops
+     to its own row under them (see the 600px rule). Folded, the divider
+     goes: only the median's line sits under the header. */
   .median-card-header{
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: start;
+    column-gap: 12px;
     margin-bottom: 14px;
-    padding-bottom: 10px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--line);
   }
+  .median-card-header > #median-toggle-seg{ align-self: center; margin-bottom: 0; }
+  .median-card-header > .lv-tools{ grid-column: -2 / -1; grid-row: 1; }
+  .median-card.lv-folded .median-card-header{ margin-bottom: 4px; padding-bottom: 0; border-bottom: 0; }
+  .median-card.lv-folded #median-body .median-split-label{ margin: 0; }
   .median-card-title{ font-weight: 700; font-size: 0.95rem; color: var(--text); }
 
   /* The card splits into the Above/Below grids (left) and the vertical
@@ -823,8 +831,9 @@
   /* Three modes don't fit beside the title on a phone: the toggle drops
      under it and spans the card. */
   @media (max-width: 600px){
-    .median-card:has(#median-toggle-seg) .median-card-header{ flex-wrap: wrap; gap: 10px; align-items: center; }
-    #median-toggle-seg{ width: 100%; margin-bottom: 0; }
+    .median-card-header{ grid-template-columns: minmax(0, 1fr) auto; }
+    .median-card-header > .lv-tools{ grid-column: 2 / 3; grid-row: 1; }
+    #median-toggle-seg{ grid-column: 1 / -1; grid-row: 2; width: 100%; margin: 12px 0 0; }
     #median-toggle-seg button{ flex: 1; justify-content: center; }
   }
   /* Each team gets its own fully self-contained chip (background/border on
@@ -1002,15 +1011,8 @@
   .st-go{ flex: none; height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--loss-line); background: none; color: var(--text); font: 700 0.8rem var(--body); cursor: pointer; position: relative; }
   .st-go::before{ content: ''; position: absolute; inset: -4px -2px; }
   /* On waivers (audit VIII #6): Tuesday to the week's first kickoff; folds to its title. */
-  #waiver-section{ margin: -4px 0 18px; }
-  .wv-tools{ display: flex; align-items: center; gap: 8px; }
-  .wv-min{ position: relative; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: var(--text-dim); display: grid; place-items: center; cursor: pointer; padding: 0; }
-  .wv-min::before{ content: ''; position: absolute; inset: -6px; }
-  .wv-min svg{ width: 15px; height: 15px; transition: transform .2s ease; }
-  .wv-min[aria-expanded="false"] svg{ transform: rotate(-90deg); }
-  .wv-min:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
-  .wv-sum{ color: var(--text-dim); font-size: 0.8rem; padding: 0 22px 16px; margin-top: -4px; }
-  .wv-sum b{ color: var(--text); font-weight: 600; }
+  #waiver-section{ margin: -4px 0 14px; }
+  .wv-body{ margin-top: 12px; }
   .wv-row{ display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; }
   .wv-row + .wv-row{ border-top: 1px solid var(--line); }
   .wv-pos{ font: 800 0.56rem/1 var(--body); letter-spacing: 0.05em; padding: 4px 6px; border-radius: 5px; color: #111; min-width: 28px; text-align: center; }
@@ -1024,20 +1026,28 @@
   .wv-acts a{ height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
   .wv-acts a.plain{ border-color: var(--ctl-line); color: var(--text); }
   /* Week in Review folded to one line on Wednesday (audit VIII #4). */
-  /* Folded, the card is the button: no card padding around it, and the
-     summary breaks only between its parts, never inside a name or score. */
-  .recap-card.folded{ padding: 0; }
-  .recap-fold{ display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: none; border: 0; color: var(--text); text-align: left; cursor: pointer; font: inherit; border-radius: inherit; }
-  .recap-fold .rf-t{ flex: 1; min-width: 0; display: grid; gap: 1px; }
-  .recap-fold .rf-h{ font-weight: 700; font-size: 0.92rem; }
-  .recap-fold .rf-s{ color: var(--text-dim); font-size: 0.76rem; line-height: 1.4; }
-  .recap-fold .rf-b{ white-space: nowrap; }
-  .recap-fold svg, .rc-fold svg{ flex: none; width: 16px; height: 16px; color: var(--text-dim); }
-  .recap-fold:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
-  /* Open on a fold day: a chevron beside Share folds it back. */
-  .rc-fold{ display: grid; place-items: center; width: 30px; height: 30px; margin: -3px -6px -3px 0; padding: 0; background: none; border: 0; border-radius: 999px; cursor: pointer; }
-  .rc-fold svg{ transform: rotate(180deg); }
-  .rc-fold:focus-visible{ outline: 2px solid var(--gold); outline-offset: 0; }
+  /* One header for Live's foldable cards (On waivers, Week in Review, Median
+     Watch): Median Watch's title over a dim line, and the round fold button
+     with its top level with the title's. A folded card keeps its header,
+     and the line under the title becomes the card's summary, which breaks
+     only between its parts (.lv-b), never inside a name or score. Tapping
+     a folded header anywhere opens it. */
+  .lv-head{ display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .lv-ht{ flex: 1; min-width: 0; }
+  .lv-title{ font-weight: 700; font-size: 0.95rem; line-height: 1.3; color: var(--text); }
+  .lv-sub{ display: block; color: var(--text-dim); font-size: 0.76rem; font-weight: 500; line-height: 1.4; margin-top: 3px; }
+  .lv-sub b{ color: var(--text); font-weight: 600; }
+  .lv-b{ white-space: nowrap; }
+  .lv-tools{ display: flex; align-items: center; gap: 8px; flex: none; }
+  .lv-fold{ position: relative; flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: var(--text-dim); display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .lv-fold::before{ content: ''; position: absolute; inset: -6px; }
+  .lv-fold svg{ width: 15px; height: 15px; transition: transform .2s ease; }
+  .lv-fold[aria-expanded="false"] svg{ transform: rotate(-90deg); }
+  .lv-fold:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .lv-sub b.up{ color: var(--turf); }
+  .lv-sub b.dn{ color: var(--loss); }
+  .lv-folded .lv-head, .lv-folded .median-card-header{ cursor: pointer; }
+  .wv-card, .recap-card{ padding: 18px 20px; }
   /* The preview card's three tables behind one switch (audit VIII #5). */
   .pre-seg{ display: flex; gap: 4px; padding: 4px; margin: 14px 0 6px; border-radius: 22px; background: var(--ctl-bg); border: 1px solid var(--ctl-line); }
   .pre-seg button{ flex: 1; height: 32px; border-radius: 16px; border: 0; background: none; color: var(--text-dim); font: 600 0.78rem var(--body); cursor: pointer; white-space: nowrap; }
@@ -1149,7 +1159,7 @@
   .mwp-line-r{ display: flex; align-items: center; gap: 10px; font-size: 0.74rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .mwp-line-r b{ font-family: var(--scoreboard); font-size: 0.95rem; font-weight: 700; color: var(--gold); margin-left: 3px; }
   /* Under the title while any card can open. "Click" with a mouse, "Tap" on a touchscreen. */
-  .mw-hint{ display: block; font-size: 0.72rem; font-weight: 500; color: var(--text-dim); margin-top: 3px; }
+  .mw-hint{ display: block; font-size: 0.76rem; font-weight: 500; line-height: 1.4; color: var(--text-dim); margin-top: 3px; }
   .mw-hint[hidden]{ display: none; }
   .mw-hint .tap{ display: none; }
   @media (hover: none){ .mw-hint .click{ display: none; } .mw-hint .tap{ display: inline; } }
@@ -1393,10 +1403,9 @@
   .recap-card{
     --rc-ctx: color-mix(in srgb, var(--gold) 72%, var(--text-dim));
     background: linear-gradient(165deg, var(--surface-2), var(--surface));
-    border: 1px solid var(--line); border-radius: var(--card-r); box-shadow: var(--card-edge); padding: 16px 18px 18px;
+    border: 1px solid var(--line); border-radius: var(--card-r); box-shadow: var(--card-edge);
   }
-  .rc-tools{ display: flex; align-items: center; gap: 8px; flex: none; }
-  .rc-dek{ color: var(--rc-ctx); font-size: 0.82rem; line-height: 1.4; margin-top: 4px; text-wrap: balance; }
+  .rc-dek{ color: var(--rc-ctx); text-wrap: balance; }
   .rc-ctx{ display: block; color: var(--rc-ctx); font-size: 0.7rem; line-height: 1.35; margin-top: 2px; }
   /* Your name, wherever it shows up in the card, in your ring color. Not
      .me, whose outline would ring the whole element. */
@@ -1553,7 +1562,7 @@
 
   /* ---------- Small-phone tightening (must stay last: overrides base rules above) ---------- */
   @media (max-width: 480px){
-    .median-card{ padding: 16px; }
+    .median-card, .wv-card, .recap-card{ padding: 16px; }
     .card-body{ gap: 8px; }
     .spread-col{ width: 84px; }
     .lb-stat{ width: 34px; }
@@ -3750,6 +3759,29 @@
     return { above: held(sorted.slice(0, half)), below: held(sorted.slice(sorted.length - half)), all: sorted, zones };
   }
 
+  // The header Live's foldable cards share (see .lv-head): title, a dim line
+  // under it (the summary while folded), any tools, then the fold button.
+  function lvFoldBtn(attr, open, title) {
+    return `<button type="button" class="lv-fold" ${attr} data-noshot aria-expanded="${open}" aria-label="${open ? 'Fold' : 'Show'} ${title}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`;
+  }
+  function lvHead(title, sub, attr, open, tools = '', subCls = '') {
+    return `<div class="lv-head"><div class="lv-ht"><div class="lv-title">${title}</div>${sub ? `<span class="lv-sub${subCls ? ' ' + subCls : ''}">${sub}</span>` : ''}</div><div class="lv-tools">${tools}${lvFoldBtn(attr, open, title)}</div></div>`;
+  }
+  // A summary's parts, which wrap only between each other.
+  const lvBits = bits => bits.filter(Boolean).map(b => `<span class="lv-b">${b}</span>`).join(' · ');
+  // Median Watch folds to its median and line, remembered on this phone.
+  const MW_FOLD = 'rl-mw-min';
+  let mwFoldMem = false; // where storage is blocked, it holds for this visit
+  function mwFolded() { try { const v = localStorage.getItem(MW_FOLD); if (v !== null) return v === '1'; } catch (e) {} return mwFoldMem; }
+  document.getElementById('median-container').addEventListener('click', e => {
+    const folded = mwFolded();
+    if (!e.target.closest('[data-mw-fold]') && !(folded && e.target.closest('.median-card-header'))) return;
+    mwFoldMem = !folded;
+    try { localStorage.setItem(MW_FOLD, folded ? '0' : '1'); } catch (err) {}
+    mwHide();
+    if (lastMedianTeams) renderMedianStatic(medianViewMode);
+  });
+
   // ---------- Median Watch: unified Current/Projected toggle card ----------
   // Remembered per-browser across real page reloads (not just the in-memory
   // periodic refresh, which already preserves it since medianViewMode just
@@ -3865,11 +3897,22 @@
     // A past week's three modes are all its final scores: no toggle.
     // A finished live week says so where the switch was; the strip and the
     // median's chart for the week stay as they are.
-    const toggleHtml = lastMedianData && lastMedianData.archived ? ''
-      : weekFinal ? '<span class="mw-final">Final</span>' : mwToggleHtml(mode);
-    let bodyHtml, rows = null, medianValue = null;
+    const toggleHtml = lastMedianData && lastMedianData.archived || weekFinal ? '' : mwToggleHtml(mode);
+    const finalChip = weekFinal && !(lastMedianData && lastMedianData.archived) ? '<span class="mw-final">Final</span>' : '';
+    // Folded: just the median and its line for the week, with where you
+    // stand under the title.
+    const folded = mwFolded();
+    let bodyHtml, rows = null, medianValue = null, sub = '';
     if (mode === 'current' && !currentHasStarted) {
       bodyHtml = medianPendingBodyHtml();
+    } else if (folded) {
+      medianValue = mwMedian(mode);
+      bodyHtml = medianSplitHtml(mode, medianValue);
+      const mine = lastMedianTeams.find(t => isMe(medianTeamName(t)));
+      if (mine && typeof mine[mode] === 'number') {
+        const d = mine[mode] - medianValue;
+        sub = `<span class="lv-sub">You're <b class="${d >= 0 ? 'up' : 'dn'}">${fmtScore(Math.abs(d))}</b> ${d >= 0 ? 'above' : 'below'} at ${fmtScore(mine[mode])}</span>`;
+      }
     } else {
       medianValue = mwMedian(mode);
       rows = computeMedianRows(lastMedianTeams, medianValue, mode);
@@ -3885,12 +3928,14 @@
           </div>
         </div>`;
     }
+    if (folded && mwOpen) mwHide();
     document.getElementById('median-container').innerHTML = `
-      <div class="median-card">
+      <div class="median-card${folded ? ' lv-folded' : ''}">
         <div class="median-card-header">
-          <div><span class="median-card-title">Median Watch</span>
-            <span class="mw-hint" id="mw-hint" hidden><span class="click">Click</span><span class="tap">Tap</span> a card to see <span id="mw-hint-what"></span></span></div>
-          ${toggleHtml}
+          <div class="lv-ht"><div class="lv-title">Median Watch</div>
+            ${folded ? sub : `<span class="mw-hint" id="mw-hint" hidden><span class="click">Click</span><span class="tap">Tap</span> a card to see <span id="mw-hint-what"></span></span>`}</div>
+          ${folded ? '' : toggleHtml}
+          <div class="lv-tools">${finalChip}${lvFoldBtn('data-mw-fold', !folded, 'Median Watch')}</div>
         </div>
         <div id="median-body">${bodyHtml}</div>
       </div>`;
@@ -5180,16 +5225,14 @@
     const note = made.length && missed.length
       ? `<div class="rc-note"><span><b>${who(made)}</b> made it by <b class="up">+${fmtScore(made[0].score - median)}</b></span><span><b>${who(missed)}</b> missed by <b class="dn">−${fmtScore(median - missed[0].score)}</b></span></div>${ctx.median ? `<span class="rc-ctx">${esc(ctx.median)}</span>` : ''}`
       : sides.some(s => s.type === 'Cons') ? '<div class="rc-note">Faded dots are consolation games: they count for highs, never for lows.</div>' : '';
-    // Wednesday (audit VIII #4): everyone has seen it by now, so it folds to
-    // one line until it leaves on Thursday; a tap opens it for this visit.
-    const etDow = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' }).format(new Date());
-    let opened = false;
-    try { opened = sessionStorage.getItem('rl-recap-open') === String(rw.week); } catch (e) {}
-    const foldDay = etDow === 'Wed' && !FORCE_RECAP;
-    const chev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
-    if (foldDay && !opened) {
-      const bits = [high.length ? `Top score ${who(high)} ${fmtScore(high[0].score)}` : '', low.length ? `${esc(lowLabel)} ${who(low)} ${fmtScore(low[0].score)}` : '', closest.length ? `Closest ${who(closest)} by ${fmtScore(closest[0].margin)}` : ''].filter(Boolean);
-      section.innerHTML = `<div class="recap-card folded"><button type="button" class="recap-fold" data-recap-open aria-expanded="false"><span class="rf-t"><span class="rf-h">Week ${rw.week} in Review</span><span class="rf-s">${bits.map(b => `<span class="rf-b">${b}</span>`).join(' · ')}</span></span>${chev}</button></div>`;
+    // Folds to its header and a one-line summary (audit VIII #4). It starts
+    // folded on Wednesday, when everyone has seen it, and open before then;
+    // the fold button's choice holds for that week on this phone.
+    const title = `Week ${rw.week} in Review`;
+    const folded = recapFolded(rw.week);
+    if (folded) {
+      const bits = [high.length ? `Top score ${who(high)} ${fmtScore(high[0].score)}` : '', low.length ? `${esc(lowLabel)} ${who(low)} ${fmtScore(low[0].score)}` : '', closest.length ? `Closest ${who(closest)} by ${fmtScore(closest[0].margin)}` : ''];
+      section.innerHTML = `<div class="recap-card lv-folded">${lvHead(title, lvBits(bits), 'data-recap-fold', false)}</div>`;
       section.hidden = false;
       section.dataset.week = rw.week;
       return;
@@ -5197,11 +5240,7 @@
     // No median chip in the header: the dashed line carries it.
     section.innerHTML = `
       <div class="recap-card">
-        <div class="acc-head">
-          <div class="acc-title">Week ${rw.week} in Review</div>
-          <div class="rc-tools">${playoff ? '<span class="badge dim">Playoffs</span>' : ''}<button type="button" class="share-btn" data-recap-share>Share</button>${foldDay ? `<button type="button" class="rc-fold" data-recap-fold data-noshot aria-label="Fold Week ${rw.week} in Review" aria-expanded="true">${chev}</button>` : ''}</div>
-        </div>
-        ${story ? `<div class="rc-dek">${esc(story[1])}</div>` : ''}
+        ${lvHead(title, story ? esc(story[1]) : '', 'data-recap-fold', true, `${playoff ? '<span class="badge dim">Playoffs</span>' : ''}<button type="button" class="share-btn" data-recap-share>Share</button>`, 'rc-dek')}
         <div class="rc-strip">
           <div class="rc-ends">${end('lo', lowLabel, low, ctx.low)}${end('hi', 'Top score', high, ctx.top)}</div>
           <div class="rc-plot" role="img" aria-label="${esc(plotLabel)}">
@@ -5226,15 +5265,24 @@
   document.getElementById('recap-section').addEventListener('click', e => {
     const b = e.target.closest('[data-recap-share]');
     if (b) recapShot.share(b);
-    if (e.target.closest('[data-recap-open]')) {
-      try { sessionStorage.setItem('rl-recap-open', document.getElementById('recap-section').dataset.week || ''); } catch (err) {}
-      renderRecap();
-    }
-    if (e.target.closest('[data-recap-fold]')) {
-      try { sessionStorage.removeItem('rl-recap-open'); } catch (err) {}
+    if (e.target.closest('[data-recap-fold]') || e.target.closest('.lv-folded .lv-head')) {
+      const wk = document.getElementById('recap-section').dataset.week || '';
+      recapFoldMem = `${wk}:${recapFolded(wk) ? 0 : 1}`;
+      try { localStorage.setItem(RECAP_FOLD, recapFoldMem); } catch (err) {}
       renderRecap();
     }
   });
+  // "week:1" folded, "week:0" open; another week goes back to the default.
+  const RECAP_FOLD = 'rl-recap-fold';
+  let recapFoldMem = '';
+  function recapFolded(week) {
+    if (FORCE_RECAP) return false;
+    let v = recapFoldMem;
+    try { v = localStorage.getItem(RECAP_FOLD) || v; } catch (e) {}
+    const [w, f] = String(v).split(':');
+    if (w === String(week)) return f === '1';
+    return new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' }).format(new Date()) === 'Wed';
+  }
 
   // Places the strip's dots by score, stacking any that would touch
   // alternately above and below the line, so a crowd at the median stays
@@ -6115,7 +6163,6 @@
   // spot, and who needs one (a starter projected 0 with nobody on the bench
   // for it). The minus folds it to its title, remembered on this phone.
   const WV_MIN = 'rl-waiver-min';
-  const WV_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
   function renderWaivers(data) {
     const el = document.getElementById('waiver-section');
     if (!el) return;
@@ -6149,13 +6196,13 @@
     const summary = lead.need.length ? `<b>${esc(lead.top.n)}</b> (${lead.pos}) is the pick for ${whoNeeds(lead.need)}` : `<b>${esc(lead.top.n)}</b> leads at ${lead.pos} with ${Number(lead.top.pts).toFixed(1)}`;
     const body = rows.map(r => `<div class="wv-row"><span class="wv-pos ${r.pos}">${r.pos}</span><div style="min-width:0"><div class="wv-n">${esc(r.top.n)} <span>${esc(r.top.tm)}</span></div>
         <div class="wv-s">${r.need.length ? `Needed by <b>${whoNeeds(r.need)}</b>` : r.next ? `Next: ${esc(r.next.n)} ${Number(r.next.pts).toFixed(1)}` : ''}</div></div><span class="wv-v">${Number(r.top.pts).toFixed(1)}</span></div>`).join('');
-    el.innerHTML = `<div class="glass"><div class="panel-title"><span>On waivers</span><span class="wv-tools"><span class="notice-chip">Week ${R.fa.week || wk - 1} points</span><button type="button" class="wv-min" data-wv-min aria-expanded="${!min}" aria-label="${min ? 'Show' : 'Fold'} On waivers">${WV_CHEV}</button></span></div>
-      ${min ? `<div class="wv-sum">${summary}</div>` : `<div class="panel-body"><div class="item">${body}</div>
+    el.innerHTML = `<div class="glass wv-card${min ? ' lv-folded' : ''}">${lvHead('On waivers', min ? summary : `Week ${R.fa.week || wk - 1} points`, 'data-wv-min', !min)}
+      ${min ? '' : `<div class="wv-body"><div class="item">${body}</div>
         <div class="wv-acts"><a href="${esc(espnUrl('players/add', {}))}" target="_blank" rel="noopener">Waiver wire in ESPN</a><a class="plain" href="roster.html">Your Roster</a></div></div>`}</div>`;
     el.hidden = false;
   }
   document.getElementById('waiver-section').addEventListener('click', e => {
-    if (!e.target.closest('[data-wv-min]')) return;
+    if (!e.target.closest('[data-wv-min]') && !e.target.closest('.lv-folded .lv-head')) return;
     let min = false;
     try { min = localStorage.getItem(WV_MIN) === '1'; localStorage.setItem(WV_MIN, min ? '0' : '1'); } catch (err) {}
     if (shownData) renderWaivers(shownData);

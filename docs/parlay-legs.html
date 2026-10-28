@@ -275,10 +275,11 @@
   // The sports the board covers, in the sheet's own names.
   const SPORTS = ['NFL', 'NCAAF', 'NBA', 'NCAAM', 'NHL', 'MLB', 'Futbol'];
   const TOTAL = { NHL: 'Total Goals', Futbol: 'Total Goals' };
+  // Player bets, only where Florida's Hard Rock Bet takes them (none for
+  // college football or college basketball).
   const PROPS = {
     NFL: ['Anytime TD', 'Receiving Yards', 'Receptions', 'Passing Yards', 'Passing TD'],
-    NCAAF: ['Anytime TD', 'Receiving Yards', 'Passing Yards'],
-    NBA: ['Player Points'], NCAAM: ['Player Points'], MLB: ['Home Runs'],
+    NBA: ['Player Points'], MLB: ['Home Runs'],
   };
   const ROSTER = { NFL: 'football/nfl', NCAAF: 'football/college-football', NBA: 'basketball/nba', NCAAM: 'basketball/mens-college-basketball', MLB: 'baseball/mlb' };
   const FOOTBALL_POS = ['WR', 'RB', 'TE', 'QB', 'FB'];
@@ -558,7 +559,8 @@
           if (r.type !== 'player' && r.type !== 'team') continue;
           for (const c of r.contents || []) {
             const sport = LEAGUE_SPORT[c.defaultLeagueSlug];
-            if (!sport) continue;
+            // A player only matters where there are player bets to make.
+            if (!sport || (r.type === 'player' && !PROPS[sport])) continue;
             hits.push(r.type === 'team'
               ? { kind: 'team', sport, teamId: (/~t:(\d+)/.exec(c.uid || '') || [])[1] }
               : { kind: 'player', sport, name: c.displayName, team: c.subtitle || '' });
