@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Retirement League">
+<style>html{background:#050505}</style>
+<title>Retirement League — You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=37">
+<link rel="stylesheet" href="nav.css?v=31">
+<link rel="stylesheet" href="features.css?v=8">
+<style>
+  /* You (site audit VIII #15): everything about your week on one page --
+     the matchup and what needs doing, your odds, the rest of your schedule,
+     last week, your alerts, and your own pages. Opened from your monogram
+     once your team is picked; here, the monogram opens the You sheet. */
+  .yu-hero{ display:flex; align-items:center; gap:14px; margin:2px 0 4px; }
+  .yu-logo{ width:58px; height:58px; border-radius:50%; overflow:hidden; flex:none; background:#1d1d1d; box-shadow:0 0 0 2px var(--me-ring, #7AAEDB); display:grid; place-items:center; font:800 0.9rem/1 var(--body); }
+  .yu-logo img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .yu-name{ font:800 2rem/0.95 var(--scoreboard); letter-spacing:0.01em; }
+  .yu-sub{ color:var(--text-dim); font-size:0.84rem; margin-top:4px; }
+  .yu-acts{ display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 0; }
+  .yu-acts .ft-btn{ border-color:var(--ctl-line); color:var(--text); }
+
+  .yu-mu{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); padding:2px 0; }
+  .yu-mu > div{ flex:1; min-width:0; }
+  .yu-mu b{ font-weight:700; font-size:0.96rem; }
+  .yu-mu .s{ display:block; color:var(--text-dim); font-size:0.8rem; margin-top:2px; }
+  .yu-mu svg, .yu-go svg{ width:16px; height:16px; color:var(--text-dim); flex:none; }
+  .yu-todo{ display:flex; align-items:center; gap:12px; padding:11px 12px; text-decoration:none; color:var(--text); }
+  .yu-todo + .yu-todo{ border-top:1px solid var(--line); }
+  .yu-todo > div{ flex:1; min-width:0; }
+  .yu-todo b{ font-weight:600; font-size:0.88rem; display:block; }
+  .yu-todo span.s{ color:var(--text-dim); font-size:0.76rem; display:block; margin-top:1px; overflow-wrap:anywhere; }
+  .yu-ic{ width:32px; height:32px; border-radius:9px; display:grid; place-items:center; flex:none; color:var(--gold); background:var(--lead-tint); border:1px solid var(--lead-line); }
+  .yu-ic.bad{ color:var(--loss); background:var(--loss-tint); border-color:var(--loss-line); }
+  .yu-ic svg{ width:16px; height:16px; }
+  .yu-pill{ flex:none; height:34px; padding:0 14px; border-radius:999px; display:inline-flex; align-items:center; font-weight:700; font-size:0.78rem; border:1px solid var(--lead-line); color:var(--gold); white-space:nowrap; }
+  .yu-pill.solid{ background:var(--gold); border-color:var(--gold); color:var(--ctl-on-ink); }
+
+  .yu-odds{ display:flex; align-items:center; gap:14px; }
+  .yu-odds .v{ font:800 2.7rem/0.9 var(--scoreboard); color:var(--me-ring, #7AAEDB); font-variant-numeric:tabular-nums; }
+  .yu-odds .s{ color:var(--text-dim); font-size:0.8rem; line-height:1.45; }
+  .yu-odds .s b{ color:var(--text); font-weight:600; }
+
+  .yu-sched{ display:grid; grid-template-columns:repeat(var(--n,7),minmax(0,1fr)); gap:5px; }
+  .yu-wk{ border:1px solid var(--item-line); background:var(--item); border-radius:10px; padding:7px 2px; text-align:center; min-width:0; text-decoration:none; color:var(--text); }
+  .yu-wk.now{ border-color:color-mix(in srgb, var(--me-ring, #7AAEDB) 60%, transparent); background:color-mix(in srgb, var(--me-ring, #7AAEDB) 7%, transparent); }
+  .yu-wk .w{ color:var(--text-dim); font-size:0.56rem; font-weight:700; letter-spacing:0.06em; }
+  .yu-wk .o{ font-weight:700; font-size:0.74rem; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
+  .yu-wk .r{ color:var(--text-dim); font-size:0.64rem; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .yu-wk .v{ font-size:0.64rem; margin-top:3px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .yu-wk .v.up{ color:var(--turf); } .yu-wk .v.dn{ color:var(--loss); } .yu-wk .v.even{ color:var(--text-dim); }
+
+  .yu-al{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 10px; padding:10px 12px; text-decoration:none; color:var(--text); }
+  .yu-al + .yu-al{ border-top:1px solid var(--line); }
+  .yu-al b{ font-weight:600; font-size:0.86rem; }
+  .yu-al span{ grid-column:1; color:var(--text-dim); font-size:0.76rem; overflow-wrap:anywhere; }
+  .yu-al time{ grid-row:1; grid-column:2; color:var(--text-dim); font-size:0.7rem; white-space:nowrap; }
+
+  .yu-links{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .yu-go{ display:flex; align-items:center; gap:10px; min-height:52px; padding:10px 12px; text-decoration:none; color:var(--text); font-weight:600; font-size:0.86rem; }
+  .yu-go .t{ flex:1; min-width:0; }
+  .yu-go .yu-ic{ width:28px; height:28px; border-radius:8px; }
+  .yu-cols{ display:grid; gap:0; }
+  @media (min-width:860px){ .yu-cols{ grid-template-columns:1fr 1fr; gap:0 14px; align-items:start; } }
+</style>
+</head>
+<body>
+  <div id="site-nav"></div>
+  <div class="wrap">
+    <header>
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">Retirement League</div>
+          <h1>You</h1>
+        </div>
+      </div>
+    </header>
+
+    <div id="view"><div class="glass"><div class="ft-empty">Loading…</div></div></div>
+
+    <footer id="site-footer" data-note="Your matchup, odds and alerts in one place"></footer>
+  </div>
+
+<script src="nav.js?v=43"></script>
+<script src="page-common.js?v=41"></script>
+<script src="race-sim.js?v=3"></script>
+<script>
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const ESPN_LEAGUE = 58101;
+  const $ = id => document.getElementById(id);
+  const SVG = b => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${b}</svg>`;
+  const IC = {
+    chev: SVG('<path d="m9 6 6 6-6 6"/>'),
+    alert: SVG('<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.2v.3"/>'),
+    ticket: SVG('<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4V7z"/><path d="M14 7v10" stroke-dasharray="2 2.2"/>'),
+    shield: SVG('<path d="M12 3 19 6v5.5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z"/>'),
+    clip: SVG('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/>'),
+    spark: SVG('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>'),
+    vs: SVG('<circle cx="8" cy="9" r="3.2"/><circle cx="16" cy="9" r="3.2"/><path d="M3 20c.6-3 2.6-4.6 5-4.6M21 20c-.6-3-2.6-4.6-5-4.6"/>'),
+    bell: SVG('<path d="M6 17v-6a6 6 0 0 1 12 0v6l1.5 2h-15L6 17z"/><path d="M10 21h4"/>'),
+  };
+  const f2 = n => Number(n).toFixed(2);
+  const pct = v => v == null ? '—' : v > 99.5 && v < 100 ? '>99%' : v > 0 && v < 0.5 ? '<1%' : Math.round(v) + '%';
+  const ET = { timeZone: 'America/New_York' };
+  const when = ms => {
+    const d = new Date(ms);
+    return `${d.toLocaleDateString('en-US', { weekday: 'short', ...ET })} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', ...ET })}`;
+  };
+  const ago = ts => { const h = Math.round((Date.now() - ts) / 36e5); return h < 1 ? 'now' : h < 24 ? `${h}h` : `${Math.round(h / 24)}d`; };
+  const panel = (title, body, right = '') => `<section class="glass ft-sec"><div class="panel-title"><span>${title}</span>${right}</div><div class="ft-body">${body}</div></section>`;
+  const getJSON = url => fetch(url, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+  // ---------- Pieces ----------
+  // You vs one manager, every game (all types), from league.json.
+  function series(games, me, opp) {
+    const gs = games.filter(g => g[4] && ((g[3] === me && g[4] === opp) || (g[3] === opp && g[4] === me)) && (g[7] === me || g[7] === opp));
+    return { w: gs.filter(g => g[7] === me).length, l: gs.filter(g => g[7] === opp).length };
+  }
+  // Starters projected 0 before their game: on bye, out, or just zero.
+  function holes(players) {
+    return players.filter(p => !p.projectedPoints && (!p.game || p.game.state === 'pre'))
+      .map(p => ({ n: p.name, slot: p.slot, why: !p.game ? 'is on bye' : p.injury === 'OUT' ? 'is out' : 'projects 0' }));
+  }
+  // Points left on the bench last week: the best lineup from that week's
+  // roster (QB, 2 RB, 2 WR, TE, 2 FLEX) against what was started.
+  function benchPoints(roster, pos) {
+    if (!roster) return null;
+    const used = new Set();
+    let best = 0;
+    const take = (ok, n) => roster.filter(p => !used.has(p[6]) && ok(pos[p[6]] || p[2])).sort((a, b) => b[3] - a[3]).slice(0, n).forEach(p => { used.add(p[6]); best += p[3]; });
+    take(x => x === 'QB', 1); take(x => x === 'RB', 2); take(x => x === 'WR', 2); take(x => x === 'TE', 1); take(x => ['RB', 'WR', 'TE'].includes(x), 2);
+    const started = roster.filter(p => p[2] !== 'BE').reduce((t, p) => t + p[3], 0);
+    return { best, started, left: Math.max(0, best - started) };
+  }
+
+  async function draw() {
+    const me = getMe();
+    if (!me) {
+      $('view').innerHTML = `<div class="glass"><div class="ft-empty">Pick your team and this page fills with your matchup, your odds and your alerts.</div><div class="ft-body" style="padding-top:0"><button type="button" class="ft-btn" id="pick">Pick your team</button></div></div>`;
+      $('pick').addEventListener('click', () => openYou('you'));
+      return;
+    }
+    const [live, league, fr, board, lineups, pidx] = await Promise.all([
+      getJSON(WORKER_URL), getJSON('data/league.json'), getJSON('data/franchise.json'),
+      fetch(WORKER_URL + '/legs', { cache: 'no-store', headers: authHeaders() }).then(r => r.ok ? r.json() : null).catch(() => null),
+      getJSON(`data/lineups/${new Date().getFullYear()}.json`), getJSON('data/players-index.json'),
+    ]);
+    const games = (league && league.games) || [];
+    const team = live && live.teams ? live.teams.find(t => t.manager === me) : null;
+    const prof = fr && fr.players ? fr.players.find(p => p.name === me) : null;
+    const year = league ? Math.max(...league.seasons.map(s => s.year)) : new Date().getFullYear();
+    const html = [];
+
+    // Hero
+    const logo = prof && prof.current_team_logo ? `<img src="${esc(prof.current_team_logo)}" alt="">` : esc(monogram(me));
+    const rank = team ? `${team.standing}${['th', 'st', 'nd', 'rd'][(team.standing % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][team.standing % 100] || 'th'} at ${team.record}` : '';
+    html.push(`<div class="yu-hero"><span class="yu-logo">${logo}</span><div style="min-width:0"><div class="yu-name">${esc(me)}</div><div class="yu-sub">${esc([team && team.name, rank].filter(Boolean).join(' · '))}</div></div></div>
+      <div class="yu-acts"><button type="button" class="ft-btn sm" data-you="push">Notifications</button><button type="button" class="ft-btn sm" data-you="settings">Settings</button><button type="button" class="ft-btn sm" data-you="you">${getAuth() ? 'Account' : 'Sign in'}</button></div>`);
+
+    // This week: the matchup, then what needs doing.
+    const mu = live && live.matchups ? live.matchups.find(m => m.awayManager === me || m.homeManager === me) : null;
+    let opp = null;
+    if (mu) {
+      const side = mu.awayManager === me ? 'away' : 'home', other = side === 'away' ? 'home' : 'away';
+      opp = mu[other + 'Manager'];
+      const mine = mu[side + 'Players'] || [];
+      const kicks = [...mine, ...(mu[other + 'Players'] || [])].map(p => p.game && Date.parse(p.game.date)).filter(Boolean);
+      const started = (mu[side + 'Score'] || 0) + (mu[other + 'Score'] || 0) > 0;
+      const s = series(games, me, opp);
+      const ser = s.w > s.l ? `you lead the series ${s.w}-${s.l}` : s.w < s.l ? `you trail the series ${s.w}-${s.l}` : `the series is tied ${s.w}-${s.l}`;
+      const line = started
+        ? `${f2(mu[side + 'Score'])} to ${f2(mu[other + 'Score'])} · ${Math.round(mu[side + 'WinProbability'])}% to win`
+        : `${f2(mu[side + 'Projected'])} to ${f2(mu[other + 'Projected'])} projected · ${Math.round(mu[side + 'WinProbability'])}%`;
+      const todo = [];
+      holes(mine).forEach(h => todo.push(`<a class="yu-todo" href="https://fantasy.espn.com/football/team?leagueId=${ESPN_LEAGUE}&teamId=${team ? team.teamId : ''}&seasonId=${year}" target="_blank" rel="noopener"><span class="yu-ic bad">${IC.alert}</span><div><b>${esc(h.n)} ${esc(h.why)}</b><span class="s">${esc(h.slot)} in your lineup · fix it in ESPN</span></div><span class="yu-pill">Fix</span></a>`));
+      if (board && board.open && !board.locked && board.players.includes(me)) {
+        const leg = board.legs.find(l => l.player === me);
+        const locks = new Date(board.locksAt).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', ...ET }).replace(',', '');
+        todo.push(leg
+          ? `<a class="yu-todo" href="parlay-legs.html"><span class="yu-ic">${IC.ticket}</span><div><b>Your leg is in</b><span class="s">${esc(String(leg.raw_pick || '').replace(/\s*\([+-]?\d+\)\s*$/, ''))}</span></div><span class="yu-pill">Change</span></a>`
+          : `<a class="yu-todo" href="parlay-legs.html"><span class="yu-ic">${IC.ticket}</span><div><b>Parlay leg not in</b><span class="s">Locks ${esc(locks)} · ${board.legs.length} of ${board.players.length} in</span></div><span class="yu-pill solid">Enter</span></a>`);
+      }
+      html.push(panel(`Week ${live.week}`, `<a class="yu-mu" href="index.html"><div><b>vs ${esc(opp)}${!started && kicks.length ? ` · ${esc(when(Math.min(...kicks)))}` : ''}</b><span class="s">${esc(line)} · ${esc(ser)}</span></div>${IC.chev}</a>
+        ${todo.length ? `<div class="ft-lines">${todo.join('')}</div>` : ''}`));
+    }
+
+    // Your season: the site's own sim (race-sim.js), the same odds as Live and Playoff Race.
+    const inp = live && typeof RaceSim !== 'undefined' ? RaceSim.inputs(live) : null;
+    if (inp && inp.teams.includes(me)) {
+      html.push(`<div id="season-slot">${panel('Your season', '<div class="ft-empty" style="padding:4px 2px">Running the season…</div>')}</div>`);
+    }
+
+    // The rest of the schedule: their record now, then you against them all-time.
+    if (team && team.ahead && team.ahead.length) {
+      const rec = m => { const t = live.teams.find(x => x.manager === m); return t ? t.record : ''; };
+      const cells = team.ahead.map((o, i) => {
+        const s = series(games, me, o), cls = s.w > s.l ? 'up' : s.w < s.l ? 'dn' : 'even';
+        return `<a class="yu-wk${i === 0 ? ' now' : ''}" href="head-to-head.html?a=${encodeURIComponent(me)}&b=${encodeURIComponent(o)}"><div class="w">WK ${live.week + i}</div><div class="o">${esc(o)}</div><div class="r">${esc(rec(o))}</div><div class="v ${cls}">${s.w}-${s.l}</div></a>`;
+      }).join('');
+      html.push(panel('The rest of your schedule', `<div class="yu-sched" style="--n:${team.ahead.length}">${cells}</div><div class="ft-s" style="font-size:0.74rem">Their record, then yours against them all-time. Tap one for the full head to head.</div>`));
+    }
+
+    // Last week: your result, where it ranked, and the points left on the bench.
+    const mineLast = games.filter(g => g[0] === year && g[2] === 'Reg' && g[4] && (g[3] === me || g[4] === me));
+    const lw = mineLast.length ? Math.max(...mineLast.map(g => g[1])) : null;
+    if (lw && (!live || lw < live.week || live.finalWeek)) {
+      const g = mineLast.find(x => x[1] === lw);
+      const mine = g[3] === me ? g[5] : g[6], theirs = g[3] === me ? g[6] : g[5], them = g[3] === me ? g[4] : g[3];
+      const all = games.filter(x => x[0] === year && x[1] === lw && x[2] === 'Reg').flatMap(x => [[x[3], x[5]], [x[4], x[6]]]).filter(x => x[0]);
+      const place = all.filter(x => x[1] > mine).length + 1;
+      const sacko = place === all.length, top = place === 1;
+      const pos = Object.fromEntries(((pidx && pidx.players) || []).map(p => [p[0], p[2]]));
+      const bp = lineups && lineups.weeks && lineups.weeks[String(lw)] ? benchPoints(lineups.weeks[String(lw)][me], pos) : null;
+      const won = mine > theirs;
+      const bits = [top ? 'The week\'s top score.' : sacko ? 'The week\'s Sacko.' : `${place}${['th', 'st', 'nd', 'rd'][place] || 'th'} of ${all.length} that week.`];
+      if (bp && bp.left >= 0.5) bits.push(`Your best lineup scored ${f2(bp.best)}, so ${f2(bp.left)} sat on the bench.`);
+      else if (bp) bits.push('You started your best lineup.');
+      html.push(panel(`Week ${lw}`, `<div class="yu-mu" style="cursor:default"><div><b>${won ? 'Beat' : 'Lost to'} ${esc(them)} ${f2(mine)}–${f2(theirs)}</b><span class="s">${esc(bits.join(' '))}</span></div></div>`));
+    }
+
+    // Your alerts, the same list as You › Notifications.
+    html.push('<div id="inbox-slot"></div>');
+
+    // Your own pages.
+    const wrapYear = league ? Math.max(...league.games.filter(g => g[2] === 'Champ').map(g => g[0])) : year - 1;
+    const links = [
+      [`franchise.html?m=${encodeURIComponent(me)}`, IC.shield, 'Franchise'],
+      [`roster.html?m=${encodeURIComponent(me)}`, IC.clip, 'Roster'],
+      [`wrapped.html?m=${encodeURIComponent(me)}&year=${wrapYear}`, IC.spark, `${wrapYear} Wrapped`],
+      opp ? [`head-to-head.html?a=${encodeURIComponent(me)}&b=${encodeURIComponent(opp)}`, IC.vs, `You vs ${esc(opp)}`] : null,
+    ].filter(Boolean);
+    html.push(panel('Yours', `<div class="yu-links">${links.map(([href, ic, t]) => `<a class="yu-go ft-item" href="${href}"><span class="yu-ic">${ic}</span><span class="t">${t}</span>${IC.chev}</a>`).join('')}</div>`));
+
+    $('view').innerHTML = `<div class="yu-cols"><div>${html.slice(0, 3).join('')}</div><div>${html.slice(3).join('')}</div></div>`;
+    riseIn(document.querySelectorAll('#view .glass'));
+    if (team) setPageStatus(`${team.record} · Week ${live.week}`);
+
+    // The sim (about a quarter second) after the page has painted.
+    if (inp && inp.teams.includes(me)) setTimeout(() => {
+      const res = RaceSim.simulate(inp, RaceSim.RUNS, null, true)[me];
+      const total = inp.reg * 2, fw = res.fw || {};
+      const share = k => fw[k][0] / RaceSim.RUNS;
+      const common = Object.keys(fw).map(Number).sort((a, b) => share(b) - share(a)).slice(0, 3).sort((a, b) => b - a);
+      const tiles = common.map(k => { const p = fw[k][1] * 100 / fw[k][0]; return `<div class="ft-tile${p >= 90 ? ' good' : p <= 10 ? ' bad' : ''}"><div class="ft-tl">At ${k}-${total - k}</div><div class="ft-tv">${pct(p)}</div><div class="ft-ts">${Math.max(1, Math.round(share(k) * 100))}% of seasons</div></div>`; }).join('');
+      const worth = res.ifWin != null && res.ifLoss != null && opp ? `<b>${pct(res.ifWin)}</b> if you beat ${esc(opp)}, <b>${pct(res.ifLoss)}</b> if you lose.` : '';
+      const slot = $('season-slot');
+      if (slot) slot.innerHTML = panel('Your season', `<a class="yu-odds" href="race.html" style="text-decoration:none;color:inherit"><span class="v">${pct(res.po)}</span><span class="s">playoff odds<br>${worth}</span></a>${tiles ? `<div class="ft-tiles" style="--n:${common.length}">${tiles}</div>` : ''}`, '<a class="ft-chip" href="race.html" style="text-decoration:none">Playoff Race ›</a>');
+    }, 50);
+
+    // Alerts (nav.js keeps them a few minutes per tab).
+    if (window.rlInbox) rlInbox.list().then(list => {
+      const slot = $('inbox-slot');
+      if (!slot || !list) return;
+      const rows = list.slice(0, 4).map(a => `<a class="yu-al" href="${esc(a.url || 'index.html')}"><b>${esc(a.title)}</b><time>${esc(ago(a.ts))}</time><span>${esc(a.body)}</span></a>`).join('');
+      slot.innerHTML = panel('Your alerts', rows ? `<div class="ft-lines">${rows}</div>` : '<div class="ft-s">Nothing this week yet.</div>', '<button type="button" class="ft-chip" data-you="push" style="background:none;cursor:pointer">All ›</button>');
+    }).catch(() => {});
+  }
+
+  document.addEventListener('click', e => { const b = e.target.closest('[data-you]'); if (b) openYou(b.dataset.you); });
+  window.addEventListener('rl-me', draw);
+  draw();
+</script>
+<script src="track.js?v=2" defer></script>
+</body>
+</html>

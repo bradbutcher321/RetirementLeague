@@ -40,7 +40,7 @@
     { key: 'history', href: 'history.html', label: 'History', icon: ICONS.book, pages: [] },
   ];
   // Pages that belong to no tab, so none lights up.
-  const NO_TAB = ['commissioner.html'];
+  const NO_TAB = ['commissioner.html', 'you.html'];
   // Pages that keep their eyebrow instead of a back link: Secret Santa lights
   // the Live tab, which already goes back to Live.
   const NO_BACK = ['secret-santa.html'];
@@ -193,6 +193,12 @@
   // which opens You (nav.css hides it at 1080px, where the top bar has it).
   // Past the title, a slim glass bar takes the title's place at the top,
   // with the title (or the h1's data-fold, e.g. "Week 6") and the status line.
+  // Your monogram opens your page (you.html, audit VIII #15) once your team
+  // is picked; before that, and on that page itself, it opens the You sheet.
+  function youTap() {
+    if (getMe() && currentFile() !== 'you.html') location.href = 'you.html';
+    else openYou();
+  }
   function meButton(cls) {
     const b = document.createElement('button');
     b.type = 'button';
@@ -205,7 +211,7 @@
       b.setAttribute('aria-label', me ? `You: ${me}` : 'You: pick your team');
     };
     draw();
-    b.addEventListener('click', () => openYou());
+    b.addEventListener('click', youTap);
     window.addEventListener('rl-me', draw);
     return b;
   }
@@ -654,7 +660,7 @@
   function wireYou(btn) {
     if (!btn) return;
     drawChip(btn);
-    btn.addEventListener('click', () => openYou());
+    btn.addEventListener('click', youTap);
     window.addEventListener('rl-me', () => drawChip(btn));
   }
 
@@ -668,7 +674,7 @@
       btn.setAttribute('aria-label', me ? `You: ${me}` : 'You: pick your team');
     };
     draw();
-    btn.addEventListener('click', () => openYou());
+    btn.addEventListener('click', youTap);
     window.addEventListener('rl-me', draw);
   }
 
@@ -1117,6 +1123,8 @@
     const stood = new Set(prefs.rival ? alerts.filter(a => a.replaces).map(a => a.replaces) : []);
     return alerts.filter(a => prefs[a.pref] && !stood.has(a.k) && !(a.about && prefs.parlay && a.about.toLowerCase() === me));
   }
+  // For a page that lists them too (you.html).
+  window.rlInbox = { list: async () => { const a = await recentAlerts(); return a ? inboxList(a) : null; } };
   async function drawRecent() {
     const alerts = await recentAlerts(true);
     const box = document.getElementById('you-recent');
