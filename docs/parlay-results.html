@@ -152,6 +152,35 @@
   .pr-split{ margin-left: auto; text-align: right; color: var(--text-dim); font-size: 0.78rem; white-space: nowrap; }
   .pr-split b{ font-family: var(--scoreboard); font-weight: 800; font-size: 1rem; color: var(--gold); }
 
+  /* ---------- Before the lock (audit VIII #10) ----------
+     Until legs lock, the week's story is who's in: the count as the
+     headline, one circle per manager (gold once their leg is in, dashed
+     until then, yours in your color), and your own status with the way in.
+     The chance to cash comes back once all twelve are in. */
+  .pre-count{ font-family: var(--scoreboard); font-weight: 800; font-size: clamp(2.6rem, 11vw, 3.4rem); line-height: 0.95; }
+  .pre-count small{ font-size: 0.5em; color: var(--text-dim); margin-left: 4px; }
+  .pre-sub{ color: var(--text-dim); font-size: 0.84rem; margin-top: 6px; }
+  .pre-sub b{ color: var(--text); font-weight: 600; }
+  .pre-grid{ display: grid; grid-template-columns: repeat(6, minmax(0, 44px)); justify-content: space-between; gap: 8px; margin-top: 16px; }
+  @media (min-width: 701px){ .pre-grid{ grid-template-columns: repeat(12, minmax(0, 44px)); } }
+  .pre-grid i{ aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font: 800 0.72rem/1 var(--scoreboard); font-style: normal; letter-spacing: 0.02em; border: 1px dashed rgba(255,255,255,0.22); color: var(--text-dim); }
+  .pre-grid i.in{ border: 1px solid var(--lead-line); background: var(--lead-tint); color: var(--gold); }
+  .pre-grid i.mine{ border: 2px solid var(--me-ring, #7AAEDB); color: var(--me-ring, #7AAEDB); }
+  .pre-grid i.mine:not(.in){ border-style: dashed; }
+  .pre-you{ display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(122,174,219,0.45); background: rgba(122,174,219,0.06); text-decoration: none; color: var(--text); }
+  .pre-you > div{ flex: 1; min-width: 0; }
+  .pre-you .t{ font-weight: 700; font-size: 0.92rem; }
+  .pre-you .s{ color: var(--text-dim); font-size: 0.8rem; margin-top: 2px; overflow-wrap: anywhere; }
+  .pre-you .go{ flex: none; height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; font-weight: 700; font-size: 0.84rem; white-space: nowrap; border: 1px solid var(--gold); color: var(--gold); }
+  .pre-you .go.solid{ background: var(--gold); color: var(--ctl-on-ink); }
+  .pre-you:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .pre-wait{ margin-top: 14px; }
+  .pre-wait .k{ display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; color: var(--text-dim); font-size: 0.8rem; }
+  .pre-wait .k b{ color: var(--text); font-weight: 600; }
+  .pre-wait .names{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pre-wait .names span{ height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line); display: inline-flex; align-items: center; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); }
+  .pre-wait .names span.mine{ color: var(--me-ring, #7AAEDB); border-color: rgba(122,174,219,0.5); }
+
   .hero-chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; position: relative; }
   .hero-chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); }
   .hero-chip.loss{ border-color: rgba(214,98,79,0.4); background: rgba(214,98,79,0.08); color: var(--loss); font-weight: 600; }
@@ -444,15 +473,64 @@
       </div>`;
   }
 
-  function renderParlay(week, players, live, record) {
+  // ---------- Before the lock (audit VIII #10) ----------
+  // The leg board (GET /legs) is the live word on who's in; the sheet's copy
+  // in /parlay-stats can trail it by a few minutes.
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const ymd = s => `${MONTHS[Number(s.slice(4, 6)) - 1]} ${Number(s.slice(6, 8))}`;
+  function boardDates(b) {
+    const d = (b.days || []).slice().sort();
+    if (!d.length) return '';
+    const a = ymd(d[0]), z = ymd(d[d.length - 1]);
+    return a === z ? a : a.slice(0, 3) === z.slice(0, 3) ? `${a} – ${z.slice(4)}` : `${a} – ${z}`;
+  }
+  const isPreLock = (week, b) => !!b && b.open && !b.locked && b.year === week.year && b.week === week.week;
+  const etWhen = ms => new Date(ms).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }).replace(',', '');
+  const legText = l => String(l.raw_pick || '').replace(/\s*\([+-]?\d+\)\s*$/, '');
+
+  function preHeroHtml(week, b) {
+    const inSet = new Set(b.legs.map(l => l.player));
+    const priced = b.legs.filter(l => typeof l.odds === 'number');
+    const dec = priced.reduce((t, l) => t * decOdds(l.odds), 1);
+    const sofar = priced.length ? ` · so far <b>${amerOdds(dec)}</b> on ${priced.length} leg${priced.length === 1 ? '' : 's'}` : '';
+    const dates = boardDates(b);
+    const meName = b.players.find(p => isMe(p));
+    const myLeg = meName && b.legs.find(l => l.player === meName);
+    const grid = b.players.map(p => `<i class="${inSet.has(p) ? 'in' : ''}${isMe(p) ? ' mine' : ''}" title="${esc(p)}${inSet.has(p) ? ' · in' : ' · not in yet'}">${esc(monogram(p))}</i>`).join('');
+    const you = !meName ? ''
+      : myLeg
+        ? `<a class="pre-you" href="parlay-legs.html"><div><div class="t">Your leg is in</div><div class="s">${esc(legText(myLeg))}</div></div><span class="go">Change</span></a>`
+        : `<a class="pre-you" href="parlay-legs.html"><div><div class="t">You're not in yet</div><div class="s">The board shows what's taken, so you won't double up.</div></div><span class="go solid">Enter your leg</span></a>`;
+    return `
+      <div class="glass hero2" style="position:relative">
+        <span class="badge week-ribbon">Week ${esc(week.week)}${dates ? ` · ${esc(dates)}` : ''}</span>
+        <span class="badge status-ribbon gold">Open</span>
+        <div class="hero2-main">
+          <div class="pre-count">${inSet.size}<small>of ${b.players.length} in</small></div>
+          <div class="pre-sub">Locks <b>${esc(etWhen(b.locksAt))}</b>${sofar}</div>
+          <div class="pre-grid" role="img" aria-label="${inSet.size} of ${b.players.length} legs in">${grid}</div>
+          ${you}
+        </div>
+      </div>`;
+  }
+  // The managers still out, as one line under the legs instead of a row each.
+  function waitingHtml(b) {
+    const out = b.players.filter(p => !b.legs.some(l => l.player === p));
+    if (!out.length) return '';
+    return `<div class="pre-wait"><div class="k"><span><b>Waiting on ${out.length}</b></span><span>Chance to cash shows once all ${b.players.length} are in</span></div>
+      <div class="names">${out.map(p => `<span class="${isMe(p) ? 'mine' : ''}">${esc(p)}</span>`).join('')}</div></div>`;
+  }
+
+  function renderParlay(week, players, live, record, board) {
     const legs = legsSorted(week, players);
     const wins = legs.filter(([, p]) => p.result === 'Win').length;
     const losses = legs.filter(([, p]) => p.result === 'Loss').length;
-    const missing = players.filter(p => !week.picks[p]);
+    const pre = isPreLock(week, board);
+    const missing = pre ? [] : players.filter(p => !week.picks[p]);
     const result = week.final.result;
     const status = result === 'Loss' ? 'Dead' : result === 'Win' ? 'Hit' : 'Alive';
     const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
-    const hero = heroHtml(week, legs, wins, losses, status, statusTone, live, record);
+    const hero = pre ? preHeroHtml(week, board) : heroHtml(week, legs, wins, losses, status, statusTone, live, record);
 
     // Kickoff order, under a heading for each day the legs are played.
     const rows = [];
@@ -498,23 +576,31 @@
     return `${hero}
       <div class="glass" style="margin-top:14px">
         <div class="panel-title">Legs<span class="legs-actions">${share}</span></div>
-        <div class="panel-body legs-list">${head}${rows.join('')}</div>
+        <div class="panel-body legs-list">${head}${rows.join('') || (pre ? '<p class="loading-row">No legs in yet.</p>' : '')}${pre ? waitingHtml(board) : ''}</div>
       </div>`;
   }
 
-  // ---------- Parlay Legs banner ----------
-  fetch(WORKER_URL + '/legs', { cache: 'no-store', headers: authHeaders() })
-    .then(r => r.ok ? r.json() : null)
-    .then(b => {
-      if (!b || !b.open || b.locked) return;
-      const el = document.getElementById('legs-banner');
-      const locks = new Date(b.locksAt).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' }).replace(',', '');
-      const mineIn = b.me && b.legs.some(l => l.player === b.me);
-      el.innerHTML = `<span class="lb-text"><b>Week ${b.week} legs are open.</b> ${b.legs.length} of ${b.players.length} in · locks ${esc(locks)}</span>
-        <span class="lb-go">${mineIn ? 'See the legs' : 'Enter your leg'} ›</span>`;
-      el.hidden = false;
-    })
-    .catch(() => {});
+  // ---------- The leg board, and the Parlay Legs banner ----------
+  // The banner is the way in to Parlay Legs while legs are open. On the
+  // open week itself the hero carries that (audit VIII #10), so the banner
+  // only shows when another week is on screen.
+  let board = null, boardShown = null;
+  function loadLegBoard() {
+    return fetch(WORKER_URL + '/legs', { cache: 'no-store', headers: authHeaders() })
+      .then(r => r.ok ? r.json() : null)
+      .then(b => { if (b) { board = b; if (boardShown) boardShown(); } })
+      .catch(() => {});
+  }
+  function drawBanner(shownWeek) {
+    const el = document.getElementById('legs-banner');
+    const b = board;
+    if (!b || !b.open || b.locked || (shownWeek && isPreLock(shownWeek, b))) { el.hidden = true; return; }
+    const mineIn = b.legs.some(l => isMe(l.player));
+    el.innerHTML = `<span class="lb-text"><b>Week ${b.week} legs are open.</b> ${b.legs.length} of ${b.players.length} in · locks ${esc(etWhen(b.locksAt))}</span>
+      <span class="lb-go">${mineIn ? 'See the legs' : 'Enter your leg'} ›</span>`;
+    el.hidden = false;
+  }
+  loadLegBoard();
 
   // ---------- Wiring ----------
   // Reads straight from the Worker/KV now instead of a committed static
@@ -554,7 +640,8 @@
         if (!w) return;
         const isCurrent = w === current;
         backBtn.hidden = isCurrent;
-        container.innerHTML = renderParlay(w, players, live, record);
+        container.innerHTML = renderParlay(w, players, live, record, board);
+        drawBanner(w);
         shot.queue();
       }
       // Delegated once on the container, since showSelected() rebuilds the
@@ -573,6 +660,7 @@
         showSelected();
       }
       selectCurrent();
+      boardShown = showSelected;
       riseIn(container.children);
       yearSel.addEventListener('change', () => { fillWeeks(); showSelected(); });
       weekSel.addEventListener('change', showSelected);
@@ -590,9 +678,11 @@
       let liveLoadAt = Date.now();
       function pollLive() {
         liveLoadAt = Date.now();
+        // Until the lock, who's in changes by the minute too.
+        const legsP = board && board.open && !board.locked ? loadLegBoard() : null;
         return fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
           .then(res => res.json())
-          .then(fresh => { live = fresh.live || {}; showSelected(); })
+          .then(async fresh => { live = fresh.live || {}; await legsP; showSelected(); })
           .catch(() => {}); // a missed poll just tries again next interval
       }
       setInterval(() => { if (!document.hidden) pollLive(); }, LIVE_POLL_MS);

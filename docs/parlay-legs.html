@@ -121,6 +121,31 @@
   .pbtn i.who{ color: var(--loss); }
   .pbtn.on{ border-color: var(--gold); background: var(--lead-tint); }
 
+  /* ---------- One line per game (audit VIII #11) ----------
+     A game is a single row (teams, kickoff, the line) until you open it;
+     open, it's the full board above. The open card's head closes it. */
+  .gm-head{ display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 2px; background: none; border: 0; color: var(--text); text-align: left; cursor: pointer; font-family: var(--body); }
+  .gm-head .tms{ font-weight: 700; font-size: 0.9rem; line-height: 1.25; min-width: 0; overflow-wrap: anywhere; }
+  .gm-head .tms span{ color: var(--text-dim); font-weight: 500; }
+  .gm-head .ln{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.76rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .gm-head svg{ width: 16px; height: 16px; color: var(--text-dim); transition: transform .2s ease; }
+  .gm-head:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
+  .gm-row{ border-top: 1px solid var(--line); }
+  .day + .gm-row{ border-top: 0; }
+  .gm-head .tms .pk{ display: inline-block; margin-left: 8px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 999px; padding: 2px 7px; vertical-align: 2px; line-height: 1.3; }
+  .gm .gm-head{ min-height: 40px; padding: 0 0 2px; }
+  .gm .gm-head svg{ transform: rotate(180deg); }
+  .taken-line{ margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--item); color: var(--text-dim); font-size: 0.8rem; line-height: 1.45; }
+  .taken-line b{ color: var(--text); font-weight: 600; }
+  /* Your pick and Save, pinned above the tab bar while the slip itself is
+     off screen. */
+  .pickbar{ position: sticky; bottom: calc(var(--tabbar-h, 0px) + 10px); z-index: 20; margin-top: 14px; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; background: #1a1710; border: 1px solid var(--lead-line); border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+  @media (min-width: 1080px){ .pickbar{ bottom: 10px; } }
+  .pickbar[hidden]{ display: none; }
+  .pickbar .pb-text{ flex: 1; min-width: 0; background: none; border: 0; padding: 0; color: var(--text); text-align: left; cursor: pointer; font: 600 0.86rem/1.3 var(--body); overflow-wrap: anywhere; }
+  .pickbar .pb-text small{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.74rem; }
+  .pickbar .gold-btn{ flex: none; }
+
   /* The leg as it will be saved, with the line and odds still editable. */
   .slip{ margin: 8px 0 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--lead-line); background: var(--lead-tint); }
   .slip-text{ font-weight: 700; font-size: 0.98rem; overflow-wrap: anywhere; }
@@ -215,6 +240,7 @@
       <div id="paste-sec" hidden></div>
     </div>
     <div class="savebar" id="savebar" hidden></div>
+    <div class="pickbar" id="pickbar" hidden></div>
     <footer id="site-footer" data-source="Lines from Hard Rock Bet · Games from ESPN"></footer>
   </div>
 
@@ -245,7 +271,7 @@
   // A commissioner entering someone else's leg (from the board, or Enter
   // Picks' Edit Week via ?for=Name); null is your own.
   let target = new URLSearchParams(location.search).get('for') || null;
-  const blank = () => ({ sport: 'NFL', gid: null, bet: null, side: null, player: null, tds: 1, line: '', odds: '', q: '', pq: '', more: false, typed: false, text: '' });
+  const blank = () => ({ sport: 'NFL', open: null, gid: null, bet: null, side: null, player: null, tds: 1, line: '', odds: '', q: '', pq: '', more: false, typed: false, text: '' });
   let st = blank();
 
   const fmtOdds = o => o == null || o === '' || Number.isNaN(Number(o)) ? '' : (Number(o) > 0 ? '+' : '') + Math.round(Number(o));
@@ -363,6 +389,7 @@
     if (t && v.d && !v.d.typed) t.textContent = pickText(v.d);
     if (m) m.innerHTML = v.html;
     if (b) b.disabled = !v.ok || saving;
+    if (typeof drawPickbar === 'function') drawPickbar();
   }
 
   // ---------- Loading ----------
@@ -530,10 +557,28 @@
     for (const g of list){
       const d = parts(g.t).day;
       if (d !== last){ h += `<div class="day">${d}</div>`; last = d; }
-      h += gameCard(g);
+      h += st.open === g.id ? gameCard(g) : gameRow(g);
     }
     return h;
   }
+  // A game's one line: the teams, then kickoff, the favourite's spread and
+  // the total. The same head, flipped, closes an open card.
+  const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+  function lineText(g){
+    const o = g.odds;
+    if (!o) return 'No line yet';
+    const bits = [];
+    const fav = [0, 1].find(i => /^-/.test(String(o.sp[i][0])));
+    if (fav != null) bits.push(`${tm(g, fav)} ${o.sp[fav][0]}`);
+    else if (o.ml[0] != null && o.ml[1] != null) bits.push(`${tm(g, o.ml[0] < o.ml[1] ? 0 : 1)} ${fmtOdds(Math.min(o.ml[0], o.ml[1]))}`);
+    if (o.tot[0][0]) bits.push(`O/U ${o.tot[0][0]}`);
+    return bits.join(' · ') || 'No line yet';
+  }
+  const takenOn = g => others().filter(l => l.game_id === g.id || (l.gametime && gameKey(l) === gameKey({ team: g.a, opponent: g.h, gametime: g.t })));
+  const gameHead = (g, open) => `<button type="button" class="gm-head" data-open="${g.id}" aria-expanded="${open}">
+      <span class="tms">${esc(g.a)} <span>at</span> ${esc(g.h)}${!open && st.gid === g.id ? '<span class="pk">Your pick</span>' : ''}<span class="ln">${parts(g.t).time} · ${esc(lineText(g))}${g.odds && g.odds.src === 'DK' ? ' · DraftKings line' : ''}</span></span>
+      ${monos(takenOn(g))}${CHEV}</button>`;
+  const gameRow = g => `<div class="gm-row">${gameHead(g, false)}</div>`;
   function cell(g, bet, side, top, odds){
     if (!top && odds == null) return '<button type="button" class="cell none" disabled aria-label="No line"><b>—</b></button>';
     const stop = blocker(legFor(g, bet, side));
@@ -550,9 +595,8 @@
       ${cell(g, tot, i ? 'Under' : 'Over', o.tot[i][0] ? `${i ? 'U' : 'O'} ${o.tot[i][0]}` : '', o.tot[i][1])}
       ${cell(g, 'Money Line', i, fmtOdds(o.ml[i]), o.ml[i])}`;
     const props = PROPS[g.sport] || [];
-    const on = others().filter(l => l.game_id === g.id || (l.gametime && gameKey(l) === gameKey({ team: g.a, opponent: g.h, gametime: g.t })));
     return `<div class="gm${open ? ' open' : ''}">
-      <div class="gm-top"><span class="t">${parts(g.t).time}${g.odds && g.odds.src === 'DK' ? ' · DraftKings line' : ''}</span>${monos(on)}</div>
+      ${gameHead(g, true)}
       <div class="gm-grid"><span></span><span class="hd">Spread</span><span class="hd">Total</span><span class="hd">Winner</span>${row(0)}${row(1)}</div>
       ${props.length ? `<button type="button" class="link-btn" data-more="${g.id}">${open && st.more ? 'Hide player bets' : props.includes('Anytime TD') ? 'Touchdown scorer and player bets' : 'Player bets'}</button>` : '<div style="height:8px"></div>'}
       ${open && st.more ? propPanel(g, props) : ''}
@@ -598,6 +642,9 @@
     <div id="slip-msg">${verdict().html}</div>
     <div class="acts"><button type="button" class="gold-btn quiet" data-act="untype">Back to the games</button><button type="button" class="gold-btn solid" id="save" data-act="save"${verdict().ok && !saving ? '' : ' disabled'}>${saving ? 'Saving…' : 'Save as typed'}</button></div>`;
 
+  // What a taken leg is about, short: the game for a game bet, the player
+  // for a prop, the text for a typed one.
+  const takenWhat = l => l.bet_type === 'Other' ? l.player_prop : isProp(l.bet_type) ? `${l.player_prop}, ${l.bet_type}` : `${l.team}–${l.opponent}`;
   function drawMine(){
     if (!board) return loadError ? '' : '<p class="empty">Loading…</p>';
     const auth = getAuth(), m = mine();
@@ -610,9 +657,11 @@
     if (m && !editing) return legRow(m) + `<div class="acts"><button type="button" class="gold-btn" data-act="change">Change</button>${m.sheet ? '' : '<button type="button" class="gold-btn quiet" data-act="remove">Remove</button>'}</div>
       <p class="fine">${saveMsg ? `<b>${esc(saveMsg)}</b> ` : ''}${board.open ? `Everyone can see it. You can change it until <b>${esc(etWhen(board.locksAt))}</b>.` : 'Locked for members. You can still change it as commissioner.'}</p>`;
     if (st.typed) return typedForm();
+    const taken = others().slice().sort((a, b) => (a.gametime || '9').localeCompare(b.gametime || '9'));
     return `<div style="margin:-12px 0 4px"><button type="button" class="link-btn" data-act="type">Can't find it? Type it in</button></div>`
+      + (taken.length ? `<div class="taken-line"><b>Taken:</b> ${taken.map(l => `${esc(l.player)} (${esc(takenWhat(l))})`).join(', ')}</div>` : '')
       + sportChips()
-      + `<div style="margin-top:12px">${Array.isArray(games[st.sport]) && games[st.sport].length > 16 ? `<input class="in" id="f-q" data-q type="search" autocomplete="off" placeholder="Find a team" value="${esc(st.q)}" aria-label="Find a team" style="margin-bottom:10px">` : ''}
+      + `<div style="margin-top:12px">${Array.isArray(games[st.sport]) && games[st.sport].length > 6 ? `<input class="in" id="f-q" data-q type="search" autocomplete="off" placeholder="Find a team" value="${esc(st.q)}" aria-label="Find a team" style="margin-bottom:10px">` : ''}
         <div id="glist">${gameList()}</div></div>`
       + (m ? '<button type="button" class="link-btn" data-act="cancel">Keep the leg I have</button>' : '');
   }
@@ -640,8 +689,43 @@
     held = mineEl.contains(document.activeElement) && document.activeElement.matches('input, textarea');
     if (held) { refreshSlip(); return; }
     mineEl.innerHTML = drawMine();
+    watchSlip();
     if (board && board.canEnter && me() && (editing || !mine()) && !st.typed) loadGames(st.sport);
   }
+
+  // ---------- Your pick, pinned (audit VIII #11) ----------
+  // While a pick is made but its slip (with Save) is off screen -- scrolled
+  // past, or its game closed -- a bar above the tab bar carries it.
+  const pickbarEl = document.getElementById('pickbar');
+  let slipSeen = false, slipObs = null;
+  const BAR_CLEAR = 96; // the tab bar and the bar itself
+  function watchSlip(){
+    if (slipObs) slipObs.disconnect();
+    const b = document.getElementById('save');
+    const r = b && b.getBoundingClientRect();
+    slipSeen = !!r && r.top < innerHeight - BAR_CLEAR && r.bottom > 0;
+    if (b && 'IntersectionObserver' in window){
+      slipObs = new IntersectionObserver(es => { slipSeen = es[es.length - 1].isIntersecting; drawPickbar(); }, { rootMargin: `0px 0px -${BAR_CLEAR}px 0px` });
+      slipObs.observe(b);
+    }
+    drawPickbar();
+  }
+  function drawPickbar(){
+    const v = board && board.canEnter && me() && (editing || !mine()) && !st.typed ? verdict() : null;
+    if (!v || !v.d || v.d.typed || slipSeen || !document.getElementById('savebar').hidden){ pickbarEl.hidden = true; return; }
+    pickbarEl.innerHTML = `<button type="button" class="pb-text" data-pb="go">${esc(pickText(v.d))}<small>${v.ok ? `${esc(fmtOdds(v.d.odds))} · tap to see it` : 'Not finished · tap to finish it'}</small></button>
+      <button type="button" class="gold-btn solid" data-pb="save"${v.ok && !saving ? '' : ' disabled'}>${saving ? 'Saving…' : 'Save'}</button>`;
+    pickbarEl.hidden = false;
+  }
+  pickbarEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-pb]');
+    if (!b || b.disabled || saving) return;
+    if (b.dataset.pb === 'save'){ const v = verdict(); if (v.ok) send({ leg: v.d }); return; }
+    st.open = st.gid;
+    render();
+    const slipEl = document.querySelector('.slip');
+    if (slipEl) slipEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  });
 
   // ---------- Saving ----------
   const ERRORS = {
@@ -684,6 +768,14 @@
     const g = byId(st.gid);
     saveMsg = d.act === 'save' ? saveMsg : '';
     if (d.sport){ st = { ...blank(), sport: d.sport }; if (games[d.sport] === 'error') delete games[d.sport]; }
+    else if (d.open){
+      st.open = st.open === d.open ? null : d.open;
+      render();
+      // An open card can start above the screen when a taller one above it closes.
+      const el = st.open && document.querySelector(`.gm [data-open="${CSS.escape(st.open)}"]`);
+      if (el && el.getBoundingClientRect().top < 70) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return;
+    }
     else if (d.cell){
       const [id, bet, side] = d.cell.split('|');
       const game = byId(id);
