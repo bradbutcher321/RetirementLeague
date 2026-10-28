@@ -1024,12 +1024,20 @@
   .wv-acts a{ height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
   .wv-acts a.plain{ border-color: var(--ctl-line); color: var(--text); }
   /* Week in Review folded to one line on Wednesday (audit VIII #4). */
-  .recap-fold{ display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: none; border: 0; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
-  .recap-fold .rf-t{ flex: 1; min-width: 0; }
-  .recap-fold .rf-t b{ display: block; font-weight: 700; font-size: 0.98rem; }
-  .recap-fold .rf-t span{ display: block; color: var(--text-dim); font-size: 0.78rem; margin-top: 2px; line-height: 1.4; }
-  .recap-fold svg{ flex: none; width: 16px; height: 16px; color: var(--text-dim); }
-  .recap-fold:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; border-radius: inherit; }
+  /* Folded, the card is the button: no card padding around it, and the
+     summary breaks only between its parts, never inside a name or score. */
+  .recap-card.folded{ padding: 0; }
+  .recap-fold{ display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: none; border: 0; color: var(--text); text-align: left; cursor: pointer; font: inherit; border-radius: inherit; }
+  .recap-fold .rf-t{ flex: 1; min-width: 0; display: grid; gap: 1px; }
+  .recap-fold .rf-h{ font-weight: 700; font-size: 0.92rem; }
+  .recap-fold .rf-s{ color: var(--text-dim); font-size: 0.76rem; line-height: 1.4; }
+  .recap-fold .rf-b{ white-space: nowrap; }
+  .recap-fold svg, .rc-fold svg{ flex: none; width: 16px; height: 16px; color: var(--text-dim); }
+  .recap-fold:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
+  /* Open on a fold day: a chevron beside Share folds it back. */
+  .rc-fold{ display: grid; place-items: center; width: 30px; height: 30px; margin: -3px -6px -3px 0; padding: 0; background: none; border: 0; border-radius: 999px; cursor: pointer; }
+  .rc-fold svg{ transform: rotate(180deg); }
+  .rc-fold:focus-visible{ outline: 2px solid var(--gold); outline-offset: 0; }
   /* The preview card's three tables behind one switch (audit VIII #5). */
   .pre-seg{ display: flex; gap: 4px; padding: 4px; margin: 14px 0 6px; border-radius: 22px; background: var(--ctl-bg); border: 1px solid var(--ctl-line); }
   .pre-seg button{ flex: 1; height: 32px; border-radius: 16px; border: 0; background: none; color: var(--text-dim); font: 600 0.78rem var(--body); cursor: pointer; white-space: nowrap; }
@@ -5177,9 +5185,11 @@
     const etDow = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' }).format(new Date());
     let opened = false;
     try { opened = sessionStorage.getItem('rl-recap-open') === String(rw.week); } catch (e) {}
-    if (etDow === 'Wed' && !opened && !FORCE_RECAP) {
+    const foldDay = etDow === 'Wed' && !FORCE_RECAP;
+    const chev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+    if (foldDay && !opened) {
       const bits = [high.length ? `Top score ${who(high)} ${fmtScore(high[0].score)}` : '', low.length ? `${esc(lowLabel)} ${who(low)} ${fmtScore(low[0].score)}` : '', closest.length ? `Closest ${who(closest)} by ${fmtScore(closest[0].margin)}` : ''].filter(Boolean);
-      section.innerHTML = `<div class="recap-card"><button type="button" class="recap-fold" data-recap-open aria-expanded="false"><span class="rf-t"><b>Week ${rw.week} in Review</b><span>${bits.join(' · ')}</span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>`;
+      section.innerHTML = `<div class="recap-card folded"><button type="button" class="recap-fold" data-recap-open aria-expanded="false"><span class="rf-t"><span class="rf-h">Week ${rw.week} in Review</span><span class="rf-s">${bits.map(b => `<span class="rf-b">${b}</span>`).join(' · ')}</span></span>${chev}</button></div>`;
       section.hidden = false;
       section.dataset.week = rw.week;
       return;
@@ -5189,7 +5199,7 @@
       <div class="recap-card">
         <div class="acc-head">
           <div class="acc-title">Week ${rw.week} in Review</div>
-          <div class="rc-tools">${playoff ? '<span class="badge dim">Playoffs</span>' : ''}<button type="button" class="share-btn" data-recap-share>Share</button></div>
+          <div class="rc-tools">${playoff ? '<span class="badge dim">Playoffs</span>' : ''}<button type="button" class="share-btn" data-recap-share>Share</button>${foldDay ? `<button type="button" class="rc-fold" data-recap-fold data-noshot aria-label="Fold Week ${rw.week} in Review" aria-expanded="true">${chev}</button>` : ''}</div>
         </div>
         ${story ? `<div class="rc-dek">${esc(story[1])}</div>` : ''}
         <div class="rc-strip">
@@ -5218,6 +5228,10 @@
     if (b) recapShot.share(b);
     if (e.target.closest('[data-recap-open]')) {
       try { sessionStorage.setItem('rl-recap-open', document.getElementById('recap-section').dataset.week || ''); } catch (err) {}
+      renderRecap();
+    }
+    if (e.target.closest('[data-recap-fold]')) {
+      try { sessionStorage.removeItem('rl-recap-open'); } catch (err) {}
       renderRecap();
     }
   });
