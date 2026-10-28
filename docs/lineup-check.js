@@ -45,10 +45,15 @@ const LineupCheck = (() => {
 
   // The starters to flag, in lineup order: [{ player, kind }], kind 'bye' /
   // 'out' / 'zero'. avgSource comes from the Worker (averageValue()): it only
-  // says 'out' while the player's game hasn't kicked off, and 'bye' when his
-  // team has no game.
-  function problems(players, data, now) {
-    if (!isOpen(data, now)) return [];
+  // says 'out' while the player's game hasn't kicked off, and 'bye' when the
+  // team has no game. opts.anyDay (the Live page, audit VIII #3): from the
+  // moment the week's lineups are up, not just from Thursday 6 AM -- a bye
+  // is fixable all week. The Worker's lineup push keeps the Thursday rule.
+  function problems(players, data, now, opts) {
+    const open = opts && opts.anyDay
+      ? !!data && !data.archived && !!data.lastKickoff && now < Date.parse(data.lastKickoff)
+      : isOpen(data, now);
+    if (!open) return [];
     const out = [];
     (players || []).forEach(player => {
       if (player.avgSource === 'bye') out.push({ player, kind: 'bye' });

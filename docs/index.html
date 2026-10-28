@@ -116,6 +116,8 @@
   .psb-row .n.r{ grid-template-columns: minmax(0,1fr) auto; justify-items: end; }
   .psb-root{ grid-column: 1 / -1; font: 800 0.56rem/1.2 var(--body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--me-ring); margin-top: 3px; white-space: nowrap; }
   .psb-root:empty{ display: none; }
+  /* A starter projected 0 (audit VIII #3), under the manager's name. */
+  .psb-hole{ grid-column: 1 / -1; font: 700 0.6rem/1.25 var(--body); color: var(--loss); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .psb-ft{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 6px 2px 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--me-ring) 35%, transparent); background: color-mix(in srgb, var(--me-ring) 6%, transparent); font-size: 0.78rem; color: var(--text-dim); }
   .psb-ft b{ font-family: var(--scoreboard); font-size: 1.05rem; color: var(--text); font-variant-numeric: tabular-nums; }
   .psb-ft b.up{ color: var(--turf); }
@@ -286,6 +288,8 @@
   .mu-espn{ display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; margin-top: 2px; border-radius: 21px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.06); color: var(--text); font-weight: 700; font-size: 0.86rem; text-decoration: none; }
   .mu-espn i{ font-style: normal; background: #C9252C; color: #fff; font: 900 0.56rem/1 var(--body); padding: 4px 5px; border-radius: 5px; }
   .mu-espn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .mu-lc-fix{ margin: -2px 0 2px 46px; color: var(--text); font-size: 0.74rem; line-height: 1.4; }
+  .mu-lc-fix:empty{ display: none; }
   .mu-lc-tag{ flex: none; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; color: var(--loss); white-space: nowrap; }
   .mu-pips-wrap{ display: flex; flex-direction: column; gap: 5px; min-width: 0; margin-top: 11px; }
   .mu-pips-wrap.home{ align-items: flex-end; }
@@ -989,6 +993,49 @@
   .st-x{ flex: none; align-self: flex-start; background: rgba(255,255,255,0.06); border: none; color: var(--text-dim); border-radius: 999px; width: 30px; height: 30px; font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; position: relative; }
   .st-x::before{ content: ''; position: absolute; inset: -7px; }
   .st-x:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* "Up next: Collin" goes to your card (audit VIII #4). */
+  .st-next{ background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--me-ring); cursor: pointer; }
+  .st-next:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* A starter projected 0 takes the status line until it's fixed (audit VIII #3). */
+  .st-line.st-warn{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .st-warn .st-mono{ border-color: var(--loss); color: var(--loss); font-size: 1.1rem; }
+  .st-go{ flex: none; height: 36px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--loss-line); background: none; color: var(--text); font: 700 0.8rem var(--body); cursor: pointer; position: relative; }
+  .st-go::before{ content: ''; position: absolute; inset: -4px -2px; }
+  /* On waivers (audit VIII #6): Tuesday to the week's first kickoff; folds to its title. */
+  #waiver-section{ margin: -4px 0 18px; }
+  .wv-tools{ display: flex; align-items: center; gap: 8px; }
+  .wv-min{ position: relative; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: var(--text-dim); display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .wv-min::before{ content: ''; position: absolute; inset: -6px; }
+  .wv-min svg{ width: 15px; height: 15px; transition: transform .2s ease; }
+  .wv-min[aria-expanded="false"] svg{ transform: rotate(-90deg); }
+  .wv-min:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .wv-sum{ color: var(--text-dim); font-size: 0.8rem; padding: 0 22px 16px; margin-top: -4px; }
+  .wv-sum b{ color: var(--text); font-weight: 600; }
+  .wv-row{ display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; }
+  .wv-row + .wv-row{ border-top: 1px solid var(--line); }
+  .wv-pos{ font: 800 0.56rem/1 var(--body); letter-spacing: 0.05em; padding: 4px 6px; border-radius: 5px; color: #111; min-width: 28px; text-align: center; }
+  .wv-pos.QB{ background: #E0705C; } .wv-pos.RB{ background: #5DBB85; } .wv-pos.WR{ background: #5D9BE0; } .wv-pos.TE{ background: #E39A4E; }
+  .wv-n{ font-weight: 700; font-size: 0.88rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wv-n span{ color: var(--text-dim); font-weight: 500; }
+  .wv-s{ color: var(--text-dim); font-size: 0.74rem; margin-top: 1px; }
+  .wv-s b{ color: var(--loss); font-weight: 700; }
+  .wv-v{ font: 800 1.15rem var(--scoreboard); color: var(--gold); font-variant-numeric: tabular-nums; }
+  .wv-acts{ display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .wv-acts a{ height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+  .wv-acts a.plain{ border-color: var(--ctl-line); color: var(--text); }
+  /* Week in Review folded to one line on Wednesday (audit VIII #4). */
+  .recap-fold{ display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; background: none; border: 0; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+  .recap-fold .rf-t{ flex: 1; min-width: 0; }
+  .recap-fold .rf-t b{ display: block; font-weight: 700; font-size: 0.98rem; }
+  .recap-fold .rf-t span{ display: block; color: var(--text-dim); font-size: 0.78rem; margin-top: 2px; line-height: 1.4; }
+  .recap-fold svg{ flex: none; width: 16px; height: 16px; color: var(--text-dim); }
+  .recap-fold:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; border-radius: inherit; }
+  /* The preview card's three tables behind one switch (audit VIII #5). */
+  .pre-seg{ display: flex; gap: 4px; padding: 4px; margin: 14px 0 6px; border-radius: 22px; background: var(--ctl-bg); border: 1px solid var(--ctl-line); }
+  .pre-seg button{ flex: 1; height: 32px; border-radius: 16px; border: 0; background: none; color: var(--text-dim); font: 600 0.78rem var(--body); cursor: pointer; white-space: nowrap; }
+  .pre-seg button.on{ background: var(--gold); color: var(--ctl-on-ink); font-weight: 700; }
+  .pre-seg button:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .pre-ppl em.z{ color: var(--loss); border-color: var(--loss-line); text-decoration: line-through; }
   /* Catch me up (audit IV #9): takes the status line's place when you come back
      to games in progress. Scores then and now, the median, the biggest plays. */
   .cu{ padding: 14px 14px 12px; border: 1px solid var(--item-line); border-radius: var(--card-r); box-shadow: var(--card-edge); background: linear-gradient(165deg, var(--surface-raised), var(--surface)); }
@@ -1552,6 +1599,7 @@
          you sit, how far from the playoff line, your odds, who you play. Its
          ✕ hides it until the next week. -->
     <section id="status-section" hidden></section>
+    <section id="waiver-section" hidden></section>
 
     <!-- Week in Review (site audit 28): leads the page from the end of the
          week until the next one kicks off, when Median Watch and the
@@ -1677,7 +1725,7 @@
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
 <script src="rivals.js?v=4"></script>
-<script src="lineup-check.js?v=1"></script>
+<script src="lineup-check.js?v=2"></script>
 <script>
   // This Worker fetches ESPN directly and caches the computed result in KV
   // (see the retirement-league-refresh-proxy repo/src/index.js) — no more
@@ -2093,11 +2141,15 @@
     // Kickoffs: who plays when, both sides.
     const win = new Map();
     [[A, 'a'], [B, 'b']].forEach(([ps, s]) => ps.forEach(p => { if (!p.game || !p.game.date) return; const k = p.game.date; if (!win.has(k)) win.set(k, { a: [], b: [] }); win.get(k)[s].push(p); }));
+    const ppl = (ps, mine) => `<div class="pre-ppl${mine ? ' mine' : ''}">${ps.map(p => `<em${p.game ? '' : ' class="z"'}>${esc(lastName(p.name))}</em>`).join('')}</div>`;
     const lanes = [...win.keys()].sort().map(k => {
       const t = etKick(k), w = win.get(k), n = w.a.length + w.b.length;
-      const ppl = (ps, mine) => `<div class="pre-ppl${mine ? ' mine' : ''}">${ps.map(p => `<em>${esc(lastName(p.name))}</em>`).join('')}</div>`;
       return `<div class="pre-lane">${ppl(w.a, !meHome)}<div class="pre-when">${t.day} ${t.time.replace(':00', '')}${t.ap}<small>${n} starter${n === 1 ? '' : 's'}</small></div>${ppl(w.b, meHome)}</div>`;
-    }).join('');
+    }).join('') + (() => {
+      // Starters with no game this week, struck through (audit VIII #5).
+      const ba = A.filter(p => !p.game), bb = B.filter(p => !p.game);
+      return ba.length || bb.length ? `<div class="pre-lane">${ppl(ba, !meHome)}<div class="pre-when">Bye<small>0 projected</small></div>${ppl(bb, meHome)}</div>` : '';
+    })();
     // Projected by position.
     const sum = (ps, s) => ps.filter(p => p.slot === s).reduce((t, p) => t + (p.projectedPoints || 0), 0);
     const edge = PRE_POS.map(s => ({ s, a: sum(A, s), b: sum(B, s) })).filter(e => e.a || e.b);
@@ -2128,14 +2180,28 @@
         <div class="pre-body">
           ${two}
           <div class="pre-worth" data-worth${rootNow && rootNow.me ? '' : ' hidden'}>${worthHtml(rootNow)}</div>
-          ${lanes ? `<div class="pre-blk"><div class="pre-bt"><span>${labels[0]}</span><span>Kickoffs</span><span>${labels[1]}</span></div>${lanes}</div>` : ''}
-          ${edgeHtml ? `<div class="pre-blk"><div class="pre-bt"><span>${labels[0]}</span><span>Projected by position</span><span>${labels[1]}</span></div>${edgeHtml}</div>` : ''}
-          ${sameHtml ? `<div class="pre-blk"><div class="pre-bt"><span>Same game, both sides</span></div>${sameHtml}</div>` : ''}
+          ${preTabsHtml([
+            ['k', 'Kickoffs', lanes ? `<div class="pre-bt"><span>${labels[0]}</span><span></span><span>${labels[1]}</span></div>${lanes}` : ''],
+            ['p', 'Positions', edgeHtml ? `<div class="pre-bt"><span>${labels[0]}</span><span></span><span>${labels[1]}</span></div>${edgeHtml}` : ''],
+            ['s', `Same game · ${sameRows.length}`, sameHtml],
+          ])}
         </div>
         ${lineupHtml(m)}
         ${seriesHtml(m)}
         ${renderMatchupDetails(m)}
       </div>`;
+  }
+  // Kickoffs, Positions and Same game behind one switch (audit VIII #5), the
+  // choice kept on this phone. The tap is handled in onMatchupClick.
+  const PRE_TAB = 'rl-pre-tab';
+  function preTabsHtml(tabs) {
+    tabs = tabs.filter(t => t[2]);
+    if (!tabs.length) return '';
+    let sel = '';
+    try { sel = localStorage.getItem(PRE_TAB) || ''; } catch (e) {}
+    if (!tabs.some(t => t[0] === sel)) sel = tabs[0][0];
+    return `<div class="pre-seg" role="tablist" aria-label="Show">${tabs.map(([k, l]) => `<button type="button" role="tab" data-pretab="${k}" class="${k === sel ? 'on' : ''}" aria-selected="${k === sel}">${esc(l)}</button>`).join('')}</div>
+      ${tabs.map(([k, , html]) => `<div class="pre-blk" data-pane="${k}"${k === sel ? '' : ' hidden'}>${html}</div>`).join('')}`;
   }
   // The other pregame matchups: one row each, both projections and the win
   // odds; a tap opens the full card under its row, as the finished
@@ -2149,7 +2215,7 @@
       const awp = typeof m.awayWinProbability === 'number' ? m.awayWinProbability : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : 50;
       const wa = Math.max(1, Math.min(99, Math.round(awp))), wb = 100 - wa, fa = wa >= 50;
       const nm = (mgr, team) => `<span class="${isMe(mgr) ? 'you' : ''}">${esc(mgr || team)}</span>`;
-      const root = mgr => `<b class="psb-root" data-root="${esc(mgr || '')}">${rootMark(rootNow, mgr)}</b>`;
+      const root = mgr => `<b class="psb-root" data-root="${esc(mgr || '')}">${rootMark(rootNow, mgr)}</b>${holeTag(mgr === m.awayManager ? m.awayPlayers : m.homePlayers)}`;
       return `<button type="button" class="sb-row psb-row" data-sb="${encodeURIComponent(key)}" aria-expanded="${open}" aria-label="${esc(m.awayManager || m.awayName)} ${fmtScore(ap)} projected, ${wa}%, against ${esc(m.homeManager || m.homeName)} ${fmtScore(hp)}, ${wb}%">
           <span class="n">${muLogoHtml(m.awayManager)}${nm(m.awayManager, m.awayName)}${root(m.awayManager)}</span>
           <span class="pj${ap >= hp ? ' fav' : ''}">${fmtScore(ap)}</span>
@@ -3961,18 +4027,65 @@
   // can't score this week. lineup-check.js holds the rules and the window
   // (Thursday morning to the last kickoff); the rows below only draw them.
   const LC_TAGS = { bye: 'Bye', out: 'Out', zero: 'Questionable · 0 proj' };
+  // ---------- Lineup holes (audit VIII #3) ----------
+  // Lineup Check from the moment the week's lineups are up, with the fix:
+  // a benched player who can fill the spot, else the best free agents at it
+  // by last week's points. Rosters and free agents come from the Worker's
+  // /roster (cached there an hour), read once a week when there's a hole.
+  const holesOf = players => (shownYear() === leagueYear && shownData ? LineupCheck.problems(players, shownData, Date.now(), { anyDay: true }) : []);
+  const HOLE_TEXT = { bye: 'is on bye', out: 'is out', zero: 'projects 0' };
+  const ELIG = { QB: ['QB'], RB: ['RB'], WR: ['WR'], TE: ['TE'], FLEX: ['RB', 'WR', 'TE'], 'RB/WR/TE': ['RB', 'WR', 'TE'], 'D/ST': ['D/ST'], K: ['K'] };
+  let rosterInfo = null, rosterWeek = 0;
+  function needRoster() {
+    const d = shownData;
+    if (!d || d.archived || !d.week || rosterWeek === d.week) return;
+    rosterWeek = d.week;
+    fetch(`${WORKER_URL}/roster?week=${Math.max(1, d.week - 1)}`).then(r => r.ok ? r.json() : null).then(j => {
+      if (!j || !j.rosters) return;
+      rosterInfo = j;
+      document.querySelectorAll('[data-lc-fix]').forEach(el => { el.textContent = fixText(el.dataset.mgr, el.dataset.name, el.dataset.slot); });
+      if (shownData) { renderWaivers(shownData); renderStatusLine(shownData); }
+    }).catch(() => { rosterWeek = 0; });
+  }
+  // The bench players who can fill it, else the free agents ([] while /roster loads).
+  function fillers(mgr, name, slot) {
+    const R = rosterInfo;
+    if (!R || !R.rosters) return null;
+    const ro = R.rosters[mgr] || [];
+    const self = ro.find(p => p.n === name);
+    const elig = ELIG[slot] || (self ? [self.pos] : []);
+    const wk = shownData && shownData.week;
+    const plays = tm => !R.byes || R.byes[tm] !== wk;
+    const bench = ro.filter(p => p.slot === 'BE' && elig.includes(p.pos) && plays(p.tm));
+    const fa = ((R.fa && R.fa.players) || []).filter(p => elig.includes(p.pos) && plays(p.tm)).slice(0, 2);
+    return { bench, fa };
+  }
+  function fixText(mgr, name, slot) {
+    const f = fillers(mgr, name, slot);
+    if (!f) return '';
+    if (f.bench.length) return `On your bench: ${f.bench.slice(0, 2).map(p => p.n).join(' or ')}.`;
+    if (f.fa.length) return `Nobody on your bench for it. On waivers: ${f.fa.map(p => `${p.n} (${p.tm}, ${Number(p.pts).toFixed(1)} last week)`).join(', ')}.`;
+    return 'Nobody on your bench for it.';
+  }
+  // Other teams' holes, under their names on the pregame scoreboard.
+  function holeTag(players) {
+    const h = holesOf(players);
+    return h.length ? `<b class="psb-hole">${esc(h.map(x => `${lastName(x.player.name)} ${x.kind === 'bye' ? 'on bye' : x.kind === 'out' ? 'out' : 'proj 0'}`).join(', '))}</b>` : '';
+  }
   function lineupHtml(m) {
     if (shownYear() !== leagueYear || !shownData) return '';
     const players = isMe(m.awayManager) ? m.awayPlayers : m.homePlayers;
-    const items = LineupCheck.problems(players, shownData, Date.now());
+    const mgr = isMe(m.awayManager) ? m.awayManager : m.homeManager;
+    const items = holesOf(players);
     if (!items.length) return '';
+    needRoster();
     // Fix in ESPN (audit V #15): ESPN's app claims /football/team, so this
     // opens your own team in the ESPN Fantasy app.
     const teamId = isMe(m.awayManager) ? m.awayId : m.homeId;
     const fix = teamId ? `<a class="mu-espn" href="${esc(espnUrl('team', { seasonId: leagueYear, teamId }))}" target="_blank" rel="noopener"><i>ESPN</i>Fix in ESPN</a>` : '';
     return `<div class="mu-lineup">${items.map(({ player, kind }) => `<div class="mu-lc-line">
         <span class="mu-lc-slot">${esc(player.slot)}</span><span class="mu-lc-name">${esc(player.name)}</span><span class="mu-lc-tag">${LC_TAGS[kind]}</span>
-      </div>`).join('')}${fix}</div>`;
+      </div><div class="mu-lc-fix" data-lc-fix data-mgr="${esc(mgr)}" data-name="${esc(player.name)}" data-slot="${esc(player.slot)}">${esc(fixText(mgr, player.name, player.slot))}</div>`).join('')}${fix}</div>`;
   }
 
   // Record Watch (site audit III #14): the matchup cards' gold box when a
@@ -5059,6 +5172,18 @@
     const note = made.length && missed.length
       ? `<div class="rc-note"><span><b>${who(made)}</b> made it by <b class="up">+${fmtScore(made[0].score - median)}</b></span><span><b>${who(missed)}</b> missed by <b class="dn">−${fmtScore(median - missed[0].score)}</b></span></div>${ctx.median ? `<span class="rc-ctx">${esc(ctx.median)}</span>` : ''}`
       : sides.some(s => s.type === 'Cons') ? '<div class="rc-note">Faded dots are consolation games: they count for highs, never for lows.</div>' : '';
+    // Wednesday (audit VIII #4): everyone has seen it by now, so it folds to
+    // one line until it leaves on Thursday; a tap opens it for this visit.
+    const etDow = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' }).format(new Date());
+    let opened = false;
+    try { opened = sessionStorage.getItem('rl-recap-open') === String(rw.week); } catch (e) {}
+    if (etDow === 'Wed' && !opened && !FORCE_RECAP) {
+      const bits = [high.length ? `Top score ${who(high)} ${fmtScore(high[0].score)}` : '', low.length ? `${esc(lowLabel)} ${who(low)} ${fmtScore(low[0].score)}` : '', closest.length ? `Closest ${who(closest)} by ${fmtScore(closest[0].margin)}` : ''].filter(Boolean);
+      section.innerHTML = `<div class="recap-card"><button type="button" class="recap-fold" data-recap-open aria-expanded="false"><span class="rf-t"><b>Week ${rw.week} in Review</b><span>${bits.join(' · ')}</span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>`;
+      section.hidden = false;
+      section.dataset.week = rw.week;
+      return;
+    }
     // No median chip in the header: the dashed line carries it.
     section.innerHTML = `
       <div class="recap-card">
@@ -5091,6 +5216,10 @@
   document.getElementById('recap-section').addEventListener('click', e => {
     const b = e.target.closest('[data-recap-share]');
     if (b) recapShot.share(b);
+    if (e.target.closest('[data-recap-open]')) {
+      try { sessionStorage.setItem('rl-recap-open', document.getElementById('recap-section').dataset.week || ''); } catch (err) {}
+      renderRecap();
+    }
   });
 
   // Places the strip's dots by score, stacking any that would touch
@@ -5967,12 +6096,75 @@
   const STATUS_KEY = 'rl-status-hidden';
   const ordinal = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
   const recWL = r => String(r || '').split('-').map(Number);
+  // ---------- On waivers (audit VIII #6) ----------
+  // Tuesday to the week's first kickoff: last week's best free agent at each
+  // spot, and who needs one (a starter projected 0 with nobody on the bench
+  // for it). The minus folds it to its title, remembered on this phone.
+  const WV_MIN = 'rl-waiver-min';
+  const WV_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+  function renderWaivers(data) {
+    const el = document.getElementById('waiver-section');
+    if (!el) return;
+    const first = data && Date.parse(data.firstKickoff);
+    if (!data || data.archived || data.playoffWeek || shownYear() !== leagueYear || !(first > Date.now())) { el.hidden = true; el.innerHTML = ''; return; }
+    needRoster();
+    const R = rosterInfo;
+    if (!R || !R.fa || !R.fa.players || !R.fa.players.length) { el.hidden = true; el.innerHTML = ''; return; }
+    const wk = data.week;
+    const plays = tm => !R.byes || R.byes[tm] !== wk;
+    // Who needs one: every team's holes the bench can't cover.
+    const need = {};
+    (data.matchups || []).forEach(m => [[m.awayManager, m.awayPlayers], [m.homeManager, m.homePlayers]].forEach(([mgr, ps]) => {
+      holesOf(ps).forEach(({ player }) => {
+        const f = fillers(mgr, player.name, player.slot);
+        if (f && f.bench.length) return;
+        const self = (R.rosters[mgr] || []).find(p => p.n === player.name);
+        const pos = self ? self.pos : player.slot;
+        (need[pos] = need[pos] || []).push(mgr);
+      });
+    }));
+    const rows = ['QB', 'RB', 'WR', 'TE'].map(pos => {
+      const list = R.fa.players.filter(p => p.pos === pos && plays(p.tm));
+      return list.length ? { pos, top: list[0], next: list[1], need: need[pos] || [] } : null;
+    }).filter(Boolean).sort((a, b) => (b.need.length > 0) - (a.need.length > 0));
+    if (!rows.length) { el.hidden = true; el.innerHTML = ''; return; }
+    let min = false;
+    try { min = localStorage.getItem(WV_MIN) === '1'; } catch (e) {}
+    const whoNeeds = list => list.map(n => (isMe(n) ? 'you' : esc(n))).join(', ');
+    const lead = rows[0];
+    const summary = lead.need.length ? `<b>${esc(lead.top.n)}</b> (${lead.pos}) is the pick for ${whoNeeds(lead.need)}` : `<b>${esc(lead.top.n)}</b> leads at ${lead.pos} with ${Number(lead.top.pts).toFixed(1)}`;
+    const body = rows.map(r => `<div class="wv-row"><span class="wv-pos ${r.pos}">${r.pos}</span><div style="min-width:0"><div class="wv-n">${esc(r.top.n)} <span>${esc(r.top.tm)}</span></div>
+        <div class="wv-s">${r.need.length ? `Needed by <b>${whoNeeds(r.need)}</b>` : r.next ? `Next: ${esc(r.next.n)} ${Number(r.next.pts).toFixed(1)}` : ''}</div></div><span class="wv-v">${Number(r.top.pts).toFixed(1)}</span></div>`).join('');
+    el.innerHTML = `<div class="glass"><div class="panel-title"><span>On waivers</span><span class="wv-tools"><span class="notice-chip">Week ${R.fa.week || wk - 1} points</span><button type="button" class="wv-min" data-wv-min aria-expanded="${!min}" aria-label="${min ? 'Show' : 'Fold'} On waivers">${WV_CHEV}</button></span></div>
+      ${min ? `<div class="wv-sum">${summary}</div>` : `<div class="panel-body"><div class="item">${body}</div>
+        <div class="wv-acts"><a href="${esc(espnUrl('players/add', {}))}" target="_blank" rel="noopener">Waiver wire in ESPN</a><a class="plain" href="roster.html">Your Roster</a></div></div>`}</div>`;
+    el.hidden = false;
+  }
+  document.getElementById('waiver-section').addEventListener('click', e => {
+    if (!e.target.closest('[data-wv-min]')) return;
+    let min = false;
+    try { min = localStorage.getItem(WV_MIN) === '1'; localStorage.setItem(WV_MIN, min ? '0' : '1'); } catch (err) {}
+    if (shownData) renderWaivers(shownData);
+  });
+
   function renderStatusLine(data) {
     const el = document.getElementById('status-section');
     const teams = data.teams || [];
     const t = getMe() && !data.archived && !data.playoffWeek && data.week ? teams.find(x => x.manager && isMe(x.manager)) : null;
     catchupTick(data, t);
     if (t && renderCatchUp(el, data, t)) return;
+    // A starter projected 0 takes the line until it's fixed (audit VIII #3).
+    const myMu = t && (data.matchups || []).find(m => isMe(m.awayManager) || isMe(m.homeManager));
+    const myHoles = myMu ? holesOf(isMe(myMu.awayManager) ? myMu.awayPlayers : myMu.homePlayers) : [];
+    if (myHoles.length) {
+      const h = myHoles[0], more = myHoles.length - 1;
+      needRoster();
+      el.innerHTML = `<div class="st-line st-warn"><span class="st-mono" aria-hidden="true">!</span>
+        <p class="st-text"><b>${esc(h.player.name)} ${HOLE_TEXT[h.kind]}.</b> ${more ? `And ${more} more in your lineup. ` : `Your ${esc(h.player.slot)} projects 0. `}${esc(fixText(t.manager, h.player.name, h.player.slot))}</p>
+        <button type="button" class="st-go" data-st-go>Fix</button></div>`;
+      el.hidden = false;
+      return;
+    }
     const key = `${data.year || leagueYear}:${data.week}`;
     let hidden = false;
     try { hidden = localStorage.getItem(STATUS_KEY) === key; } catch (e) {}
@@ -6001,7 +6193,8 @@
     const odds = typeof t.playoffPct === 'number' ? `, with a <b>${Math.round(t.playoffPct)}%</b> shot at the playoffs` : '';
     const mu = (data.matchups || []).find(m => isMe(m.awayManager) || isMe(m.homeManager));
     const opp = weekFinal ? (t.ahead || [])[1] : mu && (isMe(mu.awayManager) ? mu.homeManager : mu.awayManager);
-    const next = opp ? ` Up next: <b>${esc(opp)}</b>.` : '';
+    // Up next goes to your card (audit VIII #4), this week's opponent only.
+    const next = opp ? ` Up next: ${weekFinal ? `<b>${esc(opp)}</b>` : `<button type="button" class="st-next" data-st-go>${esc(opp)} ›</button>`}.` : '';
     el.innerHTML = `<div class="st-line"><span class="st-mono">${esc(monogram(t.manager))}</span>
       <p class="st-text">You're <b>${ordinal(rankOf(t))} at ${esc(recOf(t))}</b>${line}${odds}.${next}</p>
       <button type="button" class="st-x" aria-label="Hide until next week">✕</button></div>`;
@@ -6228,7 +6421,14 @@
     el.hidden = false;
     return true;
   }
+  // "Fix" and "Up next" land on your card, clear of the folded title bar.
+  function goToMyCard() {
+    const c = document.querySelector('.matchup-card.me');
+    if (!c) return;
+    window.scrollTo({ top: c.getBoundingClientRect().top + window.scrollY - 76, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
   document.getElementById('status-section').addEventListener('click', e => {
+    if (e.target.closest('[data-st-go]')) { goToMyCard(); return; }
     if (e.target.closest('.cu-got')) {
       if (catchup) catchup.dismissed = true;
       if (shownData) renderStatusLine(shownData);
@@ -6772,6 +6972,7 @@
         document.getElementById('my-matchup').innerHTML = onTop ? mineCard(mine) : '';
         renderMePrompt(onTop);
         renderStatusLine(data);
+        renderWaivers(data);
         // Finished games other than yours fold into one scoreboard (audit V
         // #10); a card folds only once its game is decided.
         const folded = ordered.filter(m => m !== mine && matchupDecided(m));
@@ -6929,6 +7130,14 @@
     sheet.focus({ preventScroll: true });
   }
   const onMatchupClick = (e) => {
+    const pt = e.target.closest('[data-pretab]');
+    if (pt) {
+      const k = pt.dataset.pretab, card = pt.closest('.matchup-card');
+      try { localStorage.setItem(PRE_TAB, k); } catch (err) {}
+      card.querySelectorAll('[data-pretab]').forEach(b => { const on = b === pt; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+      card.querySelectorAll('[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== k; });
+      return;
+    }
     const more = e.target.closest('[data-more]');
     if (more) { openMore(more.closest('.matchup-card')); return; }
     const sb = e.target.closest('.sb-row');
