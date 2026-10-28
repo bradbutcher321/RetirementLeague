@@ -137,6 +137,19 @@
   .gm .gm-head svg{ transform: rotate(180deg); }
   .taken-line{ margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--item); color: var(--text-dim); font-size: 0.8rem; line-height: 1.45; }
   .taken-line b{ color: var(--text); font-weight: 600; }
+  /* Search results, across every sport: a player's row opens their game's
+     player bets; a game's row opens the game. */
+  .lsr{ display: grid; }
+  .lsr-row{ display: grid; gap: 2px; width: 100%; min-height: 52px; padding: 9px 2px; background: none; border: 0; border-top: 1px solid var(--line); color: var(--text); text-align: left; cursor: pointer; font-family: var(--body); }
+  .lsr-row:first-child{ border-top: 0; }
+  .lsr-row:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
+  .lsr-k{ font-weight: 700; font-size: 0.9rem; line-height: 1.25; overflow-wrap: anywhere; }
+  .lsr-k .at{ color: var(--text-dim); font-weight: 500; }
+  .lsr-tag{ display: inline-block; margin-left: 7px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; color: var(--gold); border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 999px; padding: 2px 7px; vertical-align: 2px; line-height: 1.3; }
+  .lsr-s{ color: var(--text-dim); font-size: 0.76rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .lsr-none{ color: var(--text-dim); font-size: 0.8rem; padding: 10px 2px; border-top: 1px solid var(--line); }
+  .lsr-none:first-child{ border-top: 0; }
+
   /* Your pick and Save, pinned above the tab bar while the slip itself is
      off screen. */
   .pickbar{ position: sticky; bottom: calc(var(--tabbar-h, 0px) + 10px); z-index: 20; margin-top: 14px; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; background: #1a1710; border: 1px solid var(--lead-line); border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
@@ -466,13 +479,12 @@
     }
     throw new Error('espn');
   }
-  async function loadGames(sport){
-    if (games[sport] && games[sport] !== 'error') return;
-    games[sport] = 'loading';
-    try {
-      const hr = fetch(`${WORKER_URL}/legs/games?sport=${encodeURIComponent(sport)}`).then(r => r.json()).then(d => d.events || []).catch(() => []);
-      const lists = await Promise.all(board.days.flatMap(day => SCOREBOARDS[sport].map(([path, q]) => scoreboard(path, q, day))));
-      const events = await hr;
+  // ESPN's schedule for a sport, Thursday through Monday, games not yet
+  // started -- free, and all the search needs to find a game. Kept as a
+  // promise so the search and the sport chips share one read.
+  const sched = {};           // sport -> Promise<[games]>, each with ESPN's (DraftKings) line as g.dk
+  function loadSchedule(sport){
+    if (!sched[sport]) sched[sport] = Promise.all(board.days.flatMap(day => SCOREBOARDS[sport].map(([path, q]) => scoreboard(path, q, day)))).then(lists => {
       const seen = new Map();
       for (const ev of lists.flat()){
         const comp = ev.competitions && ev.competitions[0];
@@ -480,17 +492,97 @@
         const away = cs.find(c => c.homeAway === 'away'), home = cs.find(c => c.homeAway === 'home');
         if (!away || !home || !away.team || !home.team || seen.has(ev.id)) continue;
         if (comp.status && comp.status.type && comp.status.type.state !== 'pre') continue; // started or over
-        const g = { id: ev.id, sport, t: easternIso(new Date(comp.date)), at: Date.parse(comp.date),
+        seen.set(ev.id, { id: ev.id, sport, t: easternIso(new Date(comp.date)), at: Date.parse(comp.date),
           a: canonical(away), h: canonical(home), aid: away.team.id, hid: home.team.id,
-          am: [away.team.displayName, away.team.location, away.team.name], hm: [home.team.displayName, home.team.location, home.team.name] };
+          am: [away.team.displayName, away.team.location, away.team.name], hm: [home.team.displayName, home.team.location, home.team.name],
+          dk: espnOdds(comp) });
+      }
+      const list = [...seen.values()].sort((x, y) => x.t.localeCompare(y.t) || x.a.localeCompare(y.a));
+      sched[sport].list = list;
+      return list;
+    }).catch(err => { delete sched[sport]; throw err; });
+    return sched[sport];
+  }
+  // The games with Hard Rock's lines on them. The lines cost Odds API
+  // credits (cached four hours for everyone), so they're only asked for once
+  // you're looking at that sport -- the search never asks.
+  async function loadGames(sport){
+    if (games[sport] && games[sport] !== 'error') return;
+    games[sport] = 'loading';
+    try {
+      const hr = fetch(`${WORKER_URL}/legs/games?sport=${encodeURIComponent(sport)}`).then(r => r.json()).then(d => d.events || []).catch(() => []);
+      const list = await loadSchedule(sport);
+      const events = await hr;
+      games[sport] = list.map(g0 => {
+        const g = { ...g0 };
         const e = matchEvent(g, events);
         g.ev = e ? e.id : '';
-        g.odds = e ? hrOdds(g, e) : espnOdds(comp);
-        seen.set(ev.id, g);
-      }
-      games[sport] = [...seen.values()].sort((x, y) => x.t.localeCompare(y.t) || x.a.localeCompare(y.a));
+        g.odds = e ? hrOdds(g, e) : g.dk;
+        return g;
+      });
     } catch { games[sport] = 'error'; }
     render();
+  }
+  // ---------- Find a team or player, any sport (audit VIII #11) ----------
+  // ESPN's site search names each player's team and each team's league, one
+  // small free request per search. That says which sport to look in; ESPN's
+  // schedule (loadSchedule, also free) says whether that team plays this
+  // week. Hard Rock isn't asked until a game is opened.
+  const LEAGUE_SPORT = Object.fromEntries(Object.entries(SCOREBOARDS).flatMap(([sp, list]) => list.map(([path]) => [path.split('/')[1], sp])));
+  const sq = { q: '', hits: null, busy: false };
+  let sqTimer = 0;
+  const drawGlist = () => { const el = document.getElementById('glist'); if (el) el.innerHTML = gameList(); };
+  function runSearch(){
+    clearTimeout(sqTimer);
+    const q = st.q;
+    if (fold(q).length < 3) { Object.assign(sq, { q, hits: null, busy: false }); drawGlist(); return; }
+    Object.assign(sq, { q, hits: null, busy: true });
+    drawGlist();
+    sqTimer = setTimeout(async () => {
+      const hits = [];
+      try {
+        const d = await fetch(`https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(q.trim())}&limit=25`).then(r => r.json());
+        for (const r of d.results || []) {
+          if (r.type !== 'player' && r.type !== 'team') continue;
+          for (const c of r.contents || []) {
+            const sport = LEAGUE_SPORT[c.defaultLeagueSlug];
+            if (!sport) continue;
+            hits.push(r.type === 'team'
+              ? { kind: 'team', sport, teamId: (/~t:(\d+)/.exec(c.uid || '') || [])[1] }
+              : { kind: 'player', sport, name: c.displayName, team: c.subtitle || '' });
+          }
+        }
+      } catch { /* the team names already on the page still match */ }
+      if (st.q !== q) return;
+      await Promise.all([...new Set(hits.map(h => h.sport))].map(sp => loadSchedule(sp).catch(() => null)));
+      if (st.q !== q) return;
+      Object.assign(sq, { q, hits, busy: false });
+      drawGlist();
+    }, 300);
+  }
+  function resultsHtml(){
+    const q = fold(st.q);
+    const shown = id => SPORTS.map(sp => Array.isArray(games[sp]) && games[sp].find(g => g.id === id)).find(Boolean);
+    const withLine = g => shown(g.id) || { ...g, odds: g.dk };
+    const found = new Map(), players = [], none = [];
+    // Team names on the games already read, as you type.
+    for (const sp of SPORTS) for (const g of (sched[sp] && sched[sp].list) || []) if (fold(g.a).includes(q) || fold(g.h).includes(q)) found.set(g.id, g);
+    if (sq.q === st.q && sq.hits) for (const h of sq.hits) {
+      const list = (sched[h.sport] && sched[h.sport].list) || [];
+      const g = list.find(x => h.kind === 'team' ? (x.aid === h.teamId || x.hid === h.teamId) : (sameTeam(h.team, x.am) || sameTeam(h.team, x.hm)));
+      if (g && h.kind === 'player') { if (!players.some(p => p.name === h.name && p.g.id === g.id)) players.push({ name: h.name, g }); }
+      else if (g) found.set(g.id, g);
+      else if (h.kind === 'player' && sched[h.sport] && sched[h.sport].list && none.length < 3 && !none.some(n => n.name === h.name)) none.push(h);
+    }
+    const when = g => `${parts(g.t).day} · ${parts(g.t).time}`;
+    const rows = players.map(({ name, g }) => `<button type="button" class="lsr-row" data-hit="${esc(g.id)}" data-hsport="${esc(g.sport)}" data-hplayer="${esc(name)}">
+        <span class="lsr-k">${esc(name)}<span class="lsr-tag">${esc(g.sport)}</span></span><span class="lsr-s">${esc(g.a)} at ${esc(g.h)} · ${esc(when(g))}</span></button>`)
+      .concat([...found.values()].sort((a, b) => a.t.localeCompare(b.t)).map(g => `<button type="button" class="lsr-row" data-hit="${esc(g.id)}" data-hsport="${esc(g.sport)}">
+        <span class="lsr-k">${esc(g.a)} <span class="at">at</span> ${esc(g.h)}<span class="lsr-tag">${esc(g.sport)}</span></span><span class="lsr-s">${esc(when(g))} · ${esc(lineText(withLine(g)))}</span></button>`))
+      .concat(none.map(h => `<div class="lsr-none">${esc(h.name)}${h.team ? ` (${esc(h.team)})` : ''} · no game this week</div>`));
+    if (sq.busy) rows.push('<p class="empty">Searching every sport…</p>');
+    else if (!rows.length) rows.push(`<p class="empty">${q.length < 3 ? 'Keep typing: a team or a player, any sport.' : `Nothing this week for “${esc(st.q.trim())}”.`}</p>`);
+    return `<div class="lsr">${rows.join('')}</div>`;
   }
   async function loadRoster(sport, teamId){
     if (rosters[teamId]) return;
@@ -545,14 +637,14 @@
   function shownGames(){
     const list = games[st.sport];
     if (!Array.isArray(list)) return list;
-    const q = fold(st.q);
-    return q ? list.filter(g => fold(g.a + g.h).includes(q) || fold(g.a).includes(q) || fold(g.h).includes(q)) : list;
+    return list;
   }
   function gameList(){
+    if (fold(st.q)) return resultsHtml();
     const list = shownGames();
     if (list === 'loading' || list == null) return '<p class="empty">Finding this week\'s games…</p>';
     if (list === 'error') return `<p class="empty bad">Couldn't load the games. <button type="button" class="link-btn" data-sport="${st.sport}">Try again</button></p>`;
-    if (!list.length) return `<p class="empty">${st.q ? 'No game by that name this week.' : `No ${esc(st.sport)} games Thursday through Monday.`}</p>`;
+    if (!list.length) return `<p class="empty">No ${esc(st.sport)} games Thursday through Monday.</p>`;
     let last = '', h = '';
     for (const g of list){
       const d = parts(g.t).day;
@@ -660,9 +752,9 @@
     const taken = others().slice().sort((a, b) => (a.gametime || '9').localeCompare(b.gametime || '9'));
     return `<div style="margin:-12px 0 4px"><button type="button" class="link-btn" data-act="type">Can't find it? Type it in</button></div>`
       + (taken.length ? `<div class="taken-line"><b>Taken:</b> ${taken.map(l => `${esc(l.player)} (${esc(takenWhat(l))})`).join(', ')}</div>` : '')
-      + sportChips()
-      + `<div style="margin-top:12px">${Array.isArray(games[st.sport]) && games[st.sport].length > 6 ? `<input class="in" id="f-q" data-q type="search" autocomplete="off" placeholder="Find a team" value="${esc(st.q)}" aria-label="Find a team" style="margin-bottom:10px">` : ''}
-        <div id="glist">${gameList()}</div></div>`
+      + `<input class="in" id="f-q" data-q type="search" autocomplete="off" placeholder="Find a team or player" value="${esc(st.q)}" aria-label="Find a team or player, any sport" style="margin-bottom:10px">`
+      + `<div id="chipbox"${fold(st.q) ? ' hidden' : ''}>${sportChips()}</div>`
+      + `<div style="margin-top:12px"><div id="glist">${gameList()}</div></div>`
       + (m ? '<button type="button" class="link-btn" data-act="cancel">Keep the leg I have</button>' : '');
   }
 
@@ -768,6 +860,18 @@
     const g = byId(st.gid);
     saveMsg = d.act === 'save' ? saveMsg : '';
     if (d.sport){ st = { ...blank(), sport: d.sport }; if (games[d.sport] === 'error') delete games[d.sport]; }
+    else if (d.hit){
+      const sport = d.hsport, id = d.hit, player = d.hplayer || '';
+      st = { ...blank(), sport, open: id };
+      // A player opens their game's player bets with their name in the filter.
+      // Hard Rock's prices for them load from here, as they would by hand.
+      if (player && PROPS[sport]) Object.assign(st, { gid: id, more: true, bet: PROPS[sport][0], pq: player });
+      if (games[sport] === 'error') delete games[sport];
+      render();
+      const el = document.querySelector('.gm');
+      if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      return;
+    }
     else if (d.open){
       st.open = st.open === d.open ? null : d.open;
       render();
@@ -821,7 +925,13 @@
   mineEl.addEventListener('input', e => {
     const t = e.target;
     if (t.dataset.f){ st[t.dataset.f] = t.value; saveMsg = ''; refreshSlip(); }
-    else if ('q' in t.dataset){ st.q = t.value; document.getElementById('glist').innerHTML = gameList(); }
+    else if ('q' in t.dataset){
+      st.q = t.value;
+      // The sport chips step aside while you search every sport.
+      const chips = document.getElementById('chipbox');
+      if (chips) chips.hidden = !!fold(st.q);
+      runSearch();
+    }
     else if ('pq' in t.dataset){
       st.pq = t.value;
       const g = byId(st.gid), box = document.getElementById('plist');
