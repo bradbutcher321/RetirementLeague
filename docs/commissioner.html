@@ -160,6 +160,59 @@
   .cm-day .cm-bar{ margin-top: 0; height: 8px; }
   .cm-day em{ font-style: normal; text-align: right; font-weight: 700; }
   .cm-day span{ color: var(--text-dim); }
+
+  /* ---------- Audit VIII #17-22 ----------
+     The hub leads with this week's parlay as a timeline (today's step lit,
+     its buttons right there), then eight tools as tiles. */
+  .tl{ display: grid; }
+  .tl-st{ display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 16px; }
+  .tl-st:last-child{ padding-bottom: 2px; }
+  .tl-st::before{ content: ''; position: absolute; left: 10px; top: 24px; bottom: 0; width: 2px; background: var(--line); }
+  .tl-st:last-child::before{ display: none; }
+  .tl-dot{ width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--ctl-line); display: grid; place-items: center; background: var(--surface-raised); position: relative; z-index: 1; }
+  .tl-dot svg{ width: 12px; height: 12px; }
+  .tl-st.done .tl-dot{ border-color: var(--turf); color: var(--turf); }
+  .tl-st.now .tl-dot{ border-color: var(--gold); background: var(--gold); color: var(--ctl-on-ink); }
+  .tl-w{ color: var(--text-dim); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .tl-t{ font-weight: 600; font-size: 0.9rem; margin-top: 1px; overflow-wrap: anywhere; }
+  .tl-st.now .tl-t{ color: var(--gold); }
+  .tl-st:not(.done):not(.now) .tl-t{ color: var(--text-dim); }
+  .tl-s{ color: var(--text-dim); font-size: 0.76rem; margin-top: 2px; line-height: 1.4; }
+  .tl-acts{ margin-top: 10px; }
+  .cm-tool-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (min-width: 721px){ .cm-tool-grid{ grid-template-columns: repeat(4, 1fr); } }
+  .cm-tool{ display: flex; flex-direction: column; min-height: 104px; padding: 12px; text-decoration: none; color: var(--text); min-width: 0; }
+  .cm-tool:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .cm-tool-n{ font-weight: 700; font-size: 0.9rem; margin-top: 10px; }
+  .cm-tool-s{ color: var(--text-dim); font-size: 0.72rem; line-height: 1.35; margin-top: 2px; overflow-wrap: anywhere; }
+  .cm-tool.is-lead .cm-tool-s{ color: var(--gold); }
+  .cm-tool-s.bad{ color: var(--loss); }
+  @media (hover: hover){ .cm-tool:hover{ border-color: var(--lead-line); } }
+
+  /* Managers: what varies per person, as three small marks. */
+  .mg-ic{ display: flex; gap: 5px; flex: none; }
+  .mg-ic i{ width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; border: 1px solid var(--line); color: var(--text-dim); opacity: 0.55; }
+  .mg-ic i svg{ width: 14px; height: 14px; }
+  .mg-ic i.on{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); opacity: 1; }
+  .mg-ic i.mid{ color: var(--gold); border-color: var(--lead-line); background: var(--lead-tint); opacity: 1; }
+  .mg-ic i.miss{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); opacity: 1; }
+  .mg-legend{ display: flex; flex-wrap: wrap; gap: 12px; color: var(--text-dim); font-size: 0.7rem; margin: 0 2px 10px; }
+  .mg-legend span{ display: inline-flex; align-items: center; gap: 5px; }
+  .mg-legend svg{ width: 13px; height: 13px; }
+  .cm-txt{ background: none; border: 0; padding: 10px 0; min-height: 44px; color: var(--text-dim); font: 600 0.8rem var(--body); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+  .cm-txt.gold{ color: var(--gold); }
+
+  /* Activity: two weeks of visits, a square per manager per day. */
+  .ac-grid{ display: grid; grid-template-columns: 64px repeat(14, minmax(0, 1fr)) 36px; gap: 3px; align-items: center; font-size: 0.72rem; }
+  .ac-grid .n{ font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ac-grid .n.away{ color: var(--loss); }
+  .ac-grid .c{ aspect-ratio: 1; border-radius: 4px; background: rgba(255,255,255,0.05); }
+  .ac-grid .d{ color: var(--text-dim); font-size: 0.56rem; text-align: center; font-weight: 700; }
+  .ac-grid .tot{ text-align: right; font: 800 0.9rem var(--scoreboard); font-variant-numeric: tabular-nums; }
+
+  /* Messages */
+  .an-prev{ margin-top: 6px; padding: 12px; border-radius: 16px; background: var(--bg); border: 1px solid var(--line); }
+  .an-prev .glass{ margin: 0; }
 </style>
 </head>
 <body>
@@ -213,6 +266,9 @@
     chev: SVG('<path d="m9 6 6 6-6 6"/>'),
     chat: SVG('<path d="M4 5.5h16v10H9.5L5 19.5v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/>'),
     lock: SVG('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+    check: SVG('<path d="m5 12 4.5 4.5L19 7"/>'),
+    phone: SVG('<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/>'),
+    globe: SVG('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 2.5 14.4 0 17M12 3.5c-2.5 2.6-2.5 14.4 0 17"/>'),
   };
 
   // ---------- State ----------
@@ -230,6 +286,11 @@
   let videoSeason = 0;
   let screenData = {};     // whatever the open screen last loaded
   let busy = '';           // an action in flight, by name
+  let nudge = false;       // the Nudge sheet is open (audit VIII #18)
+  const nudgeOff = new Set();  // missing managers left out of this nudge
+  let nudgeArmed = 0;      // Push asks once: a second tap within 4s sends
+  let mFilter = 'all';     // Managers' filter
+  let msgTab = 'banner';   // Messages: banner | push | text
   let toastTimer;
   const drafts = {};       // typed-in field values, kept across a redraw
 
@@ -305,79 +366,94 @@
   const rowLink = (href, name, sub) => `<a class="cm-row item" href="${href}"><div class="cm-main"><div class="cm-name">${name}</div><div class="cm-sub">${sub}</div></div><span class="cm-chev">${I.chev}</span></a>`;
   const panel = (title, body, right, note) => `<section class="cm-section"><div class="glass"><div class="panel-title"><span>${title}</span>${right || ''}</div>${note ? `<div class="cm-note">${note}</div>` : ''}<div class="panel-body">${body}</div></div></section>`;
   const loading = '<div class="cm-empty">Loading…</div>';
+  // A typed-in box's value, set from code. draw() reads every box back into
+  // drafts before it redraws, so the box itself has to change too.
+  function setDraft(id, v) { drafts[id] = v; const el = $(id); if (el) el.value = v; }
 
-  // ---------- The hub ----------
+  // ---------- The hub (audit VIII #17) ----------
+  // This week's parlay as a timeline, then eight tools. Sign-Ins, Member
+  // Accounts and Notifications' list became Managers; Notifications and
+  // Announcements became Messages; Site Health, Data Refresh and the Activity
+  // Log became Site & Data. The old #names still open the screen they moved to.
   const TOOLS = {
-    parlay:   { label: 'Parlay Management', icon: I.ticket },
-    tables:   { label: "Jon's Tables", icon: I.table },
-    push:     { label: 'Notifications', icon: I.bell },
-    announce: { label: 'Announcements', icon: I.mega },
-    signins:  { label: 'Sign-Ins', icon: I.key },
-    members:  { label: 'Member Accounts', icon: I.people },
-    audit:    { label: 'Activity Log', icon: I.clock },
-    videos:   { label: 'Recap Videos', icon: I.play },
-    season:   { label: 'Season Setup', icon: I.cal },
-    health:   { label: 'Site Health', icon: I.shield },
-    refresh:  { label: 'Data Refresh', icon: I.sync },
+    parlay:   { label: 'Parlay', icon: I.ticket },
+    managers: { label: 'Managers', icon: I.people },
+    messages: { label: 'Messages', icon: I.mega },
     activity: { label: 'Activity', icon: I.chart },
+    videos:   { label: 'Recap Videos', icon: I.play },
+    season:   { label: 'Season', icon: I.cal },
     feedback: { label: 'Feedback', icon: I.chat },
+    site:     { label: 'Site & Data', icon: I.shield },
   };
-  const GROUPS = [
-    ['Parlay', ['parlay', 'tables']],
-    ['People', ['signins', 'members', 'push', 'announce', 'audit']],
-    ['League', ['videos', 'season']],
-    ['Site', ['feedback', 'health', 'refresh', 'activity']],
-  ];
+  const ALIAS = { signins: 'managers', members: 'managers', push: 'messages', announce: 'messages', health: 'site', refresh: 'site', audit: 'site' };
   const failing = () => ((health || (ov && ov.health)) ? (health || ov.health).checks : []).filter(c => !c.ok);
   const wfAt = file => { const c = ((health || (ov && ov.health)) ? (health || ov.health).checks : []).find(x => x.file === file); return c && c.at; };
+  const pushOn = n => !!ov && (ov.pushOn || []).includes(n);
+  // After Thursday 1 PM the window closes, which locks the legs whatever the switch says.
+  const shut = P => !!P && (P.locked || !P.windowOpen);
 
   function status(k) {
     const P = ov.parlay;
     switch (k) {
       case 'parlay':
-        if (!P) return { t: 'Legs, Sacko and final odds' };
-        if (!P.windowOpen) return { t: `Next week's legs open Tue 12 AM` };
-        return { t: P.locked ? `Locked · ${P.legsIn.length} of ${P.players.length} in` : `${P.legsIn.length} of ${P.players.length} in · locks ${etDay(P.locksAt)}` };
-      case 'tables': return { t: "Season table and this week's legs" };
-      case 'push': return { t: ov.push.people ? `${ov.push.people} of ${ov.managers} have it on` : 'Nobody has it on yet' };
-      case 'announce': return { t: ov.announcement ? 'Showing on Live' : 'Nothing showing' };
-      case 'signins': return { t: `${ov.signedIn} of ${ov.managers} signed in` };
-      case 'members': return { t: plural(ov.commissioners, 'commissioner', 'commissioners') + ` · ${plural(ov.managers - ov.commissioners, 'manager', 'managers')}` };
-      case 'audit': return { t: ov.last ? `${ov.last.who} · ${when(ov.last.ts)}` : 'Nothing yet' };
+        if (!P) return { t: "Legs, Sacko, odds and Jon's tables" };
+        if (shut(P)) return { t: `Locked · ${P.legsIn.length} of ${P.players.length} in` };
+        return { t: `${P.legsIn.length} of ${P.players.length} in · locks ${etDay(P.locksAt)}`, warn: P.missing.length > 0 };
+      case 'managers': return { t: `${ov.signedIn} of ${ov.managers} signed in · ${ov.push.people} with notifications`, warn: ov.unsigned.length > 0 };
+      case 'messages': return { t: ov.announcement ? 'A banner is showing on Live' : 'Push, Live banner or group text' };
+      case 'activity': return { t: ov.visits ? `${plural(ov.visits.visitors, 'visitor', 'visitors')} today` : 'Who comes, and what they read' };
       case 'videos': return { t: ov.playlists.length ? `${ov.playlists[ov.playlists.length - 1]} · ${plural(ov.playlists.length, 'season', 'seasons')}` : 'No playlists yet' };
       case 'season': return { t: ov.draft ? `Draft ${draftText(ov.draft.at)}` : 'No draft date set' };
-      case 'health': {
+      case 'feedback': return { t: ov.feedbackNew ? `${ov.feedbackNew} new` : 'Nothing new', warn: !!ov.feedbackNew };
+      case 'site': {
         const f = failing(), h = health || ov.health;
         if (!h) return { t: 'Not checked yet', dot: 'dim' };
         return f.length ? { t: f.length === 1 ? `${f[0].name}: ${f[0].detail}` : `${f.length} checks failing`, dot: 'red', bad: true } : { t: `All ${h.checks.length} checks passing`, dot: '' };
       }
-      case 'refresh': { const at = wfAt('refresh_league_data.yml'); return { t: at ? `League data · ${ago(at)}` : 'Run any refresh now' }; }
-      case 'activity': return { t: ov.visits ? `${plural(ov.visits.visitors, 'visitor', 'visitors')} today` : 'Visits and last seen' };
-      case 'feedback': return { t: ov.feedbackNew ? `${ov.feedbackNew} new` : 'Bugs and ideas from managers' };
     }
     return { t: '' };
   }
 
-  function needs() {
-    const out = [], P = ov.parlay;
-    const f = failing();
-    if (f.length) out.push({ go: 'health', cls: 'is-loss', t: f.length === 1 ? `${f[0].name}: ${f[0].detail}` : `${f.length} site checks are failing`, s: f.length === 1 ? 'Tap to see all the checks' : list(f.map(c => c.name)) });
-    if (P && P.windowOpen && !P.locked && P.missing.length) out.push({ go: 'parlay', cls: 'is-lead', t: plural(P.missing.length, 'leg', 'legs') + ' still missing', s: `${list(P.missing)} · locks ${etDay(P.locksAt)}` });
-    if (ov.feedbackNew) out.push({ go: 'feedback', cls: 'is-lead', t: ov.feedbackNew === 1 ? 'New feedback' : `${ov.feedbackNew} new feedback`, s: 'Bugs and ideas from managers' });
-    if (ov.unsigned.length) out.push({ go: 'signins', cls: 'is-lead', t: ov.unsigned.length === 1 ? `${ov.unsigned[0]} isn't signed in` : `${ov.unsigned.length} managers aren't signed in`, s: ov.unsigned.length === 1 ? 'Send a sign-in text' : list(ov.unsigned) });
-    return out;
+  // The week's steps: legs open, the lock, the bet, the games. (No payout
+  // step: the user asked for it off, 2026-10-28.)
+  // The bet and results come from /parlay-stats (the sheet's copy).
+  function weekHtml() {
+    const P = ov.parlay;
+    if (!P) return '';
+    const S = screenData.tables;
+    const w = S && S.weeks ? S.weeks.find(x => x.year === P.year && x.week === P.week) : null;
+    const isShut = shut(P);
+    const picks = w ? Object.values(w.picks || {}) : [];
+    const wins = picks.filter(x => x.result === 'Win').length;
+    const f = (w && w.final) || {};
+    const placed = f.odds != null && !!(w && w.sacko);
+    const result = f.result === 'Win' || f.result === 'Loss' ? f.result : '';
+    const steps = [
+      { st: 'done', w: 'Tue 12 AM', t: 'Legs opened' },
+      isShut
+        ? { st: 'done', w: etDay(P.locksAt), t: `Legs locked · ${P.legsIn.length} of ${P.players.length} in` }
+        : { st: 'now', w: `Now · locks ${etDay(P.locksAt)}`, t: `${P.legsIn.length} of ${P.players.length} legs in`, s: P.missing.length ? `Waiting on ${list(P.missing)}` : 'Every leg is in.',
+            acts: (P.missing.length ? `<button type="button" class="cm-btn solid" data-act="nudge">Nudge the ${P.missing.length}</button>` : '')
+              + (access === 'session' ? `<button type="button" class="cm-btn dim" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>Lock now</button>` : '')
+              + '<a class="cm-btn dim" href="parlay-legs.html">Enter for someone</a>' },
+      { st: !isShut ? '' : placed ? 'done' : 'now', w: 'After the lock',
+        t: placed ? `Bet placed at ${fmtOdds(f.odds)} · Sacko ${w.sacko}` : 'Place the bet, then enter the final odds and Sacko',
+        acts: isShut && !placed ? '<a class="cm-btn solid" href="parlay-legs.html">Enter odds and Sacko</a>' : '' },
+      { st: result ? 'done' : placed ? 'now' : '', w: 'Thursday to Monday',
+        t: result === 'Loss' ? `Dead${w.killed_by && w.killed_by.length ? ` · killed by ${list(w.killed_by)}` : ''}` : result === 'Win' ? 'It hit' : placed && picks.length ? `${wins} of ${picks.length} legs hit so far` : 'The games' },
+    ];
+    const body = `<div class="tl">${steps.map(x => `<div class="tl-st ${x.st}"><span class="tl-dot">${x.st === 'done' ? I.check : x.st === 'now' ? I.clock : ''}</span>
+      <div style="min-width:0"><div class="tl-w">${esc(x.w)}</div><div class="tl-t">${esc(x.t)}</div>${x.s ? `<div class="tl-s">${esc(x.s)}</div>` : ''}${x.acts ? `<div class="cm-wrap tl-acts">${x.acts}</div>` : ''}</div></div>`).join('')}</div>`;
+    return panel(`Week ${P.week} parlay`, body, '<a class="cm-txt gold" href="#parlay" style="padding:0;min-height:0">Parlay ›</a>');
   }
 
   function viewHub() {
-    const n = needs();
-    const strip = panel('Needs you',
-      n.length ? `<div class="cm-rows">${n.map(x => `<a class="cm-row item ${x.cls}" href="#${x.go}"><div class="cm-main"><div class="cm-name">${esc(x.t)}</div><div class="cm-sub">${esc(x.s)}</div></div><span class="cm-chev">${I.chev}</span></a>`).join('')}</div>` : '<div class="cm-empty">Nothing needs you right now.</div>',
-      `<span class="cm-count ${n.some(x => x.cls === 'is-loss') ? 'red' : n.length ? '' : 'green'}">${n.length || 'All clear'}</span>`);
-    const groups = GROUPS.map(([g, keys]) => panel(g, `<div class="cm-rows">${keys.map(k => {
+    const tiles = Object.keys(TOOLS).map(k => {
       const s = status(k), t = TOOLS[k];
-      return `<a class="cm-row item" href="#${k}"><span class="cm-ic">${t.icon}</span><div class="cm-main"><div class="cm-name">${t.label}</div><div class="cm-sub clip${s.bad ? ' bad' : ''}">${s.dot !== undefined ? `<span class="cm-dot ${s.dot}"></span>` : ''}${esc(s.t)}</div></div><span class="cm-chev">${I.chev}</span></a>`;
-    }).join('')}</div>`)).join('');
-    return { title: 'Commissioner', html: strip + `<div class="cm-groups">${groups}</div>` };
+      return `<a class="cm-tool item${s.bad ? ' is-loss' : s.warn ? ' is-lead' : ''}" href="#${k}"><span class="cm-ic">${t.icon}</span><div class="cm-tool-n">${t.label}</div>
+        <div class="cm-tool-s${s.bad ? ' bad' : ''}">${s.dot !== undefined ? `<span class="cm-dot ${s.dot}"></span>` : ''}${esc(s.t)}</div></a>`;
+    }).join('');
+    return { title: 'Commissioner', html: weekHtml() + `<section class="cm-section"><div class="cm-tool-grid">${tiles}</div></section>` };
   }
 
   // ---------- Parlay ----------
@@ -397,7 +473,7 @@
 
   function viewParlay() {
     const P = ov.parlay;
-    if (!P) return { title: 'Parlay Management', html: panel('Legs', '<div class="cm-empty">Couldn\'t read this week\'s legs. Try again in a minute.</div>') };
+    if (!P) return { title: 'Parlay', html: panel('Legs', '<div class="cm-empty">Couldn\'t read this week\'s legs. Try again in a minute.</div>') };
     const cant = P.missing.filter(m => ov.unsigned.includes(m));
     const dots = P.players.map(n => `<span class="cm-mono ${P.legsIn.includes(n) ? 'in' : 'out'}" title="${esc(n)}">${esc(monogram(n))}</span>`).join('');
     let legs;
@@ -407,7 +483,7 @@
       legs = `<div class="cm-dots">${dots}</div>
         <p class="cm-fine">${P.missing.length ? `<b>Missing:</b> ${esc(list(P.missing))}.` : 'Every leg is in.'}${cant.length ? ` ${esc(list(cant))} ${cant.length > 1 ? "haven't" : "hasn't"} signed in, so they can't enter ${cant.length > 1 ? 'theirs' : 'one'} themselves.` : ''}</p>
         <p class="cm-fine">${P.locked ? 'Locked. Managers can no longer change their legs. You still can.' : `Locks ${esc(etDay(P.locksAt))} ET on its own. Lock now to shut the board once the bet is placed.`}</p>
-        <div class="cm-wrap">${access === 'session' ? `<button type="button" class="cm-btn${P.locked ? ' dim' : ''}" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>${P.locked ? 'Unlock legs' : 'Lock legs'}</button>` : ''}<a class="cm-btn dim" href="parlay-legs.html">Open the board</a></div>
+        <div class="cm-wrap">${P.missing.length && !P.locked ? `<button type="button" class="cm-btn solid" data-act="nudge">Nudge the ${P.missing.length}</button>` : ''}${access === 'session' ? `<button type="button" class="cm-btn${P.locked ? ' dim' : ''}" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>${P.locked ? 'Unlock legs' : 'Lock legs'}</button>` : ''}<a class="cm-btn dim" href="parlay-legs.html">Open the board</a></div>
         ${access === 'session' ? '' : '<p class="cm-fine">Sign in as a commissioner to lock the legs.</p>'}${pricedHtml(P)}`;
     }
     const refreshed = wfAt('refresh_parlay_data.yml');
@@ -415,10 +491,11 @@
     const rows = `<div class="cm-rows">
       ${rowLink('parlay-legs.html', 'Enter or edit picks', 'Any manager, any week, or paste the whole week')}
       ${rowLink('parlay-legs.html', 'Sacko, final odds and payout', 'Set once the parlay is placed')}
+      ${rowLink('#tables', "Jon's Tables", "Season table and this week's legs, ready to copy")}
       <div class="cm-line item"><div class="cm-main"><div class="cm-name">Refresh parlay data</div><div class="cm-sub">${busy === 'parlay' ? 'Refreshing…' : refreshed ? 'Last refreshed ' + ago(refreshed) : 'Re-reads the sheet and regrades'}</div></div><button type="button" class="cm-btn dim" data-act="run" data-which="parlay"${busy === 'parlay' ? ' disabled' : ''}>Refresh</button></div>
       <div class="cm-line item" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px"><div class="cm-name">Odds credits</div><span class="cm-val">${left == null ? '—' : `${left} of 500`}</span></div><div class="cm-sub">${left == null ? 'Not checked yet this month' : 'Left this month for Hard Rock lines'}</div>${left == null ? '' : `<div class="cm-bar"><i style="width:${Math.max(0, Math.min(100, left / 5))}%"></i></div>`}</div>
     </div>`;
-    return { title: 'Parlay Management', right: `<span class="cm-count ${P.locked ? 'dim' : P.windowOpen ? 'green' : 'dim'}">${P.locked ? 'Locked' : P.windowOpen ? 'Open' : 'Closed'}</span>`,
+    return { title: 'Parlay', right: `<span class="cm-count ${P.locked ? 'dim' : P.windowOpen ? 'green' : 'dim'}">${P.locked ? 'Locked' : P.windowOpen ? 'Open' : 'Closed'}</span>`,
       html: `<div class="cm-split">${panel('Legs', legs, P.windowOpen ? `<span class="cm-count">${P.legsIn.length} of ${P.players.length} in</span>` : '')}${panel('Tools', rows)}</div>` };
   }
 
@@ -499,52 +576,176 @@
     tick();
   }
 
-  // ---------- Announcements ----------
-  function viewAnnounce() {
-    const a = ov.announcement;
-    const cur = a ? panel('Showing now', `<div class="item cm-box">${esc(a.text)}</div><p class="cm-fine">${a.until ? `Takes itself down after ${esc(a.until)}.` : 'Stays up until you take it down.'}</p><div class="cm-wrap"><button type="button" class="cm-btn danger" data-act="announce-clear"${busy ? ' disabled' : ''}>Take it down</button></div>`) : '';
-    const form = panel(a ? 'Replace it' : 'New announcement', `
-      <label class="cm-field"><span>Message</span><textarea class="cm-in" id="an-text" data-keep maxlength="200" placeholder="Draft is Sunday at 8">${esc(drafts['an-text'] || '')}</textarea></label>
-      <label class="cm-field"><span>Show through (optional)</span><input class="cm-in" id="an-until" data-keep type="date" value="${esc(drafts['an-until'] || '')}"></label>
-      <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="announce-post"${busy ? ' disabled' : ''}>Post to Live</button></div>`, '', 'Shows at the top of the Live page.');
-    return { title: 'Announcements', html: `<div class="cm-split">${a ? cur : ''}${form}</div>` };
+  // ---------- Copying a text ----------
+  // The share sheet on a phone (straight from the tap: Safari only opens it
+  // while it still counts the tap as the reason), else the clipboard.
+  function shareOrCopy(text, key) {
+    const copy = () => navigator.clipboard.writeText(text).then(() => {
+      copied = key; draw();
+      setTimeout(() => { if (copied === key) { copied = ''; draw(); } }, 2000);
+    }).catch(() => toast("Couldn't copy it. Select the text and copy it by hand."));
+    if (!navigator.share) { copy(); return; }
+    navigator.share({ text }).catch(err => { if (!err || err.name !== 'AbortError') copy(); });
   }
+  const siteLink = page => new URL(page, location.href).href;
+  // On iPhone, web notifications only work from the Home Screen app.
+  const HOWTO = 'Turn on Retirement League notifications so you hear when your leg hits and before legs lock: open the site in Safari, tap Share › Add to Home Screen, open it from your Home Screen, then tap You › Notifications › Turn on.';
+  const howtoFor = name => `${name}, ${HOWTO.charAt(0).toLowerCase()}${HOWTO.slice(1)}\n${siteLink('./')}`;
+  const nudgeText = who => `Parlay legs lock ${etDay(ov.parlay.locksAt)} ET. Still need: ${list(who)}.\nPut yours in: ${siteLink('parlay-legs.html')}`;
 
-  // ---------- Sign-Ins ----------
-  function signinRow(m) {
-    const name = esc(m.manager);
-    if (asking === m.manager) {
-      return `<div class="cm-line item is-loss"><div class="cm-main"><div class="cm-name">Reset ${name}?</div><div class="cm-sub">Their link and code stop working and they're signed out everywhere.</div></div>
-        <div class="cm-btns"><button type="button" class="cm-btn dim" data-act="no">Cancel</button><button type="button" class="cm-btn danger" data-act="yes" data-who="${name}">Reset</button></div></div>`;
-    }
-    const sent = m.sentAt || signedIn(m);
-    const sub = signedIn(m) ? `<div class="cm-sub in">Signed in: ${where(m)}</div>` : `<div class="cm-sub">${m.sentAt ? 'Sent ' + new Date(m.sentAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Not sent'}</div>`;
-    const label = copied === m.manager ? 'Copied' : sent ? 'Resend' : 'Send';
-    return `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${name}</div>${sub}</div>
-      <div class="cm-btns">${sent ? `<button type="button" class="cm-btn dim" data-act="ask" data-who="${name}">Reset</button>` : ''}<button type="button" class="cm-btn" data-act="send" data-who="${name}">${label}</button></div></div>`;
+  // ---------- Managers (audit VIII #19) ----------
+  // One list for what used to be three: sign-in, notifications, this week's
+  // leg and the last visit, with a sheet per manager for everything you can
+  // do for them.
+  function lastAt(name) {
+    const lv = (screenData.activity && screenData.activity.who && screenData.activity.who.lastVisit) || {};
+    const m = people && people.managers.find(x => x.manager === name);
+    return Math.max(lv[name] || 0, (m && m.lastSeen) || 0);
   }
-  function viewSignins() {
-    if (!people) return { title: 'Sign-Ins', html: panel('Managers', loading) };
-    const ms = people.managers;
-    return { title: 'Sign-Ins', right: `<span class="cm-count">${ms.filter(signedIn).length} of ${ms.length} signed in</span>`,
-      html: `<section class="cm-section"><div class="glass"><div class="cm-note" style="padding-top:16px">Send opens your share sheet with that manager's text already written.</div><div class="panel-body"><div class="cm-cols">${ms.map(signinRow).join('')}</div></div></div></section>` };
+  const daysAway = name => { const t = lastAt(name); return t ? Math.floor((Date.now() - t) / 864e5) : null; };
+  const hereText = name => { const d = daysAway(name); return d == null ? 'Not seen yet' : d < 1 ? 'Here today' : d === 1 ? 'Here yesterday' : `Here ${d} days ago`; };
+  function legState(name) {
+    const P = ov.parlay;
+    if (!P) return '';
+    return P.legsIn.includes(name) ? 'in' : shut(P) ? 'out' : 'miss';
   }
-
-  // ---------- Member Accounts ----------
-  function memberRow(m) {
+  const MF = {
+    all: () => true,
+    leg: m => legState(m.manager) === 'miss',
+    push: m => !pushOn(m.manager),
+    away: m => { const d = daysAway(m.manager); return d == null || d >= 6; },
+    unsigned: m => !signedIn(m),
+  };
+  function mgrRow(m) {
+    const d = daysAway(m.manager);
+    const sign = signedIn(m) ? (m.app ? ['on', I.phone, 'Signed in on the Home Screen app'] : ['mid', I.globe, 'Signed in on the website only']) : ['miss', I.key, 'Not signed in'];
+    const leg = legState(m.manager), on = pushOn(m.manager);
     return `<button type="button" class="cm-row item" data-act="open" data-who="${esc(m.manager)}"><span class="cm-mono ${m.commissioner ? 'gold' : ''}">${esc(monogram(m.manager))}</span>
-      <div class="cm-main"><div class="cm-name">${esc(m.manager)}</div><div class="cm-sub">${signedIn(m) ? 'Signed in: ' + where(m) : m.sentAt ? 'Sent' : 'Not sent'}${m.lastSeen ? ' · ' + esc(when(m.lastSeen)) : ''}</div></div>
-      ${m.founder ? `<span class="cm-lock">${I.lock}</span>` : ''}<span class="cm-chev">${I.chev}</span></button>`;
+      <div class="cm-main"><div class="cm-name">${esc(m.manager)}</div><div class="cm-sub${d == null || d >= 6 ? ' bad' : ''}">${esc(hereText(m.manager))}</div></div>
+      <span class="mg-ic"><i class="${sign[0]}" title="${sign[2]}" aria-label="${sign[2]}">${sign[1]}</i><i class="${on ? 'on' : ''}" title="Notifications ${on ? 'on' : 'off'}" aria-label="Notifications ${on ? 'on' : 'off'}">${I.bell}</i>${leg ? `<i class="${leg === 'in' ? 'on' : leg === 'miss' ? 'miss' : ''}" title="${leg === 'in' ? 'Leg in' : 'No leg'}" aria-label="${leg === 'in' ? 'Leg in' : 'No leg'}">${I.ticket}</i>` : ''}</span>
+      <span class="cm-chev">${I.chev}</span></button>`;
   }
-  function viewMembers() {
-    if (!people) return { title: 'Member Accounts', html: panel('Commissioners', loading) };
-    const c = people.managers.filter(m => m.commissioner), p = people.managers.filter(m => !m.commissioner);
-    return { title: 'Member Accounts', right: `<span class="cm-count">${plural(c.length, 'commissioner', 'commissioners')}</span>`,
-      html: panel('Commissioners', `<div class="cm-cols">${c.map(memberRow).join('')}</div>`, '', 'Only Brad and Jon can add or remove commissioners, and neither of them can be removed.')
-        + (p.length ? panel('Managers', `<div class="cm-cols">${p.map(memberRow).join('')}</div>`) : '') };
+  function viewManagers() {
+    if (!people) return { title: 'Managers', html: panel('Managers', loading) };
+    const ms = people.managers, P = ov.parlay;
+    const opts = [['all', `All ${ms.length}`]];
+    if (P && !shut(P)) opts.push(['leg', `No leg · ${ms.filter(MF.leg).length}`]);
+    opts.push(['push', `No notifications · ${ms.filter(MF.push).length}`], ['away', `Away 6+ days · ${ms.filter(MF.away).length}`]);
+    if (ms.some(MF.unsigned)) opts.push(['unsigned', `Not signed in · ${ms.filter(MF.unsigned).length}`]);
+    if (!opts.some(o => o[0] === mFilter)) mFilter = 'all';
+    const shown = ms.filter(MF[mFilter]);
+    const pills = `<div class="cm-pills outline" role="group" aria-label="Show" style="margin-bottom:12px">${opts.map(([k, l]) => `<button type="button" class="cm-pill${k === mFilter ? ' on' : ''}" data-act="mfilter" data-f="${k}" aria-pressed="${k === mFilter}">${l}</button>`).join('')}</div>`;
+    const legend = `<div class="mg-legend"><span>${I.phone}App</span><span>${I.globe}Website only</span><span>${I.bell}Notifications</span>${P ? `<span>${I.ticket}Leg in</span>` : ''}</div>`;
+    return { title: 'Managers', right: `<span class="cm-count">${ms.filter(signedIn).length} of ${ms.length} signed in</span>`,
+      html: panel('Managers', pills + legend + (shown.length ? `<div class="cm-cols">${shown.map(mgrRow).join('')}</div>` : '<div class="cm-empty">Nobody.</div>'), '', 'Tap a manager for their leg, notifications, sign-in and role.') };
+  }
+
+  // ---------- Messages (audit VIII #21) ----------
+  // A banner on Live, a push, or a group text to paste. The banner shows a
+  // preview as you type, starts from a template, and lists what was posted
+  // before (from the activity log) to post again.
+  const etYmd = (ms = Date.now()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date(ms));
+  function nextDow(dow) {
+    const t = etYmd(), d = new Date(t + 'T12:00:00Z');
+    const add = (dow - d.getUTCDay() + 7) % 7;
+    return etYmd(d.getTime() + add * 864e5);
+  }
+  const ANN_TPL = () => {
+    const P = ov.parlay;
+    return [
+      ['Legs lock', P ? `Parlay legs lock ${etDay(P.locksAt)} ET. Put yours in on the Parlay tab.` : 'Parlay legs lock Thursday at 1 PM ET. Put yours in on the Parlay tab.'],
+      ['Payout', 'The parlay hit. The payout split is up on Parlay Results.'],
+      ['Draft', ov.draft ? `The draft is ${draftText(ov.draft.at)} ET.` : 'The draft date is set. See you there.'],
+      ['Custom', ''],
+    ];
+  };
+  const GT_TPL = () => {
+    const P = ov.parlay, miss = P && !shut(P) ? P.missing : [];
+    const off = names.filter(n => !pushOn(n));
+    return [
+      ['Legs lock', miss.length ? nudgeText(miss) : `Parlay legs lock Thursday at 1 PM ET. Put yours in: ${siteLink('parlay-legs.html')}`],
+      ['Turn on notifications', `${HOWTO}\n${siteLink('./')}${off.length ? `\n\n(${list(off)})` : ''}`],
+      ['Custom', ''],
+    ];
+  };
+  function annHistory() {
+    const seen = new Set();
+    return (screenData.log || []).filter(r => r.kind === 'announce' && /^Posted an announcement: /.test(r.text))
+      .map(r => ({ text: r.text.replace(/^Posted an announcement: /, ''), who: r.who, ts: r.ts }))
+      .filter(r => !seen.has(r.text) && seen.add(r.text)).slice(0, 6);
+  }
+  function bannerTab() {
+    const a = ov.announcement;
+    const text = drafts['an-text'] || '';
+    const until = drafts['an-until'] || '';
+    const UNTIL = [['', 'Until I take it down'], [etYmd(), 'Today'], [nextDow(4), 'Through Thursday'], [nextDow(0), 'Through Sunday']];
+    const cur = a ? panel('Showing now', `<div class="item cm-box">${esc(a.text)}</div><p class="cm-fine">${a.until ? `Takes itself down after ${esc(a.until)}.` : 'Stays up until you take it down.'}</p><div class="cm-wrap"><button type="button" class="cm-btn danger" data-act="announce-clear"${busy ? ' disabled' : ''}>Take it down</button></div>`) : '';
+    const form = panel(a ? 'Replace it' : 'New banner', `
+      <div class="cm-field"><span>Start from</span><div class="cm-pills">${ANN_TPL().map(([l], i) => `<button type="button" class="cm-pill" data-act="an-tpl" data-i="${i}">${l}</button>`).join('')}</div></div>
+      <label class="cm-field"><span>Message</span><textarea class="cm-in" id="an-text" data-keep maxlength="200" placeholder="Draft is Sunday at 8">${esc(text)}</textarea></label>
+      <div class="cm-field"><span>Show</span><div class="cm-pills" role="radiogroup" aria-label="Show until">${UNTIL.map(([v, l]) => `<button type="button" role="radio" class="cm-pill${v === until ? ' on' : ''}" aria-checked="${v === until}" data-act="an-until" data-v="${v}">${l}</button>`).join('')}</div>
+        <input class="cm-in" id="an-until" data-keep type="date" value="${esc(until)}" aria-label="Or pick the last day" style="margin-top:8px"></div>
+      <div class="cm-field"><span>How it looks on Live</span><div class="an-prev"><div class="glass"><div class="panel-title"><span>Announcement</span></div><div class="panel-body"><div class="item cm-box" id="an-prev">${esc(text || 'Your message shows here.')}</div></div></div></div></div>
+      <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="announce-post"${busy ? ' disabled' : ''}>Post to Live</button></div>`, '', 'Shows at the top of the Live page.');
+    const hist = annHistory();
+    const before = hist.length ? panel('Posted before', `<div class="cm-rows">${hist.map((h, i) => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(h.text)}</div><div class="cm-sub">${esc(h.who || 'PIN')} · ${esc(when(h.ts))}</div></div><button type="button" class="cm-btn dim" data-act="an-again" data-i="${i}">Use again</button></div>`).join('')}</div>`) : '';
+    return `<div class="cm-split">${cur ? `<div>${cur}${form}</div>` : form}${before || ''}</div>`;
+  }
+  const TEMPLATES = [
+    ['Legs lock soon', 'Parlay legs lock Thursday at 1 PM', 'Enter your leg on the Parlay tab.'],
+    ['Lineups', 'Set your lineup', 'Games start soon.'],
+    ['Custom', '', ''],
+  ];
+  function pushTab() {
+    const d = screenData.push;
+    if (!d) return panel('Send', loading);
+    const byMe = Object.fromEntries(d.subs.map(x => [x.me.toLowerCase(), x]));
+    const on = names.filter(n => byMe[n.toLowerCase()]);
+    const to = drafts['pu-to'] || 'all';
+    const people_ = to === 'all' ? on.length : 1;
+    const send = `<div class="cm-pills" role="group" aria-label="Start from">${TEMPLATES.map((t, i) => `<button type="button" class="cm-pill" data-act="template" data-i="${i}">${t[0]}</button>`).join('')}</div>
+      <label class="cm-field"><span>Title</span><input class="cm-in" id="pu-title" data-keep maxlength="60" value="${esc(drafts['pu-title'] || '')}" autocomplete="off"></label>
+      <label class="cm-field"><span>Message</span><textarea class="cm-in" id="pu-body" data-keep maxlength="180" style="min-height:70px">${esc(drafts['pu-body'] || '')}</textarea></label>
+      <label class="cm-field"><span>To</span><select class="cm-in" id="pu-to" data-keep><option value="all"${to === 'all' ? ' selected' : ''}>Everyone (${plural(on.length, 'person', 'people')})</option>${on.map(n => `<option value="${esc(n)}"${to === n ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+      ${confirmPush ? `<div class="cm-line item is-lead" style="margin-top:14px"><div class="cm-main"><div class="cm-name">Send to ${to === 'all' ? plural(people_, 'person', 'people') : esc(to)}?</div><div class="cm-sub">It goes out right away and can't be taken back.</div></div><div class="cm-btns"><button type="button" class="cm-btn dim" data-act="push-no">Cancel</button><button type="button" class="cm-btn solid" data-act="push-yes"${busy ? ' disabled' : ''}>Send</button></div></div>`
+        : `<div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="push-ask"${busy ? ' disabled' : ''}>Send</button></div>`}`;
+    const off = names.filter(n => !byMe[n.toLowerCase()]);
+    const who = `<p class="cm-fine" style="margin-top:0"><b>${on.length} of ${names.length}</b> have notifications on${on.length ? `: ${esc(list(on))}` : ''}.</p>${off.length ? `<p class="cm-fine">The other ${off.length} get nothing. <button type="button" class="cm-txt gold" data-act="mtab" data-tab="text" data-tpl="1" style="padding:0;min-height:0">Text them how to turn it on ›</button></p>` : ''}`;
+    const recent = d.recent.length ? `<div class="cm-rows">${d.recent.map(r => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(r.text)}</div><div class="cm-sub">${esc(r.who)} · ${esc(when(r.ts))}</div></div></div>`).join('')}</div>` : '<div class="cm-empty">Nothing sent from here yet.</div>';
+    return `<div class="cm-split">${panel('Send', send, '', 'Goes to the Home Screen app, whatever notifications each person has turned on.')}<div>${panel('Who gets it', who)}${panel('Sent lately', recent)}</div></div>`;
+  }
+  function textTab() {
+    const tpl = GT_TPL();
+    if (drafts['gt-text'] === undefined) drafts['gt-text'] = tpl[0][1];
+    return panel('Group text', `
+      <div class="cm-field"><span>Start from</span><div class="cm-pills">${tpl.map(([l], i) => `<button type="button" class="cm-pill" data-act="gt-tpl" data-i="${i}">${l}</button>`).join('')}</div></div>
+      <label class="cm-field"><span>Text</span><textarea class="cm-in" id="gt-text" data-keep maxlength="800" style="min-height:130px">${esc(drafts['gt-text'])}</textarea></label>
+      <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="gt-share">${copied === 'gt' ? 'Copied' : 'Copy or share'}</button></div>`, '', 'For the group chat: it reaches everyone, notifications or not.');
+  }
+  function viewMessages() {
+    const tabs = [['banner', 'Live banner'], ['push', 'Push'], ['text', 'Group text']];
+    const seg = `<div class="cm-pills" role="tablist" aria-label="Messages" style="margin-bottom:14px">${tabs.map(([k, l]) => `<button type="button" role="tab" class="cm-pill${k === msgTab ? ' on' : ''}" aria-selected="${k === msgTab}" data-act="mtab" data-tab="${k}">${l}</button>`).join('')}</div>`;
+    const body = msgTab === 'push' ? pushTab() : msgTab === 'text' ? textTab() : bannerTab();
+    return { title: 'Messages', right: ov.announcement ? '<span class="cm-count">Banner on Live</span>' : '', html: seg + body };
+  }
+
+  // ---------- The sheets: a manager, or the Nudge (audit VIII #18) ----------
+  function nudgeSheet() {
+    const P = ov.parlay, miss = P ? P.missing : [];
+    const who = miss.filter(n => !nudgeOff.has(n)), reach = who.filter(pushOn);
+    const armed = Date.now() - nudgeArmed < 4000;
+    return `<div class="scrim" data-act="nudge-close"></div><div class="sheet cm-sheet" role="dialog" aria-modal="true" aria-label="Nudge the missing legs">
+      <div class="sheet-grab"><span></span></div>
+      <div class="sheet-body"><div class="cm-sheet-head"><div><b>Nudge</b><span>${plural(miss.length, 'leg', 'legs')} missing · locks ${esc(etDay(P.locksAt))}</span></div><button type="button" class="cm-btn dim" data-act="nudge-close">Done</button></div>
+      <div class="cm-field" style="margin-top:0"><span>Who (tap to leave someone out)</span><div class="cm-pills">${miss.map(n => `<button type="button" class="cm-pill${nudgeOff.has(n) ? '' : ' on'}" data-act="nudge-who" data-who="${esc(n)}" aria-pressed="${!nudgeOff.has(n)}">${esc(n)}</button>`).join('')}</div></div>
+      <div class="cm-field"><span>Group text</span><div class="item cm-box" style="white-space:pre-line;overflow-wrap:anywhere">${esc(nudgeText(who.length ? who : miss))}</div></div>
+      <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="nudge-share"${who.length ? '' : ' disabled'}>${copied === 'nudge' ? 'Copied' : 'Copy or share'}</button></div>
+      <div class="cm-line item" style="margin-top:14px"><div class="cm-main"><div class="cm-name">Push them too</div><div class="cm-sub">${reach.length ? `${reach.length} of ${who.length} ${reach.length === 1 ? 'has' : 'have'} notifications on: ${esc(list(reach))}` : `None of ${who.length === 1 ? 'them' : `these ${who.length}`} has notifications on, so a push reaches nobody.`}</div></div>
+        <button type="button" class="cm-btn ${armed ? 'solid' : 'dim'}" data-act="nudge-push"${reach.length && !busy ? '' : ' disabled'}>${busy === 'nudge' ? 'Sending…' : armed ? 'Tap to send' : `Push ${reach.length}`}</button></div></div></div>`;
   }
   function drawSheet() {
     const host = $('cm-sheet');
+    if (nudge && ov && ov.parlay) { host.innerHTML = nudgeSheet(); return; }
     const m = people && people.managers.find(x => x.manager === sheet);
     if (!m) { host.innerHTML = ''; return; }
     const name = esc(m.manager);
@@ -560,48 +761,18 @@
       perm = `<div class="cm-perm item"><div class="cm-main"><div class="cm-name">Commissioner</div><div class="cm-sub">${why}</div></div>
         <button type="button" class="cm-sw" role="switch" aria-checked="${m.commissioner}" aria-label="Commissioner" data-act="role"${locked ? ' disabled' : ''}></button></div>`;
     }
+    const P = ov.parlay, leg = legState(m.manager), on = pushOn(m.manager);
     const sent = m.sentAt || signedIn(m);
+    const legRow = leg ? `<div class="cm-line item${leg === 'miss' ? ' is-loss' : ''}"><div class="cm-main"><div class="cm-name">${leg === 'in' ? 'Leg is in' : 'No leg'} · Week ${P.week}</div><div class="cm-sub">${shut(P) ? 'Locked' : 'Locks ' + esc(etDay(P.locksAt))}</div></div><a class="cm-btn${leg === 'miss' ? ' solid' : ' dim'}" href="parlay-legs.html?for=${encodeURIComponent(m.manager)}">${leg === 'in' ? 'Change it' : 'Enter for them'}</a></div>` : '';
+    const pushRow = `<div class="cm-line item"><div class="cm-main"><div class="cm-name">Notifications ${on ? 'on' : 'off'}</div><div class="cm-sub">${on ? 'Gets leg results, reminders and finals' : 'Misses leg results, reminders and finals'}</div></div>
+      ${on ? `<button type="button" class="cm-btn dim" data-act="mpush" data-who="${name}">Send a push</button>` : `<button type="button" class="cm-btn dim" data-act="howto" data-who="${name}">${copied === 'howto:' + m.manager ? 'Copied' : 'Text how-to'}</button>`}</div>`;
+    const signRow = `<div class="cm-line item"><div class="cm-main"><div class="cm-name">Sign-in</div><div class="cm-sub">${signedIn(m) ? 'Signed in: ' + where(m) : m.sentAt ? 'Link sent ' + new Date(m.sentAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Not sent yet'}</div></div>
+      <button type="button" class="cm-btn${sent ? ' dim' : ' solid'}" data-act="send" data-who="${name}">${copied === m.manager ? 'Copied' : sent ? 'Resend' : 'Send'}</button></div>`;
     host.innerHTML = `<div class="scrim" data-act="close"></div><div class="sheet cm-sheet" role="dialog" aria-modal="true" aria-label="${name}">
       <div class="sheet-grab"><span></span></div>
-      <div class="sheet-body"><div class="cm-sheet-head"><div><b>${name}</b><span>${signedIn(m) ? 'Signed in: ' + where(m) : m.sentAt ? 'Text sent' : 'Not sent'}</span></div><button type="button" class="cm-btn dim" data-act="close">Done</button></div>
-      <div class="cm-rows">${perm}</div>
-      <div class="cm-wrap" style="margin-top:12px"><button type="button" class="cm-btn" data-act="send" data-who="${name}">${copied === m.manager ? 'Copied' : sent ? 'Resend sign-in text' : 'Send sign-in text'}</button>${sent ? `<button type="button" class="cm-btn dim" data-act="reset-now" data-who="${name}">Reset sign-in</button>` : ''}</div></div></div>`;
-  }
-
-  // ---------- Notifications ----------
-  const TEMPLATES = [
-    ['Legs lock soon', 'Parlay legs lock Thursday at 1 PM', 'Enter your leg on the Parlay tab.'],
-    ['Lineups', 'Set your lineup', 'Games start soon.'],
-    ['Custom', '', ''],
-  ];
-  function viewPush() {
-    const d = screenData.push;
-    if (!d) return { title: 'Notifications', html: panel('Send', loading) };
-    const byMe = Object.fromEntries(d.subs.map(s => [s.me.toLowerCase(), s]));
-    const on = names.filter(n => byMe[n.toLowerCase()]);
-    const total = d.subs.reduce((n, s) => n + s.devices, 0);
-    const to = drafts['pu-to'] || 'all';
-    const people_ = to === 'all' ? on.length : 1;
-    const send = `<div class="cm-pills" role="group" aria-label="Start from">${TEMPLATES.map((t, i) => `<button type="button" class="cm-pill" data-act="template" data-i="${i}">${t[0]}</button>`).join('')}</div>
-      <label class="cm-field"><span>Title</span><input class="cm-in" id="pu-title" data-keep maxlength="60" value="${esc(drafts['pu-title'] || '')}" autocomplete="off"></label>
-      <label class="cm-field"><span>Message</span><textarea class="cm-in" id="pu-body" data-keep maxlength="180" style="min-height:70px">${esc(drafts['pu-body'] || '')}</textarea></label>
-      <label class="cm-field"><span>To</span><select class="cm-in" id="pu-to" data-keep><option value="all"${to === 'all' ? ' selected' : ''}>Everyone (${plural(on.length, 'person', 'people')})</option>${on.map(n => `<option value="${esc(n)}"${to === n ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-      ${confirmPush ? `<div class="cm-line item is-lead" style="margin-top:14px"><div class="cm-main"><div class="cm-name">Send to ${to === 'all' ? plural(people_, 'person', 'people') : esc(to)}?</div><div class="cm-sub">It goes out right away and can't be taken back.</div></div><div class="cm-btns"><button type="button" class="cm-btn dim" data-act="push-no">Cancel</button><button type="button" class="cm-btn solid" data-act="push-yes"${busy ? ' disabled' : ''}>Send</button></div></div>`
-        : `<div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="push-ask"${busy ? ' disabled' : ''}>Send</button></div>`}`;
-    const who = `<div class="cm-cols">${names.map(n => {
-      const s = byMe[n.toLowerCase()];
-      return `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(n)}</div><div class="cm-sub${s ? ' in' : ''}">${s ? plural(s.devices, 'device', 'devices') : 'Not on'}</div></div></div>`;
-    }).join('')}</div>`;
-    const recent = d.recent.length ? `<div class="cm-rows">${d.recent.map(r => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(r.text)}</div><div class="cm-sub">${esc(r.who)} · ${esc(when(r.ts))}</div></div></div>`).join('')}</div>` : '<div class="cm-empty">Nothing sent from here yet.</div>';
-    return { title: 'Notifications', right: `<span class="cm-count">${plural(total, 'device', 'devices')}</span>`,
-      html: `<div class="cm-split">${panel('Send', send, '', 'Goes to the Home Screen app, whatever notifications each person has turned on.')}<div>${panel('Who has it on', who)}${panel('Sent lately', recent)}</div></div>` };
-  }
-
-  // ---------- Activity Log ----------
-  function viewAudit() {
-    const d = screenData.log;
-    if (!d) return { title: 'Activity Log', html: panel('Latest', loading) };
-    return { title: 'Activity Log', html: panel('Latest', d.length ? `<div class="cm-cols">${d.map(r => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(r.text)}</div><div class="cm-sub">${esc(r.who)} · ${esc(when(r.ts))}</div></div></div>`).join('')}</div>` : '<div class="cm-empty">Nothing yet. Resets, role changes, locks and sends show up here.</div>') };
+      <div class="sheet-body"><div class="cm-sheet-head"><div><b>${name}</b><span>${esc(hereText(m.manager))}</span></div><button type="button" class="cm-btn dim" data-act="close">Done</button></div>
+      <div class="cm-rows">${legRow}${pushRow}${signRow}${perm}</div>
+      <div class="cm-wrap" style="margin-top:6px;justify-content:space-between">${sent ? `<button type="button" class="cm-txt" data-act="reset-ask" data-who="${name}">${asking === m.manager ? 'Tap again to sign them out everywhere' : 'Reset sign-in'}</button>` : '<span></span>'}<a class="cm-txt gold" href="franchise.html?m=${encodeURIComponent(m.manager)}">Franchise ›</a></div></div></div>`;
   }
 
   // ---------- Recap Videos ----------
@@ -631,16 +802,25 @@
       <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="draft-save"${busy ? ' disabled' : ''}>Save</button>${d ? '<button type="button" class="cm-btn dim" data-act="draft-clear"' + (busy ? ' disabled' : '') + '>Clear</button>' : ''}</div>`, d ? `<span class="cm-count">${esc(draftText(d.at))}</span>` : '', 'Shows on the Live page until it passes.') };
   }
 
-  // ---------- Site Health and Data Refresh ----------
-  function viewHealth() {
+  // ---------- Site & Data (audit VIII #17) ----------
+  // The checks, with Run now on each workflow, the health alert switch, and
+  // what commissioners have done lately.
+  const RUNNABLE = { 'refresh_league_data.yml': 'league', 'refresh_franchise_data.yml': 'franchise', 'update_history_d1.yml': 'history', 'sync_scores_to_sheet.yml': 'scores', 'refresh_parlay_data.yml': 'parlay' };
+  function viewSite() {
     const h = health || ov.health;
     const checks = h ? h.checks : [];
     const bad = checks.filter(c => !c.ok).length;
-    const body = checks.length ? `<div class="cm-cols">${checks.map(c => `<div class="cm-line item ${c.ok ? '' : 'is-loss'}"><div class="cm-main"><div class="cm-name">${esc(c.name)}</div><div class="cm-sub${c.ok ? '' : ' bad'}">${esc(c.detail)}</div></div><span class="cm-dot ${c.ok ? '' : 'red'}" style="margin:0 6px"></span></div>`).join('')}</div>` : '<div class="cm-empty">Checking…</div>';
-    return { title: 'Site Health', right: checks.length ? `<span class="cm-count ${bad ? 'red' : 'green'}">${bad ? bad + ' failing' : checks.length + ' of ' + checks.length + ' passing'}</span>` : '',
-      html: `<section class="cm-section"><div class="glass"><div class="cm-note" style="padding-top:16px">Checked every morning at 9 AM ET. Commissioners with the alert below on get a push when something breaks, and again when it is fixed.${h ? ` Last checked ${esc(ago(h.at))}.` : ''}</div>
-        <div class="panel-body">${body}<div class="cm-wrap"><button type="button" class="cm-btn dim" data-act="check"${busy === 'check' ? ' disabled' : ''}>${busy === 'check' ? 'Checking…' : 'Check now'}</button></div></div></div></section>
-        <section class="cm-section"><div class="glass"><div class="panel-body">${healthAlertRow()}</div></div></section>` };
+    const body = checks.length ? `<div class="cm-cols">${checks.map(c => {
+      const which = RUNNABLE[c.file];
+      return `<div class="cm-line item ${c.ok ? '' : 'is-loss'}"><div class="cm-main"><div class="cm-name"><span class="cm-dot ${c.ok ? '' : 'red'}"></span>${esc(c.name)}</div><div class="cm-sub${c.ok ? '' : ' bad'}">${esc(busy === which ? 'Starting…' : c.detail)}</div></div>${which ? `<button type="button" class="cm-btn dim" data-act="run" data-which="${which}"${busy === which ? ' disabled' : ''}>Run now</button>` : ''}</div>`;
+    }).join('')}</div>` : '<div class="cm-empty">Checking…</div>';
+    const log = screenData.log;
+    const logHtml = !log ? loading : log.length ? `<div class="cm-rows">${log.slice(0, 15).map(r => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(r.text)}</div><div class="cm-sub">${esc(r.who || 'PIN')} · ${esc(when(r.ts))}</div></div></div>`).join('')}</div>` : '<div class="cm-empty">Nothing yet. Resets, role changes, locks and sends show up here.</div>';
+    return { title: 'Site & Data', right: checks.length ? `<span class="cm-count ${bad ? 'red' : 'green'}">${bad ? bad + ' failing' : checks.length + ' of ' + checks.length + ' passing'}</span>` : '',
+      html: panel('Checks', body + `<div class="cm-wrap"><button type="button" class="cm-btn dim" data-act="check"${busy === 'check' ? ' disabled' : ''}>${busy === 'check' ? 'Checking…' : 'Check now'}</button></div>`, '',
+          `Checked every morning at 9 AM ET${h ? `, last ${esc(ago(h.at))}` : ''}. Run now starts a refresh right away; it takes a minute or two.`)
+        + `<section class="cm-section"><div class="glass"><div class="panel-body">${healthAlertRow()}</div></div></section>`
+        + panel('What commissioners did lately', logHtml) };
   }
   // The daily site health push, for this phone (the You sheet no longer has it).
   // It rides on the phone's notification subscription, so Notify me has to be on there first.
@@ -656,43 +836,49 @@
     return `<div class="cm-line item"><div class="cm-main"><div class="cm-name">Site health alerts</div><div class="cm-sub">${esc(sub)}</div></div>
       <button type="button" class="cm-sw" role="switch" aria-checked="${on}" aria-label="Site health alerts" data-act="healthpush"${off || busy === 'healthpush' ? ' disabled' : ''}></button></div>`;
   }
-  const RUNNABLE = [['refresh_league_data.yml', 'league'], ['refresh_franchise_data.yml', 'franchise'], ['update_history_d1.yml', 'history'], ['sync_scores_to_sheet.yml', 'scores'], ['refresh_parlay_data.yml', 'parlay']];
-  function viewRefresh() {
-    const h = health || ov.health;
-    const rows = RUNNABLE.map(([file, which]) => {
-      const c = h && h.checks.find(x => x.file === file);
-      return c ? `<div class="cm-line item${c.ok ? '' : ' is-loss'}"><div class="cm-main"><div class="cm-name">${esc(c.name)}</div><div class="cm-sub${c.ok ? '' : ' bad'}">${esc(busy === which ? 'Starting…' : c.detail)}</div></div><button type="button" class="cm-btn dim" data-act="run" data-which="${which}"${busy === which ? ' disabled' : ''}>Run now</button></div>` : '';
-    }).join('');
-    return { title: 'Data Refresh', html: panel('Workflows', h ? `<div class="cm-cols">${rows}</div>` : '<div class="cm-empty">Checking…</div>', '', 'Each one runs on its own schedule. Run now starts it right away; it takes a minute or two to finish.') };
-  }
 
-  // ---------- Activity ----------
-  // "Brad, Jon, 2 guests": who, with a guest count for browsers that never signed in.
-  const whoText = (names, guests, nobody) => {
-    const parts = [...names, ...(guests ? [guests === 1 ? 'Guest' : `${guests} guests`] : [])];
+  // ---------- Activity (audit VIII #20, #22) ----------
+  // Two weeks of visits, a square per manager per day, with anyone away six
+  // days or more called out; today's numbers; and pages by the names on the
+  // tab bar, not their file names.
+  const PAGE_NAMES = { dashboard: 'Live', feed: 'Feed', 'parlay-results': 'Parlay Results', 'parlay-legs': 'Parlay Legs', 'parlay-entry': 'Parlay Legs (old link)',
+    standings: 'Standings', history: 'History', franchise: 'Franchise', 'head-to-head': 'Head to Head', videos: 'League Videos', 'game-records': 'Game Records',
+    'parlay-stats': 'Parlay Stats', column: 'The Column', overview: 'League History', 'draft-board': 'Draft Board', race: 'Playoff Race', moves: 'Trades & Waivers',
+    'rule-changes': 'Rule Changes', wrapped: 'Season Wrapped', players: 'Players', 'hall-of-fame': 'Hall of Fame', roster: 'Your Roster', 'secret-santa': 'Secret Santa', commissioner: 'Commissioner' };
+  const pageName = p => PAGE_NAMES[p] || p;
+  const whoText = (names_, guests, nobody) => {
+    const parts = [...names_, ...(guests ? [guests === 1 ? 'Guest' : `${guests} guests`] : [])];
     return parts.length ? parts.join(', ') : nobody;
   };
+  function gridHtml(d) {
+    if (!d.grid || !d.today) return '';
+    const end = Date.parse(d.today + 'T12:00:00Z');
+    const days = Array.from({ length: 14 }, (_, i) => new Date(end - (13 - i) * 864e5).toISOString().slice(0, 10));
+    const by = {};
+    d.grid.forEach(r => { (by[r.manager] = by[r.manager] || {})[r.day] = r.views; });
+    const tot = n => days.reduce((t, x) => t + ((by[n] || {})[x] || 0), 0);
+    const last = n => days.filter(x => (by[n] || {})[x]).pop();
+    const away = names.filter(n => { const l = last(n); return !l || (end - Date.parse(l + 'T12:00:00Z')) / 864e5 >= 6; });
+    const cell = v => v ? `<span class="c" style="background:rgba(212,180,106,${Math.min(1, 0.2 + Math.log10(v + 1) / 2.1).toFixed(2)})" title="${v} page view${v === 1 ? '' : 's'}"></span>` : '<span class="c"></span>';
+    const rows = names.slice().sort((a, b) => tot(b) - tot(a) || a.localeCompare(b)).map(n => `<span class="n${away.includes(n) ? ' away' : ''}">${esc(n)}</span>${days.map(x => cell((by[n] || {})[x])).join('')}<span class="tot">${tot(n)}</span>`).join('');
+    const head = `<span></span>${days.map(x => `<span class="d">${'SMTWTFS'[new Date(x + 'T12:00:00Z').getUTCDay()]}</span>`).join('')}<span></span>`;
+    const fmt = x => new Date(x + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    const awayLine = away.length ? `<div class="cm-line item is-loss" style="margin-top:12px"><div class="cm-main"><div class="cm-name">Away 6+ days: ${esc(list(away))}</div><div class="cm-sub">${esc(away.map(n => `${n} ${last(n) ? 'last here ' + fmt(last(n)) : 'not here in two weeks'}`).join(' · '))}</div></div></div>` : '';
+    return panel('Last 14 days', `<div class="ac-grid" role="img" aria-label="Page views per manager per day">${head}${rows}</div>${awayLine}`, '<span class="cm-count dim">Page views</span>');
+  }
   function viewActivity() {
     const d = screenData.activity;
-    if (!d) return { title: 'Activity', html: panel('Visits', loading) };
+    if (!d) return { title: 'Activity', html: panel('Last 14 days', loading) };
     const s = d.stats, w = d.who;
-    const days = s && s.days ? [...s.days].reverse() : [];
-    const max = Math.max(1, ...days.map(x => x.visitors));
     const count = g => g.names.length + g.guests;
     const tiles = s ? `<div class="cm-tiles">
         <div class="item cm-tile"><b>${w ? count(w.visitors) : s.visitorsToday}</b><span>Visitors today</span>${w ? `<small>${esc(whoText(w.visitors.names, w.visitors.guests, 'Nobody yet'))}</small>` : ''}</div>
         <div class="item cm-tile"><b>${s.viewsToday}</b><span>Page views today</span></div>
-        <div class="item cm-tile"><b>${w ? count(w.here) : s.activeNow}</b><span>Here now</span>${w ? `<small>${esc(whoText(w.here.names, w.here.guests, 'Nobody'))}</small>` : ''}</div></div>
-      <div class="cm-rows" style="margin-top:14px">${days.map(x => `<div class="cm-day"><span>${new Date(x.day + 'T12:00:00').toLocaleDateString([], { weekday: 'short', day: 'numeric' })}</span><div class="cm-bar"><i style="width:${(x.visitors / max) * 100}%"></i></div><em>${x.visitors}</em></div>`).join('')}</div>` : '<div class="cm-empty">Visit counts aren\'t available.</div>';
+        <div class="item cm-tile"><b>${w ? count(w.here) : s.activeNow}</b><span>Here now</span>${w ? `<small>${esc(whoText(w.here.names, w.here.guests, 'Nobody'))}</small>` : ''}</div></div>` : '<div class="cm-empty">Visit counts aren\'t available.</div>';
     const pages = w ? w.pages : (s && s.topPages ? s.topPages.map(p => ({ ...p, who: [], guests: 0 })) : []);
-    const top = pages.length ? `<div class="cm-rows">${pages.map(p => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(p.page)}</div>${w ? `<div class="cm-sub">${esc(whoText(p.who.map(x => x.views > 1 ? `${x.name} ×${x.views}` : x.name), p.guests, ''))}</div>` : ''}</div><span class="cm-val">${p.views}</span></div>`).join('')}</div>` : '<div class="cm-empty">No views yet today.</div>';
-    const seen = Object.fromEntries(d.managers.map(m => [m.manager, m]));
-    const last = (w && w.lastVisit) || {};
-    const mrows = `<div class="cm-cols">${names.map(n => {
-      const at = Math.max(last[n] || 0, (seen[n] && seen[n].seen) || 0);
-      return `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(n)}</div><div class="cm-sub${at ? ' in' : ''}">${at ? 'Here ' + esc(when(at)) : 'Never signed in'}</div></div></div>`;
-    }).join('')}</div>`;
-    return { title: 'Activity', html: `<div class="cm-split"><div>${panel('Visits, last 7 days', tiles)}${panel('Top pages today', top)}</div>${panel('Managers', mrows)}</div>` };
+    const top = pages.length ? `<div class="cm-rows">${pages.map(p => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(pageName(p.page))}</div>${w ? `<div class="cm-sub">${esc(whoText(p.who.map(x => x.views > 1 ? `${x.name} ×${x.views}` : x.name), p.guests, ''))}</div>` : ''}</div><span class="cm-val">${p.views}</span></div>`).join('')}</div>` : '<div class="cm-empty">No views yet today.</div>';
+    const p21 = d.pages21 && d.pages21.length ? `<div class="cm-rows">${d.pages21.map(p => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(pageName(p.page))}</div><div class="cm-sub">${plural(p.people, 'browser', 'browsers')}</div></div><span class="cm-val">${p.views.toLocaleString()}</span></div>`).join('')}</div>` : '';
+    return { title: 'Activity', html: gridHtml(d) + `<div class="cm-split"><div>${panel('Today', tiles)}${panel('Top pages today', top)}</div>${p21 ? panel('Pages, last 3 weeks', p21) : ''}</div>` };
   }
 
   // ---------- Feedback (worker/src/feedback.js) ----------
@@ -740,8 +926,8 @@
   }
 
   // ---------- Drawing ----------
-  const VIEWS = { hub: viewHub, parlay: viewParlay, tables: viewTables, announce: viewAnnounce, signins: viewSignins, members: viewMembers, push: viewPush, audit: viewAudit, videos: viewVideos, season: viewSeason, health: viewHealth, refresh: viewRefresh, activity: viewActivity, feedback: viewFeedback };
-  const route = () => { const r = location.hash.slice(1); return VIEWS[r] ? r : 'hub'; };
+  const VIEWS = { hub: viewHub, parlay: viewParlay, tables: viewTables, managers: viewManagers, messages: viewMessages, activity: viewActivity, videos: viewVideos, season: viewSeason, feedback: viewFeedback, site: viewSite };
+  const route = () => { let r = location.hash.slice(1); if (ALIAS[r]) { if (r === 'push') msgTab = 'push'; else if (r === 'announce') msgTab = 'banner'; r = ALIAS[r]; } return VIEWS[r] ? r : 'hub'; };
 
   function draw() {
     if (!access || !ov) return;
@@ -792,10 +978,17 @@
   async function loadScreen() {
     const r = route();
     try {
-      if (r === 'signins' || r === 'members') { people = await call('list', { names }, '/auth/admin'); people.managers.sort((a, b) => a.manager.localeCompare(b.manager)); }
+      if (r === 'managers') {
+        const [list_, actv] = await Promise.all([call('list', { names }, '/auth/admin'), call('activity').catch(() => null), loadOverview()]);
+        people = list_; people.managers.sort((a, b) => a.manager.localeCompare(b.manager));
+        if (actv) screenData.activity = actv;
+      }
       else if (r === 'tables') { if (!screenData.tables) screenData.tables = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(x => x.json()); }
-      else if (r === 'push') screenData.push = await call('push_info');
-      else if (r === 'audit') screenData.log = (await call('log')).entries;
+      else if (r === 'messages') {
+        draw();
+        const [push, log] = await Promise.all([call('push_info'), call('log'), loadOverview()]);
+        screenData.push = push; screenData.log = log.entries;
+      }
       else if (r === 'activity') screenData.activity = await call('activity');
       else if (r === 'feedback') screenData.feedback = (await call('feedback_list')).items;
       else if (r === 'videos') {
@@ -806,17 +999,23 @@
         draw();
         if (videoSeason) screenData.videoList = (await call('videos_list', { season: videoSeason })).videos;
       }
-      else if (r === 'health' || r === 'refresh') {
-        if (r === 'health' && window.rlPush) rlPush.state().then(s => { healthPush = s; if (route() === 'health') draw(); });
-        draw(); health = await call('health');
+      else if (r === 'site') {
+        if (window.rlPush) rlPush.state().then(st_ => { healthPush = st_; if (route() === 'site') draw(); });
+        draw();
+        call('log').then(x => { screenData.log = x.entries; if (route() === 'site') draw(); }).catch(() => {});
+        health = await call('health');
       }
-      else if (r === 'hub') { await loadOverview(); draw(); if (!health || Date.now() - health.at > 10 * 60 * 1000) refreshHealth(); }
-      else if (r === 'parlay' || r === 'season' || r === 'announce') await loadOverview();
+      else if (r === 'hub') { await loadOverview(); draw(); loadWeekStats(); if (!health || Date.now() - health.at > 10 * 60 * 1000) refreshHealth(); }
+      else if (r === 'parlay' || r === 'season') await loadOverview();
     } catch (err) {
       if (lostAccess(err)) return;
       toast(err.message || "Couldn't load that. Try again.");
     }
     draw();
+  }
+  // The bet and results for the hub's timeline (the same read as Jon's Tables).
+  async function loadWeekStats() {
+    try { screenData.tables = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(x => x.json()); if (route() === 'hub') draw(); } catch { /* the timeline stops at the lock */ }
   }
   // Quietly, so the hub's health line is today's and not the morning's.
   async function refreshHealth() {
@@ -832,7 +1031,7 @@
       return;
     }
     draw();
-    if (route() !== 'hub') loadScreen(); else refreshHealth();
+    if (route() !== 'hub') loadScreen(); else { refreshHealth(); loadWeekStats(); }
   }
 
   async function init() {
@@ -924,6 +1123,42 @@
         call('health').then(h => { health = h; draw(); }).catch(() => {});
       });
     }
+    else if (a === 'nudge') { nudge = true; nudgeOff.clear(); nudgeArmed = 0; drawSheet(); }
+    else if (a === 'nudge-close') { nudge = false; drawSheet(); }
+    else if (a === 'nudge-who') { nudgeOff.has(d.who) ? nudgeOff.delete(d.who) : nudgeOff.add(d.who); nudgeArmed = 0; drawSheet(); }
+    else if (a === 'nudge-share') { const who = ov.parlay.missing.filter(n => !nudgeOff.has(n)); shareOrCopy(nudgeText(who), 'nudge'); }
+    else if (a === 'nudge-push') {
+      if (Date.now() - nudgeArmed > 4000) { nudgeArmed = Date.now(); drawSheet(); setTimeout(() => { if (nudge) drawSheet(); }, 4100); return; }
+      nudgeArmed = 0;
+      const reach = ov.parlay.missing.filter(n => !nudgeOff.has(n) && pushOn(n));
+      await act('nudge', async () => {
+        const out = await call('push_send', { title: "Your parlay leg isn't in", body: `Legs lock ${etDay(ov.parlay.locksAt)} ET. Tap to put yours in.`, to: reach });
+        toast(`Pushed ${list(reach)} (${plural(out.sent, 'device', 'devices')})`);
+      });
+    }
+    else if (a === 'mfilter') { mFilter = d.f; draw(); }
+    else if (a === 'mtab') {
+      msgTab = d.tab;
+      if (d.tpl !== undefined) setDraft('gt-text', GT_TPL()[Number(d.tpl)][1]);
+      draw();
+    }
+    else if (a === 'mpush') { setDraft('pu-to', d.who); msgTab = 'push'; sheet = ''; location.hash = '#messages'; }
+    else if (a === 'howto') { shareOrCopy(howtoFor(d.who), 'howto:' + d.who); }
+    else if (a === 'reset-ask') {
+      if (asking !== d.who) { asking = d.who; drawSheet(); setTimeout(() => { if (asking === d.who) { asking = ''; drawSheet(); } }, 4000); return; }
+      asking = '';
+      await act('reset', async () => {
+        const fresh = (await call('reset', { manager: m.manager }, '/auth/admin')).manager;
+        people.managers = people.managers.map(x => x.manager === fresh.manager ? fresh : x);
+        await loadOverview();
+        toast(`${m.manager} is signed out everywhere`);
+      });
+    }
+    else if (a === 'an-tpl') { setDraft('an-text', ANN_TPL()[Number(d.i)][1]); draw(); const t = $('an-text'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
+    else if (a === 'an-again') { setDraft('an-text', annHistory()[Number(d.i)].text); window.scrollTo({ top: 0, behavior: 'smooth' }); draw(); }
+    else if (a === 'an-until') { setDraft('an-until', d.v); draw(); }
+    else if (a === 'gt-tpl') { setDraft('gt-text', GT_TPL()[Number(d.i)][1]); draw(); }
+    else if (a === 'gt-share') { const t = $('gt-text'); const text = (t ? t.value : drafts['gt-text'] || '').trim(); if (!text) { if (t) t.focus(); return; } shareOrCopy(text, 'gt'); }
     else if (a === 'tscope') { tScope = d.scope; draw(); }
     else if (a === 'fb-scope') { fbScope = d.scope; fbOpen = 0; draw(); }
     else if (a === 'fb-open') { fbOpen = Number(d.id); fbAsk = 0; draw(); }
@@ -954,6 +1189,7 @@
       if (!text) { $('an-text').focus(); return; }
       await act('announce', async () => {
         await call('announce_set', { text, until: $('an-until').value });
+        screenData.log = (await call('log')).entries;
         delete drafts['an-text']; delete drafts['an-until'];
         await loadOverview();
         toast('Posted to the Live page');
@@ -968,7 +1204,7 @@
     else if (a === 'draft-clear') await act('draft', async () => { await call('season_set', { draft: '' }); delete drafts['se-draft']; await loadOverview(); toast('Draft date cleared'); });
     else if (a === 'template') {
       const t = TEMPLATES[Number(d.i)];
-      drafts['pu-title'] = t[1]; drafts['pu-body'] = t[2]; confirmPush = false; draw();
+      setDraft('pu-title', t[1]); setDraft('pu-body', t[2]); confirmPush = false; draw();
       $('pu-title').focus();
     }
     else if (a === 'push-ask') {
@@ -1020,9 +1256,16 @@
     }
   });
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheet) { sheet = ''; confirmRole = ''; drawSheet(); } });
+  document.addEventListener('input', e => {
+    if (e.target.id === 'an-text') { const pv = $('an-prev'); if (pv) pv.textContent = e.target.value.trim() || 'Your message shows here.'; drafts['an-text'] = e.target.value; }
+    else if (e.target.id === 'an-until') {
+      drafts['an-until'] = e.target.value;
+      document.querySelectorAll('[data-act="an-until"]').forEach(b => { const on = b.dataset.v === e.target.value; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && (sheet || nudge)) { sheet = ''; nudge = false; confirmRole = ''; drawSheet(); } });
   window.addEventListener('hashchange', () => {
-    sheet = ''; confirmRole = ''; asking = ''; confirmPush = false;
+    sheet = ''; confirmRole = ''; asking = ''; confirmPush = false; nudge = false;
     if (!access) return;
     draw();
     window.scrollTo(0, 0);

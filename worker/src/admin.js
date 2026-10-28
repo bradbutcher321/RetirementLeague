@@ -10,12 +10,13 @@
  *   health                 runs every site check now and keeps the result
  *   workflow_run { which } starts league | franchise | history | scores | parlay
  *   push_info              who has notifications on, and what was sent lately
- *   push_send { title, body, to }   a push to everyone, or one manager's devices
+ *   push_send { title, body, to }   a push to everyone, one manager, or a list of managers (the Nudge)
  *   announce_set { text, until }  /  announce_clear
  *   season_set { draft }   the draft's date and time ("YYYY-MM-DDTHH:MM", Eastern), "" clears it
  *   videos_get / videos_set { season, playlist } / videos_remove { season }
  *   videos_list { season } / videos_hide { id, hidden }
- *   activity               visits, and when each manager was last here
+ *   activity               visits, when each manager was last here, two weeks of
+ *                          views per manager per day (grid), and pages over three weeks
  *   log                    the latest hundred things a commissioner did
  *   feedback_list / feedback_set { id, status, reply } / feedback_delete { id }
  *                          what managers sent from their You sheet (feedback.js)
@@ -81,6 +82,7 @@ async function overview(env, body) {
       unsigned: all.filter((m) => !signed.has(m)).sort((a, b) => a.localeCompare(b)),
       parlay,
       push: { people: subs.filter((s) => s.me).length, devices: subs.reduce((n, s) => n + s.devices, 0) },
+      pushOn: subs.filter((s) => s.me).map((s) => s.me).sort((a, b) => a.localeCompare(b)),
       announcement: ann && ann.text ? ann : null,
       draft: draft && draft.at ? draft : null,
       last: last || null,
@@ -141,11 +143,15 @@ async function pushInfo(env) {
 async function pushSend(env, body, who) {
   const title = text(body.title, 60), message = text(body.body, 180);
   if (!title) return fail(400, "no_title");
-  const to = body.to && body.to !== "all" ? text(body.to, 40) : null;
+  // One manager, several (the Nudge), or everyone.
+  const to = Array.isArray(body.to) ? body.to.slice(0, 20).map((n) => text(n, 40)).filter(Boolean)
+    : body.to && body.to !== "all" ? text(body.to, 40) : null;
+  if (Array.isArray(to) && !to.length) return fail(400, "no_recipients");
   const out = await broadcast(env, { title, body: message }, to);
   if (out.error) return fail(503, out.error);
   if (!out.devices) return fail(404, "no_devices");
-  await logAction(env, who, "push", `Sent "${title}" to ${to || "everyone"} (${out.sent} of ${out.devices} devices)`);
+  const whom = Array.isArray(to) ? to.join(", ") : to || "everyone";
+  await logAction(env, who, "push", `Sent "${title}" to ${whom} (${out.sent} of ${out.devices} devices)`);
   return { status: 200, body: out };
 }
 
@@ -218,13 +224,20 @@ async function videos(env, body, who) {
 }
 
 async function activity(env) {
-  const [stats, who, seen, subs] = await Promise.all([
+  const now = Date.now();
+  const [stats, who, seen, subs, grid, pages] = await Promise.all([
     getStats(env).catch(() => null),
     getWho(env).catch((err) => { console.error("getWho failed:", err); return null; }),
     env.DB.prepare("SELECT manager, MAX(seen) AS seen, SUM(kind = 'app') AS apps, COUNT(*) AS devices FROM auth_sessions GROUP BY manager").all(),
     subscriberSummary(env).catch(() => []),
+    // Each manager's page views a day for two weeks (audit VIII #20), and
+    // the pages people read over three.
+    env.DB.prepare("SELECT n.manager AS manager, h.day AS day, COUNT(*) AS views FROM hits h JOIN visitor_names n ON n.vid = h.vid WHERE h.day >= ?1 GROUP BY n.manager, h.day")
+      .bind(etDay(now - 13 * 864e5)).all().catch(() => ({ results: [] })),
+    env.DB.prepare("SELECT page, COUNT(*) AS views, COUNT(DISTINCT vid) AS people FROM hits WHERE day >= ?1 GROUP BY page ORDER BY views DESC LIMIT 12")
+      .bind(etDay(now - 20 * 864e5)).all().catch(() => ({ results: [] })),
   ]);
-  return { status: 200, body: { stats, who, managers: seen.results, push: subs } };
+  return { status: 200, body: { stats, who, managers: seen.results, push: subs, today: etDay(now), grid: grid.results, pages21: pages.results } };
 }
 
 async function log(env) {

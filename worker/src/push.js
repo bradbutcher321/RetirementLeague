@@ -556,7 +556,9 @@ export async function notifyPref(env, pref, message) {
 export async function broadcast(env, message, to = null) {
   if (!env.VAPID_PRIVATE_JWK) return { error: "not_configured" };
   const { results } = await env.DB.prepare("SELECT * FROM push_subs").all();
-  const subs = to ? results.filter((s) => (s.me || "").toLowerCase() === String(to).toLowerCase()) : results;
+  // `to`: one manager, a list of managers, or null for everyone.
+  const want = to == null ? null : new Set((Array.isArray(to) ? to : [to]).map((n) => String(n).toLowerCase()));
+  const subs = want ? results.filter((s) => want.has((s.me || "").toLowerCase())) : results;
   const codes = await Promise.all(subs.map((s) => deliver(env, s, { ...message, tag: message.tag || "commissioner" })));
   return { devices: subs.length, sent: codes.filter((c) => c >= 200 && c < 300).length, gone: codes.filter((c) => c === 404 || c === 410).length };
 }
