@@ -1,6 +1,54 @@
 {
- "generated_at": "2026-10-27T12:11:04+00:00",
+ "generated_at": "2026-10-29T12:10:36+00:00",
  "columns": [
+  {
+   "id": "2026-w08-preview",
+   "kind": "preview",
+   "season": 2026,
+   "week": 8,
+   "published_at": "2026-10-29T08:10:36-04:00",
+   "headline": "Jon and Kris Meet at 9-5 With the Series Dead Even",
+   "dek": "Third against fourth, tied 3-3 all time, and ESPN can only split it 52-48. Elsewhere, Chad gets a projected layup and Jared gets a reminder of what 3-11 looks like.",
+   "body": [
+    "The game of the week is Jon against Kris, and it picks itself. Both sit at 9-5, Jon third and Kris fourth, the all-time series is tied 3-3, and ESPN projects Jon at <b>105.48</b> to Kris at <b>102.62</b>, a <b>52%</b> to <b>48%</b> coin flip with a gap of <b>2.86</b>. Jon is coming off a loss, Kris off a win, and both are part of a four-way 9-5 logjam behind Chad. Jon will presumably cut a hype video for this one. The lighting will be immaculate and the lineup will be projected for <b>105.48</b>.",
+    "The tightest projection on the board actually belongs to Ben and Joe G, separated by <b>2.62</b>. Ben is 6-8, tenth, and somehow ESPN's favorite at <b>52%</b>. He also owns this series 11-4. Joe G is 9-5 with a <b>73.98%</b> playoff chance, better than Jon's or Kris's, while his little brother Chad sits alone in first at 10-4. The older brother is supposed to know better, and he is a game behind the kid and projected to lose to a 6-8 team.",
+    "The biggest mismatch is Joe K against Chad: <b>82.72</b> projected against <b>116.00</b>, a <b>33.28</b> gap and a <b>31%</b> win chance. Joe K leads the series 10-6, which is the only number on this page that likes him. Chad has <b>852.0</b> points this season and a <b>93%</b> playoff chance; Joe K has a projection that reads like a bye week and a 7-7 record to match.",
+    "Streaks: TJ has won three straight and gets Flanders, who has won two, with ESPN giving TJ <b>63%</b> and a <b>104.63</b> to <b>84.70</b> edge. TJ leads that series 4-1, so Flanders's hot streak is walking into a wall. At the bottom, Collin has lost four in a row and Jared three. Jared leads Jeff 16-7 all time, a fun fact for a man projected at <b>84.95</b> with a <b>6.95%</b> playoff chance against Jeff's <b>109.47</b>.",
+    "The playoff picture is getting crowded in the middle. Jeff, Flanders and Joe K are all 7-7, and Jeff has the best odds of the three at <b>51.25%</b>. Brad and Ben are 6-8 at <b>29.2%</b> and <b>34.53%</b>. Collin is 2-12 with a <b>0.75%</b> playoff chance, and he draws Brad, a <b>53%</b> favorite at <b>97.08</b> to <b>91.85</b>. Brad leads that series 6-4 and needs this one badly. Losing it to the last-place team would be a hell of a way to find out his head really is that big."
+   ],
+   "games": [
+    {
+     "a": "Jon",
+     "b": "Kris",
+     "note": "Both 9-5, series tied 3-3, ESPN says 52-48. Jon's video budget is not projected to help."
+    },
+    {
+     "a": "Jeff",
+     "b": "Jared",
+     "note": "Jared leads 16-7 all time but is projected at 84.95. History doesn't score points."
+    },
+    {
+     "a": "Ben",
+     "b": "Joe G",
+     "note": "Closest projection of the week at 2.62 apart. Ben owns the series 11-4 and somehow is the favorite."
+    },
+    {
+     "a": "Joe K",
+     "b": "Chad",
+     "note": "Joe K leads 10-6 all time and gets a 31% chance anyway. Projected 82.72 against 116.00."
+    },
+    {
+     "a": "TJ",
+     "b": "Flanders",
+     "note": "W3 against W2. TJ is 63% to make it four straight; Flanders projects at 84.70."
+    },
+    {
+     "a": "Brad",
+     "b": "Collin",
+     "note": "Collin has lost four straight and holds a 0.75% playoff chance. Brad is a 53% favorite, which is not much."
+    }
+   ]
+  },
   {
    "id": "2026-w07-preview",
    "kind": "preview",
