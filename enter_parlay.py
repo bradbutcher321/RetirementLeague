@@ -23,7 +23,8 @@ differs from the sheet's is written (as Pending), so a pick a commissioner
 fixed with Edit pick, which keeps its Raw Pick, is left alone; a removed
 leg's row is cleared only if it still holds that leg. Sacko and the final
 odds and payout are left alone (a commissioner saves those with the whole
-week, mode "new"/"edit").
+week, mode "new"/"edit", or on their own with mode "meta" from the
+Commissioner page's bet card, where rows is empty).
 
 Usage: PICKS='{...}' python enter_parlay.py
 """
@@ -99,6 +100,24 @@ def save_legs(client, year, week, rows, dry_run):
     print("Saved.")
 
 
+def save_meta(client, year, week, payload, num):
+    """Mode "meta": the Commissioner page's bet card. Only the week's Sacko,
+    final odds and final payout; every pick in the week is left alone."""
+    sacko = str(payload.get("sacko") or "").strip()
+    if sacko and sacko not in client.players:
+        fail(f"Sacko {sacko!r} isn't a player in the sheet.")
+    start_row, _ = client.find_week(year, week)
+    if not start_row:
+        fail(f"{year} Week {week} isn't in the sheet yet, so there's no bet to set.")
+    odds, payout = num(payload.get("final_odds")), num(payload.get("final_payout"))
+    print(f"{year} Week {week}: Sacko {sacko or '(none)'}, final odds {odds}, payout {payout} -> row {start_row}")
+    if payload.get("dry_run"):
+        print("Dry run: nothing written.")
+        return
+    client.save_meta(start_row, sacko, odds, payout)
+    print("Saved.")
+
+
 def main():
     payload = json.loads(os.environ["PICKS"])
     try:
@@ -109,6 +128,9 @@ def main():
 
     if payload.get("mode") == "legs":
         return save_legs(SheetClient(), year, week, payload.get("rows") or {}, payload.get("dry_run"))
+
+    if payload.get("mode") == "meta":
+        return save_meta(SheetClient(), year, week, payload, num)
 
     edit = payload.get("mode") == "edit"
     client = SheetClient()

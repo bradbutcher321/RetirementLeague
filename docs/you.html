@@ -17,8 +17,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=37">
-<link rel="stylesheet" href="nav.css?v=31">
+<link rel="stylesheet" href="theme.css?v=38">
+<link rel="stylesheet" href="nav.css?v=32">
 <link rel="stylesheet" href="features.css?v=8">
 <style>
   /* You (site audit VIII #15): everything about your week on one page --
@@ -30,8 +30,12 @@
   .yu-logo img{ width:100%; height:100%; object-fit:cover; display:block; }
   .yu-name{ font:800 2rem/0.95 var(--scoreboard); letter-spacing:0.01em; }
   .yu-sub{ color:var(--text-dim); font-size:0.84rem; margin-top:4px; }
-  .yu-acts{ display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 0; }
-  .yu-acts .ft-btn{ border-color:var(--ctl-line); color:var(--text); }
+  /* Settings on the page (audit IX #7): Notifications, Settings and
+     Account are drawn here by nav.js (rlYou.mount), the same panels the You
+     sheet has on every other page. */
+  .yu-set .ft-body{ padding-top: 4px; }
+  .yu-set .you-sec:first-child{ margin-top: 0; padding-top: 0; border-top: 0; }
+  .yu-more{ display:block; width:100%; min-height:44px; border:0; border-top:1px solid var(--line); background:none; color:var(--gold); font:600 0.8rem var(--body); cursor:pointer; }
 
   .yu-mu{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); padding:2px 0; }
   .yu-mu > div{ flex:1; min-width:0; }
@@ -89,13 +93,17 @@
       </div>
     </header>
 
-    <div id="view"><div class="glass"><div class="ft-empty">Loading…</div></div></div>
+    <div id="view"><span class="sr-only">Loading…</span><div class="sk-stack" aria-hidden="true">
+      <div class="sk-row" style="justify-content:flex-start;gap:14px;padding:2px 0 4px"><i class="o" style="width:58px;height:58px"></i><div class="sk-col"><i style="width:40%;height:26px"></i><i style="width:58%;height:11px"></i></div></div>
+      <div class="sk"><i style="width:28%;height:15px"></i><i style="width:64%;height:14px"></i><i style="width:80%;height:11px"></i></div>
+      <div class="sk"><i style="width:34%;height:15px"></i><div class="sk-row" style="justify-content:flex-start;gap:14px"><i style="width:88px;height:40px"></i><div class="sk-col"><i style="width:60%;height:11px"></i><i style="width:80%;height:11px"></i></div></div><div class="sk-grid" style="--cols:3"><i style="width:100%;height:58px"></i><i style="width:100%;height:58px"></i><i style="width:100%;height:58px"></i></div></div>
+    </div></div>
 
     <footer id="site-footer" data-note="Your matchup, odds and alerts in one place"></footer>
   </div>
 
-<script src="nav.js?v=43"></script>
-<script src="page-common.js?v=41"></script>
+<script src="nav.js?v=44"></script>
+<script src="page-common.js?v=42"></script>
 <script src="race-sim.js?v=3"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
@@ -111,6 +119,7 @@
     spark: SVG('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>'),
     vs: SVG('<circle cx="8" cy="9" r="3.2"/><circle cx="16" cy="9" r="3.2"/><path d="M3 20c.6-3 2.6-4.6 5-4.6M21 20c-.6-3-2.6-4.6-5-4.6"/>'),
     bell: SVG('<path d="M6 17v-6a6 6 0 0 1 12 0v6l1.5 2h-15L6 17z"/><path d="M10 21h4"/>'),
+    key: SVG('<circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5 19 4M16 7l2.5 2.5M13.5 9.5l2 2"/>'),
   };
   const f2 = n => Number(n).toFixed(2);
   const pct = v => v == null ? '—' : v > 99.5 && v < 100 ? '>99%' : v > 0 && v < 0.5 ? '<1%' : Math.round(v) + '%';
@@ -149,8 +158,10 @@
   async function draw() {
     const me = getMe();
     if (!me) {
-      $('view').innerHTML = `<div class="glass"><div class="ft-empty">Pick your team and this page fills with your matchup, your odds and your alerts.</div><div class="ft-body" style="padding-top:0"><button type="button" class="ft-btn" id="pick">Pick your team</button></div></div>`;
-      $('pick').addEventListener('click', () => openYou('you'));
+      $('view').innerHTML = `<div class="ft-s" style="margin:0 2px 12px">Pick your team and this page fills with your matchup, your odds and your alerts.</div>${panel('Account', '<div id="yu-you"></div>')}${panel('Settings', '<div id="yu-settings"></div>')}`;
+      document.querySelectorAll('#view .glass').forEach(g => g.classList.add('yu-set'));
+      rlYou.mount($('yu-you'), 'you');
+      rlYou.mount($('yu-settings'), 'settings');
       return;
     }
     const [live, league, fr, board, lineups, pidx] = await Promise.all([
@@ -168,7 +179,7 @@
     const logo = prof && prof.current_team_logo ? `<img src="${esc(prof.current_team_logo)}" alt="">` : esc(monogram(me));
     const rank = team ? `${team.standing}${['th', 'st', 'nd', 'rd'][(team.standing % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][team.standing % 100] || 'th'} at ${team.record}` : '';
     html.push(`<div class="yu-hero"><span class="yu-logo">${logo}</span><div style="min-width:0"><div class="yu-name">${esc(me)}</div><div class="yu-sub">${esc([team && team.name, rank].filter(Boolean).join(' · '))}</div></div></div>
-      <div class="yu-acts"><button type="button" class="ft-btn sm" data-you="push">Notifications</button><button type="button" class="ft-btn sm" data-you="settings">Settings</button><button type="button" class="ft-btn sm" data-you="you">${getAuth() ? 'Account' : 'Sign in'}</button></div>`);
+`);
 
     // This week: the matchup, then what needs doing.
     const mu = live && live.matchups ? live.matchups.find(m => m.awayManager === me || m.homeManager === me) : null;
@@ -241,10 +252,14 @@
       [`roster.html?m=${encodeURIComponent(me)}`, IC.clip, 'Roster'],
       [`wrapped.html?m=${encodeURIComponent(me)}&year=${wrapYear}`, IC.spark, `${wrapYear} Wrapped`],
       opp ? [`head-to-head.html?a=${encodeURIComponent(me)}&b=${encodeURIComponent(opp)}`, IC.vs, `You vs ${esc(opp)}`] : null,
+      // Commissioners: the tools, right with your own pages (and under Account).
+      isCommissioner(getAuth()) ? ['commissioner.html', IC.key, 'Commissioner'] : null,
     ].filter(Boolean);
     html.push(panel('Yours', `<div class="yu-links">${links.map(([href, ic, t]) => `<a class="yu-go ft-item" href="${href}"><span class="yu-ic">${ic}</span><span class="t">${t}</span>${IC.chev}</a>`).join('')}</div>`));
 
-    $('view').innerHTML = `<div class="yu-cols"><div>${html.slice(0, 3).join('')}</div><div>${html.slice(3).join('')}</div></div>`;
+    const set = `<div class="yu-cols"><div>${panel('Notifications', '<div id="yu-push"></div>')}</div><div>${panel('Settings', '<div id="yu-settings"></div>')}${panel('Account', '<div id="yu-you"></div>')}</div></div>`;
+    $('view').innerHTML = `<div class="yu-cols"><div>${html.slice(0, 3).join('')}</div><div>${html.slice(3).join('')}</div></div>${set}`;
+    ['push', 'settings', 'you'].forEach(k => { const el = $('yu-' + k); el.closest('.glass').classList.add('yu-set'); rlYou.mount(el, k); });
     riseIn(document.querySelectorAll('#view .glass'));
     if (team) setPageStatus(`${team.record} · Week ${live.week}`);
 
@@ -261,16 +276,21 @@
     }, 50);
 
     // Alerts (nav.js keeps them a few minutes per tab).
+    // Every alert from the last seven days is here (the bell scrolls to it), four at first.
     if (window.rlInbox) rlInbox.list().then(list => {
       const slot = $('inbox-slot');
       if (!slot || !list) return;
-      const rows = list.slice(0, 4).map(a => `<a class="yu-al" href="${esc(a.url || 'index.html')}"><b>${esc(a.title)}</b><time>${esc(ago(a.ts))}</time><span>${esc(a.body)}</span></a>`).join('');
-      slot.innerHTML = panel('Your alerts', rows ? `<div class="ft-lines">${rows}</div>` : '<div class="ft-s">Nothing this week yet.</div>', '<button type="button" class="ft-chip" data-you="push" style="background:none;cursor:pointer">All ›</button>');
+      const row = a => `<a class="yu-al" href="${esc(a.url || 'index.html')}"><b>${esc(a.title)}</b><time>${esc(ago(a.ts))}</time><span>${esc(a.body)}</span></a>`;
+      const more = list.length - 4;
+      slot.innerHTML = panel('Your alerts', list.length ? `<div class="ft-lines" id="yu-als">${list.slice(0, 4).map(row).join('')}${more > 0 ? `<button type="button" class="yu-more" id="yu-al-more">Show ${more} more</button>` : ''}</div>` : '<div class="ft-s">Nothing this week yet.</div>', '<span class="ft-chip">Last 7 days</span>');
+      slot.id = 'yu-alerts';
+      const btn = $('yu-al-more');
+      if (btn) btn.addEventListener('click', () => { btn.insertAdjacentHTML('beforebegin', list.slice(4).map(row).join('')); btn.remove(); });
     }).catch(() => {});
   }
 
-  document.addEventListener('click', e => { const b = e.target.closest('[data-you]'); if (b) openYou(b.dataset.you); });
   window.addEventListener('rl-me', draw);
+  window.addEventListener('rl-auth', draw);
   draw();
 </script>
 <script src="track.js?v=2" defer></script>

@@ -1096,3 +1096,36 @@ function feedWhat(e) {
   addEventListener('pointerup', mouseEnd);
   addEventListener('pointercancel', mouseEnd);
 })();
+
+// ---------- Team logos (site audit IX) ----------
+// Each manager's current team logo from franchise.json, which the service
+// worker keeps, asked for once per page. avatarHtml draws the round avatar:
+// the logo once it's known, the monogram until then (or for good, without one).
+let teamLogosP = null;
+function teamLogos() {
+  if (!teamLogosP) {
+    teamLogosP = fetch('data/franchise.json').then(r => r.json())
+      .then(d => Object.fromEntries((d.players || []).filter(p => p.current_team_logo).map(p => [p.name, p.current_team_logo])))
+      .catch(() => { teamLogosP = null; return {}; });
+  }
+  return teamLogosP;
+}
+function avatarHtml(name, logos, cls = '') {
+  const url = logos && logos[name];
+  return `<span class="rl-av${cls ? ' ' + cls : ''}" aria-hidden="true">${url ? `<img src="${esc(url)}" alt="" loading="lazy">` : `<i>${esc(monogram(name))}</i>`}</span>`;
+}
+
+// ---------- Play toast (site audit IX #11) ----------
+// A short pill at the top of the screen when a poll brings points for your
+// matchup: whose, what, how many. One at a time; a newer one replaces it.
+function playToast(html, ms = 3800) {
+  document.getElementById('rl-toast')?.remove();
+  const t = document.createElement('div');
+  t.id = 'rl-toast';
+  t.className = 'rl-toast';
+  t.setAttribute('role', 'status');
+  t.innerHTML = html;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add('out'), ms);
+  setTimeout(() => t.remove(), ms + 400);
+}

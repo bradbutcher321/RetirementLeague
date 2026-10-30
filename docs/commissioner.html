@@ -17,8 +17,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=37">
-<link rel="stylesheet" href="nav.css?v=31">
+<link rel="stylesheet" href="theme.css?v=38">
+<link rel="stylesheet" href="nav.css?v=32">
 <style>
   /* ---------- Commissioner: a hub of tools ----------
      The page opens on a hub (grouped rows, one panel per group, a live status
@@ -210,6 +210,92 @@
   .ac-grid .d{ color: var(--text-dim); font-size: 0.56rem; text-align: center; font-weight: 700; }
   .ac-grid .tot{ text-align: right; font: 800 0.9rem var(--scoreboard); font-variant-numeric: tabular-nums; }
 
+  /* ---------- Site audit IX #8, #9 ----------
+     The hub leads with the week's parlay as one status card that changes
+     with the week (legs open, locked, bet placed, decided), then only what
+     needs you, a pulse strip, and the tools as one list. Parlay is one
+     screen that follows the week: a phase bar, the twelve legs (each opens
+     Parlay Legs for that manager), the bet itself, and the rest. */
+  .cm-hero{ padding: 18px 18px 16px; }
+  .cm-hero-top{ display: flex; align-items: center; gap: 16px; }
+  .cm-hero-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .cm-ring{ width: 84px; height: 84px; flex: none; }
+  .cm-cap{ color: var(--gold); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .cm-big{ font: 800 2.4rem/1 var(--scoreboard); font-variant-numeric: tabular-nums; margin-top: 6px; letter-spacing: 0.01em; }
+  .cm-big small{ font: 500 0.78rem var(--body); color: var(--text-dim); margin-left: 6px; letter-spacing: 0; }
+  .cm-roll{ display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px 6px; margin-top: 16px; }
+  .cm-rc{ display: grid; justify-items: center; gap: 5px; color: var(--text); font: 600 0.64rem var(--body); text-decoration: none; min-width: 0; }
+  .cm-avw{ position: relative; display: block; }
+  .cm-avw .rl-av{ --av: 44px; }
+  .cm-avw .rl-av.in{ box-shadow: 0 0 0 2px var(--turf); }
+  .cm-avw .rl-av.out{ opacity: 0.5; }
+  .cm-avw .rl-av.won{ box-shadow: 0 0 0 2px var(--turf); }
+  .cm-avw .rl-av.lost{ box-shadow: 0 0 0 2px var(--loss); opacity: 0.6; }
+  .cm-avw .rl-av.next{ box-shadow: 0 0 0 2px var(--gold); }
+  .cm-avw .ck, .cm-avw .bl{ position: absolute; width: 17px; height: 17px; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 2px #141414; }
+  .cm-avw .ck{ right: -3px; bottom: -3px; background: var(--turf); color: #0A2A17; }
+  .cm-avw .bl{ right: -3px; top: -3px; background: #2A2A28; color: var(--gold); }
+  .cm-avw .ck svg, .cm-avw .bl svg{ width: 10px; height: 10px; }
+  .cm-rc > span:last-child{ max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cm-rc em{ font-style: normal; color: var(--text-dim); font-size: 0.56rem; font-weight: 700; letter-spacing: 0.04em; }
+  .cm-pips{ display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; margin-top: 14px; }
+  .cm-pips .cm-avw .rl-av{ --av: 26px; }
+  .cm-pips .cm-rc{ gap: 4px; }
+  .cm-legend{ display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; color: var(--text-dim); font-size: 0.7rem; }
+  .cm-legend span{ display: inline-flex; align-items: center; gap: 5px; }
+  .cm-legend i{ width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--turf); }
+  .cm-legend svg{ width: 12px; height: 12px; color: var(--gold); }
+  .cm-next{ margin-top: 12px; padding: 10px 12px; font-size: 0.82rem; color: var(--text-dim); line-height: 1.4; }
+  .cm-next b{ color: var(--text); font-weight: 600; }
+  .cm-todo{ display: flex; align-items: center; gap: 12px; padding: 12px; }
+  .cm-todo + .cm-todo{ border-top: 1px solid var(--line); }
+  .cm-tic{ width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex: none; color: #D3D3CF; background: rgba(255,255,255,0.05); border: 1px solid var(--line); }
+  .cm-tic.hot{ color: var(--loss); background: var(--loss-tint); border-color: var(--loss-line); }
+  .cm-tic.warm{ color: var(--gold); background: var(--lead-tint); border-color: var(--lead-line); }
+  .cm-tic.ok{ color: var(--turf); background: var(--win-tint); border-color: var(--win-line); }
+  .cm-tic svg{ width: 18px; height: 18px; }
+  .cm-todos{ border-radius: 14px; overflow: hidden; }
+  .cm-pulse{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+  .cm-pz{ padding: 11px 12px 10px; display: grid; gap: 4px; align-content: start; min-width: 0; text-decoration: none; color: var(--text); border-radius: 16px; }
+  .cm-pz .k{ font-size: 0.6rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cm-pz .v{ font: 800 1.6rem/1 var(--scoreboard); font-variant-numeric: tabular-nums; }
+  .cm-pz .v small{ font-size: 1rem; color: var(--text-dim); }
+  .cm-pz .v.good{ color: var(--turf); } .cm-pz .v.bad{ color: var(--loss); }
+  .cm-pz .s{ font-size: 0.66rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cm-pz svg{ width: 100%; height: 22px; display: block; margin-top: 2px; }
+  .cm-pz .cm-bar{ margin-top: 9px; height: 6px; }
+  .cm-list{ display: grid; }
+  .cm-li{ display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 6px; color: var(--text); text-decoration: none; }
+  .cm-li + .cm-li{ border-top: 1px solid var(--line); }
+  .cm-li .cm-sub.warn{ color: var(--gold); }
+  .cm-li:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 10px; }
+  .cm-li .cm-btn{ margin-left: auto; }
+  .cm-phase{ display: flex; margin: 2px 0 14px; }
+  .cm-phase div{ flex: 1; display: grid; justify-items: center; gap: 6px; font-size: 0.64rem; font-weight: 600; color: var(--text-dim); position: relative; text-align: center; }
+  .cm-phase div::before{ content: ''; position: absolute; top: 6px; left: -50%; right: 50%; height: 2px; background: rgba(255,255,255,0.12); }
+  .cm-phase div:first-child::before{ display: none; }
+  .cm-phase i{ width: 14px; height: 14px; border-radius: 50%; background: #222; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.2); position: relative; z-index: 1; }
+  .cm-phase .done, .cm-phase .now{ color: var(--text); }
+  .cm-phase .done i{ background: var(--turf); box-shadow: none; }
+  .cm-phase .done::before, .cm-phase .now::before{ background: var(--turf); }
+  .cm-phase .now{ color: var(--gold); }
+  .cm-phase .now i{ background: var(--gold); box-shadow: 0 0 0 4px rgba(212,180,106,0.2); }
+  .cm-legs{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  @media (min-width: 721px){ .cm-legs{ grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .cm-leg{ display: flex; align-items: center; gap: 8px; padding: 8px 9px; min-width: 0; text-decoration: none; color: var(--text); font-size: 0.8rem; font-weight: 600; }
+  .cm-leg .rl-av{ --av: 26px; }
+  .cm-leg .cm-main{ line-height: 1.25; }
+  .cm-leg b, .cm-leg small{ display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cm-leg b{ font-weight: 600; }
+  .cm-leg small{ font-weight: 500; font-size: 0.66rem; color: var(--text-dim); }
+  .cm-leg.is-win small{ color: var(--turf); } .cm-leg.is-loss small{ color: var(--loss); }
+  .cm-bet{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cm-bet .cm-field{ margin-top: 12px; }
+  .cm-bet-foot{ display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
+  .cm-bet-foot .cm-fine{ margin: 0; }
+  .cm-in:disabled{ opacity: 0.45; }
+  .cm-sk{ display: grid; gap: 14px; }
+
   /* Messages */
   .an-prev{ margin-top: 6px; padding: 12px; border-radius: 16px; background: var(--bg); border: 1px solid var(--line); }
   .an-prev .glass{ margin: 0; }
@@ -228,15 +314,18 @@
       </div>
     </header>
 
-    <div id="cm-main"><div class="cm-empty">Loading…</div></div>
+    <div id="cm-main"><span class="sr-only">Loading…</span><div class="cm-split" aria-hidden="true"><div class="sk-stack">
+      <div class="sk"><div class="sk-row" style="justify-content:flex-start;gap:16px"><i class="o" style="width:84px;height:84px"></i><div class="sk-col"><i style="width:60%;height:10px"></i><i style="width:46%;height:34px"></i></div></div><div class="sk-grid" style="--cols:6;gap:12px 6px"><i class="o" style="width:44px;height:44px;margin:auto"></i><i class="o" style="width:44px;height:44px;margin:auto"></i><i class="o" style="width:44px;height:44px;margin:auto"></i><i class="o" style="width:44px;height:44px;margin:auto"></i><i class="o" style="width:44px;height:44px;margin:auto"></i><i class="o" style="width:44px;height:44px;margin:auto"></i></div></div>
+      <div class="sk"><i style="width:30%;height:15px"></i><div class="sk-item"><i style="width:70%;height:13px"></i><i style="width:50%;height:10px"></i></div><div class="sk-item"><i style="width:62%;height:13px"></i><i style="width:44%;height:10px"></i></div></div>
+    </div></div></div>
     <div id="cm-sheet"></div>
     <div id="cm-toast" role="status" aria-live="polite"></div>
 
     <footer id="site-footer" data-source="Tools kept by the league's Worker"></footer>
   </div>
 
-<script src="nav.js?v=43"></script>
-<script src="page-common.js?v=41"></script>
+<script src="nav.js?v=44"></script>
+<script src="page-common.js?v=42"></script>
 <script>
 (function () {
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
@@ -293,6 +382,8 @@
   let msgTab = 'banner';   // Messages: banner | push | text
   let toastTimer;
   const drafts = {};       // typed-in field values, kept across a redraw
+  let logos = {};          // each manager's team logo (page-common.js teamLogos)
+  const betDraft = {};     // the bet card's typed-in values, until saved
 
   const ERRORS = {
     wrong_pin: b => `Wrong PIN. ${b.triesLeft} tr${b.triesLeft === 1 ? 'y' : 'ies'} left before it locks for an hour.`,
@@ -365,7 +456,7 @@
   }
   const rowLink = (href, name, sub) => `<a class="cm-row item" href="${href}"><div class="cm-main"><div class="cm-name">${name}</div><div class="cm-sub">${sub}</div></div><span class="cm-chev">${I.chev}</span></a>`;
   const panel = (title, body, right, note) => `<section class="cm-section"><div class="glass"><div class="panel-title"><span>${title}</span>${right || ''}</div>${note ? `<div class="cm-note">${note}</div>` : ''}<div class="panel-body">${body}</div></div></section>`;
-  const loading = '<div class="cm-empty">Loading…</div>';
+  const loading = '<div class="sk" aria-hidden="true" style="padding:4px 0;background:none;border:0;box-shadow:none"><div class="sk-item"><i style="width:64%;height:13px"></i><i style="width:42%;height:10px"></i></div><div class="sk-item"><i style="width:56%;height:13px"></i><i style="width:38%;height:10px"></i></div></div>';
   // A typed-in box's value, set from code. draw() reads every box back into
   // drafts before it redraws, so the box itself has to change too.
   function setDraft(id, v) { drafts[id] = v; const el = $(id); if (el) el.value = v; }
@@ -395,10 +486,14 @@
   function status(k) {
     const P = ov.parlay;
     switch (k) {
-      case 'parlay':
+      case 'parlay': {
         if (!P) return { t: "Legs, Sacko, odds and Jon's tables" };
-        if (shut(P)) return { t: `Locked · ${P.legsIn.length} of ${P.players.length} in` };
+        const W = parlayWeek();
+        if (W && W.result) return { t: W.result === 'Win' ? 'It hit' : 'Dead' };
+        if (W && W.placed) return { t: `Placed · ${W.wins} of ${W.legs.length} hit` };
+        if (shut(P)) return { t: "Locked · the bet isn't in yet", warn: true };
         return { t: `${P.legsIn.length} of ${P.players.length} in · ${P.reopened ? 'reopened' : 'locks ' + etDay(P.locksAt)}`, warn: P.missing.length > 0 };
+      }
       case 'managers': return { t: `${ov.signedIn} of ${ov.managers} signed in · ${ov.push.people} with notifications`, warn: ov.unsigned.length > 0 };
       case 'messages': return { t: ov.announcement ? 'A banner is showing on Live' : 'Push, Live banner or group text' };
       case 'activity': return { t: ov.visits ? `${plural(ov.visits.visitors, 'visitor', 'visitors')} today` : 'Who comes, and what they read' };
@@ -414,47 +509,148 @@
     return { t: '' };
   }
 
-  // The week's steps: legs open, the lock, the bet, the games. (No payout
-  // step: the user asked for it off, 2026-10-28.)
-  // The bet and results come from /parlay-stats (the sheet's copy).
-  function weekHtml() {
-    const P = ov.parlay;
-    if (!P) return '';
+  // ---------- The week's parlay, read once (audit IX #8, #9) ----------
+  // The overview (legs in, the lock), Parlay Legs' board (each leg, and the
+  // bet as the sheet has it: GET /legs) and the parlay stats (results).
+  // phase: 0 legs open, 1 locked and no bet yet, 3 bet placed, 4 decided.
+  const gtTime = iso => {
+    const m = String(iso || '').match(/^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)/);
+    if (!m) return '';
+    const d = new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]);
+    return d.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  };
+  const gtDay = iso => gtTime(iso).split(' ')[0].toUpperCase();
+  const pickText = p => String(p || '').replace(/\s*\([+-]?[\d,]+\)\s*$/, '');
+  const fmtMoney = v => v == null || !Number.isFinite(Number(v)) ? '—' : '$' + Math.round(Number(v)).toLocaleString('en-US');
+  function parlayWeek() {
+    const P = ov && ov.parlay;
+    if (!P) return null;
     const S = screenData.tables;
     const w = S && S.weeks ? S.weeks.find(x => x.year === P.year && x.week === P.week) : null;
-    const isShut = shut(P);
-    const picks = w ? Object.values(w.picks || {}) : [];
-    const wins = picks.filter(x => x.result === 'Win').length;
+    const B = screenData.board && screenData.board.year === P.year && screenData.board.week === P.week ? screenData.board : null;
+    const meta = (B && B.meta) || {};
     const f = (w && w.final) || {};
-    const placed = f.odds != null && !!(w && w.sacko);
+    const sacko = meta.sacko || (w && w.sacko) || '';
+    const odds = meta.final_odds != null ? meta.final_odds : f.odds != null ? f.odds : null;
+    const payout = meta.final_payout != null ? meta.final_payout : f.payout != null ? f.payout : null;
+    const placed = odds != null && !!sacko;
     const result = f.result === 'Win' || f.result === 'Loss' ? f.result : '';
-    const steps = [
-      { st: 'done', w: 'Tue 12 AM', t: 'Legs opened' },
-      isShut
-        ? { st: 'done', w: etDay(P.locksAt), t: `Legs locked · ${P.legsIn.length} of ${P.players.length} in`,
-            acts: access === 'session' && !placed ? `<button type="button" class="cm-btn dim" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>Unlock</button>` : '' }
-        : { st: 'now', w: P.reopened ? 'Now · reopened' : `Now · locks ${etDay(P.locksAt)}`, t: `${P.legsIn.length} of ${P.players.length} legs in`, s: P.missing.length ? `Waiting on ${list(P.missing)}` : 'Every leg is in.',
-            acts: (P.missing.length ? `<button type="button" class="cm-btn solid" data-act="nudge">Nudge the ${P.missing.length}</button>` : '')
-              + (access === 'session' ? `<button type="button" class="cm-btn dim" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>Lock now</button>` : '')
-              + '<a class="cm-btn dim" href="parlay-legs.html">Enter for someone</a>' },
-      { st: !isShut ? '' : placed ? 'done' : 'now', w: 'After the lock',
-        t: placed ? `Bet placed at ${fmtOdds(f.odds)} · Sacko ${w.sacko}` : 'Place the bet, then enter the final odds and Sacko',
-        acts: isShut && !placed ? '<a class="cm-btn solid" href="parlay-legs.html">Enter odds and Sacko</a>' : '' },
-      { st: result ? 'done' : placed ? 'now' : '', w: 'Thursday to Monday',
-        t: result === 'Loss' ? `Dead${w.killed_by && w.killed_by.length ? ` · killed by ${list(w.killed_by)}` : ''}` : result === 'Win' ? 'It hit' : placed && picks.length ? `${wins} of ${picks.length} legs hit so far` : 'The games' },
-    ];
-    const body = `<div class="tl">${steps.map(x => `<div class="tl-st ${x.st}"><span class="tl-dot">${x.st === 'done' ? I.check : x.st === 'now' ? I.clock : ''}</span>
-      <div style="min-width:0"><div class="tl-w">${esc(x.w)}</div><div class="tl-t">${esc(x.t)}</div>${x.s ? `<div class="tl-s">${esc(x.s)}</div>` : ''}${x.acts ? `<div class="cm-wrap tl-acts">${x.acts}</div>` : ''}</div></div>`).join('')}</div>`;
-    return panel(`Week ${P.week} parlay`, body, '<a class="cm-txt gold" href="#parlay" style="padding:0;min-height:0">Parlay ›</a>');
+    const picks = (w && w.picks) || {};
+    const legs = P.players.map(n => {
+      const st = picks[n], b = B && (B.legs || []).find(l => l.player === n);
+      return { n, pick: st ? st.pick : b ? pickText(b.raw_pick) : '', odds: st ? st.odds : b ? b.odds : null,
+        gt: (st && st.gametime) || (b && b.gametime) || '', result: st && (st.result === 'Win' || st.result === 'Loss') ? st.result : '' };
+    });
+    const byTime = legs.filter(l => l.gt).sort((x, y) => x.gt.localeCompare(y.gt));
+    const isShut = shut(P);
+    return { P, placed, result, sacko, odds, payout, legs, byTime, isShut, killed: (w && w.killed_by) || [],
+      wins: legs.filter(l => l.result === 'Win').length, next: byTime.find(l => !l.result),
+      phase: result ? 4 : placed ? 3 : isShut ? 1 : 0 };
+  }
+  const untilText = ms => {
+    const m = Math.max(0, Math.round((ms - Date.now()) / 60000));
+    const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
+    return d ? `${d}d ${h}h` : h ? `${h}h ${m % 60}m` : `${m}m`;
+  };
+  function ringSvg(n, of) {
+    const r = 36, c = 2 * Math.PI * r;
+    return `<svg class="cm-ring" viewBox="0 0 84 84" role="img" aria-label="${n} of ${of} legs in"><circle cx="42" cy="42" r="${r}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7"/>
+      <circle cx="42" cy="42" r="${r}" fill="none" stroke="#D4B46A" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(c * n / Math.max(1, of)).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 42 42)"/>
+      <text x="42" y="49" text-anchor="middle" font-family="Big Shoulders Display, sans-serif" font-weight="800" font-size="22" fill="#F5F5F3">${n}/${of}</text></svg>`;
+  }
+  // A manager in the roll call: their avatar ringed for their leg, a check
+  // once it's in and a bell when they get notifications. Opens Parlay Legs
+  // for them.
+  const rollCell = (n, cls, sub = '') => `<a class="cm-rc" href="parlay-legs.html?for=${encodeURIComponent(n)}" aria-label="${esc(n)}${cls === 'in' ? ': leg in' : cls === 'out' ? ': no leg yet' : ''}"><span class="cm-avw">${avatarHtml(n, logos, cls)}${cls === 'in' ? `<span class="ck">${I.check}</span>` : ''}${pushOn(n) && (cls === 'in' || cls === 'out') ? `<span class="bl">${I.bell}</span>` : ''}</span>${sub ? `<em>${esc(sub)}</em>` : `<span>${esc(n)}</span>`}</a>`;
+
+  function heroHtml() {
+    const W = parlayWeek();
+    if (!W) return '';
+    const { P } = W;
+    const lockBtn = access === 'session' ? `<button type="button" class="cm-btn dim" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>${W.isShut ? 'Unlock' : 'Lock now'}</button>` : '';
+    let body;
+    if (W.phase === 0) {
+      const head = P.reopened ? '<div class="cm-big">Reopened<small>until you lock it</small></div>' : `<div class="cm-big">${untilText(P.locksAt)}<small>until the ${esc(etDay(P.locksAt))} lock</small></div>`;
+      body = `<div class="cm-hero-top">${ringSvg(P.legsIn.length, P.players.length)}<div style="min-width:0"><div class="cm-cap">Week ${P.week} parlay · legs open</div>${head}</div></div>
+        <div class="cm-roll">${P.players.map(n => rollCell(n, P.legsIn.includes(n) ? 'in' : 'out')).join('')}</div>
+        <div class="cm-legend"><span><i></i>Leg in</span><span>${I.bell}Gets notifications</span><span>Tap anyone to enter their leg</span></div>
+        <div class="cm-wrap">${P.missing.length ? `<button type="button" class="cm-btn solid" data-act="nudge">Nudge the ${P.missing.length}</button>` : ''}${lockBtn}</div>`;
+    } else if (W.phase === 1) {
+      body = `<div class="cm-cap">Week ${P.week} parlay · locked</div><div class="cm-big">${P.legsIn.length} of ${P.players.length}<small>legs in</small></div>
+        <div class="cm-roll">${P.players.map(n => rollCell(n, P.legsIn.includes(n) ? 'in' : 'out')).join('')}</div>
+        <p class="cm-fine">Place the bet, then put in the Sacko, final odds and payout so Parlay shows the payout.</p>
+        <div class="cm-wrap"><a class="cm-btn solid" href="#parlay">Enter the bet</a>${lockBtn}</div>`;
+    } else {
+      const chip = W.result === 'Win' ? '<span class="cm-count green">Hit</span>' : W.result === 'Loss' ? '<span class="cm-count red">Dead</span>' : `<span class="cm-count">Alive · ${W.wins} of ${W.legs.length}</span>`;
+      const pips = (W.byTime.length ? W.byTime : W.legs).map(l => rollCell(l.n, l.result === 'Win' ? 'won' : l.result === 'Loss' ? 'lost' : W.next && l.n === W.next.n && !W.result ? 'next' : 'wait', l.gt ? gtDay(l.gt) : '—')).join('');
+      const line = W.result === 'Loss' ? `Dead${W.killed.length ? ` · killed by <b>${esc(list(W.killed))}</b>` : ''}.`
+        : W.result === 'Win' ? `<b>It hit.</b> ${fmtMoney(W.payout / W.legs.length)} each.`
+        : W.next ? `Next: <b>${esc(W.next.n)}</b> · ${esc(W.next.pick)}${W.next.gt ? ` · ${esc(gtTime(W.next.gt))}` : ''}` : '';
+      body = `<div class="cm-hero-head"><span class="cm-cap">Week ${P.week} parlay · bet placed</span>${chip}</div>
+        <div class="cm-big">${fmtMoney(W.payout)}<small>at ${esc(fmtOdds(W.odds))}${W.sacko ? ` · Sacko ${esc(W.sacko)}` : ''}</small></div>
+        <div class="cm-pips">${pips}</div>${line ? `<div class="cm-next item">${line}</div>` : ''}`;
+    }
+    return `<section class="cm-section"><div class="glass cm-hero">${body}</div></section>`;
+  }
+
+  // Needs you: only what you can act on, one button each; when nothing is
+  // due, what's coming next. Notifications sit last: they're never all on.
+  function needsHtml() {
+    const W = parlayWeek(), P = ov.parlay, rows = [];
+    const todo = (tone, icon, t, sub, btn) => `<div class="cm-todo"><span class="cm-tic ${tone}">${icon}</span><div class="cm-main"><div class="cm-name">${t}</div>${sub ? `<div class="cm-sub">${sub}</div>` : ''}</div>${btn || ''}</div>`;
+    if (W && W.phase === 0 && P.missing.length) {
+      const reach = P.missing.filter(pushOn);
+      rows.push(todo('hot', I.ticket, `${plural(P.missing.length, 'leg', 'legs')} missing`, `Locks ${esc(etDay(P.locksAt))}. ${reach.length ? `A push reaches ${esc(list(reach))}; text the rest.` : 'None of them get notifications, so text them.'}`, '<button type="button" class="cm-btn solid" data-act="nudge">Nudge</button>'));
+    }
+    if (W && W.phase === 0 && access === 'session') rows.push(todo('warm', I.lock, 'Lock once the bet is placed', `Or the legs lock on their own ${esc(etDay(P.locksAt))}.`, `<button type="button" class="cm-btn" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>Lock</button>`));
+    if (W && W.phase === 1) rows.push(todo('hot', I.ticket, 'Put in the bet', 'Sacko, final odds and payout.', '<a class="cm-btn solid" href="#parlay">Enter</a>'));
+    const f = failing();
+    if (f.length) rows.push(todo('hot', I.shield, f.length === 1 ? `${esc(f[0].name)} is failing` : `${f.length} site checks failing`, esc(f[0].detail), '<a class="cm-btn dim" href="#site">Open</a>'));
+    if (ov.feedbackNew) rows.push(todo('warm', I.chat, `${plural(ov.feedbackNew, 'new note', 'new notes')} from managers`, 'Sent from You › Send feedback', '<a class="cm-btn dim" href="#feedback">Read</a>'));
+    if (ov.unsigned.length) rows.push(todo('warm', I.key, `${plural(ov.unsigned.length, 'manager', 'managers')} not signed in`, esc(list(ov.unsigned)), '<a class="cm-btn dim" href="#managers">Send links</a>'));
+    if (!rows.length) {
+      rows.push(todo('ok', I.check, 'Nothing needs you right now', W && W.phase === 3 ? 'The bet is in and every leg grades on its own.' : ''));
+      if (W && W.phase === 3 && W.next) rows.push(todo('', I.clock, `${esc(gtTime(W.next.gt) || 'Next')}: ${esc(W.next.n)}'s leg`, esc(W.next.pick)));
+      if (P && P.opensAt > Date.now()) rows.push(todo('', I.clock, `${esc(etDay(P.opensAt))}: next week's legs open`, 'The Nudge shows up here once they do.'));
+    }
+    const off = names.filter(n => !pushOn(n)), on = names.filter(pushOn);
+    if (off.length) rows.push(todo('', I.bell, `${plural(off.length, 'manager', 'managers')} without notifications`, on.length ? `Only ${esc(list(on))} ${on.length === 1 ? 'has' : 'have'} them on.` : 'Nobody has them on yet.', '<button type="button" class="cm-btn dim" data-act="go-howto">Text them</button>'));
+    return panel('Needs you', `<div class="cm-todos item">${rows.join('')}</div>`);
+  }
+
+  // Managers a day for the last 14 days (Activity's grid, loaded quietly).
+  function visitDays() {
+    const d = screenData.activity;
+    if (!d || !d.grid || !d.today) return null;
+    const end = Date.parse(d.today + 'T12:00:00Z');
+    return Array.from({ length: 14 }, (_, i) => {
+      const day = new Date(end - (13 - i) * 864e5).toISOString().slice(0, 10);
+      return new Set(d.grid.filter(r => r.day === day).map(r => r.manager)).size;
+    });
+  }
+  function sparkSvg(vals) {
+    const w = 100, h = 22, max = Math.max(1, ...vals), step = w / (vals.length - 1);
+    const pts = vals.map((v, i) => [i * step, h - 2 - (v / max) * (h - 5)]);
+    const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><path d="${d} L${w} ${h} L0 ${h}Z" fill="#D4B46A" opacity=".14"/><path d="${d}" fill="none" stroke="#D4B46A" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+  function pulseHtml() {
+    const days = visitDays(), h = health || ov.health, bad = failing().length;
+    const today = days ? days[days.length - 1] : ov.visits ? ov.visits.visitors : null;
+    const pushPct = ov.managers ? Math.round(ov.push.people / ov.managers * 100) : 0;
+    return `<div class="cm-pulse">
+      <a class="glass cm-pz" href="#activity"><span class="k">${days ? 'Managers today' : 'Visitors today'}</span><b class="v">${today == null ? '—' : today}</b>${days ? sparkSvg(days) : ''}</a>
+      <a class="glass cm-pz" href="#managers"><span class="k">Notifications</span><b class="v">${ov.push.people}<small>/${ov.managers}</small></b><span class="cm-bar"><i style="width:${pushPct}%"></i></span></a>
+      <a class="glass cm-pz" href="#site"><span class="k">Site health</span><b class="v ${!h ? '' : bad ? 'bad' : 'good'}">${h ? `${h.checks.length - bad}/${h.checks.length}` : '—'}</b><span class="s">${h ? 'Checked ' + esc(ago(h.at).replace(/ hours? ago/, 'h ago').replace(/ minutes ago/, 'm ago').replace(/ days? ago/, 'd ago')) : 'Not checked yet'}</span></a></div>`;
   }
 
   function viewHub() {
-    const tiles = Object.keys(TOOLS).map(k => {
-      const s = status(k), t = TOOLS[k];
-      return `<a class="cm-tool item${s.bad ? ' is-loss' : s.warn ? ' is-lead' : ''}" href="#${k}"><span class="cm-ic">${t.icon}</span><div class="cm-tool-n">${t.label}</div>
-        <div class="cm-tool-s${s.bad ? ' bad' : ''}">${s.dot !== undefined ? `<span class="cm-dot ${s.dot}"></span>` : ''}${esc(s.t)}</div></a>`;
+    const rows = Object.keys(TOOLS).map(k => {
+      const st = status(k), t = TOOLS[k];
+      return `<a class="cm-li" href="#${k}"><span class="cm-ic">${t.icon}</span><div class="cm-main"><div class="cm-name">${t.label}</div>
+        <div class="cm-sub${st.bad ? ' bad' : st.warn ? ' warn' : ''}">${st.dot !== undefined ? `<span class="cm-dot ${st.dot}"></span>` : ''}${esc(st.t)}</div></div><span class="cm-chev">${I.chev}</span></a>`;
     }).join('');
-    return { title: 'Commissioner', html: weekHtml() + `<section class="cm-section"><div class="cm-tool-grid">${tiles}</div></section>` };
+    return { title: 'Commissioner', html: `<div class="cm-split"><div>${heroHtml()}${needsHtml()}</div><div>${pulseHtml()}${panel('Tools', `<div class="cm-list">${rows}</div>`)}</div></div>` };
   }
 
   // ---------- Parlay ----------
@@ -472,34 +668,69 @@
       ${check.length ? `<p class="cm-fine"><b>Check by hand</b></p><div class="cm-rows">${check.map(x => row(x, esc(fmtOdds(x.was) || '—'))).join('')}</div>` : ''}`;
   }
 
+  // One screen that follows the week (audit IX #9): where it stands, the
+  // twelve legs (each opens Parlay Legs for that manager), the bet itself,
+  // saved from here (POST /parlay-entry, mode "meta": only the Sacko, final
+  // odds and payout, so no leg can be overwritten), and the rest.
+  function phaseHtml(W) {
+    const last = W.result === 'Win' ? 'It hit' : W.result === 'Loss' ? 'Dead' : 'Results';
+    const cur = W.phase === 0 ? 0 : W.phase === 1 ? 1 : W.phase === 3 ? 3 : 4;
+    return `<div class="cm-phase" role="list">${['Legs open', 'Locked', 'Bet placed', last].map((l, i) => `<div role="listitem" class="${i < cur ? 'done' : i === cur ? 'now' : ''}"${i === cur ? ' aria-current="step"' : ''}><i></i>${l}</div>`).join('')}</div>`;
+  }
+  function legTile(W, l) {
+    const P = W.P;
+    let cls = '', sub;
+    if (W.phase === 0) { const inn = P.legsIn.includes(l.n); cls = inn ? 'is-win' : ''; sub = inn ? (l.odds != null ? `In · ${fmtOdds(l.odds)}` : 'In') : 'No leg yet'; }
+    else if (l.result) { cls = l.result === 'Win' ? 'is-win' : 'is-loss'; sub = l.result === 'Win' ? 'Won' : 'Lost'; }
+    else sub = l.gt ? gtTime(l.gt).replace(/ [AP]M$/, '') : P.legsIn.includes(l.n) ? 'In' : 'No leg';
+    return `<a class="cm-leg item ${cls}" href="parlay-legs.html?for=${encodeURIComponent(l.n)}"${l.pick ? ` title="${esc(l.pick)}"` : ''}>${avatarHtml(l.n, logos)}<span class="cm-main"><b>${esc(l.n)}</b><small>${esc(sub)}</small></span></a>`;
+  }
+  function betSplit(pay, n, can) {
+    if (!can) return 'Fill these in once the legs lock and the bet is placed.';
+    const v = parseFloat(String(pay).replace(/[$,\s]/g, ''));
+    return Number.isFinite(v) && v > 0 ? `Split <b>${fmtMoney(v / n)}</b> each` : 'Parlay shows the payout once it saves.';
+  }
+  function betHtml(W) {
+    const P = W.P, can = W.phase > 0;
+    // Only what you've typed overrides the saved bet (betDraft, set on input).
+    const v = (id, from) => betDraft[id] !== undefined ? betDraft[id] : from;
+    const sacko = v('bt-sacko', W.sacko);
+    const odds = v('bt-odds', W.odds != null ? fmtOdds(W.odds) : '');
+    const pay = v('bt-pay', W.payout != null ? Number(W.payout).toLocaleString('en-US', { maximumFractionDigits: 2 }) : '');
+    const off = can ? '' : ' disabled';
+    const chip = W.placed ? '<span class="cm-count green">Saved</span>' : can ? '<span class="cm-count">Needed</span>' : '<span class="cm-count dim">After the lock</span>';
+    return panel('The bet', `
+      <label class="cm-field"><span>Sacko</span><select class="cm-in" id="bt-sacko"${off}><option value="">—</option>${P.players.map(n => `<option${n === sacko ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+      <div class="cm-bet"><label class="cm-field"><span>Final odds</span><input class="cm-in" id="bt-odds" inputmode="numeric" autocomplete="off" placeholder="+400,000" value="${esc(odds)}"${off}></label>
+        <label class="cm-field"><span>Payout</span><input class="cm-in" id="bt-pay" inputmode="decimal" autocomplete="off" placeholder="80,000" value="${esc(pay)}"${off}></label></div>
+      <div class="cm-bet-foot"><p class="cm-fine" id="bt-split">${betSplit(pay, P.players.length, can)}</p><button type="button" class="cm-btn solid" data-act="bet-save"${can && !busy ? '' : ' disabled'}>${busy === 'bet' ? 'Saving…' : 'Save'}</button></div>`, chip);
+  }
   function viewParlay() {
-    const P = ov.parlay;
-    if (!P) return { title: 'Parlay', html: panel('Legs', '<div class="cm-empty">Couldn\'t read this week\'s legs. Try again in a minute.</div>') };
-    const cant = P.missing.filter(m => ov.unsigned.includes(m));
-    const dots = P.players.map(n => `<span class="cm-mono ${P.legsIn.includes(n) ? 'in' : 'out'}" title="${esc(n)}">${esc(monogram(n))}</span>`).join('');
-    let legs;
-    if (!P.windowOpen) {
-      legs = `<div class="cm-dots">${dots}</div>
-        <p class="cm-fine">Locked ${esc(etDay(P.locksAt))} ET. Unlock to let managers change their legs again, until you lock them.</p>
-        ${access === 'session' ? `<div class="cm-wrap"><button type="button" class="cm-btn" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>Unlock legs</button><a class="cm-btn dim" href="parlay-legs.html">Open the board</a></div>` : '<p class="cm-fine">Sign in as a commissioner to unlock the legs.</p>'}`;
-    } else {
-      legs = `<div class="cm-dots">${dots}</div>
-        <p class="cm-fine">${P.missing.length ? `<b>Missing:</b> ${esc(list(P.missing))}.` : 'Every leg is in.'}${cant.length ? ` ${esc(list(cant))} ${cant.length > 1 ? "haven't" : "hasn't"} signed in, so they can't enter ${cant.length > 1 ? 'theirs' : 'one'} themselves.` : ''}</p>
-        <p class="cm-fine">${P.locked ? 'Locked. Managers can no longer change their legs. You still can.' : P.reopened ? 'Reopened after the Thursday lock. Managers can change their legs until you lock them again.' : `Locks ${esc(etDay(P.locksAt))} ET on its own. Lock now to shut the board once the bet is placed.`}</p>
-        <div class="cm-wrap">${P.missing.length && !P.locked ? `<button type="button" class="cm-btn solid" data-act="nudge">Nudge the ${P.missing.length}</button>` : ''}${access === 'session' ? `<button type="button" class="cm-btn${P.locked ? ' dim' : ''}" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>${P.locked ? 'Unlock legs' : 'Lock legs'}</button>` : ''}<a class="cm-btn dim" href="parlay-legs.html">Open the board</a></div>
-        ${access === 'session' ? '' : '<p class="cm-fine">Sign in as a commissioner to lock the legs.</p>'}${pricedHtml(P)}`;
-    }
+    const W = parlayWeek();
+    if (!W) return { title: 'Parlay', html: panel('Legs', '<div class="cm-empty">Couldn\'t read this week\'s legs. Try again in a minute.</div>') };
+    const P = W.P;
+    const order = W.phase === 0 || !W.byTime.length ? W.legs : W.byTime.concat(W.legs.filter(l => !l.gt));
+    let acts = '';
+    if (W.phase === 0) acts = (P.missing.length ? `<button type="button" class="cm-btn solid" data-act="nudge">Nudge the ${P.missing.length}</button>` : '')
+      + (access === 'session' ? `<button type="button" class="cm-btn" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>${P.locked ? 'Unlock legs' : 'Lock legs'}</button>` : '');
+    else if (W.phase === 1 && access === 'session') acts = `<button type="button" class="cm-btn dim" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>Unlock legs</button>`;
+    const note = W.phase === 0 ? (P.locked ? 'Locked to managers. You can still change any leg.' : P.reopened ? 'Reopened after the Thursday lock, until you lock them again.' : `Locks ${esc(etDay(P.locksAt))} ET on its own.`)
+      : W.phase === 1 ? `Locked ${esc(etDay(P.locksAt))} ET. Unlock to let managers change their legs again.` : '';
+    const legs = panel('Legs', `${phaseHtml(W)}<div class="cm-legs">${order.map(l => legTile(W, l)).join('')}</div>
+      <p class="cm-fine">Tap anyone to enter or change their leg.${note ? ' ' + note : ''}</p>${acts ? `<div class="cm-wrap">${acts}</div>` : ''}
+      ${access === 'session' || W.phase > 1 ? '' : '<p class="cm-fine">Sign in as a commissioner to lock or unlock the legs.</p>'}${pricedHtml(P)}`,
+      `<span class="cm-count${W.phase === 0 ? '' : ' dim'}">${W.phase >= 3 ? `${W.wins} of ${W.legs.length} hit` : `${P.legsIn.length} of ${P.players.length} in`}</span>`);
     const refreshed = wfAt('refresh_parlay_data.yml');
     const left = P.oddsLeft;
-    const rows = `<div class="cm-rows">
-      ${rowLink('parlay-legs.html', 'Enter or edit picks', 'Any manager, any week, or paste the whole week')}
-      ${rowLink('parlay-legs.html', 'Sacko, final odds and payout', 'Set once the parlay is placed')}
-      ${rowLink('#tables', "Jon's Tables", "Season table and this week's legs, ready to copy")}
-      <div class="cm-line item"><div class="cm-main"><div class="cm-name">Refresh parlay data</div><div class="cm-sub">${busy === 'parlay' ? 'Refreshing…' : refreshed ? 'Last refreshed ' + ago(refreshed) : 'Re-reads the sheet and regrades'}</div></div><button type="button" class="cm-btn dim" data-act="run" data-which="parlay"${busy === 'parlay' ? ' disabled' : ''}>Refresh</button></div>
-      <div class="cm-line item" style="display:block"><div style="display:flex;justify-content:space-between;gap:10px"><div class="cm-name">Odds credits</div><span class="cm-val">${left == null ? '—' : `${left} of 500`}</span></div><div class="cm-sub">${left == null ? 'Not checked yet this month' : 'Left this month for Hard Rock lines'}</div>${left == null ? '' : `<div class="cm-bar"><i style="width:${Math.max(0, Math.min(100, left / 5))}%"></i></div>`}</div>
-    </div>`;
-    return { title: 'Parlay', right: `<span class="cm-count ${P.locked ? 'dim' : P.windowOpen ? 'green' : 'dim'}">${P.locked ? 'Locked' : P.windowOpen ? 'Open' : 'Closed'}</span>`,
-      html: `<div class="cm-split">${panel('Legs', legs, P.windowOpen ? `<span class="cm-count">${P.legsIn.length} of ${P.players.length} in</span>` : '')}${panel('Tools', rows)}</div>` };
+    const more = panel('More', `<div class="cm-list">
+      <a class="cm-li" href="parlay-legs.html"><span class="cm-ic">${I.ticket}</span><div class="cm-main"><div class="cm-name">Parlay Legs board</div><div class="cm-sub">Every leg, any week, or paste Jon's note</div></div><span class="cm-chev">${I.chev}</span></a>
+      <a class="cm-li" href="#tables"><span class="cm-ic">${I.table}</span><div class="cm-main"><div class="cm-name">Jon's Tables</div><div class="cm-sub">Season table and this week's legs, ready to copy</div></div><span class="cm-chev">${I.chev}</span></a>
+      <div class="cm-li"><span class="cm-ic">${I.sync}</span><div class="cm-main"><div class="cm-name">Parlay data</div><div class="cm-sub">${busy === 'parlay' ? 'Refreshing…' : refreshed ? 'Refreshed ' + ago(refreshed) : 'Re-reads the sheet and regrades'}</div></div><button type="button" class="cm-btn dim" data-act="run" data-which="parlay"${busy === 'parlay' ? ' disabled' : ''}>Refresh</button></div>
+      <div class="cm-li" style="display:block;padding-top:12px;padding-bottom:12px"><div style="display:flex;justify-content:space-between;gap:10px"><div class="cm-name">Odds credits</div><span class="cm-val">${left == null ? '—' : `${left} of 500`}</span></div><div class="cm-sub">${left == null ? 'Not checked yet this month' : 'Left this month for Hard Rock lines'}</div>${left == null ? '' : `<div class="cm-bar"><i style="width:${Math.max(0, Math.min(100, left / 5))}%"></i></div>`}</div>
+    </div>`);
+    const chip = W.result === 'Win' ? '<span class="cm-count green">Hit</span>' : W.result === 'Loss' ? '<span class="cm-count red">Dead</span>'
+      : W.phase === 3 ? '<span class="cm-count green">Placed</span>' : W.phase === 1 ? '<span class="cm-count dim">Locked</span>' : `<span class="cm-count ${P.locked ? 'dim' : 'green'}">${P.locked ? 'Locked' : 'Open'}</span>`;
+    return { title: 'Parlay', right: chip, html: `<div class="cm-split"><div>${legs}</div><div>${betHtml(W)}${more}</div></div>` };
   }
 
   // ---------- Jon's Tables (the season table and this week's legs, copyable) ----------
@@ -940,6 +1171,7 @@
     $('cm-eyebrow').outerHTML = r === 'hub' ? '<div class="eyebrow" id="cm-eyebrow">Retirement League</div>' : `<a class="hdr-back" id="cm-eyebrow" href="#" aria-label="Back to Commissioner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>Commissioner</span></a>`;
     $('cm-title').textContent = v.title;
     $('cm-right').innerHTML = v.right || '';
+    if (window.rlHeaderPlace) rlHeaderPlace();
     document.title = r === 'hub' ? 'Retirement League — Commissioner' : `Retirement League — ${v.title}`;
     const keep = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.keep !== undefined ? document.activeElement.id : '';
     const pos = keep ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
@@ -953,6 +1185,7 @@
     $('cm-eyebrow').outerHTML = '<div class="eyebrow" id="cm-eyebrow">Retirement League</div>';
     $('cm-title').textContent = 'Commissioner';
     $('cm-right').innerHTML = '';
+    if (window.rlHeaderPlace) rlHeaderPlace();
     mainEl.innerHTML = panel('PIN', `<form class="pin-row" id="pin-form" autocomplete="off" style="margin-top:0"><input class="pin-box" id="pin" type="password" inputmode="numeric" placeholder="PIN" aria-label="PIN" autocomplete="off"><button type="submit" class="cm-btn solid" style="height:40px;padding:0 18px">Unlock</button></form>
       ${msg ? `<p class="cm-fine bad" role="status">${esc(msg)}</p>` : ''}`, '', 'Signed-in commissioners skip this. Sign in from the You tab, or enter the PIN.');
     const pin = $('pin');
@@ -1008,17 +1241,29 @@
         call('log').then(x => { screenData.log = x.entries; if (route() === 'site') draw(); }).catch(() => {});
         health = await call('health');
       }
-      else if (r === 'hub') { await loadOverview(); draw(); loadWeekStats(); if (!health || Date.now() - health.at > 10 * 60 * 1000) refreshHealth(); }
-      else if (r === 'parlay' || r === 'season') await loadOverview();
+      else if (r === 'hub') { await loadOverview(); draw(); hubExtras(); if (!health || Date.now() - health.at > 10 * 60 * 1000) refreshHealth(); }
+      else if (r === 'parlay') await Promise.all([loadOverview(), loadBoard(), loadStats()]);
+      else if (r === 'season') await loadOverview();
     } catch (err) {
       if (lostAccess(err)) return;
       toast(err.message || "Couldn't load that. Try again.");
     }
     draw();
   }
-  // The bet and results for the hub's timeline (the same read as Jon's Tables).
-  async function loadWeekStats() {
-    try { screenData.tables = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(x => x.json()); if (route() === 'hub') draw(); } catch { /* the timeline stops at the lock */ }
+  // The bet and results (the same read as Jon's Tables), and Parlay Legs'
+  // board: each leg and the bet as the sheet has it, ahead of the stats.
+  async function loadStats() {
+    try { screenData.tables = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(x => x.json()); } catch { /* the card stops at the lock */ }
+  }
+  async function loadBoard() {
+    try { const res = await fetch(WORKER_URL + '/legs', { cache: 'no-store', headers: authHeaders() }); if (res.ok) screenData.board = await res.json(); } catch { /* the stats stand in */ }
+  }
+  // The hub's card and pulse fill in as these come back.
+  function hubExtras() {
+    const again = () => { if (route() === 'hub') draw(); };
+    loadStats().then(again);
+    loadBoard().then(again);
+    if (!screenData.activity) call('activity').then(d => { screenData.activity = d; again(); }).catch(() => {});
   }
   // Quietly, so the hub's health line is today's and not the morning's.
   async function refreshHealth() {
@@ -1034,7 +1279,8 @@
       return;
     }
     draw();
-    if (route() !== 'hub') loadScreen(); else { refreshHealth(); loadWeekStats(); }
+    if (route() !== 'hub') loadScreen(); else { refreshHealth(); hubExtras(); }
+    teamLogos().then(l => { logos = l; draw(); });
   }
 
   async function init() {
@@ -1124,6 +1370,31 @@
         await call('workflow_run', { which: d.which });
         toast('Started. Give it a minute or two.');
         call('health').then(h => { health = h; draw(); }).catch(() => {});
+      });
+    }
+    else if (a === 'go-howto') { msgTab = 'text'; setDraft('gt-text', GT_TPL()[1][1]); location.hash = '#messages'; }
+    else if (a === 'bet-save') {
+      const W = parlayWeek();
+      if (!W) return;
+      const sacko = $('bt-sacko').value;
+      const odds = parseFloat($('bt-odds').value.replace(/[,\s+]/g, ''));
+      const payout = parseFloat($('bt-pay').value.replace(/[$,\s]/g, ''));
+      if (!sacko) { toast('Pick the Sacko first.'); $('bt-sacko').focus(); return; }
+      if (!Number.isFinite(odds) || Math.abs(odds) < 100) { toast('Final odds look like +383,778.'); $('bt-odds').focus(); return; }
+      if (!Number.isFinite(payout) || payout <= 0) { toast('The payout looks like 92,127.'); $('bt-pay').focus(); return; }
+      await act('bet', async () => {
+        const body = { picks: { year: W.P.year, week: W.P.week, mode: 'meta', sacko, final_odds: odds, final_payout: payout, rows: {} } };
+        if (access === 'pin') body.pin = store.get(PIN_KEY);
+        let res = null, out = {};
+        try {
+          res = await fetch(WORKER_URL + '/parlay-entry', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify(body) });
+          out = await res.json().catch(() => ({}));
+        } catch { /* no connection */ }
+        if (!res || !res.ok) throw { ...out, message: out.error === 'cooldown' ? `Just saved. Try again in ${out.retryAfterSeconds}s.` : ERRORS[out.error] ? ERRORS[out.error](out) : `Couldn't save the bet (${res ? out.error || res.status : 'no connection'}). Try again.` };
+        // The sheet has it in a minute or two; show it here now.
+        if (screenData.board) screenData.board.meta = { sacko, final_odds: odds, final_payout: payout };
+        ['bt-sacko', 'bt-odds', 'bt-pay'].forEach(k => { delete betDraft[k]; });
+        toast('Saved. Parlay shows it in a minute or two.');
       });
     }
     else if (a === 'nudge') { nudge = true; nudgeOff.clear(); nudgeArmed = 0; drawSheet(); }
@@ -1265,7 +1536,10 @@
       drafts['an-until'] = e.target.value;
       document.querySelectorAll('[data-act="an-until"]').forEach(b => { const on = b.dataset.v === e.target.value; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
     }
+    if (/^bt-/.test(e.target.id)) betDraft[e.target.id] = e.target.value;
+    if (e.target.id === 'bt-pay') { const sp = $('bt-split'), W = parlayWeek(); if (sp && W) sp.innerHTML = betSplit(e.target.value, W.P.players.length, true); }
   });
+  document.addEventListener('change', e => { if (e.target.id === 'bt-sacko') betDraft['bt-sacko'] = e.target.value; });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && (sheet || nudge)) { sheet = ''; nudge = false; confirmRole = ''; drawSheet(); } });
   window.addEventListener('hashchange', () => {
     sheet = ''; confirmRole = ''; asking = ''; confirmPush = false; nudge = false;

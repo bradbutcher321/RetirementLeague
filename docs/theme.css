@@ -1164,3 +1164,71 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
 .ptr.busy svg{ animation:ptr-spin .7s linear infinite; }
 @keyframes ptr-spin{ from{ transform:rotate(300deg); } to{ transform:rotate(660deg); } }
 @media (prefers-reduced-motion:reduce){ .ptr.settle{ transition:none; } .ptr.busy svg{ animation:none; } }
+
+/* ---------- Site audit IX ----------
+   Round avatars (page-common.js avatarHtml): the team logo, the monogram
+   until it loads. Size with --av; .ring takes your ring color, .ringw white. */
+.rl-av{ --av: 28px; position: relative; flex: none; width: var(--av); height: var(--av); border-radius: 50%; overflow: hidden; display: inline-grid; place-items: center; background: #1C1C1C; box-shadow: 0 0 0 1px rgba(255,255,255,0.14); vertical-align: middle; }
+.rl-av img{ width: 100%; height: 100%; object-fit: cover; display: block; }
+.rl-av i{ font: 800 calc(var(--av) * 0.3)/1 var(--body); font-style: normal; letter-spacing: 0.02em; color: #D3D3CF; }
+.rl-av.ring{ box-shadow: 0 0 0 2px var(--me-ring); }
+.rl-av.ringw{ box-shadow: 0 0 0 2px var(--text); }
+
+/* A play toast (#11): a glass pill under the top of the screen. */
+.rl-toast{ position: fixed; z-index: 60; left: 50%; top: calc(env(safe-area-inset-top, 0px) + var(--fold-shown, 0px) + 10px); transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 28px); padding: 7px 16px 7px 7px; border-radius: 24px;
+  background: rgba(30,30,30,0.86); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 14px 30px -10px rgba(0,0,0,0.9); font-size: 0.84rem; line-height: 1.3;
+  animation: rl-toast-in .35s cubic-bezier(.2,.8,.2,1); transition: opacity .35s, transform .35s; pointer-events: none; }
+.rl-toast.out{ opacity: 0; transform: translate(-50%, -12px); }
+.rl-toast .rl-av{ --av: 30px; }
+.rl-toast span{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rl-toast b{ color: var(--gold); font-family: var(--scoreboard); font-size: 1.05rem; font-weight: 800; }
+@keyframes rl-toast-in{ from{ opacity: 0; transform: translate(-50%, -14px); } }
+@media (min-width: 1080px){ .rl-toast{ top: calc(var(--nav-h, 60px) + 12px); } }
+
+/* Press feel (#14): cards and buttons give a little while pressed. */
+.glass:is(a, button), .item:is(a, button), a.hub-tile, .cm-tool, .cm-row, .cm-btn, .ft-btn, .you-link, .you-pick, .you-color, .gold-btn,
+.hdr-me, .hdr-bell, .hdr-back, .wk-chip{ transition: transform .14s ease; }
+:is(.glass:is(a, button), .item:is(a, button), a.hub-tile, .cm-tool, .cm-row, .you-link):active{ transform: scale(0.98); }
+:is(.cm-btn, .ft-btn, .you-pick, .you-color, .gold-btn, .hdr-me, .hdr-bell, .hdr-back, .wk-chip):active{ transform: scale(0.95); }
+@media (prefers-reduced-motion: reduce){ :is(.glass, .item, .hub-tile, .cm-tool, .cm-row, .cm-btn, .ft-btn, .you-link, .you-pick, .you-color, .gold-btn, .hdr-me, .hdr-bell, .hdr-back, .wk-chip):active{ transform: none; } }
+
+/* One row (#1): no "Retirement League" line over the title (the whole site
+   is the league). The title shares its row with the bell and your monogram
+   (nav.js .hdr-line); a page under a tab keeps its back pill above. Under
+   the title, one line says what's happening, led by the week chip where a
+   page has weeks (#2). */
+.wrap > header .eyebrow:not(.hdr-back){ display: none; }
+.hdr-line{ display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.hdr-line h1, .header-row .hdr-line h1{ flex: 1; min-width: 0; margin: 0; }
+.hdr-line .hdr-tools{ position: static; flex: none; }
+.updated-block .wk-chip{ order: -1; margin-right: 4px; }
+.wk-chip{ display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 10px 0 13px; border-radius: 16px; border: 1px solid var(--lead-line); background: var(--lead-tint); color: var(--gold); font: 700 0.84rem/1 var(--body); cursor: pointer; white-space: nowrap; position: relative; }
+.wk-chip::after{ content: ''; position: absolute; inset: -6px -2px; }
+.wk-chip[hidden]{ display: none; }
+.wk-chip svg{ width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.wk-chip[aria-expanded="true"] svg{ transform: rotate(180deg); }
+.wk-chip:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (hover: hover){ .wk-chip:hover{ background: rgba(212,180,106,0.14); } }
+.wk-chip + .updated-label, .updated-block:has(.wk-chip:not([hidden]))::before{ margin-left: 2px; }
+
+/* The week sheet's rows (#2): each week, who you played, the score, and
+   the matchup and median results. */
+.wkr-list{ display: grid; gap: 6px; }
+.wkr{ display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--item); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.wkr.on{ border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); background: var(--lead-tint); }
+.wkr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+@media (hover: hover){ .wkr:not(.on):hover{ background: var(--item-hover); } }
+.wkr-n{ font: 800 1.05rem/1 var(--scoreboard); letter-spacing: 0.01em; }
+.wkr-n small{ display: block; font: 700 0.58rem/1.3 var(--body); color: var(--text-dim); letter-spacing: 0.05em; text-transform: uppercase; margin-top: 3px; }
+.wkr.on .wkr-n small{ color: var(--gold); }
+.wkr-o{ min-width: 0; font-weight: 600; font-size: 0.86rem; }
+.wkr-o span{ display: block; color: var(--text-dim); font-weight: 400; font-size: 0.74rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.wkr-r{ display: flex; gap: 4px; }
+.wkr-r i{ width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font: 800 0.62rem/1 var(--body); font-style: normal; border: 1px solid var(--line); color: var(--text-dim); }
+.wkr-r i.w{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
+.wkr-r i.l{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
+.wkr-r i.live{ border-color: var(--loss-line); }
+.wkr-r i.live::before{ content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
+.wkr-cap{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 2px 4px 8px; }

@@ -126,8 +126,9 @@
     tabbarShrink(mount.querySelector('.tabbar'));
     wireYou(mount.querySelector('#nav-me'));
     wireYouTab(mount.querySelector('#tb-you'));
-    headerTools();
     backButton(file);
+    headerTools();
+    tabSignals(mount.querySelector('.tabbar'));
   }
 
   // ---------- A way back (site audit VI #2) ----------
@@ -246,6 +247,10 @@
     return b;
   }
 
+  // One row (audit IX #1): with no back pill, the bell and your monogram
+  // share the title's row (.hdr-line); a page under a tab keeps them at the
+  // right end of its back pill's row. rlHeaderPlace() redoes it for a page
+  // that swaps its back pill in and out (the Commissioner page's tools).
   function headerTools() {
     const hdr = document.querySelector('.wrap > header');
     const h1 = hdr && hdr.querySelector('h1');
@@ -253,20 +258,48 @@
     const row = hdr.querySelector('.header-row') || hdr;
     const tools = document.createElement('div');
     tools.className = 'hdr-tools';
-    const step = row.querySelector('.wk-step');
-    if (step) tools.appendChild(step);
     tools.appendChild(bellButton());
     tools.appendChild(meButton('hdr-me'));
-    row.appendChild(tools);
+    const place = () => {
+      if (hdr.querySelector('.hdr-back')) { if (tools.parentElement !== row) row.appendChild(tools); return; }
+      let line = h1.parentElement;
+      if (!line.classList.contains('hdr-line')) {
+        line = document.createElement('div');
+        line.className = 'hdr-line';
+        h1.before(line);
+        line.appendChild(h1);
+      }
+      if (tools.parentElement !== line) line.appendChild(tools);
+    };
+    place();
+    window.rlHeaderPlace = place;
 
     document.body.insertAdjacentHTML('beforeend', '<div class="top-band" aria-hidden="true"></div><div class="fold" id="fold"><div class="fold-in"><span></span><button type="button" class="fold-t" aria-label="Back to the top"><b></b><span></span></button></div></div>');
     const fold = document.getElementById('fold');
     fold.querySelector('.fold-in').appendChild(meButton('fold-me'));
-    const tb = fold.querySelector('.fold-t b'), ts = fold.querySelector('.fold-t span');
     fold.querySelector('.fold-t').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    // The status line, less the week chip (the bar's title already names the week).
     const status = () => {
       const st = hdr.querySelector('.updated-block');
-      return st ? st.textContent.replace(/\s+/g, ' ').trim() : '';
+      return st ? [...st.childNodes].filter(n => !(n.classList && n.classList.contains('wk-chip'))).map(n => n.textContent).join(' ').replace(/\s+/g, ' ').trim() : '';
+    };
+    // Your score in the bar (audit IX #3): a page that has your matchup
+    // (Live, Feed) sets window.rlFoldScore to return it, and the bar shows
+    // both scores, projections and your chance to win instead of the title.
+    // It still taps back to the top. 'rl-fold' says the score moved.
+    const foldIn = fold.querySelector('.fold-in'), foldT = fold.querySelector('.fold-t');
+    let scoreKey = '';
+    const drawScore = sc => {
+      const key = sc ? JSON.stringify(sc) + Object.keys(navLogos).length : '';
+      if (key === scoreKey) return;
+      scoreKey = key;
+      foldIn.classList.toggle('sc', !!sc);
+      if (!sc) { foldT.innerHTML = '<b></b><span></span>'; foldT.setAttribute('aria-label', 'Back to the top'); return; }
+      const av = (who, cls) => typeof avatarHtml === 'function' ? avatarHtml(who, navLogos, cls) : '';
+      const side = (who, score, proj, r) => `<span class="fsb-side${r ? ' r' : ''}">${av(who, r ? 'ringw' : 'ring')}<span class="fsb-n">${esc(score)}<small>${proj ? 'proj ' + esc(proj) : esc(who)}</small></span></span>`;
+      const pct = typeof sc.pct === 'number' ? Math.max(0, Math.min(100, sc.pct)) : null;
+      foldT.innerHTML = `${side(sc.me, sc.meScore, sc.meProj)}<span class="fsb-mid"><span class="fsb-l">${sc.live ? '<i class="fsb-dot"></i>' : ''}${pct == null ? '' : `<b>${Math.round(pct)}%</b> to win`}</span>${pct == null ? '' : `<span class="fsb-bar"><i style="width:${pct}%"></i></span>`}<span class="fsb-l2">${esc(sc.line || '')}</span></span>${side(sc.opp, sc.oppScore, sc.oppProj, true)}`;
+      foldT.setAttribute('aria-label', `${sc.me} ${sc.meScore}, ${sc.opp} ${sc.oppScore}. Back to the top`);
     };
     let shown = false, queued = false;
     const update = () => {
@@ -274,8 +307,12 @@
       if (!fold.offsetHeight) return; // desktop: hidden
       const on = h1.getBoundingClientRect().bottom < fold.offsetHeight;
       if (on) {
-        tb.textContent = h1.dataset.fold || h1.textContent.trim();
-        ts.textContent = status();
+        const sc = typeof window.rlFoldScore === 'function' ? window.rlFoldScore() : null;
+        drawScore(sc);
+        if (!sc) {
+          foldT.querySelector('b').textContent = h1.dataset.fold || h1.textContent.trim();
+          foldT.querySelector('span').textContent = status();
+        }
       }
       if (on === shown) return;
       shown = on;
@@ -287,8 +324,60 @@
     window.addEventListener('scroll', queue, { passive: true });
     window.addEventListener('resize', queue);
     fold.setAttribute('aria-hidden', 'true');
+    window.addEventListener('rl-fold', () => { if (shown) update(); });
+    if (typeof teamLogos === 'function') teamLogos().then(l => { navLogos = l; if (shown) update(); });
     queue();
   }
+  let navLogos = {};
+
+  // ---------- What's new, on the tab bar (audit IX #13) ----------
+  // Feed: a gold count of plays since you last looked at it (your matchup's
+  // once your team is picked), read with /feed?since=<the newest you saw>,
+  // which feed.html keeps in rl-feed-seen. Live: a red dot while your
+  // starters are on the field, as Live or Feed last saw it (rl-live-mine,
+  // trusted for 20 minutes).
+  const FEED_SEEN = 'rl-feed-seen', LIVE_MINE = 'rl-live-mine';
+  function tabSignals(bar) {
+    if (!bar) return;
+    const file = currentFile();
+    const badge = (key, html) => {
+      const a = bar.querySelector(`[data-tab="${key}"] .tb-ic`);
+      if (!a) return;
+      a.querySelector('.tb-badge')?.remove();
+      if (html) a.insertAdjacentHTML('beforeend', html);
+    };
+    const live = () => {
+      let v = null;
+      try { v = JSON.parse(localStorage.getItem(LIVE_MINE)); } catch (e) {}
+      const on = !!(v && v.on && Date.now() - v.at < 20 * 60 * 1000 && v.me === getMe());
+      badge('live', on ? '<i class="tb-badge dot" aria-label="Your players are on the field"></i>' : '');
+    };
+    let seq = 0;
+    const feed = async () => {
+      if (file === 'feed.html') { badge('feed', ''); return; }
+      let seen = null;
+      try { seen = JSON.parse(localStorage.getItem(FEED_SEEN)); } catch (e) {}
+      if (!seen || !seen.id || document.hidden) return;
+      const my = ++seq;
+      try {
+        const d = await fetch(`${WORKER}/feed?since=${encodeURIComponent(seen.id)}`, { cache: 'no-store' }).then(r => r.json());
+        if (my !== seq) return;
+        const me = getMe();
+        const n = (d.events || []).filter(e => e.k !== 'p' && (!me || e.m === me || e.om === me)).length;
+        badge('feed', n ? `<i class="tb-badge" aria-label="${n} new play${n === 1 ? '' : 's'}">${n > 9 ? '9+' : n}</i>` : '');
+      } catch (e) {}
+    };
+    live(); feed();
+    window.addEventListener('rl-live-mine', live);
+    window.addEventListener('storage', e => { if (e.key === LIVE_MINE) live(); if (e.key === FEED_SEEN) feed(); });
+    setInterval(() => { live(); feed(); }, 2 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { live(); feed(); } });
+  }
+  // For Live and Feed: say whether your starters are on the field.
+  window.rlLiveMine = on => {
+    try { localStorage.setItem(LIVE_MINE, JSON.stringify({ on: !!on, at: Date.now(), me: getMe() })); } catch (e) {}
+    window.dispatchEvent(new CustomEvent('rl-live-mine'));
+  };
 
   // The floating tab bar drops its labels and shrinks while you scroll
   // down, and comes back on any scroll up or near the top (audit V #4).
@@ -698,8 +787,33 @@
   let youPanel = 'you';
   let youNames = [];
 
+  // You as one page (audit IX #7): you.html shows these same panels on the
+  // page itself. rlYou.mount(el, panel) draws one into el and keeps it drawn
+  // there; on that page openYou(panel) scrolls to it instead of opening the
+  // sheet. Everywhere else they live in the sheet as before.
+  const inlineYou = {};
+  const youBody = panel => inlineYou[panel] || (youPanel === panel && document.getElementById('you-sheet') ? document.getElementById('you-body') : null);
+  function drawOne(panel) {
+    if (panel === 'push') drawPushPanel();
+    else if (panel === 'settings') drawSettings();
+    else drawYou(youNames);
+  }
+  // A panel changed (signed in, signed out, feedback opened): draw it again wherever it is.
+  function redraw(panel) {
+    if (inlineYou[panel]) drawOne(panel);
+    if (document.getElementById('you-sheet') && youPanel === panel) drawPanel();
+  }
+  window.rlYou = {
+    mount(el, panel) {
+      inlineYou[panel] = el;
+      loadManagers().then(n => { youNames = n; if (inlineYou[panel] === el) drawOne(panel); });
+    },
+  };
+
   window.openYou = async function openYou(panel) {
     if (document.getElementById('you-sheet')) return;
+    const here = panel === 'push' && document.getElementById('yu-alerts') || inlineYou[panel || 'you'];
+    if (here) { here.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     lastFocus = document.activeElement;
     youPanel = YOU_PANELS.some(([k]) => k === panel) ? panel : 'you';
     document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="you-scrim"></div>
@@ -744,9 +858,7 @@
   function drawPanel() {
     drawTabs();
     if (youPanel !== 'you') youFeedback = false;
-    if (youPanel === 'push') drawPushPanel();
-    else if (youPanel === 'settings') drawSettings();
-    else drawYou(youNames);
+    drawOne(youPanel);
   }
 
   // ---------- Signing in (site audit III #24) ----------
@@ -806,11 +918,12 @@
     signinNote = '';
     try { await signIn(m[1].toUpperCase()); } catch (err) { signinNote = signInError(err, true); }
     youPanel = 'you';
-    if (document.getElementById('you-sheet')) drawPanel(); else openYou('you');
+    if (inlineYou.you) { redraw('you'); openYou('you'); }
+    else if (document.getElementById('you-sheet')) drawPanel(); else openYou('you');
   }
 
   function drawYou(names) {
-    const body = document.getElementById('you-body');
+    const body = youBody('you');
     if (!body) return;
     const auth = getAuth();
     if (auth && youFeedback) { drawFeedback(body, auth); return; }
@@ -852,7 +965,7 @@
       say('Checking your code…');
       try {
         await signIn(code);
-        if (document.body.contains(body)) drawPanel();
+        if (document.body.contains(body)) redraw('you');
       } catch (err) {
         busy = false;
         input.disabled = false;
@@ -899,7 +1012,7 @@
       <textarea class="you-code you-fb-text" id="you-fb-text" maxlength="1000" placeholder="${esc(kind[2])}" aria-label="Your feedback">${esc(fbDraft)}</textarea>
       <div class="you-fb-send"><span class="you-note${fbNote && fbNote !== 'sent' ? ' err' : ''}" id="you-fb-note" role="status">${fbNote === 'sent' ? "Thanks. It's in." : esc(fbNote)}</span><button type="button" class="you-btn" id="you-fb-go">Send</button></div>
       <div class="you-sec" id="you-fb-mine"></div>`;
-    body.querySelector('#you-fb-back').addEventListener('click', () => { youFeedback = false; fbNote = ''; drawPanel(); });
+    body.querySelector('#you-fb-back').addEventListener('click', () => { youFeedback = false; fbNote = ''; redraw('you'); });
     const ta = body.querySelector('#you-fb-text');
     ta.addEventListener('input', () => { fbDraft = ta.value; });
     body.querySelectorAll('[data-fb-kind]').forEach(b => b.addEventListener('click', () => {
@@ -961,11 +1074,11 @@
         <div class="you-sub">It signs in on its own. Copy your code, open the app, tap You and paste.</div>
         <button type="button" class="you-copy" id="you-copy"${known ? '' : ' disabled'}><span class="you-copy-code">${known ? fmtCode(known) : '····-····'}</span><span class="you-copy-lab">Copy</span></button>
       </div>` : ''}`;
-    body.querySelector('#you-fb').addEventListener('click', () => { youFeedback = true; drawPanel(); });
+    body.querySelector('#you-fb').addEventListener('click', () => { youFeedback = true; redraw('you'); });
     body.querySelector('#you-signout').addEventListener('click', () => {
       fetch(WORKER + '/auth/signout', { method: 'POST', headers: authHeaders(), keepalive: true }).catch(() => {});
       setAuth(null);
-      drawPanel();
+      redraw('you');
     });
     const copy = body.querySelector('#you-copy');
     if (copy) copy.addEventListener('click', async () => {
@@ -982,19 +1095,19 @@
     });
     // Asks the Worker whether this browser's key is still good (a reset
     // signs every phone out) and, on the website, for the code to show.
-    const still = () => youPanel === 'you' && document.body.contains(body) && (getAuth() || {}).token === auth.token;
+    const still = () => document.body.contains(body) && (getAuth() || {}).token === auth.token;
     fetch(WORKER + '/auth/me' + (web ? '?code=1' : ''), { headers: { Authorization: 'Bearer ' + auth.token } }).then(async res => {
       if (res.status === 401) {
         if ((getAuth() || {}).token !== auth.token) return;
         setAuth(null);
         signinNote = `You were signed out. Tap the link in ${COMMISH}'s text to sign back in.`;
-        if (youPanel === 'you' && document.body.contains(body)) drawPanel();
+        if (document.body.contains(body)) redraw('you');
         return;
       }
       const out = await res.json();
       if (out.commissioner !== undefined && out.commissioner !== isCommissioner(getAuth())) {
         patchAuth({ commissioner: out.commissioner });
-        if (youPanel === 'you' && document.body.contains(body)) drawPanel();
+        if (document.body.contains(body)) redraw('you');
       }
       if (!web || !out.code) return;
       appCode = { token: auth.token, code: out.code };
@@ -1005,8 +1118,10 @@
   }
 
   function drawPushPanel() {
-    const body = document.getElementById('you-body');
+    const body = youBody('push');
     if (!body) return;
+    // On the You page its alerts are their own card, so only the switches here.
+    if (inlineYou.push === body) { body.innerHTML = '<div id="you-push"></div>'; drawPush(); return; }
     body.innerHTML = '<div id="you-recent"></div><div id="you-push"></div>';
     drawRecent();
     drawPush();
@@ -1015,7 +1130,7 @@
   // Settings: where your matchup sits on the dashboard, and your ring's
   // color -- each swatch drawn ringed, so the pick shows as it will look.
   function drawSettings() {
-    const body = document.getElementById('you-body');
+    const body = youBody('settings');
     if (!body) return;
     const set = getSettings();
     const me = getMe();

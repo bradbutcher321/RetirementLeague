@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=37">
-<link rel="stylesheet" href="nav.css?v=31">
+<link rel="stylesheet" href="theme.css?v=38">
+<link rel="stylesheet" href="nav.css?v=32">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -451,28 +451,16 @@
   .pl-div{ font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); margin: 14px 8px 4px; }
   .pl-msg{ padding: 26px 0; text-align: center; font-size: 0.8rem; color: var(--text-dim); }
 
-  /* ---------- Week stepper (header) ---------- */
-  /* One pill split in two, no wider than the Updated stamp under it, so
-     the header keeps the title and this column side by side at 430px.
-     Each half's tap area reaches 44px tall past the pill. */
-  .wk-step{ display: inline-flex; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.06); }
-  .wk-step[hidden]{ display: none; }
-  .wk-step button{ position: relative; width: 34px; height: 30px; border: 0; background: none; color: var(--text); display: grid; place-items: center; cursor: pointer; padding: 0; border-radius: 999px; }
-  .wk-step button + button{ box-shadow: -1px 0 0 var(--line); border-radius: 0 999px 999px 0; }
-  .wk-step button:first-child{ border-radius: 999px 0 0 999px; }
-  .wk-step button::after{ content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }
-  .wk-step button svg{ width: 8px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .wk-step button:disabled{ opacity: 0.3; cursor: default; }
-  @media (hover: hover){ .wk-step button:not(:disabled):hover{ color: var(--gold); } }
-  .wk-step button:focus-visible, .wk-live:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* ---------- The title row (audit IX #1, #2) ----------
+     "Live" and your bell and monogram on one row; under it the week chip
+     (it opens the week picker: any week of any season) and what the week is
+     doing. A past week says so, with the way back to the live one. */
   .wk-live{ font: inherit; color: var(--gold); background: none; border: 0; padding: 0; cursor: pointer; }
-  /* The title is the week picker's button: the h1's own type, plus a chevron. */
-  .wk-title{ font: inherit; color: inherit; letter-spacing: inherit; line-height: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
-  .wk-eyebrow{ font-family: inherit; background: none; border: 0; padding: 6px 0; margin: -6px 0 -6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-  .wk-eyebrow svg{ flex: none; width: 11px; height: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
-  body.wp-open .wk-eyebrow svg{ transform: rotate(180deg); }
-  .wk-title:focus-visible, .wk-eyebrow:focus-visible{ outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 6px; }
-  @media (hover: hover){ .wk-title:hover, .wk-eyebrow:hover{ opacity: 0.85; } }
+  .wk-live:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* A score that just went up glows gold for a moment (audit IX #11). */
+  .mu-val.glow{ animation: mu-glow 1.6s ease-out; }
+  @keyframes mu-glow{ 0%, 25%{ color: var(--gold); text-shadow: 0 0 18px rgba(212,180,106,0.75); } }
+  @media (prefers-reduced-motion: reduce){ .mu-val.glow{ animation: none; } }
 
   /* Week picker: seasons as a scrolling chip row, then that season's weeks. */
   #wp-pop{ padding: 12px 14px 16px; }
@@ -1579,20 +1567,13 @@
     <header>
       <div class="header-row">
         <div>
-          <!-- The season line and the title both open the week picker (any
-               week of any season). The chevron sits on the season line: on
-               the title it pushed the Updated column off the row at 430px. -->
-          <button type="button" class="eyebrow wk-eyebrow" data-wp-open aria-haspopup="dialog" aria-label="Pick a week"><span id="dash-eyebrow">Retirement League</span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 1.5L6 6l4.5-4.5"/></svg></button>
-          <h1><button type="button" class="wk-title" id="wk-title" data-wp-open aria-haspopup="dialog" aria-expanded="false"><span id="week-header">Live Dashboard</span></button></h1>
+          <h1><span id="week-header">Live</span></h1>
         </div>
-        <!-- Week stepper: back through finished weeks (each rebuilt by the
-             Worker's /?week=N), forward again to the live one. On a past
-             week the Updated stamp gives way to a jump back to live. -->
+        <!-- The week chip opens the week picker (audit IX #2: it took over
+             from the old ‹ › arrows); the status line says what the week
+             is doing, and the time only once the numbers are a few minutes old. -->
         <div class="updated-block">
-          <div class="wk-step" id="wk-step" hidden>
-            <button type="button" data-wk="-1" aria-label="Previous week"><svg viewBox="0 0 8 12" aria-hidden="true"><path d="M6 2L2 6l4 4"/></svg></button>
-            <button type="button" data-wk="1" aria-label="Next week"><svg viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4"/></svg></button>
-          </div>
+          <button type="button" class="wk-chip" id="wk-title" data-wp-open aria-haspopup="dialog" aria-expanded="false" hidden><span id="wk-chip-t">Week</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
           <div class="updated-label" id="updated-label">Updated</div>
           <div class="updated-value" id="updated-at">—</div>
         </div>
@@ -1736,8 +1717,8 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=43"></script>
-<script src="page-common.js?v=41"></script>
+<script src="nav.js?v=44"></script>
+<script src="page-common.js?v=42"></script>
 <script src="race-sim.js?v=3"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
@@ -6046,6 +6027,7 @@
         const from = was.sides[i].score, to = muNum(val);
         if (!isNaN(from) && !isNaN(to) && Math.abs(to - from) >= 0.005) {
           tickMwNumber(val, from, to);
+          if (to > from) { val.classList.remove('glow'); void val.offsetWidth; val.classList.add('glow'); }
           const d = document.createElement('span');
           d.className = 'mu-delta' + (to < from ? ' down' : '');
           d.setAttribute('aria-hidden', 'true');
@@ -6546,16 +6528,74 @@
   }
   const onScreen = () => view || { year: leagueYear, week: liveWeekNow() };
 
+  // ---------- What the week is doing (audit IX #1) ----------
+  // From every starter's game: games on now and starters in them, else the
+  // day that finished and the next kickoff, else the first kickoff.
+  function weekState(data) {
+    const games = new Map();
+    let playing = 0;
+    for (const m of data.matchups || []) {
+      playing += (parseInt(m.awayInPlay, 10) || 0) + (parseInt(m.homeInPlay, 10) || 0);
+      for (const s of ['away', 'home']) for (const p of m[s + 'Players'] || []) {
+        const g = p.game;
+        if (g && g.date) games.set([g.team, g.opponent].sort().join('-') + g.date, g);
+      }
+    }
+    const all = [...games.values()];
+    const live = all.filter(g => g.state === 'in').length;
+    const tz = { timeZone: 'America/New_York' };
+    const day = ms => new Date(ms).toLocaleDateString('en-US', { weekday: 'long', ...tz });
+    const at = ms => `${day(ms)} ${new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', ...tz }).replace(':00', '')}`;
+    const pre = all.filter(g => g.state === 'pre').map(g => Date.parse(g.date)).sort((a, b) => a - b);
+    const post = all.filter(g => g.state === 'post').map(g => Date.parse(g.date)).sort((a, b) => b - a);
+    if (weekFinal) return { html: '<b>Final</b>', text: 'Final' };
+    if (live) return { live: true, html: `<b>${live} game${live === 1 ? '' : 's'} live</b> · ${playing} starter${playing === 1 ? '' : 's'} playing`, text: `${live} game${live === 1 ? '' : 's'} live` };
+    if (post.length && pre.length) return { html: `<b>${day(post[0])} final</b> · ${at(pre[0])} next`, text: `${at(pre[0])} next` };
+    if (pre.length) return { html: `First kickoff ${at(pre[0])}`, text: `Kickoff ${at(pre[0])}` };
+    return { html: 'Updated', text: '' };
+  }
+
+  // ---------- Your matchup, in the folded bar and as toasts (audit IX #3, #11) ----------
+  // nav.js asks rlFoldScore() for the bar; Live and Feed both answer.
+  // rlLiveMine tells the tab bar whether your starters are on the field.
+  // Between polls, the biggest gain in your matchup since the last one
+  // gets a toast naming the player.
+  let foldMu = null, liveLogos = {}, lastPts = null;
+  teamLogos().then(l => { liveLogos = l; });
+  window.rlFoldScore = () => foldMu;
+  function foldAndToast(data, archived) {
+    const mu = (data.matchups || []).find(m => isMe(m.awayManager) || isMe(m.homeManager));
+    if (!mu) { foldMu = null; lastPts = null; window.dispatchEvent(new CustomEvent('rl-fold')); return; }
+    const s = isMe(mu.awayManager) ? 'away' : 'home', o = s === 'away' ? 'home' : 'away';
+    const done = archived || matchupDecided(mu);
+    const inPlay = (parseInt(mu[s + 'InPlay'], 10) || 0) + (parseInt(mu[o + 'InPlay'], 10) || 0);
+    const n2 = v => (Number(v) || 0).toFixed(2);
+    foldMu = { me: mu[s + 'Manager'], opp: mu[o + 'Manager'], meScore: n2(mu[s + 'Score']), oppScore: n2(mu[o + 'Score']),
+      meProj: done ? '' : n2(mu[s + 'Projected']), oppProj: done ? '' : n2(mu[o + 'Projected']),
+      pct: done ? null : mu[s + 'WinProbability'], live: !done && inPlay > 0,
+      line: done ? (mu[s + 'Score'] > mu[o + 'Score'] ? 'Final · you won' : 'Final · you lost') : `Week ${data.week} · ${weekState(data).text}` };
+    window.dispatchEvent(new CustomEvent('rl-fold'));
+    if (archived) { lastPts = null; return; }
+    if (window.rlLiveMine) rlLiveMine((parseInt(mu[s + 'InPlay'], 10) || 0) > 0);
+    const pts = new Map();
+    for (const side of [s, o]) for (const p of mu[side + 'Players'] || []) pts.set(p.name, { pts: Number(p.livePoints) || 0, who: mu[side + 'Manager'] });
+    if (lastPts && lastPts.key === mu[s + 'Manager'] + mu[o + 'Manager']) {
+      let best = null;
+      pts.forEach((v, name) => { const was = lastPts.pts.get(name); const d = was ? v.pts - was.pts : 0; if (d >= 0.5 && (!best || d > best.d)) best = { name, d, who: v.who }; });
+      if (best) playToast(`${avatarHtml(best.who, liveLogos, isMe(best.who) ? 'ring' : 'ringw')}<span>${esc(best.name)} <b>+${best.d.toFixed(2)}</b></span>`);
+    }
+    lastPts = { key: mu[s + 'Manager'] + mu[o + 'Manager'], pts };
+  }
+
+  // The week chip names the week on screen (and its season, when it isn't this one).
   function renderWeekStep() {
-    const step = document.getElementById('wk-step');
+    const chip = document.getElementById('wk-title');
     const live = liveWeekNow();
-    if (!live || !leagueGames) { step.hidden = true; return; }
-    step.hidden = false;
-    const list = allWeeks();
+    if (!live || !leagueGames) { chip.hidden = true; return; }
     const at = onScreen();
-    const i = list.findIndex(v => v.year === at.year && v.week === at.week);
-    step.querySelector('[data-wk="-1"]').disabled = i <= 0;
-    step.querySelector('[data-wk="1"]').disabled = view === null;
+    chip.hidden = false;
+    document.getElementById('wk-chip-t').textContent = `${at.year !== leagueYear ? at.year + ' · ' : ''}Week ${at.week}`;
+    chip.setAttribute('aria-label', `Week ${at.week}${at.year !== leagueYear ? ', ' + at.year : ''}: pick a week`);
   }
 
   function setViewParams(v) {
@@ -6645,16 +6685,6 @@
     else showView(year, r.week);
   }
 
-  document.getElementById('wk-step').addEventListener('click', e => {
-    const b = e.target.closest('[data-wk]');
-    if (!b || b.disabled) return;
-    const list = allWeeks();
-    const at = onScreen();
-    const i = list.findIndex(v => v.year === at.year && v.week === at.week);
-    const next = list[i + Number(b.dataset.wk)];
-    if (next) showView(next.year, next.week);
-    else if (Number(b.dataset.wk) > 0) showView(leagueYear, liveWeekNow());
-  });
   document.addEventListener('click', e => {
     if (e.target.closest('[data-wk-live]')) showView(leagueYear, liveWeekNow());
   });
@@ -6685,9 +6715,41 @@
     };
     const range = (a, b) => { const o = []; for (let w = a; w <= b; w++) o.push(weekBtn(w)); return o.join(''); };
     const note = wpDetail(year);
+    const yearsHtml = `<div class="wp-years edge-fade" role="group" aria-label="Season">${years.map(y => `<button type="button" class="wp-yr${y === year ? ' on' : ''}" data-wp-year="${y}" aria-pressed="${y === year}">${y}</button>`).join('')}</div>
+      ${note ? `<div class="wp-note">${note}</div>` : ''}`;
+    // Your season, newest week first (audit IX #2): who you played, the
+    // score, and the matchup and median results. Without a team picked, or
+    // for a season you weren't in, the plain grid of weeks.
+    const me = getMe();
+    const mine = me ? (leagueGames || []).filter(g => g.year === year && (g.p1 === me || g.p2 === me)) : [];
+    if (mine.length || (me && year === leagueYear)) {
+      const rows = [];
+      for (let w = count; w >= 1; w--) {
+        const on = at.year === year && at.week === w;
+        const g = mine.find(x => x.week === w);
+        const tag = w > reg ? (g && GAME_LABELS[g.type]) || 'Playoffs' : '';
+        let opp = '', sub = '', pips = '';
+        if (g) {
+          const mineS = g.p1 === me ? g.s1 : g.s2, theirs = g.p1 === me ? g.s2 : g.s1;
+          opp = g.p2 ? `vs ${esc(g.p1 === me ? g.p2 : g.p1)}` : 'Median only';
+          sub = `${mineS.toFixed(2)}–${theirs.toFixed(2)}${year >= medianEraYear && g.median && w <= reg ? ` · median ${Number(g.median).toFixed(2)}` : ''}`;
+          pips = `<i class="${g.winner === me ? 'w' : 'l'}">${g.winner === me ? 'W' : 'L'}</i>${year >= medianEraYear && g.median && w <= reg ? `<i class="${mineS > g.median ? 'w' : 'l'}">${mineS > g.median ? 'W' : 'L'}</i>` : ''}`;
+        } else if (year === leagueYear && w === live && liveData) {
+          const m = (liveData.matchups || []).find(x => isMe(x.awayManager) || isMe(x.homeManager));
+          if (m) {
+            const s = isMe(m.awayManager) ? 'away' : 'home', o = s === 'away' ? 'home' : 'away';
+            opp = `vs ${esc(m[o + 'Manager'])}`;
+            sub = `${(Number(m[s + 'Score']) || 0).toFixed(2)}–${(Number(m[o + 'Score']) || 0).toFixed(2)} · ${Math.round(m[s + 'WinProbability'])}% to win`;
+            pips = '<i class="live" aria-label="This week"></i>';
+          }
+        }
+        if (!opp) { opp = 'No game'; sub = w > reg ? 'Out of the playoffs' : ''; }
+        rows.push(`<button type="button" class="wkr${on ? ' on' : ''}" data-wp-week="${w}" aria-pressed="${on}"><span class="wkr-n">Wk ${w}<small>${year === leagueYear && w === live ? 'This week' : tag || (g ? (g.winner === me ? 'Won' : 'Lost') : '')}</small></span><span class="wkr-o">${opp}${sub ? `<span>${sub}</span>` : ''}</span><span class="wkr-r">${pips}</span></button>`);
+      }
+      return `${yearsHtml}<div class="wkr-cap" style="margin-top:12px"><span>${esc(me)}${year >= medianEraYear ? '' : ''}</span><span>${year >= medianEraYear ? 'Matchup · Median' : 'Result'}</span></div><div class="wkr-list">${rows.join('')}</div>`;
+    }
     return `
-      <div class="wp-years edge-fade" role="group" aria-label="Season">${years.map(y => `<button type="button" class="wp-yr${y === year ? ' on' : ''}" data-wp-year="${y}" aria-pressed="${y === year}">${y}</button>`).join('')}</div>
-      ${note ? `<div class="wp-note">${note}</div>` : ''}
+      ${yearsHtml}
       <div class="wp-label">Regular season</div>
       <div class="wp-grid">${range(1, Math.min(reg, count))}</div>
       ${count > reg ? `<div class="wp-label">Playoffs</div><div class="wp-grid">${range(reg + 1, count)}</div>` : ''}`;
@@ -6979,11 +7041,9 @@
         const animate = dashboardShown && !mwReduceMotion && !still;
 
         // The line over the title names the season when it isn't this one.
-        document.getElementById('week-header').textContent = archived ? `Week ${data.week} — Final`
-          : data.week ? `Live Dashboard — Week ${data.week}` : 'Live Dashboard';
+        // The title is the tab's name; the week is the chip under it.
         // The folding title bar's short name (nav.js headerTools).
         document.querySelector('header h1').dataset.fold = data.week ? `${data.year && data.year !== leagueYear ? data.year + ' · ' : ''}Week ${data.week}` : 'Live';
-        document.getElementById('dash-eyebrow').textContent = `Retirement League · ${data.year || leagueYear}`;
         // Playoff weeks have no median to watch.
         document.getElementById('median-container').style.display = data.playoffWeek ? 'none' : '';
         document.getElementById('matchups-h').textContent = archived ? 'Matchups' : "This week's matchups";
@@ -6993,18 +7053,19 @@
         const updatedEl = document.getElementById('updated-at');
         if (archived) {
           const live = (liveData && liveData.week) || data.liveWeek;
-          document.getElementById('updated-label').textContent = 'Live now';
+          document.getElementById('updated-label').innerHTML = '<b>Final</b> ·';
           updatedEl.parentElement.classList.remove('live');
-          updatedEl.innerHTML = `<button type="button" class="wk-live" data-wk-live>Week ${live} ›</button>`;
+          updatedEl.innerHTML = `<button type="button" class="wk-live" data-wk-live>Week ${live} is live ›</button>`;
         } else {
           // The status line says what state the week is in (audit V #5, #9):
           // Final once every starter is done, a red dot while games are on.
-          const on = !weekFinal && matchups.some(m => (parseInt(m.awayInPlay, 10) || 0) + (parseInt(m.homeInPlay, 10) || 0) > 0);
-          document.getElementById('updated-label').innerHTML = weekFinal ? '<b>Final</b> · updated' : on ? '<b>Live</b> · updated' : 'Updated';
+          const ws = weekState(data);
+          const on = !weekFinal && !!ws.live;
+          document.getElementById('updated-label').innerHTML = ws.html;
           updatedEl.parentElement.classList.toggle('live', on);
-          const updatedText = data.updatedAt
-            ? formatUpdated(data.updatedAt)
-            : '—';
+          // The time only once it's a few minutes old (audit IX #1).
+          const stale = data.updatedAt && Date.now() - Date.parse(data.updatedAt) > 3 * 60 * 1000;
+          const updatedText = stale ? `· updated ${formatUpdated(data.updatedAt)}` : '';
           if (animate && updatedEl.textContent !== updatedText) {
             updatedEl.classList.add('flash');
             setTimeout(() => updatedEl.classList.remove('flash'), 60);
@@ -7012,6 +7073,7 @@
           updatedEl.textContent = updatedText;
         }
         renderWeekStep();
+        foldAndToast(data, archived);
 
         // Yours (getMe in page-common.js) leads the matchups, ringed -- or
         // the whole page, with the You sheet's meTop setting on.

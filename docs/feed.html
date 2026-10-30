@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=37">
-<link rel="stylesheet" href="nav.css?v=31">
+<link rel="stylesheet" href="theme.css?v=38">
+<link rel="stylesheet" href="nav.css?v=32">
 <style>
   /* ---------- Feed (site audit III #7; redesigned 2026-10-16) ----------
      Every change to a starter's points this week, newest first, the whole
@@ -263,20 +263,39 @@
      The week stepper (the dashboard's pill; nav.js moves it into the title
      row), and on a finished week its biggest plays above the list. The
      ticker holds the finals. */
-  .wk-step{ display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.06); }
-  .wk-step[hidden]{ display: none; }
-  .wk-step button{ position: relative; width: 34px; height: 30px; border: 0; background: none; color: var(--text); display: grid; place-items: center; cursor: pointer; padding: 0; border-radius: 999px; }
-  .wk-step button + button{ box-shadow: -1px 0 0 var(--line); border-radius: 0 999px 999px 0; }
-  .wk-step button:first-child{ border-radius: 999px 0 0 999px; }
-  .wk-step button::after{ content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }
-  .wk-step button svg{ width: 8px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .wk-step button:disabled{ opacity: 0.3; cursor: default; }
-  @media (hover: hover){ .wk-step button:not(:disabled):hover{ color: var(--gold); } }
-  .wk-step button:focus-visible, .fd-link:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .fd-link:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .fd-link{ font: inherit; font-weight: 600; color: var(--gold); background: none; border: 0; padding: 6px 2px; margin: -6px 0; cursor: pointer; }
   .fd-sum{ padding: 12px 12px 12px; margin-bottom: 12px; }
   .fd-sum .ln-h{ margin-bottom: 2px; }
   .fd-sum-note{ margin: 10px 4px 0; font-size: 0.72rem; color: var(--text-dim); }
+  /* Faces (audit IX #6): each row leads with the player's headshot, ringed
+     in his NFL team's color, with the manager's initials on a badge (yours
+     in your ring color, your opponent's white). The time moves to the line
+     under the name, after a team-color chip. A lineup or projection note
+     shows the manager's team logo instead. */
+  .fd-row{ grid-template-columns: 46px minmax(0,1fr) auto; }
+  .fd-hs{ position: relative; width: 42px; height: 42px; margin-top: 1px; }
+  .fd-row.compact .fd-hs{ margin-top: 0; }
+  .fd-hs .ph{ display: block; width: 42px; height: 42px; border-radius: 50%; overflow: hidden; background: #1C1C1C; box-shadow: 0 0 0 2px var(--tc, rgba(255,255,255,0.18)); }
+  .fd-hs .ph img{ width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; display: block; }
+  .fd-hs .ph.logo img{ object-fit: contain; padding: 5px; object-position: center; }
+  .fd-hs .ph i{ display: grid; place-items: center; width: 100%; height: 100%; font: 800 0.72rem/1 var(--body); font-style: normal; color: #D3D3CF; }
+  .fd-hs .rl-av{ --av: 42px; }
+  .fd-hs .mg{ position: absolute; right: -5px; bottom: -4px; min-width: 20px; height: 20px; padding: 0 3px; border-radius: 10px; display: grid; place-items: center; font: 800 0.48rem/1 var(--body); background: #111; color: var(--fd-soft); box-shadow: 0 0 0 1.5px rgba(255,255,255,0.3); }
+  .fd-hs .mg.mc{ color: var(--me-ring); box-shadow: 0 0 0 1.5px var(--me-ring); }
+  .fd-hs .mg.wt{ color: var(--text); box-shadow: 0 0 0 1.5px var(--text); }
+  .fd-tm{ display: inline-block; padding: 1px 5px; margin-right: 5px; border-radius: 4px; font: 800 0.56rem/1.45 var(--body); letter-spacing: 0.03em; color: #fff; vertical-align: 1px; }
+  .fd-row .fd-x, .fd-row .fd-note{ grid-column: 2 / 4; }
+  /* Loading: outlines of rows (audit IX #12). */
+  .fd-skel{ display: grid; gap: 6px; }
+  .fd-skel .sk-item{ grid-template-columns: 42px minmax(0,1fr) 48px; display: grid; align-items: center; gap: 10px; }
+  /* The week sheet (audit IX #2), in the shape of Live's week picker. */
+  #wk-sheet .sheet-grab{ position: relative; }
+  #wk-sheet .sheet-head{ padding: 8px 18px 0; }
+  #wk-sheet .sheet-body{ padding: 0 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .wk-done{ position: absolute; right: 8px; top: 0; font: 600 0.82rem var(--body); color: var(--gold); background: none; border: 0; padding: 8px 12px; min-height: 36px; cursor: pointer; }
+  .wk-done:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .wk-sheet-label{ font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); margin: 10px 0 6px; }
   .fd-new{ animation: fd-in .5s cubic-bezier(.2,.8,.2,1); }
   @keyframes fd-in{ from{ opacity: 0; transform: translateY(-6px); } }
   @media (prefers-reduced-motion: reduce){
@@ -291,14 +310,10 @@
     <header>
       <div class="header-row">
         <div>
-          <div class="eyebrow" id="fd-eyebrow">Retirement League</div>
           <h1>Feed</h1>
         </div>
         <div class="updated-block">
-          <div class="wk-step" id="wk-step" hidden>
-            <button type="button" data-wk="-1" aria-label="Previous week"><svg viewBox="0 0 8 12" aria-hidden="true"><path d="M6 2L2 6l4 4"/></svg></button>
-            <button type="button" data-wk="1" aria-label="Next week"><svg viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4"/></svg></button>
-          </div>
+          <button type="button" class="wk-chip" id="wk-chip" aria-haspopup="dialog" aria-expanded="false" hidden><span id="wk-chip-t">Week</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
           <div class="updated-label" id="fd-updated-label">Updated</div>
           <div class="updated-value" id="fd-updated">—</div>
         </div>
@@ -313,15 +328,16 @@
         <aside class="fd-side" id="fd-side"></aside>
         <div class="fd-main">
           <div id="fd-gpill"></div>
-          <div class="glass fd-panel"><div class="fd" id="fd-list"><div class="empty-note">Loading…</div></div></div>
+          <div class="glass fd-panel"><div class="fd" id="fd-list"><span class="sr-only">Loading…</span><div class="sk fd-skel" aria-hidden="true" style="padding:0;background:none;border:0;box-shadow:none"><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:70%;height:13px"></i><i style="width:45%;height:10px"></i></div><i style="width:48px;height:18px"></i></div><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:62%;height:13px"></i><i style="width:40%;height:10px"></i></div><i style="width:48px;height:18px"></i></div><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:66%;height:13px"></i><i style="width:50%;height:10px"></i></div><i style="width:48px;height:18px"></i></div></div></div></div>
         </div>
       </div>
     </section>
 
+    <template id="fd-skel-tpl"><span class="sr-only">Loading…</span><div class="sk fd-skel" aria-hidden="true" style="padding:0;background:none;border:0;box-shadow:none"><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:70%;height:13px"></i><i style="width:45%;height:10px"></i></div><i style="width:48px;height:18px"></i></div><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:62%;height:13px"></i><i style="width:40%;height:10px"></i></div><i style="width:48px;height:18px"></i></div><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:66%;height:13px"></i><i style="width:50%;height:10px"></i></div><i style="width:48px;height:18px"></i></div></div></template>
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
-<script src="nav.js?v=43"></script>
-<script src="page-common.js?v=41"></script>
+<script src="nav.js?v=44"></script>
+<script src="page-common.js?v=42"></script>
 <script>
   // The Worker saves a row each time a starter's points move
   // (worker/src/scoreFeed.js). Each poll asks only for the rows after the
@@ -403,18 +419,120 @@
     load(true);
   }
 
+  // The week chip (audit IX #2) names the week shown and opens the week sheet.
   function renderStep() {
-    const step = document.getElementById('wk-step');
-    if (!week || !liveWeek) { step.hidden = true; return; }
-    step.hidden = false;
-    step.querySelector('[data-wk="-1"]').disabled = week <= (firstWeek || 1);
-    step.querySelector('[data-wk="1"]').disabled = week >= liveWeek;
+    const chip = document.getElementById('wk-chip');
+    if (!week || !liveWeek) { chip.hidden = true; return; }
+    chip.hidden = false;
+    document.getElementById('wk-chip-t').textContent = `Week ${week}`;
+    chip.setAttribute('aria-label', `Week ${week}: pick a week`);
+  }
+
+  // ---------- The week sheet (audit IX #2) ----------
+  // Every week the Feed has, newest first, each with your result from
+  // league.json (this week's from the board).
+  let leagueP = null;
+  const leagueGames = () => (leagueP = leagueP || fetch('data/league.json').then(r => r.json()).catch(() => { leagueP = null; return null; }));
+  async function openWeeks() {
+    if (document.getElementById('wk-sheet') || !liveWeek) return;
+    const chip = document.getElementById('wk-chip');
+    document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="wk-scrim"></div>
+      <div class="sheet" id="wk-sheet" role="dialog" aria-modal="true" aria-label="Pick a week">
+        <div class="sheet-grab" data-grab><span></span><button type="button" class="wk-done" data-wk-close>Done</button></div>
+        <div class="sheet-head" data-grab><div class="wk-sheet-label">Pick a week</div></div>
+        <div class="sheet-body"><div class="wkr-list" id="wk-rows"></div></div></div>`);
+    chip.setAttribute('aria-expanded', 'true');
+    const close = () => { document.getElementById('wk-sheet')?.remove(); document.getElementById('wk-scrim')?.remove(); chip.setAttribute('aria-expanded', 'false'); };
+    document.getElementById('wk-scrim').addEventListener('click', close);
+    document.getElementById('wk-sheet').addEventListener('click', e => {
+      if (e.target.closest('[data-wk-close]')) { close(); return; }
+      const b = e.target.closest('[data-wk-pick]');
+      if (b) { close(); showWeek(Number(b.dataset.wkPick)); }
+    });
+    const draw = d => {
+      const me = getMe(), year = d ? Math.max(...d.seasons.map(x => x.year)) : null;
+      const games = d ? d.games.filter(g => g[0] === year && (g[3] === me || g[4] === me)) : [];
+      const rows = [];
+      for (let w = liveWeek; w >= (firstWeek || 1); w--) {
+        const on = w === week, g = games.find(x => x[1] === w);
+        let opp = '', sub = '', pips = '', tag = w === liveWeek ? 'This week' : '';
+        if (g) {
+          const mine = g[3] === me ? g[5] : g[6], theirs = g[3] === me ? g[6] : g[5], won = g[7] === me;
+          opp = `vs ${esc(g[3] === me ? g[4] : g[3])}`;
+          sub = `${f2(mine)}–${f2(theirs)}${g[9] ? ` · median ${f2(g[9])}` : ''}`;
+          pips = `<i class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</i>${g[9] ? `<i class="${mine > g[9] ? 'w' : 'l'}">${mine > g[9] ? 'W' : 'L'}</i>` : ''}`;
+          tag = tag || (won ? 'Won' : 'Lost');
+        } else if (w === liveWeek && me && board) {
+          const pr = pairs.find(x => x.includes(me));
+          const t = m => (board.teams || []).find(x => x.m === m);
+          if (pr) { const o = pr[0] === me ? pr[1] : pr[0]; opp = `vs ${esc(o)}`; sub = `${f2((t(me) || {}).cur || 0)}–${f2((t(o) || {}).cur || 0)}`; pips = '<i class="live" aria-label="This week"></i>'; }
+        }
+        if (!opp) { opp = `Week ${w}`; sub = w === liveWeek ? 'Every play so far' : 'Every play'; }
+        rows.push(`<button type="button" class="wkr${on ? ' on' : ''}" data-wk-pick="${w}" aria-pressed="${on}"><span class="wkr-n">Wk ${w}${tag ? `<small>${tag}</small>` : ''}</span><span class="wkr-o">${opp}<span>${sub}</span></span><span class="wkr-r">${pips}</span></button>`);
+      }
+      const box = document.getElementById('wk-rows');
+      if (box) box.innerHTML = (me && games.length ? '<div class="wkr-cap"><span>' + esc(me) + '</span><span>Matchup · Median</span></div>' : '') + rows.join('') + `<p class="fd-sum-note" style="text-align:center">The Feed keeps plays from Week ${firstWeek || 1} on.</p>`;
+    };
+    draw(null);
+    draw(await leagueGames());
   }
 
   const gameLineOf = e => {
     const clock = e.q ? (e.q > 4 ? 'OT' : `Q${e.q}`) + (e.clk ? ' ' + e.clk : '') : '';
     return e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
   };
+
+  // ---------- Faces (audit IX #6) ----------
+  // ESPN's headshot for the player (a team defense gets its logo), ringed in
+  // his NFL team's color, with the manager's initials on a badge; a lineup
+  // or projection note gets the manager's own team logo.
+  const NFL = { ARI: '#97233F', ATL: '#A71930', BAL: '#4B2F9E', BUF: '#1E4FB8', CAR: '#0085CA', CHI: '#C83803', CIN: '#FB4F14', CLE: '#FF3C00',
+    DAL: '#1B5FC9', DEN: '#FB4F14', DET: '#0076B6', GB: '#2F7A55', HOU: '#A71930', IND: '#1F5AA6', JAX: '#007A87', KC: '#E31837',
+    LV: '#8A9095', LAC: '#0080C6', LAR: '#2153C9', MIA: '#008E97', MIN: '#5B2D96', NE: '#2A4F8C', NO: '#9F8958', NYG: '#1B3C9E',
+    NYJ: '#1F7A55', PHI: '#00747F', PIT: '#C9A100', SF: '#AA0000', SEA: '#4C8A1E', TB: '#D50A0A', TEN: '#4B92DB', WSH: '#8A2525', WAS: '#8A2525' };
+  const teamChip = t => t ? `<span class="fd-tm" style="background:${NFL[t] || '#555'}">${esc(t)}</span>` : '';
+  let feedLogos = {};
+  teamLogos().then(l => { feedLogos = l; if (loaded) render(); });
+  function face(e, t) {
+    const mg = `<span class="mg ${t}">${esc(monogram(e.m))}</span>`;
+    if (e.k === 'p' || !e.tm) return `<span class="fd-hs" aria-hidden="true">${avatarHtml(e.m, feedLogos)}${mg}</span>`;
+    const dst = e.pos === 'D/ST' || !(e.pid > 0);
+    const url = dst ? `https://a.espncdn.com/i/teamlogos/nfl/500/${encodeURIComponent(e.tm.toLowerCase())}.png`
+      : `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${e.pid}.png&w=96&h=70`;
+    return `<span class="fd-hs" style="--tc:${NFL[e.tm] || 'rgba(255,255,255,0.2)'}" aria-hidden="true"><span class="ph${dst ? ' logo' : ''}"><img src="${url}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('i'),{textContent:'${esc(e.tm)}'}))"></span>${mg}</span>`;
+  }
+
+  // ---------- What the week is doing (audit IX #1) ----------
+  // From the board's games: games on now and your league's starters in them,
+  // else the day that finished and the next kickoff.
+  function weekState() {
+    const games = board?.games || [];
+    const tz = { timeZone: ET };
+    const day = ms => new Date(ms).toLocaleDateString('en-US', { weekday: 'long', ...tz });
+    const at = ms => `${day(ms)} ${new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', ...tz }).replace(':00', '')}`;
+    const live = games.filter(g => g.state === 'in');
+    if (live.length) { const n = live.reduce((t, g) => t + (g.players || []).length, 0); return { live: true, html: `<b>${live.length} game${live.length === 1 ? '' : 's'} live</b> · ${n} starter${n === 1 ? '' : 's'} playing`, text: `${live.length} game${live.length === 1 ? '' : 's'} live` }; }
+    const pre = games.filter(g => g.state === 'pre').map(g => Date.parse(g.ko)).sort((a, b) => a - b);
+    const post = games.filter(g => g.state === 'post').map(g => Date.parse(g.ko)).sort((a, b) => b - a);
+    if (post.length && pre.length) return { html: `<b>${day(post[0])} final</b> · ${at(pre[0])} next`, text: `${at(pre[0])} next` };
+    if (pre.length) return { html: `First kickoff ${at(pre[0])}`, text: `Kickoff ${at(pre[0])}` };
+    if (post.length) return { html: '<b>Final</b>', text: 'Final' };
+    return { html: board ? 'Updated' : '', text: '' };
+  }
+
+  // ---------- Your matchup for the folded bar and the tab bar (audit IX #3, #13) ----------
+  let foldMu = null;
+  window.rlFoldScore = () => foldMu;
+  const winPct = d => 100 / (1 + Math.exp(-1.702 * d / 57));   // ~ normal(margin / 57), as ESPN's pregame odds
+  function yourMatchup(me, opp, cur, proj, done, st, live) {
+    foldMu = me && opp ? { me, opp, meScore: f2(cur.get(me) || 0), oppScore: f2(cur.get(opp) || 0),
+      meProj: done || !proj.has(me) ? '' : f2(proj.get(me)), oppProj: done || !proj.has(opp) ? '' : f2(proj.get(opp)),
+      pct: done || !proj.has(me) || !proj.has(opp) ? null : winPct(proj.get(me) - proj.get(opp)),
+      live: !done && live.some(g => (g.players || []).some(p => p.m === me || p.m === opp)),
+      line: done ? `Week ${week} · final` : `Week ${week} · ${st.text}` } : null;
+    window.dispatchEvent(new CustomEvent('rl-fold'));
+    if (me && !done && board && window.rlLiveMine) rlLiveMine(live.some(g => (g.players || []).some(p => p.m === me)));
+  }
 
   // Each row's current scores, rebuilt from the rows: a team's score at any
   // point is the sum of its starters' latest totals, and the current median
@@ -448,12 +566,14 @@
   }
 
   function render() {
-    document.getElementById('fd-eyebrow').textContent = week ? `Retirement League · Week ${week}` : 'Retirement League';
-    // A finished week: the Updated stamp gives way to a jump to the live week.
+    // A finished week says so, with the way to the live one; the live week
+    // says what it's doing, and the time only once it's a few minutes old.
     const done = !!(week && liveWeek && week < liveWeek);
-    document.getElementById('fd-updated-label').textContent = done ? 'Live now' : 'Updated';
-    document.getElementById('fd-updated').innerHTML = done ? `<button type="button" class="fd-link" data-fd-live>Week ${liveWeek} ›</button>`
-      : esc(updatedAt ? formatUpdated(updatedAt) : '—');
+    const st = weekState();
+    document.getElementById('fd-updated-label').innerHTML = done ? '<b>Final</b> ·' : st.html;
+    document.getElementById('fd-updated').innerHTML = done ? `<button type="button" class="fd-link" data-fd-live>Week ${liveWeek} is live ›</button>`
+      : updatedAt && Date.now() - Date.parse(updatedAt) > 3 * 60 * 1000 ? esc('· updated ' + formatUpdated(updatedAt)) : '';
+    document.querySelector('.updated-block').classList.toggle('live', !done && !!st.live);
     renderStep();
     const oppOf = new Map();
     pairs.forEach(([a, b]) => { oppOf.set(a, b); oppOf.set(b, a); });
@@ -514,6 +634,7 @@
     });
     renderAsk();
     renderSide(pair, me, opp, tone, wide ? tkHtml : '', order.length);
+    yourMatchup(me, opp, cur, proj, done, st, live);
 
     // ----- The list -----
     if (game && !games.some(g => g.key === game) && !events.some(e => gameKey(e.tm, e.op) === game)) game = null;
@@ -553,13 +674,21 @@
       const x = detailed ? `<div class="fd-x">${lines(e, other, sTone(e.m), oTone(other), name)}</div>` : '';
       const mins = e.over ? Math.max(1, Math.round(e.over / 60000)) : 0;
       const note = e.over && view === 'detailed' ? `<div class="fd-note">Taken back ${mins === 1 ? 'a minute' : mins + ' minutes'} later, so it didn't count.</div>` : '';
+      // The time rides the second line now that a face leads the row.
+      const sub2 = e.k === 'p' ? `${who} · ${fdTime(e.t)}` : detailed ? `${teamChip(e.tm)}${esc(gameLine.replace(/^\S+ /, ''))} · ${fdTime(e.t)}` : `${who}${e.tm ? ' · ' + teamChip(e.tm) + esc(gameLine.replace(/^\S+ /, '')) : ''} · ${fdTime(e.t)}`;
       return `${head}<div class="fd-row item${whose ? ' ' + whose : ''}${detailed ? '' : ' compact'}${e.td && !e.over ? ' td' : ''}${e.over ? ' over' : ''}${seen && e.id > seen ? ' fd-new' : ''}" data-id="${e.id}">
-          <span class="fd-t">${fdTime(e.t)}</span>
-          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${tags}${sub ? `<div class="fd-s">${sub}</div>` : ''}${why}</div>
+          ${face(e, tone(e.m))}
+          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${tags}<div class="fd-s">${sub2}</div>${why}</div>
           <span class="fd-p ${valTone}${Math.abs(e.d) >= 6 ? ' big' : ''}">${e.d > 0 ? '+' : '−'}${f2(Math.abs(e.d))}</span>
           ${x}${note}
         </div>`;
     }).join('');
+    // A poll that brought points to your matchup: a toast for the biggest (audit IX #11).
+    if (seen && !done && me && !frozen()) {
+      const fresh = events.filter(e => e.id > seen && e.k !== 'p' && !e.undo && (e.m === me || e.m === opp) && e.d >= 0.5);
+      const best = fresh.sort((x, y) => y.d - x.d)[0];
+      if (best) playToast(`${face(best, tone(best.m))}<span>${esc(best.n)}${best.what ? ' · ' + esc(best.what) : ''} <b>+${f2(best.d)}</b></span>`);
+    }
     // Before kickoff the week is lineup moves and projection notes, which Big
     // plays leaves out: the empty line offers them.
     const notes = events.filter(e => e.k === 'p' && (!pair || pair.includes(e.m))).length;
@@ -580,8 +709,8 @@
       const other = e.om || '', gl = gameLineOf(e);
       const who = name(e.m, sTone(e.m)) + (other ? ' vs ' + name(other, oTone(other)) : '');
       return `<div class="fd-row item compact${whose ? ' ' + whose : ''}${e.td ? ' td' : ''}">
-          <span class="fd-t">${fdDay(e.t).slice(0, 3)}</span>
-          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${e.td ? '<span class="tag">TD</span>' : ''}<div class="fd-s">${who}${gl ? ' · ' + esc(gl) : ''}</div></div>
+          ${face(e, tone(e.m))}
+          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${e.td ? '<span class="tag">TD</span>' : ''}<div class="fd-s">${who}${gl ? ' · ' + esc(gl) : ''} · ${fdDay(e.t).slice(0, 3)}</div></div>
           <span class="fd-p ${valTone}${Math.abs(e.d) >= 6 ? ' big' : ''}">${e.d > 0 ? '+' : '−'}${f2(Math.abs(e.d))}</span>
         </div>`;
     };
@@ -596,11 +725,13 @@
     const band = bandEl.getBoundingClientRect().bottom;
     const anchor = [...listEl.querySelectorAll('.fd-row')].find(r => r.getBoundingClientRect().bottom > band);
     const keep = anchor && listEl.getBoundingClientRect().top < band ? { id: anchor.dataset.id, top: anchor.getBoundingClientRect().top } : null;
-    listEl.innerHTML = loaded ? rows || `<div class="empty-note">${empty}</div>` : '<div class="empty-note">Loading…</div>';
+    if (loaded || !listEl.querySelector('.fd-skel')) listEl.innerHTML = loaded ? rows || `<div class="empty-note">${empty}</div>` : document.getElementById('fd-skel-tpl').innerHTML;
     if (keep) {
       const same = listEl.querySelector(`.fd-row[data-id="${keep.id}"]`);
       if (same) window.scrollBy({ top: same.getBoundingClientRect().top - keep.top, behavior: 'instant' });
     }
+    // The newest play you've seen on the live week, for the tab bar's count (nav.js).
+    if (loaded && !done && maxId) { try { localStorage.setItem('rl-feed-seen', JSON.stringify({ id: maxId, week })); } catch (e) {} }
     seen = maxId;
     document.documentElement.style.setProperty('--band-h', bandEl.offsetHeight + 'px');
     markStuck();
@@ -731,12 +862,11 @@
     filter = 'all'; try { localStorage.setItem('feedFilter', filter); } catch (err) {}
     seen = 0; render();
   });
-  // nav.js moves the stepper into the title row, so these listen on the page.
+  document.getElementById('wk-chip').addEventListener('click', openWeeks);
   document.addEventListener('click', e => {
-    const b = e.target.closest('#wk-step [data-wk]');
-    if (b && !b.disabled && week) showWeek(Math.min(liveWeek || week, week + Number(b.dataset.wk)));
     if (e.target.closest('[data-fd-live]') && liveWeek) showWeek(liveWeek);
   });
+  addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('wk-scrim')?.click(); });
   addEventListener('rl-me', render);
   addEventListener('rl-settings', render);
 

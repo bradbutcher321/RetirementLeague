@@ -599,3 +599,31 @@ button.you-link{ width: 100%; font-family: var(--body); cursor: pointer; text-al
   .rv-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: 440px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
   .rv-sheet .sheet-grab{ visibility: hidden; height: 8px; padding: 0; }
 }
+
+/* ---------- Your score in the folded title (audit IX #3) ----------
+   On Live and Feed the bar shows your matchup: you on the left in your
+   ring, your opponent on the right in white, your chance between. Scoped
+   under .sc so the plain title's .fold-t b / span rules don't reach in. */
+.fold-in.sc{ grid-template-columns: minmax(0, 1fr) 34px; }
+.fold-in.sc > span:first-child{ display: none; }
+.fold-in.sc .fold-t{ display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; text-align: left; line-height: 1; }
+.fold-in.sc .rl-av{ display: inline-grid; margin: 0; overflow: hidden; }
+.fold-in.sc .fsb-side{ display: flex; align-items: center; gap: 7px; min-width: 0; margin: 0; overflow: visible; font-size: inherit; color: inherit; }
+.fold-in.sc .fsb-side.r{ flex-direction: row-reverse; text-align: right; }
+.fold-in.sc .fsb-side .rl-av{ --av: 28px; display: inline-grid; }
+.fold-in.sc .fsb-n{ display: block; margin: 0; overflow: visible; font: 800 1.3rem/1 var(--scoreboard); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text); }
+.fold-in.sc .fsb-side:not(.r) .fsb-n{ color: var(--me-ring); }
+.fold-in.sc .fsb-n small{ display: block; font: 500 0.6rem/1.25 var(--body); color: var(--text-dim); margin-top: 2px; }
+.fold-in.sc .fsb-mid{ display: grid; justify-items: center; gap: 4px; min-width: 0; margin: 0; overflow: visible; }
+.fold-in.sc .fsb-l, .fold-in.sc .fsb-l2{ margin: 0; display: flex; align-items: center; justify-content: center; gap: 5px; max-width: 100%; font-size: 0.66rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fold-in.sc .fsb-l b{ display: inline; color: var(--text); font-weight: 700; font-size: 0.74rem; }
+.fold-in.sc .fsb-dot{ display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
+.fold-in.sc .fsb-bar{ margin: 0; display: flex; width: 100%; max-width: 110px; height: 4px; border-radius: 2px; background: rgba(245,245,243,0.5); overflow: hidden; }
+.fold-in.sc .fsb-bar i{ display: block; height: 100%; background: var(--me-ring); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+@media (prefers-reduced-motion: reduce){ .fold-in.sc .fsb-dot{ animation: none; } .fold-in.sc .fsb-bar i{ transition: none; } }
+
+/* ---------- What's new, on the tab bar (audit IX #13) ---------- */
+.tabbar .tb-cap .tb-ic{ position: relative; }
+.tb-badge{ position: absolute; top: -5px; left: 15px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--gold); color: var(--ctl-on-ink); font: 800 0.56rem/16px var(--body); font-style: normal; text-align: center; box-shadow: 0 0 0 2px #1C1C1C; }
+.tb-badge.dot{ min-width: 0; width: 9px; height: 9px; padding: 0; top: -2px; left: 17px; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce){ .tb-badge.dot{ animation: none; } }

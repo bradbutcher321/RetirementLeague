@@ -89,6 +89,14 @@ class SheetClient:
         for i, player in enumerate(self.players):
             self.ws.update([_row_values(player_rows.get(player, {}))], f"E{start_row + i}:O{start_row + i}")
 
+    def save_meta(self, start_row, sacko, final_odds, final_payout):
+        """Only the week's Sacko, Final Odds and Final Payout (the first row's
+        C, P and Q), for the Commissioner page's bet card. Every pick stays."""
+        assert (start_row - 2) % PLAYERS_PER_WEEK == 0, f"start_row {start_row} isn't aligned to a 12-row week block"
+        self.ws.update([[sacko or ""]], f"C{start_row}")
+        self.ws.update([[final_odds if final_odds is not None else ""]], f"P{start_row}")
+        self.ws.update([[final_payout if final_payout is not None else ""]], f"Q{start_row}")
+
     def save_rows(self, start_row, player_rows):
         """Rewrites only the given players' rows of a week already in the
         sheet (Parlay Legs' sync), leaving everyone else's, and the week's
