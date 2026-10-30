@@ -778,7 +778,7 @@
     if (!board.canEnter) return m ? legRow(m) + `<p class="fine">${esc(lockedAt)}. Text the group chat if it needs a fix.</p>`
       : `<p class="empty">${esc(board.locked ? 'The legs are locked in' : `Legs locked ${etWhen(board.locksAt)}`)} and yours isn't in. Text it to the group chat.</p>`;
     if (m && !editing) return legRow(m) + askHtml() + `<div class="acts"><button type="button" class="gold-btn" data-act="change">Change</button>${m.sheet ? '' : '<button type="button" class="gold-btn quiet" data-act="remove">Remove</button>'}</div>
-      <p class="fine">${saveMsg ? `<b>${esc(saveMsg)}</b> ` : ''}${board.open ? `Everyone can see it. You can change it until <b>${esc(etWhen(board.locksAt))}</b>.` : 'Locked for members. You can still change it as commissioner.'}</p>`;
+      <p class="fine">${saveMsg ? `<b>${esc(saveMsg)}</b> ` : ''}${board.open && !board.locked ? (board.reopened ? 'Everyone can see it. A commissioner reopened the legs, so you can change it until they lock them.' : `Everyone can see it. You can change it until <b>${esc(etWhen(board.locksAt))}</b>.`) : 'Locked for members. You can still change it as commissioner.'}</p>`;
     if (st.typed) return typedForm();
     const taken = others().slice().sort((a, b) => (a.gametime || '9').localeCompare(b.gametime || '9'));
     return `<div style="margin:-12px 0 4px"><button type="button" class="link-btn" data-act="type">Can't find it? Type it in</button></div>`
@@ -802,7 +802,7 @@
     document.getElementById('mine-title').innerHTML = other
       ? `<span>${esc(forWhom())}'s leg</span><button type="button" class="link-btn" id="back-mine" style="padding:0;min-height:32px">Back to mine</button>` : 'Your leg';
     document.getElementById('chips').innerHTML = board ? `<span class="chip gold">${board.year} · Week ${board.week}</span>
-      <span class="chip">${board.locked ? 'Locked · legs confirmed' : board.open ? `Locks ${esc(etWhen(board.locksAt))}` : `Locked · opens ${esc(etWhen(board.opensAt))}`}</span>
+      <span class="chip">${board.locked ? 'Locked · legs confirmed' : board.reopened ? 'Reopened' : board.open ? `Locks ${esc(etWhen(board.locksAt))}` : `Locked · opens ${esc(etWhen(board.opensAt))}`}</span>
       <span class="chip">${board.legs.length} of ${board.players.length} in</span>` : '';
     if (cm) renderCm();
     else {
@@ -1238,10 +1238,13 @@
         <label class="field"><span>Sacko</span><select class="in" data-w="sacko">${['', ...roster()].map(p => `<option value="${esc(p)}"${p === c.sacko ? ' selected' : ''}>${esc(p || '—')}</option>`).join('')}</select></label>
         <label class="field"><span>Final odds</span><input class="in" data-w="final_odds" value="${esc(c.final_odds)}" inputmode="numbers-and-punctuation" autocomplete="off" placeholder="+478887"></label>
         <label class="field"><span>Final payout</span><input class="in" data-w="final_payout" value="${esc(c.final_payout)}" inputmode="decimal" autocomplete="off" placeholder="95797.48"></label>
-      </div>${onBoardWeek() && board.open ? `<div class="acts"><button type="button" class="gold-btn" id="m-lock"${cmSaving ? ' disabled' : ''}>${cmSaving === 'lock' ? 'Pulling Hard Rock odds…' : board.locked ? 'Unlock legs' : 'Lock legs'}</button></div>` : ''}
+      </div>${onBoardWeek() ? `<div class="acts"><button type="button" class="gold-btn" id="m-lock"${cmSaving ? ' disabled' : ''}>${cmSaving === 'lock' ? 'Pulling Hard Rock odds…' : shut() ? 'Unlock legs' : 'Lock legs'}</button></div>` : ''}
       ${lockMsg ? `<p class="fine">${esc(lockMsg)}</p>` : ''}${onBoardWeek() ? pricedHtml() : ''}`;
     return [`<span>Week numbers</span>${stepperHtml()}`, body];
   }
+  // Shut to members: locked by a commissioner, or past Thursday 1 PM and not
+  // reopened (for a commissioner, `open` is just the members' window).
+  function shut(){ return board.locked || !board.open; }
 
   // What Lock legs found on Hard Rock: the legs it repriced, and the ones it
   // left as entered, to check against the bet slip by hand.
@@ -1316,15 +1319,16 @@
     const step = e.target.closest('[data-step]');
     if (step && !step.disabled) { const w = weekList()[Number(step.dataset.step)]; if (w) goToWeek(w.year, w.week); return; }
     if (!e.target.closest('#m-lock') || cmSaving) return;
-    cmSaving = board.locked ? true : 'lock'; lockMsg = ''; renderCm();
+    const lock = !shut();
+    cmSaving = lock ? 'lock' : true; lockMsg = ''; renderCm();
     let res = null, out = {};
     try {
-      res = await fetch(WORKER_URL + '/legs/lock', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ locked: !board.locked }) });
+      res = await fetch(WORKER_URL + '/legs/lock', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ locked: lock }) });
       out = await res.json().catch(() => ({}));
     } catch { /* no connection */ }
     cmSaving = false;
     if (out.legs) board = { ...board, ...out };
-    lockMsg = res && res.ok ? (board.locked ? 'Legs locked. Only commissioners can change them now.' : 'Legs unlocked.')
+    lockMsg = res && res.ok ? (board.locked ? 'Legs locked. Only commissioners can change them now.' : 'Legs unlocked. Managers can change their legs until you lock them again.')
       : `Couldn't change the lock (${res ? out.error || res.status : 'no connection'}).`;
     render();
     // Repriced legs land in the rows you haven't touched.

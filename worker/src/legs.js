@@ -30,7 +30,10 @@
  *                              everyone else once the bet is live (or unlocks
  *                              them); commissioners can still edit. Locking
  *                              also reprices every leg at Hard Rock's odds
- *                              of that minute (priceAtLock)
+ *                              of that minute (priceAtLock). Unlocking after
+ *                              Thursday 1 PM reopens the week to everyone
+ *                              until a commissioner locks it again or the
+ *                              next window opens (reopenKey)
  *
  * Lines come from Hard Rock Bet through The Odds API (secret ODDS_API_KEY):
  * the Florida book first, then Hard Rock's main book, which also has
@@ -192,6 +195,8 @@ async function weekLegs(env, wk, win) {
   return out;
 }
 const lockKey = (wk) => `legs:locked:${wk.year}:${wk.week}`;
+// Set (to the window's Tuesday) when a commissioner unlocks after Thursday 1 PM.
+const reopenKey = (wk) => `legs:reopened:${wk.year}:${wk.week}`;
 const pickFields = (r) => Object.fromEntries(LEG_FIELDS.map((f) => [f, f === "odds" ? r.odds : r[f] || ""]));
 
 /** A leg from the page, checked, with its Raw Pick -- or {error}. */
@@ -230,12 +235,16 @@ async function board(env, request) {
   const commish = !!me && (await isCommissioner(env, me.manager));
   // A commissioner's Lock legs button shuts the week to everyone else once
   // the bet is live; a commissioner can still edit (open stays true for them).
-  const locked = !!(await env.COOLDOWN_KV.get(lockKey(wk)));
+  const [lockVal, reopenVal] = await Promise.all([env.COOLDOWN_KV.get(lockKey(wk)), env.COOLDOWN_KV.get(reopenKey(wk))]);
+  const locked = !!lockVal;
+  // Past Thursday 1 PM the window stays shut unless a commissioner reopened it.
+  const reopened = !win.open && reopenVal === win.tue;
+  const windowOpen = win.open || reopened;
   // A commissioner can enter or fix a leg at any time (canEnter); `open` is
   // the members' window.
   return {
-    year: wk.year, week: wk.week, open: win.open && (!locked || commish), canEnter: commish || (win.open && !locked),
-    locked: win.open && locked, locksAt: win.locksAt, opensAt: win.opensAt,
+    year: wk.year, week: wk.week, open: windowOpen && (!locked || commish), canEnter: commish || (windowOpen && !locked),
+    locked: windowOpen && locked, reopened, locksAt: win.locksAt, opensAt: win.opensAt,
     days: win.days, players: stats?.players || [], legs: await weekLegs(env, wk, win), me: me ? me.manager : null,
     commish, asOf: Date.now(),
     // Hard Rock's odds from the last Lock legs, for commissioners to check the slip against.
@@ -305,7 +314,14 @@ async function saveLock(request, env) {
       const n = (h) => report.filter((r) => h.includes(r.how)).length;
       note = ` · Hard Rock odds on ${n(["updated", "same"])} of ${report.length}, ${n(["updated"])} changed`;
     }
-  } else await env.COOLDOWN_KV.delete(lockKey(b._wk));
+  } else {
+    await env.COOLDOWN_KV.delete(lockKey(b._wk));
+    // After Thursday 1 PM, unlocking reopens the week to everyone.
+    if (!b._win.open) {
+      await env.COOLDOWN_KV.put(reopenKey(b._wk), b._win.tue, { expirationTtl: 14 * 24 * 3600 });
+      note = " after the Thursday lock";
+    }
+  }
   await logAction(env, who.manager, "parlay", `${body.locked ? "Locked" : "Unlocked"} the legs for week ${b._wk.week}${note}`);
   return { status: 200, body: { ok: true, ...publicBoard(await board(env, request)), me: who.manager } };
 }
@@ -632,7 +648,7 @@ export async function legsSummary(env) {
   const left = await env.COOLDOWN_KV.get(ODDS_LEFT_KEY);
   const inNow = new Set(b.legs.map((l) => l.player));
   return {
-    year: b._wk.year, week: b._wk.week, windowOpen: b._win.open, locked: b._win.open && locked,
+    year: b._wk.year, week: b._wk.week, windowOpen: b._win.open || b.reopened, locked: b.locked, reopened: b.reopened,
     locksAt: b.locksAt, opensAt: b.opensAt, players: b.players,
     legsIn: b.players.filter((p) => inNow.has(p)), missing: b.players.filter((p) => !inNow.has(p)),
     oddsLeft: left == null ? null : Number(left),

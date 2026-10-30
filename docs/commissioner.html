@@ -398,7 +398,7 @@
       case 'parlay':
         if (!P) return { t: "Legs, Sacko, odds and Jon's tables" };
         if (shut(P)) return { t: `Locked · ${P.legsIn.length} of ${P.players.length} in` };
-        return { t: `${P.legsIn.length} of ${P.players.length} in · locks ${etDay(P.locksAt)}`, warn: P.missing.length > 0 };
+        return { t: `${P.legsIn.length} of ${P.players.length} in · ${P.reopened ? 'reopened' : 'locks ' + etDay(P.locksAt)}`, warn: P.missing.length > 0 };
       case 'managers': return { t: `${ov.signedIn} of ${ov.managers} signed in · ${ov.push.people} with notifications`, warn: ov.unsigned.length > 0 };
       case 'messages': return { t: ov.announcement ? 'A banner is showing on Live' : 'Push, Live banner or group text' };
       case 'activity': return { t: ov.visits ? `${plural(ov.visits.visitors, 'visitor', 'visitors')} today` : 'Who comes, and what they read' };
@@ -431,8 +431,9 @@
     const steps = [
       { st: 'done', w: 'Tue 12 AM', t: 'Legs opened' },
       isShut
-        ? { st: 'done', w: etDay(P.locksAt), t: `Legs locked · ${P.legsIn.length} of ${P.players.length} in` }
-        : { st: 'now', w: `Now · locks ${etDay(P.locksAt)}`, t: `${P.legsIn.length} of ${P.players.length} legs in`, s: P.missing.length ? `Waiting on ${list(P.missing)}` : 'Every leg is in.',
+        ? { st: 'done', w: etDay(P.locksAt), t: `Legs locked · ${P.legsIn.length} of ${P.players.length} in`,
+            acts: access === 'session' && !placed ? `<button type="button" class="cm-btn dim" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>Unlock</button>` : '' }
+        : { st: 'now', w: P.reopened ? 'Now · reopened' : `Now · locks ${etDay(P.locksAt)}`, t: `${P.legsIn.length} of ${P.players.length} legs in`, s: P.missing.length ? `Waiting on ${list(P.missing)}` : 'Every leg is in.',
             acts: (P.missing.length ? `<button type="button" class="cm-btn solid" data-act="nudge">Nudge the ${P.missing.length}</button>` : '')
               + (access === 'session' ? `<button type="button" class="cm-btn dim" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>Lock now</button>` : '')
               + '<a class="cm-btn dim" href="parlay-legs.html">Enter for someone</a>' },
@@ -478,11 +479,13 @@
     const dots = P.players.map(n => `<span class="cm-mono ${P.legsIn.includes(n) ? 'in' : 'out'}" title="${esc(n)}">${esc(monogram(n))}</span>`).join('');
     let legs;
     if (!P.windowOpen) {
-      legs = `<p class="cm-fine" style="margin-top:0">Legs for week ${P.week} open Tuesday at 12 AM ET and lock Thursday at 1 PM.</p>`;
+      legs = `<div class="cm-dots">${dots}</div>
+        <p class="cm-fine">Locked ${esc(etDay(P.locksAt))} ET. Unlock to let managers change their legs again, until you lock them.</p>
+        ${access === 'session' ? `<div class="cm-wrap"><button type="button" class="cm-btn" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>Unlock legs</button><a class="cm-btn dim" href="parlay-legs.html">Open the board</a></div>` : '<p class="cm-fine">Sign in as a commissioner to unlock the legs.</p>'}`;
     } else {
       legs = `<div class="cm-dots">${dots}</div>
         <p class="cm-fine">${P.missing.length ? `<b>Missing:</b> ${esc(list(P.missing))}.` : 'Every leg is in.'}${cant.length ? ` ${esc(list(cant))} ${cant.length > 1 ? "haven't" : "hasn't"} signed in, so they can't enter ${cant.length > 1 ? 'theirs' : 'one'} themselves.` : ''}</p>
-        <p class="cm-fine">${P.locked ? 'Locked. Managers can no longer change their legs. You still can.' : `Locks ${esc(etDay(P.locksAt))} ET on its own. Lock now to shut the board once the bet is placed.`}</p>
+        <p class="cm-fine">${P.locked ? 'Locked. Managers can no longer change their legs. You still can.' : P.reopened ? 'Reopened after the Thursday lock. Managers can change their legs until you lock them again.' : `Locks ${esc(etDay(P.locksAt))} ET on its own. Lock now to shut the board once the bet is placed.`}</p>
         <div class="cm-wrap">${P.missing.length && !P.locked ? `<button type="button" class="cm-btn solid" data-act="nudge">Nudge the ${P.missing.length}</button>` : ''}${access === 'session' ? `<button type="button" class="cm-btn${P.locked ? ' dim' : ''}" data-act="lock"${busy === 'lock' ? ' disabled' : ''}>${P.locked ? 'Unlock legs' : 'Lock legs'}</button>` : ''}<a class="cm-btn dim" href="parlay-legs.html">Open the board</a></div>
         ${access === 'session' ? '' : '<p class="cm-fine">Sign in as a commissioner to lock the legs.</p>'}${pricedHtml(P)}`;
     }
@@ -1109,7 +1112,7 @@
     }
     else if (a === 'lock') {
       await act('lock', async () => {
-        const res = await fetch(WORKER_URL + '/legs/lock', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ locked: !ov.parlay.locked }) });
+        const res = await fetch(WORKER_URL + '/legs/lock', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ locked: !shut(ov.parlay) }) });
         if (!res.ok) throw { message: "Couldn't change the lock. Try again." };
         await loadOverview();
         const pr = ov.parlay.locked && ov.parlay.priced, changed = pr ? pr.legs.filter(x => x.how === 'updated').length : 0;
