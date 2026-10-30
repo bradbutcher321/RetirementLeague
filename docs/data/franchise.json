@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-29T11:00:01.838969+00:00",
+  "generated_at": "2026-10-30T10:57:59.139243+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -1498,8 +1498,8 @@
         ]
       },
       "moves": {
-        "total": 91,
-        "avg_per_season": 7.6,
+        "total": 92,
+        "avg_per_season": 7.7,
         "busiest_season": {
           "year": 2015,
           "moves": 14
