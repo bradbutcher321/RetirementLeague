@@ -1104,7 +1104,8 @@
   // The board moved (a manager saved, or a Pick above): rows the commissioner
   // hasn't touched follow it; a row being edited keeps its boxes.
   function refreshFromBoard(only){
-    if (!ed.orig || !onBoardWeek()) return;
+    // Mid-save the board still holds the sheet's old rows; it catches up after.
+    if (!ed.orig || !onBoardWeek() || cmSaving) return;
     if (!only) ed.asOf = board.asOf;
     for (const n of only || roster()) {
       const nb = boardRow(n, ed.orig.rows[n]);
@@ -1465,8 +1466,12 @@
   async function saveWeek(){
     if (cmSaving || !ed.cur || !changeCount() || ed.finding.size || !stats) return;
     const year = ed.year, week = ed.week, mode = weekSaved(year, week) ? 'edit' : 'new';
-    const sent = clone(ed.cur);
+    const sent = clone(ed.cur), before = ed.orig;
     const body = { picks: { year, week, mode, loaded_at: ed.asOf, dry_run: dryQ !== '', ...editPayload() } };
+    // What this save changes, to know when Parlay Results has it.
+    const changed = roster().filter(isChanged);
+    const setResult = mode === 'edit' ? changed.filter(n => sent.rows[n].result !== before.rows[n].result && ['Win', 'Loss'].includes(sent.rows[n].result)) : [];
+    const sackoSet = sent.sacko !== before.sacko, oddsSet = sent.final_odds !== before.final_odds;
     cmSaving = true;
     steps([['', 'Sending…']]);
     const sentAt = Date.now();
@@ -1482,9 +1487,24 @@
     }
     const label = `${year} Week ${week}`;
     if (body.picks.dry_run) { cmSaving = false; steps([['done', `Sent ${label} as a dry run. Nothing will be written; check the Enter Parlay Picks Action log.`]]); return; }
+    // Sent: it is the new baseline now, so the count clears and Save can't go
+    // twice; edits made while it publishes count as changes.
+    const here = () => ed.year === year && ed.week === week && !!ed.orig;
+    if (here()) ed.orig = clone(sent);
     steps([['done', `Sent ${label}`], ['', 'Writing it to the sheet, grading and publishing. Usually a minute or two.']]);
-    loadBoard();   // the Worker already moved the board's copy
-    // Done once Parlay Results' data is newer than the save and has the week.
+    loadBoard();
+    // Done once Parlay Results' data is newer than the save and has what it
+    // changed. Grading can turn a sent Pending into Win or Loss, so a Result
+    // only has to match where the commissioner set one.
+    const has = w => {
+      const ok = n => {
+        const r = body.picks.rows[n], p = w.picks[n];
+        if (!r.bet_type) return !p || !p.pick;
+        return !!p && (p.odds ?? null) === (r.odds ?? null) && (!r.gametime || String(p.gametime || '').slice(0, 16) === r.gametime.slice(0, 16))
+          && (!setResult.includes(n) || p.result === r.result);
+      };
+      return changed.every(ok) && (!sackoSet || (w.sacko || '') === (body.picks.sacko || '')) && (!oddsSet || ((w.final || {}).odds ?? null) === body.picks.final_odds);
+    };
     const deadline = sentAt + 6 * 60 * 1000;
     const poll = async () => {
       try {
@@ -1492,19 +1512,20 @@
         // Newer than the save, and holding these picks: a scheduled refresh
         // can publish the old copy of a week being replaced in between.
         const w = Date.parse(data.generated_at) > sentAt && data.weeks.find(x => x.year === year && x.week === week);
-        const same = ([n, r]) => !r.bet_type || (w.picks[n] && (w.picks[n].odds ?? null) === (r.odds ?? null) && (mode === 'new' || w.picks[n].result === r.result));
-        if (w && Object.entries(body.picks.rows).every(same)) {
+        if (w && has(w)) {
           stats = data;
           cmSaving = false;
-          if (ed.year === year && ed.week === week && ed.orig) ed.orig = sent;   // later edits stay changes
           if (pasteMsg) { noteText = ''; store.set(NOTE_KEY, ''); pasteMsg = null; pasteOpen = false; }
           steps([['done', `Saved and published. <a href="parlay-results.html" style="color:var(--gold);font-weight:600">See it on Parlay Results</a>`]]);
+          loadBoard();
           return;
         }
       } catch { /* try again next tick */ }
       if (Date.now() < deadline) setTimeout(poll, 10000);
       else {
         cmSaving = false;
+        // Not seen: put the changes back so Save can send them again.
+        if (here()) { ed.orig = before; loadBoard(); }
         steps([['done', `Sent ${label}`], ['fail', `It hasn't shown up after six minutes. Check the <a href="https://github.com/bradbutcher321/RetirementLeague/actions/workflows/enter_parlay.yml" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600">Enter Parlay Picks</a> Action.`]]);
       }
     };
