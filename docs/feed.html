@@ -259,6 +259,24 @@
   .me-ask .x{ background: rgba(255,255,255,0.06); border: none; color: var(--text-dim); border-radius: 999px; width: 30px; height: 30px; font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; flex: none; position: relative; }
   .me-ask .x::before{ content: ''; position: absolute; inset: -7px; }
   .me-ask-go:focus-visible, .me-ask .x:focus-visible, .fd-gpill:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  /* ---------- Between weeks (site audit VIII #9) ----------
+     The week stepper (the dashboard's pill; nav.js moves it into the title
+     row), and on a finished week its biggest plays above the list. The
+     ticker holds the finals. */
+  .wk-step{ display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.06); }
+  .wk-step[hidden]{ display: none; }
+  .wk-step button{ position: relative; width: 34px; height: 30px; border: 0; background: none; color: var(--text); display: grid; place-items: center; cursor: pointer; padding: 0; border-radius: 999px; }
+  .wk-step button + button{ box-shadow: -1px 0 0 var(--line); border-radius: 0 999px 999px 0; }
+  .wk-step button:first-child{ border-radius: 999px 0 0 999px; }
+  .wk-step button::after{ content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }
+  .wk-step button svg{ width: 8px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .wk-step button:disabled{ opacity: 0.3; cursor: default; }
+  @media (hover: hover){ .wk-step button:not(:disabled):hover{ color: var(--gold); } }
+  .wk-step button:focus-visible, .fd-link:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
+  .fd-link{ font: inherit; font-weight: 600; color: var(--gold); background: none; border: 0; padding: 6px 2px; margin: -6px 0; cursor: pointer; }
+  .fd-sum{ padding: 12px 12px 12px; margin-bottom: 12px; }
+  .fd-sum .ln-h{ margin-bottom: 2px; }
+  .fd-sum-note{ margin: 10px 4px 0; font-size: 0.72rem; color: var(--text-dim); }
   .fd-new{ animation: fd-in .5s cubic-bezier(.2,.8,.2,1); }
   @keyframes fd-in{ from{ opacity: 0; transform: translateY(-6px); } }
   @media (prefers-reduced-motion: reduce){
@@ -277,7 +295,11 @@
           <h1>Feed</h1>
         </div>
         <div class="updated-block">
-          <div class="updated-label">Updated</div>
+          <div class="wk-step" id="wk-step" hidden>
+            <button type="button" data-wk="-1" aria-label="Previous week"><svg viewBox="0 0 8 12" aria-hidden="true"><path d="M6 2L2 6l4 4"/></svg></button>
+            <button type="button" data-wk="1" aria-label="Next week"><svg viewBox="0 0 8 12" aria-hidden="true"><path d="M2 2l4 4-4 4"/></svg></button>
+          </div>
+          <div class="updated-label" id="fd-updated-label">Updated</div>
           <div class="updated-value" id="fd-updated">—</div>
         </div>
       </div>
@@ -285,6 +307,7 @@
 
     <section>
       <div id="fd-ask"></div>
+      <div id="fd-sum"></div>
       <div class="fd-band" id="fd-band"></div>
       <div class="fd-grid" id="fd-grid">
         <aside class="fd-side" id="fd-side"></aside>
@@ -305,10 +328,16 @@
   // newest one here; live=1 also keeps the live dashboard fresh on the
   // Worker and returns who plays whom (pairs) and the live board (each
   // team's score now and projected, and the week's NFL games with their
-  // league starters). The week shown is the newest with any rows.
+  // league starters). The week shown is the newest with any rows, so a
+  // finished week stays up until the new week's first row -- a lineup move,
+  // injury news or a play -- and then the page moves to it on its own
+  // (audit VIII #9). The week stepper pins a week (?week=N); a finished week
+  // is loaded once and not polled.
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const REFRESH_MS = 15 * 1000;
   let week = null, events = [], maxId = 0, pairs = [], board = null, updatedAt = null, busy = false, seen = 0, loaded = false, lastAt = 0;
+  let pinned = parseInt(new URLSearchParams(location.search).get('week'), 10) || null, liveWeek = null, firstWeek = null, seq = 0;
+  const frozen = () => !!(pinned && liveWeek && pinned < liveWeek && loaded);
   // scope: 'all', 'mine' (your matchup) or 'm:<manager>' (that manager's
   // matchup this week; a week without it falls back to Everyone).
   let scope = 'mine', filter = 'big', view = 'detailed', game = null;
@@ -331,26 +360,61 @@
   const shortName = n => { const p = String(n).split(' '); return p.length > 1 && p[0].length > 2 && !p[0].includes('.') ? p[0][0] + '. ' + p.slice(1).join(' ') : n; };
   const gameKey = (a, b) => [a, b].sort().join('-');
 
-  function load() {
-    if (busy) return Promise.resolve();
+  // `force` is a week step: it goes out even while a poll is in flight, and
+  // whichever answer is older is dropped.
+  function load(force) {
+    if (busy && !force) return Promise.resolve();
+    if (frozen() && !force) return Promise.resolve();
     busy = true;
     lastAt = Date.now();
-    return fetch(`${WORKER_URL}/feed?live=1&since=${maxId}`, { cache: 'no-store' })
+    const id = ++seq;
+    return fetch(`${WORKER_URL}/feed?live=1&since=${maxId}${pinned ? '&week=' + pinned : ''}`, { cache: 'no-store' })
       .then(res => res.json())
       .then(d => {
-        if (!d || !Array.isArray(d.events)) return;
+        if (id !== seq || !d || !Array.isArray(d.events)) return;
         // A new week's first rows replace the last week's.
-        if (d.week !== week) { week = d.week; events = []; maxId = 0; seen = 0; prevCur.clear(); }
+        if (d.week !== week) { week = d.week; events = []; maxId = 0; seen = 0; prevCur.clear(); game = null; }
         d.events.forEach(e => { if (e.id > maxId) { events.push(e); maxId = e.id; } });
         if (Array.isArray(d.pairs)) pairs = d.pairs;
-        if (d.board) board = d.board;
+        board = d.board || null;
         if (d.updatedAt) updatedAt = d.updatedAt;
+        if (d.liveWeek) liveWeek = d.liveWeek;
+        if (d.firstWeek) firstWeek = d.firstWeek;
         loaded = true;
         render();
       })
       .catch(() => {})
-      .finally(() => { busy = false; });
+      .finally(() => { if (id === seq) busy = false; });
   }
+
+  // A week from the stepper (or the header's jump to the live week).
+  function showWeek(w) {
+    if (!w || w === week) return;
+    pinned = w;
+    week = w; events = []; maxId = 0; seen = 0; pairs = []; board = null; game = null; loaded = false;
+    prevCur.clear();
+    try {
+      const url = new URL(location.href);
+      url.searchParams.set('week', w);
+      history.replaceState(history.state, '', url);
+    } catch (e) {}
+    render();
+    scrollTo({ top: 0, behavior: 'auto' });
+    load(true);
+  }
+
+  function renderStep() {
+    const step = document.getElementById('wk-step');
+    if (!week || !liveWeek) { step.hidden = true; return; }
+    step.hidden = false;
+    step.querySelector('[data-wk="-1"]').disabled = week <= (firstWeek || 1);
+    step.querySelector('[data-wk="1"]').disabled = week >= liveWeek;
+  }
+
+  const gameLineOf = e => {
+    const clock = e.q ? (e.q > 4 ? 'OT' : `Q${e.q}`) + (e.clk ? ' ' + e.clk : '') : '';
+    return e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
+  };
 
   // Each row's current scores, rebuilt from the rows: a team's score at any
   // point is the sum of its starters' latest totals, and the current median
@@ -385,7 +449,12 @@
 
   function render() {
     document.getElementById('fd-eyebrow').textContent = week ? `Retirement League · Week ${week}` : 'Retirement League';
-    document.getElementById('fd-updated').textContent = updatedAt ? formatUpdated(updatedAt) : '—';
+    // A finished week: the Updated stamp gives way to a jump to the live week.
+    const done = !!(week && liveWeek && week < liveWeek);
+    document.getElementById('fd-updated-label').textContent = done ? 'Live now' : 'Updated';
+    document.getElementById('fd-updated').innerHTML = done ? `<button type="button" class="fd-link" data-fd-live>Week ${liveWeek} ›</button>`
+      : esc(updatedAt ? formatUpdated(updatedAt) : '—');
+    renderStep();
     const oppOf = new Map();
     pairs.forEach(([a, b]) => { oppOf.set(a, b); oppOf.set(b, a); });
     events.forEach(e => { if (!e.om) e.om = oppOf.get(e.m) || null; });
@@ -419,14 +488,14 @@
       const [a, b] = p, on = !!pair && pair.includes(a);
       const ca = cur.get(a) || 0, cb = cur.get(b) || 0;
       const lead = ca > cb + 0.005 ? a : cb > ca + 0.005 ? b : null;
-      const row = m => `<span class="tk-r"><span class="tk-n ${tone(m)}">${esc(m)}</span><span class="tk-s${lead && lead !== m ? ' trail' : ''}" data-tk="${esc(m)}">${f2(cur.get(m) || 0)}</span><span class="tk-p">${proj.has(m) ? f1(proj.get(m)) : ''}</span></span>`;
+      const row = m => `<span class="tk-r"><span class="tk-n ${tone(m)}">${esc(m)}</span><span class="tk-s${lead && lead !== m ? ' trail' : ''}" data-tk="${esc(m)}">${f2(cur.get(m) || 0)}</span><span class="tk-p">${proj.has(m) && !done ? f1(proj.get(m)) : ''}</span></span>`;
       return `<button type="button" class="tk-t${p === order[0] && mineP ? ' mine' : ''}${on ? ' on' : ''}" data-fd-scope="${esc(key)}" aria-pressed="${on}" aria-label="${esc(a)} vs ${esc(b)}">${row(a)}${row(b)}${livePlayers.has(a) || livePlayers.has(b) ? '<i class="tk-live" aria-hidden="true"></i>' : ''}</button>`;
     };
     const tk = document.getElementById('fd-tk');
     const tkLeft = tk ? tk.scrollLeft : 0;
     const tkHtml =
       `<div class="tk" id="fd-tk" role="group" aria-label="Whose plays">
-        <button type="button" class="tk-t all${pair ? '' : ' on'}" data-fd-scope="all" aria-pressed="${!pair}"><span class="tk-all">Everyone</span><span class="tk-sub">${live.length ? `${live.length} game${live.length === 1 ? '' : 's'} live` : `${order.length} matchups`}</span></button>
+        <button type="button" class="tk-t all${pair ? '' : ' on'}" data-fd-scope="all" aria-pressed="${!pair}"><span class="tk-all">Everyone</span><span class="tk-sub">${done ? 'Finals' : live.length ? `${live.length} game${live.length === 1 ? '' : 's'} live` : `${order.length} matchups`}</span></button>
         ${order.map((p, i) => tile(p, i === 0 && mineP ? 'mine' : 'm:' + p[0])).join('')}
       </div>`;
     // On a wide screen the ticker moves out of the band into the side column.
@@ -469,8 +538,7 @@
       const whose = e.m === me ? 'mine' : opp && e.m === opp ? 'opp' : '';
       // No red for a loss: the minus sign already says it.
       const valTone = whose === 'mine' ? 'mc' : whose === 'opp' ? 'wt' : 'gold';
-      const clock = e.q ? (e.q > 4 ? 'OT' : `Q${e.q}`) + (e.clk ? ' ' + e.clk : '') : '';
-      const gameLine = e.tm ? [`${e.tm} vs ${e.op}`, clock].filter(Boolean).join(' · ') : '';
+      const gameLine = gameLineOf(e);
       const other = e.om || '';
       // Detailed needs the projections the Worker saved with the row; a
       // row from before it kept them shows the compact line instead.
@@ -492,10 +560,34 @@
           ${x}${note}
         </div>`;
     }).join('');
-    const empty = !events.length ? 'Scoring plays show up here once games kick off.'
+    // Before kickoff the week is lineup moves and projection notes, which Big
+    // plays leaves out: the empty line offers them.
+    const notes = events.filter(e => e.k === 'p' && (!pair || pair.includes(e.m))).length;
+    const empty = !events.length ? (done ? `No plays were saved for Week ${week}.` : 'Scoring plays show up here once games kick off.')
       : game ? 'Nothing from this game here yet.'
       : filter === 'big' ? (pair ? 'No big plays in this matchup yet.' : 'No big plays yet.')
+        + (notes ? `<br><button type="button" class="fd-link" data-fd-all>See ${notes} lineup and projection note${notes === 1 ? '' : 's'}</button>` : '')
       : 'Nothing has scored in this matchup yet.';
+
+    // A finished week: its five biggest plays (in the matchup picked in the
+    // ticker) above the list.
+    const sumEl = document.getElementById('fd-sum');
+    const top = done ? events.filter(e => e.k !== 'p' && !e.undo && !e.over && (!pair || pair.includes(e.m)))
+      .sort((a, b) => Math.abs(b.d) - Math.abs(a.d)).slice(0, 5) : [];
+    const swRow = e => {
+      const whose = e.m === me ? 'mine' : opp && e.m === opp ? 'opp' : '';
+      const valTone = whose === 'mine' ? 'mc' : whose === 'opp' ? 'wt' : 'gold';
+      const other = e.om || '', gl = gameLineOf(e);
+      const who = name(e.m, sTone(e.m)) + (other ? ' vs ' + name(other, oTone(other)) : '');
+      return `<div class="fd-row item compact${whose ? ' ' + whose : ''}${e.td ? ' td' : ''}">
+          <span class="fd-t">${fdDay(e.t).slice(0, 3)}</span>
+          <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${e.td ? '<span class="tag">TD</span>' : ''}<div class="fd-s">${who}${gl ? ' · ' + esc(gl) : ''}</div></div>
+          <span class="fd-p ${valTone}${Math.abs(e.d) >= 6 ? ' big' : ''}">${e.d > 0 ? '+' : '−'}${f2(Math.abs(e.d))}</span>
+        </div>`;
+    };
+    sumEl.innerHTML = top.length ? `<div class="glass fd-sum"><div class="ln-h"><span class="ln-cap">Biggest plays of Week ${week}</span></div>
+        <div class="fd">${top.map(swRow).join('')}</div>
+        ${pinned ? '' : `<p class="fd-sum-note">Week ${liveWeek} takes over here with its first lineup move.</p>`}</div>` : '';
 
     // New rows land at the top. Scrolled down into the list, the row you
     // were reading stays where it is on screen instead of being pushed down.
@@ -557,8 +649,10 @@
     };
     let html = '';
     if (games.length) {
-      const today = fdDay(Date.now());
-      const done = games.filter(g => g.state === 'post' && fdDay(Date.parse(g.ko)) === today && inScope(g));
+      // The whole date: a finished week's Thursday isn't today's.
+      const ymd = ms => new Date(ms).toLocaleDateString('en-US', { timeZone: ET });
+      const today = ymd(Date.now());
+      const done = games.filter(g => g.state === 'post' && ymd(Date.parse(g.ko)) === today && inScope(g));
       // Starters still to play per game (on a matchup, only its own), then the
       // games grouped by kickoff, each group led by its starter total.
       const mgrs = g => (g.ms || []).filter(m => !pair || pair.includes(m));
@@ -632,6 +726,17 @@
     if (!e.target.closest('[data-fd-cleargame]')) return;
     game = null; seen = 0; render();
   });
+  document.getElementById('fd-list').addEventListener('click', e => {
+    if (!e.target.closest('[data-fd-all]')) return;
+    filter = 'all'; try { localStorage.setItem('feedFilter', filter); } catch (err) {}
+    seen = 0; render();
+  });
+  // nav.js moves the stepper into the title row, so these listen on the page.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('#wk-step [data-wk]');
+    if (b && !b.disabled && week) showWeek(Math.min(liveWeek || week, week + Number(b.dataset.wk)));
+    if (e.target.closest('[data-fd-live]') && liveWeek) showWeek(liveWeek);
+  });
   addEventListener('rl-me', render);
   addEventListener('rl-settings', render);
 
@@ -648,7 +753,7 @@
 
   // Background tabs don't poll; coming back refreshes right away if stale.
   renderAsk();
-  window.pageRefresh = load; // pull to refresh (page-common.js)
+  window.pageRefresh = () => load(true); // pull to refresh (page-common.js)
   load();
   setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
   document.addEventListener('visibilitychange', () => {

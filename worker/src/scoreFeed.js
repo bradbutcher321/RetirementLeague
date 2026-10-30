@@ -21,7 +21,9 @@
  *   oldest first, only rows after `since` (the page polls for the new ones),
  *   only changes of more than 3 points either way with big=1 (the
  *   dashboard's Flow captions). Defaults to the latest week recorded, never
- *   past `maxWeek` (the live week). A projection note comes as
+ *   past `maxWeek` (the live week): the Feed stays on the finished week until
+ *   the new one's first row (often a Tuesday lineup move). The first poll
+ *   (no `since`) also gets `firstWeek`. A projection note comes as
  *   { k: 'p', n: headline, d: points moved, nt: [{ t, a }] }.
  */
 
@@ -242,9 +244,14 @@ export async function getFeed(env, url, maxWeek = 99) {
             proj_prev, proj, opp_manager, opp_proj, median_prev, median, kind, note
      FROM score_events WHERE season = ? AND week = ? AND id > ?${big} ORDER BY id`
   ).bind(season, week, since).all();
+  // The earliest week with rows, once per page load: how far back the Feed's
+  // week stepper goes.
+  const first = since ? null : await env.HISTORY_DB.prepare("SELECT MIN(week) AS week FROM score_events WHERE season = ?")
+    .bind(season).first();
   return {
     season,
     week,
+    ...(first ? { firstWeek: first.week } : {}),
     // Short keys: a whole Sunday is a thousand-odd rows.
     events: results.map((r) => ({
       id: r.id,
