@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS santa_room (
   seen INTEGER NOT NULL,
   holding INTEGER NOT NULL DEFAULT 0
 );
--- Joins and emoji in the Room.
+-- Joins, emoji and typed lines in the Room (kind join | react | say; a say's text is in emoji).
 CREATE TABLE IF NOT EXISTS santa_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   manager TEXT NOT NULL,

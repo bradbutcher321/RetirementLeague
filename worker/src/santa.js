@@ -11,8 +11,8 @@
  *    It's kept in site_settings (santa_draw) and is never sent whole until
  *    the commissioners unmask it on Unwrap night.
  * 3. Reveal night, Fri Nov 13 at 9:00 PM: the Room. Everyone in the draw
- *    sends a heartbeat; when they're all here the Room starts itself (10
- *    seconds out, so every phone counts down together). From 9:30 a
+ *    sends a heartbeat. Once they're all here a commissioner presses Start
+ *    (10 seconds out, so every phone counts down together); from 9:30 a
  *    commissioner can start it with whoever is here. Once it has started,
  *    everyone gets their own giftee; anyone who missed it opens theirs alone.
  * 4. Gifting: each Santa records their shirt and its order, estimated and
@@ -26,7 +26,7 @@
  * POST /santa                your card (sign-ups)
  * POST /santa/nudge          { manager, kind: "signup" | "buy" }
  * POST /santa/remind         { on }  the 15-minute reminder before the reveal
- * POST /santa/room           { holding?, react?, after? }  the Room's heartbeat
+ * POST /santa/room           { holding?, react?, say?, after? }  the Room's heartbeat
  * POST /santa/opened         { inRoom }  you watched your envelope open
  * POST /santa/gift           { shirt, title, url, size, ordered, eta, delivered } or { clear: true }
  * POST /santa/msg            { to: "giftee" | "santa", text }
@@ -55,7 +55,8 @@ const NUDGE_SECONDS = 24 * 60 * 60;
 const HERE_MS = 12 * 1000;      // a heartbeat this recent means you're in the Room
 const HOLDING_MS = 3 * 1000;    // and this recent while holding the seal
 const START_DELAY = 10 * 1000;  // the countdown every phone shows before the lights go down
-const EMOJI = ["🎁", "🔥", "😂", "👀", "🎄"];
+const EMOJI = ["🎁", "🔥", "😂", "👀", "🗑️"];
+const SAY_MAX = 140;            // a typed line in the Room's chat
 const SHIRTS = 957;             // docs/data/santa-shirts.json
 
 const fail = (status, error) => ({ status, body: { error } });
@@ -292,13 +293,15 @@ async function room(request, env) {
     const writes = [env.DB.prepare("INSERT INTO santa_room (manager, seen, holding) VALUES (?1, ?2, ?3) ON CONFLICT(manager) DO UPDATE SET seen = excluded.seen, holding = excluded.holding").bind(me.manager, now, holding)];
     if (!was || now - was.seen >= HERE_MS) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, at) VALUES (?1, 'join', ?2)").bind(me.manager, now));
     if (EMOJI.includes(body.react)) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'react', ?2, ?3)").bind(me.manager, body.react, now));
+    // A typed line in the Room's chat (kept in the emoji column, kind "say").
+    const say = typeof body.say === "string" ? body.say.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, SAY_MAX) : "";
+    if (say) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'say', ?2, ?3)").bind(me.manager, say, now));
     await env.DB.batch(writes);
   }
 
   const { present, holding: holders } = await roomNow(env, draw.chain, now);
-  let start = await getSetting(env, "santa_start");
-  // Everyone's here: start in 10 seconds.
-  if (!start && now >= REVEAL && draw.chain.every((n) => present.includes(n))) start = await startRoom(env, draw.chain, "everyone");
+  // A commissioner starts it (admin "start"); it never starts itself.
+  const start = await getSetting(env, "santa_start");
   const after = Number(body.after) || 0;
   const { results: events } = await env.DB.prepare("SELECT id, manager, kind, emoji, at FROM santa_events WHERE id > ?1 AND at > ?2 ORDER BY id DESC LIMIT 20").bind(after, now - 10 * 60 * 1000).all();
   const out = { present, holding: holders, start: start ? { at: start.at, crew: start.crew } : null, now, events: events.reverse() };
@@ -426,11 +429,13 @@ async function admin(request, env) {
       return { status: 200, body: { ok: true, drawn: now } };
     }
     case "start": {
-      if (now < FORCE_AT) return fail(403, "too_early");
+      // Everyone's here: any time from 9:00. Anyone missing: from 9:30.
+      if (now < REVEAL) return fail(403, "too_early");
       if (start) return { status: 200, body: { ok: true, start: start.at } };
       const draw = await getSetting(env, "santa_draw");
       if (!draw) return fail(400, "no_draw");
       const { present } = await roomNow(env, draw.chain, now);
+      if (now < FORCE_AT && !draw.chain.every((n) => present.includes(n))) return fail(403, "too_early");
       const s = await startRoom(env, present, me.manager);
       await logAction(env, me.manager, "santa", `Secret Santa: started the Room with ${present.length} of ${draw.chain.length}`);
       return { status: 200, body: { ok: true, start: s.at } };
