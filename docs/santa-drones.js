@@ -147,6 +147,37 @@ const Drones = (() => {
       x.fillStyle = ink; x.font = `900 ${30 * s}px ${FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(label, 50 * s, 56 * s);
     }, { pitch: 0.05, max });
   }
+  // A real shirt (a cutout photo) in drones: a bright outline, a faint body,
+  // and most of the drones on the print, spaced finer so its colors read.
+  // From behind (turning past 90 degrees) the print goes plain like the
+  // shirt's back: each print drone carries that back color in bc/bb.
+  function shirtPrint(img, { w = 1.9, max = 520 } = {}) {
+    const ppu = 160, h = w * (img.naturalHeight || 1) / (img.naturalWidth || 1), W = Math.ceil(w * ppu), H = Math.ceil(h * ppu);
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const x = cv.getContext('2d', { willReadFrequently: true });
+    try { x.drawImage(img, 0, 0, W, H); } catch (e) {}
+    const px = x.getImageData(0, 0, W, H).data;
+    const at = (X, Y) => { X |= 0; Y |= 0; if (X < 0 || Y < 0 || X >= W || Y >= H) return null; const i = (Y * W + X) * 4; return [px[i], px[i + 1], px[i + 2], px[i + 3]]; };
+    // 0 outside, 1 the shirt's white, 2 the print.
+    const kind = c => { if (!c || c[3] < 110) return 0; const mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]); return mn > 190 && mx - mn < 40 ? 1 : 2; };
+    const grid = (st, keep) => { const out = []; for (let r = 0, Y = st / 2; Y < H; Y += st * 0.866, r++) for (let X = r % 2 ? st : st / 2; X < W; X += st) { const p = keep(X, Y, at(X, Y), st); if (p) out.push(p); } return out; };
+    const U = (X, Y) => [X / ppu - w / 2, Y / ppu - h / 2], BODY = [225, 230, 240];
+    const make = (bodyPitch, printPitch) => grid(bodyPitch, (X, Y, c, st) => {
+      const k = kind(c); if (!k) return null;
+      const rim = [0, 1, 2, 3, 4, 5].some(j => !kind(at(X + Math.cos(j * Math.PI / 3) * st * 0.8, Y + Math.sin(j * Math.PI / 3) * st * 0.8)));
+      const [ux, uy] = U(X, Y);
+      return rim ? { x: ux, y: uy, z: 0, c: [240, 242, 246], b: 0.95 } : k === 1 ? { x: ux, y: uy, z: 0, c: BODY, b: 0.16 } : null;
+    }).concat(grid(printPitch, (X, Y, c) => {
+      if (kind(c) !== 2) return null;
+      const [ux, uy] = U(X, Y), mx = Math.max(c[0], c[1], c[2]);
+      if (mx < 80) return { x: ux, y: uy, z: 0, c: [120, 132, 160], b: 0.3, bc: BODY, bb: 0.16 };
+      const avg = (c[0] + c[1] + c[2]) / 3;
+      return { x: ux, y: uy, z: 0, c: c.slice(0, 3).map(v => clamp(avg + (v - avg) * 1.5, 0, 255)), b: 1, bc: BODY, bb: 0.16 };
+    }));
+    let bp = 0.075 * ppu, pp = 0.042 * ppu, pts = make(bp, pp);
+    for (let i = 0; i < 8 && pts.length > max; i++) { const f = Math.sqrt(pts.length / max) * 1.01; bp *= f; pp *= f; pts = make(bp, pp); }
+    return pts;
+  }
   // Small round clusters on a circle: one per manager, for the hold.
   function clusters(n, { R = 0.92, r = 0.085, cy = 0, c = [212, 180, 106] } = {}) {
     const pts = [];
@@ -287,16 +318,19 @@ const Drones = (() => {
       for (let k = 0; k < M; k++) {
         const di = dOrd[Math.floor((k * N) / Math.max(1, M))], p = P[pOrd[k]], d = D[di];
         used[di] = 1; d.tx = p.x; d.ty = p.y; d.tz = p.z || 0; d.tc = p.c; d.tbr = p.b != null ? p.b : 1; d.g = p.g != null ? p.g : -1; d.fixed = p.fixed || 0;
+        d.bcs = p.bc ? `rgb(${p.bc[0] | 0},${p.bc[1] | 0},${p.bc[2] | 0})` : null; d.bb = p.bb != null ? p.bb : 1;
         const ky = order === 'y' ? clamp(1 - (p.y + 1.2) / 2.4, 0, 1) : order === 'x' ? clamp((p.x + this.halfW) / (2 * this.halfW), 0, 1) : order === 'radial' ? clamp(Math.hypot(p.x, p.y) / 1.3, 0, 1) : order === 'random' ? Math.random() : k / Math.max(1, M);
         d.del = ky * stagger;
       }
-      for (let i = 0; i < N; i++) if (!used[i]) { const d = D[i]; d.tx = d.x; d.ty = d.y; d.tz = d.z; d.tc = d.c; d.tbr = 0; d.g = -1; d.del = Math.random() * stagger * 0.5; }
+      for (let i = 0; i < N; i++) if (!used[i]) { const d = D[i]; d.tx = d.x; d.ty = d.y; d.tz = d.z; d.tc = d.c; d.tbr = 0; d.g = -1; d.bcs = null; d.del = Math.random() * stagger * 0.5; }
       for (const d of D) d.moving = true;
       this.t0 = t; this.dur = dur; this.span = dur + stagger;
-      if (!keepAngle) { this.spin = spin; if (!spin) { const r = Math.round(this.ang / TAU) * TAU; this.angFrom = this.ang; this.angTo = r; } else this.angTo = null; }
+      if (!keepAngle) { this.spin = spin; this.turnA = null; if (!spin) { const r = Math.round(this.ang / TAU) * TAU; this.angFrom = this.ang; this.angTo = r; } else this.angTo = null; }
       return t + dur + stagger;
     }
     place(pts) { this.form(pts, { dur: 0.001, stagger: 0 }); this.t0 -= 1; this.update(this.now()); }
+    // Turn the formation all the way around n times (eased), ending facing front.
+    turn(n = 1, dur = 2) { this.spin = 0; this.angTo = null; const a = Math.round(this.ang / TAU) * TAU; this.turnA = { from: a, to: a + n * TAU, t0: this.now(), dur }; }
     // Brighten/dim one cluster in place (the hold: a person's lights come on).
     groupTo(g, { b = 1, c = null, dur = 0.4 } = {}) {
       const t = this.now();
@@ -336,7 +370,8 @@ const Drones = (() => {
       requestAnimationFrame(this.loop);
     }
     update(t, dt = 0) {
-      if (this.spin) this.ang += this.spin * dt;
+      if (this.turnA) { const T = this.turnA, k = clamp((t - T.t0) / T.dur, 0, 1); this.ang = T.from + (T.to - T.from) * easeIO(k); if (k >= 1) { this.ang = 0; this.turnA = null; } }
+      else if (this.spin) this.ang += this.spin * dt;
       else if (this.angTo != null) { const k = easeIO(clamp((t - this.t0) / Math.max(0.3, this.dur), 0, 1)); this.ang = this.angFrom + (this.angTo - this.angFrom) * k; if (k >= 1) { this.ang = 0; this.angTo = null; } }
       for (const d of this.d) {
         if (d.moving) {
@@ -385,18 +420,20 @@ const Drones = (() => {
       b1.globalCompositeOperation = 'source-over'; b2.globalCompositeOperation = 'source-over';
       b1.clearRect(0, 0, this.b1.width, this.b1.height); b2.clearRect(0, 0, this.b2.width, this.b2.height);
       b1.globalCompositeOperation = 'lighter'; b2.globalCompositeOperation = 'lighter';
-      const ca = Math.cos(this.ang), sa = Math.sin(this.ang), pts = [];
+      // Turned past 90 degrees, a flat formation shows its back (see shirtPrint).
+      const ca = Math.cos(this.ang), sa = Math.sin(this.ang), away = !!this.ang && ca < 0, pts = [];
       for (const d of this.d) {
-        if (d.br < 0.02) continue;
+        const back = away && d.bcs && !d.fixed, br = back ? Math.min(d.br, d.bb) : d.br, cs = back ? d.bcs : d.cs;
+        if (br < 0.02) continue;
         let x = d.x, z = d.z;
         if (!d.fixed && this.ang) { const x2 = x * ca + z * sa; z = -x * sa + z * ca; x = x2; }
         const p = 1 / (1 + z * 0.32), wb = this.wob * 0.004;
         const X0 = cx + (x + Math.sin(tm * 1.3 + d.ph) * wb) * s * p, Y0 = cy + (d.y + Math.cos(tm * 1.1 + d.ph) * wb) * s * p;
-        const a = d.br * (z < 0 ? 1 : clamp(1 - z * 0.35, 0.45, 1));
-        pts.push(X0, Y0, a, p, d);
+        const a = br * (z < 0 ? 1 : clamp(1 - z * 0.35, 0.45, 1));
+        pts.push(X0, Y0, a, p, cs);
         if (a < 0.12) continue; // dim drones get no glow (no smear of light on the ground)
-        b1.globalAlpha = a * 0.8; b1.fillStyle = d.cs; b1.fillRect(X0 / 3 - 0.55, Y0 / 3 - 0.55, 1.1, 1.1);
-        b2.globalAlpha = a * 0.5; b2.fillStyle = d.cs; b2.fillRect(X0 / 12 - 0.5, Y0 / 12 - 0.5, 1, 1);
+        b1.globalAlpha = a * 0.8; b1.fillStyle = cs; b1.fillRect(X0 / 3 - 0.55, Y0 / 3 - 0.55, 1.1, 1.1);
+        b2.globalAlpha = a * 0.5; b2.fillStyle = cs; b2.fillRect(X0 / 12 - 0.5, Y0 / 12 - 0.5, 1, 1);
       }
       const fwp = [];
       for (const f of this.fw) {
@@ -423,8 +460,8 @@ const Drones = (() => {
       }
       // Sharp cores.
       for (let i = 0; i < pts.length; i += 5) {
-        const X0 = pts[i], Y0 = pts[i + 1], a = pts[i + 2], p = pts[i + 3], d = pts[i + 4], r = 1.3 * p * (this.W > 900 ? 1.25 : 1);
-        X.globalAlpha = Math.min(1, a * 1.15); X.fillStyle = d.cs;
+        const X0 = pts[i], Y0 = pts[i + 1], a = pts[i + 2], p = pts[i + 3], r = 1.3 * p * (this.W > 900 ? 1.25 : 1);
+        X.globalAlpha = Math.min(1, a * 1.15); X.fillStyle = pts[i + 4];
         X.beginPath(); X.arc(X0, Y0, r, 0, 6.283); X.fill();
         if (a > 0.5) { X.globalAlpha = (a - 0.5) * 1.2; X.fillStyle = '#fff'; X.fillRect(X0 - r * 0.42, Y0 - r * 0.42, r * 0.84, r * 0.84); }
       }
@@ -441,5 +478,5 @@ const Drones = (() => {
     }
   }
 
-  return { Sky, loadImg, text, image, giftBox, tree, shirt, clusters, ring, merge, move, colorsOf, drawn, FONT };
+  return { Sky, loadImg, text, image, giftBox, tree, shirt, shirtPrint, clusters, ring, merge, move, colorsOf, drawn, FONT };
 })();

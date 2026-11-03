@@ -1,5 +1,7 @@
-/* Secret Santa's sound (secret-santa.html). Everything is synthesized with Web
-   Audio as it plays: no audio files. One AudioContext for the page, started by
+/* Secret Santa's sound (secret-santa.html). The music and effects are
+   synthesized with Web Audio as they play; the only files are the announcer's
+   lines (docs/audio/santa/, recorded by tools/santa_announcer.py), played
+   through a stadium PA here (voice). One AudioContext for the page, started by
    the first tap (iPhone only lets sound start from a tap, and mutes Web Audio
    with the silent switch unless the page asks for "playback").
 
@@ -15,7 +17,7 @@
    silences only its sounds. */
 const AE = (() => {
   const KEY = 'rl-santa-sound';
-  const S = { ctx: null, on: true, out: null, bus: null, verbIn: null, delayIn: null, noise: null, pink: null, curve: null, chans: new Map(), spoke: false };
+  const S = { ctx: null, on: true, out: null, bus: null, verbIn: null, delayIn: null, noise: null, pink: null, curve: null, chans: new Map(), vox: null, voxSrc: null, bufs: new Map() };
   try { S.on = localStorage.getItem(KEY) !== 'off'; } catch (e) {}
 
   function impulse(ctx, secs, decay) {
@@ -36,15 +38,10 @@ const AE = (() => {
     return b;
   }
 
-  // Called from every tap (the page listens, with tap = true). The first call
-  // builds the mixer; each one wakes the context, and the first tap also wakes
-  // the phone's speech voice.
-  function init(tap) {
+  // Called from every tap (the page listens). The first call builds the mixer;
+  // each one wakes the context.
+  function init() {
     try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch (e) {}
-    if (tap && !S.spoke && window.speechSynthesis) {
-      // iPhone only speaks after it has spoken once from a tap.
-      try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); S.spoke = true; } catch (e) {}
-    }
     if (S.ctx) { if (S.ctx.state !== 'running') { try { const r = S.ctx.resume(); if (r && r.catch) r.catch(() => {}); } catch (e) {} } return S.ctx; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
@@ -321,7 +318,7 @@ const AE = (() => {
   function setOn(on) {
     S.on = on; try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch (e) {}
     if (S.out) { const t = S.ctx.currentTime; S.out.gain.cancelScheduledValues(t); S.out.gain.setValueAtTime(S.out.gain.value, t); S.out.gain.linearRampToValueAtTime(on ? 0.9 : 0, t + 0.1); }
-    if (!on && window.speechSynthesis) speechSynthesis.cancel();
+    if (!on) stopVoice();
   }
 
   /* A step sequencer on the audio clock (looks 0.15s ahead every 25ms). Its
@@ -401,20 +398,46 @@ const AE = (() => {
   }
   const FULL = { kick: 1, hat: 1, clap: 1, bass: 1, riff: 1, cut: 3600, stab: 1, shaker: 1, chant: 1, bigClap: 1, horn: 1, crashBar: 1 };
 
-  // The phone's own voice. Never asked to say a giftee's name.
-  function say(text, { rate = 0.88, pitch = 0.75, voiceHint = /Daniel|Alex|Fred|Google US English|Microsoft Guy|Aaron|Arthur/i, volume = 1 } = {}) {
-    if (!S.on || !window.speechSynthesis) return null;
-    try {
-      const u = new SpeechSynthesisUtterance(text); u.rate = rate; u.pitch = pitch; u.volume = volume;
-      const vs = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
-      u.voice = vs.find(v => voiceHint.test(v.name)) || vs[0] || null;
-      speechSynthesis.cancel(); speechSynthesis.speak(u); return u;
-    } catch (e) { return null; }
+  /* ---------- The announcer ----------
+     Recorded lines (never a giftee's name) through a stadium PA: a little
+     brighter, compressed, a big room and two slap echoes off the stands. */
+  function voxIn() {
+    if (S.vox) return S.vox;
+    const c = S.ctx, inp = c.createGain(), hp = c.createBiquadFilter(), pk = c.createBiquadFilter(), comp = c.createDynamicsCompressor(), dry = c.createGain();
+    hp.type = 'highpass'; hp.frequency.value = 110; pk.type = 'peaking'; pk.frequency.value = 2600; pk.Q.value = 0.9; pk.gain.value = 4;
+    comp.threshold.value = -22; comp.ratio.value = 3.5; comp.attack.value = 0.003; comp.release.value = 0.2; dry.gain.value = 1.15;
+    inp.connect(hp); hp.connect(pk); pk.connect(comp); comp.connect(dry); dry.connect(S.out);
+    const verb = c.createConvolver(), vg = c.createGain(); verb.buffer = impulse(c, 2.8, 2.6); vg.gain.value = 0.34; comp.connect(verb); verb.connect(vg); vg.connect(S.out);
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600; comp.connect(lp);
+    [[0.19, 0.26], [0.41, 0.13]].forEach(([dt, g]) => { const d = c.createDelay(1), gg = c.createGain(); d.delayTime.value = dt; gg.gain.value = g; lp.connect(d); d.connect(gg); gg.connect(S.out); });
+    return (S.vox = inp);
   }
-  if (window.speechSynthesis) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); } catch (e) {} }
+  // Fetches and decodes a line (once); call early so it's ready on cue.
+  function loadVoice(url) {
+    if (!init()) return Promise.reject(new Error('no audio'));
+    if (!S.bufs.has(url)) {
+      const p = fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+        .then(ab => new Promise((res, rej) => S.ctx.decodeAudioData(ab, res, rej)));
+      p.catch(() => S.bufs.delete(url));
+      S.bufs.set(url, p);
+    }
+    return S.bufs.get(url);
+  }
+  // Says a line; resolves when it ends. With the sound off (or the file
+  // missing) it waits `fallback` seconds instead, so the show keeps its pace.
+  async function voice(url, { fallback = 1.5 } = {}) {
+    const pause = () => new Promise(r => setTimeout(r, fallback * 1000));
+    if (!S.on || !running()) return pause();
+    let buf; try { buf = await loadVoice(url); } catch (e) { return pause(); }
+    if (!S.on || !running()) return pause();
+    stopVoice();
+    const s = S.ctx.createBufferSource(); s.buffer = buf; s.connect(voxIn()); s.start(); S.voxSrc = s;
+    return new Promise(r => { s.onended = r; setTimeout(r, buf.duration * 1000 + 250); });
+  }
+  function stopVoice() { if (S.voxSrc) { try { S.voxSrc.stop(); } catch (e) {} S.voxSrc = null; } }
 
   return {
-    init, now, midi, channel, stopChannel, setOn, running, Seq, BELLS, STAD, bellsStep, stadiumStep, layersFor, LAYERS, FULL, say,
+    init, now, midi, channel, stopChannel, setOn, running, Seq, BELLS, STAD, bellsStep, stadiumStep, layersFor, LAYERS, FULL, voice, loadVoice, stopVoice,
     get on() { return S.on; }, get ctx() { return S.ctx; },
     // The page's own one-off tones (secret-santa.html's A) play through the same master volume.
     get master() { return S.out; },
