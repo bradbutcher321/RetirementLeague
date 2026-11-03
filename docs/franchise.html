@@ -679,7 +679,9 @@
     const r = p.career.record;
     const w = (r.reg_w || 0) + (r.playoff_w || 0), l = (r.reg_l || 0) + (r.playoff_l || 0);
     const pct = w + l ? w / (w + l) * 100 : null;
-    const ranks = leagueRankBadges(p, data.players).map(b => `<span class="rank-badge${b.bad ? ' bad' : ''}">${esc(b.label)}</span>`).join('');
+    // Secret Santa's Shirtys go first: a trophy from the party, every year it was won.
+    const ranks = (SHIRTYS[p.name] || []).map(s => `<span class="rank-badge">${esc(`${s.year} Shirty · ${s.label}`)}</span>`).join('')
+      + leagueRankBadges(p, data.players).map(b => `<span class="rank-badge${b.bad ? ' bad' : ''}">${esc(b.label)}</span>`).join('');
     const active = isActivePlayer(p, CTX.currentYear);
     const last = p.season_history.length ? p.season_history[p.season_history.length - 1].year : null;
     const span = p.founded_year ? (active ? `Since ${p.founded_year}` : `${p.founded_year}–${last}`) : '';
@@ -1356,6 +1358,18 @@
     const p = data && data.players.find(x => x.name === document.getElementById('franchise-select').value);
     if (p && TABS[tab].id === 'weekly') document.getElementById('tab-content').innerHTML = renderWeekly(p);
   });
+
+  // Secret Santa's Shirty winners, every year (worker/src/santa.js, GET /santa/hof).
+  // A win shows in the hero's badge row; the hero redraws if they land after it.
+  let SHIRTYS = {};
+  fetch('https://retirement-league-refresh-proxy.bradbutcher321.workers.dev/santa/hof').then(r => r.json()).then(h => {
+    const by = {};
+    for (const [year, y] of Object.entries(h.years || {})) for (const [key, res] of Object.entries(y.shirtys || {})) for (const w of res.winners || []) (by[w.manager] = by[w.manager] || []).push({ year: +year, label: (h.labels || {})[key] || res.label || key });
+    Object.values(by).forEach(list => list.sort((a, b) => b.year - a.year));
+    SHIRTYS = by;
+    const p = data && data.players.find(x => x.name === document.getElementById('franchise-select').value);
+    if (p && SHIRTYS[p.name]) document.getElementById('hero-container').innerHTML = renderHero(p);
+  }).catch(() => {});
 
   fetch('data/draft-value.json', { cache: 'no-cache' }).then(r => r.json()).then(d => { DRAFTV = d.years || {}; })
     .catch(err => { console.error(err); DRAFTV = null; }).then(() => {

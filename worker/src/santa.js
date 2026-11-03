@@ -15,26 +15,41 @@
  *    (10 seconds out, so every phone counts down together); from 9:30 a
  *    commissioner can start it with whoever is here. Once it has started,
  *    everyone gets their own giftee; anyone who missed it opens theirs alone.
- * 4. Gifting: each Santa records their shirt and its order, estimated and
- *    delivered dates (santa_gifts); everyone sees totals only. Plus an
- *    anonymous mailbox between each Santa and giftee, and a guess at who
- *    your Santa is.
- * 5. Unwrap night: a commissioner unmasks, and the whole loop, every shirt
- *    and every guess go out to everyone.
+ *    Reveal day has its own pushes (checkSantaHype): noon, 8:00, the 8:45
+ *    reminder, 9:00, then "X just walked into the Room" to anyone not there.
+ *    The reaction cam's photo (taken on the phone as the name lands) is
+ *    kept here, seen only by its owner until the unmask.
+ * 4. Gifting: each Santa's shortlist (the big board, up to three shirts), and
+ *    the gift itself, step by step: picked, ordered, shipped, delivered,
+ *    wrapped (santa_gifts). Everyone sees how far each Santa has gotten (the
+ *    sleigh race), never who they're buying for; the last place is roasted
+ *    in a push on Monday and Thursday evenings. Plus an anonymous mailbox
+ *    between each Santa and giftee, and a guess at who your Santa is.
+ * 5. Unwrap night: a commissioner unmasks, and the whole loop, every shirt,
+ *    every guess and the photos go out to everyone. Then the Shirtys: three
+ *    awards voted on phones, two the site works out; a commissioner seals
+ *    each envelope. The year's loop, haul and winners are kept for good
+ *    (site_settings santa_hof, GET /santa/hof) for League History and the
+ *    Franchise page.
  *
  * GET  /santa                Authorization optional; see status() for the shape.
  * POST /santa                your card (sign-ups)
- * POST /santa/nudge          { manager, kind: "signup" | "buy" }
- * POST /santa/remind         { on }  the 15-minute reminder before the reveal
+ * POST /santa/nudge          { manager, kind: "signup" | "buy" | "room" }
+ * POST /santa/remind         { on }  the 15-minute reminder
  * POST /santa/room           { holding?, react?, say?, after? }  the Room's heartbeat
  * POST /santa/opened         { inRoom }  you watched your envelope open
- * POST /santa/gift           { shirt, title, url, size, ordered, eta, delivered } or { clear: true }
+ * POST /santa/gift           { shirt, title, url, size, ordered, shipped, eta, delivered, wrapped } or { clear: true }
+ * POST /santa/board          { board: [shirt, ...] }  up to three
  * POST /santa/msg            { to: "giftee" | "santa", text }
  * POST /santa/guess          { guess }  (null clears it)
- * POST /santa/admin          commissioners: { action: "dates" | "ship" | "draw" | "start" | "unmask" | "remind", ... }
+ * GET  /santa/photo?m=Name   a reaction-cam photo (image/jpeg): yours any time, anyone's after the unmask
+ * POST /santa/photo          { img: base64 JPEG } or { clear: true }
+ * POST /santa/vote           { cat, pick }  a Shirty vote (pick = whose shirt, by giftee; null clears)
+ * GET  /santa/hof            every year's loop, haul and Shirty winners (public)
+ * POST /santa/admin          commissioners: { action: "dates" | "ship" | "draw" | "start" | "unmask" | "remind" | "shirty", ... }
  *
  * Tables are in schema.sql (analytics D1): santa_cards, santa_people,
- * santa_room, santa_events, santa_gifts, santa_msgs.
+ * santa_room, santa_events, santa_gifts, santa_msgs, santa_photos, santa_votes.
  */
 import { sessionManager } from "./auth.js";
 import { broadcast } from "./push.js";
@@ -42,6 +57,7 @@ import { getSetting, isCommissioner, logAction, setSetting } from "./roles.js";
 
 export const SIZES = ["S", "M", "L", "XL", "2XL", "3XL"];
 export const COLORS = ["Black", "White", "Navy", "Light Blue", "Light Pink", "Natural", "Sport Grey", "Yellow Haze", "Forest Green"];
+const YEAR = 2026;
 // Sign-ups open 12:00 AM Nov 1 EDT and close 12:00 AM Nov 13 EST (Nov 12 is the last day).
 export const OPENS = Date.parse("2026-11-01T00:00:00-04:00");
 export const CLOSES = Date.parse("2026-11-13T00:00:00-05:00");
@@ -49,15 +65,31 @@ export const CLOSES = Date.parse("2026-11-13T00:00:00-05:00");
 export const REVEAL = Date.parse("2026-11-13T21:00:00-05:00");
 export const FORCE_AT = REVEAL + 30 * 60 * 1000;
 const REMIND_AT = REVEAL - 15 * 60 * 1000;
+// Reveal day's other pushes (checkSantaHype): noon and 8:00 PM Eastern.
+const NOON = Date.parse("2026-11-13T12:00:00-05:00");
+const EIGHT = Date.parse("2026-11-13T20:00:00-05:00");
 const DECEMBER = /^2026-12-(0[1-9]|[12]\d|3[01])$/;
 const DAY = /^20\d\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const NUDGE_SECONDS = 24 * 60 * 60;
 const HERE_MS = 12 * 1000;      // a heartbeat this recent means you're in the Room
 const HOLDING_MS = 3 * 1000;    // and this recent while holding the seal
 const START_DELAY = 10 * 1000;  // the countdown every phone shows before the lights go down
+const WALKIN_MS = 5 * 60 * 1000; // "X just walked in": at most one per person this often
 const EMOJI = ["🎁", "🔥", "😂", "👀", "🗑️"];
 const SAY_MAX = 140;            // a typed line in the Room's chat
 const SHIRTS = 957;             // docs/data/santa-shirts.json
+const PHOTO_MAX = 700000;       // base64 characters (about 500 KB of JPEG)
+// The gift's steps, as the sleigh race shows them (0 is "still at the North Pole").
+const STAGES = ["Picked", "Ordered", "Shipped", "Delivered", "Wrapped"];
+// The Shirtys. Voted awards go to the Santa who picked the shirt.
+export const SHIRTYS = [
+  { key: "best", label: "Best Shirt", vote: true },
+  { key: "offensive", label: "Most Offensive", vote: true },
+  { key: "fit", label: "Worst Fit", vote: true },
+  { key: "detective", label: "Best Detective", vote: false },
+  { key: "late", label: "Last-Minute Santa", vote: false },
+];
+const SHIRTY = Object.fromEntries(SHIRTYS.map((c) => [c.key, c]));
 
 const fail = (status, error) => ({ status, body: { error } });
 const clip = (v, max) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, max);
@@ -66,7 +98,11 @@ const mineRow = (r) => ({
   name: r.name, street: r.street, apt: r.apt || "", city: r.city, state: r.state, zip: r.zip,
   size: r.size, colors: JSON.parse(r.colors || "[]"), dates: JSON.parse(r.dates || "[]"), updated: r.updated,
 });
-const giftRow = (r) => r && ({ shirt: r.shirt, title: r.title || "", url: r.url || "", size: r.size || "", price: r.price, ordered: r.ordered, eta: r.eta, delivered: r.delivered, updated: r.updated });
+const giftRow = (r) => r && ({ shirt: r.shirt, title: r.title || "", url: r.url || "", size: r.size || "", price: r.price, ordered: r.ordered, shipped: r.shipped || null, eta: r.eta, delivered: r.delivered, wrapped: r.wrapped || null, updated: r.updated });
+/** How far a Santa has gotten: 0 (nothing yet) to 5 (wrapped). */
+export const stageOf = (g) => (!g ? 0 : g.wrapped ? 5 : g.delivered ? 4 : g.shipped ? 3 : g.ordered ? 2 : g.shirt != null || g.title || g.url ? 1 : 0);
+const nameList = (names) => (names.length < 3 ? names.join(" and ") : `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`);
+const json = (v, fallback) => { try { return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } };
 
 // ---------- The draw ----------
 function shuffle(a) {
@@ -88,23 +124,25 @@ const gifteeOf = (chain, n) => { const i = chain.indexOf(n); return i < 0 ? null
 const santaOf = (chain, n) => { const i = chain.indexOf(n); return i < 0 ? null : chain[(i + chain.length - 1) % chain.length]; };
 
 async function settings(env) {
-  return { purchaseBy: null, eventAt: null, ship: false, unmasked: null, ...(await getSetting(env, "santa", {})) };
+  return { purchaseBy: null, eventAt: null, ship: false, unmasked: null, shirtys: {}, ...(await getSetting(env, "santa", {})) };
 }
 
 /** Everything the page shows. Who's in, the day counts, the draw's date, the
- * Room, who opened, the gift totals and the commissioners' dates are the same
+ * Room, who opened, the sleigh race and the commissioners' dates are the same
  * for everyone. Your own card, your giftee (once the Room has started), your
- * gift, your mailbox and your guess are only ever sent to you. Commissioners
- * also get a status row per manager, which never says who has whom. */
+ * board, gift, photo, mailbox and guess are only ever sent to you.
+ * Commissioners also get a status row per manager, which never says who has
+ * whom. */
 async function status(request, env) {
   const now = Date.now();
   const me = await sessionManager(request, env).catch(() => null);
-  const [rows, people, gifts, set, start] = await Promise.all([
+  const [rows, people, gifts, set, start, photos] = await Promise.all([
     env.DB.prepare("SELECT manager, name, street, apt, city, state, zip, size, colors, dates, updated FROM santa_cards").all(),
-    env.DB.prepare("SELECT manager, remind, seen, opened, in_room, guess FROM santa_people").all().catch(() => ({ results: [] })),
+    env.DB.prepare("SELECT * FROM santa_people").all().catch(() => ({ results: [] })),
     env.DB.prepare("SELECT * FROM santa_gifts").all().catch(() => ({ results: [] })),
     settings(env),
     getSetting(env, "santa_start"),
+    env.DB.prepare("SELECT manager, at FROM santa_photos").all().catch(() => ({ results: [] })),
   ]);
   const cards = Object.fromEntries(rows.results.map((r) => [r.manager, r]));
   const signed = rows.results.map((r) => r.manager);
@@ -112,6 +150,7 @@ async function status(request, env) {
   const chain = draw ? draw.chain : [];
   const ppl = Object.fromEntries(people.results.map((r) => [r.manager, r]));
   const gift = Object.fromEntries(gifts.results.map((r) => [r.santa, r]));
+  const photo = Object.fromEntries(photos.results.map((r) => [r.manager, r.at]));
   const dates = {};
   for (const r of rows.results) for (const d of JSON.parse(r.dates || "[]")) dates[d] = (dates[d] || 0) + 1;
   const started = start && now >= start.at ? start.at : null;
@@ -134,20 +173,25 @@ async function status(request, env) {
     totals: { bought: chain.filter((n) => gift[n] && gift[n].ordered).length, delivered: chain.filter((n) => gift[n] && gift[n].delivered).length, total: chain.length },
     remind: me ? (ppl[me.manager] ? !!ppl[me.manager].remind : true) : null,
   };
+  // The sleigh race: each Santa's step, from the Room's start.
+  if (started) body.race = Object.fromEntries(chain.map((n) => [n, stageOf(gift[n])]));
 
   if (me && started && chain.includes(me.manager)) {
     const g = gifteeOf(chain, me.manager), s = santaOf(chain, me.manager), c = cards[g];
     const msgs = await env.DB.prepare(
       "SELECT santa, giftee, from_santa, text, at FROM santa_msgs WHERE (santa = ?1 AND giftee = ?2) OR (santa = ?3 AND giftee = ?1) ORDER BY id"
     ).bind(me.manager, g, s).all().catch(() => ({ results: [] }));
+    const mine = ppl[me.manager] || {};
     body.you = {
       giftee: c ? {
         name: g, size: c.size, colors: JSON.parse(c.colors || "[]"),
         ...(set.ship ? { address: { name: c.name, street: c.street, apt: c.apt || "", city: c.city, state: c.state, zip: c.zip } } : {}),
       } : { name: g },
       gift: giftRow(gift[me.manager]) || null,
-      guess: ppl[me.manager] ? ppl[me.manager].guess : null,
-      opened: !!(ppl[me.manager] && ppl[me.manager].opened),
+      board: json(mine.board, []),
+      photo: photo[me.manager] || null,
+      guess: mine.guess || null,
+      opened: !!mine.opened,
       // Your side of each thread: "giftee" is you writing as Santa, "santa" is your Santa writing to you.
       msgs: {
         giftee: msgs.results.filter((m) => m.santa === me.manager).map((m) => ({ mine: !!m.from_santa, text: m.text, at: m.at })),
@@ -161,13 +205,22 @@ async function status(request, env) {
       chain,
       gifts: Object.fromEntries(chain.map((n) => [gifteeOf(chain, n), gift[n] ? { shirt: gift[n].shirt, title: gift[n].title || "", url: gift[n].url || "" } : null])),
       guesses: Object.fromEntries(chain.map((n) => [n, ppl[n] ? ppl[n].guess : null])),
+      photos: Object.fromEntries(chain.filter((n) => photo[n]).map((n) => [n, photo[n]])),
     };
+    // The Shirtys: how many have voted in each, your own vote, and each sealed envelope's winners.
+    const { results: votes } = await env.DB.prepare("SELECT voter, cat, pick FROM santa_votes").all().catch(() => ({ results: [] }));
+    body.shirtys = Object.fromEntries(SHIRTYS.map((c) => [c.key, {
+      voters: votes.filter((v) => v.cat === c.key && chain.includes(v.voter)).length,
+      mine: me ? (votes.find((v) => v.cat === c.key && v.voter === me.manager) || {}).pick || null : null,
+      result: (set.shirtys || {})[c.key] || null,
+    }]));
   }
 
   if (me && (await isCommissioner(env, me.manager))) {
     body.commish = (chain.length ? chain : signed).slice().sort().map((n) => ({
       manager: n, card: !!cards[n], opened: ppl[n] ? ppl[n].opened : null,
-      ordered: gift[n] ? gift[n].ordered : null, eta: gift[n] ? gift[n].eta : null, delivered: gift[n] ? gift[n].delivered : null,
+      ordered: gift[n] ? gift[n].ordered : null, shipped: gift[n] ? gift[n].shipped : null, eta: gift[n] ? gift[n].eta : null,
+      delivered: gift[n] ? gift[n].delivered : null, wrapped: gift[n] ? gift[n].wrapped : null,
     }));
   }
   return { status: 200, body };
@@ -202,8 +255,9 @@ async function save(request, env) {
 }
 
 /** A push to someone who hasn't signed up (anyone can send it, while sign-ups
- * are open) or hasn't marked their shirt bought (commissioners, after the
- * Room). Once a day per person and kind, whoever sends it. */
+ * are open), isn't in the Room yet (anyone, on reveal night) or hasn't marked
+ * their shirt bought (commissioners, after the Room). Once a day per person
+ * and kind (the Room's every 5 minutes), whoever sends it. */
 async function nudge(request, env) {
   const me = await sessionManager(request, env);
   if (!me) return fail(401, "signed_out");
@@ -220,7 +274,6 @@ async function nudge(request, env) {
     if (await env.DB.prepare("SELECT 1 AS x FROM santa_cards WHERE manager = ?1").bind(to).first()) return fail(409, "already_in");
     message = { title: "Secret Santa", body: `${me.manager} says you haven't signed up yet.`, url: "secret-santa.html", tag: "santa-nudge" };
   } else if (kind === "room") {
-    // Reveal night, before the Room starts: anyone can call someone in.
     if (now < REVEAL - 5 * 60 * 1000 || (await getSetting(env, "santa_start"))) return fail(403, "not_now");
     message = { title: "Secret Santa", body: `${me.manager} says everyone's waiting on you in the Room.`, url: "secret-santa.html", tag: "santa-room" };
   } else {
@@ -230,7 +283,6 @@ async function nudge(request, env) {
     const set = await settings(env);
     message = { title: "Secret Santa", body: `Your shirt isn't marked bought yet.${set.purchaseBy ? ` Buy it by ${fmtDay(set.purchaseBy)}.` : ""}`, url: "secret-santa.html", tag: "santa-buy" };
   }
-  // The Room's call-in can go again after 5 minutes; the others once a day.
   const key = `santa:nudge:${kind}:${to}`;
   if (await env.COOLDOWN_KV.get(key)) return fail(429, "nudged_today");
   await env.COOLDOWN_KV.put(key, "1", { expirationTtl: kind === "room" ? 300 : NUDGE_SECONDS });
@@ -239,7 +291,7 @@ async function nudge(request, env) {
 }
 const fmtDay = (d) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
-// ---------- Reveal night ----------
+// ---------- Reveal day ----------
 async function remind(request, env) {
   const me = await sessionManager(request, env);
   if (!me) return fail(401, "signed_out");
@@ -248,19 +300,52 @@ async function remind(request, env) {
   await env.DB.prepare("INSERT INTO santa_people (manager, remind) VALUES (?1, ?2) ON CONFLICT(manager) DO UPDATE SET remind = excluded.remind").bind(me.manager, on).run();
   return { status: 200, body: { ok: true, remind: !!on } };
 }
+/** Everyone in the draw who hasn't turned the 15-minute reminder off. */
+async function wantsHype(env, chain) {
+  const { results } = await env.DB.prepare("SELECT manager FROM santa_people WHERE remind = 0").all().catch(() => ({ results: [] }));
+  const off = new Set(results.map((r) => r.manager));
+  return chain.filter((n) => !off.has(n));
+}
+/** Sends once per key (push_sent); false if it already went. */
+async function once(env, key, now) {
+  const r = await env.DB.prepare("INSERT OR IGNORE INTO push_sent (k, ts) VALUES (?1, ?2)").bind(key, now).run();
+  return !!(r.meta && r.meta.changes);
+}
 
 /** The 15-minute push, from the cron's first run in the window (scheduled() in index.js). */
 export async function checkSantaReminder(env, now = Date.now()) {
   if (now < REMIND_AT || now >= REVEAL || !env.VAPID_PRIVATE_JWK) return;
-  const key = "santa:remind:2026";
-  if (await env.DB.prepare("SELECT 1 AS x FROM push_sent WHERE k = ?1").bind(key).first()) return;
-  await env.DB.prepare("INSERT OR IGNORE INTO push_sent (k, ts) VALUES (?1, ?2)").bind(key, now).run();
+  if (await env.DB.prepare("SELECT 1 AS x FROM push_sent WHERE k = 'santa:remind:2026'").first()) return;
+  const draw = await getSetting(env, "santa_draw");
+  if (!draw || !(await once(env, "santa:remind:2026", now))) return;
+  const message = { title: "Secret Santa starts in 15 minutes", body: "The Room opens at 9:00 PM. Everyone opens their envelope together.", url: "secret-santa.html", tag: "santa-remind" };
+  await Promise.allSettled((await wantsHype(env, draw.chain)).map((n) => broadcast(env, message, n)));
+}
+
+/** Reveal day's other pushes, from the cron: noon, 8:00 PM and 9:00 PM
+ * (that one only to whoever isn't in the Room yet). Each goes once, from the
+ * first run in its window, to everyone in the draw (the page's switch is only
+ * the 15-minute reminder). */
+export async function checkSantaHype(env, now = Date.now()) {
+  if (!env.VAPID_PRIVATE_JWK || now < NOON || now >= FORCE_AT) return;
   const draw = await getSetting(env, "santa_draw");
   if (!draw) return;
-  const { results } = await env.DB.prepare("SELECT manager FROM santa_people WHERE remind = 0").all();
-  const off = new Set(results.map((r) => r.manager));
-  const message = { title: "Secret Santa starts in 15 minutes", body: "The Room opens at 9:00 PM. Everyone opens their envelope together.", url: "secret-santa.html", tag: "santa-remind" };
-  await Promise.allSettled(draw.chain.filter((n) => !off.has(n)).map((n) => broadcast(env, message, n)));
+  let key, message, to;
+  if (now < NOON + 3 * 3600 * 1000) {
+    key = "santa:hype:noon:2026";
+    message = { title: "Reveal night is tonight", body: "Your envelope is in the vault. The Room opens at 9:00 PM.", url: "secret-santa.html", tag: "santa-hype" };
+  } else if (now >= EIGHT && now < REMIND_AT) {
+    key = "santa:hype:eight:2026";
+    message = { title: "One hour", body: "Find a spot where nobody can see your screen.", url: "secret-santa.html", tag: "santa-hype" };
+  } else if (now >= REVEAL && now < FORCE_AT) {
+    if (await getSetting(env, "santa_start")) return;
+    key = "santa:hype:nine:2026";
+    const { present } = await roomNow(env, draw.chain, now);
+    to = draw.chain.filter((n) => !present.includes(n));
+    message = { title: "The Room is open", body: `${present.length} of ${draw.chain.length} are here. Walk in.`, url: "secret-santa.html", tag: "santa-room" };
+  } else return;
+  if (!(await once(env, key, now))) return;
+  await Promise.allSettled((to || draw.chain).map((n) => broadcast(env, message, n)));
 }
 
 /** Who's in the Room now: in the draw, with a heartbeat in the last 12 seconds. */
@@ -274,11 +359,25 @@ async function startRoom(env, crew, by) {
   await env.DB.prepare("INSERT OR IGNORE INTO site_settings (k, v, updated) VALUES ('santa_start', ?1, ?2)").bind(JSON.stringify(value), Date.now()).run();
   return getSetting(env, "santa_start");
 }
+/** "Jon just walked into the Room": to everyone in the draw who isn't there,
+ * once at least half of them are, and at most once every five minutes each. */
+async function walkedIn(env, chain, who, now) {
+  if (!env.VAPID_PRIVATE_JWK || now < REVEAL) return;
+  const { present } = await roomNow(env, chain, now);
+  if (present.length * 2 < chain.length) return;
+  const out = chain.filter((n) => n !== who && !present.includes(n));
+  const bucket = Math.floor(now / WALKIN_MS);
+  await Promise.allSettled(out.map(async (n) => {
+    if (!(await once(env, `santa:walkin:${n}:${bucket}`, now))) return;
+    const others = out.length - 1;
+    await broadcast(env, { title: `${who} just walked into the Room`, body: `Waiting on you${others ? ` and ${others} other${others === 1 ? "" : "s"}` : ""}.`, url: "secret-santa.html", tag: "santa-room" }, n);
+  }));
+}
 
 /** The Room's heartbeat. Every few seconds from everyone on the page from
  * 9:00 PM, and about every 0.7s while holding the seal. -> { present,
  * holding, start: { at, crew } | null, events, giftee (once started) } */
-async function room(request, env) {
+async function room(request, env, ctx) {
   const me = await sessionManager(request, env);
   if (!me) return fail(401, "signed_out");
   const now = Date.now();
@@ -286,22 +385,25 @@ async function room(request, env) {
   const draw = await getSetting(env, "santa_draw");
   if (!draw) return fail(403, "no_draw");
   const body = await request.json().catch(() => ({}));
+  let start = await getSetting(env, "santa_start");
   // Someone who isn't in the draw can watch, but doesn't take a seat.
   if (draw.chain.includes(me.manager)) {
     const holding = body.holding ? 1 : 0;
     const was = await env.DB.prepare("SELECT seen FROM santa_room WHERE manager = ?1").bind(me.manager).first();
+    const joined = !was || now - was.seen >= HERE_MS;
     const writes = [env.DB.prepare("INSERT INTO santa_room (manager, seen, holding) VALUES (?1, ?2, ?3) ON CONFLICT(manager) DO UPDATE SET seen = excluded.seen, holding = excluded.holding").bind(me.manager, now, holding)];
-    if (!was || now - was.seen >= HERE_MS) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, at) VALUES (?1, 'join', ?2)").bind(me.manager, now));
+    if (joined) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, at) VALUES (?1, 'join', ?2)").bind(me.manager, now));
     if (EMOJI.includes(body.react)) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'react', ?2, ?3)").bind(me.manager, body.react, now));
     // A typed line in the Room's chat (kept in the emoji column, kind "say").
     const say = typeof body.say === "string" ? body.say.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, SAY_MAX) : "";
     if (say) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'say', ?2, ?3)").bind(me.manager, say, now));
     await env.DB.batch(writes);
+    if (joined && !start && ctx) ctx.waitUntil(walkedIn(env, draw.chain, me.manager, now).catch((e) => console.error("walk-in push failed:", e)));
   }
 
   const { present, holding: holders } = await roomNow(env, draw.chain, now);
   // A commissioner starts it (admin "start"); it never starts itself.
-  const start = await getSetting(env, "santa_start");
+  start = start || (await getSetting(env, "santa_start"));
   const after = Number(body.after) || 0;
   const { results: events } = await env.DB.prepare("SELECT id, manager, kind, emoji, at FROM santa_events WHERE id > ?1 AND at > ?2 ORDER BY id DESC LIMIT 20").bind(after, now - 10 * 60 * 1000).all();
   const out = { present, holding: holders, start: start ? { at: start.at, crew: start.crew } : null, now, events: events.reverse() };
@@ -337,6 +439,8 @@ async function participant(request, env) {
   return { me, chain: draw.chain };
 }
 
+/** Your gift: the shirt (picked from the board, or any link), then a date for
+ * each step. A pick alone has no dates yet. */
 async function saveGift(request, env) {
   const p = await participant(request, env);
   if (p.error) return p.error;
@@ -352,17 +456,30 @@ async function saveGift(request, env) {
   const g = {
     shirt, title: clip(body.title, 140), url, size: SIZES.includes(body.size) ? body.size : "",
     price: Number.isFinite(+body.price) && +body.price > 0 && +body.price < 1000 ? Math.round(+body.price * 100) / 100 : null,
-    ordered: day(body.ordered), eta: day(body.eta), delivered: day(body.delivered),
+    ordered: day(body.ordered), shipped: day(body.shipped), eta: day(body.eta), delivered: day(body.delivered), wrapped: day(body.wrapped),
   };
   if (shirt == null && !g.title && !g.url) return fail(400, "no_shirt");
-  if (!g.ordered) return fail(400, "no_order_date");
+  // A later step needs the ones before it.
+  if (!g.ordered && (g.shipped || g.delivered || g.wrapped)) return fail(400, "no_order_date");
   const now = Date.now();
   await env.DB.prepare(
-    `INSERT INTO santa_gifts (santa, shirt, title, url, size, price, ordered, eta, delivered, updated) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+    `INSERT INTO santa_gifts (santa, shirt, title, url, size, price, ordered, shipped, eta, delivered, wrapped, updated) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
      ON CONFLICT(santa) DO UPDATE SET shirt = excluded.shirt, title = excluded.title, url = excluded.url, size = excluded.size, price = excluded.price,
-       ordered = excluded.ordered, eta = excluded.eta, delivered = excluded.delivered, updated = excluded.updated`
-  ).bind(p.me.manager, g.shirt, g.title, g.url, g.size, g.price, g.ordered, g.eta, g.delivered, now).run();
+       ordered = excluded.ordered, shipped = excluded.shipped, eta = excluded.eta, delivered = excluded.delivered, wrapped = excluded.wrapped, updated = excluded.updated`
+  ).bind(p.me.manager, g.shirt, g.title, g.url, g.size, g.price, g.ordered, g.shipped, g.eta, g.delivered, g.wrapped, now).run();
   return { status: 200, body: { ok: true, gift: { ...g, updated: now } } };
+}
+
+/** The big board: up to three shirts you're thinking about, best first. */
+async function saveBoard(request, env) {
+  const p = await participant(request, env);
+  if (p.error) return p.error;
+  const body = await request.json().catch(() => null);
+  const list = Array.isArray(body && body.board) ? body.board : null;
+  if (!list) return fail(400, "bad_json");
+  const board = [...new Set(list.filter((i) => Number.isInteger(i) && i >= 0 && i < SHIRTS))].slice(0, 3);
+  await env.DB.prepare("INSERT INTO santa_people (manager, board) VALUES (?1, ?2) ON CONFLICT(manager) DO UPDATE SET board = excluded.board").bind(p.me.manager, JSON.stringify(board)).run();
+  return { status: 200, body: { ok: true, board } };
 }
 
 /** The anonymous mailbox. Writing to your giftee signs it "Santa"; writing to
@@ -391,12 +508,154 @@ async function guess(request, env) {
   const body = await request.json().catch(() => ({}));
   const g = body.guess == null ? null : clip(body.guess, 40);
   if (g != null && (!p.chain.includes(g) || g === p.me.manager)) return fail(400, "bad_guess");
-  await env.DB.prepare("INSERT INTO santa_people (manager, guess) VALUES (?1, ?2) ON CONFLICT(manager) DO UPDATE SET guess = excluded.guess").bind(p.me.manager, g).run();
+  // guessed_at: when the guess last changed (Best Detective goes to whoever had the right one first).
+  await env.DB.prepare("INSERT INTO santa_people (manager, guess, guessed_at) VALUES (?1, ?2, ?3) ON CONFLICT(manager) DO UPDATE SET guess = excluded.guess, guessed_at = excluded.guessed_at").bind(p.me.manager, g, g ? Date.now() : null).run();
   return { status: 200, body: { ok: true, guess: g } };
 }
 
+// ---------- The reaction cam ----------
+/** Your photo, taken on your phone as your giftee's name landed (or retaken). */
+async function photoPost(request, env) {
+  const p = await participant(request, env);
+  if (p.error) return p.error;
+  const set = await settings(env);
+  if (set.unmasked) return fail(403, "locked");
+  const body = await request.json().catch(() => null);
+  if (!body) return fail(400, "bad_json");
+  if (body.clear) {
+    await env.DB.prepare("DELETE FROM santa_photos WHERE manager = ?1").bind(p.me.manager).run();
+    return { status: 200, body: { ok: true, photo: null } };
+  }
+  const img = String(body.img || "").replace(/^data:image\/jpeg;base64,/, "");
+  if (!img || img.length > PHOTO_MAX || !/^[A-Za-z0-9+/]+=*$/.test(img)) return fail(400, "bad_photo");
+  const now = Date.now();
+  await env.DB.prepare("INSERT INTO santa_photos (manager, img, at) VALUES (?1, ?2, ?3) ON CONFLICT(manager) DO UPDATE SET img = excluded.img, at = excluded.at").bind(p.me.manager, img, now).run();
+  return { status: 200, body: { ok: true, photo: now } };
+}
+/** A photo: your own any time; once the loop is unmasked, anyone's to anyone signed in. */
+async function photoGet(request, env) {
+  const me = await sessionManager(request, env).catch(() => null);
+  if (!me) return fail(401, "signed_out");
+  const who = clip(new URL(request.url).searchParams.get("m"), 40) || me.manager;
+  if (who !== me.manager && !(await settings(env)).unmasked) return fail(403, "sealed");
+  const row = await env.DB.prepare("SELECT img FROM santa_photos WHERE manager = ?1").bind(who).first();
+  if (!row) return fail(404, "no_photo");
+  const bin = atob(row.img), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return { status: 200, binary: bytes, type: "image/jpeg" };
+}
+
+// ---------- The Shirtys ----------
+/** A vote: whose shirt (by who got it). Not your own pick, and only until a
+ * commissioner seals that envelope. */
+async function vote(request, env) {
+  const p = await participant(request, env);
+  if (p.error) return p.error;
+  const set = await settings(env);
+  if (!set.unmasked) return fail(403, "not_unmasked");
+  const body = await request.json().catch(() => null);
+  const c = body && SHIRTY[body.cat];
+  if (!c || !c.vote) return fail(400, "bad_cat");
+  if ((set.shirtys || {})[c.key]) return fail(403, "sealed");
+  if (body.pick == null) {
+    await env.DB.prepare("DELETE FROM santa_votes WHERE voter = ?1 AND cat = ?2").bind(p.me.manager, c.key).run();
+    return { status: 200, body: { ok: true, pick: null } };
+  }
+  const pick = clip(body.pick, 40);
+  if (!p.chain.includes(pick)) return fail(400, "bad_pick");
+  if (santaOf(p.chain, pick) === p.me.manager) return fail(400, "own_pick");
+  await env.DB.prepare("INSERT INTO santa_votes (voter, cat, pick, at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(voter, cat) DO UPDATE SET pick = excluded.pick, at = excluded.at").bind(p.me.manager, c.key, pick, Date.now()).run();
+  return { status: 200, body: { ok: true, pick } };
+}
+/** Opens a category's envelope: who won. Ties all win. */
+async function shirtyResult(env, key, chain, set) {
+  const c = SHIRTY[key];
+  const gifts = Object.fromEntries((await env.DB.prepare("SELECT * FROM santa_gifts").all()).results.map((r) => [r.santa, r]));
+  const shirtOf = (giftee) => { const g = gifts[santaOf(chain, giftee)]; return g ? { shirt: g.shirt, title: g.title || "" } : { shirt: null, title: "" }; };
+  if (c.vote) {
+    const { results } = await env.DB.prepare("SELECT voter, pick FROM santa_votes WHERE cat = ?1").bind(key).all();
+    const tally = {};
+    for (const v of results) if (chain.includes(v.voter) && chain.includes(v.pick)) tally[v.pick] = (tally[v.pick] || 0) + 1;
+    const top = Math.max(0, ...Object.values(tally));
+    const winners = top ? Object.keys(tally).filter((g) => tally[g] === top).sort().map((g) => ({ manager: santaOf(chain, g), giftee: g, votes: top, ...shirtOf(g) })) : [];
+    return { label: c.label, winners, voters: results.filter((v) => chain.includes(v.voter)).length };
+  }
+  const people = Object.fromEntries((await env.DB.prepare("SELECT manager, guess, guessed_at FROM santa_people").all()).results.map((r) => [r.manager, r]));
+  if (key === "detective") {
+    // Everyone who named their own Santa; the first to settle on it wins (ties all win).
+    const right = chain.filter((n) => people[n] && people[n].guess && people[n].guess === santaOf(chain, n));
+    const first = Math.min(...right.map((n) => people[n].guessed_at || Infinity));
+    const winners = right.filter((n) => (people[n].guessed_at || Infinity) === first).map((n) => ({ manager: n, guess: people[n].guess, at: people[n].guessed_at || null }));
+    return { label: c.label, winners, right: right.length };
+  }
+  // Last-Minute Santa: the latest order date anyone recorded.
+  const dates = chain.map((n) => gifts[n] && gifts[n].ordered).filter(Boolean).sort();
+  const last = dates[dates.length - 1];
+  const winners = last ? chain.filter((n) => gifts[n] && gifts[n].ordered === last).map((n) => ({ manager: n, ordered: last, purchaseBy: set.purchaseBy || null })) : [];
+  return { label: c.label, winners };
+}
+
+// ---------- The Hall of Fame ----------
+/** This year's loop, haul and Shirty winners (once unmasked). */
+async function yearRecord(env, set) {
+  const draw = await getSetting(env, "santa_draw");
+  if (!draw || !set.unmasked) return null;
+  const chain = draw.chain;
+  const gifts = Object.fromEntries((await env.DB.prepare("SELECT * FROM santa_gifts").all()).results.map((r) => [r.santa, r]));
+  return {
+    year: YEAR, eventAt: set.eventAt || null, unmasked: set.unmasked, chain,
+    gifts: Object.fromEntries(chain.map((n) => { const g = gifts[santaOf(chain, n)]; return [n, g ? { shirt: g.shirt, title: g.title || "", url: g.url || "" } : null]; })),
+    shirtys: Object.fromEntries(SHIRTYS.filter((c) => (set.shirtys || {})[c.key]).map((c) => [c.key, set.shirtys[c.key]])),
+  };
+}
+/** Every year so far (past years as they were saved, this one as it is now). */
+async function hof(request, env) {
+  const saved = await getSetting(env, "santa_hof", {});
+  const now = await yearRecord(env, await settings(env));
+  const years = { ...saved };
+  if (now) years[YEAR] = now; else delete years[YEAR];
+  return { status: 200, body: { years, labels: Object.fromEntries(SHIRTYS.map((c) => [c.key, c.label])) } };
+}
+async function saveHof(env) {
+  const rec = await yearRecord(env, await settings(env));
+  const saved = await getSetting(env, "santa_hof", {});
+  if (rec) saved[YEAR] = rec; else delete saved[YEAR];
+  await setSetting(env, "santa_hof", Object.keys(saved).length ? saved : null);
+}
+
+// ---------- The sleigh race's roast ----------
+/** Monday and Thursday at 7 PM Eastern, from the reveal until event night: a
+ * push to everyone in the draw naming whoever's furthest behind. Once all of
+ * them are wrapped, one last push says so. */
+export async function checkSantaRoast(env, now = Date.now()) {
+  if (!env.VAPID_PRIVATE_JWK) return;
+  const et = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", hourCycle: "h23" }).formatToParts(new Date(now)).map((p) => [p.type, p.value]));
+  if (!["Mon", "Thu"].includes(et.weekday) || Number(et.hour) !== 19) return;
+  const [draw, start, set] = await Promise.all([getSetting(env, "santa_draw"), getSetting(env, "santa_start"), settings(env)]);
+  if (!draw || !start || now < start.at || set.unmasked || (set.eventAt && now >= set.eventAt)) return;
+  const chain = draw.chain;
+  const gifts = Object.fromEntries((await env.DB.prepare("SELECT * FROM santa_gifts").all()).results.map((r) => [r.santa, r]));
+  const st = Object.fromEntries(chain.map((n) => [n, stageOf(gifts[n])]));
+  const low = Math.min(...chain.map((n) => st[n])), last = chain.filter((n) => st[n] === low).sort();
+  const buyBy = set.purchaseBy ? ` Buy by ${fmtDay(set.purchaseBy).replace(/^\w+, /, "")}.` : "";
+  let key = `santa:roast:${new Date(now).toLocaleDateString("en-CA", { timeZone: "America/New_York" })}`, text;
+  if (low === 5) { key = "santa:roast:wrapped:2026"; text = `All ${chain.length} shirts are wrapped. See you on event night.`; }
+  else {
+    const all = last.length === chain.length, who = all ? "Nobody" : nameList(last), many = !all && last.length > 1;
+    text = [
+      all ? `Nobody has left the North Pole yet.${buyBy}` : `${who} ${many ? "haven't" : "hasn't"} left the North Pole.${buyBy}`,
+      all ? `Everyone has picked a shirt and nobody has ordered one.${buyBy}` : `${who} picked a shirt and stopped there.${buyBy}`,
+      all ? "Every shirt is ordered and none has shipped. Tick tock." : `${who} ordered, but nothing has shipped. Tick tock.`,
+      all ? "Every shirt is in the mail. Watch the porch." : `${who} ${many ? "are" : "is"} waiting on the mail. Everyone else has theirs.`,
+      all ? "Every shirt is here and none is wrapped." : `${who} ${many ? "have" : "has"} a shirt in hand and no wrapping paper.`,
+    ][low];
+  }
+  if (!(await once(env, key, now))) return;
+  await Promise.allSettled(chain.map((n) => broadcast(env, { title: "The sleigh race", body: text, url: "secret-santa.html", tag: "santa-race" }, n)));
+}
+
 // ---------- Commissioners ----------
-async function admin(request, env) {
+async function admin(request, env, ctx) {
   const me = await sessionManager(request, env);
   if (!me) return fail(401, "signed_out");
   if (!(await isCommissioner(env, me.manager))) return fail(403, "not_commissioner");
@@ -438,13 +697,31 @@ async function admin(request, env) {
       if (now < FORCE_AT && !draw.chain.every((n) => present.includes(n))) return fail(403, "too_early");
       const s = await startRoom(env, present, me.manager);
       await logAction(env, me.manager, "santa", `Secret Santa: started the Room with ${present.length} of ${draw.chain.length}`);
+      // Anyone who missed it: their envelope waits for them.
+      const missed = draw.chain.filter((n) => !s.crew.includes(n));
+      if (missed.length && ctx) ctx.waitUntil(Promise.allSettled(missed.map((n) => broadcast(env, { title: "The reveal started without you", body: "Your envelope is waiting on the Secret Santa page.", url: "secret-santa.html", tag: "santa-room" }, n))));
       return { status: 200, body: { ok: true, start: s.at } };
     }
     case "unmask": {
       if (!start || now < start.at) return fail(403, "not_started");
       await setSetting(env, "santa", { ...set, unmasked: body.on === false ? null : now });
+      await saveHof(env);
       await logAction(env, me.manager, "santa", body.on === false ? "Secret Santa: hid the loop again" : "Secret Santa: unmasked everyone");
       return { status: 200, body: { ok: true } };
+    }
+    case "shirty": {
+      // Seal a category's envelope (its winners go to everyone), or reopen it (open: true).
+      const c = SHIRTY[body.cat];
+      if (!c) return fail(400, "bad_cat");
+      if (!set.unmasked) return fail(403, "not_unmasked");
+      const draw = await getSetting(env, "santa_draw");
+      const shirtys = { ...(set.shirtys || {}) };
+      if (body.open) delete shirtys[c.key];
+      else shirtys[c.key] = { ...(await shirtyResult(env, c.key, draw.chain, set)), at: now, by: me.manager };
+      await setSetting(env, "santa", { ...set, shirtys });
+      await saveHof(env);
+      await logAction(env, me.manager, "santa", body.open ? `Secret Santa: reopened the ${c.label} vote` : `Secret Santa: sealed the ${c.label} envelope`);
+      return { status: 200, body: { ok: true, result: shirtys[c.key] || null } };
     }
     case "remind": {
       const draw = await getSetting(env, "santa_draw");
@@ -469,7 +746,11 @@ export const SANTA_ROUTES = {
   "/santa/room": { POST: room },
   "/santa/opened": { POST: opened },
   "/santa/gift": { POST: saveGift },
+  "/santa/board": { POST: saveBoard },
   "/santa/msg": { POST: msg },
   "/santa/guess": { POST: guess },
+  "/santa/photo": { GET: photoGet, POST: photoPost },
+  "/santa/vote": { POST: vote },
+  "/santa/hof": { GET: hof },
   "/santa/admin": { POST: admin },
 };

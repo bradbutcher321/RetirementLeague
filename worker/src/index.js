@@ -82,7 +82,7 @@ import { isCommissioner } from "./roles.js";
 import { ADMIN_ROUTES, siteInfo } from "./admin.js";
 import { VIDEO_ROUTES } from "./videos.js";
 import { FEEDBACK_ROUTES } from "./feedback.js";
-import { SANTA_ROUTES, checkSantaReminder } from "./santa.js";
+import { SANTA_ROUTES, checkSantaHype, checkSantaReminder, checkSantaRoast } from "./santa.js";
 import { ROSTER_ROUTES } from "./roster.js";
 import { runHealthCheck } from "./healthCheck.js";
 
@@ -284,7 +284,9 @@ export default {
     if (SANTA_ROUTES[path]) {
       const route = SANTA_ROUTES[path][request.method];
       if (!route) return jsonResponse({ error: "Method not allowed" }, headers, 405);
-      const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      const result = await route(request, env, ctx).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      // A reaction-cam photo comes back as the picture itself.
+      if (result.binary) return new Response(result.binary, { status: result.status, headers: { ...headers, "Content-Type": result.type, "Cache-Control": "private, no-store" } });
       return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
     }
     if (LEG_ROUTES[path]) {
@@ -384,6 +386,8 @@ export default {
           checkPushEvents(env, dashboard),
           checkLegReminders(env),
           checkSantaReminder(env),
+          checkSantaHype(env),
+          checkSantaRoast(env),
           feed,
         ]);
         if (push.status === "rejected") console.error("Push check failed:", push.reason);

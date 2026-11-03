@@ -126,15 +126,18 @@ CREATE TABLE IF NOT EXISTS santa_cards (
 );
 -- After the draw (src/santa.js). The draw itself, the Room's start and the
 -- commissioners' dates live in site_settings (santa_draw, santa_start, santa).
--- santa_people: the 15-minute reminder switch (on unless turned off), the last
--- visit (Been by today), when you opened your envelope, and your guess.
+-- santa_people: the reveal-day pushes switch (on unless turned off), the last
+-- visit (Been by today), when you opened your envelope, your guess and when
+-- it last changed, and your big board (a JSON array of up to three shirts).
 CREATE TABLE IF NOT EXISTS santa_people (
   manager TEXT PRIMARY KEY,
   remind INTEGER NOT NULL DEFAULT 1,
   seen INTEGER,
   opened INTEGER,
   in_room INTEGER NOT NULL DEFAULT 0,
-  guess TEXT
+  guess TEXT,
+  guessed_at INTEGER,
+  board TEXT
 );
 -- The Room on reveal night: a heartbeat every few seconds, every ~0.7s while holding the seal.
 CREATE TABLE IF NOT EXISTS santa_room (
@@ -151,7 +154,9 @@ CREATE TABLE IF NOT EXISTS santa_events (
   at INTEGER NOT NULL
 );
 -- Each Santa's shirt: which one (shirt = index into docs/data/santa-shirts.json,
--- or NULL for a pasted link), and the order, estimated and delivered dates (YYYY-MM-DD).
+-- or NULL for a pasted link), then a date (YYYY-MM-DD) for each step: ordered,
+-- shipped, delivered, wrapped (eta is the estimated delivery). A row with no
+-- dates is a pick.
 CREATE TABLE IF NOT EXISTS santa_gifts (
   santa TEXT PRIMARY KEY,
   shirt INTEGER,
@@ -162,7 +167,24 @@ CREATE TABLE IF NOT EXISTS santa_gifts (
   ordered TEXT,
   eta TEXT,
   delivered TEXT,
-  updated INTEGER NOT NULL
+  updated INTEGER NOT NULL,
+  shipped TEXT,
+  wrapped TEXT
+);
+-- The reaction cam: each Santa's photo (base64 JPEG) from the moment the name
+-- landed, seen only by its owner until the unmask.
+CREATE TABLE IF NOT EXISTS santa_photos (
+  manager TEXT PRIMARY KEY,
+  img TEXT NOT NULL,
+  at INTEGER NOT NULL
+);
+-- The Shirtys: one vote per person per award (pick = whose shirt, by who got it).
+CREATE TABLE IF NOT EXISTS santa_votes (
+  voter TEXT NOT NULL,
+  cat TEXT NOT NULL,
+  pick TEXT NOT NULL,
+  at INTEGER NOT NULL,
+  PRIMARY KEY (voter, cat)
 );
 -- The anonymous mailbox: one thread per Santa and giftee. from_santa says which side wrote it.
 CREATE TABLE IF NOT EXISTS santa_msgs (

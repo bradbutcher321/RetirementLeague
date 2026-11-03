@@ -1,0 +1,21 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Retirement League//Secret Santa//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:secret-santa-reveal-2026@retirementleague
+DTSTAMP:20261103T120000Z
+DTSTART:20261114T020000Z
+DTEND:20261114T030000Z
+SUMMARY:Secret Santa reveal night
+DESCRIPTION:Everyone opens their envelope together in the Room.
+https://bradbutcher321.github.io/RetirementLeague/secret-santa.html
+URL:https://bradbutcher321.github.io/RetirementLeague/secret-santa.html
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Secret Santa starts in 15 minutes
+TRIGGER:-PT15M
+END:VALARM
+END:VEVENT
+END:VCALENDAR

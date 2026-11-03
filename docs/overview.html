@@ -225,6 +225,35 @@
   .lr-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; font-variant-numeric:tabular-nums; white-space:nowrap; text-align:right; }
   .lr.lead .lr-v{ color:var(--gold); } .lr.low .lr-v{ color:var(--loss); }
   .lr .lr-v.up{ color:var(--turf); } .lr .lr-v.down{ color:var(--loss); }
+
+  /* ---------- Secret Santa: each year's loop, haul and Shirty winners ---------- */
+  .ss-years{ display:flex; gap:6px; margin:0 0 12px; }
+  .ss-years button{ height:34px; padding:0 14px; border-radius:17px; border:1px solid var(--ctl-line); background:var(--ctl-bg); color:var(--text-dim); font:600 0.82rem var(--body); cursor:pointer; }
+  .ss-years button[aria-pressed="true"]{ background:var(--gold); border-color:var(--gold); color:var(--ctl-on-ink); }
+  .ss-stack{ display:grid; gap:12px; }
+  .ss-ring{ position:relative; width:min(100%, 380px); aspect-ratio:1; margin:6px auto 22px; }
+  .ss-ring svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+  .ss-ring path{ fill:none; stroke:var(--gold); stroke-width:.55; stroke-linecap:round; opacity:.85; }
+  .ss-seat{ position:absolute; width:15%; aspect-ratio:1; transform:translate(-50%, -50%); }
+  .ss-seat .lg{ display:grid; place-items:center; width:100%; height:100%; border-radius:50%; overflow:hidden; background:#1a1a1a; box-shadow:0 0 0 1.5px var(--lead-line); font:700 0.74rem var(--scoreboard); color:var(--text-dim); }
+  .ss-seat .lg img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .ss-seat .nm{ position:absolute; left:50%; top:100%; transform:translateX(-50%); margin-top:3px; font-size:0.62rem; font-weight:600; white-space:nowrap; color:#E8E6DF; }
+  .ss-core{ position:absolute; inset:30%; display:grid; place-content:center; text-align:center; }
+  .ss-core b{ font:800 2.6rem/.9 var(--scoreboard); color:var(--gold); }
+  .ss-core small{ margin-top:6px; color:var(--text-dim); font-size:0.66rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; }
+  .ss-haul{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
+  @media (min-width:560px){ .ss-haul{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
+  .ss-t{ display:grid; gap:4px; padding:8px; border-radius:12px; border:1px solid var(--item-line); background:var(--item); color:var(--text); text-decoration:none; min-width:0; }
+  .ss-t .ph{ aspect-ratio:1; display:grid; place-items:center; color:var(--text-dim); }
+  .ss-t .ph img{ width:92%; height:92%; object-fit:contain; }
+  .ss-t b{ font-size:0.72rem; }
+  .ss-t small{ font-size:0.66rem; color:var(--text-dim); line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ss-w{ display:grid; gap:6px; }
+  .ss-won{ display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:12px; border:1px solid var(--item-line); background:var(--item); }
+  .ss-won svg{ flex:none; width:30px; height:30px; }
+  .ss-won b{ display:block; font-size:0.92rem; }
+  .ss-won small{ color:var(--text-dim); font-size:0.74rem; }
+  .ss-note{ color:#9CC7E8; font-size:0.74rem; text-align:center; margin:0 0 10px; }
 </style>
 </head>
 <body>
@@ -905,17 +934,79 @@
   lbOneColumn.addEventListener('change', lbHide);
 
 
+  // ---------- Secret Santa ----------
+  // Every year's loop, the haul and the Shirty winners, kept by the Worker
+  // (worker/src/santa.js, GET /santa/hof) once that year's loop is unmasked.
+  // The tab only appears once there's a year to show. ?santa=hof previews it
+  // with example data.
+  const HOF_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev/santa/hof';
+  const HOF_DEMO = urlParam('santa') === 'hof';
+  let HOF = null, hofYear = null, LOGOS = {};
+  const SS_TROPHY = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="sstg" x1="0" x2="1"><stop offset="0" stop-color="#8A7342"/><stop offset=".45" stop-color="#F3E2B3"/><stop offset="1" stop-color="#B8954A"/></linearGradient></defs><path d="M18 8h28v12c0 9-6 16-14 16S18 29 18 20z" fill="url(#sstg)"/><path d="M18 12H9c0 8 4 12 10 12M46 12h9c0 8-4 12-10 12" stroke="url(#sstg)" stroke-width="3" fill="none"/><rect x="29" y="36" width="6" height="10" fill="url(#sstg)"/><rect x="20" y="46" width="24" height="8" rx="2" fill="url(#sstg)"/></svg>';
+  const hofYears = () => (HOF ? Object.keys(HOF.years).map(Number).sort((a, b) => b - a) : []);
+  function santaHtml() {
+    const years = hofYears(), y = HOF.years[hofYear], chain = y.chain, N = chain.length, labels = HOF.labels || {};
+    const at = i => { const a = i / N * 2 * Math.PI - Math.PI / 2; return [50 + 41 * Math.cos(a), 50 + 41 * Math.sin(a)]; };
+    const seats = chain.map((n, i) => { const [x, yy] = at(i); return `<div class="ss-seat" style="left:${x.toFixed(2)}%;top:${yy.toFixed(2)}%"><div class="lg">${LOGOS[n] ? `<img src="${esc(LOGOS[n])}" alt="">` : esc(monogram(n))}</div><span class="nm">${esc(n)}</span></div>`; }).join('');
+    // Each Santa to their giftee: the next seat round the ring, on a curve pulled toward the middle.
+    const links = chain.map((n, i) => {
+      const [x1, y1] = at(i), [x2, y2] = at((i + 1) % N), mx = (x1 + x2) / 2, my = (y1 + y2) / 2, cx = mx + (50 - mx) * 0.35, cy = my + (50 - my) * 0.35;
+      const sh = (x, yy, tx, ty, d) => { const L = Math.hypot(tx - x, ty - yy) || 1; return [x + (tx - x) / L * d, yy + (ty - yy) / L * d]; };
+      const [sx, sy] = sh(x1, y1, cx, cy, 8.5), [ex, ey] = sh(x2, y2, cx, cy, 8.5);
+      return `<path d="M${sx.toFixed(2)} ${sy.toFixed(2)} Q${cx.toFixed(2)} ${cy.toFixed(2)} ${ex.toFixed(2)} ${ey.toFixed(2)}"/>`;
+    }).join('');
+    const when = y.eventAt ? new Date(y.eventAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
+    const haul = chain.map(n => {
+      const g = y.gifts[n], i = g && g.shirt != null ? g.shirt : null, title = g ? g.title || 'A shirt' : 'Not recorded';
+      const href = g && g.url;
+      return `<${href ? `a href="${esc(href)}" target="_blank" rel="noopener"` : 'div'} class="ss-t"><span class="ph">${i != null ? `<img src="icons/santa/shirts/${String(i).padStart(3, '0')}.webp" alt="" loading="lazy">` : ''}</span><b>${esc(n)} got</b><small>${esc(title)}</small></${href ? 'a' : 'div'}>`;
+    }).join('');
+    const won = Object.entries(y.shirtys || {}).flatMap(([k, r]) => (r.winners || []).map(w => `<div class="ss-won">${SS_TROPHY}<div style="min-width:0"><b>${link(w.manager)}</b><small>${esc(labels[k] || r.label || k)}${w.giftee ? ` · for ${esc(w.giftee)}` : ''}</small></div></div>`)).join('');
+    return `${HOF_DEMO ? '<p class="ss-note">Preview with example data.</p>' : ''}
+      ${years.length > 1 ? `<div class="ss-years">${years.map(x => `<button type="button" data-ssy="${x}" aria-pressed="${x === hofYear}">${x}</button>`).join('')}</div>` : ''}
+      <div class="ss-stack">
+        ${panel(`The loop, ${hofYear}`, `<div class="ss-ring"><svg viewBox="0 0 100 100" aria-hidden="true">${links}</svg>${seats}<div class="ss-core"><b>${N}</b><small>shirts${when ? ' · ' + esc(when) : ''}</small></div></div>`)}
+        ${panel('The haul', `<div class="ss-haul">${haul}</div>`)}
+        ${won ? panel('The Shirtys', `<div class="ss-w">${won}</div>`) : ''}
+      </div>`;
+  }
+  // Adds (or redraws) the tab once there's a year to show.
+  function santaTab() {
+    if (!hofYears().length || !TABS.length) return;
+    if (!hofYear || !HOF.years[hofYear]) hofYear = hofYears()[0];
+    const t = { label: 'Secret Santa', html: santaHtml(), santa: true };
+    const k = TABS.findIndex(x => x.santa);
+    if (k >= 0) TABS[k] = t; else TABS.push(t);
+  }
+  document.addEventListener('click', e => { const b = e.target.closest('[data-ssy]'); if (b) { hofYear = Number(b.dataset.ssy); santaTab(); render(); } });
+  // The example: this year's managers in a loop, a shirt each, a few winners.
+  function demoHof(D) {
+    const yr = Math.max(...D.seasons.map(s => s.year));
+    const chain = [...new Set(D.seasons.filter(s => s.year === yr).map(s => s.player))].sort((a, b) => ((a.charCodeAt(0) * 7 + a.length * 13) % 17) - ((b.charCodeAt(0) * 7 + b.length * 13) % 17) || a.localeCompare(b));
+    const gifts = Object.fromEntries(chain.map((n, i) => [n, { shirt: (i * 263 + 41) % 957, title: 'Example shirt', url: '' }]));
+    const santa = n => chain[(chain.indexOf(n) + chain.length - 1) % chain.length];
+    return { labels: { best: 'Best Shirt', offensive: 'Most Offensive', fit: 'Worst Fit', detective: 'Best Detective', late: 'Last-Minute Santa' },
+      years: { 2026: { year: 2026, eventAt: Date.parse('2026-12-12T19:00:00-05:00'), chain, gifts, shirtys: {
+        best: { winners: [{ manager: santa(chain[4]), giftee: chain[4] }] }, offensive: { winners: [{ manager: santa(chain[7]), giftee: chain[7] }] },
+        detective: { winners: [{ manager: chain[3] }] }, late: { winners: [{ manager: chain[9] }] } } } } };
+  }
+
+  const HOF_P = HOF_DEMO ? Promise.resolve(null) : fetch(HOF_URL).then(r => (r.ok ? r.json() : null)).catch(() => null);
   Promise.all([
     LG.load(),
     fetch('data/franchise.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
     fetch('data/rule-changes.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
   ])
     .then(([D, F, R]) => {
-      build(D, F, R); render(); riseIn(document.getElementById('overview').children);
+      LOGOS = Object.fromEntries(((F && F.players) || []).filter(p => p.current_team_logo).map(p => [p.name, p.current_team_logo]));
+      const all = () => { build(D, F, R); if (HOF_DEMO && !HOF) HOF = demoHof(D); santaTab(); };
+      all(); render(); riseIn(document.getElementById('overview').children);
       // Picking your team, or its ring colour, in the You sheet redraws every tab.
-      const redo = () => { build(D, F, R); render(); };
+      const redo = () => { all(); render(); };
       addEventListener('rl-me', redo);
       addEventListener('rl-settings', redo);
+      // Secret Santa's tab joins once the Worker says there's a year.
+      HOF_P.then(h => { if (h && h.years && Object.keys(h.years).length) { HOF = h; santaTab(); render(); } });
     })
     .catch(err => LG.showError('overview', err));
 </script>
