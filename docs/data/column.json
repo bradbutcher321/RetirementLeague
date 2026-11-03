@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-29T12:10:36+00:00",
+ "generated_at": "2026-11-03T16:08:56+00:00",
  "columns": [
   {
    "id": "2026-w08-preview",
@@ -46,6 +46,110 @@
      "a": "Brad",
      "b": "Collin",
      "note": "Collin has lost four straight and holds a 0.75% playoff chance. Brad is a 53% favorite, which is not much."
+    }
+   ]
+  },
+  {
+   "id": "2026-w08-recap",
+   "kind": "recap",
+   "season": 2026,
+   "week": 8,
+   "published_at": "2026-11-03T11:08:56-05:00",
+   "headline": "Joe K Benches a Win Against Chad, Who Was Very Grateful",
+   "dek": "Chad survived the closest game of the week by 3.36 because Joe K left a winning lineup on the bench. Kris put up the high score and Jared started a donut at quarterback.",
+   "body": [
+    "The closest game of the week was decided on Joe K's bench. Chad beat him <b>125.50</b> to <b>122.14</b>, a <b>3.36</b>-point margin, and Joe K was the only loser in the league whose best lineup would have won. That lineup was <b>133.64</b>. He benched T.J. Hockenson and his <b>13.80</b> and started Jeremiyah Love in the flex, who returned <b>2.30</b> on a <b>10.34</b> projection. That is <b>11.50</b> points left on the pine in a game lost by <b>3.36</b>, which is dumb, and the league has already approved the word. Patrick Mahomes gave him <b>25.44</b> on a <b>14.23</b> projection and he wasted it. Joe K still beat the <b>104.83</b> median, climbed to sixth at 8-8, and leads the series 10-7, which will be no comfort at all.",
+    "Chad, meanwhile, got away with it. Jahmyr Gibbs scored <b>23.80</b>, Bucky Irving added <b>21.00</b>, and Chad is alone in first at 12-4 with <b>977.50</b> points. The margin that kept him there was gift-wrapped by Joe K's flex.",
+    "Kris put up the high score of the week, <b>129.16</b>, and used it on Jon, who managed <b>68.70</b>. The <b>60.46</b>-point margin was the biggest of the week, and Kris now leads that series 4-3. Tony Pollard scored <b>27.20</b> on a <b>13.84</b> projection and Kris jumped two spots to second at 11-5. Jon benched Emmett Johnson, who scored <b>22.80</b>, and started Parker Washington in the flex for <b>3.10</b> on a <b>13.88</b> projection. His best lineup of <b>104.80</b> would still have lost, so it only made it uglier. Jon spends real money making weekly videos; this week's footage is <b>68.70</b> points of a man falling from third to fifth at 9-7. Gorgeous production, terrible product.",
+    "Jared posted the low score of the week, <b>46.30</b>, and the reason starts at quarterback: Lamar Jackson put up a donut on a <b>22.17</b> projection. His best lineup was <b>66.58</b>, so even the bench couldn't have caught Jeff's <b>95.18</b>, and Jared sits alone in last at 3-13. Jeff took the win and still missed the median, because Drake London gave him <b>1.30</b> on a <b>14.82</b> projection and Josh Downs laid a donut in the flex. Jared still leads that series 16-8, which is nice for him.",
+    "The best start of the week against projection went to Collin: Tee Higgins scored <b>32.50</b> on a <b>13.00</b> projection, beating it by <b>19.50</b>, and Collin beat Brad <b>127.02</b> to <b>75.66</b>. That was the second-best score of the week and it moved Collin up out of last to 11th at 4-12. Brad got <b>28.90</b> from Bhayshul Tuten, <b>4.70</b> from Jonathan Taylor on a <b>14.31</b> projection, and a donut from Roschon Johnson at running back. His entire bench scored nothing, so nothing on the bench would have saved him. Brad falls to tenth at 6-10, still leads the series 6-5, and would like everyone to know his head is not that big, which is the one thing about his team this week that isn't small.",
+    "Ben had the best possible lineup of anyone at <b>163.88</b> and still only scored <b>121.28</b>, because Tyler Allgeier scored <b>33.60</b> on his bench while Javonte Williams started for <b>6.20</b> on a <b>19.11</b> projection and J.K. Dobbins added <b>1.30</b>. He left <b>42.60</b> on the bench and beat Joe G anyway, with Joe Burrow putting up <b>39.48</b>. Ben leads that series 12-4 and jumped three spots to seventh at 8-8. Joe G got <b>28.18</b> from Kirk Cousins and a donut from Zay Flowers on a <b>16.69</b> projection, lost by <b>6.80</b>, beat the median, and somehow moved up to fourth at 10-6.",
+    "TJ beat Flanders <b>88.76</b> to <b>51.18</b> and leads that series 5-1, but <b>88.76</b> missed the median and he slid to third at 10-6, tied on record with Joe G and ahead on points. He started Tre Tucker in the flex for a donut and benched Brian Thomas Jr., who scored <b>7.70</b>. It didn't matter, which is the only reason it isn't the dumbest thing in this column. Flanders got a donut from Omar Cooper Jr. in the flex, <b>13.98</b> from Caleb Williams as his top scorer, and fell three spots to ninth at 7-9."
+   ],
+   "standings": [
+    {
+     "rank": 1,
+     "manager": "Chad",
+     "record": "12-4",
+     "move": 0,
+     "note": "Alone in first at 12-4 after winning the closest game of the week by 3.36."
+    },
+    {
+     "rank": 2,
+     "manager": "Kris",
+     "record": "11-5",
+     "move": 2,
+     "note": "High score of 129.16 and up two spots to second at 11-5."
+    },
+    {
+     "rank": 3,
+     "manager": "TJ",
+     "record": "10-6",
+     "move": -1,
+     "note": "Won by 37.58 and still went 1-1, sliding to third on points at 10-6."
+    },
+    {
+     "rank": 4,
+     "manager": "Joe G",
+     "record": "10-6",
+     "move": 1,
+     "note": "Lost to Ben, beat the median, moved up to fourth. Zay Flowers: donut."
+    },
+    {
+     "rank": 5,
+     "manager": "Jon",
+     "record": "9-7",
+     "move": -2,
+     "note": "68.70 points, down from third to fifth. Emmett Johnson scored 22.80 on the bench."
+    },
+    {
+     "rank": 6,
+     "manager": "Joe K",
+     "record": "8-8",
+     "move": 1,
+     "note": "Best lineup 133.64, lost with 122.14. Up to sixth anyway."
+    },
+    {
+     "rank": 7,
+     "manager": "Ben",
+     "record": "8-8",
+     "move": 3,
+     "note": "Left 42.60 on the bench and still won. Up three spots to seventh."
+    },
+    {
+     "rank": 8,
+     "manager": "Jeff",
+     "record": "8-8",
+     "move": 0,
+     "note": "Beat Jared by 48.88 and missed the median at 95.18. Holds eighth at 8-8."
+    },
+    {
+     "rank": 9,
+     "manager": "Flanders",
+     "record": "7-9",
+     "move": -3,
+     "note": "51.18, the second-lowest score of the week. Down three spots to ninth."
+    },
+    {
+     "rank": 10,
+     "manager": "Brad",
+     "record": "6-10",
+     "move": -1,
+     "note": "Bench scored nothing, starters scored 75.66. Tenth at 6-10."
+    },
+    {
+     "rank": 11,
+     "manager": "Collin",
+     "record": "4-12",
+     "move": 1,
+     "note": "Tee Higgins went for 32.50 and Collin is finally out of last at 4-12."
+    },
+    {
+     "rank": 12,
+     "manager": "Jared",
+     "record": "3-13",
+     "move": -1,
+     "note": "Lamar Jackson laid a donut on a 22.17 projection. Alone in last at 3-13."
     }
    ]
   },
