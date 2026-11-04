@@ -149,6 +149,7 @@
   .cm-table tbody tr:last-child td{ border-bottom: none; }
   @media (hover: hover){ .cm-table tbody tr:hover{ background: var(--surface-raised); } }
   .cm-tools{ display: flex; gap: 6px; }
+  .cm-wkpick{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   /* Activity */
   .cm-tiles{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -724,7 +725,7 @@
     const left = P.oddsLeft;
     const more = panel('More', `<div class="cm-list">
       <a class="cm-li" href="parlay-legs.html"><span class="cm-ic">${I.ticket}</span><div class="cm-main"><div class="cm-name">Parlay Legs board</div><div class="cm-sub">Every leg, any week, or paste Jon's note</div></div><span class="cm-chev">${I.chev}</span></a>
-      <a class="cm-li" href="#tables"><span class="cm-ic">${I.table}</span><div class="cm-main"><div class="cm-name">Jon's Tables</div><div class="cm-sub">Season table and this week's legs, ready to copy</div></div><span class="cm-chev">${I.chev}</span></a>
+      <a class="cm-li" href="#tables"><span class="cm-ic">${I.table}</span><div class="cm-main"><div class="cm-name">Jon's Tables</div><div class="cm-sub">Season table and any week's legs, ready to copy</div></div><span class="cm-chev">${I.chev}</span></a>
       <div class="cm-li"><span class="cm-ic">${I.sync}</span><div class="cm-main"><div class="cm-name">Parlay data</div><div class="cm-sub">${busy === 'parlay' ? 'Refreshing…' : refreshed ? 'Refreshed ' + ago(refreshed) : 'Re-reads the sheet and regrades'}</div></div><button type="button" class="cm-btn dim" data-act="run" data-which="parlay"${busy === 'parlay' ? ' disabled' : ''}>Refresh</button></div>
       <div class="cm-li" style="display:block;padding-top:12px;padding-bottom:12px"><div style="display:flex;justify-content:space-between;gap:10px"><div class="cm-name">Odds credits</div><span class="cm-val">${left == null ? '—' : `${left} of 500`}</span></div><div class="cm-sub">${left == null ? 'Not checked yet this month' : 'Left this month for Hard Rock lines'}</div>${left == null ? '' : `<div class="cm-bar"><i style="width:${Math.max(0, Math.min(100, left / 5))}%"></i></div>`}</div>
     </div>`);
@@ -733,8 +734,9 @@
     return { title: 'Parlay', right: chip, html: `<div class="cm-split"><div>${legs}</div><div>${betHtml(W)}${more}</div></div>` };
   }
 
-  // ---------- Jon's Tables (the season table and this week's legs, copyable) ----------
+  // ---------- Jon's Tables (the season table and any week's legs, copyable) ----------
   let tScope = '';
+  let tWeek = '';
   let tCopied = '';
   let tStatus = '';
   const fmtOdds = o => o === null || o === undefined ? '—' : (Math.round(o) > 0 ? '+' : '') + Math.round(o).toLocaleString();
@@ -749,8 +751,10 @@
     // individual_wl is already in win % order with ties broken on average odds.
     return st.individual_wl.map(w => ({ player: w.player, w: w.w, l: w.l, pct: w.win_pct, odds: odds[w.player] ?? null, sackos: sackos[w.player] ?? 0 }));
   }
+  // The week the Parlay Table shows: the one picked, or the latest.
+  const betWeek = d => d.weeks.find(w => `${w.year}-${w.week}` === tWeek) || d.weeks[d.weeks.length - 1];
   function betRows(d) {
-    const cur = d.weeks[d.weeks.length - 1];
+    const cur = betWeek(d);
     const time = iso => { if (!iso) return 'TBD'; const t = new Date(iso), h = t.getHours(); return `${DAYS[t.getDay()]}. ${h % 12 || 12}:${String(t.getMinutes()).padStart(2, '0')}${h < 12 ? 'AM' : 'PM'}`; };
     // "{bet type}: {details}" -> "{bet type} | {details}"; Money Line / ML read Moneyline.
     const bet = p => {
@@ -775,8 +779,12 @@
     const pills = `<div class="cm-pills" role="group" aria-label="Season">${scopes.map(x => `<button type="button" class="cm-pill${x === tScope ? ' on' : ''}" data-act="tscope" data-scope="${x}" aria-pressed="${x === tScope}">${x === 'all' ? 'All Time' : x}</button>`).join('')}</div>`;
     const tools = `<div class="cm-tools"><button type="button" class="cm-btn dim" data-act="trefresh"${busy === 'trefresh' || tStatus ? ' disabled' : ''}>Refresh Data</button><button type="button" class="cm-btn dim" data-act="tcopy" data-which="j">${tCopied === 'j' ? 'Copied!' : 'Copy All'}</button></div>`;
     const jon = panel("Jon's Table", `${pills}<div class="cm-table-wrap"><table class="cm-table"><thead><tr><th>Team</th><th>Avg Odds</th><th>W - L</th><th>Win %</th></tr></thead><tbody>${rows}</tbody></table></div>${tStatus ? `<p class="cm-fine">${esc(tStatus)}</p>` : ''}`, tools);
-    const bets = betRows(d).map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
-    const pt = panel('Parlay Table', `<div class="cm-table-wrap" style="margin-top:0"><table class="cm-table bets"><thead><tr><th>Manager</th><th>Bet</th><th>Odds</th><th>Game Time</th><th>Result</th></tr></thead><tbody>${bets}</tbody></table></div>`,
+    const bw = betWeek(d);
+    const yrs = [...new Set(d.weeks.map(w => w.year))].sort((a, b) => b - a);
+    const wks = d.weeks.filter(w => w.year === bw.year).map(w => w.week);
+    const picker = `<div class="cm-wkpick"><select class="cm-in" id="tw-year" aria-label="Season">${yrs.map(y => `<option${y === bw.year ? ' selected' : ''}>${y}</option>`).join('')}</select><select class="cm-in" id="tw-week" aria-label="Week">${wks.map(n => `<option value="${n}"${n === bw.week ? ' selected' : ''}>Week ${n}</option>`).join('')}</select></div>`;
+    const bets = betRows(d).map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('') || '<tr><td colspan="5">No legs in this week.</td></tr>';
+    const pt = panel('Parlay Table', `${picker}<div class="cm-table-wrap"><table class="cm-table bets"><thead><tr><th>Manager</th><th>Bet</th><th>Odds</th><th>Game Time</th><th>Result</th></tr></thead><tbody>${bets}</tbody></table></div>`,
       `<button type="button" class="cm-btn dim" data-act="tcopy" data-which="p">${tCopied === 'p' ? 'Copied!' : 'Copy All'}</button>`);
     return { title: "Jon's Tables", html: jon + pt };
   }
@@ -1539,7 +1547,17 @@
     if (/^bt-/.test(e.target.id)) betDraft[e.target.id] = e.target.value;
     if (e.target.id === 'bt-pay') { const sp = $('bt-split'), W = parlayWeek(); if (sp && W) sp.innerHTML = betSplit(e.target.value, W.P.players.length, true); }
   });
-  document.addEventListener('change', e => { if (e.target.id === 'bt-sacko') betDraft['bt-sacko'] = e.target.value; });
+  document.addEventListener('change', e => {
+    if (e.target.id === 'bt-sacko') betDraft['bt-sacko'] = e.target.value;
+    // A new season keeps the same week number when it has one, else its last week.
+    else if (e.target.id === 'tw-year' || e.target.id === 'tw-week') {
+      const d = screenData.tables, y = Number($('tw-year').value);
+      const wks = d.weeks.filter(w => w.year === y).map(w => w.week);
+      const n = e.target.id === 'tw-week' ? Number(e.target.value) : wks.includes(betWeek(d).week) ? betWeek(d).week : wks[wks.length - 1];
+      tWeek = `${y}-${n}`;
+      draw();
+    }
+  });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && (sheet || nudge)) { sheet = ''; nudge = false; confirmRole = ''; drawSheet(); } });
   window.addEventListener('hashchange', () => {
     sheet = ''; confirmRole = ''; asking = ''; confirmPush = false; nudge = false;
