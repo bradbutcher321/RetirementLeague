@@ -913,6 +913,8 @@
   .mwa-sub{ display: flex; align-items: center; gap: 5px; font-size: 0.64rem; font-weight: 500; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
   .mwa-sub.live{ color: var(--loss); }
   .mwa-sub.live span{ color: var(--text-dim); }
+  .mwa-sub.hole{ color: var(--loss); }
+  .mwa-sub.hole span{ color: var(--text-dim); }
   .mwa-sub .ld{ flex: none; width: 5px; height: 5px; border-radius: 50%; background: var(--loss); animation: pulse 1.5s ease-in-out infinite; }
   .mwa-sl{ display: block; font-size: 0.62rem; font-weight: 500; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .mwa-r{ text-align: right; }
@@ -2420,6 +2422,10 @@
 
   const mwCardEl = name => document.querySelector(`#median-container .mb-card[data-name="${CSS.escape(name)}"]`);
   const mwStillToCome = p => ['pre', 'live', 'possession'].includes(playerState(p));
+  // A starter on bye isn't finished while he can still be benched: Lineup
+  // Check's window, up to the week's last kickoff (lineup-check.js).
+  const mwOpenBye = p => !p.game && !!lastMedianData
+    && LineupCheck.problems([p], lastMedianData, Date.now(), { anyDay: true }).some(x => x.kind === 'bye');
   const mwClock = g => `${g.period > 4 ? 'OT' : `Q${g.period}`} ${g.clock}`;
   const mwGame = g => `${g.team} ${g.teamScore}–${g.opponentScore} ${g.opponent}`;
 
@@ -2468,11 +2474,13 @@
     const g = p.game || {};
     const state = playerState(p);
     const live = state === 'live' || state === 'possession';
+    const bye = mwOpenBye(p);
     const sub = live ? `<div class="mwa-sub live"><i class="ld"></i>${mwClock(g)} <span>· ${mwGame(g)}</span></div>`
       : state === 'pre' ? `<div class="mwa-sub">${fmtKickoff(g.date)} · ${g.team} vs ${g.opponent}</div>`
       : state === 'final' ? `<div class="mwa-sub">Final · ${mwGame(g)}</div>`
+      : bye ? '<div class="mwa-sub hole">Bye week <span>· can still be swapped out</span></div>'
       : '<div class="mwa-sub">Bye week</div>';
-    const done = state !== 'pre' && !live;
+    const done = state !== 'pre' && !live && !bye;
     const num = (v, tone = '') => `<div class="mwa-val${tone}">${v}</div>`;
     // While his game is on, his projection is as of now, green or red against
     // the pregame one (liveProj); otherwise the pregame number.
@@ -2486,7 +2494,7 @@
     if (mode === 'current') {
       val = state === 'pre' ? num('—', ' none') : num(fmtScore(p.livePoints || 0));
       small = proj();
-    } else if (done) {
+    } else if (done || bye) {
       val = num(fmtScore(p.livePoints || 0));
       small = proj();
     } else {
@@ -2496,13 +2504,14 @@
     return mwRowHtml(p, sub, val, small, done ? ' is-done' : '');
   }
 
-  // Players still to come first (live ones before those yet to kick off),
-  // then the finished ones under a divider.
+  // Players still to come first (live ones before those yet to kick off,
+  // then a bye he can still bench), then the finished ones under a divider.
   function mwListHtml(players, mode) {
     if (mode === 'average') return `<div class="mwa-list">${players.map(mwAvgRowHtml).join('')}</div>`;
-    const rank = p => ({ possession: 0, live: 0, pre: 1, final: 2 })[playerState(p)] ?? 3;
+    const open = p => mwStillToCome(p) || mwOpenBye(p);
+    const rank = p => ({ possession: 0, live: 0, pre: 1, final: 3 })[playerState(p)] ?? (mwOpenBye(p) ? 2 : 4);
     const sorted = players.slice().sort((a, b) => rank(a) - rank(b));
-    const up = sorted.filter(mwStillToCome), done = sorted.filter(p => !mwStillToCome(p));
+    const up = sorted.filter(open), done = sorted.filter(p => !open(p));
     return `<div class="mwa-list">${up.map(p => mwLiveRowHtml(p, mode)).join('')}${up.length && done.length ? '<div class="mwa-div">Finished</div>' : ''}${done.map(p => mwLiveRowHtml(p, mode)).join('')}</div>`;
   }
 
@@ -3588,6 +3597,15 @@
     if (clusters.length) {
       const last = clusters[clusters.length - 1];
       last.pos = Math.min(last.pos, plotSize - sizeOf(last) / 2);
+    }
+
+    // Pass 3: that clamp can pull a tall top row down onto the one under
+    // it (Week 8 2026: five managers merged at the top hid Joe G behind
+    // Ben), so push apart high-to-low the same way.
+    for (let i = clusters.length - 2; i >= 0; i--) {
+      const hiC = clusters[i + 1], loC = clusters[i];
+      const requiredGap = sizeOf(loC) / 2 + sizeOf(hiC) / 2 + SPREAD_MIN_GAP;
+      if (hiC.pos - loC.pos < requiredGap) loC.pos = hiC.pos - requiredGap;
     }
     clusters.forEach(c => { c.size = sizeOf(c); });
     return clusters;
