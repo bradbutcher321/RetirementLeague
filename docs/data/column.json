@@ -1,6 +1,54 @@
 {
- "generated_at": "2026-11-03T16:08:56+00:00",
+ "generated_at": "2026-11-05T12:06:27+00:00",
  "columns": [
+  {
+   "id": "2026-w09-preview",
+   "kind": "preview",
+   "season": 2026,
+   "week": 9,
+   "published_at": "2026-11-05T07:06:27-05:00",
+   "headline": "Joe G and Jon Fight Over Fourth Like It Means Something",
+   "dek": "Fourth against fifth, a 3.16-point projected gap and a 52-48 coin flip. Elsewhere, Kris gets Jared, and Brad needs a miracle against a team he owns.",
+   "body": [
+    "The game of the week is Joe G against Jon, because it is fourth against fifth, back to back in the standings, with a playoff spot riding on it. Joe G is fourth at 10-6 with a <b>80.13%</b> playoff chance; Jon is fifth at 9-7 at <b>52.55%</b>, which is ESPN's polite way of saying coin flip. The projection agrees: Joe G at <b>105.05</b>, Jon at <b>101.89</b>, a gap of <b>3.16</b> and a <b>52%</b> to <b>48%</b> split. Joe G has won two straight, Jon has lost two, and Joe G leads the series 3-2. Jon is the underdog in a game he can't afford to lose, which is a lot of pressure for a man who is already 9-7.",
+    "The closest projection on the board is Brad against TJ, separated by <b>1.67</b>: TJ at <b>103.3</b>, Brad at <b>101.63</b>, <b>51%</b> to <b>49%</b>. TJ is third at 10-6, tied on record with Joe G and ahead on points with <b>842.12</b>. Brad is tenth at 6-10 with an <b>18.8%</b> playoff chance and has lost two in a row. He also leads this series 5-1, which means TJ has lost five of six to a guy who is now 6-10. Brad needs it far more. TJ needs it a little, and should be embarrassed either way.",
+    "The biggest mismatch is Kris against Jared: <b>98.39</b> projected against <b>69.71</b>, a <b>28.68</b>-point gap and a <b>31%</b> win chance for Jared. Kris is second at 11-5 and has won two straight. Jared is alone in last at 3-13, has lost four straight, and carries a <b>1.58%</b> playoff chance. Kris leads the series 9-5. ESPN's projection for Jared reads like a lineup set during a power outage.",
+    "Chad, alone in first at 12-4 with a <b>97.13%</b> playoff chance, is projected for <b>118.45</b>, the best number on the board, against Jeff's <b>109.34</b>. That still only makes him a <b>55%</b> favorite, which is ESPN admitting it has no idea what it's doing. Chad leads the series 12-8. Jeff has lost two straight and is one of three 8-8 teams sitting sixth through eighth.",
+    "Those 8-8 teams are the playoff picture. Joe K sits sixth with the worst odds of the three at <b>43.28%</b>; Ben is at <b>51.03%</b> and Jeff at <b>50.13%</b>. Joe K is a <b>56%</b> favorite over Collin, <b>101.33</b> to <b>91.05</b>, and has won two straight, yet Collin leads that series 6-4. Collin is 4-12 with a <b>2.7%</b> playoff chance, so losing to him again would take real effort. Ben gets Flanders at <b>106.13</b> to <b>101.76</b>, a <b>52%</b> favorite against a man who leads the series 11-5. Flanders is ninth at 7-9 with a <b>35.2%</b> chance, which is a lot of ownership of one man and not much of anyone else."
+   ],
+   "games": [
+    {
+     "a": "Kris",
+     "b": "Jared",
+     "note": "Projected 98.39 to 69.71, the biggest gap of the week. Jared has lost four straight; Kris leads the series 9-5."
+    },
+    {
+     "a": "Joe G",
+     "b": "Jon",
+     "note": "Fourth vs fifth at 52% to 48%. Joe G leads 3-2 and Jon has lost two straight."
+    },
+    {
+     "a": "Chad",
+     "b": "Jeff",
+     "note": "Chad's 118.45 is the top projection of the week, and ESPN still only gives him 55%. Chad leads 12-8."
+    },
+    {
+     "a": "Flanders",
+     "b": "Ben",
+     "note": "Ben is the 52% favorite. Flanders leads the series 11-5 and would like a word."
+    },
+    {
+     "a": "Collin",
+     "b": "Joe K",
+     "note": "Joe K projected at 101.33 and favored at 56%, but Collin owns the series 6-4."
+    },
+    {
+     "a": "Brad",
+     "b": "TJ",
+     "note": "Closest projection of the week at 1.67. Brad leads 5-1 and sits at an 18.8% playoff chance."
+    }
+   ]
+  },
   {
    "id": "2026-w08-preview",
    "kind": "preview",
