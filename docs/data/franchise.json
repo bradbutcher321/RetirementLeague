@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-03T12:07:51.674229+00:00",
+  "generated_at": "2026-11-05T12:35:30.577712+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -184,8 +184,8 @@
         ]
       },
       "moves": {
-        "total": 265,
-        "avg_per_season": 22.1,
+        "total": 267,
+        "avg_per_season": 22.2,
         "busiest_season": {
           "year": 2015,
           "moves": 46
@@ -639,8 +639,8 @@
         ]
       },
       "moves": {
-        "total": 389,
-        "avg_per_season": 32.4,
+        "total": 390,
+        "avg_per_season": 32.5,
         "busiest_season": {
           "year": 2019,
           "moves": 78
@@ -1076,9 +1076,9 @@
       "weekly_sackos": 4,
       "money": {
         "total_dues": 1600.0,
-        "net_result": -1560.0,
+        "net_result": -1580.0,
         "total_earnings": 100.0,
-        "parlays_purchased": 60.0
+        "parlays_purchased": 80.0
       },
       "season_history": [
         {
@@ -1954,8 +1954,8 @@
         ]
       },
       "moves": {
-        "total": 292,
-        "avg_per_season": 24.3,
+        "total": 294,
+        "avg_per_season": 24.5,
         "busiest_season": {
           "year": 2019,
           "moves": 38
@@ -3277,8 +3277,8 @@
         ]
       },
       "moves": {
-        "total": 188,
-        "avg_per_season": 18.8,
+        "total": 189,
+        "avg_per_season": 18.9,
         "busiest_season": {
           "year": 2020,
           "moves": 31
@@ -3685,8 +3685,8 @@
         ]
       },
       "moves": {
-        "total": 226,
-        "avg_per_season": 22.6,
+        "total": 227,
+        "avg_per_season": 22.7,
         "busiest_season": {
           "year": 2018,
           "moves": 31
@@ -4097,8 +4097,8 @@
         ]
       },
       "moves": {
-        "total": 236,
-        "avg_per_season": 29.5,
+        "total": 237,
+        "avg_per_season": 29.6,
         "busiest_season": {
           "year": 2020,
           "moves": 58
@@ -4457,8 +4457,8 @@
         ]
       },
       "moves": {
-        "total": 81,
-        "avg_per_season": 16.2,
+        "total": 83,
+        "avg_per_season": 16.6,
         "busiest_season": {
           "year": 2022,
           "moves": 21
@@ -4762,8 +4762,8 @@
         ]
       },
       "moves": {
-        "total": 165,
-        "avg_per_season": 33.0,
+        "total": 167,
+        "avg_per_season": 33.4,
         "busiest_season": {
           "year": 2022,
           "moves": 46
