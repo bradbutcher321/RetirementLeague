@@ -185,17 +185,21 @@
   const loose = s => s.replace(/[^a-z0-9 ]/g, '');
   const stripRank = s => String(s || '').replace(/^#\d+\s*/, '');
 
-  function teamMatches(candidate, t) {
+  // 3 an exact name, 2 the same without punctuation, 1 only inside the full
+  // name, 0 none (_team_match_rank). The last is weak -- "Kentucky" is inside
+  // "Western Kentucky Hilltoppers" -- so a day's games are searched for the
+  // best match, not the first.
+  function teamRank(candidate, t) {
     candidate = fold(candidate);
-    if (!candidate || !t) return false;
+    if (!candidate || !t) return 0;
     const exact = new Set(['shortDisplayName', 'displayName', 'name', 'location', 'abbreviation'].map(f => fold(t[f])));
     const cands = [candidate];
     if (TEAM_NICKNAMES[candidate]) cands.push(TEAM_NICKNAMES[candidate]);
-    if (cands.some(c => exact.has(c))) return true;
+    if (cands.some(c => exact.has(c))) return 3;
     const looseExact = new Set([...exact].map(loose));
-    if (cands.some(c => looseExact.has(loose(c)))) return true;
+    if (cands.some(c => looseExact.has(loose(c)))) return 2;
     const display = fold(t.displayName);
-    return cands.some(c => display.includes(c));
+    return cands.some(c => display.includes(c)) ? 1 : 0;
   }
 
   function canonical(t, c) {
@@ -289,7 +293,7 @@
     team = stripRank(team);
     opponent = stripRank(opponent);
     const partial = [];
-    let failed = false;
+    let failed = false, best = null, bestKey = null;
     for (const sport of Object.keys(SPORT_PATHS)) {
       for (const b of await boards(sport, days)) {
         if (!b.ok) { failed = true; continue; }
@@ -299,17 +303,24 @@
           const [c0, c1] = comp.competitors;
           const t0 = c0.team, t1 = c1.team;
           if (!t0 || !t1) continue;
-          const tt0 = teamMatches(team, t0), tt1 = teamMatches(team, t1);
-          const ot0 = teamMatches(opponent, t0), ot1 = teamMatches(opponent, t1);
+          const tt0 = teamRank(team, t0), tt1 = teamRank(team, t1);
+          const ot0 = teamRank(opponent, t0), ot1 = teamRank(opponent, t1);
           const hit = (a, ac, o, oc) => ({ gametime: easternIso(new Date(comp.date)), sport,
             team: canonical(a, ac), opponent: canonical(o, oc) });
-          if (tt0 && ot1) return hit(t0, c0, t1, c1);
-          if (tt1 && ot0) return hit(t1, c1, t0, c0);
+          // The weaker side's match first, then both together.
+          const full = (a, o, h) => {
+            const key = Math.min(a, o) * 10 + a + o;
+            if (a && o && (bestKey === null || key > bestKey)) { best = h; bestKey = key; }
+          };
+          full(tt0, ot1, () => hit(t0, c0, t1, c1));
+          full(tt1, ot0, () => hit(t1, c1, t0, c0));
+          if (tt0 && ot1 || tt1 && ot0) continue;
           if (tt0 || ot1) partial.push(hit(t0, c0, t1, c1));
           else if (tt1 || ot0) partial.push(hit(t1, c1, t0, c0));
         }
       }
     }
+    if (best) return best();
     // One side misspelled ("Gaytors") is fine if the other side has
     // exactly one game all window.
     if (partial.length === 1) return partial[0];
@@ -379,20 +390,23 @@
   /** The player's team's game in the window. */
   async function findTeamOnly(team, sport, days) {
     team = stripRank(team);
-    let failed = false;
+    let failed = false, best = null, bestRank = 0;
     for (const b of await boards(sport, days)) {
       if (!b.ok) { failed = true; continue; }
       for (const ev of (b.data && b.data.events) || []) {
         const comp = gameOf(ev);
         if (!comp || !comp.date) continue;
-        const own = comp.competitors.find(c => teamMatches(team, c.team));
-        if (!own) continue;
-        const other = comp.competitors.find(c => c !== own);
-        return { gametime: easternIso(new Date(comp.date)), sport,
-          matchup: other && other.team ? `${canonical(own.team, own)} vs. ${canonical(other.team, other)}` : canonical(own.team, own) };
+        for (const own of comp.competitors) {
+          const rank = teamRank(team, own.team);
+          if (rank <= bestRank) continue;
+          const other = comp.competitors.find(c => c !== own);
+          bestRank = rank;
+          best = { gametime: easternIso(new Date(comp.date)), sport,
+            matchup: other && other.team ? `${canonical(own.team, own)} vs. ${canonical(other.team, other)}` : canonical(own.team, own) };
+        }
       }
     }
-    return { failed };
+    return best || { failed };
   }
 
   /** One parsed pick -> {found: true, gametime, sport, team?, opponent?,

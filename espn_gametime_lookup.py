@@ -363,7 +363,20 @@ def _fold_name(name):
 
 
 def _team_matches(candidate, espn_team):
-    """Checks every name ESPN exposes for a team, not just displayName/
+    return _team_match_rank(candidate, espn_team) > 0
+
+
+def _team_match_rank(candidate, espn_team):
+    """How well `candidate` names this ESPN team: 3 an exact name, 2 the
+    same name once punctuation is dropped, 1 only found inside the full
+    displayName, 0 not at all. The last kind is the weak one -- "Kentucky"
+    is inside "Western Kentucky Hilltoppers" and "Tennessee" inside "Middle
+    Tennessee Blue Raiders" -- so callers that pick one game out of a day
+    take the best-ranked match rather than the first (2026 Week 8: a
+    Kentucky vs. Tennessee leg was graded on Western Kentucky at Middle
+    Tennessee, which finished first).
+
+    Checks every name ESPN exposes for a team, not just displayName/
     shortDisplayName -- confirmed directly this was needed: for "Florida
     Gators", shortDisplayName is "Florida" (the school) while the mascot
     "Gators" only appears in the separate `name` field, and for "UCF
@@ -377,7 +390,7 @@ def _team_matches(candidate, espn_team):
     _fold_name."""
     candidate = _fold(candidate)
     if not candidate:
-        return False
+        return 0
     fields = ["shortDisplayName", "displayName", "name", "location", "abbreviation"]
     exact = {_fold(espn_team.get(f) or "") for f in fields}
     candidates = {candidate}
@@ -385,12 +398,21 @@ def _team_matches(candidate, espn_team):
     if mapped:
         candidates.add(mapped)
     if candidates & exact:
-        return True
+        return 3
     loose = lambda s: re.sub(r"[^a-z0-9 ]", "", s)
     if {loose(c) for c in candidates} & {loose(e) for e in exact}:
-        return True
+        return 2
     display = _fold(espn_team.get("displayName") or "")
-    return any(c in display for c in candidates)
+    return 1 if any(c in display for c in candidates) else 0
+
+
+def _kickoff_matches(event, gametime_iso):
+    """Whether ESPN's kickoff for this event is the gametime the pick
+    recorded -- the tiebreak between two equally good name matches."""
+    try:
+        return _to_eastern_iso(event.get("date") or "")[:16] == gametime_iso[:16]
+    except ValueError:
+        return False
 
 
 def _canonical_name(team_obj, competitor):
@@ -559,6 +581,8 @@ def _find_event(team, opponent, sport, gametime_iso):
     the pick was first resolved). Shared by every function below that needs
     "the one game a sheet row is about," given how it's actually
     recorded -- as a specific sport+gametime, not an ESPN event id.
+    Of several matches, the one whose weaker side matches best wins (see
+    _team_match_rank), then the one kicking off at gametime_iso.
     Returns (event, team_competitor, opponent_competitor), or
     (None, None, None) if no match is found on gametime_iso's date."""
     if not team or not opponent or not sport or not gametime_iso:
@@ -570,6 +594,7 @@ def _find_event(team, opponent, sport, gametime_iso):
     except ValueError:
         return None, None, None
 
+    best, best_key = (None, None, None), None
     for espn_path in SPORT_ESPN_PATHS.get(sport, []):
         data = _fetch(espn_path, game_date.strftime("%Y%m%d"))
         if not data:
@@ -584,11 +609,15 @@ def _find_event(team, opponent, sport, gametime_iso):
                 t0, t1 = c0["team"], c1["team"]
             except (KeyError, IndexError):
                 continue
-            if _team_matches(team, t0) and _team_matches(opponent, t1):
-                return event, c0, c1
-            if _team_matches(team, t1) and _team_matches(opponent, t0):
-                return event, c1, c0
-    return None, None, None
+            for tc, oc in ((c0, c1), (c1, c0)):
+                a = _team_match_rank(team, tc["team"])
+                b = _team_match_rank(opponent, oc["team"])
+                if not a or not b:
+                    continue
+                key = (min(a, b), a + b, _kickoff_matches(event, gametime_iso))
+                if best_key is None or key > best_key:
+                    best, best_key = (event, tc, oc), key
+    return best
 
 
 def _find_event_for_team(team, sport, gametime_iso):
@@ -605,6 +634,7 @@ def _find_event_for_team(team, sport, gametime_iso):
     except ValueError:
         return None, None
 
+    best, best_key = (None, None), None
     for espn_path in SPORT_ESPN_PATHS.get(sport, []):
         data = _fetch(espn_path, game_date.strftime("%Y%m%d"))
         if not data:
@@ -615,9 +645,13 @@ def _find_event_for_team(team, sport, gametime_iso):
             except (KeyError, IndexError):
                 continue
             for c in competitors:
-                if _team_matches(team, c.get("team", {})):
-                    return event, c
-    return None, None
+                rank = _team_match_rank(team, c.get("team", {}))
+                if not rank:
+                    continue
+                key = (rank, _kickoff_matches(event, gametime_iso))
+                if best_key is None or key > best_key:
+                    best, best_key = (event, c), key
+    return best
 
 
 def find_final_score(team, opponent, sport, gametime_iso):
