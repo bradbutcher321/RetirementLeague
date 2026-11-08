@@ -609,16 +609,19 @@
   fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
     .then(res => res.json())
     .then(data => {
-      const { players, weeks, stats } = data;
+      let { players, weeks } = data;
       let live = data.live || {};
-      const record = furthestRecord(stats);
-      const current = weeks[weeks.length - 1];
-      const years = [...new Set(weeks.map(w => w.year))].sort((a, b) => b - a);
+      let record = furthestRecord(data.stats);
+      let current = weeks[weeks.length - 1];
       const yearSel = document.getElementById('year-select');
       const weekSel = document.getElementById('week-select');
       const backBtn = document.getElementById('back-to-current');
       const container = document.getElementById('current-container');
-      yearSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+      function fillYears() {
+        const years = [...new Set(weeks.map(w => w.year))].sort((a, b) => b - a);
+        yearSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+      }
+      fillYears();
 
       function fillWeeks(preferred) {
         const inYear = weeks.filter(w => w.year === Number(yearSel.value)).sort((a, b) => b.week - a.week);
@@ -666,27 +669,49 @@
       weekSel.addEventListener('change', showSelected);
       backBtn.addEventListener('click', selectCurrent);
 
-      // Re-checks just the live-score map every couple minutes (the same
-      // endpoint, re-fetched -- one cheap KV read) and re-renders the
-      // currently-displayed week in place, without touching the
-      // year/week selection or the Stats section below. publish_parlay_stats.py
-      // only refreshes this data every 10 minutes itself, but polling a
-      // little faster here means a game that just went live (or just
-      // ended) shows up close to as soon as the backend has it. Hidden
-      // tabs skip the poll; coming back catches up if it's gone stale.
+      // Re-fetches the same endpoint every couple minutes (one cheap KV
+      // read) and re-renders the week on screen in place, keeping the
+      // year/week you picked. The whole answer, not just the live scores:
+      // a leg graded Hit or Lost, a new week's picks and the record line
+      // live in the weeks, so a poll (or a pull to refresh) that kept only
+      // `live` left every result as it was at open. If you were on the
+      // current week and a new one has started, you move to it.
+      // publish_parlay_stats.py only refreshes this data every 10 minutes
+      // itself, but polling a little faster here means a game that just
+      // went live (or just ended) shows up close to as soon as the backend
+      // has it. Hidden tabs skip the poll; coming back catches up if it's
+      // gone stale.
       const LIVE_POLL_MS = 120000;
       let liveLoadAt = Date.now();
-      function pollLive() {
+      function pollLive(all) {
         liveLoadAt = Date.now();
-        // Until the lock, who's in changes by the minute too.
-        const legsP = board && board.open && !board.locked ? loadLegBoard() : null;
+        // Until the lock, who's in changes by the minute too; a pull also
+        // catches a week's legs opening.
+        const legsP = all || (board && board.open && !board.locked) ? loadLegBoard() : null;
         return fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
           .then(res => res.json())
-          .then(async fresh => { live = fresh.live || {}; await legsP; showSelected(); })
+          .then(async fresh => {
+            if (Array.isArray(fresh.weeks) && fresh.weeks.length) {
+              const onCurrent = Number(yearSel.value) === current.year && Number(weekSel.value) === current.week;
+              const y = Number(yearSel.value), wk = Number(weekSel.value);
+              players = fresh.players || players;
+              weeks = fresh.weeks;
+              record = furthestRecord(fresh.stats);
+              current = weeks[weeks.length - 1];
+              fillYears();
+              if (onCurrent) yearSel.value = current.year;
+              else yearSel.value = weeks.some(w => w.year === y) ? y : current.year;
+              fillWeeks(onCurrent ? current.week : wk);
+              document.getElementById('updated-at').textContent = formatUpdated(fresh.generated_at);
+            }
+            live = fresh.live || {};
+            await legsP;
+            showSelected();
+          })
           .catch(() => {}); // a missed poll just tries again next interval
       }
       setInterval(() => { if (!document.hidden) pollLive(); }, LIVE_POLL_MS);
-      window.pageRefresh = pollLive; // pull to refresh (page-common.js)
+      window.pageRefresh = () => pollLive(true); // pull to refresh (page-common.js)
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && Date.now() - liveLoadAt >= LIVE_POLL_MS) pollLive();
       });
