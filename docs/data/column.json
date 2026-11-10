@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-05T12:06:27+00:00",
+ "generated_at": "2026-11-10T16:07:43+00:00",
  "columns": [
   {
    "id": "2026-w09-preview",
@@ -46,6 +46,110 @@
      "a": "Brad",
      "b": "TJ",
      "note": "Closest projection of the week at 1.67. Brad leads 5-1 and sits at an 18.8% playoff chance."
+    }
+   ]
+  },
+  {
+   "id": "2026-w09-recap",
+   "kind": "recap",
+   "season": 2026,
+   "week": 9,
+   "published_at": "2026-11-10T11:07:43-05:00",
+   "headline": "Chad Hangs 133.68 on Jeff While Jared Starts a Ghost at QB",
+   "dek": "Chad posts the week's high score with nothing left on the bench, Jared loses a game his own roster could have won, and Brad wins with the seventh-best score in the league.",
+   "body": [
+    "Chad put up <b>133.68</b>, the high score of the week, and beat Jeff by <b>60.32</b>, the biggest margin on the board. The annoying part is that there was nothing to second-guess: his best possible lineup was <b>133.68</b> too, with zero points left on the bench. Christian Watson did <b>26.60</b> against a <b>12.85</b> projection, Chad sits alone in first at 14-4, and he now leads the series with Jeff 13-8. Jeff, meanwhile, watched C.J. Stroud score <b>35.36</b> from his bench while Josh Jacobs gave him <b>0.50</b> as a starter. Even Jeff's best lineup, <b>103.66</b>, would have been run over, so the Stroud thing is just a souvenir.",
+    "The worst loss of the week belongs to Jared, the only manager whose own roster could have won. He started Lamar Jackson at quarterback, and Lamar put up a donut on a projection of nothing, which means ESPN told him in writing. Matthew Stafford scored <b>11.22</b> on the bench, Jared's best lineup was <b>79.72</b>, and Kris won with <b>75.46</b>. That is a loss by choice. Jared is alone in last at 3-15, and Kris now leads that series 10-5.",
+    "Kris is not getting a pass for that win either. <b>75.46</b> was ninth of 12 and missed the <b>83.86</b> median, and Justin Jefferson managed <b>7.30</b> on a <b>15.10</b> projection. He stays second at 12-6, and he can thank the one opponent who benched a winning lineup for the W.",
+    "The closest game went to Collin, who beat Joe K <b>109.38</b> to <b>102.08</b>, a margin of <b>7.30</b>. It came down to which Love you had: Collin started Jordan Love, who scored <b>36.18</b> against a <b>17.03</b> projection, the best start of the week; Joe K started Jeremiyah Love in the flex and got a donut. T.J. Hockenson scored <b>5.30</b> on Joe K's bench, which is dumb, though Joe K's best lineup of <b>105.98</b> still loses, so it was dumb for free. Joe K had the fifth-best score in the league, lost anyway and slid to seventh. Collin leads the series 7-4 and is still 11th at 6-12, so he gets the win and none of the dignity.",
+    "Jon beat Joe G <b>124.10</b> to <b>88.58</b> and jumped two spots to third, behind Kenneth Walker III's <b>34.30</b> and a lineup that left nothing on the bench. For once the production budget bought a finished product. Joe G left Kayshon Boutte and his <b>26.50</b> on the bench, on a <b>3.69</b> projection, while Aaron Jones Sr. gave him <b>2.60</b> in the flex. Little brother Chad left zero points on his bench this week; big brother left <b>25.50</b>. The series is tied 3-3, and Joe G and Jon are both 11-7, with Jon ahead on points.",
+    "TJ posted the low score, <b>63.14</b>, and lost to Brad, whose <b>79.14</b> was seventh in the week and below the median. TJ started Ladd McConkey in the flex for a donut while Jadarian Price scored <b>9.80</b> on the bench, though his best lineup of <b>77.34</b> still loses to a Brad team that got a donut at tight end from Mason Taylor. TJ fell two spots to fifth; Brad climbed to ninth and leads that series 6-1. Brad would like it noted that his head is not that big, which tracks with a win this small.",
+    "Ben handled Flanders <b>110.04</b> to <b>75.50</b> behind Joe Burrow's <b>29.54</b> and moved up to sixth, even with Adonai Mitchell's flex donut and KC Concepcion's <b>16.80</b> on the bench. Flanders started Jared Goff for <b>5.30</b> on a <b>19.41</b> projection while Caleb Williams scored <b>12.76</b> on the bench, and Samaje Perine added a donut. Even the best version only reaches <b>85.46</b>, so it was not close. Flanders still leads the series 11-6 and dropped to tenth at 7-11, tied with Brad on record."
+   ],
+   "standings": [
+    {
+     "rank": 1,
+     "manager": "Chad",
+     "record": "14-4",
+     "move": 0,
+     "note": "133.68 with nothing left on the bench. 14-4 and the rest of the league is playing for second."
+    },
+    {
+     "rank": 2,
+     "manager": "Kris",
+     "record": "12-6",
+     "move": 0,
+     "note": "Won with 75.46, ninth of 12. Thank Jared's quarterback choice for the win, not your lineup."
+    },
+    {
+     "rank": 3,
+     "manager": "Jon",
+     "record": "11-7",
+     "move": 2,
+     "note": "Kenneth Walker III's 34.30 carried him up two spots to third. The video budget finally paid off."
+    },
+    {
+     "rank": 4,
+     "manager": "Joe G",
+     "record": "11-7",
+     "move": 0,
+     "note": "Kayshon Boutte scored 26.50 on the bench. Beat the median and still lost by 35.52."
+    },
+    {
+     "rank": 5,
+     "manager": "TJ",
+     "record": "10-8",
+     "move": -2,
+     "note": "Low score at 63.14, a flex donut from Ladd McConkey, and a two-spot drop to fifth."
+    },
+    {
+     "rank": 6,
+     "manager": "Ben",
+     "record": "10-8",
+     "move": 1,
+     "note": "Joe Burrow's 29.54 beat Flanders by 34.54 despite a flex donut. Up to sixth."
+    },
+    {
+     "rank": 7,
+     "manager": "Joe K",
+     "record": "9-9",
+     "move": -1,
+     "note": "Fifth-best score at 102.08, still lost, still dumb. Jeremiyah Love's flex donut did not help."
+    },
+    {
+     "rank": 8,
+     "manager": "Jeff",
+     "record": "8-10",
+     "move": 0,
+     "note": "C.J. Stroud put up 35.36 on the bench. Josh Jacobs put up 0.50 in the lineup."
+    },
+    {
+     "rank": 9,
+     "manager": "Brad",
+     "record": "7-11",
+     "move": 1,
+     "note": "79.14 was below the median and still beat TJ. Climbed to ninth anyway."
+    },
+    {
+     "rank": 10,
+     "manager": "Flanders",
+     "record": "7-11",
+     "move": -1,
+     "note": "Jared Goff's 5.30 on a 19.41 projection, with Caleb Williams on the bench. Down to tenth."
+    },
+    {
+     "rank": 11,
+     "manager": "Collin",
+     "record": "6-12",
+     "move": 0,
+     "note": "Jordan Love's 36.18 won the closest game of the week. Still 11th at 6-12."
+    },
+    {
+     "rank": 12,
+     "manager": "Jared",
+     "record": "3-15",
+     "move": 0,
+     "note": "Started a QB projected for nothing; his best lineup of 79.72 would have won. Alone in last at 3-15."
     }
    ]
   },
