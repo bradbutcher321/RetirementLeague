@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-10T12:50:21.447381+00:00",
+  "generated_at": "2026-11-12T13:00:22.117772+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -639,8 +639,8 @@
         ]
       },
       "moves": {
-        "total": 391,
-        "avg_per_season": 32.6,
+        "total": 392,
+        "avg_per_season": 32.7,
         "busiest_season": {
           "year": 2019,
           "moves": 78
@@ -2406,8 +2406,8 @@
         ]
       },
       "moves": {
-        "total": 171,
-        "avg_per_season": 14.2,
+        "total": 172,
+        "avg_per_season": 14.3,
         "busiest_season": {
           "year": 2020,
           "moves": 23
@@ -2857,8 +2857,8 @@
         ]
       },
       "moves": {
-        "total": 245,
-        "avg_per_season": 20.4,
+        "total": 246,
+        "avg_per_season": 20.5,
         "busiest_season": {
           "year": 2016,
           "moves": 46
@@ -3277,8 +3277,8 @@
         ]
       },
       "moves": {
-        "total": 189,
-        "avg_per_season": 18.9,
+        "total": 190,
+        "avg_per_season": 19.0,
         "busiest_season": {
           "year": 2020,
           "moves": 31
@@ -3685,8 +3685,8 @@
         ]
       },
       "moves": {
-        "total": 228,
-        "avg_per_season": 22.8,
+        "total": 230,
+        "avg_per_season": 23.0,
         "busiest_season": {
           "year": 2018,
           "moves": 31
@@ -4097,8 +4097,8 @@
         ]
       },
       "moves": {
-        "total": 238,
-        "avg_per_season": 29.8,
+        "total": 239,
+        "avg_per_season": 29.9,
         "busiest_season": {
           "year": 2020,
           "moves": 58
@@ -4457,8 +4457,8 @@
         ]
       },
       "moves": {
-        "total": 84,
-        "avg_per_season": 16.8,
+        "total": 86,
+        "avg_per_season": 17.2,
         "busiest_season": {
           "year": 2022,
           "moves": 21
@@ -4608,7 +4608,7 @@
     {
       "name": "TJ",
       "current_team_name": "Scary  Terry ",
-      "current_team_logo": "icons/teams/8ef06858d539699b.svg",
+      "current_team_logo": "icons/teams/b6518c7613faf666.svg",
       "previous_team_names": [],
       "previous_team_logos": {},
       "founded_year": 2022,
@@ -4762,8 +4762,8 @@
         ]
       },
       "moves": {
-        "total": 167,
-        "avg_per_season": 33.4,
+        "total": 169,
+        "avg_per_season": 33.8,
         "busiest_season": {
           "year": 2022,
           "moves": 46
@@ -4777,9 +4777,9 @@
       "weekly_sackos": 4,
       "money": {
         "total_dues": 1000.0,
-        "net_result": -860.0,
+        "net_result": -880.0,
         "total_earnings": 200.0,
-        "parlays_purchased": 60.0
+        "parlays_purchased": 80.0
       },
       "season_history": [
         {
