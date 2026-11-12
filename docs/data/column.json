@@ -1,6 +1,55 @@
 {
- "generated_at": "2026-11-10T16:07:43+00:00",
+ "generated_at": "2026-11-12T12:08:58+00:00",
  "columns": [
+  {
+   "id": "2026-w10-preview",
+   "kind": "preview",
+   "season": 2026,
+   "week": 10,
+   "published_at": "2026-11-12T07:08:58-05:00",
+   "headline": "Kris and Joe G Settle a 7-7 Series With Second Place in View",
+   "dek": "Second against fourth, a series dead even at 7-7, and ESPN picking Kris. Elsewhere, Chad gets Jared and Joe K gets a projection that reads like a cry for help.",
+   "body": [
+    "The game of the week is Kris against Joe G, because it is second against fourth, both of them in the playoff picture, and the all-time series is tied 7-7. Somebody walks out of Sunday owning this rivalry and the other one walks out with a story about how it was actually close. ESPN has Kris at <b>107.01</b> and Joe G at <b>87.62</b>, a <b>19.39</b>-point gap and a <b>62%</b> to <b>38%</b> split. Joe G has won three straight and Kris lost last week, so the hot team is the underdog, which is the most Joe G sentence ever written.",
+    "The stakes are real. Kris is second at 12-6 with an <b>89.28%</b> playoff chance. Joe G is fourth at 11-7, tied on record with Jon, who sits third because he has more points. Joe G somehow has the better playoff odds of the two, <b>81.08%</b> to Jon's <b>79.18%</b>, so ESPN trusts him more than the standings do. Lose this one and he is a guy with a three-game streak and nothing to show for it.",
+    "The closest projection on the board is Jeff against Collin: <b>92.13</b> to <b>95.34</b>, a <b>3.21</b>-point gap and a <b>48%</b> to <b>52%</b> split. Jeff has lost three straight and is eighth at 8-10. Collin has won two straight and is eleventh at 6-12 with a <b>6.9%</b> playoff chance, which is a two-game heater in service of nothing. Jeff leads the series 7-6. ESPN has the eleventh-place team favored over him, and nobody even had to be mean about it.",
+    "The biggest mismatch is Chad against Jared. Chad is alone in first at 14-4 with a <b>99.75%</b> playoff chance and is projected for <b>110.44</b>. Jared is alone in last at 3-15, has lost five straight, holds a <b>0.2%</b> playoff chance and is projected for <b>57.34</b>, the lowest number on the board by a mile, a <b>53.1</b>-point gap and an <b>18%</b> win chance. And yet Jared leads this series 11-9. Whatever Jared has on Chad, he should use it this week, because his lineup is not going to.",
+    "Joe K against TJ is the other blowout on paper: TJ at <b>111.97</b>, the top projection of the week, against Joe K at <b>71.47</b>, a <b>40.5</b>-point gap and a <b>25%</b> win chance for Joe K. Joe K has won three straight and is still seventh at 9-9 with a <b>28.93%</b> playoff chance, lower than Jeff's <b>34.28%</b> at 8-10. That is ESPN looking at a .500 team on a heater and saying no thanks. TJ has lost two straight and is fifth at 10-8, ahead of Ben on points. The series is tied 4-4, so one of these two geniuses gets the bragging rights.",
+    "Ben and Brad are a near coin flip at <b>98.17</b> to <b>102.87</b>, <b>47%</b> to <b>53%</b>, with the series tied 8-8. Brad has lost three straight and is ninth at 7-11 with a <b>19.5%</b> playoff chance, tied on record with Flanders and somehow behind him in the odds. Jon is a <b>65%</b> favorite over Flanders, <b>108.74</b> to <b>84.38</b>, even though Flanders leads that series 3-2."
+   ],
+   "games": [
+    {
+     "a": "Joe G",
+     "b": "Kris",
+     "note": "Series tied 7-7, second vs fourth. ESPN likes Kris at 62% despite Joe G's three-game streak."
+    },
+    {
+     "a": "Jared",
+     "b": "Chad",
+     "note": "A 53.1-point projected gap, and Jared still leads the series 11-9. Sundays are weird."
+    },
+    {
+     "a": "Jon",
+     "b": "Flanders",
+     "note": "Jon projected 108.74 to 84.38, but Flanders owns the series 3-2."
+    },
+    {
+     "a": "Jeff",
+     "b": "Collin",
+     "note": "Closest game on the board at 3.21 points. Jeff has lost three straight to get here."
+    },
+    {
+     "a": "Ben",
+     "b": "Brad",
+     "note": "Tied 8-8 all time and 47% to 53% this week. Brad needs it more after three straight losses."
+    },
+    {
+     "a": "Joe K",
+     "b": "TJ",
+     "note": "TJ's 111.97 is the week's top projection. Joe K gets a 25% chance and his three-game streak."
+    }
+   ]
+  },
   {
    "id": "2026-w09-preview",
    "kind": "preview",
