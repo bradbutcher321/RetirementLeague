@@ -1719,7 +1719,7 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=44"></script>
+<script src="nav.js?v=45"></script>
 <script src="page-common.js?v=42"></script>
 <script src="race-sim.js?v=3"></script>
 <script src="share.js?v=1"></script>
@@ -7419,8 +7419,57 @@
       elH.innerHTML = PREVIEW[urlParam('santa')] || { before: 'Sign-ups open <b>Nov 1</b>', open: 'Sign up by <b>Nov 12</b>', closed: 'Reveal night <b>Nov 13</b>', tonight: 'Tonight at <b>9:00 PM</b>', room: 'The Room is <b>open</b>', drawn: PREVIEW.drawn }[phase()];
       fitWords();
     }
+    // After the Room, the card carries your own status: your envelope, the next step for your
+    // gift, new mail, event night. From the Worker when you're signed in (kept five minutes).
+    const elS = document.getElementById('santa-s'), CARD = 'rl-santa-card';
+    let mine = null;
+    function cardWords(d) {
+      if (d.unmasked) return ['The loop is <b>unmasked</b>', 'See who had who'];
+      if (d.host) return ['Unwrap night is <b>live</b>', 'Follow along on your phone'];
+      const y = d.you; if (!d.started || !y) return null;
+      const day = t => new Date(t).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }), key = t => { const x = new Date(t); return x.getFullYear() * 10000 + x.getMonth() * 100 + x.getDate(); };
+      const ev = d.eventAt ? `Event night is ${day(d.eventAt)}` : 'Event night is TBD';
+      if (d.eventAt && key(d.eventAt) === key(Date.now())) return ['Unwrap night \u00b7 <b>tonight</b>', `${new Date(d.eventAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}${d.place ? ' \u00b7 ' + esc(d.place) : ''}. Bring the shirt.`];
+      if (!y.opened) return ['Your envelope is <b>waiting</b>', 'Open it where nobody can see your screen'];
+      let seen = 0; try { seen = Number(localStorage.getItem('rl-santa-mail-seen')) || 0; } catch (e) {}
+      const fromG = y.msgs.giftee.filter(m => !m.mine).length, fromS = y.msgs.santa.filter(m => !m.mine).length;
+      if (fromG + fromS > seen) return [fromS && (!fromG || y.msgs.santa[y.msgs.santa.length - 1].at > y.msgs.giftee[y.msgs.giftee.length - 1 < 0 ? 0 : y.msgs.giftee.length - 1].at) ? 'Your Santa <b>wrote you</b>' : 'Your giftee <b>wrote back</b>', 'Open the mailbox', true];
+      const g = y.gift, at = !g ? 0 : g.wrapped ? 5 : g.delivered ? 4 : g.shipped ? 3 : g.ordered ? 2 : 1;
+      const left = d.purchaseBy ? Math.ceil((new Date(d.purchaseBy + 'T23:59:59') - Date.now()) / 864e5) - 1 : null;
+      const due = d.purchaseBy ? `Buy by ${day(d.purchaseBy + 'T12:00:00')}` : '';
+      const clock = left == null ? 'Good Shirts takes about 3 weeks' : left > 1 ? `${left} days left \u00b7 3 weeks to arrive` : left === 1 ? 'Tomorrow is the last day' : left === 0 ? 'Today is the last day' : 'The buy-by date has passed';
+      return [
+        ['Pick <b>their shirt</b>', due ? `${due} \u00b7 ${clock}` : clock],
+        [due ? `Buy by <b>${day(d.purchaseBy + 'T12:00:00')}</b>` : 'Buy <b>the shirt</b>', clock],
+        ['<b>Ordered</b>', 'Waiting on Good Shirts to ship it'],
+        ['<b>Shipped</b>', g && g.eta ? `Due ${day(g.eta + 'T12:00:00')}` : ev],
+        ['<b>Wrap it</b>', ev],
+        ['Wrapped. <b>Bring it.</b>', ev],
+      ][at];
+    }
+    function applyMine(c) {
+      mine = c && c.h ? c : null;
+      if (mine) { elH.innerHTML = mine.h; elS.textContent = mine.s; fitWords(); }
+    }
+    async function santaStatus() {
+      if (urlParam('santa') || new Date() < REVEAL) return;
+      let a = null; try { a = JSON.parse(localStorage.getItem('rl-auth')); } catch (e) {}
+      if (!a || !a.token || !a.manager) return;
+      let c = null; try { c = JSON.parse(localStorage.getItem(CARD)); } catch (e) {}
+      if (c && c.me === a.manager) { applyMine(c); if (Date.now() - c.at < 5 * 60 * 1000) return; }
+      try {
+        const d = await fetch(WORKER_URL + '/santa', { headers: { Authorization: 'Bearer ' + a.token }, cache: 'no-store' }).then(r => r.json());
+        const w = cardWords(d), next = { me: a.manager, at: Date.now(), h: w ? w[0] : '', s: w ? w[1] : '', mail: !!(w && w[2]) };
+        try { localStorage.setItem(CARD, JSON.stringify(next)); } catch (e) {}
+        applyMine(next);
+      } catch (e) {}
+    }
+    const clockWords = setWords;
+    setWords = function () { if (mine) { elH.innerHTML = mine.h; fitWords(); } else clockWords(); };
     setWords();
-    setInterval(setWords, 60 * 1000);
+    setInterval(() => { setWords(); santaStatus(); }, 60 * 1000);
+    santaStatus();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) santaStatus(); });
     addEventListener('resize', fitWords);
     if (document.fonts) document.fonts.ready.then(fitWords);
 

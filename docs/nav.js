@@ -350,7 +350,10 @@
       let v = null;
       try { v = JSON.parse(localStorage.getItem(LIVE_MINE)); } catch (e) {}
       const on = !!(v && v.on && Date.now() - v.at < 20 * 60 * 1000 && v.me === getMe());
-      badge('live', on ? '<i class="tb-badge dot" aria-label="Your players are on the field"></i>' : '');
+      // Secret Santa: your Santa or your giftee wrote (the Live card and the Secret Santa page keep this).
+      let mail = false;
+      try { const c = JSON.parse(localStorage.getItem('rl-santa-card')), a = JSON.parse(localStorage.getItem('rl-auth')); mail = !!(c && c.mail && a && c.me === a.manager && currentFile() !== 'secret-santa.html'); } catch (e) {}
+      badge('live', on ? '<i class="tb-badge dot" aria-label="Your players are on the field"></i>' : mail ? '<i class="tb-badge dot" aria-label="New Secret Santa mail"></i>' : '');
     };
     let seq = 0;
     const feed = async () => {
@@ -369,7 +372,7 @@
     };
     live(); feed();
     window.addEventListener('rl-live-mine', live);
-    window.addEventListener('storage', e => { if (e.key === LIVE_MINE) live(); if (e.key === FEED_SEEN) feed(); });
+    window.addEventListener('storage', e => { if (e.key === LIVE_MINE || e.key === 'rl-santa-card') live(); if (e.key === FEED_SEEN) feed(); });
     setInterval(() => { live(); feed(); }, 2 * 60 * 1000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { live(); feed(); } });
   }
