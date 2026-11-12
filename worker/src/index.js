@@ -82,7 +82,7 @@ import { isCommissioner } from "./roles.js";
 import { ADMIN_ROUTES, siteInfo } from "./admin.js";
 import { VIDEO_ROUTES } from "./videos.js";
 import { FEEDBACK_ROUTES } from "./feedback.js";
-import { SANTA_ROUTES, checkSantaHype, checkSantaReminder, checkSantaRoast } from "./santa.js";
+import { SANTA_ROUTES, checkSantaDeadlines, checkSantaHype, checkSantaReminder, checkSantaRoast } from "./santa.js";
 import { ROSTER_ROUTES } from "./roster.js";
 import { runHealthCheck } from "./healthCheck.js";
 
@@ -388,6 +388,7 @@ export default {
           checkSantaReminder(env),
           checkSantaHype(env),
           checkSantaRoast(env),
+          checkSantaDeadlines(env),
           feed,
         ]);
         if (push.status === "rejected") console.error("Push check failed:", push.reason);

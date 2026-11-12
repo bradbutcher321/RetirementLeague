@@ -52,7 +52,7 @@
  * santa_room, santa_events, santa_gifts, santa_msgs, santa_photos, santa_votes.
  */
 import { sessionManager } from "./auth.js";
-import { broadcast } from "./push.js";
+import { broadcast, subscriberSummary } from "./push.js";
 import { getSetting, isCommissioner, logAction, setSetting } from "./roles.js";
 
 export const SIZES = ["S", "M", "L", "XL", "2XL", "3XL"];
@@ -94,7 +94,13 @@ export const SHIRTYS = [
   { key: "fit", label: "Worst Fit", vote: true },
   { key: "detective", label: "Best Detective", vote: false },
   { key: "late", label: "Last-Minute Santa", vote: false },
+  { key: "props", label: "Sharpest Card", vote: false },
 ];
+// Santa props: picked before the Room starts, settled on Unwrap night. `who` props name a manager.
+const PROPS = { off: "who", ou: "ou", late: "who", wrap: "who" };
+const OU_LINE = 3.5;            // right guesses on Unwrap night: over or under
+const RATES = ["🔥", "😂", "🗑️"]; // rating a shirt as it's unwrapped
+const WALL_MAX = 200;
 const SHIRTY = Object.fromEntries(SHIRTYS.map((c) => [c.key, c]));
 
 const fail = (status, error) => ({ status, body: { error } });
@@ -130,7 +136,7 @@ const gifteeOf = (chain, n) => { const i = chain.indexOf(n); return i < 0 ? null
 const santaOf = (chain, n) => { const i = chain.indexOf(n); return i < 0 ? null : chain[(i + chain.length - 1) % chain.length]; };
 
 async function settings(env) {
-  return { purchaseBy: null, eventAt: null, ship: false, unmasked: null, shirtys: {}, ...(await getSetting(env, "santa", {})) };
+  return { purchaseBy: null, eventAt: null, place: "", notes: "", ship: false, unmasked: null, host: null, shirtys: {}, ...(await getSetting(env, "santa", {})) };
 }
 
 /** Everything the page shows. Who's in, the day counts, the draw's date, the
@@ -142,14 +148,17 @@ async function settings(env) {
 async function status(request, env) {
   const now = Date.now();
   const me = await sessionManager(request, env).catch(() => null);
-  const [rows, people, gifts, set, start, photos] = await Promise.all([
+  const [rows, people, gifts, set, start, photos, votesRes, wallRes] = await Promise.all([
     env.DB.prepare("SELECT manager, name, street, apt, city, state, zip, size, colors, dates, updated FROM santa_cards").all(),
     env.DB.prepare("SELECT * FROM santa_people").all().catch(() => ({ results: [] })),
     env.DB.prepare("SELECT * FROM santa_gifts").all().catch(() => ({ results: [] })),
     settings(env),
     getSetting(env, "santa_start"),
     env.DB.prepare("SELECT manager, at FROM santa_photos").all().catch(() => ({ results: [] })),
+    env.DB.prepare("SELECT voter, cat, pick FROM santa_votes").all().catch(() => ({ results: [] })),
+    env.DB.prepare("SELECT id, manager, emoji, at FROM santa_events WHERE kind = 'wall' ORDER BY id DESC LIMIT 40").all().catch(() => ({ results: [] })),
   ]);
+  const allVotes = votesRes.results, wallRows = wallRes.results;
   const cards = Object.fromEntries(rows.results.map((r) => [r.manager, r]));
   const signed = rows.results.map((r) => r.manager);
   const draw = await ensureDraw(env, signed);
@@ -173,12 +182,24 @@ async function status(request, env) {
     signed, dates, mine: me && cards[me.manager] ? mineRow(cards[me.manager]) : null,
     drawn: draw ? draw.at : null, crew: chain.length ? [...chain].sort() : null,
     start: start ? start.at : null, started, unmasked: set.unmasked,
-    purchaseBy: set.purchaseBy, eventAt: set.eventAt, ship: !!set.ship,
+    purchaseBy: set.purchaseBy, eventAt: set.eventAt, place: set.place || "", notes: set.notes || "", ship: !!set.ship,
     opened: people.results.filter((r) => r.opened).map((r) => r.manager),
     seen,
     totals: { bought: chain.filter((n) => gift[n] && gift[n].ordered).length, delivered: chain.filter((n) => gift[n] && gift[n].delivered).length, total: chain.length },
     remind: me ? (ppl[me.manager] ? !!ppl[me.manager].remind : true) : null,
   };
+  // Event night's RSVPs (everyone sees who's coming).
+  const rsvp = allVotes.filter((v) => v.cat === "rsvp" && chain.includes(v.voter));
+  body.rsvp = { in: rsvp.filter((v) => v.pick === "in").map((v) => v.voter).sort(), out: rsvp.filter((v) => v.pick === "out").map((v) => v.voter).sort(), mine: me ? (rsvp.find((v) => v.voter === me.manager) || {}).pick || null : null };
+  // Santa props: your own picks and how many have a card in. Everyone's picks go out with the unmask.
+  const propVotes = allVotes.filter((v) => v.cat.startsWith("prop:") && chain.includes(v.voter));
+  body.props = {
+    mine: me ? Object.fromEntries(propVotes.filter((v) => v.voter === me.manager).map((v) => [v.cat.slice(5), v.pick])) : {},
+    cards: new Set(propVotes.map((v) => v.voter)).size, locked: !!start,
+    ...(set.unmasked ? { all: Object.fromEntries(Object.keys(PROPS).map((k) => [k, Object.fromEntries(propVotes.filter((v) => v.cat === "prop:" + k).map((v) => [v.voter, v.pick]))])) } : {}),
+  };
+  // Santa says: the anonymous wall. Names come off with the unmask.
+  if (started) body.wall = wallRows.filter((r) => !r.manager.startsWith("rh:")).reverse().map((r) => ({ id: r.id, text: r.emoji, at: r.at, mine: !!me && r.manager === me.manager, ...(set.unmasked ? { by: r.manager } : {}) }));
   // The sleigh race: each Santa's step, from the Room's start.
   if (started) body.race = Object.fromEntries(chain.map((n) => [n, stageOf(gift[n])]));
 
@@ -213,8 +234,10 @@ async function status(request, env) {
       guesses: Object.fromEntries(chain.map((n) => [n, ppl[n] ? ppl[n].guess : null])),
       photos: Object.fromEntries(chain.filter((n) => photo[n]).map((n) => [n, photo[n]])),
     };
+    body.unwrap.fits = Object.fromEntries(chain.filter((n) => photo[fitKey(n)]).map((n) => [n, photo[fitKey(n)]]));
+    body.unwrap.rates = await rateTallies(env, chain);
     // The Shirtys: how many have voted in each, your own vote, and each sealed envelope's winners.
-    const { results: votes } = await env.DB.prepare("SELECT voter, cat, pick FROM santa_votes").all().catch(() => ({ results: [] }));
+    const votes = allVotes;
     body.shirtys = Object.fromEntries(SHIRTYS.map((c) => [c.key, {
       voters: votes.filter((v) => v.cat === c.key && chain.includes(v.voter)).length,
       mine: me ? (votes.find((v) => v.cat === c.key && v.voter === me.manager) || {}).pick || null : null,
@@ -222,9 +245,21 @@ async function status(request, env) {
     }]));
   }
 
+  // Unwrap night, hosted: only what has been shown so far.
+  if (set.host && !set.unmasked && started) body.host = await hostView(env, set, chain, me, { votes: allVotes, gift, ppl, photo });
+
   if (me && (await isCommissioner(env, me.manager))) {
+    // For reveal night: who has notifications on, and when each last came by signed in.
+    const [subs, sess] = await Promise.all([
+      subscriberSummary(env).catch(() => []),
+      env.DB.prepare("SELECT manager, MAX(seen) AS seen FROM auth_sessions GROUP BY manager").all().catch(() => ({ results: [] })),
+    ]);
+    const devices = Object.fromEntries(subs.map((x) => [String(x.me || "").toLowerCase(), x.devices]));
+    const lastSeen = Object.fromEntries(sess.results.map((r) => [r.manager, r.seen]));
+    // Who can make which December day (for picking event night).
+    body.avail = Object.fromEntries(rows.results.map((r) => [r.manager, JSON.parse(r.dates || "[]")]));
     body.commish = (chain.length ? chain : signed).slice().sort().map((n) => ({
-      manager: n, card: !!cards[n], opened: ppl[n] ? ppl[n].opened : null,
+      manager: n, card: !!cards[n], opened: ppl[n] ? ppl[n].opened : null, push: devices[n.toLowerCase()] || 0, last: lastSeen[n] || null,
       ordered: gift[n] ? gift[n].ordered : null, shipped: gift[n] ? gift[n].shipped : null, eta: gift[n] ? gift[n].eta : null,
       delivered: gift[n] ? gift[n].delivered : null, wrapped: gift[n] ? gift[n].wrapped : null,
     }));
@@ -528,12 +563,16 @@ async function msg(request, env) {
   const text = clip(body && body.text, 500);
   if (!text) return fail(400, "empty");
   const toGiftee = body.to === "giftee";
+  // This or that: Santa sends two shirts ("[[tot:12,45]]"), the giftee taps one ("[[pick:12]]").
+  const tot = /^\[\[tot:(\d+),(\d+)\]\]$/.exec(text), pick = /^\[\[pick:(\d+)\]\]$/.exec(text);
+  if (/\[\[/.test(text) && !(tot && toGiftee && +tot[1] < SHIRTS && +tot[2] < SHIRTS && tot[1] !== tot[2]) && !(pick && !toGiftee && +pick[1] < SHIRTS)) return fail(400, "bad_text");
+  const said = tot ? "This or that? Tap to pick a shirt." : pick ? "They picked one of your two shirts." : text.slice(0, 120);
   const santa = toGiftee ? p.me.manager : santaOf(p.chain, p.me.manager);
   const giftee = toGiftee ? gifteeOf(p.chain, p.me.manager) : p.me.manager;
   const now = Date.now();
   await env.DB.prepare("INSERT INTO santa_msgs (santa, giftee, from_santa, text, at) VALUES (?1, ?2, ?3, ?4, ?5)").bind(santa, giftee, toGiftee ? 1 : 0, text, now).run();
   const to = toGiftee ? giftee : santa;
-  await broadcast(env, { title: toGiftee ? "Your Secret Santa wrote you" : `${p.me.manager} wrote back`, body: text.slice(0, 120), url: "secret-santa.html#mailbox", tag: "santa-msg" }, to).catch(() => {});
+  await broadcast(env, { title: toGiftee ? "Your Secret Santa wrote you" : `${p.me.manager} wrote back`, body: said, url: "secret-santa.html#mailbox", tag: "santa-msg" }, to).catch(() => {});
   return { status: 200, body: { ok: true, at: now } };
 }
 
@@ -541,7 +580,7 @@ async function guess(request, env) {
   const p = await participant(request, env);
   if (p.error) return p.error;
   const set = await settings(env);
-  if (set.unmasked || (set.eventAt && Date.now() >= set.eventAt)) return fail(403, "locked");
+  if (set.unmasked || set.host || (set.eventAt && Date.now() >= set.eventAt)) return fail(403, "locked");
   const body = await request.json().catch(() => ({}));
   const g = body.guess == null ? null : clip(body.guess, 40);
   if (g != null && (!p.chain.includes(g) || g === p.me.manager)) return fail(400, "bad_guess");
@@ -556,26 +595,35 @@ async function photoPost(request, env) {
   const p = await participant(request, env);
   if (p.error) return p.error;
   const set = await settings(env);
-  if (set.unmasked) return fail(403, "locked");
   const body = await request.json().catch(() => null);
   if (!body) return fail(400, "bad_json");
+  // A fit check: you, in the shirt, on Unwrap night (kept under its own key, next to the reaction photos).
+  const fit = body.kind === "fit";
+  if (fit ? !(set.host || set.unmasked) : (set.unmasked || set.host)) return fail(403, "locked");
+  const key = fit ? fitKey(p.me.manager) : p.me.manager;
   if (body.clear) {
-    await env.DB.prepare("DELETE FROM santa_photos WHERE manager = ?1").bind(p.me.manager).run();
+    await env.DB.prepare("DELETE FROM santa_photos WHERE manager = ?1").bind(key).run();
     return { status: 200, body: { ok: true, photo: null } };
   }
   const img = String(body.img || "").replace(/^data:image\/jpeg;base64,/, "");
   if (!img || img.length > PHOTO_MAX || !/^[A-Za-z0-9+/]+=*$/.test(img)) return fail(400, "bad_photo");
   const now = Date.now();
-  await env.DB.prepare("INSERT INTO santa_photos (manager, img, at) VALUES (?1, ?2, ?3) ON CONFLICT(manager) DO UPDATE SET img = excluded.img, at = excluded.at").bind(p.me.manager, img, now).run();
+  await env.DB.prepare("INSERT INTO santa_photos (manager, img, at) VALUES (?1, ?2, ?3) ON CONFLICT(manager) DO UPDATE SET img = excluded.img, at = excluded.at").bind(key, img, now).run();
   return { status: 200, body: { ok: true, photo: now } };
 }
 /** A photo: your own any time; once the loop is unmasked, anyone's to anyone signed in. */
 async function photoGet(request, env) {
   const me = await sessionManager(request, env).catch(() => null);
   if (!me) return fail(401, "signed_out");
-  const who = clip(new URL(request.url).searchParams.get("m"), 40) || me.manager;
-  if (who !== me.manager && !(await settings(env)).unmasked) return fail(403, "sealed");
-  const row = await env.DB.prepare("SELECT img FROM santa_photos WHERE manager = ?1").bind(who).first();
+  const q = new URL(request.url).searchParams, who = clip(q.get("m"), 40) || me.manager, fit = q.get("kind") === "fit";
+  if (!fit && who !== me.manager) {
+    // A reaction photo is its owner's until the unmask, or until the hosted night has shown who that Santa had.
+    const set = await settings(env);
+    let shown = !!set.unmasked;
+    if (!shown && set.host) { const draw = await getSetting(env, "santa_draw"), at = draw && hostAt(set, draw.chain), k = draw ? draw.chain.indexOf(who) : -1; shown = k >= 0 && (k < at.link || (k === at.link && at.beat >= 1)); }
+    if (!shown) return fail(403, "sealed");
+  }
+  const row = await env.DB.prepare("SELECT img FROM santa_photos WHERE manager = ?1").bind(fit ? fitKey(who) : who).first();
   if (!row) return fail(404, "no_photo");
   const bin = atob(row.img), bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -618,6 +666,22 @@ async function shirtyResult(env, key, chain, set) {
     return { label: c.label, winners, voters: results.filter((v) => chain.includes(v.voter)).length };
   }
   const people = Object.fromEntries((await env.DB.prepare("SELECT manager, guess, guessed_at FROM santa_people").all()).results.map((r) => [r.manager, r]));
+  if (key === "props") {
+    // Each prop's answer (null while it can't be known yet), then whoever got the most right.
+    const off = (set.shirtys || {}).offensive, orders = chain.map((n) => gifts[n] && gifts[n].ordered).filter(Boolean).sort(), wraps = chain.map((n) => gifts[n] && gifts[n].wrapped).filter(Boolean).sort();
+    const right = chain.filter((n) => people[n] && people[n].guess && people[n].guess === santaOf(chain, n)).length;
+    const answers = {
+      off: off ? off.winners.map((w) => w.giftee) : null,
+      ou: [right > OU_LINE ? "over" : "under"],
+      late: orders.length ? chain.filter((n) => gifts[n] && gifts[n].ordered === orders[orders.length - 1]) : null,
+      wrap: wraps.length ? chain.filter((n) => gifts[n] && gifts[n].wrapped === wraps[0]) : null,
+    };
+    const { results } = await env.DB.prepare("SELECT voter, cat, pick FROM santa_votes WHERE cat LIKE 'prop:%'").all();
+    const score = {};
+    for (const v of results) { const a = answers[v.cat.slice(5)]; if (chain.includes(v.voter) && a && a.includes(v.pick)) score[v.voter] = (score[v.voter] || 0) + 1; }
+    const top = Math.max(0, ...Object.values(score)), of = Object.values(answers).filter(Boolean).length;
+    return { label: c.label, winners: top ? Object.keys(score).filter((n) => score[n] === top).sort().map((n) => ({ manager: n, right: top, of })) : [], answers, score, guessedRight: right };
+  }
   if (key === "detective") {
     // Everyone who named their own Santa; the first to settle on it wins (ties all win).
     const right = chain.filter((n) => people[n] && people[n].guess && people[n].guess === santaOf(chain, n));
@@ -632,6 +696,173 @@ async function shirtyResult(env, key, chain, set) {
   return { label: c.label, winners };
 }
 
+// ---------- Santa props, RSVPs, Santa says ----------
+/** You, in the draw (before or after the Room); else an error. */
+async function drawn(request, env) {
+  const me = await sessionManager(request, env);
+  if (!me) return { error: fail(401, "signed_out") };
+  const draw = await getSetting(env, "santa_draw");
+  if (!draw || !draw.chain.includes(me.manager)) return { error: fail(403, "not_in_draw") };
+  return { me, chain: draw.chain };
+}
+const setVote = (env, voter, cat, pick) => (pick == null
+  ? env.DB.prepare("DELETE FROM santa_votes WHERE voter = ?1 AND cat = ?2").bind(voter, cat).run()
+  : env.DB.prepare("INSERT INTO santa_votes (voter, cat, pick, at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(voter, cat) DO UPDATE SET pick = excluded.pick, at = excluded.at").bind(voter, cat, pick, Date.now()).run());
+
+/** A prop pick. Open from the draw until a commissioner starts the Room. */
+async function prop(request, env) {
+  const p = await drawn(request, env);
+  if (p.error) return p.error;
+  if (await getSetting(env, "santa_start")) return fail(403, "locked");
+  const body = await request.json().catch(() => null);
+  const kind = body && PROPS[body.cat];
+  if (!kind) return fail(400, "bad_cat");
+  const pick = body.pick == null ? null : clip(body.pick, 40);
+  if (pick != null && (kind === "ou" ? !["over", "under"].includes(pick) : !p.chain.includes(pick))) return fail(400, "bad_pick");
+  await setVote(env, p.me.manager, "prop:" + body.cat, pick);
+  return { status: 200, body: { ok: true, pick } };
+}
+async function rsvpPost(request, env) {
+  const p = await drawn(request, env);
+  if (p.error) return p.error;
+  const body = await request.json().catch(() => ({}));
+  const pick = body.going === true ? "in" : body.going === false ? "out" : null;
+  await setVote(env, p.me.manager, "rsvp", pick);
+  return { status: 200, body: { ok: true, mine: pick } };
+}
+/** Santa says: a line on the wall, signed "A Santa" until the unmask. */
+async function wallPost(request, env) {
+  const p = await participant(request, env);
+  if (p.error) return p.error;
+  const body = await request.json().catch(() => null);
+  const text = String((body && body.text) || "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, WALL_MAX);
+  if (!text) return fail(400, "empty");
+  const now = Date.now();
+  const r = await env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'wall', ?2, ?3)").bind(p.me.manager, text, now).run();
+  return { status: 200, body: { ok: true, id: r.meta && r.meta.last_row_id, at: now } };
+}
+
+// ---------- Unwrap night, hosted ----------
+// A commissioner runs it one gift at a time, in the loop's order, so whoever
+// just opened is the next Santa "on the clock". Each link has three beats:
+// 0 on the clock (phones vote on who that Santa had), 1 the pick, 2 the shirt.
+// set.host.step counts beats; at 3 x the loop's length the whole loop is
+// unmasked for good.
+const fitKey = (n) => `fit:${YEAR}:${n}`;
+async function rateTallies(env, chain) {
+  const { results } = await env.DB.prepare("SELECT emoji FROM santa_events WHERE kind = 'rate'").all().catch(() => ({ results: [] }));
+  const out = {};
+  for (const r of results) {
+    const [e, k] = String(r.emoji || "").split("|"), g = chain[(Number(k) + 1) % chain.length];
+    if (!RATES.includes(e) || !g) continue;
+    (out[g] = out[g] || {})[e] = (out[g][e] || 0) + 1;
+  }
+  return out;
+}
+function hostAt(set, chain) {
+  const n = chain.length, step = Math.max(0, Math.min(3 * n, (set.host && set.host.step) || 0));
+  return { n, step, link: Math.min(n - 1, Math.floor(step / 3)), beat: step >= 3 * n ? 2 : step % 3 };
+}
+async function hostView(env, set, chain, me, { votes, gift, ppl, photo }) {
+  const { n, step, link, beat } = hostAt(set, chain);
+  const rates = await rateTallies(env, chain);
+  const links = [];
+  for (let k = 0; k <= link; k++) {
+    const S = chain[k], G = chain[(k + 1) % n], full = k < link, had = votes.filter((v) => v.cat === "had:" + k && chain.includes(v.voter));
+    const o = { s: S, voted: had.length, mine: me ? (had.find((v) => v.voter === me.manager) || {}).pick || null : null };
+    if (full || beat >= 1) Object.assign(o, { g: G, guess: (ppl[G] && ppl[G].guess) || null, called: had.filter((v) => v.pick === G).length, photo: !!photo[S] });
+    if (full || beat >= 2) {
+      const x = gift[S];
+      Object.assign(o, { shirt: x ? x.shirt : null, title: x ? x.title || "" : "", also: json(ppl[S] && ppl[S].board, []).filter((i) => !x || i !== x.shirt).slice(0, 2), rates: rates[G] || {} });
+    }
+    links.push(o);
+  }
+  return { step, n, link, beat, links };
+}
+/** The phones' and the TV's poll while Unwrap night is running: the same view, without the rest of the page. */
+async function hostGet(request, env) {
+  const me = await sessionManager(request, env).catch(() => null);
+  const [set, draw, start] = await Promise.all([settings(env), getSetting(env, "santa_draw"), getSetting(env, "santa_start")]);
+  if (!draw || !start || !set.host || set.unmasked) return { status: 200, body: { host: null, unmasked: set.unmasked || null } };
+  const [votes, gifts, people, photos] = await Promise.all([
+    env.DB.prepare("SELECT voter, cat, pick FROM santa_votes WHERE cat LIKE 'had:%'").all(),
+    env.DB.prepare("SELECT * FROM santa_gifts").all(), env.DB.prepare("SELECT * FROM santa_people").all(), env.DB.prepare("SELECT manager, at FROM santa_photos").all(),
+  ]);
+  const view = await hostView(env, set, draw.chain, me, {
+    votes: votes.results, gift: Object.fromEntries(gifts.results.map((r) => [r.santa, r])),
+    ppl: Object.fromEntries(people.results.map((r) => [r.manager, r])), photo: Object.fromEntries(photos.results.map((r) => [r.manager, r.at])),
+  });
+  // The newest ratings, for the emoji that float up on the TV.
+  const after = Number(new URL(request.url).searchParams.get("after")) || 0;
+  const { results: recent } = await env.DB.prepare("SELECT id, emoji FROM santa_events WHERE kind = 'rate' AND id > ?1 ORDER BY id DESC LIMIT 12").bind(after).all();
+  return { status: 200, body: { host: view, unmasked: null, rates: recent.reverse().map((r) => ({ id: r.id, e: String(r.emoji).split("|")[0] })) } };
+}
+/** "Who did this Santa have?": a guess from your phone while they're on the clock. */
+async function hadPost(request, env) {
+  const p = await participant(request, env);
+  if (p.error) return p.error;
+  const set = await settings(env);
+  if (!set.host || set.unmasked) return fail(403, "not_hosting");
+  const { link, beat } = hostAt(set, p.chain);
+  if (beat !== 0) return fail(403, "closed");
+  const body = await request.json().catch(() => ({}));
+  const pick = body.pick == null ? null : clip(body.pick, 40);
+  if (pick != null && (!p.chain.includes(pick) || pick === p.chain[link])) return fail(400, "bad_pick");
+  await setVote(env, p.me.manager, "had:" + link, pick);
+  return { status: 200, body: { ok: true, pick } };
+}
+/** A tap on a shirt as it's unwrapped (as many as you like). */
+async function ratePost(request, env) {
+  const p = await participant(request, env);
+  if (p.error) return p.error;
+  const set = await settings(env);
+  if (!set.host || set.unmasked) return fail(403, "not_hosting");
+  const { link, beat } = hostAt(set, p.chain);
+  if (beat !== 2) return fail(403, "closed");
+  const body = await request.json().catch(() => ({}));
+  if (!RATES.includes(body.e)) return fail(400, "bad_rate");
+  await env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'rate', ?2, ?3)").bind(p.me.manager, `${body.e}|${link}`, Date.now()).run();
+  return { status: 200, body: { ok: true } };
+}
+
+// ---------- Deadline pushes ----------
+/** From the cron: your envelope is still sealed (the morning after), the
+ * buy-by date coming up (three days out, the day before, the day of, to
+ * anyone not marked ordered), and event night (the day before, two hours
+ * before). Each goes once, from the first run inside its window. */
+export async function checkSantaDeadlines(env, now = Date.now()) {
+  if (!env.VAPID_PRIVATE_JWK) return;
+  const [draw, start, set] = await Promise.all([getSetting(env, "santa_draw"), getSetting(env, "santa_start"), settings(env)]);
+  if (!draw || !start || now < start.at || set.unmasked) return;
+  const chain = draw.chain, H = 3600 * 1000, D = 24 * H;
+  const send = (list, title, body) => Promise.allSettled(list.map((n) => broadcast(env, { title, body, url: "secret-santa.html", tag: "santa-deadline" }, n)));
+  const within = (t, span) => now >= t && now < t + span;
+  // The morning after the Room (about 10 AM Eastern after a 9 PM start).
+  if (within(start.at + 13 * H, 12 * H) && (await once(env, "santa:dl:unopened:" + YEAR, now))) {
+    const { results } = await env.DB.prepare("SELECT manager FROM santa_people WHERE opened IS NOT NULL").all();
+    const opened = new Set(results.map((r) => r.manager));
+    await send(chain.filter((n) => !opened.has(n)), "Your envelope is still sealed", "Everyone else knows who they have. Open yours on the Secret Santa page.");
+  }
+  const gifts = Object.fromEntries((await env.DB.prepare("SELECT santa, ordered, wrapped FROM santa_gifts").all()).results.map((r) => [r.santa, r]));
+  if (set.purchaseBy) {
+    const due = Date.parse(set.purchaseBy + "T17:00:00Z"), late = chain.filter((n) => !(gifts[n] && gifts[n].ordered)), day = fmtDay(set.purchaseBy);
+    for (const [key, at, title, text] of [
+      ["buy3", due - 3 * D, "Three days to buy your shirt", `Buy by ${day}. Good Shirts takes about 3 weeks to deliver.`],
+      ["buy1", due - D, "Buy your shirt by tomorrow", `${day} is the last day that gets it here in time.`],
+      ["buy0", due, "Today is the buy-by date", "Order the shirt today, then mark it bought on the Secret Santa page."],
+    ]) if (late.length && within(at, 20 * H) && (await once(env, `santa:dl:${key}:${set.purchaseBy}`, now))) await send(late, title, text);
+  }
+  if (set.eventAt) {
+    const when = new Date(set.eventAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }), where = set.place ? ` at ${set.place}` : "";
+    if (within(set.eventAt - 26 * H, 20 * H) && (await once(env, "santa:dl:eve:" + set.eventAt, now))) {
+      const bare = chain.filter((n) => !(gifts[n] && gifts[n].wrapped));
+      await send(bare, "Unwrap night is tomorrow", `Wrap the shirt. ${when}${where}.`);
+      await send(chain.filter((n) => !bare.includes(n)), "Unwrap night is tomorrow", `${when}${where}. Bring the shirt.`);
+    }
+    if (now >= set.eventAt - 2 * H && now < set.eventAt - 20 * 60 * 1000 && (await once(env, "santa:dl:soon:" + set.eventAt, now))) await send(chain, "Unwrap night in two hours", `${when}${where}. Bring the wrapped shirt, and lock in your guess.`);
+  }
+}
+
 // ---------- The Hall of Fame ----------
 /** This year's loop, haul and Shirty winners (once unmasked). */
 async function yearRecord(env, set) {
@@ -643,6 +874,7 @@ async function yearRecord(env, set) {
     year: YEAR, eventAt: set.eventAt || null, unmasked: set.unmasked, chain,
     gifts: Object.fromEntries(chain.map((n) => { const g = gifts[santaOf(chain, n)]; return [n, g ? { shirt: g.shirt, title: g.title || "", url: g.url || "" } : null]; })),
     shirtys: Object.fromEntries(SHIRTYS.filter((c) => (set.shirtys || {})[c.key]).map((c) => [c.key, set.shirtys[c.key]])),
+    fits: (await env.DB.prepare("SELECT manager FROM santa_photos WHERE manager LIKE ?1").bind(`fit:${YEAR}:%`).all().catch(() => ({ results: [] }))).results.map((r) => r.manager.slice(`fit:${YEAR}:`.length)),
   };
 }
 /** Every year so far (past years as they were saved, this one as it is now). */
@@ -706,7 +938,15 @@ async function admin(request, env, ctx) {
       const purchaseBy = body.purchaseBy == null || body.purchaseBy === "" ? null : day(body.purchaseBy);
       const eventAt = Number.isFinite(body.eventAt) && body.eventAt > REVEAL ? body.eventAt : null;
       if (body.purchaseBy && !purchaseBy) return fail(400, "bad_date");
-      await setSetting(env, "santa", { ...set, purchaseBy, eventAt });
+      const place = body.place === undefined ? set.place || "" : clip(body.place, 120), notes = body.notes === undefined ? set.notes || "" : clip(body.notes, 240);
+      await setSetting(env, "santa", { ...set, purchaseBy, eventAt, place, notes });
+      // New dates go out to everyone in the draw.
+      if ((purchaseBy !== set.purchaseBy || eventAt !== set.eventAt) && (purchaseBy || eventAt) && ctx) {
+        const draw = await getSetting(env, "santa_draw");
+        const when = eventAt ? new Date(eventAt).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" }) : null;
+        const text = [when ? `Event night is ${when}${place ? ` at ${place}` : ""}.` : "", purchaseBy ? `Buy your shirt by ${fmtDay(purchaseBy)}: Good Shirts takes about 3 weeks.` : ""].filter(Boolean).join(" ");
+        if (draw) ctx.waitUntil(Promise.allSettled(draw.chain.map((n) => broadcast(env, { title: "Secret Santa dates", body: text, url: "secret-santa.html", tag: "santa-dates" }, n))));
+      }
       await logAction(env, me.manager, "santa", `Secret Santa dates: buy by ${purchaseBy || "TBD"}, event ${eventAt ? new Date(eventAt).toISOString() : "TBD"}`);
       return { status: 200, body: { ok: true, purchaseBy, eventAt } };
     }
@@ -749,6 +989,24 @@ async function admin(request, env, ctx) {
       const missed = draw.chain.filter((n) => !s.crew.includes(n));
       if (missed.length && ctx) ctx.waitUntil(Promise.allSettled(missed.map((n) => broadcast(env, { title: "The reveal started without you", body: "Your envelope is waiting on the Secret Santa page.", url: "secret-santa.html", tag: "santa-room" }, n))));
       return { status: 200, body: { ok: true, start: s.at } };
+    }
+    case "host": {
+      // Unwrap night, hosted: start it (step 0), move it a beat (step), or call it off (on: false).
+      // The last beat unmasks the whole loop for good.
+      if (!start || now < start.at) return fail(403, "not_started");
+      if (set.unmasked) return fail(403, "unmasked");
+      const draw = await getSetting(env, "santa_draw");
+      if (body.on === false) { await setSetting(env, "santa", { ...set, host: null }); await logAction(env, me.manager, "santa", "Secret Santa: called off the hosted Unwrap night"); return { status: 200, body: { ok: true, host: null } }; }
+      const max = 3 * draw.chain.length, step = Math.max(0, Math.min(max, Number.isInteger(body.step) ? body.step : 0));
+      if (!set.host) await logAction(env, me.manager, "santa", "Secret Santa: started the hosted Unwrap night");
+      if (step >= max) {
+        await setSetting(env, "santa", { ...set, host: { step, by: me.manager }, unmasked: now });
+        await saveHof(env);
+        await logAction(env, me.manager, "santa", "Secret Santa: the hosted Unwrap night finished; everyone is unmasked");
+        return { status: 200, body: { ok: true, done: true } };
+      }
+      await setSetting(env, "santa", { ...set, host: { step, by: me.manager } });
+      return { status: 200, body: { ok: true, step } };
     }
     case "rehearsal_reset": {
       // Clears the rehearsal Room so it can run again.
@@ -809,5 +1067,11 @@ export const SANTA_ROUTES = {
   "/santa/photo": { GET: photoGet, POST: photoPost },
   "/santa/vote": { POST: vote },
   "/santa/hof": { GET: hof },
+  "/santa/prop": { POST: prop },
+  "/santa/rsvp": { POST: rsvpPost },
+  "/santa/wall": { POST: wallPost },
+  "/santa/host": { GET: hostGet },
+  "/santa/had": { POST: hadPost },
+  "/santa/rate": { POST: ratePost },
   "/santa/admin": { POST: admin },
 };
