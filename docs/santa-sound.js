@@ -425,10 +425,11 @@ const AE = (() => {
   }
   // Says a line; resolves when it ends. With the sound off (or the file
   // missing) it waits `fallback` seconds instead, so the show keeps its pace.
-  async function voice(url, { fallback = 1.5 } = {}) {
+  async function voice(url, { fallback = 1.5, patience = 1.2 } = {}) {
     const pause = () => new Promise(r => setTimeout(r, fallback * 1000));
     if (!S.on || !running()) return pause();
-    let buf; try { buf = await loadVoice(url); } catch (e) { return pause(); }
+    // A line that isn't here within `patience` seconds of its cue is skipped: the show never waits on a download.
+    let buf; try { buf = await Promise.race([loadVoice(url), new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), patience * 1000))]); } catch (e) { return pause(); }
     if (!S.on || !running()) return pause();
     stopVoice();
     const s = S.ctx.createBufferSource(); s.buffer = buf; s.connect(voxIn()); s.start(); S.voxSrc = s;

@@ -75,6 +75,12 @@ const HERE_MS = 12 * 1000;      // a heartbeat this recent means you're in the R
 const HOLDING_MS = 3 * 1000;    // and this recent while holding the seal
 const START_DELAY = 10 * 1000;  // the countdown every phone shows before the lights go down
 const WALKIN_MS = 5 * 60 * 1000; // "X just walked in": at most one per person this often
+const DROP_DELAY = 3500;        // once everyone is holding, every seal breaks this long after
+// santa_room.holding is a set of bits: holding the seal, sound checked, reaction cam on, seal already broken.
+const F_HOLD = 1, F_SND = 2, F_CAM = 4, F_OPEN = 8;
+// The rehearsal Room (commissioners try reveal night ahead of time): its own
+// start and break time, and its own seats ("rh:Brad"), so it never touches the real draw.
+const space = (rh) => (rh ? { start: "santa_start_rh", drop: "santa_drop_rh", pre: "rh:" } : { start: "santa_start", drop: "santa_drop", pre: "" });
 const EMOJI = ["🎁", "🔥", "😂", "👀", "🗑️"];
 const SAY_MAX = 140;            // a typed line in the Room's chat
 const SHIRTS = 957;             // docs/data/santa-shirts.json
@@ -348,16 +354,24 @@ export async function checkSantaHype(env, now = Date.now()) {
   await Promise.allSettled((to || draw.chain).map((n) => broadcast(env, message, n)));
 }
 
-/** Who's in the Room now: in the draw, with a heartbeat in the last 12 seconds. */
-async function roomNow(env, chain, now) {
+/** Who's in the Room now: in the draw (the rehearsal Room: anyone in it),
+ * with a heartbeat in the last 12 seconds. `holding` also counts anyone whose
+ * seal has already broken. `flags` says who has checked their sound and
+ * turned the reaction cam on. */
+async function roomNow(env, chain, now, pre = "") {
   const { results } = await env.DB.prepare("SELECT manager, seen, holding FROM santa_room").all();
-  const live = results.filter((r) => chain.includes(r.manager) && now - r.seen < HERE_MS);
-  return { present: live.map((r) => r.manager), holding: live.filter((r) => r.holding && now - r.seen < HOLDING_MS).map((r) => r.manager) };
+  const live = results.filter((r) => r.manager.startsWith("rh:") === !!pre && now - r.seen < HERE_MS)
+    .map((r) => ({ ...r, manager: r.manager.slice(pre.length) })).filter((r) => !chain || chain.includes(r.manager));
+  return {
+    present: live.map((r) => r.manager),
+    holding: live.filter((r) => (r.holding & F_OPEN) || ((r.holding & F_HOLD) && now - r.seen < HOLDING_MS)).map((r) => r.manager),
+    flags: Object.fromEntries(live.map((r) => [r.manager, { snd: !!(r.holding & F_SND), cam: !!(r.holding & F_CAM) }])),
+  };
 }
-async function startRoom(env, crew, by) {
+async function startRoom(env, crew, by, key = "santa_start") {
   const value = { at: Date.now() + START_DELAY, crew, by };
-  await env.DB.prepare("INSERT OR IGNORE INTO site_settings (k, v, updated) VALUES ('santa_start', ?1, ?2)").bind(JSON.stringify(value), Date.now()).run();
-  return getSetting(env, "santa_start");
+  await env.DB.prepare("INSERT OR IGNORE INTO site_settings (k, v, updated) VALUES (?1, ?2, ?3)").bind(key, JSON.stringify(value), Date.now()).run();
+  return getSetting(env, key);
 }
 /** "Jon just walked into the Room": to everyone in the draw who isn't there,
  * once at least half of them are, and at most once every five minutes each. */
@@ -381,36 +395,59 @@ async function room(request, env, ctx) {
   const me = await sessionManager(request, env);
   if (!me) return fail(401, "signed_out");
   const now = Date.now();
-  if (now < REVEAL - 5 * 60 * 1000) return fail(403, "not_yet");
-  const draw = await getSetting(env, "santa_draw");
-  if (!draw) return fail(403, "no_draw");
   const body = await request.json().catch(() => ({}));
-  let start = await getSetting(env, "santa_start");
+  const rh = !!body.rehearsal, sp = space(rh);
+  if (!rh && now < REVEAL - 5 * 60 * 1000) return fail(403, "not_yet");
+  const draw = rh ? null : await getSetting(env, "santa_draw");
+  if (!rh && !draw) return fail(403, "no_draw");
+  let start = await getSetting(env, sp.start);
   // Someone who isn't in the draw can watch, but doesn't take a seat.
-  if (draw.chain.includes(me.manager)) {
-    const holding = body.holding ? 1 : 0;
-    const was = await env.DB.prepare("SELECT seen FROM santa_room WHERE manager = ?1").bind(me.manager).first();
+  const seated = rh || draw.chain.includes(me.manager);
+  if (seated) {
+    const seat = sp.pre + me.manager;
+    const bits = (body.holding ? F_HOLD : 0) | (body.snd ? F_SND : 0) | (body.cam ? F_CAM : 0) | (body.opened ? F_OPEN : 0);
+    const was = await env.DB.prepare("SELECT seen FROM santa_room WHERE manager = ?1").bind(seat).first();
     const joined = !was || now - was.seen >= HERE_MS;
-    const writes = [env.DB.prepare("INSERT INTO santa_room (manager, seen, holding) VALUES (?1, ?2, ?3) ON CONFLICT(manager) DO UPDATE SET seen = excluded.seen, holding = excluded.holding").bind(me.manager, now, holding)];
-    if (joined) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, at) VALUES (?1, 'join', ?2)").bind(me.manager, now));
-    if (EMOJI.includes(body.react)) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'react', ?2, ?3)").bind(me.manager, body.react, now));
+    const writes = [env.DB.prepare("INSERT INTO santa_room (manager, seen, holding) VALUES (?1, ?2, ?3) ON CONFLICT(manager) DO UPDATE SET seen = excluded.seen, holding = excluded.holding").bind(seat, now, bits)];
+    if (joined && !start) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, at) VALUES (?1, 'join', ?2)").bind(seat, now));
+    if (EMOJI.includes(body.react)) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'react', ?2, ?3)").bind(seat, body.react, now));
     // A typed line in the Room's chat (kept in the emoji column, kind "say").
     const say = typeof body.say === "string" ? body.say.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, SAY_MAX) : "";
-    if (say) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'say', ?2, ?3)").bind(me.manager, say, now));
+    if (say) writes.push(env.DB.prepare("INSERT INTO santa_events (manager, kind, emoji, at) VALUES (?1, 'say', ?2, ?3)").bind(seat, say, now));
     await env.DB.batch(writes);
-    if (joined && !start && ctx) ctx.waitUntil(walkedIn(env, draw.chain, me.manager, now).catch((e) => console.error("walk-in push failed:", e)));
+    if (!rh && joined && !start && ctx) ctx.waitUntil(walkedIn(env, draw.chain, me.manager, now).catch((e) => console.error("walk-in push failed:", e)));
   }
 
-  const { present, holding: holders } = await roomNow(env, draw.chain, now);
+  const { present, holding: holders, flags } = await roomNow(env, rh ? null : draw.chain, now, sp.pre);
   // A commissioner starts it (admin "start"); it never starts itself.
-  start = start || (await getSetting(env, "santa_start"));
+  start = start || (await getSetting(env, sp.start));
+  // The seal: the first moment everyone from the start who is still here is
+  // holding, one break time is set for all of them, a few seconds out.
+  let drop = start && now >= start.at ? await getSetting(env, sp.drop) : null;
+  if (start && now >= start.at && !drop) {
+    const crewNow = start.crew.filter((n) => present.includes(n));
+    if (crewNow.length && crewNow.every((n) => holders.includes(n))) {
+      await env.DB.prepare("INSERT OR IGNORE INTO site_settings (k, v, updated) VALUES (?1, ?2, ?3)").bind(sp.drop, JSON.stringify({ at: now + DROP_DELAY }), now).run();
+      drop = await getSetting(env, sp.drop);
+    }
+  }
+  // The chat: the last ten minutes while waiting, the whole night once it has started (the afterparty).
   const after = Number(body.after) || 0;
-  const { results: events } = await env.DB.prepare("SELECT id, manager, kind, emoji, at FROM santa_events WHERE id > ?1 AND at > ?2 ORDER BY id DESC LIMIT 20").bind(after, now - 10 * 60 * 1000).all();
-  const out = { present, holding: holders, start: start ? { at: start.at, crew: start.crew } : null, now, events: events.reverse() };
-  if (start && now >= start.at - START_DELAY && draw.chain.includes(me.manager)) {
-    const g = gifteeOf(draw.chain, me.manager);
-    const c = await env.DB.prepare("SELECT size, colors FROM santa_cards WHERE manager = ?1").bind(g).first();
-    out.giftee = { name: g, size: c ? c.size : "", colors: c ? JSON.parse(c.colors || "[]") : [] };
+  const { results: events } = await env.DB.prepare("SELECT id, manager, kind, emoji, at FROM santa_events WHERE id > ?1 AND at > ?2 AND kind IN ('join', 'react', 'say') ORDER BY id DESC LIMIT 60").bind(after, now - (start ? 12 * 3600 * 1000 : 10 * 60 * 1000)).all();
+  const mineOnly = events.filter((e) => e.manager.startsWith("rh:") === rh).slice(0, 30).map((e) => ({ ...e, manager: e.manager.slice(sp.pre.length) }));
+  const out = { present, holding: holders, flags, start: start ? { at: start.at, crew: start.crew } : null, drop: drop ? drop.at : null, now, events: mineOnly.reverse() };
+  if (start && now >= start.at - START_DELAY && seated) {
+    if (rh) {
+      // A stand-in giftee: the next person in the rehearsal, or anyone else with a card.
+      const crew = [...start.crew].sort(), i = crew.indexOf(me.manager);
+      let g = crew.length > 1 && i >= 0 ? crew[(i + 1) % crew.length] : null;
+      if (!g) { const other = await env.DB.prepare("SELECT manager FROM santa_cards WHERE manager != ?1 ORDER BY manager LIMIT 1").bind(me.manager).first(); g = other ? other.manager : "Santa"; }
+      out.giftee = { name: g, size: "XL", colors: [] };
+    } else {
+      const g = gifteeOf(draw.chain, me.manager);
+      const c = await env.DB.prepare("SELECT size, colors FROM santa_cards WHERE manager = ?1").bind(g).first();
+      out.giftee = { name: g, size: c ? c.size : "", colors: c ? JSON.parse(c.colors || "[]") : [] };
+    }
   }
   return { status: 200, body: out };
 }
@@ -688,19 +725,39 @@ async function admin(request, env, ctx) {
       return { status: 200, body: { ok: true, drawn: now } };
     }
     case "start": {
-      // Everyone's here: any time from 9:00. Anyone missing: from 9:30.
+      // The rehearsal Room: any time, with whoever is in it.
+      if (body.rehearsal) {
+        const sp = space(true), had = await getSetting(env, sp.start);
+        if (had) return { status: 200, body: { ok: true, start: had.at } };
+        const { present } = await roomNow(env, null, now, sp.pre);
+        if (!present.length) return fail(400, "nobody_here");
+        const s = await startRoom(env, present, me.manager, sp.start);
+        return { status: 200, body: { ok: true, start: s.at } };
+      }
+      // Everyone's here: any time from 9:00. Anyone missing: from 9:30, or
+      // sooner when the commissioner says to go without them (force).
       if (now < REVEAL) return fail(403, "too_early");
       if (start) return { status: 200, body: { ok: true, start: start.at } };
       const draw = await getSetting(env, "santa_draw");
       if (!draw) return fail(400, "no_draw");
       const { present } = await roomNow(env, draw.chain, now);
-      if (now < FORCE_AT && !draw.chain.every((n) => present.includes(n))) return fail(403, "too_early");
+      if (!present.length) return fail(400, "nobody_here");
+      if (now < FORCE_AT && !body.force && !draw.chain.every((n) => present.includes(n))) return fail(403, "too_early");
       const s = await startRoom(env, present, me.manager);
       await logAction(env, me.manager, "santa", `Secret Santa: started the Room with ${present.length} of ${draw.chain.length}`);
       // Anyone who missed it: their envelope waits for them.
       const missed = draw.chain.filter((n) => !s.crew.includes(n));
       if (missed.length && ctx) ctx.waitUntil(Promise.allSettled(missed.map((n) => broadcast(env, { title: "The reveal started without you", body: "Your envelope is waiting on the Secret Santa page.", url: "secret-santa.html", tag: "santa-room" }, n))));
       return { status: 200, body: { ok: true, start: s.at } };
+    }
+    case "rehearsal_reset": {
+      // Clears the rehearsal Room so it can run again.
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM site_settings WHERE k IN ('santa_start_rh', 'santa_drop_rh')"),
+        env.DB.prepare("DELETE FROM santa_room WHERE manager LIKE 'rh:%'"),
+        env.DB.prepare("DELETE FROM santa_events WHERE manager LIKE 'rh:%'"),
+      ]);
+      return { status: 200, body: { ok: true } };
     }
     case "unmask": {
       if (!start || now < start.at) return fail(403, "not_started");

@@ -365,7 +365,12 @@ const Drones = (() => {
     destroy() { this.alive = false; this.running = false; this.ro.disconnect(); this.cv.remove(); }
     loop() {
       if (!this.running || !this.alive) return;
-      const t = this.now(), dt = Math.min(0.05, t - this.last); this.last = t; this.time += dt;
+      const t = this.now(), raw = t - this.last, dt = Math.min(0.05, raw); this.last = t; this.time += dt;
+      // A slow phone (under about 30 frames a second after the first two seconds) drops the lake's mirror image.
+      if (!this.lite && this.scene === 'lake' && (this.fN = (this.fN || 0) + 1) <= 210) {
+        if (this.fN > 60) this.fT = (this.fT || 0) + Math.min(0.1, raw);
+        if (this.fN === 210 && this.fT / 150 > 0.034) this.lite = true;
+      }
       this.update(t, dt); this.draw();
       requestAnimationFrame(this.loop);
     }
@@ -447,7 +452,7 @@ const Drones = (() => {
       X.globalCompositeOperation = 'lighter'; X.imageSmoothingEnabled = true;
       X.globalAlpha = 0.7; X.drawImage(this.b2, 0, 0, W, H); X.globalAlpha = 0.85; X.drawImage(this.b1, 0, 0, W, H); X.globalAlpha = 1;
       // The lake mirrors the sky (squashed, rippled, dim).
-      if (this.scene === 'lake') {
+      if (this.scene === 'lake' && !this.lite) {
         const hy = this.hy, k = 0.5;
         X.save(); X.beginPath(); X.rect(0, hy, W, H - hy); X.clip();
         for (let i = 0; i < 6; i++) {
