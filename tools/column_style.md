@@ -97,6 +97,15 @@ on the bench would have saved him"), not as a joke at his expense.
 - Call managers by the names in the packet (Chad, Joe G, ...). Players are
   referred to by the names in the packet.
 
+## Secret Santa (only when the packet has `secret_santa`)
+
+- One or two sentences, somewhere it fits. The target is `furthest_behind`,
+  at the step `furthest_behind_step` says ("still at the North Pole" means
+  they haven't even picked a shirt). If `everyone_tied` is true, roast the
+  whole league instead of naming anyone.
+- You may mention `buy_by` as the deadline and how many are `wrapped`.
+- Never guess or hint at who is buying for whom. The packet doesn't know.
+
 ## Numbers
 
 - Write each figure exactly as the packet has it: scores to two decimals

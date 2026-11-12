@@ -289,6 +289,31 @@ def build_preview(year):
     }
 
 
+def santa_facts():
+    """Secret Santa's sleigh race, while it's running: how far each Santa has
+    gotten with their gift (never who it's for). None before the reveal, after
+    the unmask, or if the Worker can't be reached."""
+    try:
+        d = worker_json("santa")
+    except Exception:
+        return None
+    race = d.get("race")
+    if not race or d.get("unmasked"):
+        return None
+    steps = ["still at the North Pole (no shirt picked)", "picked a shirt", "ordered it", "it shipped", "it was delivered", "wrapped"]
+    low = min(race.values())
+    return {
+        "what": "Secret Santa: every manager is buying one shirt for another; this is how far each has gotten",
+        "furthest_behind": sorted(m for m, v in race.items() if v == low),
+        "furthest_behind_step": steps[low],
+        "everyone_tied": len(set(race.values())) == 1,
+        "by_manager": {m: steps[v] for m, v in sorted(race.items())},
+        "wrapped": sum(1 for v in race.values() if v == 5),
+        "managers": len(race),
+        "buy_by": d.get("purchaseBy"),
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("kind", choices=["recap", "preview"])
@@ -296,6 +321,9 @@ def main():
     ap.add_argument("--week", type=int)
     a = ap.parse_args()
     pk = build_recap(a.year, a.week) if a.kind == "recap" else build_preview(a.year)
+    santa = santa_facts()
+    if santa and isinstance(pk, dict) and "skip" not in pk:
+        pk["secret_santa"] = santa
     json.dump(pk, sys.stdout, indent=1, ensure_ascii=False)
     print()
 
