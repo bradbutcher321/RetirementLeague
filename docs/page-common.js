@@ -381,6 +381,24 @@ function mgrLink(name, known) {
 // them instead of going to their Franchise page; the sheet has a button on to
 // it. Your own name, and a tap with a modifier key (open in a new tab), go
 // where they always did. rivals.js loads the first time it's needed.
+// A side bet (audit XI #20, bets.js): any [data-bet="Name"] opens the offer
+// sheet, loading bets.js the first time it's needed.
+function openBet(name) {
+  if (typeof RLBets !== 'undefined') return RLBets.open(name);
+  return new Promise(done => {
+    const s = document.createElement('script');
+    s.src = 'bets.js';
+    s.onload = s.onerror = done;
+    document.head.appendChild(s);
+  }).then(() => (typeof RLBets !== 'undefined' ? RLBets.open(name) : null));
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-bet]');
+  if (!b) return;
+  e.preventDefault();
+  if (typeof Rivals !== 'undefined' && Rivals.closeSheet) Rivals.closeSheet();
+  openBet(b.getAttribute('data-bet'));
+});
 function openRival(name) {
   if (typeof Rivals !== 'undefined') return Rivals.openSheet(name);
   return new Promise(done => {

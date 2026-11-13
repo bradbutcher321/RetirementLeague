@@ -5740,6 +5740,7 @@
             <button type="button" class="more-it" data-act="share"><i>${MORE_IC.share}</i><span><b>Share a picture</b><small>${decided ? 'The final' : 'This matchup as it stands'}, ready for the group chat</small></span><em></em></button>
             ${espn ? `<a class="more-it" href="${esc(espn)}" target="_blank" rel="noopener"><i class="espn">ESPN</i><span><b>Open in ESPN</b><small>Fantasycast for this matchup, in the ESPN app</small></span><em>${MORE_IC.out}</em></a>` : ''}
             ${m.awayManager && m.homeManager ? `<a class="more-it" href="${esc(pageLink('head-to-head.html', { a, b }))}"><i>${MORE_IC.vs}</i><span><b>Head to Head</b><small>${esc(a)} vs ${esc(b)}, every game</small></span><em>${MORE_IC.chev}</em></a>` : ''}
+            ${isMe(a) && !decided && year === leagueYear && shownData === liveData && getAuth() ? `<button type="button" class="more-it" data-bet="${esc(b)}"><i>$</i><span><b>Bet ${esc(b)}</b><small>Your matchup, a score, or anything else</small></span><em>${MORE_IC.chev}</em></button>` : ''}
           </div>
           <button type="button" class="more-cancel">Cancel</button>
         </div>
@@ -5747,6 +5748,8 @@
     const sheet = document.getElementById('more-sheet');
     document.getElementById('more-scrim').addEventListener('click', closeMore);
     sheet.querySelector('.more-cancel').addEventListener('click', closeMore);
+    const bet = sheet.querySelector('[data-bet]');
+    if (bet) bet.addEventListener('click', () => closeMore());
     sheet.querySelector('[data-act="share"]').addEventListener('click', () => {
       shotKey = key;
       closeMore();

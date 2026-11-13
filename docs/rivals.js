@@ -145,6 +145,7 @@ const Rivals = (() => {
           ${head}${body}
           <a class="rv-go" href="${esc(pageLink('head-to-head.html', { a: me, b: name }))}">Open Head to Head</a>
           <a class="rv-go ghost" href="${esc(pageLink('franchise.html', { m: name }))}">Open ${esc(name)}'s Franchise Page</a>
+          ${typeof getAuth === 'function' && getAuth() ? `<button type="button" class="rv-go ghost" data-bet="${esc(name)}">Side bet with ${esc(name)}</button>` : ''}
           <button type="button" class="rv-done">Done</button>
         </div>
       </div>`);

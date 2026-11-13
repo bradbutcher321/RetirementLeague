@@ -57,6 +57,7 @@
  *                      signed-in manager's You sheet (see feedback.js).
  * GET /polls, POST /polls/vote -> league votes (see league.js, audit X #20).
  * GET /idiot, POST /idiot/vote -> Idiot of the Week (see idiot.js, audit XI #19).
+ * GET/POST /bets, POST /bets/answer|cancel|settle -> side bets (see bets.js, audit XI #20).
  *
  * Required setup:
  *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT, PARLAY_PIN, AUTH_SECRET,
@@ -86,6 +87,7 @@ import { SANTA_ROUTES, checkSantaDeadlines, checkSantaHype, checkSantaReminder, 
 import { ROSTER_ROUTES } from "./roster.js";
 import { runHealthCheck } from "./healthCheck.js";
 import { checkIdiot, idiotGet, idiotVote } from "./idiot.js";
+import { BET_ROUTES, settleBets } from "./bets.js";
 
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
 
@@ -285,6 +287,12 @@ export default {
         : idiotVote(request, env)).catch((err) => ({ status: 500, body: { error: String(err) } }));
       return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
     }
+    if (BET_ROUTES[path]) {
+      const route = BET_ROUTES[path][request.method];
+      if (!route) return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
+    }
     if (path === "/site-info") {
       if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       return jsonResponse(await siteInfo(env).catch(() => ({ announcement: null, draft: null })), { ...headers, "Cache-Control": "public, max-age=60" });
@@ -407,6 +415,7 @@ export default {
           checkSantaDeadlines(env),
           sendScheduledPushes(env),
           checkIdiot(env, dashboard, (w) => pastWeekDashboard(env, w)),
+          settleBets(env, dashboard, (w) => pastWeekDashboard(env, w)),
           feed,
         ]);
         if (push.status === "rejected") console.error("Push check failed:", push.reason);

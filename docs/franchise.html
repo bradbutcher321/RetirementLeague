@@ -25,7 +25,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
 <link rel="stylesheet" href="theme.css?v=8dc1bc5c">
-<link rel="stylesheet" href="nav.css?v=692f2733">
+<link rel="stylesheet" href="nav.css?v=997f8198">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
      spacing and variants here. */
@@ -463,7 +463,8 @@
   </div>
 
 <script src="nav.js?v=7d37e514"></script>
-<script src="page-common.js?v=ff41b6f1"></script>
+<script src="page-common.js?v=35de6e21"></script>
+<script src="bets.js?v=aee58a49"></script>
 <script src="achievements.js?v=db57e048"></script>
 <script src="race-sim.js?v=3786b0d6"></script>
 <script>
@@ -1422,12 +1423,21 @@
   // The page's skeleton for the tab; fillNow() puts the numbers in.
   function nowHtml(p) {
     const slot = (id, title) => `<div id="${id}">${card(title, '<div class="empty-note">Loading…</div>')}</div>`;
-    return `<div class="pf-cols"><div class="pf-col">${slot('pf-week', 'This week')}${slot('pf-so-far', 'Season so far')}<div id="pf-sched"></div></div>
+    return `<div class="pf-cols"><div class="pf-col">${slot('pf-week', 'This week')}${slot('pf-so-far', 'Season so far')}<div id="pf-sched"></div><div id="pf-bets"></div></div>
       <div class="pf-col">${slot('pf-odds', 'Playoff odds')}<div id="pf-built"></div><div id="pf-more"></div></div></div>`;
   }
   const put = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  // Side bets (audit XI #20): your own profile keeps the ledger (bets.js).
+  function fillBets(name) {
+    if (!isMe(name) || typeof RLBets === 'undefined' || !getAuth()) return;
+    RLBets.ledger().then(l => {
+      if (l && shown === name && curTab() === 'now') put('pf-bets', card('Side bets', l.body, { chip: `<span class="chip">${esc(l.chip)}</span>` }));
+    });
+  }
+  addEventListener('rl-bets', () => { if (shown) fillBets(shown); });
   async function fillNow(p) {
     const name = p.name, mine = isMe(name), year = CTX.currentYear;
+    fillBets(name);
     const [d] = await Promise.all([liveP(), GAMES_P]);
     if (shown !== name || curTab() !== 'now') return;
     const team = d && d.teams.find(t => t.manager === name);

@@ -34,6 +34,8 @@
  *          trailing side has the points left to make it a game; both sides
  *   idiot  Idiot of the Week (audit XI #19, league.js): the vote opens, the
  *          winner is in (notifyPref, sent once by league.js itself)
+ *   bets   side bets (audit XI #20, bets.js): offered to you, taken or passed,
+ *          settled (notifyManager, also kept in your Recent list)
  *   legIn  your parlay leg isn't in yet (site audit IV #10): Wednesday from
  *          7 PM ET and Thursday from 11 AM ET while Parlay Legs is open,
  *          only to a manager with no leg, saying how many are in
@@ -56,7 +58,7 @@ import { commissioners } from "./roles.js";
 import { legsSummary } from "./legs.js";
 import { sessionManager } from "./auth.js";
 
-const PREF_KEYS = ["final", "median", "lineup", "rival", "recap", "record", "parlay", "parlayAll", "legIn", "monday", "idiot", "health"];
+const PREF_KEYS = ["final", "median", "lineup", "rival", "recap", "record", "parlay", "parlayAll", "legIn", "monday", "idiot", "bets", "health"];
 // Off unless asked for: everyone else's legs is a lot of buzzing, and it
 // came after people had already subscribed with the four above on. "health"
 // is the commissioner's daily site check (healthCheck.js). "rival" is new
@@ -586,6 +588,20 @@ export async function checkLegReminders(env, now = new Date()) {
   if (!fresh.length) return;
   await recordSent(env, fresh, fresh, now.getTime());
   await sendFresh(env, fresh);
+}
+
+/** One manager's message (side bets, audit XI #20): to their devices with
+ * `pref` on, and into their Recent list whether or not any device is
+ * subscribed, so the bell has it. `message.key` makes it once-only. */
+export async function notifyManager(env, to, pref, message) {
+  if (!to) return;
+  const ts = Date.now();
+  const key = message.key || `${pref}:${to}:${ts}:${Math.random().toString(36).slice(2, 6)}`;
+  const e = { key, to, pref, message };
+  await logStmt(env, e, ts).run().catch(() => {});
+  if (!env.VAPID_PRIVATE_JWK) return;
+  const { results } = await env.DB.prepare("SELECT * FROM push_subs WHERE LOWER(me) = LOWER(?1)").bind(to).all();
+  await Promise.allSettled(results.filter((sub) => cleanPrefs(JSON.parse(sub.prefs || "{}"))[pref]).map((sub) => deliver(env, sub, message)));
 }
 
 /** Sends one message to every subscriber with `pref` on (no per-manager

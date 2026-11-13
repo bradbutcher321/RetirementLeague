@@ -618,9 +618,48 @@ button.you-link{ width: 100%; font-family: var(--body); cursor: pointer; text-al
 .rv-go.ghost, .rv-done{ border-color: var(--line); background: rgba(255,255,255,0.06); color: var(--text); }
 .rv-go:focus-visible, .rv-done:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (min-width: 721px){
-  .rv-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: 440px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
-  .rv-sheet .sheet-grab{ visibility: hidden; height: 8px; padding: 0; }
+  .rv-sheet, .bet-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: 440px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
+  .rv-sheet .sheet-grab, .bet-sheet .sheet-grab{ visibility: hidden; height: 8px; padding: 0; }
 }
+/* ---------- Side bets (audit XI #20, bets.js) ---------- */
+.bet-sheet:focus{ outline: none; }
+.bet-sheet .sheet-body{ padding: 4px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
+.bet-h{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 2px 0 12px; }
+.bet-h b{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.6rem; line-height: 1; }
+.bet-h span{ color: var(--text-dim); font-size: var(--fs-small); }
+.bet-kinds{ display: grid; gap: 8px; }
+.bet-kinds button{ display: block; width: 100%; min-height: 52px; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--item); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.bet-kinds button b{ display: block; font-weight: 700; font-size: 0.92rem; }
+.bet-kinds button small{ display: block; color: var(--text-dim); font-size: var(--fs-detail); margin-top: 1px; }
+.bet-kinds button.on{ border-color: var(--gold); background: var(--lead-tint); }
+.bet-more{ display: grid; gap: 8px; margin-top: 12px; }
+.bet-row{ display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--text-dim); font-size: var(--fs-small); }
+.bet-seg{ display: inline-flex; padding: 3px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.04); }
+.bet-seg button{ min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--text-dim); font: 600 var(--fs-small) var(--body); cursor: pointer; }
+.bet-seg button.on{ background: var(--gold); color: var(--ctl-on-ink, #0A0A08); }
+.bet-lab{ display: block; margin: 14px 0 6px; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+.bet-in{ width: 100%; min-height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: #0c0c0b; color: var(--text); font: 16px var(--body); }
+.bet-in.sm{ width: 120px; text-align: right; }
+.bet-in:focus{ outline: none; border-color: var(--gold); }
+.bet-note{ color: var(--text-dim); font-size: var(--fs-detail); line-height: 1.4; margin: 10px 0 0; }
+.bet-send{ display: flex; align-items: center; justify-content: center; width: 100%; min-height: 48px; margin-top: 14px; border-radius: 999px; border: 0; background: var(--gold); color: var(--ctl-on-ink, #0A0A08); font: 700 0.95rem var(--body); cursor: pointer; }
+.bet-send:disabled{ opacity: 0.5; }
+.bet-msg{ min-height: 1.2em; margin-top: 8px; color: var(--loss); font-size: var(--fs-small); text-align: center; }
+.bt-list{ display: grid; gap: 8px; }
+.bt-row{ display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--item); }
+.bt-row.won{ border-color: var(--win-line); }
+.bt-row.lost{ border-color: var(--loss-line); }
+.bt-t b{ display: block; font-weight: 650; font-size: var(--fs-small); line-height: 1.35; }
+.bt-t small{ display: block; color: var(--text-dim); font-size: var(--fs-detail); margin-top: 2px; }
+.bt-act{ display: flex; flex-wrap: wrap; gap: 8px; }
+.bt-yes, .bt-no{ min-height: 40px; padding: 0 16px; border-radius: 999px; font: 700 var(--fs-small) var(--body); cursor: pointer; }
+.bt-yes{ border: 1px solid var(--gold); background: var(--gold); color: var(--ctl-on-ink, #0A0A08); }
+.bt-no{ border: 1px solid var(--line); background: rgba(255,255,255,0.06); color: var(--text); }
+.bt-cap{ margin: 12px 2px 6px; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+.bt-cap:first-child{ margin-top: 0; }
+.bt-owed{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.bt-owed span{ padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--text); font-size: var(--fs-detail); }
+.bt-empty{ color: var(--text-dim); font-size: var(--fs-small); line-height: 1.4; }
 
 /* ---------- Your score in the folded title (audit IX #3) ----------
    On Live and Feed the bar shows your matchup: you on the left in your

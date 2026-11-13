@@ -59,6 +59,18 @@
       return `<div class="glass notice-card" id="idiot-card"><div class="panel-title"><span>Idiot of Week ${esc(v.week)}</span><span class="notice-chip">${v.closed ? 'Final' : 'Vote · closes ' + esc(closes)}</span></div>
         <div class="panel-body"><div class="iw-opts">${opts}</div><div class="vote-note">${note}</div></div></div>`;
     }
+    // A bet offered, taken or settled (bets.js): redraw its card, or add it.
+    addEventListener('rl-bets', async () => {
+      if (typeof RLBets === 'undefined') return;
+      const html = await RLBets.liveCard();
+      const old = document.getElementById('bets-card');
+      if (old) { if (html) old.outerHTML = html; else old.remove(); return; }
+      if (!html) return;
+      let stack = sec.querySelector('.notice-stack');
+      if (!stack) { sec.innerHTML = '<div class="notice-stack"></div>'; stack = sec.querySelector('.notice-stack'); }
+      stack.insertAdjacentHTML('afterbegin', html);
+      sec.hidden = false;
+    });
     document.addEventListener('click', async e => {
       const b = e.target.closest('[data-idiot]');
       if (!b) return;
@@ -80,8 +92,8 @@
     fetch(WORKER_URL + '/site-info').then(r => r.ok ? r.json() : null).then(async info => {
       if (!info) return;
       if (info.lore && typeof loreFromSite === 'function') loreFromSite(info.lore);
-      const [vote, idiot] = await Promise.all([info.poll ? voteCard(info.poll.id) : '', idiotCard()]);
-      const html = (info.announcement ? card('Announcement', '', info.announcement.text) : '') + idiot + vote + (info.draft ? draft(info.draft.at) : '');
+      const [vote, idiot, bets] = await Promise.all([info.poll ? voteCard(info.poll.id) : '', idiotCard(), typeof RLBets !== 'undefined' ? RLBets.liveCard() : '']);
+      const html = (info.announcement ? card('Announcement', '', info.announcement.text) : '') + bets + idiot + vote + (info.draft ? draft(info.draft.at) : '');
       if (!html) return;
       sec.innerHTML = `<div class="notice-stack">${html}</div>`;
       sec.hidden = false;
