@@ -4289,7 +4289,9 @@
       teams.forEach(t => sums.set(t.manager, sums.get(t.manager) + (mode === 'live' ? t.cur : t.proj)));
       // A finished week is a week like the others: no dashes.
       if (fin) tile(`Week ${week}`, '');
-      else tile(`Wk ${week} ${mode === 'live' ? 'live' : 'proj'}`, ' now');
+      // The pill above says live or projected, and the dashed border marks the
+      // week in progress: "Wk 10 proj" didn't fit the tile (audit XI follow-up).
+      else tile(`Week ${week}`, ' now');
     }
     if (!tiles.length) return '';
     return `
