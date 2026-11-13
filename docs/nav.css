@@ -591,6 +591,9 @@ button.you-link{ width: 100%; font-family: var(--body); cursor: pointer; text-al
 /* ---------- Rivals (rivals.js) ----------
    The standings tag: in your ring color, never gold/green/red, which mean
    something already. The tap-a-name sheet: you against one manager. */
+/* Idiot of the Week (audit XI #19): the league's vote, not a rivalry of
+   yours, so plain white rather than your ring color. */
+.rv-tag.idiot{ border-color: rgba(245,245,243,0.4); background: rgba(245,245,243,0.06); color: var(--text); }
 .rv-tag{ flex: none; display: inline-flex; align-items: center; margin-left: 0.55em; padding: 3px 7px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--me-ring, #7AAEDB) 55%, transparent); background: color-mix(in srgb, var(--me-ring, #7AAEDB) 9%, transparent); color: var(--me-ring, #7AAEDB); font: 800 var(--fs-label)/1 var(--body); letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; vertical-align: middle; }
 .rv-sheet:focus{ outline: none; }
 .rv-sheet .sheet-body{ padding: 4px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }

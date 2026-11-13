@@ -25,7 +25,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
 <link rel="stylesheet" href="theme.css?v=8dc1bc5c">
-<link rel="stylesheet" href="nav.css?v=515b2cfd">
+<link rel="stylesheet" href="nav.css?v=692f2733">
 <link rel="stylesheet" href="league.css?v=97fa7167">
 <link rel="stylesheet" href="features.css?v=fd5e3df4">
 <style>
@@ -263,7 +263,7 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=90921fec"></script>
+<script src="nav.js?v=7d37e514"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
 <script src="league-common.js?v=bc5ee91a"></script>
 <script src="race-sim.js?v=3786b0d6"></script>
@@ -436,6 +436,18 @@
     }).catch(err => console.error('Schedule left:', err));
   }
 
+  // Idiot of the Week (audit XI #19): the last vote's winner wears the tag
+  // until the next one is in (the Worker's /idiot, "wearing"); ties all wear it.
+  let IDIOT = null;
+  fetch(WORKER_URL + '/idiot', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).then(d => {
+    const w = d && d.wearing;
+    if (!w || !w.managers || !w.managers.length) return;
+    IDIOT = { year: w.year, week: w.week, set: new Set(w.managers) };
+    render();
+  }).catch(() => {});
+  const idiotTag = (name, year) => (IDIOT && IDIOT.year === year && IDIOT.set.has(name)
+    ? `<span class="rv-tag idiot" title="Idiot of Week ${IDIOT.week}, by league vote">Idiot</span>` : '');
+
   // ---------- Through Week N / Week N+1 projected (moved from the dashboard) ----------
   // Standings from the Worker's live numbers: every finished week
   // (`prior`), or those plus this week as the projected scores would
@@ -581,7 +593,7 @@
       : `<span class="st-pct">${pct(r.pct)}</span>`;
     // Your Daddy / Your Bitch (rivals.js), in your ring color, after the name.
     return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}" data-rv="${esc(r.player)}"><span class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</span>` +
-      `<span class="st-main"><span class="st-nm"><span class="nm">${esc(r.player)}</span>${moveHtml}${badges.join('')}${Rivals.pill(r.player)}</span>` +
+      `<span class="st-main"><span class="st-nm"><span class="nm">${esc(r.player)}</span>${moveHtml}${badges.join('')}${Rivals.pill(r.player)}${idiotTag(r.player, year)}</span>` +
       (sub.length ? `<span class="st-sub">${sub.join('')}</span>` : '') + `</span>` +
       `<span class="st-wl">${rec}</span><span class="st-pf">${n0(r.pf)}<small>PA ${n0(r.pa)}</small></span><span class="st-od">${last}</span></a>`;
   }

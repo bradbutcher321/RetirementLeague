@@ -1440,6 +1440,16 @@
   .vote-res b{ font-family:var(--scoreboard); font-size:1.2rem; color:var(--gold); }
   .vote-res.mine{ border-color:var(--me-ring, #7AAEDB); }
   .vote-note{ color:var(--text-dim); font-size:var(--fs-detail); margin-top:10px; line-height:1.4; }
+  /* Idiot of the Week (audit XI #19): one row per nominee, the reason under the name. */
+  .iw-opts{ display:grid; gap:8px; }
+  .iw-opt{ display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:10px 12px; border-radius:12px; border:1px solid var(--item-line); background:var(--item); color:var(--text); font:inherit; text-align:left; }
+  button.iw-opt{ cursor:pointer; }
+  .iw-opt.mine{ border-color:var(--me-ring, #7AAEDB); }
+  .iw-opt.won{ border-color:var(--lead-line); background:var(--lead-tint); }
+  .iw-t{ flex:1; min-width:0; }
+  .iw-t b{ display:block; font-weight:700; font-size:0.92rem; }
+  .iw-t small{ display:block; color:var(--text-dim); font-size:var(--fs-detail); line-height:1.35; margin-top:2px; }
+  .iw-n{ font-family:var(--scoreboard); font-size:1.25rem; color:var(--gold); min-width:24px; text-align:right; }
   .acc-prize{ margin-left:6px; padding:2px 8px; border-radius:999px; border:1px solid var(--lead-line); color:var(--gold); font:700 var(--fs-label) var(--body); vertical-align:2px; }
   .accolade-card{
     background: linear-gradient(165deg, var(--surface-raised), var(--surface));

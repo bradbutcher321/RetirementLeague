@@ -29,6 +29,11 @@
  *   parlayAll  every leg that hits while the parlay is alive, then one
  *          "killed" when it dies (killed_by in the parlay data); legs
  *          whose games start after the kill send nothing
+ *   monday it comes down to Monday night (audit XI #18): Monday from 6 PM ET,
+ *          a matchup whose only players left play Monday night and whose
+ *          trailing side has the points left to make it a game; both sides
+ *   idiot  Idiot of the Week (audit XI #19, league.js): the vote opens, the
+ *          winner is in (notifyPref, sent once by league.js itself)
  *   legIn  your parlay leg isn't in yet (site audit IV #10): Wednesday from
  *          7 PM ET and Thursday from 11 AM ET while Parlay Legs is open,
  *          only to a manager with no leg, saying how many are in
@@ -51,7 +56,7 @@ import { commissioners } from "./roles.js";
 import { legsSummary } from "./legs.js";
 import { sessionManager } from "./auth.js";
 
-const PREF_KEYS = ["final", "median", "lineup", "rival", "recap", "record", "parlay", "parlayAll", "legIn", "health"];
+const PREF_KEYS = ["final", "median", "lineup", "rival", "recap", "record", "parlay", "parlayAll", "legIn", "monday", "idiot", "health"];
 // Off unless asked for: everyone else's legs is a lot of buzzing, and it
 // came after people had already subscribed with the four above on. "health"
 // is the commissioner's daily site check (healthCheck.js). "rival" is new
@@ -187,7 +192,7 @@ async function recordBook() {
 
 /** Every event the current dashboard and parlay data say has happened:
  * [{ key, to: manager name or null for everyone, pref, message }]. */
-function currentEvents(year, dashboard, parlay, book, rivals) {
+export function currentEvents(year, dashboard, parlay, book, rivals, now = new Date()) {
   const out = [];
   const week = dashboard.week;
   const teams = dashboard.teams || [];
@@ -217,6 +222,39 @@ function currentEvents(year, dashboard, parlay, book, rivals) {
             url: "index.html",
             tag: `final-${week}`,
           },
+        });
+      }
+    }
+  }
+
+  // It comes down to Monday night (audit XI #18). From 6 PM Eastern on
+  // Monday, a matchup whose players left all play Monday night and haven't
+  // started, where the side behind has at least half the gap still
+  // projected. Both managers get it once: the margin and who's left.
+  if (known && mondayEvening(now)) {
+    const last = (p) => { const w = String(p.name || "").split(" "); return w.length > 1 ? w.slice(1).join(" ") : w[0]; };
+    const list = (ps) => { const n = ps.map(last); return n.length < 3 ? n.join(" and ") : `${n.slice(0, -1).join(", ")} and ${n[n.length - 1]}`; };
+    const projOf = (ps) => ps.reduce((t, p) => t + (Number(p.projectedPoints) || 0), 0);
+    for (const m of dashboard.matchups || []) {
+      const left = { away: (m.awayPlayers || []).filter((p) => p.game && p.game.state !== "post"), home: (m.homePlayers || []).filter((p) => p.game && p.game.state !== "post") };
+      const all = [...left.away, ...left.home];
+      if (!all.length || !all.every((p) => p.game.state === "pre" && etWeekday(p.game.date) === "Mon")) continue;
+      const a = Number(m.awayScore) || 0, b = Number(m.homeScore) || 0, gap = Math.abs(a - b);
+      const behind = a < b ? "away" : b < a ? "home" : null;
+      if (behind && (!left[behind].length || projOf(left[behind]) < gap * 0.5)) continue;
+      for (const [side, other] of [["away", "home"], ["home", "away"]]) {
+        const me = m[side + "Manager"], opp = m[other + "Manager"];
+        if (!me || !opp) continue;
+        const mine = left[side], theirs = left[other];
+        const lead = side === "away" ? a - b : b - a;
+        const head = lead > 0 ? `You lead ${opp} by ${f2(lead)}.` : lead < 0 ? `${opp} leads you by ${f2(-lead)}.` : `You and ${opp} are tied at ${f2(a)}.`;
+        const you = mine.length ? ` ${list(mine)} ${mine.length === 1 ? "is" : "are"} still to play for you (${projOf(mine).toFixed(1)} projected).` : " You're done.";
+        const them = theirs.length ? ` ${opp} has ${list(theirs)} (${projOf(theirs).toFixed(1)}).` : ` ${opp} is done.`;
+        out.push({
+          key: `monday:${year}:${week}:${me}`,
+          to: me,
+          pref: "monday",
+          message: { title: "It's on Monday night", body: head + you + them, url: "index.html", tag: `monday-${week}` },
         });
       }
     }
@@ -499,6 +537,14 @@ async function sendFresh(env, fresh) {
 
 // ---------- "Your leg isn't in yet" (site audit IV #10) ----------
 const ET_PARTS = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", hour: "2-digit", hourCycle: "h23" });
+const etParts = (d) => Object.fromEntries(ET_PARTS.formatToParts(d).map((x) => [x.type, x.value]));
+/** Eastern weekday ("Mon") of an ISO time. */
+const etWeekday = (iso) => { const t = Date.parse(iso); return Number.isFinite(t) ? etParts(new Date(t)).weekday : ""; };
+/** Monday, 6 PM Eastern or later (the Monday-night alert, audit XI #18). */
+function mondayEvening(now = new Date()) {
+  const p = etParts(now);
+  return p.weekday === "Mon" && Number(p.hour) >= 18;
+}
 
 /** Which reminder `now` is in the window of: "wed" from 7 PM Eastern
  * Wednesday, "thu" from 11 AM Eastern Thursday (the legs lock at 1 PM), else

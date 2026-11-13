@@ -681,6 +681,8 @@
     ['rival', 'Rival Game Alerts', true],
     ['parlay', 'Parlay Leg Wins or Loses', true],
     ['legIn', 'Missing Parlay Leg', true],
+    ['monday', 'Down to Monday Night', true],
+    ['idiot', 'Idiot of the Week', false],
     ['parlayAll', 'Parlay Status Updates', false],
     ['recap', 'Week in Review is up', false],
     ['record', 'League Record Falls', false],

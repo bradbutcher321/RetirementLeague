@@ -34,6 +34,40 @@
         <div class="panel-body"><div class="vote-q">${esc(p.q)}</div><div class="vote-opts">${opts}</div>
         <div class="vote-note">${total} vote${total === 1 ? '' : 's'}${p.voters.length ? ': ' + esc(p.voters.join(', ')) : ''}${!signed ? '. Sign in under You to vote.' : p.mine != null ? '. You can change yours.' : ''}</div></div></div>`;
     }
+    // Idiot of the Week (audit XI #19): the site's own vote on the week's
+    // worst lineup calls. One tap votes (never for yourself; tap another to
+    // change it); the counts show once you've voted, and the result stays
+    // up for a day and a half after it closes.
+    async function idiotCard() {
+      const res = await fetch(WORKER_URL + '/idiot', { cache: 'no-store', headers: authHeaders() }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+      const v = res && res.vote;
+      if (!v || !v.cands || (v.closed && Date.now() - v.closes > 36 * 3600 * 1000)) return '';
+      const auth = getAuth(), signed = !!auth, self = auth && auth.manager;
+      const total = Object.values(v.counts).reduce((a, b) => a + b, 0);
+      const shown = !!v.mine || v.closed || !signed;
+      const closes = new Date(v.closes).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+      const opts = v.cands.map(c => {
+        const mine = v.mine === c.m, won = v.closed && (v.winners || []).includes(c.m);
+        const inner = `<span class="iw-t"><b>${esc(c.m)}</b><small>${esc(c.why)}</small></span>${shown ? `<b class="iw-n">${v.counts[c.m] || 0}</b>` : ''}`;
+        return signed && !v.closed && c.m !== self
+          ? `<button type="button" class="iw-opt${mine ? ' mine' : ''}" data-idiot="${esc(c.m)}" data-idiot-id="${esc(v.id)}" aria-pressed="${mine}">${inner}</button>`
+          : `<div class="iw-opt${mine ? ' mine' : ''}${won ? ' won' : ''}">${inner}</div>`;
+      }).join('');
+      const note = v.closed
+        ? (v.winners && v.winners.length ? `${esc(v.winners.join(' and '))} ${v.winners.length === 1 ? 'wears' : 'wear'} the Idiot tag on Standings until next week's is in.` : 'Nobody voted.')
+        : `${total} vote${total === 1 ? '' : 's'}${v.voters.length ? ': ' + esc(v.voters.join(', ')) : ''}.${!signed ? ' Sign in under You to vote.' : v.mine ? ' You can change yours.' : v.cands.some(c => c.m === self) ? " You're on the ballot, so you can't vote for yourself." : ''}`;
+      return `<div class="glass notice-card" id="idiot-card"><div class="panel-title"><span>Idiot of Week ${esc(v.week)}</span><span class="notice-chip">${v.closed ? 'Final' : 'Vote · closes ' + esc(closes)}</span></div>
+        <div class="panel-body"><div class="iw-opts">${opts}</div><div class="vote-note">${note}</div></div></div>`;
+    }
+    document.addEventListener('click', async e => {
+      const b = e.target.closest('[data-idiot]');
+      if (!b) return;
+      b.disabled = true;
+      const res = await fetch(WORKER_URL + '/idiot/vote', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ id: b.dataset.idiotId, m: b.dataset.idiot }) }).catch(() => null);
+      const card = document.getElementById('idiot-card');
+      if (card) card.outerHTML = await idiotCard() || '';
+      if (!res || !res.ok) b.disabled = false;
+    });
     document.addEventListener('click', async e => {
       const b = e.target.closest('[data-vote]');
       if (!b) return;
@@ -46,8 +80,8 @@
     fetch(WORKER_URL + '/site-info').then(r => r.ok ? r.json() : null).then(async info => {
       if (!info) return;
       if (info.lore && typeof loreFromSite === 'function') loreFromSite(info.lore);
-      const vote = info.poll ? await voteCard(info.poll.id) : '';
-      const html = (info.announcement ? card('Announcement', '', info.announcement.text) : '') + vote + (info.draft ? draft(info.draft.at) : '');
+      const [vote, idiot] = await Promise.all([info.poll ? voteCard(info.poll.id) : '', idiotCard()]);
+      const html = (info.announcement ? card('Announcement', '', info.announcement.text) : '') + idiot + vote + (info.draft ? draft(info.draft.at) : '');
       if (!html) return;
       sec.innerHTML = `<div class="notice-stack">${html}</div>`;
       sec.hidden = false;

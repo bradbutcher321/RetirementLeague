@@ -34,6 +34,7 @@ import { cached } from "./cache.js";
 import { fetchPlaylist, hiddenVideos, playlistId, playlists } from "./videos.js";
 import { feedbackAdmin, feedbackNew } from "./feedback.js";
 import { leagueAdmin, siteExtras } from "./league.js";
+import { idiotExtras } from "./idiot.js";
 
 const REPO = "bradbutcher321/RetirementLeague";
 const WORKFLOWS = {
@@ -53,8 +54,8 @@ const text = (v, max) => String(v == null ? "" : v).trim().slice(0, max);
 export async function siteInfo(env) {
   const [ann, draft] = await Promise.all([getSetting(env, "announcement"), getSetting(env, "draft")]);
   const live = ann && ann.text && (!ann.until || ann.until >= etDay());
-  const extra = await siteExtras(env).catch(() => ({}));
-  return { announcement: live ? { text: ann.text, until: ann.until || null } : null, draft: draft && draft.at ? { at: draft.at } : null, ...extra };
+  const [extra, idiot] = await Promise.all([siteExtras(env).catch(() => ({})), idiotExtras(env).catch(() => ({}))]);
+  return { announcement: live ? { text: ann.text, until: ann.until || null } : null, draft: draft && draft.at ? { at: draft.at } : null, ...extra, ...idiot };
 }
 
 async function overview(env, body) {

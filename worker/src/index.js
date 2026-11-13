@@ -56,6 +56,7 @@
  * POST /feedback, GET /feedback/mine -> bug reports and ideas from a
  *                      signed-in manager's You sheet (see feedback.js).
  * GET /polls, POST /polls/vote -> league votes (see league.js, audit X #20).
+ * GET /idiot, POST /idiot/vote -> Idiot of the Week (see idiot.js, audit XI #19).
  *
  * Required setup:
  *   - Secrets:     ESPN_SWID, ESPN_S2, GITHUB_PAT, PARLAY_PIN, AUTH_SECRET,
@@ -84,6 +85,7 @@ import { POLL_ROUTES, sendScheduledPushes } from "./league.js";
 import { SANTA_ROUTES, checkSantaDeadlines, checkSantaHype, checkSantaReminder, checkSantaRoast } from "./santa.js";
 import { ROSTER_ROUTES } from "./roster.js";
 import { runHealthCheck } from "./healthCheck.js";
+import { checkIdiot, idiotGet, idiotVote } from "./idiot.js";
 
 const PUSH_ROUTES = { "/push/subscribe": subscribe, "/push/unsubscribe": unsubscribe };
 
@@ -273,6 +275,16 @@ export default {
       const result = await route(request, env).catch((err) => ({ status: 500, body: { error: String(err) } }));
       return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
     }
+    if (path === "/idiot" || path === "/idiot/vote") {
+      // Idiot of the Week (idiot.js, audit XI #19). The GET also opens the
+      // week's vote if its games are over and the cron hasn't yet.
+      const want = path === "/idiot" ? "GET" : "POST";
+      if (request.method !== want) return jsonResponse({ error: "Method not allowed" }, headers, 405);
+      const result = await (path === "/idiot"
+        ? idiotGet(request, env, { dashboard: (await readCache(env).catch(() => null))?.data, loadWeek: (w) => pastWeekDashboard(env, w) })
+        : idiotVote(request, env)).catch((err) => ({ status: 500, body: { error: String(err) } }));
+      return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
+    }
     if (path === "/site-info") {
       if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
       return jsonResponse(await siteInfo(env).catch(() => ({ announcement: null, draft: null })), { ...headers, "Cache-Control": "public, max-age=60" });
@@ -394,6 +406,7 @@ export default {
           checkSantaRoast(env),
           checkSantaDeadlines(env),
           sendScheduledPushes(env),
+          checkIdiot(env, dashboard, (w) => pastWeekDashboard(env, w)),
           feed,
         ]);
         if (push.status === "rejected") console.error("Push check failed:", push.reason);
