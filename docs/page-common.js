@@ -75,6 +75,44 @@ const VIEW_AS_KEY = 'rl-view-as';
 function viewingAs() {
   try { const v = sessionStorage.getItem(VIEW_AS_KEY); return v && isCommissioner(getAuth()) ? v : ''; } catch (e) { return ''; }
 }
+// How often a live page asks for scores (audit X #27): every 15 seconds
+// while a game is on, or due to start within half an hour; every two
+// minutes otherwise. Live polled every 15 seconds from Tuesday to Sunday.
+// games: [{ state: 'pre' | 'in' | 'post' | ..., date or ko: ISO kickoff }].
+const POLL_FAST = 15 * 1000, POLL_SLOW = 2 * 60 * 1000;
+function pollMs(games) {
+  const now = Date.now();
+  const on = (games || []).some(g => {
+    if (!g) return false;
+    if (g.state && g.state !== 'pre' && g.state !== 'post') return true;
+    const t = Date.parse(g.date || g.ko || '');
+    return g.state === 'pre' && t - now < 30 * 60 * 1000 && now - t < 4 * 3600 * 1000;
+  });
+  return on ? POLL_FAST : POLL_SLOW;
+}
+// The footer's last line says which (nav.js draws the footer).
+function setRefreshNote(ms) {
+  const foot = document.getElementById('site-footer');
+  if (!foot) return;
+  const note = ms <= POLL_FAST ? 'Refreshes every 15 seconds' : 'Refreshes every 2 minutes until a game is on';
+  if (foot.dataset.note === note) return;
+  foot.dataset.note = note;
+  foot.textContent = [foot.dataset.source || 'Data via ESPN Fantasy', note].join(' · ');
+}
+
+// One fetch per data file per page (audit X #32): nav.js, rivals.js,
+// league-common.js and the page all ask for data/league.json, and Live
+// asked twice. rlData('league') is the same promise to every caller.
+// Callers must not change what it returns (copy first, as LG.load does).
+const rlDataCache = {};
+function rlData(name) {
+  if (!rlDataCache[name]) {
+    rlDataCache[name] = fetch(`data/${name}.json`, { cache: 'no-cache' })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .catch(err => { delete rlDataCache[name]; throw err; });
+  }
+  return rlDataCache[name];
+}
 function getMe() {
   const v = viewingAs();
   if (v) return v;
@@ -1128,7 +1166,7 @@ function feedWhat(e) {
 let teamLogosP = null;
 function teamLogos() {
   if (!teamLogosP) {
-    teamLogosP = fetch('data/franchise.json').then(r => r.json())
+    teamLogosP = rlData('franchise')
       .then(d => Object.fromEntries((d.players || []).filter(p => p.current_team_logo).map(p => [p.name, p.current_team_logo])))
       .catch(() => { teamLogosP = null; return {}; });
   }

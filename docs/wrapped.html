@@ -21,13 +21,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>html{background:#050505}</style>
 <title>Retirement League — Season Wrapped</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=41">
-<link rel="stylesheet" href="nav.css?v=34">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
+<link rel="stylesheet" href="theme.css?v=8289f9ac">
+<link rel="stylesheet" href="nav.css?v=0c5d8859">
 <style>
   /* ---------- Season Wrapped (site audit II #39) ----------
      One manager's finished season as a short run of cards, then a picture
@@ -67,7 +64,6 @@
   .wr-share img{ width:min(100%, 360px); aspect-ratio:4/5; border-radius:12px; border:1px solid var(--line); display:block; }
   .wr-share-btn{ min-height:44px; padding:0 22px; border-radius:999px; border:0; background:var(--gold); color:var(--ctl-on-ink); font:700 0.9rem/1 var(--body); cursor:pointer; }
   .wr-share-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:3px; }
-  .wr-empty{ margin-top:14px; }
 </style>
 </head>
 <body>
@@ -99,9 +95,9 @@
     <footer id="site-footer" data-note="Money is dues and prizes from that year's payout rules; parlays aren't counted"></footer>
   </div>
 
-<script src="nav.js?v=46"></script>
-<script src="page-common.js?v=44"></script>
-<script src="league-common.js?v=6"></script>
+<script src="nav.js?v=b6928293"></script>
+<script src="page-common.js?v=ff41b6f1"></script>
+<script src="league-common.js?v=bc5ee91a"></script>
 <script>
   const $ = id => document.getElementById(id);
   const f2 = n => Number(n).toFixed(2);
@@ -461,7 +457,7 @@
 
   Promise.all([
     LG.load(),
-    fetch('data/franchise.json').then(r => r.json()).catch(() => null),
+    rlData('franchise').catch(() => null),
     fetch('data/rule-changes.json').then(r => r.json()).catch(() => null),
   ]).then(([data, fr, rc]) => {
     D = data; F = fr; R = rc;
@@ -477,6 +473,6 @@
     render();
   }).catch(err => LG.showError('wr-out', err));
 </script>
-<script src="track.js?v=2" defer></script>
+<script src="track.js?v=0cbf34b9" defer></script>
 </body>
 </html>

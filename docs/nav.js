@@ -434,7 +434,7 @@
 
   function loadIndex() {
     if (!idx) {
-      idx = fetch('data/league.json').then(r => r.json()).then(d => {
+      idx = (typeof rlData === 'function' ? rlData('league') : fetch('data/league.json').then(r => r.json())).then(d => {
         const last = Math.max(...d.seasons.map(s => s.year));
         const byMgr = new Map(), byTeam = new Map(), byYear = new Map();
         for (const s of d.seasons) {
@@ -756,7 +756,7 @@
   let managers = null;
   function loadManagers() {
     if (!managers) {
-      managers = fetch('data/league.json').then(r => r.json()).then(d => {
+      managers = (typeof rlData === 'function' ? rlData('league') : fetch('data/league.json').then(r => r.json())).then(d => {
         const year = Math.max(...d.seasons.map(s => s.year));
         return [...new Set(d.seasons.filter(s => s.year === year).map(s => s.player))].sort((a, b) => a.localeCompare(b));
       }).catch(() => { managers = null; return []; });

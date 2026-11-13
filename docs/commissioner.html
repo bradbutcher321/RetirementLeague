@@ -22,13 +22,10 @@
 <meta name="apple-mobile-web-app-title" content="Retirement League">
 <style>html{background:#050505}</style>
 <title>Retirement League — Commissioner</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=41">
-<link rel="stylesheet" href="nav.css?v=34">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
+<link rel="stylesheet" href="theme.css?v=8289f9ac">
+<link rel="stylesheet" href="nav.css?v=0c5d8859">
 <style>
   /* ---------- Commissioner: a hub of tools ----------
      The page opens on a hub (grouped rows, one panel per group, a live status
@@ -55,11 +52,9 @@
   .cm-tag{ flex: none; font-size: var(--fs-label); font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); white-space: nowrap; }
   .cm-tag.warn{ color: var(--gold); border-color: var(--lead-line); background: var(--lead-tint); }
   .cm-tag.ok{ color: var(--turf); border-color: var(--win-line); }
-  .cm-groups{ display: grid; gap: 14px; }
   @media (min-width: 721px){
     .cm-cols{ grid-template-columns: 1fr 1fr; gap: 8px; }
     .cm-split{ grid-template-columns: 1fr 1fr; align-items: start; }
-    .cm-groups{ grid-template-columns: 1fr 1fr; align-items: start; }
   }
   .cm-section{ margin-bottom: 14px; }
 
@@ -75,8 +70,7 @@
   .cm-ic{ width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: var(--gold); background: var(--lead-tint); flex: none; }
   .cm-ic svg{ width: 17px; height: 17px; }
   .cm-chev{ width: 16px; height: 16px; color: var(--text-dim); flex: none; }
-  .cm-chev svg, .cm-lock svg{ width: 100%; height: 100%; display: block; }
-  .cm-lock{ width: 14px; height: 14px; color: var(--text-dim); flex: none; }
+  .cm-chev svg{ width: 100%; height: 100%; display: block; }
   @media (hover: hover){ a.cm-row:hover, button.cm-row:hover{ border-color: var(--lead-line); } }
   .cm-row:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .cm-dot{ display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--turf); margin-right: 6px; vertical-align: 1px; }
@@ -99,10 +93,6 @@
 
   .cm-mono{ width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--ctl-line); display: grid; place-items: center; font: 800 var(--fs-label)/1 var(--body); letter-spacing: 0.02em; flex: none; }
   .cm-mono.gold{ border-color: var(--gold); color: var(--gold); }
-  .cm-dots{ display: flex; flex-wrap: wrap; gap: 8px; }
-  .cm-dots .cm-mono{ width: 36px; height: 36px; }
-  .cm-dots .cm-mono.in{ border-color: var(--win-line); background: var(--win-tint); color: var(--turf); }
-  .cm-dots .cm-mono.out{ color: var(--text-dim); border-style: dashed; }
   .cm-bar{ height: 5px; border-radius: 99px; background: var(--ctl-bg); margin-top: 7px; overflow: hidden; }
   .cm-bar i{ display: block; height: 100%; background: var(--gold); border-radius: 99px; }
   .cm-val{ font-weight: 700; font-size: 0.84rem; font-variant-numeric: tabular-nums; flex: none; }
@@ -173,38 +163,13 @@
   .cm-tile b{ display: block; font: 800 1.5rem/1 var(--scoreboard); font-variant-numeric: tabular-nums; }
   .cm-tile span{ display: block; color: var(--text-dim); font-size: var(--fs-detail); margin-top: 4px; }
   .cm-tile small{ display: block; font-size: var(--fs-detail); line-height: 1.35; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
-  .cm-day{ display: grid; grid-template-columns: 62px 1fr 34px; align-items: center; gap: 10px; font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
-  .cm-day .cm-bar{ margin-top: 0; height: 8px; }
-  .cm-day em{ font-style: normal; text-align: right; font-weight: 700; }
-  .cm-day span{ color: var(--text-dim); }
 
   /* ---------- Audit VIII #17-22 ----------
      The hub leads with this week's parlay as a timeline (today's step lit,
      its buttons right there), then eight tools as tiles. */
   .tl{ display: grid; }
-  .tl-st{ display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 16px; }
-  .tl-st:last-child{ padding-bottom: 2px; }
-  .tl-st::before{ content: ''; position: absolute; left: 10px; top: 24px; bottom: 0; width: 2px; background: var(--line); }
-  .tl-st:last-child::before{ display: none; }
-  .tl-dot{ width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--ctl-line); display: grid; place-items: center; background: var(--surface-raised); position: relative; z-index: 1; }
-  .tl-dot svg{ width: 12px; height: 12px; }
-  .tl-st.done .tl-dot{ border-color: var(--turf); color: var(--turf); }
-  .tl-st.now .tl-dot{ border-color: var(--gold); background: var(--gold); color: var(--ctl-on-ink); }
-  .tl-w{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .tl-t{ font-weight: 600; font-size: 0.9rem; margin-top: 1px; overflow-wrap: anywhere; }
-  .tl-st.now .tl-t{ color: var(--gold); }
-  .tl-st:not(.done):not(.now) .tl-t{ color: var(--text-dim); }
-  .tl-s{ color: var(--text-dim); font-size: var(--fs-detail); margin-top: 2px; line-height: 1.4; }
-  .tl-acts{ margin-top: 10px; }
-  .cm-tool-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  @media (min-width: 721px){ .cm-tool-grid{ grid-template-columns: repeat(4, 1fr); } }
-  .cm-tool{ display: flex; flex-direction: column; min-height: 104px; padding: 12px; text-decoration: none; color: var(--text); min-width: 0; }
-  .cm-tool:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
-  .cm-tool-n{ font-weight: 700; font-size: 0.9rem; margin-top: 10px; }
-  .cm-tool-s{ color: var(--text-dim); font-size: var(--fs-detail); line-height: 1.35; margin-top: 2px; overflow-wrap: anywhere; }
-  .cm-tool.is-lead .cm-tool-s{ color: var(--gold); }
-  .cm-tool-s.bad{ color: var(--loss); }
-  @media (hover: hover){ .cm-tool:hover{ border-color: var(--lead-line); } }
+  
+  
 
   /* Managers: what varies per person, as three small marks. */
   .mg-ic{ display: flex; gap: 5px; flex: none; }
@@ -311,7 +276,6 @@
   .cm-bet-foot{ display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
   .cm-bet-foot .cm-fine{ margin: 0; }
   .cm-in:disabled{ opacity: 0.45; }
-  .cm-sk{ display: grid; gap: 14px; }
 
   /* Messages */
   .an-prev{ margin-top: 6px; padding: 12px; border-radius: 16px; background: var(--bg); border: 1px solid var(--line); }
@@ -341,9 +305,9 @@
     <footer id="site-footer" data-source="Tools kept by the league's Worker"></footer>
   </div>
 
-<script src="nav.js?v=46"></script>
-<script src="page-common.js?v=44"></script>
-<script src="lore-eggs.js?v=1"></script>
+<script src="nav.js?v=b6928293"></script>
+<script src="page-common.js?v=ff41b6f1"></script>
+<script src="lore-eggs.js?v=2ac42062"></script>
 <script>
 (function () {
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
@@ -472,7 +436,6 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { $('cm-toast').innerHTML = ''; }, 2400);
   }
-  const rowLink = (href, name, sub) => `<a class="cm-row item" href="${href}"><div class="cm-main"><div class="cm-name">${name}</div><div class="cm-sub">${sub}</div></div><span class="cm-chev">${I.chev}</span></a>`;
   const panel = (title, body, right, note) => `<section class="cm-section"><div class="glass"><div class="panel-title"><span>${title}</span>${right || ''}</div>${note ? `<div class="cm-note">${note}</div>` : ''}<div class="panel-body">${body}</div></div></section>`;
   const loading = '<div class="sk" aria-hidden="true" style="padding:4px 0;background:none;border:0;box-shadow:none"><div class="sk-item"><i style="width:64%;height:13px"></i><i style="width:42%;height:10px"></i></div><div class="sk-item"><i style="width:56%;height:13px"></i><i style="width:38%;height:10px"></i></div></div>';
   // A typed-in box's value, set from code. draw() reads every box back into

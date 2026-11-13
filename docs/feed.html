@@ -21,24 +21,11 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>html{background:#050505}</style>
 <title>Retirement League — Feed</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- The two font-family's woff2 files Google serves for the latin subset
-     at the weights this site uses -- one variable-font file per family
-     covers every weight declared, confirmed directly by fetching the
-     stylesheet below and comparing each @font-face block's url(). Starts
-     the actual font downloads immediately, in parallel with that
-     stylesheet fetch, instead of waiting to discover these same URLs
-     only after the stylesheet loads and is parsed -- avoids the
-     fallback-to-webfont swap (FOUT) that otherwise shows on a slow or
-     uncached load. If Google ever changes these hashed URLs, this just
-     degrades to a wasted (unused) preload, not a correctness issue -- the
-     stylesheet's own @font-face still fetches whatever the new URL is. -->
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=41">
-<link rel="stylesheet" href="nav.css?v=34">
+<!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
+<link rel="stylesheet" href="theme.css?v=8289f9ac">
+<link rel="stylesheet" href="nav.css?v=0c5d8859">
 <style>
   /* ---------- Feed (site audit III #7; redesigned 2026-10-16) ----------
      Every change to a starter's points this week, newest first, the whole
@@ -222,8 +209,6 @@
   .fd-row.td:not(.mine):not(.opp){ border-color: var(--lead-line); background: var(--lead-tint); }
   .fd-row.td .fd-p{ text-shadow: 0 0 16px color-mix(in srgb, currentColor 55%, transparent); }
   .fd-row.compact{ align-items: center; }
-  .fd-t{ color: var(--text-dim); font-size: var(--fs-label); padding-top: 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .fd-row.compact .fd-t{ padding-top: 0; }
   .fd-m{ min-width: 0; font-size: var(--fs-small); line-height: 1.35; }
   .fd-m b{ font-weight: 600; }
   .fd-m .what{ color: var(--text-dim); }
@@ -336,8 +321,8 @@
     <template id="fd-skel-tpl"><span class="sr-only">Loading…</span><div class="sk fd-skel" aria-hidden="true" style="padding:0;background:none;border:0;box-shadow:none"><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:70%;height:13px"></i><i style="width:45%;height:10px"></i></div><i style="width:48px;height:18px"></i></div><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:62%;height:13px"></i><i style="width:40%;height:10px"></i></div><i style="width:48px;height:18px"></i></div><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:66%;height:13px"></i><i style="width:50%;height:10px"></i></div><i style="width:48px;height:18px"></i></div></div></template>
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
-<script src="nav.js?v=46"></script>
-<script src="page-common.js?v=44"></script>
+<script src="nav.js?v=b6928293"></script>
+<script src="page-common.js?v=ff41b6f1"></script>
 <script>
   // The Worker saves a row each time a starter's points move
   // (worker/src/scoreFeed.js). Each poll asks only for the rows after the
@@ -432,7 +417,7 @@
   // Every week the Feed has, newest first, each with your result from
   // league.json (this week's from the board).
   let leagueP = null;
-  const leagueGames = () => (leagueP = leagueP || fetch('data/league.json').then(r => r.json()).catch(() => { leagueP = null; return null; }));
+  const leagueGames = () => (leagueP = leagueP || rlData('league').catch(() => { leagueP = null; return null; }));
   async function openWeeks() {
     if (document.getElementById('wk-sheet') || !liveWeek) return;
     const chip = document.getElementById('wk-chip');
@@ -885,11 +870,17 @@
   renderAsk();
   window.pageRefresh = () => load(true); // pull to refresh (page-common.js)
   load();
-  setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+  // Fast only around games (audit X #27, page-common.js pollMs).
+  const pace = () => pollMs(((board && board.games) || []).map(g => ({ state: g.state, ko: g.ko })));
+  setInterval(() => {
+    const ms = pace();
+    setRefreshNote(ms);
+    if (!document.hidden && Date.now() - lastAt >= ms - 500) load();
+  }, REFRESH_MS);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && Date.now() - lastAt >= REFRESH_MS) load();
   });
 </script>
-<script src="track.js?v=2" defer></script>
+<script src="track.js?v=0cbf34b9" defer></script>
 </body>
 </html>

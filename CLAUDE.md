@@ -23,3 +23,11 @@ inside an iPhone Pro Max frame and a desktop frame, with a slider or toggle
 to switch between them, using real league content and the site's real colors
 and backgrounds. Seeing both form factors side by side has made design
 choices much easier than describing options in text.
+
+## File versions (`?v=`)
+
+Pages load shared files as `nav.js?v=<hash>`. After changing any `.js` or
+`.css` in `docs/` that a page loads, run `python tools/stamp_versions.py`;
+it sets every `?v=` from the file's contents. `--check` reports stale ones.
+Live's own code is in `docs/live.js`, `docs/live.css` and `docs/live-cards.js`,
+not inside `index.html`.

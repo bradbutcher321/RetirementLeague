@@ -105,11 +105,6 @@ export async function collectChecks(env) {
   return parts.flat();
 }
 
-/** Every problem found right now: [{ id, text }]. */
-export async function collectProblems(env) {
-  return (await collectChecks(env)).filter((c) => !c.ok).map((c) => ({ id: c.id, text: c.text }));
-}
-
 /** The last full set of checks, kept so the Commissioner page can show
  * something before it has run a fresh one. */
 export async function saveSnapshot(env, checks) {

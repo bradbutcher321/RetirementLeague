@@ -10,9 +10,8 @@ const LG = (() => {
   const money = n => (n < 0 ? '−$' : '$') + Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
 
   async function load() {
-    const res = await fetch('data/league.json', { cache: 'no-cache' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
+    // A copy of the shared file (rlData, page-common.js): the games are reshaped below.
+    const data = Object.assign({}, await rlData('league'));
     data.games = data.games.map(g => ({
       year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7], gid: g[8], median: g[9],
     }));

@@ -83,7 +83,7 @@ const Rivals = (() => {
   // it can't be read (the tags and the sheet just don't appear).
   function ready() {
     if (!loading) {
-      loading = fetch('data/league.json', { cache: 'no-cache' }).then(r => r.json()).then(d => {
+      loading = (typeof rlData === 'function' ? rlData('league') : fetch('data/league.json', { cache: 'no-cache' }).then(r => r.json())).then(d => {
         const rows = d.games.map(g => ({ year: g[0], week: g[1], type: g[2], p1: g[3], p2: g[4], s1: g[5], s2: g[6], winner: g[7] }));
         const year = Math.max(...d.seasons.map(s => s.year));
         book = build(rows, d.seasons.filter(s => s.year === year).map(s => s.player));

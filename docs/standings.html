@@ -21,26 +21,13 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>html{background:#050505}</style>
 <title>Retirement League — Standings</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- The two font-family's woff2 files Google serves for the latin subset
-     at the weights this site uses -- one variable-font file per family
-     covers every weight declared, confirmed directly by fetching the
-     stylesheet below and comparing each @font-face block's url(). Starts
-     the actual font downloads immediately, in parallel with that
-     stylesheet fetch, instead of waiting to discover these same URLs
-     only after the stylesheet loads and is parsed -- avoids the
-     fallback-to-webfont swap (FOUT) that otherwise shows on a slow or
-     uncached load. If Google ever changes these hashed URLs, this just
-     degrades to a wasted (unused) preload, not a correctness issue -- the
-     stylesheet's own @font-face still fetches whatever the new URL is. -->
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=41">
-<link rel="stylesheet" href="nav.css?v=34">
-<link rel="stylesheet" href="league.css?v=8">
-<link rel="stylesheet" href="features.css?v=12">
+<!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
+<link rel="stylesheet" href="theme.css?v=8289f9ac">
+<link rel="stylesheet" href="nav.css?v=0c5d8859">
+<link rel="stylesheet" href="league.css?v=97fa7167">
+<link rel="stylesheet" href="features.css?v=4896c982">
 <style>
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
@@ -80,14 +67,11 @@
   .qrow .tm{ flex-wrap:wrap; }
   .qrow .tm .nm{ flex:none; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   /* Your Daddy / Your Bitch (rivals.js): on a line of its own, so it never squeezes the name. */
-  .qrow .rv-row{ margin-top:4px; } .qrow .rv-row .rv-tag{ margin-left:0; }
-  .qrow-main{ min-width:0; }
   /* All-Time titles and Sackos ride the line under the name ("12 szns ·
      3 titles · 2 Sackos", site audit II #10) instead of badges, which
      had to shrink and move above W/L once two of them met a narrow row.
      That leaves stats-col one line tall; top-aligning it keeps it level
      with the name however tall the meta lines run. */
-  .qrow .stats-col{ display:flex; flex-direction:column; align-items:flex-end; align-self:start; }
   .qrow .meta .t{ color:var(--gold); font-weight:600; }
   .qrow .meta .s{ color:var(--loss); font-weight:600; }
   @media (max-width:580px){
@@ -103,10 +87,8 @@
      part carries its own leading " · ", and the row is shifted left by
      that separator's width inside an overflow:hidden segment, so the
      separator of whichever part starts a line is clipped off. */
-  .qrow .meta-seg{ white-space:nowrap; display:block; overflow:hidden; }
-  .qrow .meta-sep{ display:none; }
-  .qrow .pfpa, .qrow .tally{ display:flex; flex-wrap:wrap; margin-left:-1em; }
-  .qrow .pfpa > span::before, .qrow .tally > span::before{ content:'·'; display:inline-block; width:1em; text-align:center; color:var(--text-dim); font-weight:400; }
+  .qrow .tally{ display:flex; flex-wrap:wrap; margin-left:-1em; }
+  .qrow .tally > span::before{ content:'·'; display:inline-block; width:1em; text-align:center; color:var(--text-dim); font-weight:400; }
 
   /* Every row opens that manager's Franchise page. */
   a.qrow{ color:inherit; text-decoration:none; }
@@ -281,12 +263,12 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=46"></script>
-<script src="page-common.js?v=44"></script>
-<script src="league-common.js?v=6"></script>
-<script src="race-sim.js?v=5"></script>
-<script src="race-ui.js?v=2"></script>
-<script src="rivals.js?v=4"></script>
+<script src="nav.js?v=b6928293"></script>
+<script src="page-common.js?v=ff41b6f1"></script>
+<script src="league-common.js?v=bc5ee91a"></script>
+<script src="race-sim.js?v=f60c97fb"></script>
+<script src="race-ui.js?v=43d4c514"></script>
+<script src="rivals.js?v=940fc493"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
   const { pct } = LG;
@@ -926,6 +908,6 @@
     riseIn(document.querySelectorAll('#standings-container .st-r'));
   }).catch(err => LG.showError('standings-container', err));
 </script>
-<script src="track.js?v=2" defer></script>
+<script src="track.js?v=0cbf34b9" defer></script>
 </body>
 </html>

@@ -96,7 +96,6 @@ a.plink{ border-bottom:1px dotted rgba(255,255,255,0.25); }
 .pl-hit b{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
 .pl-hit span:last-child{ color:var(--text-dim); font-size:var(--fs-label); margin-left:auto; white-space:nowrap; }
 @media (hover:hover){ .pl-hit:hover{ background:var(--item-hover); } }
-.pl-top{ display:grid; gap:2px; padding:0 4px; }
 .pl-hd{ padding:16px 16px 4px; }
 .pl-name{ font-family:var(--scoreboard); font-weight:800; font-size:2.1rem; line-height:1; }
 .pl-sub{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; margin-top:7px; color:var(--text-dim); font-size:var(--fs-small); }
@@ -111,9 +110,6 @@ a.plink{ border-bottom:1px dotted rgba(255,255,255,0.25); }
 .pl-d b{ font-family:var(--scoreboard); font-size:1rem; }
 .pl-d span{ color:var(--gold); font-size:var(--fs-small); font-weight:700; }
 .pl-d em{ font-style:normal; color:var(--text-dim); font-size:var(--fs-label); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.pl-feat{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:0 0 12px; padding-bottom:2px; }
-.pl-feat::-webkit-scrollbar{ display:none; }
-.pl-feat a{ flex:none; display:inline-flex; align-items:center; height:38px; padding:0 14px; border-radius:999px; border:1px solid var(--track-line); background:rgba(255,255,255,0.05); color:var(--text-dim); text-decoration:none; font-weight:600; font-size:var(--fs-small); white-space:nowrap; }
 
 /* ---------- Hall of Fame ---------- */
 .hf-views{ margin-bottom:12px; }
@@ -218,8 +214,6 @@ svg.elo{ width:100%; height:auto; display:block; }
 .rc-foot{ color:var(--text-dim); font-size:var(--fs-detail); line-height:1.5; padding:12px 4px 0; }
 .rc-grid{ display:grid; gap:14px; }
 @media (min-width:860px){ .rc-grid{ grid-template-columns:minmax(0,5fr) minmax(0,6fr); align-items:start; } }
-.rc-tag{ font-size:var(--fs-label); font-weight:800; letter-spacing:0.05em; text-transform:uppercase; margin-left:5px; vertical-align:1px; }
-.rc-tag.in{ color:var(--turf); } .rc-tag.out{ color:var(--loss); }
 
 /* Race tab: title odds and the money, and odds week by week (audit X #14, #15). */
 .rc-mls{ display:grid; gap:6px; }

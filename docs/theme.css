@@ -1,3 +1,10 @@
+/* The site's two fonts, served with the site (audit X #29) instead of from
+   Google: no second and third connection before a heading can draw. Each
+   is one variable file covering every weight used. Latin only, as Google's
+   latin subset was; anything outside it falls back to the system font. */
+@font-face{ font-family: 'Big Shoulders Display'; font-style: normal; font-weight: 600 900; font-display: swap; src: url(fonts/big-shoulders-display.woff2) format('woff2'); }
+@font-face{ font-family: 'Inter'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(fonts/inter.woff2) format('woff2'); }
+
 :root{
   /* Three sizes for small text (audit X #12), in place of thirteen between
      9px and 13px. Nothing on the site is smaller than --fs-label. */
@@ -237,14 +244,11 @@ body{
 .hero2-v{ position:relative; font-family:var(--scoreboard); font-weight:900; font-size:clamp(2.2rem,5.5vw,3.4rem); line-height:0.95; margin:9px 0 6px; color:#fff; }
 .hero2-v.turf{ color:var(--turf); }
 .hero2-v.loss{ color:var(--loss); }
-.hero2-side{ background:rgba(0,0,0,0.22); border-left:1px solid var(--line); padding:24px 28px; display:flex; flex-direction:column; gap:18px; justify-content:center; }
 /* center, not baseline: the label is 0.76rem body text and the value is a
    1.2rem scoreboard numeral, so sitting them on a shared baseline left the
    small label looking dropped against the big one. Centering the two halves
    against each other is what reads as level. */
 .hs{ display:flex; justify-content:space-between; align-items:center; gap:26px; }
-.hs-l{ color:var(--text-dim); font-size:var(--fs-detail); }
-.hs-r{ text-align:right; }
 /* Gold is the default for a hero's side values -- these are the figures the
    card exists to show. A tone class is the exception, for a value whose
    meaning is bad (a lost leg), not the rule. */
@@ -252,8 +256,6 @@ body{
    "106-87" into "106-" / "87". The label is what gives when space is tight;
    the number isn't. It also sets each tile's floor width, which keeps the
    strip from collapsing unevenly. */
-.hs-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; color:var(--gold); white-space:nowrap; }
-.hs-v.turf{ color:var(--turf); } .hs-v.loss{ color:var(--loss); } .hs-v.gold{ color:var(--gold); }
 
 /* Once the hero stacks, the side column stops being a column. A row of
    label-left/value-right lines reads fine beside the headline, but under it
@@ -262,25 +264,6 @@ body{
    tiles -- the shape the old .qtiles strip had, which is what this layout
    should have become all along. */
 @media (max-width:700px){
-  .hero2-side{
-    border-left:none;
-    border-top:1px solid var(--line);
-    flex-direction:row;
-    /* Never wrap. A strip that breaks leaves one orphan tile on a second
-       row, which reads as a mistake rather than a layout. Each tile takes
-       an equal share of the width instead (flex:1 1 0) and the type scales
-       down with the viewport, so five tiles stay on one line. */
-    flex-wrap:nowrap;
-    align-items:flex-start;
-    /* Spread across the full width rather than packed left. Because every
-       tile hugs its own content (no slack), the leftover is split evenly
-       between them, so the space you see between one stat and the next is
-       the same everywhere. The gap is the floor for when the row is tight
-       and there is no leftover to share. */
-    justify-content:space-between;
-    gap:clamp(12px, 3vw, 24px);
-    padding:20px 22px;
-  }
   /* Content-sized and packed from the left, NOT an equal share each
      (flex:1 1 0). Equal shares centre a one-character value like "3" in a
      cell as wide as "106-81"'s, so the gaps between the numbers you
@@ -300,13 +283,10 @@ body{
      into one order: value, then label, then sub. Reordering .hs-r as a unit
      would strand the sub between the value and the label. */
   .hs{ display:grid; justify-items:center; gap:2px; text-align:center; }
-  .hs-r{ display:contents; }
   /* Scale with the viewport between a floor and the sizes used beside the
      headline, so the row holds its shape instead of breaking. A label too
      long for its share wraps inside its own tile, which keeps the strip
      intact. */
-  .hs-v{ order:1; font-size:clamp(1rem, 5vw, 1.5rem); }
-  .hs-l{ order:2; font-size:clamp(0.5rem, 2.4vw, 0.66rem); text-transform:uppercase; letter-spacing:0.04em; line-height:1.25; }
 }
 
 /* ---------- Selectors: tab rows, segmented controls, dropdowns ----------
@@ -776,8 +756,6 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
    The container's gap and each column's floor width differ by page (how many
    columns, how wide the widest value is), so only the numeral and its
    caption -- identical everywhere -- live here. */
-.row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.row-stat span{ font-size: var(--fs-label); color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
 
 /* ---------- Disclosure chevron ----------
    The one arrow on everything that opens -- matchup cards, parlay legs, Game
@@ -1193,11 +1171,11 @@ footer{ color: var(--text-dim); font-size: var(--fs-small); text-align: center; 
 @media (min-width: 1080px){ .rl-toast{ top: calc(var(--nav-h, 60px) + 12px); } }
 
 /* Press feel (#14): cards and buttons give a little while pressed. */
-.glass:is(a, button), .item:is(a, button), a.hub-tile, .cm-tool, .cm-row, .cm-btn, .ft-btn, .you-link, .you-pick, .you-color, .gold-btn,
+.glass:is(a, button), .item:is(a, button), a.hub-tile, .cm-row, .cm-btn, .ft-btn, .you-link, .you-pick, .you-color, .gold-btn,
 .hdr-me, .hdr-bell, .hdr-back, .wk-chip{ transition: transform .14s ease; }
-:is(.glass:is(a, button), .item:is(a, button), a.hub-tile, .cm-tool, .cm-row, .you-link):active{ transform: scale(0.98); }
+:is(.glass:is(a, button), .item:is(a, button), a.hub-tile, .cm-row, .you-link):active{ transform: scale(0.98); }
 :is(.cm-btn, .ft-btn, .you-pick, .you-color, .gold-btn, .hdr-me, .hdr-bell, .hdr-back, .wk-chip):active{ transform: scale(0.95); }
-@media (prefers-reduced-motion: reduce){ :is(.glass, .item, .hub-tile, .cm-tool, .cm-row, .cm-btn, .ft-btn, .you-link, .you-pick, .you-color, .gold-btn, .hdr-me, .hdr-bell, .hdr-back, .wk-chip):active{ transform: none; } }
+@media (prefers-reduced-motion: reduce){ :is(.glass, .item, .hub-tile, .cm-row, .cm-btn, .ft-btn, .you-link, .you-pick, .you-color, .gold-btn, .hdr-me, .hdr-bell, .hdr-back, .wk-chip):active{ transform: none; } }
 
 /* One row (#1): no "Retirement League" line over the title (the whole site
    is the league). The title shares its row with the bell and your monogram

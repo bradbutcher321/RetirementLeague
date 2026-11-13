@@ -37,6 +37,44 @@ EXT_BY_TYPE = {
 }
 MAX_BYTES = 5 * 1024 * 1024
 TIMEOUT = 10
+# Logos are drawn in circles 24 to 68px wide; at 2x that's 136. A copy is
+# scaled so its shorter side is SIZE (audit X #30): the originals ran to
+# 1300x919, and one animated GIF was 282KB.
+SIZE = 160
+
+
+def shrink(path):
+    """Scales a raster logo down in place (same name, same format). An
+    animated GIF keeps its first frame. Needs Pillow; without it the file
+    stays as fetched."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+    ext = os.path.splitext(path)[1].lower()
+    if ext not in (".png", ".jpg", ".jpeg", ".gif", ".webp"):
+        return False
+    try:
+        with Image.open(path) as im:
+            im.seek(0)
+            w, h = im.size
+            if min(w, h) <= SIZE and os.path.getsize(path) < 60 * 1024:
+                return False
+            k = SIZE / min(w, h) if min(w, h) > SIZE else 1
+            frame = im.convert("RGBA") if im.mode in ("P", "LA", "RGBA") or "transparency" in im.info else im.convert("RGB")
+            out = frame.resize((max(1, round(w * k)), max(1, round(h * k))), Image.LANCZOS)
+        if ext in (".jpg", ".jpeg"):
+            out.convert("RGB").save(path, "JPEG", quality=85, optimize=True, progressive=True)
+        elif ext == ".png":
+            out.save(path, "PNG", optimize=True)
+        elif ext == ".webp":
+            out.save(path, "WEBP", quality=85)
+        else:
+            out.convert("RGBA").convert("P", palette=Image.ADAPTIVE, colors=255).save(path, "GIF", optimize=True)
+        return True
+    except Exception as e:  # a file Pillow can't read stays as it is
+        print(f"  logo: couldn't shrink {os.path.basename(path)} ({e.__class__.__name__})")
+        return False
 
 
 def _stem(url):
@@ -123,8 +161,15 @@ def mirror(url, cache):
         name = stem + EXT_BY_TYPE[ctype]
         with open(os.path.join(LOGO_DIR, name), "wb") as f:
             f.write(data)
+        shrink(os.path.join(LOGO_DIR, name))
     cache[url] = SITE_PREFIX + name
     return cache[url]
+
+
+def shrink_all():
+    """Shrinks every logo already on disk (run once by hand: python logo_mirror.py)."""
+    done = [n for n in sorted(os.listdir(LOGO_DIR)) if shrink(os.path.join(LOGO_DIR, n))]
+    print(f"Shrank {len(done)} logos")
 
 
 def mirror_player_logos(players):
@@ -136,3 +181,7 @@ def mirror_player_logos(players):
             meta["logo_url"] = mirror(meta.get("logo_url"), cache)
     ok = sum(1 for v in cache.values() if v)
     print(f"Team logos: {ok} of {len(cache)} distinct URLs served from {SITE_PREFIX}")
+
+
+if __name__ == "__main__":
+    shrink_all()

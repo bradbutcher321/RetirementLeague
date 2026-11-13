@@ -21,24 +21,11 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>html{background:#050505}</style>
 <title>Retirement League — Parlay Stats</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- The two font-family's woff2 files Google serves for the latin subset
-     at the weights this site uses -- one variable-font file per family
-     covers every weight declared, confirmed directly by fetching the
-     stylesheet below and comparing each @font-face block's url(). Starts
-     the actual font downloads immediately, in parallel with that
-     stylesheet fetch, instead of waiting to discover these same URLs
-     only after the stylesheet loads and is parsed -- avoids the
-     fallback-to-webfont swap (FOUT) that otherwise shows on a slow or
-     uncached load. If Google ever changes these hashed URLs, this just
-     degrades to a wasted (unused) preload, not a correctness issue -- the
-     stylesheet's own @font-face still fetches whatever the new URL is. -->
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=41">
-<link rel="stylesheet" href="nav.css?v=34">
+<!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
+<link rel="stylesheet" href="theme.css?v=8289f9ac">
+<link rel="stylesheet" href="nav.css?v=0c5d8859">
 <style>
   /* Four tabs and the Year on one row (redesign 2026-10-22): Parlays (the
      parlay itself), Leaders (every manager ranking, one card a stat),
@@ -284,24 +271,13 @@
     <footer id="site-footer" data-source="Data from the league sheet"></footer>
   </div>
 
-<script src="nav.js?v=46"></script>
-<script src="page-common.js?v=44"></script>
-<script src="parlay-common.js?v=1"></script>
+<script src="nav.js?v=b6928293"></script>
+<script src="page-common.js?v=ff41b6f1"></script>
+<script src="parlay-common.js?v=3418fa92"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
 
-  function fmtOdds(o) {
-    if (o === null || o === undefined) return '—';
-    const n = Math.round(o);
-    return (n > 0 ? '+' : '') + n.toLocaleString();
-  }
-  function fmtMoney(n) {
-    if (n === null || n === undefined) return '—';
-    return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
-  }
-  function fmtPct(n) {
-    return n === null || n === undefined ? '—' : Number(n).toFixed(1) + '%';
-  }
+  // fmtOdds, fmtMoney and fmtPct live in parlay-common.js (audit X #33).
   // ---------- Stat cards ----------
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const pill = (text, up) => `<span class="pill ${up ? 'up' : 'down'}">${text}</span>`;
@@ -856,7 +832,7 @@
       function loadTeams() {
         if (MGR.teamsAsked) return;
         MGR.teamsAsked = true;
-        fetch('data/franchise.json', { cache: 'no-cache' }).then(r => r.json()).then(d => {
+        rlData('franchise').then(d => {
           MGR.teams = Object.fromEntries((d.players || []).map(p => [p.name, { team: p.current_team_name, logo: p.current_team_logo }]));
           if (TABS[activeCategory].managers) renderStats();
         }).catch(() => {});
@@ -961,6 +937,6 @@
       document.getElementById('stats-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading parlay stats.</div>';
     });
 </script>
-<script src="track.js?v=2" defer></script>
+<script src="track.js?v=0cbf34b9" defer></script>
 </body>
 </html>

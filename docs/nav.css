@@ -191,8 +191,6 @@
 .hdr-back:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (hover: hover){ .hdr-back:hover{ background: rgba(60,60,60,0.6); } }
 .header-row:has(.hdr-tools:not(:empty)) .eyebrow{ padding-right: 140px; }
-.hdr-tools .wk-step{ margin: 0; height: 38px; border-radius: 19px; background: rgba(40,40,40,0.55); border: 1px solid rgba(255,255,255,0.10); box-shadow: inset 0 1px 0 rgba(255,255,255,0.10); }
-.hdr-tools .wk-step button{ width: 36px; height: 36px; }
 .hdr-me, .fold-me{
   position: relative;
   flex: none;

@@ -80,3 +80,19 @@ function finalChipHtml(p) {
   const cls = /^[\d\s.–—-]+$/.test(text) || unitText ? 'fin' : 'fin is-text';
   return `<span class="${cls}" title="${esc(text)}">${esc(text)}</span>`;
 }
+
+// The parlay pages' number formats, once (audit X #33; they were copied
+// into Parlay Results and Parlay Stats): odds "+1,250", money "$54,513",
+// a rate "40.7%".
+function fmtOdds(o) {
+  if (o === null || o === undefined) return '—';
+  const n = Math.round(o);
+  return (n > 0 ? '+' : '') + n.toLocaleString();
+}
+function fmtMoney(n) {
+  if (n === null || n === undefined) return '—';
+  return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+function fmtPct(n) {
+  return n === null || n === undefined ? '—' : Number(n).toFixed(1) + '%';
+}

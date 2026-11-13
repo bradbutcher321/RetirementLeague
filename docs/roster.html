@@ -21,14 +21,11 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>html{background:#050505}</style>
 <title>Retirement League — Your Roster</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=41">
-<link rel="stylesheet" href="nav.css?v=34">
-<link rel="stylesheet" href="features.css?v=12">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
+<link rel="stylesheet" href="theme.css?v=8289f9ac">
+<link rel="stylesheet" href="nav.css?v=0c5d8859">
+<link rel="stylesheet" href="features.css?v=4896c982">
 <style>
   /* Your Roster (site audit VI #11, #12, #13). Every card is one glass
      panel; the league-wide grid for a card sits right under it. */
@@ -123,9 +120,9 @@
     <div id="view"><span class="sr-only">Loading…</span></div>
     <footer id="site-footer"></footer>
   </div>
-<script src="nav.js?v=46"></script>
-<script src="page-common.js?v=44"></script>
-<script src="league-common.js?v=6"></script>
+<script src="nav.js?v=b6928293"></script>
+<script src="page-common.js?v=ff41b6f1"></script>
+<script src="league-common.js?v=bc5ee91a"></script>
 <script>
   // Your Roster (site audit VI #11, #12, #13): what ESPN's app doesn't add up.
   //   Byes ahead: your starters whose NFL team is off, week by week, and who
@@ -302,6 +299,6 @@
     riseIn(document.querySelectorAll('#view .glass'));
   }).catch(err => { $('view').innerHTML = `<div class="loading-row">Couldn’t load your roster (${esc(err.message)}).</div>`; });
 </script>
-<script src="track.js?v=2" defer></script>
+<script src="track.js?v=0cbf34b9" defer></script>
 </body>
 </html>

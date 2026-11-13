@@ -22,13 +22,10 @@
 <meta name="apple-mobile-web-app-title" content="Retirement League">
 <style>html{background:#050505}</style>
 <title>Retirement League — Parlay Legs</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=41">
-<link rel="stylesheet" href="nav.css?v=34">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
+<link rel="stylesheet" href="theme.css?v=8289f9ac">
+<link rel="stylesheet" href="nav.css?v=0c5d8859">
 <style>
   /* ---------- Parlay Legs ----------
      Each manager enters their own leg for the coming week (worker/src/legs.js).
@@ -106,8 +103,6 @@
   /* A game: away row over home row; spread, total, winner. */
   .gm{ border: 1px solid var(--item-line); background: var(--item); border-radius: 12px; padding: 10px 10px 4px; margin-top: 8px; }
   .gm.open{ border-color: var(--lead-line); }
-  .gm-top{ display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 20px; }
-  .gm-top .t{ color: var(--text-dim); font-size: var(--fs-detail); font-weight: 600; }
   .gm-grid{ display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 74px); gap: 5px; align-items: center; margin-top: 6px; }
   @media (min-width: 900px){ .gm-grid{ grid-template-columns: minmax(0, 1fr) repeat(3, 96px); } }
   .gm-grid .hd{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; }
@@ -275,9 +270,9 @@
     <footer id="site-footer" data-source="Lines from Hard Rock Bet · Games from ESPN"></footer>
   </div>
 
-<script src="nav.js?v=46"></script>
-<script src="page-common.js?v=44"></script>
-<script src="parlay-note.js?v=3"></script>
+<script src="nav.js?v=b6928293"></script>
+<script src="page-common.js?v=ff41b6f1"></script>
+<script src="parlay-note.js?v=b64ebfa0"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const ESPN = 'https://site.web.api.espn.com/apis/site/v2/sports';
@@ -1537,6 +1532,6 @@
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadBoard(); });
   loadBoard();
 </script>
-<script src="track.js?v=2" defer></script>
+<script src="track.js?v=0cbf34b9" defer></script>
 </body>
 </html>
