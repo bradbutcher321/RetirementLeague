@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=33">
+<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="nav.css?v=34">
 <style>
   .wrap.wide{ max-width: 1180px; }
 
@@ -52,7 +52,7 @@
   .legend-chip{ height: 44px; padding: 0; border: none; background: none; cursor: pointer; font: inherit; color: var(--text-dim); }
   .legend-chip > span{
     display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 999px;
-    border: 1px solid var(--ctl-line); background: var(--ctl-bg); font-size: 0.74rem; font-weight: 600;
+    border: 1px solid var(--ctl-line); background: var(--ctl-bg); font-size: var(--fs-detail); font-weight: 600;
     transition: background-color .2s, border-color .2s, color .2s;
   }
   @media (hover: hover){
@@ -62,8 +62,8 @@
   .legend-chip:focus-visible{ outline: none; }
   .legend-chip:focus-visible > span{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .legend-swatch{ width: 10px; height: 10px; border-radius: 2px; }
-  .legend-hint{ font-size: 0.72rem; color: var(--text-dim); margin-left: 4px; }
-  .legend-clear{ height: 44px; padding: 0 6px; border: none; background: none; cursor: pointer; font: 600 0.74rem var(--body); color: var(--gold); }
+  .legend-hint{ font-size: var(--fs-detail); color: var(--text-dim); margin-left: 4px; }
+  .legend-clear{ height: 44px; padding: 0 6px; border: none; background: none; cursor: pointer; font: 600 var(--fs-detail) var(--body); color: var(--gold); }
   .pick-cell, .sb-pick, table.board thead th{ transition: opacity .25s ease; }
   .pick-cell.dim{ opacity: 0.16; }
   .pick-cell.found{ outline: 2px solid var(--gold); outline-offset: 1px; }
@@ -80,7 +80,7 @@
 
   /* ---------- Simple "by team" view: one column per manager, picks listed
      top to bottom, instead of the snake-order grid ---------- */
-  .simple-label{ display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .simple-label{ display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-size: var(--fs-detail); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
   .simple-label::after{ content: ''; flex: 1; height: 1px; background: var(--line); }
   /* Hard-capped at 3 columns (rather than auto-fit's implicit count) --
      room for the pro-team column means 4-up got too tight for names --
@@ -145,10 +145,10 @@
      it a little extra breathing room off the pick number specifically. */
   .sb-pick{ display: grid; grid-template-columns: 46px 30px 1fr 34px; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
   .sb-pick:first-of-type{ border-top: none; padding-top: 0; }
-  .sb-badge{ display: flex; align-items: center; justify-content: center; font-family: var(--scoreboard); font-weight: 800; font-size: 0.6rem; color: #fff; padding: 3px 4px; border-radius: 5px; white-space: nowrap; overflow: hidden; }
-  .sb-overall{ color: var(--text-dim); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+  .sb-badge{ display: flex; align-items: center; justify-content: center; font-family: var(--scoreboard); font-weight: 800; font-size: var(--fs-label); color: #fff; padding: 3px 4px; border-radius: 5px; white-space: nowrap; overflow: hidden; }
+  .sb-overall{ color: var(--text-dim); font-size: var(--fs-small); font-variant-numeric: tabular-nums; }
   .sb-player{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 4px; }
-  .sb-team{ color: var(--text-dim); font-size: 0.68rem; font-weight: 600; text-transform: uppercase; text-align: right; white-space: nowrap; }
+  .sb-team{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 600; text-transform: uppercase; text-align: right; white-space: nowrap; }
   @media (max-width: 799px){
     /* One team per page has room for every name except the odd outlier on
        a small phone (Marquez Valdes-Scantling at 375px) -- wrap that one
@@ -167,7 +167,7 @@
   table.board th, table.board td{ padding: 0; }
   table.board thead th{
     width: 92px; background: var(--surface-raised); color: var(--text); font-family: var(--scoreboard);
-    font-weight: 700; font-size: 0.78rem; padding: 8px 4px; text-align: center; white-space: nowrap;
+    font-weight: 700; font-size: var(--fs-small); padding: 8px 4px; text-align: center; white-space: nowrap;
     position: sticky; top: 0; z-index: 2; border-radius: 4px;
   }
   /* The header is a button that picks out the manager's column. */
@@ -178,8 +178,8 @@
   }
   .mgr-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
   table.board thead th.on{ box-shadow: inset 0 0 0 1px var(--gold); }
-  table.board thead th .slot-manager{ display: block; color: var(--gold); font-size: 0.74rem; margin-bottom: 2px; }
-  table.board thead th .slot-team{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.64rem; max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto; }
+  table.board thead th .slot-manager{ display: block; color: var(--gold); font-size: var(--fs-detail); margin-bottom: 2px; }
+  table.board thead th .slot-team{ display: block; color: var(--text-dim); font-weight: 500; font-size: var(--fs-label); max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto; }
 
   .pick-cell{
     width: 92px; height: 64px; padding: 6px 6px !important; vertical-align: top;
@@ -189,23 +189,23 @@
   .pick-top{ display: flex; align-items: center; justify-content: space-between; gap: 4px; overflow: hidden; }
   .pick-tag{ display: flex; align-items: center; gap: 3px; min-width: 0; overflow: hidden; }
   .pick-rank{
-    flex-shrink: 0; font-weight: 800; font-size: 0.64rem; font-family: var(--scoreboard);
+    flex-shrink: 0; font-weight: 800; font-size: var(--fs-label); font-family: var(--scoreboard);
     color: #fff; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.01em; white-space: nowrap;
   }
   .pick-team{
-    color: #111; font-weight: 700; font-size: 0.58rem;
+    color: #111; font-weight: 700; font-size: var(--fs-label);
     background: rgba(255,255,255,0.88); padding: 1px 4px; border-radius: 3px;
     white-space: nowrap; overflow: hidden;
   }
-  .pick-overall{ flex-shrink: 0; font-size: 0.6rem; font-variant-numeric: tabular-nums; color: var(--text-dim); white-space: nowrap; }
-  .pick-player{ font-size: 0.72rem; font-weight: 700; line-height: 1.18; margin-top: 4px; white-space: nowrap; overflow: hidden; color: var(--text); }
+  .pick-overall{ flex-shrink: 0; font-size: var(--fs-label); font-variant-numeric: tabular-nums; color: var(--text-dim); white-space: nowrap; }
+  .pick-player{ font-size: var(--fs-detail); font-weight: 700; line-height: 1.18; margin-top: 4px; white-space: nowrap; overflow: hidden; color: var(--text); }
   .pick-player span{ display: block; }
-  .pick-arrow{ position: absolute; bottom: 2px; right: 4px; font-size: 0.62rem; line-height: 1; color: var(--text-dim); }
+  .pick-arrow{ position: absolute; bottom: 2px; right: 4px; font-size: var(--fs-label); line-height: 1; color: var(--text-dim); }
   .pick-keeper{
     position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%;
     background: var(--gold); box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
   }
-  .pick-empty{ color: var(--text-dim); font-size: 0.7rem; text-align: center; padding-top: 22px !important; height: 100%; }
+  .pick-empty{ color: var(--text-dim); font-size: var(--fs-label); text-align: center; padding-top: 22px !important; height: 100%; }
 
   /* Position color coding — tinted glass: a soft wash + border, with the
      rank as a solid-color pill so the position still reads at a glance
@@ -229,24 +229,24 @@
      line for it -- and as a column in By Team. */
   table.board.has-pts .pick-cell{ height: 76px; }
   @media (max-width: 480px){ table.board.has-pts .pick-cell{ height: 72px; } }
-  .pick-pts{ position: absolute; bottom: 3px; left: 6px; font-size: 0.62rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); opacity: 0.8; line-height: 1; }
+  .pick-pts{ position: absolute; bottom: 3px; left: 6px; font-size: var(--fs-label); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); opacity: 0.8; line-height: 1; }
   .simple-board.has-pts .sb-pick{ grid-template-columns: 46px 30px 1fr 34px 44px; }
-  .sb-pts{ text-align: right; font-size: 0.78rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .sb-pts{ text-align: right; font-size: var(--fs-small); font-weight: 700; font-variant-numeric: tabular-nums; }
 
   /* The Value view: the draft's best value and biggest bust, then every
      manager's draft graded against that year's field. */
-  .dv-note{ color: var(--text-dim); font-size: 0.74rem; padding: 4px 22px 0; }
+  .dv-note{ color: var(--text-dim); font-size: var(--fs-detail); padding: 4px 22px 0; }
   .dv-pair{ margin-bottom: 14px; }
   .dv-item{ padding: 14px 16px; }
   .dv-top{ display: flex; align-items: center; gap: 8px; min-width: 0; }
   .dv-name{ font-weight: 700; font-size: 1rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dv-meta{ color: var(--text-dim); font-size: 0.74rem; margin-top: 6px; }
+  .dv-meta{ color: var(--text-dim); font-size: var(--fs-detail); margin-top: 6px; }
   .dv-v{ display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
   .dv-v b{ font-family: var(--scoreboard); font-size: 1.5rem; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
-  .dv-v span{ color: var(--text-dim); font-size: 0.74rem; }
+  .dv-v span{ color: var(--text-dim); font-size: var(--fs-detail); }
   .dv-v .win{ color: var(--turf); font-weight: 600; }
   .dv-v .loss{ color: var(--loss); font-weight: 600; }
-  .chip{ font-size: 0.7rem; font-weight: 600; color: var(--text-dim); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+  .chip{ font-size: var(--fs-label); font-weight: 600; color: var(--text-dim); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
   /* The grade takes the rank column: a letter in a rounded square, coloured
      only where it means something (A/B good, D/F bad), the letter always
      saying it too. */
@@ -272,11 +272,11 @@
   .lv-top .panel-body{ padding: 12px 14px 14px; }
   .lv-item{ padding: 14px 16px; }
   .lv-who{ font-family: var(--scoreboard); font-weight: 800; font-size: 2.3rem; line-height: 1; color: var(--gold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lv-sub{ color: var(--text-dim); font-size: 0.78rem; margin-top: 6px; }
+  .lv-sub{ color: var(--text-dim); font-size: var(--fs-small); margin-top: 6px; }
   .lv-next{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
   .lv-next .chip b{ color: var(--text); font-weight: 600; }
   .lv-btns{ display: flex; align-items: center; gap: 8px; }
-  .lv-tv{ height: 44px; padding: 0 4px; border: none; background: none; cursor: pointer; font: 600 0.74rem var(--body); color: var(--gold); }
+  .lv-tv{ height: 44px; padding: 0 4px; border: none; background: none; cursor: pointer; font: 600 var(--fs-detail) var(--body); color: var(--gold); }
   .lv-tv:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
   .lv-exit{ display: none; }
   .lv-extra{ display: grid; gap: 14px; margin-top: 14px; }
@@ -288,7 +288,7 @@
   .lv-row.reach{ border-color: var(--loss-line); background: var(--loss-tint); }
   .lv-no{ color: var(--text-dim); font-family: var(--scoreboard); font-size: 0.95rem; text-align: center; font-variant-numeric: tabular-nums; }
   .lv-nm{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lv-mt{ color: var(--text-dim); font-size: 0.72rem; margin-top: 1px; }
+  .lv-mt{ color: var(--text-dim); font-size: var(--fs-detail); margin-top: 1px; }
   .lv-delta{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; color: var(--text-dim); white-space: nowrap; }
   .lv-delta.up{ color: var(--turf); } .lv-delta.down{ color: var(--loss); }
   .chip.up{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }

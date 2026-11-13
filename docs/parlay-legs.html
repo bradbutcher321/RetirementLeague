@@ -27,8 +27,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=33">
+<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="nav.css?v=34">
 <style>
   /* ---------- Parlay Legs ----------
      Each manager enters their own leg for the coming week (worker/src/legs.js).
@@ -36,7 +36,7 @@
      so one tap picks the game, the bet and the side. A leg someone already
      has, and its opposite, carry their initials before you tap. */
   .chips{ display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-  .chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: var(--text); white-space: nowrap; }
+  .chip{ display: inline-flex; align-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: var(--fs-small); color: var(--text); white-space: nowrap; }
   .chip.gold{ color: var(--gold); border-color: var(--lead-line); background: var(--lead-tint); font-weight: 600; }
   .chip.loss{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); font-weight: 600; }
   .cols{ display: grid; gap: 14px; align-items: start; }
@@ -53,7 +53,7 @@
     background: var(--ctl-bg-solid) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238E8E8C' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center; }
   .acts a.gold-btn{ display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
   .panel-body{ padding: 12px 14px 16px; }
-  .fine{ color: var(--text-dim); font-size: 0.8rem; margin: 10px 0 0; }
+  .fine{ color: var(--text-dim); font-size: var(--fs-small); margin: 10px 0 0; }
   .fine b{ color: var(--text); font-weight: 600; }
   .empty{ color: var(--text-dim); font-size: 0.86rem; padding: 6px 2px; margin: 0; }
   .empty.bad{ color: var(--loss); font-weight: 600; }
@@ -65,10 +65,10 @@
   .pl-leg-name{ font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pl-leg.out .pl-leg-name{ color: var(--text-dim); font-weight: 600; }
   .pl-leg-odds{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .pl-leg.out .pl-leg-odds{ font-family: var(--body); font-weight: 500; font-size: 0.78rem; color: var(--text-dim); }
+  .pl-leg.out .pl-leg-odds{ font-family: var(--body); font-weight: 500; font-size: var(--fs-small); color: var(--text-dim); }
   .pl-leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 3px; overflow-wrap: anywhere; }
   .pl-leg-bet b{ color: var(--text); font-weight: 600; }
-  .pl-leg-game{ display: flex; align-items: center; gap: 10px; margin-top: 7px; font-size: 0.8rem; color: var(--text-dim); }
+  .pl-leg-game{ display: flex; align-items: center; gap: 10px; margin-top: 7px; font-size: var(--fs-small); color: var(--text-dim); }
   .pl-leg-game .sport{ color: var(--gold); font-weight: 700; }
   .badge.gold{ background: none; }
 
@@ -79,12 +79,12 @@
   .gold-btn:focus-visible, .pick:focus-visible, .cell:focus-visible, .pbtn:focus-visible, .link-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
   .acts{ display: flex; gap: 8px; margin-top: 12px; }
   .acts .gold-btn{ flex: 1 1 0; }
-  .link-btn{ background: none; border: 0; color: var(--gold); font: 600 0.82rem var(--body); cursor: pointer; padding: 12px 0; min-height: 44px; text-align: left; }
+  .link-btn{ background: none; border: 0; color: var(--gold); font: 600 var(--fs-small) var(--body); cursor: pointer; padding: 12px 0; min-height: 44px; text-align: left; }
 
   /* Fields you type in get text selection back (theme.css turns it off);
      16px keeps iPhone Safari from zooming in. */
   .field{ display: grid; gap: 4px; min-width: 0; margin-top: 10px; }
-  .field > span{ color: var(--text-dim); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .field > span{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
   .in{ width: 100%; min-width: 0; height: 44px; padding: 0 12px; background: var(--ctl-bg-solid); color: var(--text); border: 1px solid var(--ctl-line); border-radius: 10px; font: 16px var(--body); user-select: text; -webkit-user-select: text; }
   .in:focus{ outline: none; border-color: var(--gold); }
   textarea.in{ height: auto; min-height: 92px; padding: 10px 12px; resize: vertical; line-height: 1.4; }
@@ -98,35 +98,35 @@
   .big{ min-height: 50px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--ctl-line); background: var(--ctl-bg); color: var(--text); cursor: pointer; font: 700 0.9rem var(--body); }
   .big.on{ border-color: var(--gold); background: var(--lead-tint); }
 
-  .day{ color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 16px 0 6px; }
+  .day{ color: var(--text-dim); font-size: var(--fs-detail); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 16px 0 6px; }
   .day:first-child{ margin-top: 0; }
   .monos{ display: inline-flex; gap: 4px; }
-  .mono{ font-size: 0.62rem; font-weight: 700; padding: 3px 6px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); line-height: 1; }
+  .mono{ font-size: var(--fs-label); font-weight: 700; padding: 3px 6px; border-radius: 999px; border: 1px solid var(--lead-line); color: var(--gold); background: var(--lead-tint); line-height: 1; }
 
   /* A game: away row over home row; spread, total, winner. */
   .gm{ border: 1px solid var(--item-line); background: var(--item); border-radius: 12px; padding: 10px 10px 4px; margin-top: 8px; }
   .gm.open{ border-color: var(--lead-line); }
   .gm-top{ display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 20px; }
-  .gm-top .t{ color: var(--text-dim); font-size: 0.76rem; font-weight: 600; }
+  .gm-top .t{ color: var(--text-dim); font-size: var(--fs-detail); font-weight: 600; }
   .gm-grid{ display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 74px); gap: 5px; align-items: center; margin-top: 6px; }
   @media (min-width: 900px){ .gm-grid{ grid-template-columns: minmax(0, 1fr) repeat(3, 96px); } }
-  .gm-grid .hd{ color: var(--text-dim); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; }
+  .gm-grid .hd{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; }
   .gm-grid .tm{ font-weight: 600; font-size: 0.9rem; min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
   .cell{ position: relative; height: 46px; border-radius: 8px; border: 1px solid var(--ctl-line); background: var(--ctl-bg); color: var(--text); cursor: pointer; display: grid; align-content: center; justify-items: center; padding: 0; min-width: 0; font-family: var(--body); }
-  .cell b{ font-weight: 700; font-size: 0.82rem; font-variant-numeric: tabular-nums; line-height: 1.15; }
-  .cell span{ color: var(--gold); font-size: 0.72rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .cell b{ font-weight: 700; font-size: var(--fs-small); font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .cell span{ color: var(--gold); font-size: var(--fs-detail); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.15; }
   .cell.on{ border-color: var(--gold); background: var(--lead-tint); }
   .cell.taken{ border-color: var(--loss-line); background: var(--loss-tint); }
   .cell.taken b, .cell.taken span{ color: var(--text-dim); }
-  .cell .who{ position: absolute; top: -7px; right: -4px; color: var(--loss); background: #2A1512; border: 1px solid var(--loss-line); border-radius: 999px; padding: 2px 5px; line-height: 1; font-size: 0.62rem; font-weight: 700; }
+  .cell .who{ position: absolute; top: -7px; right: -4px; color: var(--loss); background: #2A1512; border: 1px solid var(--loss-line); border-radius: 999px; padding: 2px 5px; line-height: 1; font-size: var(--fs-label); font-weight: 700; }
   .cell.none{ opacity: 0.35; cursor: default; }
   .more{ border-top: 1px solid var(--line); margin-top: 8px; padding: 10px 0 8px; }
   .plist{ display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; margin-top: 10px; }
   .pcol{ display: grid; gap: 6px; align-content: start; min-width: 0; }
-  .pcol > span{ color: var(--text-dim); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; overflow-wrap: anywhere; }
+  .pcol > span{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; overflow-wrap: anywhere; }
   .pbtn{ min-height: 44px; padding: 4px 10px; border-radius: 10px; border: 1px solid var(--item-line); background: var(--item); color: var(--text); cursor: pointer; text-align: left; font: 600 0.84rem var(--body); display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 0; }
   .pbtn > span{ min-width: 0; overflow-wrap: anywhere; }
-  .pbtn i{ font-style: normal; color: var(--text-dim); font-size: 0.68rem; font-weight: 700; flex: none; }
+  .pbtn i{ font-style: normal; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; flex: none; }
   .pbtn i.price{ color: var(--gold); }
   .pbtn i.who{ color: var(--loss); }
   .pbtn.on{ border-color: var(--gold); background: var(--lead-tint); }
@@ -137,15 +137,15 @@
   .gm-head{ display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 2px; background: none; border: 0; color: var(--text); text-align: left; cursor: pointer; font-family: var(--body); }
   .gm-head .tms{ font-weight: 700; font-size: 0.9rem; line-height: 1.25; min-width: 0; overflow-wrap: anywhere; }
   .gm-head .tms span{ color: var(--text-dim); font-weight: 500; }
-  .gm-head .ln{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.76rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .gm-head .ln{ display: block; color: var(--text-dim); font-weight: 500; font-size: var(--fs-detail); margin-top: 2px; font-variant-numeric: tabular-nums; }
   .gm-head svg{ width: 16px; height: 16px; color: var(--text-dim); transition: transform .2s ease; }
   .gm-head:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
   .gm-row{ border-top: 1px solid var(--line); }
   .day + .gm-row{ border-top: 0; }
-  .gm-head .tms .pk{ display: inline-block; margin-left: 8px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 999px; padding: 2px 7px; vertical-align: 2px; line-height: 1.3; }
+  .gm-head .tms .pk{ display: inline-block; margin-left: 8px; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 999px; padding: 2px 7px; vertical-align: 2px; line-height: 1.3; }
   .gm .gm-head{ min-height: 40px; padding: 0 0 2px; }
   .gm .gm-head svg{ transform: rotate(180deg); }
-  .taken-line{ margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--item); color: var(--text-dim); font-size: 0.8rem; line-height: 1.45; }
+  .taken-line{ margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--item); color: var(--text-dim); font-size: var(--fs-small); line-height: 1.45; }
   .taken-line b{ color: var(--text); font-weight: 600; }
   /* Search results, across every sport: a player's row opens their game's
      player bets; a game's row opens the game. */
@@ -155,9 +155,9 @@
   .lsr-row:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
   .lsr-k{ font-weight: 700; font-size: 0.9rem; line-height: 1.25; overflow-wrap: anywhere; }
   .lsr-k .at{ color: var(--text-dim); font-weight: 500; }
-  .lsr-tag{ display: inline-block; margin-left: 7px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.04em; color: var(--gold); border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 999px; padding: 2px 7px; vertical-align: 2px; line-height: 1.3; }
-  .lsr-s{ color: var(--text-dim); font-size: 0.76rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-  .lsr-none{ color: var(--text-dim); font-size: 0.8rem; padding: 10px 2px; border-top: 1px solid var(--line); }
+  .lsr-tag{ display: inline-block; margin-left: 7px; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.04em; color: var(--gold); border: 1px solid var(--lead-line); background: var(--lead-tint); border-radius: 999px; padding: 2px 7px; vertical-align: 2px; line-height: 1.3; }
+  .lsr-s{ color: var(--text-dim); font-size: var(--fs-detail); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .lsr-none{ color: var(--text-dim); font-size: var(--fs-small); padding: 10px 2px; border-top: 1px solid var(--line); }
   .lsr-none:first-child{ border-top: 0; }
 
   /* Your pick and Save, pinned above the tab bar while the slip itself is
@@ -172,7 +172,7 @@
   /* After a save, an offer of notifications (audit VIII #16). */
   .ask{ margin-top: 14px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--lead-line); background: var(--lead-tint); }
   .ask b{ display: block; font-size: 0.92rem; }
-  .ask p{ margin: 3px 0 0; color: var(--text-dim); font-size: 0.8rem; line-height: 1.45; }
+  .ask p{ margin: 3px 0 0; color: var(--text-dim); font-size: var(--fs-small); line-height: 1.45; }
   .ask ol{ margin: 10px 0 0; padding-left: 1.3em; color: var(--text); font-size: 0.84rem; display: grid; gap: 4px; }
   .ask .acts{ margin-top: 12px; }
   .ask .acts .gold-btn{ flex: 0 0 auto; padding: 0 20px; }
@@ -180,20 +180,20 @@
   /* The leg as it will be saved, with the line and odds still editable. */
   .slip{ margin: 8px 0 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--lead-line); background: var(--lead-tint); }
   .slip-text{ font-weight: 700; font-size: 0.98rem; overflow-wrap: anywhere; }
-  .slip-sub{ color: var(--text-dim); font-size: 0.8rem; margin-top: 2px; }
+  .slip-sub{ color: var(--text-dim); font-size: var(--fs-small); margin-top: 2px; }
   .slip-sub .sport{ color: var(--gold); font-weight: 700; }
   .slip .gold-btn{ width: 100%; margin-top: 12px; }
-  .msg{ font-size: 0.82rem; margin-top: 10px; color: var(--text-dim); }
+  .msg{ font-size: var(--fs-small); margin-top: 10px; color: var(--text-dim); }
   .msg.bad{ color: var(--loss); font-weight: 600; }
   .msg b{ color: var(--text); font-weight: 600; }
   .msg.ok::before{ content: '✓ '; color: var(--gold); font-weight: 700; }
 
   /* Hard Rock's odds pulled at Lock legs: what changed, and what to check by hand. */
   .priced{ margin-top: 12px; }
-  .priced h4{ margin: 12px 0 6px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+  .priced h4{ margin: 12px 0 6px; font-size: var(--fs-detail); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
   .pr-row{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 8px 12px; margin-top: 6px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,0.025); font-size: 0.86rem; }
   .pr-row > span:first-child{ min-width: 0; overflow-wrap: anywhere; }
-  .pr-row small{ display: block; color: var(--text-dim); font-size: 0.76rem; }
+  .pr-row small{ display: block; color: var(--text-dim); font-size: var(--fs-detail); }
   .pr-row .pr-odds{ flex: none; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .pr-row .pr-odds b{ color: var(--gold); }
   .pr-row .pr-odds s{ color: var(--text-dim); margin-right: 4px; }
@@ -204,9 +204,9 @@
      and a paste box for a whole week. Nothing is saved until the bar at the
      bottom is tapped. */
   .cols > section{ margin: 0; }
-  .cm-banner{ display: flex; align-items: center; gap: 8px; margin: -4px 0 14px; color: var(--gold); font: 700 0.66rem var(--body); letter-spacing: 0.1em; text-transform: uppercase; }
+  .cm-banner{ display: flex; align-items: center; gap: 8px; margin: -4px 0 14px; color: var(--gold); font: 700 var(--fs-label) var(--body); letter-spacing: 0.1em; text-transform: uppercase; }
   .cm-banner::before{ content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
-  .cm-banner span{ color: var(--text-dim); font-weight: 500; letter-spacing: 0; text-transform: none; font-size: 0.76rem; }
+  .cm-banner span{ color: var(--text-dim); font-weight: 500; letter-spacing: 0; text-transform: none; font-size: var(--fs-detail); }
   @media (min-width: 900px){
     .wrap.cm{ max-width: 980px; }
     .wrap.cm .cols{ grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "num board" "mine board" "paste board"; grid-template-rows: auto auto 1fr; }
@@ -220,7 +220,7 @@
   .stepper select.in{ width: auto; min-width: 118px; height: 44px; border-radius: 22px; font-weight: 600; font-size: 0.86rem; padding-left: 14px; }
   .pl-leg.changed{ border-color: var(--lead-line); background: var(--lead-tint); }
   .pl-leg.bad{ border-color: var(--loss-line); background: var(--loss-tint); }
-  .leg-why{ color: var(--loss); font-size: 0.8rem; font-weight: 600; margin-top: 6px; }
+  .leg-why{ color: var(--loss); font-size: var(--fs-small); font-weight: 600; margin-top: 6px; }
   .leg-wait{ color: var(--text-dim); display: inline-flex; align-items: center; gap: 7px; }
   .leg-wait::before{ content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: blink 1s ease-in-out infinite; }
   @keyframes blink{ 50%{ opacity: 0.25; } }
@@ -230,22 +230,22 @@
   .res-row .link-btn{ padding: 0; display: inline-flex; align-items: center; white-space: nowrap; }
   .edit-form{ margin-top: 6px; border-top: 1px solid var(--line); padding-top: 2px; }
   .typed-q{ margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; border: 1px dashed var(--lead-line); color: var(--text); font-size: 0.84rem; overflow-wrap: anywhere; }
-  .typed-q small{ display: block; color: var(--text-dim); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 2px; }
+  .typed-q small{ display: block; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 2px; }
   .fill-row{ display: flex; gap: 8px; align-items: flex-end; }
   .fill-row .field{ flex: 1 1 auto; }
   .fill-row .gold-btn{ flex: none; }
-  .hint{ font-size: 0.78rem; color: var(--text-dim); margin-top: 6px; }
+  .hint{ font-size: var(--fs-small); color: var(--text-dim); margin-top: 6px; }
   .hint.bad{ color: var(--loss); font-weight: 600; }
   .savebar{ position: sticky; bottom: calc(var(--tabbar-h, 0px) + 10px); z-index: 20; margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: #1a1710; border: 1px solid var(--lead-line); border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
   @media (min-width: 1080px){ .savebar{ bottom: 10px; } }
   .savebar[hidden]{ display: none; }
   .savebar .gold-btn{ flex: none; height: 44px; }
   .savebar span{ font-weight: 600; font-size: 0.86rem; min-width: 0; }
-  .savebar span small{ display: block; color: var(--text-dim); font-weight: 500; font-size: 0.74rem; }
+  .savebar span small{ display: block; color: var(--text-dim); font-weight: 500; font-size: var(--fs-detail); }
   .note-box{ display: block; width: 100%; min-height: 190px; resize: vertical; background: var(--ctl-bg-solid); color: var(--text); border: 1px solid var(--ctl-line); border-radius: 10px; padding: 12px 14px; font: 16px/1.45 var(--body); user-select: text; -webkit-user-select: text; }
   .note-box:focus{ outline: none; border-color: var(--gold); }
-  .skipped{ margin-top: 10px; font-size: 0.8rem; color: var(--text-dim); }
-  .skipped div{ color: var(--text); font-family: ui-monospace, Menlo, monospace; font-size: 0.78rem; margin-top: 4px; overflow-wrap: anywhere; }
+  .skipped{ margin-top: 10px; font-size: var(--fs-small); color: var(--text-dim); }
+  .skipped div{ color: var(--text); font-family: ui-monospace, Menlo, monospace; font-size: var(--fs-small); margin-top: 4px; overflow-wrap: anywhere; }
   /* iPhone Safari gives a date-time field a fixed width wider than half a card. */
   input.in[type="datetime-local"]{ -webkit-appearance: none; appearance: none; display: block; max-width: 100%; color-scheme: dark; }
   input.in[type="datetime-local"]::-webkit-date-and-time-value{ text-align: left; }

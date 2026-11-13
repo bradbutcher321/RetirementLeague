@@ -7,6 +7,6 @@
    name inside a .qrow. Here a badge sits beside a manager's name at nearly
    body size, and the small version read as a typo next to it. See the note on
    .badge in theme.css -- the three sizes are not interchangeable. */
-.badge{ font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); margin-left: 6px; vertical-align: middle; white-space: nowrap; }
+.badge{ font-size: var(--fs-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); margin-left: 6px; vertical-align: middle; white-space: nowrap; }
 .badge.gold{ color: var(--gold); border-color: var(--gold); }
 .badge.loss{ color: var(--loss); border-color: var(--loss); }

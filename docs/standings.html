@@ -37,10 +37,10 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=33">
-<link rel="stylesheet" href="league.css?v=7">
-<link rel="stylesheet" href="features.css?v=9">
+<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="nav.css?v=34">
+<link rel="stylesheet" href="league.css?v=8">
+<link rel="stylesheet" href="features.css?v=10">
 <style>
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
@@ -67,11 +67,11 @@
   @media (max-width:480px){ .sf-band{ margin-inline:-14px; padding-inline:14px; } }
   @media (prefers-reduced-motion:reduce){ .sf-band{ transition:none; } }
   /* Playoff odds, beside the Move pill. */
-  .od{ flex:none; box-sizing:border-box; padding:2px 8px; border-radius:999px; border:1px solid var(--line); font-style:normal; font-size:0.68rem; font-weight:700; line-height:1.2; color:var(--text-dim); white-space:nowrap; }
+  .od{ flex:none; box-sizing:border-box; padding:2px 8px; border-radius:999px; border:1px solid var(--line); font-style:normal; font-size:var(--fs-label); font-weight:700; line-height:1.2; color:var(--text-dim); white-space:nowrap; }
   .od.high{ border-color:var(--turf-dim); color:var(--turf); }
   .od.low{ border-color:rgba(214,98,79,0.4); color:var(--loss); }
   .qrow.in .rk{ color:var(--gold); }
-  .legend{ display:flex; gap:16px; flex-wrap:wrap; color:var(--text-dim); font-size:0.74rem; padding:18px 24px 0; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; color:var(--text-dim); font-size:var(--fs-detail); padding:18px 24px 0; }
   .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
 
   .qrow .tm{ font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; min-width:0; }
@@ -117,7 +117,7 @@
      finished season's Champion/Sacko badge goes -- a column of its own
      beside W/L/Win % pushed the stats into the PF/PA line at phone width. */
   .mv{ flex:none; box-sizing:border-box; min-width:28px; padding:2px 6px; border-radius:999px; border:1px solid var(--line); text-align:center;
-       color:var(--text-dim); font-style:normal; font-size:0.68rem; font-weight:700; line-height:1.2; white-space:nowrap; }
+       color:var(--text-dim); font-style:normal; font-size:var(--fs-label); font-weight:700; line-height:1.2; white-space:nowrap; }
   .mv.up{ border-color:var(--turf-dim); color:var(--turf); }
   .mv.down{ border-color:rgba(214,98,79,0.4); color:var(--loss); }
 
@@ -128,7 +128,7 @@
      colour isn't the only signal. */
   .form{ display:flex; gap:3px; justify-content:flex-end; margin-top:6px; }
   .form i{ width:16px; height:16px; border-radius:4px; border:1px solid; display:flex; align-items:center; justify-content:center;
-    font-style:normal; font-size:0.55rem; font-weight:800; line-height:1; }
+    font-style:normal; font-size:var(--fs-label); font-weight:800; line-height:1; }
   .form i.w{ color:var(--turf); border-color:var(--win-line); background:var(--win-tint); }
   .form i.l{ color:var(--loss); border-color:var(--loss-line); background:var(--loss-tint); }
   .form i.t{ color:var(--text-dim); border-color:var(--line); }
@@ -160,7 +160,7 @@
   .st-list{ padding:12px 10px 14px; }
   .st-h, .st-r{ display:grid; grid-template-columns:22px minmax(0,1fr) 54px 54px 46px; gap:8px; align-items:center; }
   /* 11px: the rows' 10px padding plus their 1px border, so the columns line up. */
-  .st-h{ padding:0 11px 6px; color:var(--text-dim); font-size:0.58rem; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; }
+  .st-h{ padding:0 11px 6px; color:var(--text-dim); font-size:var(--fs-label); font-weight:800; letter-spacing:0.07em; text-transform:uppercase; }
   /* W-L, PF and Odds: header and numbers centred on the same line. */
   .st-h span:nth-child(n+3){ text-align:center; }
   .st-h span:first-child{ text-align:center; }
@@ -182,20 +182,20 @@
   .st-nm .nm{ font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
   /* Tighter than nav.css's, so Daddy / Bitch fits on the name line. */
   .st-nm .rv-tag{ margin-left:0; padding:3px 5px; letter-spacing:0.05em; }
-  .st-sub{ display:flex; align-items:center; gap:4px 7px; flex-wrap:wrap; color:var(--text-dim); font-size:0.68rem; margin-top:3px; }
+  .st-sub{ display:flex; align-items:center; gap:4px 7px; flex-wrap:wrap; color:var(--text-dim); font-size:var(--fs-label); margin-top:3px; }
   .st-sub .t{ color:var(--gold); font-weight:600; } .st-sub .s{ color:var(--loss); font-weight:600; }
   .st-dots{ display:inline-flex; gap:2px; }
   .st-dots i{ width:6px; height:6px; border-radius:50%; background:var(--text-dim); }
   .st-dots i.w{ background:var(--turf); } .st-dots i.l{ background:var(--loss); }
   .st-wl{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; text-align:center; font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .st-pf{ text-align:center; color:var(--text); font-size:0.78rem; font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .st-pf small{ display:block; color:var(--text-dim); font-size:0.62rem; }
+  .st-pf{ text-align:center; color:var(--text); font-size:var(--fs-small); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .st-pf small{ display:block; color:var(--text-dim); font-size:var(--fs-label); }
   .st-od{ text-align:center; }
   .st-od .od{ padding:2px 6px; }
   /* Playoff odds open Playoff Race: a bigger tap area than the pill. */
   .od.go{ position:relative; cursor:pointer; }
-  .od.mark{ min-width:2.6em; text-align:center; font-size:0.78rem; }
-  .st-marks{ color:var(--text-dim); font-size:0.74rem; margin:10px 4px 0; }
+  .od.mark{ min-width:2.6em; text-align:center; font-size:var(--fs-small); }
+  .st-marks{ color:var(--text-dim); font-size:var(--fs-detail); margin:10px 4px 0; }
   .st-marks b{ color:var(--text); }
   .od.go::after{ content:''; position:absolute; inset:-14px -8px; }
   .od.go:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }

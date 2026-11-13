@@ -27,9 +27,9 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=33">
-<link rel="stylesheet" href="features.css?v=9">
+<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="nav.css?v=34">
+<link rel="stylesheet" href="features.css?v=10">
 <style>
   /* You (site audit VIII #15): everything about your week on one page --
      the matchup and what needs doing, your odds, the rest of your schedule,
@@ -45,43 +45,43 @@
      sheet has on every other page. */
   .yu-set .ft-body{ padding-top: 4px; }
   .yu-set .you-sec:first-child{ margin-top: 0; padding-top: 0; border-top: 0; }
-  .yu-more{ display:block; width:100%; min-height:44px; border:0; border-top:1px solid var(--line); background:none; color:var(--gold); font:600 0.8rem var(--body); cursor:pointer; }
+  .yu-more{ display:block; width:100%; min-height:44px; border:0; border-top:1px solid var(--line); background:none; color:var(--gold); font:600 var(--fs-small) var(--body); cursor:pointer; }
 
   .yu-mu{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); padding:2px 0; }
   .yu-mu > div{ flex:1; min-width:0; }
   .yu-mu b{ font-weight:700; font-size:0.96rem; }
-  .yu-mu .s{ display:block; color:var(--text-dim); font-size:0.8rem; margin-top:2px; }
+  .yu-mu .s{ display:block; color:var(--text-dim); font-size:var(--fs-small); margin-top:2px; }
   .yu-mu svg, .yu-go svg{ width:16px; height:16px; color:var(--text-dim); flex:none; }
   .yu-todo{ display:flex; align-items:center; gap:12px; padding:11px 12px; text-decoration:none; color:var(--text); }
   .yu-todo + .yu-todo{ border-top:1px solid var(--line); }
   .yu-todo > div{ flex:1; min-width:0; }
   .yu-todo b{ font-weight:600; font-size:0.88rem; display:block; }
-  .yu-todo span.s{ color:var(--text-dim); font-size:0.76rem; display:block; margin-top:1px; overflow-wrap:anywhere; }
+  .yu-todo span.s{ color:var(--text-dim); font-size:var(--fs-detail); display:block; margin-top:1px; overflow-wrap:anywhere; }
   .yu-ic{ width:32px; height:32px; border-radius:9px; display:grid; place-items:center; flex:none; color:var(--gold); background:var(--lead-tint); border:1px solid var(--lead-line); }
   .yu-ic.bad{ color:var(--loss); background:var(--loss-tint); border-color:var(--loss-line); }
   .yu-ic svg{ width:16px; height:16px; }
-  .yu-pill{ flex:none; height:34px; padding:0 14px; border-radius:999px; display:inline-flex; align-items:center; font-weight:700; font-size:0.78rem; border:1px solid var(--lead-line); color:var(--gold); white-space:nowrap; }
+  .yu-pill{ flex:none; height:34px; padding:0 14px; border-radius:999px; display:inline-flex; align-items:center; font-weight:700; font-size:var(--fs-small); border:1px solid var(--lead-line); color:var(--gold); white-space:nowrap; }
   .yu-pill.solid{ background:var(--gold); border-color:var(--gold); color:var(--ctl-on-ink); }
 
   .yu-odds{ display:flex; align-items:center; gap:14px; }
   .yu-odds .v{ font:800 2.7rem/0.9 var(--scoreboard); color:var(--me-ring, #7AAEDB); font-variant-numeric:tabular-nums; }
-  .yu-odds .s{ color:var(--text-dim); font-size:0.8rem; line-height:1.45; }
+  .yu-odds .s{ color:var(--text-dim); font-size:var(--fs-small); line-height:1.45; }
   .yu-odds .s b{ color:var(--text); font-weight:600; }
 
   .yu-sched{ display:grid; grid-template-columns:repeat(var(--n,7),minmax(0,1fr)); gap:5px; }
   .yu-wk{ border:1px solid var(--item-line); background:var(--item); border-radius:10px; padding:7px 2px; text-align:center; min-width:0; text-decoration:none; color:var(--text); }
   .yu-wk.now{ border-color:color-mix(in srgb, var(--me-ring, #7AAEDB) 60%, transparent); background:color-mix(in srgb, var(--me-ring, #7AAEDB) 7%, transparent); }
-  .yu-wk .w{ color:var(--text-dim); font-size:0.56rem; font-weight:700; letter-spacing:0.06em; }
-  .yu-wk .o{ font-weight:700; font-size:0.74rem; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
-  .yu-wk .r{ color:var(--text-dim); font-size:0.64rem; margin-top:2px; font-variant-numeric:tabular-nums; }
-  .yu-wk .v{ font-size:0.64rem; margin-top:3px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .yu-wk .w{ color:var(--text-dim); font-size:var(--fs-label); font-weight:700; letter-spacing:0.06em; }
+  .yu-wk .o{ font-weight:700; font-size:var(--fs-detail); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
+  .yu-wk .r{ color:var(--text-dim); font-size:var(--fs-label); margin-top:2px; font-variant-numeric:tabular-nums; }
+  .yu-wk .v{ font-size:var(--fs-label); margin-top:3px; font-weight:700; font-variant-numeric:tabular-nums; }
   .yu-wk .v.up{ color:var(--turf); } .yu-wk .v.dn{ color:var(--loss); } .yu-wk .v.even{ color:var(--text-dim); }
 
   .yu-al{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 10px; padding:10px 12px; text-decoration:none; color:var(--text); }
   .yu-al + .yu-al{ border-top:1px solid var(--line); }
   .yu-al b{ font-weight:600; font-size:0.86rem; }
-  .yu-al span{ grid-column:1; color:var(--text-dim); font-size:0.76rem; overflow-wrap:anywhere; }
-  .yu-al time{ grid-row:1; grid-column:2; color:var(--text-dim); font-size:0.7rem; white-space:nowrap; }
+  .yu-al span{ grid-column:1; color:var(--text-dim); font-size:var(--fs-detail); overflow-wrap:anywhere; }
+  .yu-al time{ grid-row:1; grid-column:2; color:var(--text-dim); font-size:var(--fs-label); white-space:nowrap; }
 
   .yu-links{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .yu-go{ display:flex; align-items:center; gap:10px; min-height:52px; padding:10px 12px; text-decoration:none; color:var(--text); font-weight:600; font-size:0.86rem; }

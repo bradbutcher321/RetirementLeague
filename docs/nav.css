@@ -87,18 +87,18 @@
   border: 0;
   background: none;
   color: var(--text-dim);
-  font: 600 0.66rem/1 var(--body);
+  font: 600 var(--fs-label)/1 var(--body);
   letter-spacing: 0.01em;
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.tabbar .tb-cap a, .tabbar .tb-cap button{ color: #B4B4B0; font-size: 0.64rem; }
+.tabbar .tb-cap a, .tabbar .tb-cap button{ color: #B4B4B0; font-size: var(--fs-label); }
 .tabbar .tb-cap .on{ color: var(--gold); background: rgba(255,255,255,0.09); }
 .tb-ic{ width: 24px; height: 24px; display: grid; place-items: center; }
 .tb-ic svg{ width: 22px; height: 22px; }
 /* You, once picked: the monogram in a ring the size of the other icons. */
-.tb-mono{ width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid currentColor; font: 800 0.56rem/1 var(--body); letter-spacing: 0.02em; }
+.tb-mono{ width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid currentColor; font: 800 var(--fs-label)/1 var(--body); letter-spacing: 0.02em; }
 .tabbar a:focus-visible, .tabbar button:focus-visible{ outline: 2px solid var(--gold); outline-offset: -4px; border-radius: 12px; }
 @media (hover: hover){ .tabbar a:not(.on):hover, .tabbar button:hover{ color: var(--text); } }
 
@@ -166,11 +166,11 @@
   border: 1px solid var(--line);
   background: transparent;
   color: var(--text-dim);
-  font: 500 0.8rem/1 var(--body);
+  font: 500 var(--fs-small)/1 var(--body);
   cursor: pointer;
 }
 .nav-search svg{ width: 16px; height: 16px; }
-.nav-search kbd{ font: 600 0.68rem/1 var(--body); padding: 4px 7px; border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--text-dim); }
+.nav-search kbd{ font: 600 var(--fs-label)/1 var(--body); padding: 4px 7px; border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--text-dim); }
 @media (hover: hover){ .nav-search:hover{ color: var(--text); } }
 .nav-search:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 
@@ -205,7 +205,7 @@
   border: 2px solid var(--me-ring, #7AAEDB);
   background: color-mix(in srgb, var(--me-ring, #7AAEDB) 9%, transparent);
   color: var(--text);
-  font: 800 0.74rem/1 var(--body);
+  font: 800 var(--fs-detail)/1 var(--body);
   letter-spacing: 0.02em;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -221,7 +221,7 @@
 .hdr-bell[hidden]{ display: none; }
 .hdr-bell::after{ content: ''; position: absolute; inset: -5px; }
 .hdr-bell svg{ width: 18px; height: 18px; }
-.hdr-bell i{ position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--loss); color: #fff; font: 800 0.62rem/18px var(--body); font-style: normal; text-align: center; }
+.hdr-bell i{ position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--loss); color: #fff; font: 800 var(--fs-label)/18px var(--body); font-style: normal; text-align: center; }
 .hdr-bell:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 .header-row:has(.hdr-bell:not([hidden])) .eyebrow{ padding-right: 190px; }
 @media (min-width: 1080px){ .hdr-bell{ display: none; } }
@@ -247,8 +247,8 @@
 .fold-in{ height: 50px; display: grid; grid-template-columns: 38px minmax(0,1fr) 38px; align-items: center; gap: 8px; }
 .fold-t{ text-align: center; line-height: 1.15; min-width: 0; background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
 .fold-t b{ display: block; font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fold-t span{ display: block; color: var(--text-dim); font-size: 0.72rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fold-me{ width: 34px; height: 34px; font-size: 0.68rem; justify-self: end; }
+.fold-t span{ display: block; color: var(--text-dim); font-size: var(--fs-detail); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fold-me{ width: 34px; height: 34px; font-size: var(--fs-label); justify-self: end; }
 html.folded{ --fold-shown: 50px; }
 @media (min-width: 1080px){ .fold, .top-band{ display: none; } html.folded{ --fold-shown: 0px; } }
 @media (prefers-reduced-motion: reduce){ .fold{ transition: none; } }
@@ -271,7 +271,7 @@ html.folded{ --fold-shown: 50px; }
   justify-content: center;
   padding: 0;
   cursor: pointer;
-  font: 700 0.72rem/1 var(--body);
+  font: 700 var(--fs-detail)/1 var(--body);
   letter-spacing: 0.02em;
 }
 .nav-me::before{ content: ''; position: absolute; inset: -5px; }
@@ -322,19 +322,19 @@ html.folded{ --fold-shown: 50px; }
 .sr-hit + .sr-hit{ border-top: 1px solid var(--line); }
 @media (hover: hover){ .sr-hit:hover{ background: var(--item-hover); } }
 .sr-hit:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
-.sr-k{ grid-row: span 2; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--lead-line); border-radius: 6px; text-align: center; padding: 4px 0; }
+.sr-k{ grid-row: span 2; font-size: var(--fs-label); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--lead-line); border-radius: 6px; text-align: center; padding: 4px 0; }
 .sr-hit b{ font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sr-s{ color: var(--text-dim); font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-s{ color: var(--text-dim); font-size: var(--fs-detail); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sr-none{ color: var(--text-dim); font-size: 0.86rem; padding: 14px 10px; }
 
 /* The History hub: the pages you were last on, then four headed groups of
    tiles. Two tiles across on a phone; four group columns on a desktop. */
 .hub-h{ display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 8px; }
-.hub-h b{ font-size: 0.7rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim); }
+.hub-h b{ font-size: var(--fs-label); font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim); }
 .hub-h.live b{ color: var(--gold); }
 .hub-recent{ display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 0 18px; }
 .hub-recent::-webkit-scrollbar{ display: none; }
-.hub-chip{ flex: none; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 0 10px; border-radius: 22px; border: 1px solid var(--line); background: var(--item); color: var(--text); font-size: 0.82rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.hub-chip{ flex: none; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 0 10px; border-radius: 22px; border: 1px solid var(--line); background: var(--item); color: var(--text); font-size: var(--fs-small); font-weight: 600; text-decoration: none; white-space: nowrap; }
 .hub-chip i{ width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; background: var(--lead-tint); color: var(--gold); }
 .hub-chip svg{ width: 14px; height: 14px; }
 @media (hover: hover){ .hub-chip:hover{ border-color: var(--lead-line); } }
@@ -364,7 +364,7 @@ html.folded{ --fold-shown: 50px; }
 .hub-ic{ width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: var(--gold); background: var(--lead-tint); margin-bottom: 8px; }
 .hub-ic svg{ width: 17px; height: 17px; }
 .hub-tile b{ font-size: 0.92rem; font-weight: 700; }
-.hub-tile > span:last-child{ color: var(--text-dim); font-size: 0.74rem; line-height: 1.35; }
+.hub-tile > span:last-child{ color: var(--text-dim); font-size: var(--fs-detail); line-height: 1.35; }
 
 /* The ⌘K card: centred near the top of the screen. */
 .search-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: min(560px, calc(100vw - 32px)); max-height: 70vh; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }
@@ -379,11 +379,11 @@ html.folded{ --fold-shown: 50px; }
 .search-bottom .sb-list:has(#search-jump:empty):has(#search-results[hidden]){ display: none; }
 .search-bottom .sr-results{ display: flex; flex-direction: column-reverse; padding: 0; }
 .search-bottom .sr-results .sr-hit + .sr-hit{ border-top: 0; border-bottom: 1px solid var(--line); }
-.sb-grp{ color: var(--text-dim); font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 10px 4px; }
+.sb-grp{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 10px 4px; }
 .sb-mgrs{ display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 4px 6px 6px; }
 .sb-mgrs::-webkit-scrollbar{ display: none; }
-.sb-mgrs a{ flex: none; width: 54px; display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--text); font-size: 0.66rem; text-decoration: none; white-space: nowrap; }
-.sb-mono{ width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: var(--item); color: var(--gold); font: 800 0.72rem/1 var(--body); }
+.sb-mgrs a{ flex: none; width: 54px; display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--text); font-size: var(--fs-label); text-decoration: none; white-space: nowrap; }
+.sb-mono{ width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: var(--item); color: var(--gold); font: 800 var(--fs-detail)/1 var(--body); }
 .sb-mono.you{ border: 2px solid var(--me-ring); color: var(--text); }
 .sb-mgrs a:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
 .sb-field{ display: flex; align-items: center; gap: 10px; }
@@ -401,7 +401,7 @@ html.searching .tabbar{ visibility: hidden; }
 .you-tabs button{ flex: 1; justify-content: center; padding: 0 8px; }
 /* On a phone Done sits in the grab row, like the dashboard's sheets, and
    the slider gets the whole row; the desktop card keeps its ✕ beside it. */
-.you-done{ display: none; position: absolute; right: 4px; top: 0; font: 600 0.82rem var(--body); color: var(--gold); background: none; border: 0; padding: 0 12px; min-height: 44px; cursor: pointer; }
+.you-done{ display: none; position: absolute; right: 4px; top: 0; font: 600 var(--fs-small) var(--body); color: var(--gold); background: none; border: 0; padding: 0 12px; min-height: 44px; cursor: pointer; }
 .you-done:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
 .you-sheet:focus{ outline: none; }
 @media (max-width: 720px){
@@ -412,7 +412,7 @@ html.searching .tabbar{ visibility: hidden; }
 /* Panels differ in height; a floor keeps the slider from jumping around
    as the sheet grows and shrinks under it. */
 #you-body{ min-height: 300px; padding-top: 12px; }
-.you-row small{ display: block; color: var(--text-dim); font-size: 0.74rem; margin-top: 2px; }
+.you-row small{ display: block; color: var(--text-dim); font-size: var(--fs-detail); margin-top: 2px; }
 /* One row of six swatches (audit X #11); the chosen one's name is in the line above. */
 .you-colors{ display: flex; flex-wrap: wrap; gap: 10px; }
 .you-colors .you-color{ width: 44px; height: 44px; min-height: 0; padding: 0; justify-content: center; border-radius: 50%; }
@@ -426,7 +426,7 @@ html.searching .tabbar{ visibility: hidden; }
 .you-swatch{ flex: none; width: 18px; height: 18px; border-radius: 50%; background: var(--ring); }
 .you-color:focus-visible{ box-shadow: 0 0 0 2px var(--gold); }
 @media (hover: hover){ .you-color:hover{ background: var(--item-hover); } }
-.you-sub{ color: var(--text-dim); font-size: 0.8rem; line-height: 1.4; padding: 0 4px 12px; }
+.you-sub{ color: var(--text-dim); font-size: var(--fs-small); line-height: 1.4; padding: 0 4px 12px; }
 .you-picks{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .you-pick{
   min-height: 44px;
@@ -443,8 +443,8 @@ html.searching .tabbar{ visibility: hidden; }
 .you-pick:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (hover: hover){ .you-pick:hover{ background: var(--item-hover); } }
 .you-sec{ margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
-.you-sec-t{ font-size: 0.62rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim); padding: 0 4px 6px; }
-.you-note{ color: var(--text-dim); font-size: 0.8rem; line-height: 1.45; padding: 6px 4px; }
+.you-sec-t{ font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-dim); padding: 0 4px 6px; }
+.you-note{ color: var(--text-dim); font-size: var(--fs-small); line-height: 1.45; padding: 6px 4px; }
 /* Signing in (site audit III #24). Signed out: a code box and Paste at the
    top of You, the team picker under them. Signed in: who you are, and on
    the website the code for the Home Screen app with its Copy button. */
@@ -474,11 +474,11 @@ html.searching .tabbar{ visibility: hidden; }
 .you-btn{ flex: none; height: 46px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--gold); background: var(--gold); color: var(--ctl-on-ink); font: 700 0.86rem var(--body); cursor: pointer; }
 .you-btn:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 .you-acct{ display: flex; align-items: center; gap: 12px; padding: 12px; }
-.you-mono{ flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--me-ring); font: 800 0.8rem/1 var(--body); letter-spacing: 0.02em; }
+.you-mono{ flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--me-ring); font: 800 var(--fs-small)/1 var(--body); letter-spacing: 0.02em; }
 .you-acct-t{ flex: 1; min-width: 0; }
 .you-acct-t b{ display: block; font-size: 0.98rem; }
-.you-acct-t span{ display: block; color: var(--text-dim); font-size: 0.76rem; }
-.you-txt{ flex: none; min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--text-dim); font: 600 0.8rem var(--body); cursor: pointer; }
+.you-acct-t span{ display: block; color: var(--text-dim); font-size: var(--fs-detail); }
+.you-txt{ flex: none; min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--text-dim); font: 600 var(--fs-small) var(--body); cursor: pointer; }
 .you-txt:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
 @media (hover: hover){ .you-txt:hover{ color: var(--text); } }
 /* The commissioners' way to their page: a row under who they are. */
@@ -501,12 +501,12 @@ button.you-link{ width: 100%; font-family: var(--body); cursor: pointer; text-al
 .you-fb-send .you-btn:disabled{ opacity: 0.6; cursor: default; }
 .you-fbs{ display: grid; gap: 8px; }
 .you-fb{ padding: 10px 12px 11px; border-radius: 12px; }
-.you-fb-h{ display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--text-dim); font-size: 0.72rem; }
-.you-fb-st{ flex: none; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); }
+.you-fb-h{ display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--text-dim); font-size: var(--fs-detail); }
+.you-fb-st{ flex: none; font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); }
 .you-fb-st.planned{ color: var(--gold); border-color: var(--lead-line); background: var(--lead-tint); }
 .you-fb-st.done{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
 .you-fb-t{ font-size: 0.86rem; line-height: 1.45; margin-top: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.you-fb-r{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); color: var(--text); font-size: 0.82rem; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.you-fb-r{ margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--line); color: var(--text); font-size: var(--fs-small); line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (hover: hover){ .you-link:hover{ background: var(--item-hover); } }
 .you-sec-h{ font-weight: 700; font-size: 0.9rem; padding: 0 4px 4px; }
 .you-copy{ display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 52px; padding: 0 8px 0 16px; border-radius: 999px; border: 1px solid var(--lead-line); background: var(--lead-tint); color: var(--gold); cursor: pointer; }
@@ -514,13 +514,13 @@ button.you-link{ width: 100%; font-family: var(--body); cursor: pointer; text-al
 .you-copy:disabled .you-copy-lab{ opacity: 0.4; }
 .you-copy:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 .you-copy-code{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.35rem; letter-spacing: 0.08em; }
-.you-copy-lab{ display: flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--gold); color: var(--ctl-on-ink); font: 700 0.8rem var(--body); }
+.you-copy-lab{ display: flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--gold); color: var(--ctl-on-ink); font: 700 var(--fs-small) var(--body); }
 .you-copy.done .you-copy-lab{ background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--lead-line); }
 .you-row{ display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 0 4px; font-size: 0.9rem; cursor: pointer; }
 .you-row.dis{ color: var(--text-dim); cursor: default; }
 /* Hidden cards in Settings (audit IV #14) */
 .you-row.hid{ cursor: default; }
-.you-show{ flex: none; min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--gold); font: 700 0.8rem var(--body); cursor: pointer; }
+.you-show{ flex: none; min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--gold); font: 700 var(--fs-small) var(--body); cursor: pointer; }
 .you-show:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
 /* Recent alerts at the top of Notifications (audit IV #11) */
 #you-recent{ margin-bottom: 14px; }
@@ -529,12 +529,12 @@ button.you-link{ width: 100%; font-family: var(--body); cursor: pointer; text-al
 .you-al + .you-al{ border-top: 1px solid var(--line); }
 .you-al i{ width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: rgba(255,255,255,0.05); color: #D3D3CF; }
 .you-al i svg{ width: 16px; height: 16px; }
-.you-al b{ display: block; font-size: 0.82rem; font-weight: 600; line-height: 1.3; }
-.you-al > span > span{ display: block; color: var(--text-dim); font-size: 0.74rem; line-height: 1.35; margin-top: 1px; }
-.you-al time{ color: var(--text-dim); font-size: 0.68rem; white-space: nowrap; padding-top: 2px; }
+.you-al b{ display: block; font-size: var(--fs-small); font-weight: 600; line-height: 1.3; }
+.you-al > span > span{ display: block; color: var(--text-dim); font-size: var(--fs-detail); line-height: 1.35; margin-top: 1px; }
+.you-al time{ color: var(--text-dim); font-size: var(--fs-label); white-space: nowrap; padding-top: 2px; }
 .you-al:focus-visible{ outline: 2px solid var(--gold); outline-offset: -2px; }
 @media (hover: hover){ .you-al:hover{ background: var(--item-hover); } }
-.you-more{ display: block; width: 100%; min-height: 44px; margin-top: 2px; border: 0; background: none; color: var(--gold); font: 600 0.8rem var(--body); cursor: pointer; }
+.you-more{ display: block; width: 100%; min-height: 44px; margin-top: 2px; border: 0; background: none; color: var(--gold); font: 600 var(--fs-small) var(--body); cursor: pointer; }
 .you-more:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
 .you-types{ margin: 2px 0 0 0; padding-left: 10px; border-left: 1px solid var(--line); }
 .you-types .you-row{ font-size: 0.84rem; min-height: 40px; }
@@ -579,25 +579,25 @@ button.you-link{ width: 100%; font-family: var(--body); cursor: pointer; text-al
 /* ---------- Rivals (rivals.js) ----------
    The standings tag: in your ring color, never gold/green/red, which mean
    something already. The tap-a-name sheet: you against one manager. */
-.rv-tag{ flex: none; display: inline-flex; align-items: center; margin-left: 0.55em; padding: 3px 7px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--me-ring, #7AAEDB) 55%, transparent); background: color-mix(in srgb, var(--me-ring, #7AAEDB) 9%, transparent); color: var(--me-ring, #7AAEDB); font: 800 0.56rem/1 var(--body); letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; vertical-align: middle; }
+.rv-tag{ flex: none; display: inline-flex; align-items: center; margin-left: 0.55em; padding: 3px 7px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--me-ring, #7AAEDB) 55%, transparent); background: color-mix(in srgb, var(--me-ring, #7AAEDB) 9%, transparent); color: var(--me-ring, #7AAEDB); font: 800 var(--fs-label)/1 var(--body); letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap; vertical-align: middle; }
 .rv-sheet:focus{ outline: none; }
 .rv-sheet .sheet-body{ padding: 4px 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
 .rv-vs{ display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; padding-top: 6px; }
 .rv-side{ display: grid; justify-items: center; gap: 6px; text-align: center; min-width: 0; }
 .rv-side b{ font-size: 1rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rv-mono{ display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); font: 800 0.82rem/1 var(--body); letter-spacing: 0.02em; }
+.rv-mono{ display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); font: 800 var(--fs-small)/1 var(--body); letter-spacing: 0.02em; }
 .rv-mono.you{ border-color: var(--me-ring, #7AAEDB); }
 .rv-rec{ text-align: center; font: 600 3rem/1 var(--scoreboard); }
-.rv-rec small{ display: block; margin-top: 4px; color: var(--text-dim); font: 500 0.72rem/1.2 var(--body); }
+.rv-rec small{ display: block; margin-top: 4px; color: var(--text-dim); font: 500 var(--fs-detail)/1.2 var(--body); }
 .rv-form{ display: flex; justify-content: center; gap: 4px; margin-top: 14px; }
-.rv-form i{ width: 22px; height: 22px; border-radius: 6px; border: 1px solid; font: 800 0.66rem/20px var(--body); text-align: center; font-style: normal; }
+.rv-form i{ width: 22px; height: 22px; border-radius: 6px; border: 1px solid; font: 800 var(--fs-label)/20px var(--body); text-align: center; font-style: normal; }
 .rv-form i.W{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
 .rv-form i.L{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
 .rv-grid{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 16px 0 14px; }
 .rv-box{ padding: 10px 12px; border: 1px solid var(--item-line, var(--line)); border-radius: 12px; background: var(--item, rgba(255,255,255,0.025)); min-width: 0; }
-.rv-box small{ display: block; color: var(--text-dim); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.rv-box small{ display: block; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 .rv-box b{ display: block; font: 600 1.5rem/1.15 var(--scoreboard); }
-.rv-box span{ display: block; color: var(--text-dim); font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-box span{ display: block; color: var(--text-dim); font-size: var(--fs-detail); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rv-none{ margin: 22px 0 18px; text-align: center; color: var(--text-dim); font-size: 0.9rem; }
 .rv-go, .rv-done{ display: flex; align-items: center; justify-content: center; width: 100%; min-height: 46px; margin-top: 8px; border-radius: 999px; border: 1px solid var(--gold); background: var(--gold); color: var(--ctl-on-ink, #0A0A08); font: 700 0.9rem var(--body); text-decoration: none; cursor: pointer; }
 .rv-go.ghost, .rv-done{ border-color: var(--line); background: rgba(255,255,255,0.06); color: var(--text); }
@@ -620,10 +620,10 @@ button.you-link{ width: 100%; font-family: var(--body); cursor: pointer; text-al
 .fold-in.sc .fsb-side .rl-av{ --av: 28px; display: inline-grid; }
 .fold-in.sc .fsb-n{ display: block; margin: 0; overflow: visible; font: 800 1.3rem/1 var(--scoreboard); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text); }
 .fold-in.sc .fsb-side:not(.r) .fsb-n{ color: var(--me-ring); }
-.fold-in.sc .fsb-n small{ display: block; font: 500 0.6rem/1.25 var(--body); color: var(--text-dim); margin-top: 2px; }
+.fold-in.sc .fsb-n small{ display: block; font: 500 var(--fs-label)/1.25 var(--body); color: var(--text-dim); margin-top: 2px; }
 .fold-in.sc .fsb-mid{ display: grid; justify-items: center; gap: 4px; min-width: 0; margin: 0; overflow: visible; }
-.fold-in.sc .fsb-l, .fold-in.sc .fsb-l2{ margin: 0; display: flex; align-items: center; justify-content: center; gap: 5px; max-width: 100%; font-size: 0.66rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fold-in.sc .fsb-l b{ display: inline; color: var(--text); font-weight: 700; font-size: 0.74rem; }
+.fold-in.sc .fsb-l, .fold-in.sc .fsb-l2{ margin: 0; display: flex; align-items: center; justify-content: center; gap: 5px; max-width: 100%; font-size: var(--fs-label); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fold-in.sc .fsb-l b{ display: inline; color: var(--text); font-weight: 700; font-size: var(--fs-detail); }
 .fold-in.sc .fsb-dot{ display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
 .fold-in.sc .fsb-bar{ margin: 0; display: flex; width: 100%; max-width: 110px; height: 4px; border-radius: 2px; background: rgba(245,245,243,0.5); overflow: hidden; }
 .fold-in.sc .fsb-bar i{ display: block; height: 100%; background: var(--me-ring); transition: width .6s cubic-bezier(.2,.8,.2,1); }
@@ -631,6 +631,6 @@ button.you-link{ width: 100%; font-family: var(--body); cursor: pointer; text-al
 
 /* ---------- What's new, on the tab bar (audit IX #13) ---------- */
 .tabbar .tb-cap .tb-ic{ position: relative; }
-.tb-badge{ position: absolute; top: -5px; left: 15px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--gold); color: var(--ctl-on-ink); font: 800 0.56rem/16px var(--body); font-style: normal; text-align: center; box-shadow: 0 0 0 2px #1C1C1C; }
+.tb-badge{ position: absolute; top: -5px; left: 15px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--gold); color: var(--ctl-on-ink); font: 800 var(--fs-label)/16px var(--body); font-style: normal; text-align: center; box-shadow: 0 0 0 2px #1C1C1C; }
 .tb-badge.dot{ min-width: 0; width: 9px; height: 9px; padding: 0; top: -2px; left: 17px; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce){ .tb-badge.dot{ animation: none; } }

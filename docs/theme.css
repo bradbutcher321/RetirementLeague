@@ -1,4 +1,9 @@
 :root{
+  /* Three sizes for small text (audit X #12), in place of thirteen between
+     9px and 13px. Nothing on the site is smaller than --fs-label. */
+  --fs-label: 0.6875rem;   /* 11px: caps labels, chips, tiny captions */
+  --fs-detail: 0.75rem;    /* 12px: sub-lines, notes */
+  --fs-small: 0.8125rem;   /* 13px: secondary text */
   /* "Night Match" -- UCF Knights black & gold, refined: a warmer/softer gold,
      translucent hairlines instead of flat gray ones (so they read correctly
      over both flat surfaces and the glass gradient below), and two surface
@@ -174,7 +179,7 @@ body{
    pages that read data/league.json -- that override is the one real
    divergence, so it stays there rather than being duplicated here. */
 .stat-card-title{ padding: 16px 18px 0; font-weight: 700; font-size: 0.95rem; }
-.stat-card-note{ color: var(--text-dim); font-size: 0.74rem; padding: 3px 18px 0; }
+.stat-card-note{ color: var(--text-dim); font-size: var(--fs-detail); padding: 3px 18px 0; }
 .stat-card-body{ padding: 12px 14px 14px; }
 /* Two stat cards side by side, stacking on a narrow screen. align-items:
    start, not stretch: a three-row card next to a five-row one shouldn't
@@ -238,7 +243,7 @@ body{
    small label looking dropped against the big one. Centering the two halves
    against each other is what reads as level. */
 .hs{ display:flex; justify-content:space-between; align-items:center; gap:26px; }
-.hs-l{ color:var(--text-dim); font-size:0.76rem; }
+.hs-l{ color:var(--text-dim); font-size:var(--fs-detail); }
 .hs-r{ text-align:right; }
 /* Gold is the default for a hero's side values -- these are the figures the
    card exists to show. A tone class is the exception, for a value whose
@@ -372,7 +377,7 @@ body{
    instead of needing the full width. */
 /* A hand-off to the ESPN app (audit V #15): a pill the height of a track. */
 .espn-link{ display: inline-flex; align-items: center; gap: 8px; height: var(--track-h); padding: 0 16px 0 10px; border-radius: 999px; border: 1px solid var(--ctl-line); background: var(--ctl-bg); color: var(--text); font-weight: 700; font-size: 0.84rem; text-decoration: none; white-space: nowrap; }
-.espn-link i{ font-style: normal; background: #C9252C; color: #fff; font: 900 0.56rem/1 var(--body); padding: 4px 5px; border-radius: 5px; }
+.espn-link i{ font-style: normal; background: #C9252C; color: #fff; font: 900 var(--fs-label)/1 var(--body); padding: 4px 5px; border-radius: 5px; }
 .espn-link:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (hover: hover){ .espn-link:hover{ border-color: rgba(255,255,255,0.24); } }
 .controls-row{ display: flex; align-items: flex-end; justify-content: space-between; gap: 10px 16px; margin-bottom: 14px; }
@@ -406,7 +411,7 @@ body{
   background: none;
   color: var(--text-dim);
   font-family: var(--body);
-  font-size: 0.82rem;
+  font-size: var(--fs-small);
   font-weight: 600;
   line-height: 1;
   white-space: nowrap;
@@ -563,7 +568,7 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
    site's existing caption voice (.past-logos-label, .act-label). */
 .selector-label{
   color: var(--text-dim);
-  font-size: 0.68rem;
+  font-size: var(--fs-label);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -733,7 +738,7 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
 .stats div:last-child{ min-width:56px; }
 .stats b{ display:block; font-family:var(--scoreboard); font-size:1.1rem; font-weight:700; font-variant-numeric:tabular-nums; }
 .stats b em{ font-style:normal; }
-.stats span{ font-size:0.58rem; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; }
+.stats span{ font-size:var(--fs-label); color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase; }
 
 /* ---------- Pill badge (champion/sacko markers inline with a name) ----------
    Heads up: .badge is deliberately re-sized per context, and the three
@@ -742,7 +747,7 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
    steps it up for the league.json pages' .row names, and franchise.html steps
    it up again for the full-size season-history labels. Change one and check
    the other two -- there is no single value that suits all three. */
-.badge{ font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:2px 7px; border-radius:999px; border:1px solid; white-space:nowrap; flex:none; line-height:1.4; }
+.badge{ font-size:var(--fs-label); font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:2px 7px; border-radius:999px; border:1px solid; white-space:nowrap; flex:none; line-height:1.4; }
 .badge.gold{ color:var(--gold); border-color:var(--gold); }
 .badge.turf{ color:var(--turf); border-color:var(--turf); }
 .badge.loss{ color:var(--loss); border-color:var(--loss); }
@@ -753,7 +758,7 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
    dashboard's standings and the Standings page's season in progress. A
    dashed gold rule with its label centred; it takes the list's own gap
    above and below, so the rows either side stay evenly spaced. */
-.po-line{ display:flex; align-items:center; gap:10px; color:var(--gold); font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.09em; line-height:1; padding:0 4px; }
+.po-line{ display:flex; align-items:center; gap:10px; color:var(--gold); font-size:var(--fs-label); font-weight:700; text-transform:uppercase; letter-spacing:0.09em; line-height:1; padding:0 4px; }
 .po-line::before, .po-line::after{ content:''; flex:1; border-top:1px dashed var(--lead-line); }
 /* The race marker at the end of a row's record line (playoffRace in
    page-common.js); games back stays in the line's own dim grey. */
@@ -763,7 +768,7 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
 .sos.hard{ color:var(--loss); }
 
 /* ---------- Delta pill (a trend/margin figure, tinted by direction) ---------- */
-.pill{ font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pill{ font-size: var(--fs-small); font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pill.up{ color: var(--turf); border-color: var(--turf-dim); background: rgba(76,154,107,0.10); }
 .pill.down{ color: var(--loss); border-color: var(--loss); background: rgba(192,87,75,0.10); }
 
@@ -772,7 +777,7 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
    columns, how wide the widest value is), so only the numeral and its
    caption -- identical everywhere -- live here. */
 .row-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.row-stat span{ font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
+.row-stat span{ font-size: var(--fs-label); color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
 
 /* ---------- Disclosure chevron ----------
    The one arrow on everything that opens -- matchup cards, parlay legs, Game
@@ -809,7 +814,7 @@ a.mgr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; border
 .mono-tile{
   width: 36px; height: 36px; flex: none; border-radius: 50%; border: 1px solid var(--item-line);
   background: var(--item); color: var(--gold); display: grid; place-items: center;
-  font: 800 0.72rem/1 var(--body); letter-spacing: 0.02em;
+  font: 800 var(--fs-detail)/1 var(--body); letter-spacing: 0.02em;
 }
 /* Gold, like any record; your own is your ring colour. */
 .mono-tile.me-mono{ color: var(--me-ring, #7AAEDB); }
@@ -831,7 +836,7 @@ header{
 .eyebrow{
   color: var(--gold);
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: var(--fs-small);
   letter-spacing: 0.02em;
 }
 h1{
@@ -870,7 +875,7 @@ h2{
   color: var(--text);
   margin: 0 2px 12px;
 }
-h2 .h-state{ float: right; margin-top: 0.35em; color: var(--text-dim); font-size: 0.8rem; font-weight: 500; letter-spacing: 0; }
+h2 .h-state{ float: right; margin-top: 0.35em; color: var(--text-dim); font-size: var(--fs-small); font-weight: 500; letter-spacing: 0; }
 h2 .h-state:empty{ display: none; }
 
 .qrow.lead{ border-color:var(--lead-line); background:var(--lead-tint); }
@@ -939,7 +944,7 @@ h2 .h-state:empty{ display: none; }
   .sk i, .tabs:empty, .seg:empty{ animation: none; }
   .rise{ animation: none; }
 }
-footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-top: 10px; }
+footer{ color: var(--text-dim); font-size: var(--fs-small); text-align: center; padding-top: 10px; }
 
 /* ---------- Flat hero (.fhero) ----------
    Franchise's hero, shared with Season Wrapped. Its own card rather than the shared .hero2: no gold glow behind the
@@ -950,7 +955,7 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
 .fhero-main{ padding:18px 18px 16px; min-width:0; }
 .fhero-id{ display:flex; align-items:center; gap:14px; }
 .fhero-name{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.9rem, 8vw, 2.6rem); line-height:0.95; overflow-wrap:anywhere; }
-.fhero-sub{ color:var(--text-dim); font-size:0.8rem; margin-top:5px; }
+.fhero-sub{ color:var(--text-dim); font-size:var(--fs-small); margin-top:5px; }
 /* No dividers between stats. Cells hug their content and the leftover
    width is shared evenly between them, so the visible gaps between
    numbers come out equal ("3" doesn't sit in a cell as wide as "76-100"). */
@@ -962,20 +967,20 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
 .fs{ width:min-content; }
 .fs-v{ justify-self:center; }
 .fs-v{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.05rem, 5vw, 1.4rem); color:var(--gold); white-space:nowrap; font-variant-numeric:tabular-nums; }
-.fs-l{ color:var(--text-dim); font-size:0.56rem; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; line-height:1.25; }
+.fs-l{ color:var(--text-dim); font-size:var(--fs-label); text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; line-height:1.25; }
 @media (min-width:721px){
   .fhero{ grid-template-columns:minmax(0,1fr) auto; }
   .fhero-main{ padding:26px 28px 24px; }
   .fhero-stats{ display:flex; flex-direction:column; justify-content:center; gap:14px; border-top:none; border-left:1px solid var(--line); border-radius:0 14px 14px 0; padding:22px 26px; }
   .fs{ display:flex; justify-content:space-between; align-items:center; gap:28px; padding:0; text-align:left; width:auto; }
   .fs-v{ order:2; font-size:1.2rem; }
-  .fs-l{ order:1; font-size:0.76rem; text-transform:none; letter-spacing:0; margin:0; }
+  .fs-l{ order:1; font-size:var(--fs-detail); text-transform:none; letter-spacing:0; margin:0; }
 }
 
 /* The "#N in X" rank pills under a .fhero's name (Franchise, Parlay Stats' Managers tab). */
 .hero-pills{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 @media (max-width:720px){ .hero-pills.scroll{ flex-wrap:nowrap; margin-left:-18px; margin-right:-18px; padding:0 18px; scroll-padding:0 18px; } }
-.rank-badge{ background: rgba(212,180,106,0.14); border: 1px solid var(--gold); color: var(--gold); font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.rank-badge{ background: rgba(212,180,106,0.14); border: 1px solid var(--gold); color: var(--gold); font-size: var(--fs-detail); font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 .rank-badge.bad{ background: rgba(214,98,79,0.14); border-color: var(--loss); color: var(--loss); }
 
 /* ---------- Parlay leg card ----------
@@ -990,7 +995,7 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
    every width -- on desktop each leg is a single ledger line with odds,
    score and status in aligned columns. */
 .legs-list{ display: grid; gap: 8px; }
-.leg-day{ color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 2px 0; }
+.leg-day{ color: var(--text-dim); font-size: var(--fs-detail); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 2px 0; }
 .leg-day:first-child{ margin-top: 0; }
 .leg{
   display: grid; grid-template-columns: 60px minmax(0, 1fr);
@@ -1008,9 +1013,9 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
    the Live badge on the right carries the pulsing dot, so the rail
    doesn't repeat it. */
 .leg-rail{ background: rgba(0,0,0,0.22); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 2px; text-align: center; min-width: 0; }
-.leg-rail .sp{ color: var(--gold); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.leg-rail .sp{ color: var(--gold); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 .leg-rail .t{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.1rem; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.leg-rail .p{ color: var(--text-dim); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.leg-rail .p{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
 .leg-rail.live .t, .leg-rail.live .p{ color: var(--loss); }
 .leg-rail .arrow{ font-size: 0.7em; margin-right: 2px; vertical-align: 0.12em; }
 
@@ -1039,7 +1044,7 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
    Filled rather than outlined, matching Parlay Results' .hero-chip. Nothing renders here before kickoff. */
 .fin{
   font-family: var(--scoreboard); font-variant-numeric: tabular-nums;
-  font-size: 0.82rem; font-weight: 700; line-height: 1; color: var(--text);
+  font-size: var(--fs-small); font-weight: 700; line-height: 1; color: var(--text);
   background: rgba(255,255,255,0.06); border-radius: 999px; padding: 5px 10px;
   white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis;
 }
@@ -1126,12 +1131,12 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
 .a2hs-icon{ width:44px; height:44px; border-radius:11px; flex:none; box-shadow:0 0 0 1px rgba(255,255,255,0.1); }
 .a2hs-txt{ flex:1; min-width:0; }
 .a2hs-ttl{ font-weight:700; font-size:0.95rem; line-height:1.25; }
-.a2hs-sub{ color:var(--text-dim); font-size:0.76rem; margin-top:2px; }
+.a2hs-sub{ color:var(--text-dim); font-size:var(--fs-detail); margin-top:2px; }
 .a2hs-steps{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:12px; }
 .a2hs-k{ display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 9px; border-radius:999px; background:rgba(255,255,255,0.06);
-         border:1px solid var(--line); font-weight:600; font-size:0.78rem; white-space:nowrap; }
+         border:1px solid var(--line); font-weight:600; font-size:var(--fs-small); white-space:nowrap; }
 .a2hs-k svg{ width:14px; height:14px; flex:none; }
-.a2hs-then{ color:var(--text-dim); font-size:0.78rem; }
+.a2hs-then{ color:var(--text-dim); font-size:var(--fs-small); }
 /* Each "then" wraps with the step it introduces, never alone at a row's end. */
 .a2hs-step{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
 /* The panels' 30px ✕, with a 44px tap area around it. */
@@ -1221,14 +1226,14 @@ footer{ color: var(--text-dim); font-size: 0.78rem; text-align: center; padding-
 .wkr:focus-visible{ outline: 2px solid var(--gold); outline-offset: 2px; }
 @media (hover: hover){ .wkr:not(.on):hover{ background: var(--item-hover); } }
 .wkr-n{ font: 800 1.05rem/1 var(--scoreboard); letter-spacing: 0.01em; }
-.wkr-n small{ display: block; font: 700 0.58rem/1.3 var(--body); color: var(--text-dim); letter-spacing: 0.05em; text-transform: uppercase; margin-top: 3px; }
+.wkr-n small{ display: block; font: 700 var(--fs-label)/1.3 var(--body); color: var(--text-dim); letter-spacing: 0.05em; text-transform: uppercase; margin-top: 3px; }
 .wkr.on .wkr-n small{ color: var(--gold); }
 .wkr-o{ min-width: 0; font-weight: 600; font-size: 0.86rem; }
-.wkr-o span{ display: block; color: var(--text-dim); font-weight: 400; font-size: 0.74rem; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.wkr-o span{ display: block; color: var(--text-dim); font-weight: 400; font-size: var(--fs-detail); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .wkr-r{ display: flex; gap: 4px; }
-.wkr-r i{ width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font: 800 0.62rem/1 var(--body); font-style: normal; border: 1px solid var(--line); color: var(--text-dim); }
+.wkr-r i{ width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font: 800 var(--fs-label)/1 var(--body); font-style: normal; border: 1px solid var(--line); color: var(--text-dim); }
 .wkr-r i.w{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
 .wkr-r i.l{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
 .wkr-r i.live{ border-color: var(--loss-line); }
 .wkr-r i.live::before{ content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
-.wkr-cap{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 2px 4px 8px; }
+.wkr-cap{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 2px 4px 8px; }

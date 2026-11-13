@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=33">
+<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="nav.css?v=34">
 <style>
   /* Four tabs and the Year on one row (redesign 2026-10-22): Parlays (the
      parlay itself), Leaders (every manager ranking, one card a stat),
@@ -54,7 +54,7 @@
   .tab-view{ display: grid; gap: 14px; }
   .stat-card{ overflow: hidden; }
   .stat-card-title.split{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .pm-cap{ display: block; color: var(--text-dim); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .pm-cap{ display: block; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
 
   /* ---------- Parlays ---------- */
   .ph-big{ font-family: var(--scoreboard); font-weight: 800; font-size: 3.4rem; line-height: 0.95; color: var(--gold); font-variant-numeric: tabular-nums; }
@@ -64,7 +64,7 @@
 
   /* Every parlay: a row per week, a square per leg in kickoff order, the
      first loss crossed and everything after it faded. */
-  .pg-yr{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 12px 4px 4px; }
+  .pg-yr{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: var(--fs-detail); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 12px 4px 4px; }
   .pg-yr:first-child{ margin-top: 0; }
   .pg-yr .r{ font-variant-numeric: tabular-nums; }
   .pg-row{ display: grid; grid-template-columns: 38px minmax(0, 1fr) 40px; gap: 8px; align-items: center; width: 100%; padding: 3px 4px; margin: 1px 0; border: 1px solid transparent; border-radius: 8px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
@@ -77,13 +77,13 @@
   .pc.Loss{ background: var(--loss); border-color: var(--loss); }
   .pc.after{ opacity: 0.28; }
   .pc.Pending{ border-style: dashed; }
-  .pc.kill::after{ content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-weight: 800; line-height: 1; color: #1A0A07; }
+  .pc.kill::after{ content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; font-size: var(--fs-label); font-weight: 800; line-height: 1; color: #1A0A07; }
   .pg-n{ font-family: var(--scoreboard); font-weight: 700; font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
   .pg-n small{ color: var(--text-dim); font-size: 0.75em; }
-  .pg-key{ display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--text-dim); font-size: 0.72rem; margin-top: 12px; }
+  .pg-key{ display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--text-dim); font-size: var(--fs-detail); margin-top: 12px; }
   .pg-key span{ display: inline-flex; align-items: center; gap: 6px; }
   .pg-key .pc{ width: 14px; height: 14px; }
-  .pg-key .pc.kill::after{ font-size: 9px; }
+  .pg-key .pc.kill::after{ font-size: var(--fs-label); }
   .pg-detail{ margin-top: 12px; padding: 10px 12px; font-size: 0.84rem; line-height: 1.5; }
   .pg-detail .dim{ color: var(--text-dim); }
   .pg-detail a{ color: var(--gold); font-weight: 600; text-decoration: none; }
@@ -98,8 +98,8 @@
   .uc-dot{ width: 100%; max-width: 22px; aspect-ratio: 1; border-radius: 50%; background: rgba(212,180,106,0.35); }
   .uc-dot.most{ background: var(--gold); }
   .uc-ax{ display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 4px; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 5px; }
-  .uc-ax span{ text-align: center; color: var(--text-dim); font-size: 0.66rem; font-variant-numeric: tabular-nums; }
-  .uc-cap{ display: flex; justify-content: space-between; gap: 10px; color: var(--text-dim); font-size: 0.72rem; margin-top: 8px; }
+  .uc-ax span{ text-align: center; color: var(--text-dim); font-size: var(--fs-label); font-variant-numeric: tabular-nums; }
+  .uc-cap{ display: flex; justify-content: space-between; gap: 10px; color: var(--text-dim); font-size: var(--fs-detail); margin-top: 8px; }
   .uc-cap b{ color: var(--gold); }
   .stat-card-title .scope-row{ margin: 0; }
 
@@ -107,10 +107,10 @@
   a.wk{ display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 12px; align-items: center; color: inherit; text-decoration: none; }
   @media (hover: hover){ a.wk:hover{ background: var(--item-hover); } }
   .wk-t{ font-weight: 700; font-size: 0.9rem; }
-  .wk-s{ color: var(--text-dim); font-size: 0.76rem; grid-column: 1; }
+  .wk-s{ color: var(--text-dim); font-size: var(--fs-detail); grid-column: 1; }
   .wk-v{ grid-column: 2; grid-row: 1 / span 2; text-align: right; }
   .wk-v b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.35rem; color: var(--gold); line-height: 1; font-variant-numeric: tabular-nums; }
-  .wk-v span{ display: block; margin-top: 3px; color: var(--text-dim); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .wk-v span{ display: block; margin-top: 3px; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 
   /* ---------- Leaders: a card per stat ----------
      The leader big (every tied name), #2 and #3 under it, the full 12 in a
@@ -125,14 +125,14 @@
   .lc-lead .v{ font-family: var(--scoreboard); font-weight: 800; font-size: 2rem; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .lc.bad .lc-lead .v{ color: var(--loss); }
   .lc-lead .n{ font-weight: 700; font-size: 0.9rem; margin-top: 4px; overflow-wrap: anywhere; }
-  .lc-lead .s{ color: var(--text-dim); font-size: 0.7rem; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lc-lead .s{ color: var(--text-dim); font-size: var(--fs-label); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lc-next{ margin: 10px 10px 0; display: grid; gap: 2px; }
-  .lc-next > div{ display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 6px; font-size: 0.76rem; padding: 3px 4px; }
+  .lc-next > div{ display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 6px; font-size: var(--fs-detail); padding: 3px 4px; }
   .lc-next .rk{ color: var(--text-dim); font-family: var(--scoreboard); font-weight: 700; }
   .lc-next .n{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lc-next .v{ font-family: var(--scoreboard); font-weight: 700; font-variant-numeric: tabular-nums; }
   .lc-all{ margin: auto 10px 10px; padding-top: 10px; }
-  .lc-all button{ width: 100%; height: 32px; border-radius: 16px; border: 1px solid var(--ctl-line); background: none; color: var(--text-dim); font: inherit; font-size: 0.76rem; font-weight: 600; cursor: pointer; }
+  .lc-all button{ width: 100%; height: 32px; border-radius: 16px; border: 1px solid var(--ctl-line); background: none; color: var(--text-dim); font: inherit; font-size: var(--fs-detail); font-weight: 600; cursor: pointer; }
   .lc-all button.on{ color: var(--gold); border-color: var(--lead-line); }
   @media (hover: hover){ .lc-all button:hover{ color: var(--text); background: rgba(255,255,255,0.05); } }
   .lc .mgr-tap{ background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
@@ -140,7 +140,7 @@
 
   .ls-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .ls-title{ font-weight: 700; font-size: 1rem; }
-  .ls-note{ color: var(--text-dim); font-size: 0.76rem; line-height: 1.4; margin: 4px 0 10px; }
+  .ls-note{ color: var(--text-dim); font-size: var(--fs-detail); line-height: 1.4; margin: 4px 0 10px; }
   .ls-rows{ display: grid; gap: 4px; padding-bottom: 6px; }
   .ls-row{ display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 12px; min-height: 44px; width: 100%; color: inherit; font: inherit; text-align: left; cursor: pointer; }
   @media (hover: hover){ .ls-row:hover{ background: var(--item-hover); } }
@@ -148,7 +148,7 @@
   .ls-row.top.bad{ border-color: var(--loss-line); background: var(--loss-tint); }
   .ls-row .rk{ font-family: var(--scoreboard); font-weight: 700; color: var(--text-dim); text-align: center; font-size: 1.05rem; }
   .ls-row .n{ font-weight: 700; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ls-row .s{ color: var(--text-dim); font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ls-row .s{ color: var(--text-dim); font-size: var(--fs-detail); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ls-row .v{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.15rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .ls-row .v.up{ color: var(--turf); } .ls-row .v.down{ color: var(--loss); }
   #ls-pop{ max-height: 70vh; overflow-y: auto; }
@@ -159,7 +159,7 @@
   .bh{ padding: 12px; min-width: 0; }
   .bh .v{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.5rem; line-height: 1.05; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bh .v.up{ color: var(--turf); } .bh .v.down{ color: var(--loss); }
-  .bh .s{ color: var(--text-dim); font-size: 0.74rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .bh .s{ color: var(--text-dim); font-size: var(--fs-detail); margin-top: 2px; font-variant-numeric: tabular-nums; }
   .pm-tile.thin b{ color: var(--text-dim); }
   /* ---------- Managers tab ----------
      One manager's parlay franchise (mockup option A, 2026-10-22): the
@@ -191,10 +191,10 @@
   .pm-chart .end{ fill: var(--gold); stroke: #121212; stroke-width: 2; }
   .pm-chart .xh{ stroke: rgba(255,255,255,0.35); }
   .pm-chart .xd{ fill: none; stroke: var(--text); stroke-width: 2; }
-  .pm-tip{ position: absolute; top: 0; width: 200px; pointer-events: none; z-index: 2; background: #1C1C1B; border: 1px solid var(--ctl-line); border-radius: 10px; padding: 7px 9px; font-size: 0.74rem; line-height: 1.35; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-  .pm-tip .t1{ color: var(--text-dim); font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pm-tip{ position: absolute; top: 0; width: 200px; pointer-events: none; z-index: 2; background: #1C1C1B; border: 1px solid var(--ctl-line); border-radius: 10px; padding: 7px 9px; font-size: var(--fs-detail); line-height: 1.35; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .pm-tip .t1{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
   .pm-tip .t2{ font-weight: 600; margin: 2px 0; }
-  .pm-tip .t3{ color: var(--text-dim); font-size: 0.72rem; }
+  .pm-tip .t3{ color: var(--text-dim); font-size: var(--fs-detail); }
   .pm-tip .t4{ margin-top: 4px; font-variant-numeric: tabular-nums; }
   .pm-tip .up{ color: var(--turf); } .pm-tip .down{ color: var(--loss); }
 
@@ -204,12 +204,12 @@
   .pm-form i{ display: grid; place-items: center; height: 30px; border-radius: 8px; border: 1px solid var(--ctl-line); font-style: normal; font-family: var(--scoreboard); font-weight: 700; font-size: 0.95rem; color: var(--text-dim); }
   .pm-form i.Win{ color: var(--turf); border-color: var(--win-line); background: var(--win-tint); }
   .pm-form i.Loss{ color: var(--loss); border-color: var(--loss-line); background: var(--loss-tint); }
-  .pm-form span{ display: block; color: var(--text-dim); font-size: 0.6rem; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pm-form span{ display: block; color: var(--text-dim); font-size: var(--fs-label); margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .pm-pods{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
   .pm-pod{ padding: 10px 6px; text-align: center; min-width: 0; }
   .pm-pod b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.6rem; line-height: 1.05; color: var(--gold); font-variant-numeric: tabular-nums; }
   .pm-pod b.up{ color: var(--turf); } .pm-pod b.down{ color: var(--loss); }
-  .pm-pod small{ display: block; color: var(--text-dim); font-size: 0.7rem; margin-top: 3px; }
+  .pm-pod small{ display: block; color: var(--text-dim); font-size: var(--fs-label); margin-top: 3px; }
 
   /* Longest odds hit / safest miss. */
   .pm-pair{ display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
@@ -218,17 +218,17 @@
   .pm-pick .pm-cap{ grid-column: 1 / -1; margin: 0; }
   .pm-pick .what{ font-size: 0.88rem; color: var(--text-dim); min-width: 0; overflow-wrap: anywhere; }
   .pm-pick .what b{ color: var(--text); font-weight: 600; }
-  .pm-pick .when{ color: var(--text-dim); font-size: 0.74rem; }
+  .pm-pick .when{ color: var(--text-dim); font-size: var(--fs-detail); }
   .pm-pick .odds{ grid-column: 2; grid-row: 2 / span 2; font-family: var(--scoreboard); font-weight: 700; font-size: 1.5rem; color: var(--gold); font-variant-numeric: tabular-nums; }
 
   /* Splits: a tile per sport / bet type / odds range / side, W-L big. */
   .pm-tiles{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
   .pm-tile{ padding: 9px 10px 10px; min-width: 0; }
-  .pm-tile .tl{ color: var(--text-dim); font-size: 0.72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pm-tile .tr{ color: var(--text-dim); opacity: 0.75; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; margin-top: 1px; }
+  .pm-tile .tl{ color: var(--text-dim); font-size: var(--fs-detail); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pm-tile .tr{ color: var(--text-dim); opacity: 0.75; font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; margin-top: 1px; }
   .pm-tile b{ display: block; font-family: var(--scoreboard); font-weight: 700; font-size: 1.55rem; line-height: 1.1; margin-top: 3px; font-variant-numeric: tabular-nums; }
   .pm-tile b.up{ color: var(--turf); } .pm-tile b.down{ color: var(--loss); }
-  .pm-tile small{ display: block; color: var(--text-dim); font-size: 0.68rem; font-variant-numeric: tabular-nums; }
+  .pm-tile small{ display: block; color: var(--text-dim); font-size: var(--fs-label); font-variant-numeric: tabular-nums; }
 
   /* Every leg: the shared leg card, with the bet type where Parlay Results
      puts the manager, and a third row for "Killed it" / "Sacko week". */

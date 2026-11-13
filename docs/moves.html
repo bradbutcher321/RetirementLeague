@@ -26,9 +26,9 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=33">
-<link rel="stylesheet" href="features.css?v=9">
+<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="nav.css?v=34">
+<link rel="stylesheet" href="features.css?v=10">
 </head>
 <body>
   <div id="site-nav"></div>
@@ -131,7 +131,7 @@
     const names = a => a.length <= 1 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
     return `<div class="glass"><div class="panel-title">${M.current_year} moves <span class="ft-chip">${M.recent.length}</span></div>
       <div class="ft-note">The latest ${M.recent.length} waiver claims and free-agent pickups this season. Waivers run early Wednesday morning; free agents are first come, first served.</div>
-      <div class="ft-body"><div class="ft-lines">${M.recent.map(m => `<div class="ft-line mvrow"><div class="ft-main"><div class="ft-n">${esc(m.mgr)} <span class="dimt" style="font-weight:500;font-size:0.68rem;margin-left:4px">${esc(m.type)} · ${esc(when(m.ts))}</span></div>
+      <div class="ft-body"><div class="ft-lines">${M.recent.map(m => `<div class="ft-line mvrow"><div class="ft-main"><div class="ft-n">${esc(m.mgr)} <span class="dimt" style="font-weight:500;font-size:var(--fs-label);margin-left:4px">${esc(m.type)} · ${esc(when(m.ts))}</span></div>
         <div class="mv-ad">${m.add.map(([n, p]) => `<span class="mv-add">${esc(n)} <i>${esc(p || '')}</i></span>`).join('')}${m.drop.map(([n, p]) => `<span class="mv-drop">${esc(n)} <i>${esc(p || '')}</i></span>`).join('')}</div>
         ${m.beat ? `<div class="ft-s">Won the claim over ${esc(names(m.beat))}</div>` : ''}</div></div>`).join('')}</div></div></div>`;
   }

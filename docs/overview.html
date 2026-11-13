@@ -37,9 +37,9 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=33">
-<link rel="stylesheet" href="features.css?v=9">
+<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="nav.css?v=34">
+<link rel="stylesheet" href="features.css?v=10">
 <style>
   /* ---------- League History ----------
      Same building blocks as Franchise and Game Records: one panel per
@@ -52,24 +52,24 @@
   .p-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 16px 0; }
   .p-title{ font-weight:700; font-size:0.95rem; }
   .p-body{ padding:12px; }
-  .chip{ font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--text-dim); white-space:nowrap; }
+  .chip{ font-size:var(--fs-label); font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--text-dim); white-space:nowrap; }
 
   /* ---------- Summary ---------- */
   .reign{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .reign-c{ border:1px solid; border-radius:10px; padding:14px 10px 12px; text-align:center; min-width:0; }
   .reign-c.champ{ border-color:var(--lead-line); background:var(--lead-tint); }
   .reign-c.sacko{ border-color:var(--loss-line); background:var(--loss-tint); }
-  .reign-l{ font-size:0.62rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
+  .reign-l{ font-size:var(--fs-label); font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
   .reign-c.champ .reign-l{ color:var(--gold); } .reign-c.sacko .reign-l{ color:var(--loss); }
   .reign-n{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.7rem, 8vw, 2.3rem); line-height:1.05; margin-top:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .reign-s{ color:var(--text-dim); font-size:0.74rem; margin-top:3px; }
+  .reign-s{ color:var(--text-dim); font-size:var(--fs-detail); margin-top:3px; }
 
   .tiles{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
   @media (min-width:721px){ .tiles{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
   .tile{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:10px 6px 9px; text-align:center; min-width:0; }
-  .tile-l{ color:var(--text-dim); font-size:0.6rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  .tile-l{ color:var(--text-dim); font-size:var(--fs-label); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
   .tile-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.5rem; line-height:1.15; margin-top:3px; }
-  .tile-s{ color:var(--text-dim); font-size:0.66rem; margin-top:1px; }
+  .tile-s{ color:var(--text-dim); font-size:var(--fs-label); margin-top:1px; }
 
   /* Record rows: Game Records' shape -- type tile, caption, holder, value. */
   .recs{ display:grid; grid-template-columns:1fr; }
@@ -77,9 +77,9 @@
   .rec-row{ display:grid; grid-template-columns:36px minmax(0,1fr) auto; gap:12px; align-items:center; padding:10px 6px; border-top:1px solid var(--line); }
   .rec-row:first-child{ border-top:none; }
   @media (min-width:721px){ .rec-row:nth-child(2){ border-top:none; } }
-  .cap{ display:block; color:var(--text-dim); font-size:0.6rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+  .cap{ display:block; color:var(--text-dim); font-size:var(--fs-label); font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
   .holder{ display:block; font-weight:600; font-size:0.88rem; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ctx{ display:block; color:var(--text-dim); font-size:0.7rem; margin-top:1px; }
+  .ctx{ display:block; color:var(--text-dim); font-size:var(--fs-label); margin-top:1px; }
   .rec-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.4rem; color:var(--gold); font-variant-numeric:tabular-nums; white-space:nowrap; }
 
   /* ---------- Timeline: one card per season (audit II #7) ----------
@@ -95,8 +95,8 @@
   .yr-hl{ display:flex; align-items:center; gap:8px; min-width:0; }
   .yr-y{ font-family:var(--scoreboard); font-weight:800; font-size:1.4rem; line-height:1; }
   .yr-sk{ display:inline-flex; align-items:center; gap:7px; height:26px; padding:0 11px; border-radius:999px; border:1px solid var(--loss-line); background:var(--loss-tint); min-width:0; }
-  .yr-sk span{ color:var(--loss); font-size:0.58rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; }
-  .yr-sk b{ font-size:0.78rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .yr-sk span{ color:var(--loss); font-size:var(--fs-label); font-weight:700; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; }
+  .yr-sk b{ font-size:var(--fs-small); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   .podium{ display:grid; grid-template-columns:1.12fr 1fr 1fr; gap:6px; align-items:end; height:116px; }
   .pd{ border-radius:9px 9px 4px 4px; text-align:center; padding:0 5px 7px; min-width:0; border:1px solid var(--item-line); background:var(--item); display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:1px; }
@@ -105,17 +105,17 @@
   .pd-lg{ position:relative; width:30px; height:30px; border-radius:50%; overflow:hidden; margin-bottom:4px; flex:none; background:var(--item); }
   .pd.p1 .pd-lg{ width:36px; height:36px; box-shadow:0 0 0 2px var(--gold); }
   .pd-lg img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .pd-lg .ph{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:0.8rem; color:var(--text-dim); }
+  .pd-lg .ph{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:var(--fs-small); color:var(--text-dim); }
   .pd-r{ font-family:var(--scoreboard); font-weight:800; font-size:0.84rem; color:var(--text-dim); line-height:1.1; }
   .pd.p1 .pd-r{ color:var(--gold); }
   .pd-n{ font-weight:700; font-size:0.86rem; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pd.p1 .pd-n{ color:var(--gold); font-size:0.95rem; }
-  .pd-a{ color:var(--text-dim); font-size:0.66rem; font-variant-numeric:tabular-nums; height:1.2em; }
+  .pd-a{ color:var(--text-dim); font-size:var(--fs-label); font-variant-numeric:tabular-nums; height:1.2em; }
 
   .yr-sec > .cap{ margin-bottom:5px; }
   .slots{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:5px; }
-  .slot{ display:flex; align-items:center; gap:6px; height:26px; padding:0 9px; border-radius:999px; border:1px solid var(--item-line); font-size:0.74rem; min-width:0; }
-  .slot b{ font-weight:700; font-size:0.7rem; font-variant-numeric:tabular-nums; flex:none; }
+  .slot{ display:flex; align-items:center; gap:6px; height:26px; padding:0 9px; border-radius:999px; border:1px solid var(--item-line); font-size:var(--fs-detail); min-width:0; }
+  .slot b{ font-weight:700; font-size:var(--fs-label); font-variant-numeric:tabular-nums; flex:none; }
   .slot span{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .slot.playoffs{ border-color:var(--win-line); background:var(--win-tint); } .slot.playoffs b{ color:var(--turf); }
   .slot.missed{ border-color:var(--loss-line); background:var(--loss-tint); } .slot.missed b{ color:var(--loss); }
@@ -125,11 +125,11 @@
   /* Superlatives: name only, so both fit one row on a phone. The points
      show on hover, or on a tap (the pill is a button). */
   .sups{ display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-  .sup{ position:relative; display:flex; align-items:center; gap:8px; height:30px; padding:0 12px; border-radius:999px; border:1px solid var(--item-line); background:var(--item); color:var(--text); font:inherit; font-size:0.78rem; min-width:0; cursor:pointer; text-align:left; }
+  .sup{ position:relative; display:flex; align-items:center; gap:8px; height:30px; padding:0 12px; border-radius:999px; border:1px solid var(--item-line); background:var(--item); color:var(--text); font:inherit; font-size:var(--fs-small); min-width:0; cursor:pointer; text-align:left; }
   .sup .cap{ flex:none; margin:0; line-height:1; }
   .sup b{ line-height:1; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .sup:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
-  .sup::after{ content:attr(data-pts); position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); padding:5px 10px; border-radius:8px; background:var(--ctl-bg-solid); border:1px solid var(--ctl-line); color:var(--gold); font-weight:700; font-size:0.78rem; white-space:nowrap; font-variant-numeric:tabular-nums; opacity:0; pointer-events:none; transition:opacity .12s; z-index:2; }
+  .sup::after{ content:attr(data-pts); position:absolute; left:50%; bottom:calc(100% + 6px); transform:translateX(-50%); padding:5px 10px; border-radius:8px; background:var(--ctl-bg-solid); border:1px solid var(--ctl-line); color:var(--gold); font-weight:700; font-size:var(--fs-small); white-space:nowrap; font-variant-numeric:tabular-nums; opacity:0; pointer-events:none; transition:opacity .12s; z-index:2; }
   .sup.show::after{ opacity:1; }
   @media (hover:hover){ .sup:hover::after{ opacity:1; } }
 
@@ -138,9 +138,9 @@
      width, so all the seasons fit a phone without scrolling. States are
      the same ones the Franchise page uses for a season. */
   .heat{ display:grid; gap:3px; align-items:center; }
-  .heat-n{ font-weight:600; font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:5px 4px 5px 8px; }
-  .heat-y{ text-align:center; color:var(--text-dim); font-size:0.58rem; }
-  .heat-c{ height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:0.78rem; color:var(--text-dim); background:var(--item); border:1px solid var(--item-line); min-width:0; }
+  .heat-n{ font-weight:600; font-size:var(--fs-small); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:5px 4px 5px 8px; }
+  .heat-y{ text-align:center; color:var(--text-dim); font-size:var(--fs-label); }
+  .heat-c{ height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:700; font-size:var(--fs-small); color:var(--text-dim); background:var(--item); border:1px solid var(--item-line); min-width:0; }
   .heat-ast{ font-family:var(--body); font-weight:700; font-size:0.95em; line-height:1; margin-left:1px; align-self:flex-start; margin-top:5px; }
   .heat-c.none{ background:none; border-color:transparent; color:rgba(255,255,255,0.15); }
   .heat-c.champion{ border-color:var(--gold); background:color-mix(in srgb, var(--gold) 20%, transparent); color:var(--text); box-shadow:0 0 7px color-mix(in srgb, var(--gold) 55%, transparent); }
@@ -151,7 +151,7 @@
      playoff year the softer red line. Glow and fill are mixed from --loss. */
   .heat-c.missed{ border-color:var(--loss-line); background:var(--loss-tint); color:var(--loss); }
   .heat-c.sacko{ border-color:var(--loss); background:color-mix(in srgb, var(--loss) 22%, transparent); color:var(--text); box-shadow:0 0 7px color-mix(in srgb, var(--loss) 55%, transparent); }
-  .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; color:var(--text-dim); font-size:0.68rem; padding:12px 2px 0; }
+  .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; color:var(--text-dim); font-size:var(--fs-label); padding:12px 2px 0; }
   .legend i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; border:1px solid var(--item-line); background:var(--item); }
   .legend .champion{ border-color:var(--gold); background:color-mix(in srgb, var(--gold) 20%, transparent); box-shadow:0 0 5px color-mix(in srgb, var(--gold) 55%, transparent); }
   .legend .runner-up{ border-color:var(--lead-line); background:none; }
@@ -187,16 +187,16 @@
   .lb .chev{ color:var(--text-dim); justify-self:center; }
   .lb.open .chev{ color:var(--gold); }
   .pair{ width:36px; height:36px; flex:none; position:relative; }
-  .pair .mono-tile{ position:absolute; width:24px; height:24px; font-size:0.5rem; letter-spacing:0; background:#1c1c1c; }
+  .pair .mono-tile{ position:absolute; width:24px; height:24px; font-size:var(--fs-label); letter-spacing:0; background:#1c1c1c; }
   .pair .mono-tile:first-child{ left:0; top:0; } .pair .mono-tile:last-child{ right:0; bottom:0; }
-  .you-tag{ display:inline-flex; align-items:center; margin-top:5px; padding:3px 8px; border-radius:999px; border:1px solid color-mix(in srgb, var(--me-ring) 55%, transparent); background:color-mix(in srgb, var(--me-ring) 9%, transparent); color:var(--me-ring); font-size:0.66rem; font-weight:700; white-space:nowrap; max-width:100%; }
+  .you-tag{ display:inline-flex; align-items:center; margin-top:5px; padding:3px 8px; border-radius:999px; border:1px solid color-mix(in srgb, var(--me-ring) 55%, transparent); background:color-mix(in srgb, var(--me-ring) 9%, transparent); color:var(--me-ring); font-size:var(--fs-label); font-weight:700; white-space:nowrap; max-width:100%; }
   .jump{ display:flex; gap:8px; overflow-x:auto; padding:2px 0; scrollbar-width:none; }
   .jump::-webkit-scrollbar{ display:none; }
-  .jump button{ flex:none; border:1px solid var(--line); background:var(--item); color:var(--text-dim); border-radius:999px; padding:7px 13px; font:600 0.76rem var(--body); cursor:pointer; }
+  .jump button{ flex:none; border:1px solid var(--line); background:var(--item); color:var(--text-dim); border-radius:999px; padding:7px 13px; font:600 var(--fs-detail) var(--body); cursor:pointer; }
   .stand{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
   .stand div{ background:var(--item); border:1px solid var(--item-line); border-radius:12px; padding:10px 12px; }
   .stand b{ display:block; font-family:var(--scoreboard); font-weight:800; font-size:1.9rem; line-height:1; color:var(--me-ring); }
-  .stand span{ display:block; margin-top:5px; color:var(--text-dim); font-size:0.68rem; line-height:1.35; }
+  .stand span{ display:block; margin-top:5px; color:var(--text-dim); font-size:var(--fs-label); line-height:1.35; }
   .lb-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px; }
   .lb-title{ font-weight:700; font-size:1.05rem; }
 
@@ -222,26 +222,26 @@
   .lr.me{ outline-offset:-1.5px; border-radius:8px; }
   .lr.lead .lr-rk{ color:var(--gold); } .lr.low .lr-rk{ color:var(--loss); }
   .lr-nm{ font-weight:600; font-size:0.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .lr-sub{ color:var(--text-dim); font-size:0.7rem; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lr-sub{ color:var(--text-dim); font-size:var(--fs-label); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .lr-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; font-variant-numeric:tabular-nums; white-space:nowrap; text-align:right; }
   .lr.lead .lr-v{ color:var(--gold); } .lr.low .lr-v{ color:var(--loss); }
   .lr .lr-v.up{ color:var(--turf); } .lr .lr-v.down{ color:var(--loss); }
 
   /* ---------- Secret Santa: each year's loop, haul and Shirty winners ---------- */
   .ss-years{ display:flex; gap:6px; margin:0 0 12px; }
-  .ss-years button{ height:34px; padding:0 14px; border-radius:17px; border:1px solid var(--ctl-line); background:var(--ctl-bg); color:var(--text-dim); font:600 0.82rem var(--body); cursor:pointer; }
+  .ss-years button{ height:34px; padding:0 14px; border-radius:17px; border:1px solid var(--ctl-line); background:var(--ctl-bg); color:var(--text-dim); font:600 var(--fs-small) var(--body); cursor:pointer; }
   .ss-years button[aria-pressed="true"]{ background:var(--gold); border-color:var(--gold); color:var(--ctl-on-ink); }
   .ss-stack{ display:grid; gap:12px; }
   .ss-ring{ position:relative; width:min(100%, 380px); aspect-ratio:1; margin:6px auto 22px; }
   .ss-ring svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
   .ss-ring path{ fill:none; stroke:var(--gold); stroke-width:.55; stroke-linecap:round; opacity:.85; }
   .ss-seat{ position:absolute; width:15%; aspect-ratio:1; transform:translate(-50%, -50%); }
-  .ss-seat .lg{ display:grid; place-items:center; width:100%; height:100%; border-radius:50%; overflow:hidden; background:#1a1a1a; box-shadow:0 0 0 1.5px var(--lead-line); font:700 0.74rem var(--scoreboard); color:var(--text-dim); }
+  .ss-seat .lg{ display:grid; place-items:center; width:100%; height:100%; border-radius:50%; overflow:hidden; background:#1a1a1a; box-shadow:0 0 0 1.5px var(--lead-line); font:700 var(--fs-detail) var(--scoreboard); color:var(--text-dim); }
   .ss-seat .lg img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .ss-seat .nm{ position:absolute; left:50%; top:100%; transform:translateX(-50%); margin-top:3px; font-size:0.62rem; font-weight:600; white-space:nowrap; color:#E8E6DF; }
+  .ss-seat .nm{ position:absolute; left:50%; top:100%; transform:translateX(-50%); margin-top:3px; font-size:var(--fs-label); font-weight:600; white-space:nowrap; color:#E8E6DF; }
   .ss-core{ position:absolute; inset:30%; display:grid; place-content:center; text-align:center; }
   .ss-core b{ font:800 2.6rem/.9 var(--scoreboard); color:var(--gold); }
-  .ss-core small{ margin-top:6px; color:var(--text-dim); font-size:0.66rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase; }
+  .ss-core small{ margin-top:6px; color:var(--text-dim); font-size:var(--fs-label); font-weight:600; letter-spacing:.12em; text-transform:uppercase; }
   .ss-haul{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
   @media (min-width:560px){ .ss-haul{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
   .ss-t{ display:grid; gap:4px; padding:8px; border-radius:12px; border:1px solid var(--item-line); background:var(--item); color:var(--text); text-decoration:none; min-width:0; }
@@ -251,14 +251,14 @@
   /* A fit check (them, in the shirt) fills the tile; the shirt itself tucks into the corner. */
   .ss-t .ph img.fit{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:8px; }
   .ss-t .ph.hasfit img:not(.fit){ position:absolute; right:3px; bottom:3px; width:40%; height:auto; z-index:1; filter:drop-shadow(0 2px 5px rgba(0,0,0,.7)); }
-  .ss-t b{ font-size:0.72rem; }
-  .ss-t small{ font-size:0.66rem; color:var(--text-dim); line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ss-t b{ font-size:var(--fs-detail); }
+  .ss-t small{ font-size:var(--fs-label); color:var(--text-dim); line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .ss-w{ display:grid; gap:6px; }
   .ss-won{ display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:12px; border:1px solid var(--item-line); background:var(--item); }
   .ss-won svg{ flex:none; width:30px; height:30px; }
   .ss-won b{ display:block; font-size:0.92rem; }
-  .ss-won small{ color:var(--text-dim); font-size:0.74rem; }
-  .ss-note{ color:#9CC7E8; font-size:0.74rem; text-align:center; margin:0 0 10px; }
+  .ss-won small{ color:var(--text-dim); font-size:var(--fs-detail); }
+  .ss-note{ color:#9CC7E8; font-size:var(--fs-detail); text-align:center; margin:0 0 10px; }
 </style>
 </head>
 <body>

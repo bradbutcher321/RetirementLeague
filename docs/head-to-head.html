@@ -37,8 +37,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=33">
+<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="nav.css?v=34">
 <style>
   /* ---------- Head to Head ----------
      Built phone-first around one idea: two sides, each with its own colour
@@ -52,7 +52,7 @@
     --a: var(--gold); --a-line: rgba(212,180,106,0.45); --a-tint: rgba(212,180,106,0.08);
     --b: #7AAEDB;     --b-line: rgba(122,174,219,0.45); --b-tint: rgba(122,174,219,0.08);
   }
-  .chip{ font-size:0.68rem; font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--text-dim); white-space:nowrap; }
+  .chip{ font-size:var(--fs-label); font-weight:700; padding:3px 9px; border-radius:999px; border:1px solid var(--line); color:var(--text-dim); white-space:nowrap; }
   /* Losing figures sit well below the blue so the two never blur together. */
   :root{ --lose: #626262; }
   .ca{ color:var(--a); } .cb{ color:var(--b); } .cd{ color:var(--text-dim); }
@@ -80,12 +80,12 @@
   .p-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 16px 0; }
   .p-title{ font-weight:700; font-size:0.95rem; }
   .p-body{ padding:12px; }
-  .key{ display:flex; gap:12px; font-size:0.72rem; font-weight:600; color:var(--text-dim); white-space:nowrap; }
+  .key{ display:flex; gap:12px; font-size:var(--fs-detail); font-weight:600; color:var(--text-dim); white-space:nowrap; }
   .key i{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; vertical-align:0; }
   .key .ka i{ background:var(--a); } .key .kb i{ background:var(--b); }
 
   /* ---------- Monogram ---------- */
-  .mono{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; border:1px solid; font-family:var(--scoreboard); font-weight:800; font-size:0.74rem; letter-spacing:0.02em; flex:none; }
+  .mono{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; border:1px solid; font-family:var(--scoreboard); font-weight:800; font-size:var(--fs-detail); letter-spacing:0.02em; flex:none; }
   .mono.a{ color:var(--a); border-color:var(--a-line); background:var(--a-tint); }
   .mono.b{ color:var(--b); border-color:var(--b-line); background:var(--b-tint); }
   .mono.n{ color:var(--text-dim); border-color:var(--line); background:var(--item); }
@@ -99,7 +99,7 @@
   .vs-logo .ph{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; background:var(--item); }
   .vs-side.a .ph{ color:var(--a); } .vs-side.b .ph{ color:var(--b); }
   .vs-name{ font-family:var(--scoreboard); font-weight:800; font-size:clamp(1.5rem, 7vw, 2.2rem); line-height:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .vs-team{ color:var(--text-dim); font-size:0.72rem; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vs-team{ color:var(--text-dim); font-size:var(--fs-detail); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .vs-score{ display:flex; align-items:baseline; gap:6px; font-family:var(--scoreboard); font-weight:800; font-size:clamp(2.4rem, 11vw, 3.4rem); line-height:1; font-variant-numeric:tabular-nums; }
   .vs-score i{ font-style:normal; color:var(--text-dim); font-size:0.6em; }
   /* Swap: each manager's picker, card side and win count carries a
@@ -121,12 +121,12 @@
   @media (min-width:721px){ .facts{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
   .fact{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:10px 6px 9px; text-align:center; min-width:0; }
   .fact.a{ border-color:var(--a-line); background:var(--a-tint); } .fact.b{ border-color:var(--b-line); background:var(--b-tint); }
-  .fact-l{ color:var(--text-dim); font-size:0.6rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  .fact-l{ color:var(--text-dim); font-size:var(--fs-label); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
   .fact-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.4rem; line-height:1.15; margin-top:3px; white-space:nowrap; }
   .fact.a .fact-v{ color:var(--a); } .fact.b .fact-v{ color:var(--b); }
-  .fact-s{ color:var(--text-dim); font-size:0.68rem; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fact-s{ color:var(--text-dim); font-size:var(--fs-label); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .form{ padding:10px 12px 16px; }
-  .form-l{ color:var(--text-dim); font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; text-align:center; margin-bottom:8px; }
+  .form-l{ color:var(--text-dim); font-size:var(--fs-label); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; text-align:center; margin-bottom:8px; }
   .form-row{ display:flex; justify-content:center; gap:5px; flex-wrap:wrap; }
   .form-row .mono.po{ box-shadow:0 0 0 2px var(--surface), 0 0 0 3px var(--gold); }
   /* Share (share.js) sits under the card and isn't in the picture. */
@@ -138,10 +138,10 @@
   .mo-base{ stroke:rgba(255,255,255,0.18); stroke-width:1; stroke-dasharray:4 4; vector-effect:non-scaling-stroke; }
   .mo-a{ fill:var(--a); opacity:0.28; } .mo-b{ fill:var(--b); opacity:0.28; }
   .mo-line{ fill:none; stroke:var(--text); stroke-width:1.6; vector-effect:non-scaling-stroke; }
-  .mo-tag{ display:block; padding:0 6px; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
+  .mo-tag{ display:block; padding:0 6px; font-size:var(--fs-label); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
   .mo-tag.a{ color:var(--a); margin-bottom:6px; } .mo-tag.b{ color:var(--b); margin-top:6px; }
   .mo-x{ position:relative; height:16px; margin:2px 4px 0; }
-  .mo-x span{ position:absolute; transform:translateX(-50%); color:var(--text-dim); font-size:0.6rem; }
+  .mo-x span{ position:absolute; transform:translateX(-50%); color:var(--text-dim); font-size:var(--fs-label); }
   .leads{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
 
   /* ---------- Season by season ---------- */
@@ -149,7 +149,7 @@
   .yrs::-webkit-scrollbar{ display:none; }
   .yr{ flex:none; width:60px; text-align:center; background:var(--item); border:1px solid var(--item-line); border-radius:8px; padding:8px 2px 7px; }
   .yr.a{ border-color:var(--a-line); background:var(--a-tint); } .yr.b{ border-color:var(--b-line); background:var(--b-tint); }
-  .yr-y{ color:var(--text-dim); font-size:0.62rem; font-weight:600; }
+  .yr-y{ color:var(--text-dim); font-size:var(--fs-label); font-weight:600; }
   .yr-r{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; line-height:1.15; margin-top:2px; font-variant-numeric:tabular-nums; }
   .yr-r .lose{ opacity:0.4; }
 
@@ -158,11 +158,11 @@
   @media (min-width:721px){ .edges{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
   .edge{ background:var(--item); border:1px solid var(--item-line); border-radius:10px; padding:10px 10px 9px; min-width:0; }
   .edge.a{ border-color:var(--a-line); background:var(--a-tint); } .edge.b{ border-color:var(--b-line); background:var(--b-tint); }
-  .edge-l{ color:var(--text-dim); font-size:0.6rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .edge-l{ color:var(--text-dim); font-size:var(--fs-label); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .edge-m{ display:flex; align-items:center; gap:8px; margin-top:6px; }
   .edge-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.4rem; line-height:1; white-space:nowrap; font-variant-numeric:tabular-nums; }
   .edge.a .edge-v{ color:var(--a); } .edge.b .edge-v{ color:var(--b); }
-  .edge-s{ color:var(--text-dim); font-size:0.68rem; margin-top:5px; line-height:1.3; }
+  .edge-s{ color:var(--text-dim); font-size:var(--fs-label); margin-top:5px; line-height:1.3; }
 
   /* ---------- Career tale of the tape ----------
      Both careers side by side. The better figure takes its side's colour;
@@ -175,17 +175,17 @@
   .tape, .tape-head{ max-width:600px; margin-left:auto; margin-right:auto; }
   .tr{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:10px; padding:8px 4px; border-top:1px solid var(--line); }
   .tr:first-child{ border-top:none; }
-  .tr-l{ color:var(--text-dim); font-size:0.66rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; text-align:center; white-space:nowrap; min-width:104px; }
+  .tr-l{ color:var(--text-dim); font-size:var(--fs-label); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; text-align:center; white-space:nowrap; min-width:104px; }
   .tr-v{ font-family:var(--scoreboard); font-weight:800; font-size:1.2rem; font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--lose); }
   .tr-v.l{ text-align:left; } .tr-v.r{ text-align:right; }
   .tr-v.win.l{ color:var(--a); } .tr-v.win.r{ color:var(--b); }
   .tr-v.even{ color:var(--text); }
-  .tape-head{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:10px; padding:0 4px 6px; font-weight:700; font-size:0.8rem; }
+  .tape-head{ display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); gap:10px; padding:0 4px 6px; font-weight:700; font-size:var(--fs-small); }
   .tape-head span:first-child{ color:var(--a); } .tape-head span:last-child{ color:var(--b); text-align:right; }
   .tape-head span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   /* ---------- Every game ---------- */
-  .glist-head{ display:grid; grid-template-columns:54px minmax(0,1fr) 74px; gap:8px; padding:0 8px 6px; font-size:0.72rem; font-weight:700; }
+  .glist-head{ display:grid; grid-template-columns:54px minmax(0,1fr) 74px; gap:8px; padding:0 8px 6px; font-size:var(--fs-detail); font-weight:700; }
   /* Left score right-aligned and right score left-aligned around a fixed
      dash column, so the dashes line up down the list and each name sits
      directly over its own scores. */
@@ -199,7 +199,7 @@
   .g:first-of-type{ border-top:none; }
   .g.final{ background:var(--lead-tint); border-radius:8px; }
   .g-when b{ display:block; font-family:var(--scoreboard); font-weight:700; font-size:1rem; color:var(--text-dim); line-height:1.1; }
-  .g-when span{ display:block; color:var(--text-dim); font-size:0.64rem; white-space:nowrap; }
+  .g-when span{ display:block; color:var(--text-dim); font-size:var(--fs-label); white-space:nowrap; }
   .g-when span.tag{ color:var(--gold); font-weight:700; }
   .g-when span.tag.sacko{ color:var(--loss); }
   .g-sc{ font-family:var(--scoreboard); font-weight:700; font-size:1.15rem; font-variant-numeric:tabular-nums; white-space:nowrap; }

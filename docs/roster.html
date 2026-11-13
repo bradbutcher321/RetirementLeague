@@ -26,9 +26,9 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=33">
-<link rel="stylesheet" href="features.css?v=9">
+<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="nav.css?v=34">
+<link rel="stylesheet" href="features.css?v=10">
 <style>
   /* Your Roster (site audit VI #11, #12, #13). Every card is one glass
      panel; the league-wide grid for a card sits right under it. */
@@ -36,14 +36,14 @@
   .ro-grid > div > .glass:first-child{ margin-top:0; }
   .ro-grid > div:empty{ display:none; }
   @media (min-width:860px){ .ro-grid{ grid-template-columns:1fr 1fr; align-items:start; } }
-  .pos{ display:inline-block; min-width:34px; text-align:center; font:800 0.56rem/1 var(--body); letter-spacing:0.05em; padding:4px 5px; border-radius:5px; margin-right:8px; color:#111; vertical-align:1px; }
+  .pos{ display:inline-block; min-width:34px; text-align:center; font:800 var(--fs-label)/1 var(--body); letter-spacing:0.05em; padding:4px 5px; border-radius:5px; margin-right:8px; color:#111; vertical-align:1px; }
   .pos.QB{ background:#E0705C; } .pos.RB{ background:#5DBB85; } .pos.WR{ background:#5D9BE0; } .pos.TE{ background:#E39A4E; } .pos.FLEX{ background:#B9B6AE; } .pos.BENCH{ background:#6f6f6c; color:#eee; }
   .ro-you{ color:var(--me-ring); }
 
   /* Byes ahead: a strip of the weeks left, the count of your starters off. */
   .wks{ display:grid; grid-template-columns:repeat(var(--n,7),minmax(0,1fr)); gap:6px; }
   .wks button{ border:1px solid var(--item-line); background:var(--item); border-radius:12px; padding:8px 0 7px; min-height:54px; color:var(--text); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; font:inherit; }
-  .wks button small{ color:var(--text-dim); font:700 0.56rem/1 var(--body); letter-spacing:0.06em; white-space:nowrap; }
+  .wks button small{ color:var(--text-dim); font:700 var(--fs-label)/1 var(--body); letter-spacing:0.06em; white-space:nowrap; }
   .wks button b{ font-family:var(--scoreboard); font-weight:800; font-size:1.35rem; line-height:1; }
   .wks button.z b{ color:#4d4d4b; }
   .wks button.hot{ border-color:var(--loss-line); background:var(--loss-tint); } .wks button.hot b{ color:var(--loss); }
@@ -51,18 +51,18 @@
   .wks button:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   .bx{ background:var(--item); border:1px solid var(--item-line); border-radius:12px; padding:12px; }
   .bx-t{ font-weight:700; font-size:0.92rem; }
-  .bx-t small{ color:var(--text-dim); font-weight:500; font-size:0.74rem; margin-left:6px; }
+  .bx-t small{ color:var(--text-dim); font-weight:500; font-size:var(--fs-detail); margin-left:6px; }
   .pl{ display:flex; justify-content:space-between; gap:10px; padding:8px 0; font-size:0.86rem; min-width:0; }
   .pl + .pl{ border-top:1px solid var(--line); }
   .pl > span:first-child{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pl .dim{ color:var(--text-dim); flex:none; }
-  .cov{ margin-top:10px; color:var(--text); font-size:0.8rem; line-height:1.55; }
+  .cov{ margin-top:10px; color:var(--text); font-size:var(--fs-small); line-height:1.55; }
   .cov .no{ color:var(--loss); font-weight:700; }
 
   /* The whole league's byes: starters off per week, deeper red for more. */
-  .heat{ display:grid; grid-template-columns:64px repeat(var(--n,7),minmax(0,1fr)); gap:4px; font-size:0.7rem; }
-  .heat .h{ color:var(--text-dim); font-weight:800; font-size:0.56rem; text-align:center; letter-spacing:0.05em; padding-bottom:2px; white-space:nowrap; }
-  .heat .m{ font-weight:700; font-size:0.78rem; align-self:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .heat{ display:grid; grid-template-columns:64px repeat(var(--n,7),minmax(0,1fr)); gap:4px; font-size:var(--fs-label); }
+  .heat .h{ color:var(--text-dim); font-weight:800; font-size:var(--fs-label); text-align:center; letter-spacing:0.05em; padding-bottom:2px; white-space:nowrap; }
+  .heat .m{ font-weight:700; font-size:var(--fs-small); align-self:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .heat .c{ height:32px; border-radius:7px; display:grid; place-items:center; font-family:var(--scoreboard); font-weight:800; font-size:0.95rem; background:rgba(255,255,255,0.03); color:#4d4d4b; border:0; padding:0; cursor:pointer; }
   .heat .c.n1{ background:rgba(214,98,79,0.12); color:#d9a093; }
   .heat .c.n2{ background:rgba(214,98,79,0.28); color:#f0c2b8; }
@@ -75,12 +75,12 @@
   .fa{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 12px; align-items:center; padding:10px 12px; }
   .fa + .fa{ border-top:1px solid var(--line); }
   .fa b{ font-size:0.88rem; font-weight:600; }
-  .fa .s{ grid-column:1; color:var(--text-dim); font-size:0.72rem; line-height:1.4; }
+  .fa .s{ grid-column:1; color:var(--text-dim); font-size:var(--fs-detail); line-height:1.4; }
   .fa .v{ grid-row:span 2; text-align:right; font-family:var(--scoreboard); font-weight:800; font-size:1.25rem; color:var(--gold); font-variant-numeric:tabular-nums; }
-  .fa .v small{ display:block; font:600 0.6rem/1.2 var(--body); color:var(--text-dim); }
+  .fa .v small{ display:block; font:600 var(--fs-label)/1.2 var(--body); color:var(--text-dim); }
   .espn-row{ display:flex; justify-content:center; padding-top:4px; }
-  .espn-link{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 16px; border-radius:999px; border:1px solid var(--lead-line); color:var(--gold); font-weight:700; font-size:0.82rem; text-decoration:none; }
-  .espn-link i{ font-style:normal; font:900 0.56rem/1 var(--body); background:#C9252C; color:#fff; border-radius:5px; padding:4px 5px; }
+  .espn-link{ display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 16px; border-radius:999px; border:1px solid var(--lead-line); color:var(--gold); font-weight:700; font-size:var(--fs-small); text-decoration:none; }
+  .espn-link i{ font-style:normal; font:900 var(--fs-label)/1 var(--body); background:#C9252C; color:#fff; border-radius:5px; padding:4px 5px; }
 
   /* Where your starters rank. */
   .pr{ display:grid; grid-template-columns:48px minmax(0,1fr) 54px; gap:10px; align-items:center; padding:6px 2px; }
@@ -89,14 +89,14 @@
   .pbar span{ position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:rgba(255,255,255,0.22); }
   .pbar span.top{ background:var(--gold); } .pbar span.low{ background:var(--loss); }
   .pr .rk{ text-align:right; font:800 0.84rem/1 var(--body); }
-  .pr .rk small{ display:block; color:var(--text-dim); font:500 0.64rem/1.4 var(--body); }
+  .pr .rk small{ display:block; color:var(--text-dim); font:500 var(--fs-label)/1.4 var(--body); }
   .pr .rk.top{ color:var(--gold); } .pr .rk.low{ color:var(--loss); }
 
   /* The league's position ranks. */
   .g6{ display:grid; grid-template-columns:64px repeat(6,minmax(0,1fr)); gap:3px; }
-  .g6 .h{ color:var(--text-dim); font-weight:800; font-size:0.54rem; text-align:center; letter-spacing:0.04em; padding-bottom:2px; }
-  .g6 .m{ font-weight:700; font-size:0.78rem; align-self:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .g6 .c{ height:30px; border-radius:6px; display:grid; place-items:center; font:800 0.76rem/1 var(--body); background:rgba(255,255,255,0.04); color:var(--text); font-variant-numeric:tabular-nums; }
+  .g6 .h{ color:var(--text-dim); font-weight:800; font-size:var(--fs-label); text-align:center; letter-spacing:0.04em; padding-bottom:2px; }
+  .g6 .m{ font-weight:700; font-size:var(--fs-small); align-self:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .g6 .c{ height:30px; border-radius:6px; display:grid; place-items:center; font:800 var(--fs-detail)/1 var(--body); background:rgba(255,255,255,0.04); color:var(--text); font-variant-numeric:tabular-nums; }
   .g6 .c.top{ background:rgba(212,180,106,0.22); color:#f3e2b5; }
   .g6 .c.low{ background:rgba(214,98,79,0.22); color:#f0c2b8; }
 </style>
