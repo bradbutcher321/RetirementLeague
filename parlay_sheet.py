@@ -1,7 +1,6 @@
 """
-The "Auto Parlay Tracker" tab's week writer, used by enter_parlay.py (run by
-the enter_parlay.yml and sync_legs.yml Actions the Worker dispatches when a
-week or a leg is saved on the site's Parlay Legs page).
+The "Auto Parlay Tracker" tab's sheet client, used by parlay_to_sheet.py
+(the nightly copy of the Worker's picks into the sheet, site audit X #26).
 """
 import gspread
 from google.oauth2.service_account import Credentials
@@ -109,7 +108,7 @@ class SheetClient:
 
 def _row_values(data):
     """One player's E..O cells, in ROW_FIELDS order. Game times arrive as
-    the sheet's ISO text already (enter_parlay.py rejects anything else)."""
+    the sheet's ISO text already (the Worker rejects anything else)."""
     row_values = []
     for f in ROW_FIELDS:
         v = data.get(f, "")

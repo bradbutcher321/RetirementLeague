@@ -13,11 +13,10 @@
  * hand is saved as bet type "Other" with the text in Player Prop, for a
  * commissioner to fit into the sheet on Enter Picks.
  *
- * A saved leg lands in leg_entries (PARLAY_DB) at once, then every save
- * dispatches sync_legs.yml with the whole week's legs, which writes the
- * rows that changed to Auto Parlay Tracker (enter_parlay.py, mode "legs")
- * and publishes. A later dispatch replaces a queued one, and each carries
- * every leg, so the last save always wins.
+ * A saved leg lands in leg_entries (PARLAY_DB) at once, and the same save
+ * writes it into the picks table and republishes the stats (parlayData.js
+ * syncLegs, audit X #26). It used to wait on a GitHub Action that wrote
+ * the sheet.
  *
  * GET  /legs                -> { year, week, open, locksAt, opensAt, players,
  *                                legs, me } (me only with a signed-in key)
@@ -48,9 +47,8 @@
 import { sessionManager } from "./auth.js";
 import { cached } from "./cache.js";
 import { isCommissioner, logAction } from "./roles.js";
+import { syncLegs } from "./parlayData.js";
 
-const REPO = "bradbutcher321/RetirementLeague";
-const SYNC_WORKFLOW = "sync_legs.yml";
 const ODDS_API = "https://api.the-odds-api.com/v4/sports";
 const BOOKS = ["hardrockbet_fl", "hardrockbet"];
 const ODDS_RESERVE = 30;
@@ -291,7 +289,7 @@ async function saveLeg(request, env) {
     ).bind(b.year, b.week, player, b._win.tue, leg.sport, leg.bet_type, leg.team, leg.opponent, leg.player_prop,
       leg.line, leg.side, leg.odds, leg.gametime, leg.raw_pick, leg.game_id, now).run();
   }
-  const synced = await dispatchSync(env, b._wk).catch((err) => { console.error("Leg sync dispatch failed:", err); return false; });
+  const synced = await syncLegs(env, b._wk).then(() => true).catch((err) => { console.error("Leg sync failed:", err && err.stack || err); return false; });
   return { status: 200, body: { ok: true, synced, ...publicBoard({ ...b, legs: await weekLegs(env, b._wk, b._win) }), me: who.manager, commish } };
 }
 
@@ -310,7 +308,7 @@ async function saveLock(request, env) {
     const report = await priceAtLock(env, b).catch((err) => { console.error("Lock odds:", err); return null; });
     if (report) {
       await env.COOLDOWN_KV.put(pricedKey(b._wk), JSON.stringify({ at: Date.now(), legs: report }), { expirationTtl: 14 * 24 * 3600 });
-      if (await savePrices(env, b, report)) await dispatchSync(env, b._wk).catch((err) => console.error("Lock sync dispatch failed:", err));
+      if (await savePrices(env, b, report)) await syncLegs(env, b._wk).catch((err) => console.error("Lock sync failed:", err && err.stack || err));
       const n = (h) => report.filter((r) => h.includes(r.how)).length;
       note = ` · Hard Rock odds on ${n(["updated", "same"])} of ${report.length}, ${n(["updated"])} changed`;
     }
@@ -372,20 +370,6 @@ export async function mirrorSavedWeek(env, picks) {
     ).bind(b.year, b.week, player, b._win.tue, leg.sport, leg.bet_type, leg.team, leg.opponent, leg.player_prop, leg.line, leg.side, leg.odds, leg.gametime, leg.raw_pick, now));
   }
   if (stmts.length) await env.PARLAY_DB.batch(stmts);
-}
-
-/** Hands the week's legs to sync_legs.yml. false when it couldn't. */
-async function dispatchSync(env, wk) {
-  if (!env.GITHUB_PAT) return false;
-  const { results } = await env.PARLAY_DB.prepare("SELECT * FROM leg_entries WHERE year = ?1 AND week = ?2").bind(wk.year, wk.week).all();
-  const rows = Object.fromEntries(results.map((r) => [r.player, r.removed ? { removed: true, raw_pick: r.raw_pick } : pickFields(r)]));
-  const res = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${SYNC_WORKFLOW}/dispatches`, {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${env.GITHUB_PAT}`, "Accept": "application/vnd.github+json", "User-Agent": "retirement-league-worker", "Content-Type": "application/json" },
-    body: JSON.stringify({ ref: "main", inputs: { picks: JSON.stringify({ year: wk.year, week: wk.week, mode: "legs", rows }) } }),
-  });
-  if (!res.ok) console.error("Leg sync dispatch:", res.status, await res.text().catch(() => ""));
-  return res.ok;
 }
 
 // ---------- Hard Rock lines ----------

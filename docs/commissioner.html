@@ -465,7 +465,6 @@
   };
   const ALIAS = { signins: 'managers', members: 'managers', push: 'messages', announce: 'messages', health: 'site', refresh: 'site', audit: 'site' };
   const failing = () => ((health || (ov && ov.health)) ? (health || ov.health).checks : []).filter(c => !c.ok);
-  const wfAt = file => { const c = ((health || (ov && ov.health)) ? (health || ov.health).checks : []).find(x => x.file === file); return c && c.at; };
   const pushOn = n => !!ov && (ov.pushOn || []).includes(n);
   // After Thursday 1 PM the window closes, which locks the legs whatever the switch says.
   const shut = P => !!P && (P.locked || !P.windowOpen);
@@ -712,17 +711,19 @@
       <p class="cm-fine">Tap anyone to enter or change their leg.${note ? ' ' + note : ''}</p>${acts ? `<div class="cm-wrap">${acts}</div>` : ''}
       ${access === 'session' || W.phase > 1 ? '' : '<p class="cm-fine">Sign in as a commissioner to lock or unlock the legs.</p>'}${pricedHtml(P)}`,
       `<span class="cm-count${W.phase === 0 ? '' : ' dim'}">${W.phase >= 3 ? `${W.wins} of ${W.legs.length} hit` : `${P.legsIn.length} of ${P.players.length} in`}</span>`);
-    const refreshed = wfAt('refresh_parlay_data.yml');
+    // Legs the grader left for a person: a push, a Coin Toss, a name ESPN spells differently.
+    const review = (ov.parlayReview || []).map(r => `<div class="cm-line item is-loss"><div class="cm-main"><div class="cm-name">${esc(r.player)} · ${r.year} Week ${r.week}</div><div class="cm-sub">${esc(r.raw_pick || r.bet_type || '')}</div><div class="cm-sub bad">${esc(r.review)}</div></div><a class="cm-btn dim" href="parlay-legs.html?year=${r.year}&week=${r.week}">Set result</a></div>`).join('');
     const left = P.oddsLeft;
     const more = panel('More', `<div class="cm-list">
       <a class="cm-li" href="parlay-legs.html"><span class="cm-ic">${I.ticket}</span><div class="cm-main"><div class="cm-name">Parlay Legs board</div><div class="cm-sub">Every leg, any week, or paste Jon's note</div></div><span class="cm-chev">${I.chev}</span></a>
       <a class="cm-li" href="#tables"><span class="cm-ic">${I.table}</span><div class="cm-main"><div class="cm-name">Jon's Tables</div><div class="cm-sub">Season table and any week's legs, ready to copy</div></div><span class="cm-chev">${I.chev}</span></a>
-      <div class="cm-li"><span class="cm-ic">${I.sync}</span><div class="cm-main"><div class="cm-name">Parlay data</div><div class="cm-sub">${busy === 'parlay' ? 'Refreshing…' : refreshed ? 'Refreshed ' + ago(refreshed) : 'Re-reads the sheet and regrades'}</div></div><button type="button" class="cm-btn dim" data-act="run" data-which="parlay"${busy === 'parlay' ? ' disabled' : ''}>Refresh</button></div>
+      <div class="cm-li"><span class="cm-ic">${I.sync}</span><div class="cm-main"><div class="cm-name">Parlay data</div><div class="cm-sub">${busy === 'parlay' ? 'Grading…' : 'Grades finished games now instead of on the next check'}</div></div><button type="button" class="cm-btn dim" data-act="run" data-which="parlay"${busy === 'parlay' ? ' disabled' : ''}>Refresh</button></div>
       <div class="cm-li" style="display:block;padding-top:12px;padding-bottom:12px"><div style="display:flex;justify-content:space-between;gap:10px"><div class="cm-name">Odds credits</div><span class="cm-val">${left == null ? '—' : `${left} of 500`}</span></div><div class="cm-sub">${left == null ? 'Not checked yet this month' : 'Left this month for Hard Rock lines'}</div>${left == null ? '' : `<div class="cm-bar"><i style="width:${Math.max(0, Math.min(100, left / 5))}%"></i></div>`}</div>
     </div>`);
     const chip = W.result === 'Win' ? '<span class="cm-count green">Hit</span>' : W.result === 'Loss' ? '<span class="cm-count red">Dead</span>'
       : W.phase === 3 ? '<span class="cm-count green">Placed</span>' : W.phase === 1 ? '<span class="cm-count dim">Locked</span>' : `<span class="cm-count ${P.locked ? 'dim' : 'green'}">${P.locked ? 'Locked' : 'Open'}</span>`;
-    return { title: 'Parlay', right: chip, html: `<div class="cm-split"><div>${legs}</div><div>${betHtml(W)}${more}</div></div>` };
+    const needs = review ? panel('Needs a look', `<div class="cm-rows">${review}</div>`, `<span class="cm-count red">${ov.parlayReview.length}</span>`) : '';
+    return { title: 'Parlay', right: chip, html: `<div class="cm-split"><div>${legs}</div><div>${needs}${betHtml(W)}${more}</div></div>` };
   }
 
   // ---------- Jon's Tables (the season table and any week's legs, copyable) ----------
@@ -791,22 +792,17 @@
     else fallback();
   }
   // Starts the parlay data refresh, then re-reads the stats once it has had time to finish.
+  // The Worker grades and republishes while you wait (audit X #26).
   async function refreshTables() {
-    await call('workflow_run', { which: 'parlay' });
-    let left = 55;
-    const tick = async () => {
-      if (left <= 0) {
-        tStatus = '';
-        try { screenData.tables = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(r => r.json()); } catch { /* the old numbers stay */ }
-        if (route() === 'tables') draw();
-        return;
-      }
-      tStatus = `Refresh started. Updating in ${left}s…`;
-      left -= 1;
+    tStatus = 'Refreshing…';
+    if (route() === 'tables') draw();
+    try {
+      await call('workflow_run', { which: 'parlay' });
+      screenData.tables = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(r => r.json());
+    } finally {
+      tStatus = '';
       if (route() === 'tables') draw();
-      setTimeout(tick, 1000);
-    };
-    tick();
+    }
   }
 
   // ---------- Copying a text ----------
@@ -1041,7 +1037,7 @@
   // ---------- Site & Data (audit VIII #17) ----------
   // The checks, with Run now on each workflow, the health alert switch, and
   // what commissioners have done lately.
-  const RUNNABLE = { 'refresh_league_data.yml': 'league', 'refresh_franchise_data.yml': 'franchise', 'update_history_d1.yml': 'history', 'sync_scores_to_sheet.yml': 'scores', 'refresh_parlay_data.yml': 'parlay' };
+  const RUNNABLE = { 'refresh_league_data.yml': 'league', 'refresh_franchise_data.yml': 'franchise', 'update_history_d1.yml': 'history', 'sync_scores_to_sheet.yml': 'scores', 'copy_parlay_to_sheet.yml': 'sheet' };
   function viewSite() {
     const h = health || ov.health;
     const checks = h ? h.checks : [];
@@ -1508,8 +1504,9 @@
     }
     else if (a === 'run') {
       await act(d.which, async () => {
-        await call('workflow_run', { which: d.which });
-        toast('Started. Give it a minute or two.');
+        const out = await call('workflow_run', { which: d.which });
+        if (d.which === 'parlay') { await loadOverview(); toast(`Parlay refreshed: ${plural(out.graded.length, 'leg', 'legs')} graded`); }
+        else toast('Started. Give it a minute or two.');
         call('health').then(h => { health = h; draw(); }).catch(() => {});
       });
     }
@@ -1532,10 +1529,10 @@
           out = await res.json().catch(() => ({}));
         } catch { /* no connection */ }
         if (!res || !res.ok) throw { ...out, message: out.error === 'cooldown' ? `Just saved. Try again in ${out.retryAfterSeconds}s.` : ERRORS[out.error] ? ERRORS[out.error](out) : `Couldn't save the bet (${res ? out.error || res.status : 'no connection'}). Try again.` };
-        // The sheet has it in a minute or two; show it here now.
+        // Saved already; the board copy updates on the next read, so show it here now.
         if (screenData.board) screenData.board.meta = { sacko, final_odds: odds, final_payout: payout };
         ['bt-sacko', 'bt-odds', 'bt-pay'].forEach(k => { delete betDraft[k]; });
-        toast('Saved. Parlay shows it in a minute or two.');
+        toast('Saved');
       });
     }
     else if (a === 'nudge') { nudge = true; nudgeOff.clear(); nudgeArmed = 0; drawSheet(); }

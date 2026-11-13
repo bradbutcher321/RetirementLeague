@@ -229,13 +229,13 @@
       </div>
     </section>
 
-    <footer id="site-footer" data-source="Data from the league sheet" data-note="Refreshes every 10 minutes"></footer>
+    <footer id="site-footer" data-source="Graded from ESPN box scores" data-note="Live scores every 2 minutes"></footer>
   </div>
 
 <script src="nav.js?v=b6928293"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
 <script src="share.js?v=3bc58341"></script>
-<script src="parlay-common.js?v=3418fa92"></script>
+<script src="parlay-common.js?v=7439641b"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
 
@@ -279,7 +279,7 @@
   }
 
   // The rail of a game that's on: [big line, small line]. Built from
-  // ESPN's period number and clock (see publish_parlay_stats.py's
+  // ESPN's period number and clock (see worker/src/parlayEspn.js's
   // build_live_scores), which mean the same thing in every sport, plus its
   // shortDetail phrase -- read only for what the numbers can't say:
   // halftime, the break at the end of a period, and which half of an
@@ -338,7 +338,7 @@
 
   // The bet as Parlay Legs shows it: the bet type in white, then the rest.
   // A prop's bet names only its player, so the game they're in follows when
-  // publish_parlay_stats.py found it ("Anytime TD · Zay Flowers · BAL vs. CLE").
+  // the Worker found it ("Anytime TD · Zay Flowers · BAL vs. CLE").
   function betHtml(p) {
     const text = String(p.pick || ''), i = text.indexOf(':');
     const body = i > 0 ? `<b>${esc(text.slice(0, i))}</b> · ${esc(text.slice(i + 1).trim())}` : esc(text);
@@ -579,9 +579,7 @@
   loadLegBoard();
 
   // ---------- Wiring ----------
-  // Reads straight from the Worker/KV now instead of a committed static
-  // file (see publish_parlay_stats.py) -- same shape either way, so
-  // nothing downstream of this fetch needed to change.
+  // The Worker's parlay blob (worker/src/parlayData.js).
   fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' })
     .then(res => res.json())
     .then(data => {
@@ -652,11 +650,8 @@
       // live in the weeks, so a poll (or a pull to refresh) that kept only
       // `live` left every result as it was at open. If you were on the
       // current week and a new one has started, you move to it.
-      // publish_parlay_stats.py only refreshes this data every 10 minutes
-      // itself, but polling a little faster here means a game that just
-      // went live (or just ended) shows up close to as soon as the backend
-      // has it. Hidden tabs skip the poll; coming back catches up if it's
-      // gone stale.
+      // The Worker refreshes live scores every other minute during a game.
+      // Hidden tabs skip the poll; coming back catches up if it's gone stale.
       const LIVE_POLL_MS = 120000;
       let liveLoadAt = Date.now();
       function pollLive(all) {

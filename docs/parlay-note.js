@@ -3,7 +3,7 @@
  * Ported from the desktop entry tool's Python parser and game-time search,
  * both removed since picks are only entered on the site, with the same
  * "flag, don't guess" rules. Grading still resolves a prop player's team in
- * Python (find_player_team in espn_gametime_lookup.py), so a fix to player
+ * Python (findPlayerTeam in worker/src/parlayEspn.js), so a fix to player
  * matching belongs in both.
  *
  * ESPN's site API answers any origin, so this runs in the browser: every
@@ -123,7 +123,7 @@
     return { picks, final, unmatched };
   }
 
-  // ---------- Game finder (espn_gametime_lookup.py) ----------
+  // ---------- Game finder (worker/src/parlayEspn.js does the same) ----------
   const API = 'https://site.web.api.espn.com/apis';
   // Same order as SPORT_ESPN_PATHS: a team pick is tried sport by sport,
   // so an NFL game is found without ever loading the soccer leagues.

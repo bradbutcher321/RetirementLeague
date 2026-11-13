@@ -20,7 +20,7 @@
  * GET /player?id=&week=&last= -> one player's game log (see playerLog.js).
  * POST /hit       -> records a page view (see analytics.js; the numbers are
  *                      read on the Commissioner page, through /admin).
- * POST /parlay-entry -> Parlay Legs' commissioner save: checks a signed-in
+ * POST /parlay-entry -> Parlay Legs' commissioner save, written straight to the picks table (parlayData.js); checks a signed-in
  *                      commissioner (or the PIN) and dispatches the Action
  *                      that writes the week to the sheet (see parlayEntry.js).
  * GET /parlay-week?year=&week= -> one week's raw rows, for Edit Week.
@@ -35,11 +35,8 @@
  *                      the same 15-second rule as GET /, so that page needs
  *                      no second request, and adds who plays whom and the
  *                      live board (scores and NFL games; scoreFeed.js feedBoard).
- * GET /parlay-stats  -> the parlay stats payload, read straight from KV
- *                      (see publish_parlay_stats.py, which computes and
- *                      pushes it there -- same "no git commit needed" idea
- *                      as this whole file, just for parlay data instead
- *                      of the live dashboard).
+ * GET /parlay-stats  -> the parlay stats blob from KV plus the live scores
+ *                      (parlayData.js, which keeps the parlay; audit X #26).
  * (scheduled() also runs healthCheck.js once a day; site audit III #26.)
  * POST /push/subscribe, /push/unsubscribe -> Home Screen app
  *                      notifications (see push.js, site audit II #37).
@@ -69,7 +66,7 @@
  */
 import { buildDashboard } from "./dashboard.js";
 import { recordHit } from "./analytics.js";
-import { dispatchParlayRefreshIfNeeded } from "./parlayRefresh.js";
+import { publish as publishParlay, tick as parlayTick, tickDue as parlayTickDue, withLive } from "./parlayData.js";
 import { enterParlay, getParlayWeek } from "./parlayEntry.js";
 import { getMedianHistory, recordMedianSnapshot } from "./medianHistory.js";
 import { checkLegReminders, checkPushEvents, recent, subscribe, unsubscribe } from "./push.js";
@@ -197,6 +194,15 @@ function jsonResponse(data, headers, status = 200) {
   });
 }
 
+/** The cron's parlay run: grade and refresh live scores when something is due. */
+async function runParlay(env) {
+  const why = await parlayTickDue(env);
+  if (!why) return { status: 204 };
+  const out = await parlayTick(env);
+  if (out.graded.length || out.review.length) console.log(`Parlay (${why}):`, JSON.stringify(out));
+  return { status: 200, body: out };
+}
+
 export default {
   async fetch(request, env, ctx) {
     const headers = corsHeaders(env, request);
@@ -298,16 +304,13 @@ export default {
       return jsonResponse(result.body, { ...headers, "Cache-Control": "no-store" }, result.status);
     }
     if (path === "/parlay-stats") {
-      // Precomputed elsewhere (publish_parlay_stats.py, run on a schedule
-      // or from the Commissioner page's Data Refresh) and pushed straight into this same KV
-      // namespace -- this route is just a plain read, no live computation
-      // here, since reproducing the Python stats logic in JS would be a
-      // large duplicate-maintenance risk for no real benefit at this
-      // site's traffic level.
+      // The stats blob parlayData.js keeps in KV (rebuilt whenever a pick or
+      // result changes), plus the live scores from parlay_live (audit X #26).
       if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, headers, 405);
-      const data = await env.COOLDOWN_KV.get("parlay_stats_v1", "json");
+      let data = await env.COOLDOWN_KV.get("parlay_stats_v1", "json");
+      if (!data) data = (await publishParlay(env, { force: true }).catch(() => ({}))).payload;
       if (!data) return jsonResponse({ error: "No parlay stats published yet" }, headers, 404);
-      return jsonResponse(data, headers);
+      return jsonResponse(await withLive(env, data).catch(() => data), headers);
     }
     if (request.method !== "GET") {
       return jsonResponse({ error: "Method not allowed" }, headers, 405);
@@ -343,14 +346,11 @@ export default {
     }
   },
 
-  // Cloudflare Cron Trigger (see wrangler.toml [triggers]) -- fires
-  // refresh_parlay_data.yml on a real schedule, since GitHub's own
-  // `schedule:` trigger is best-effort and was observed firing every
-  // 2.5-5.5 hours instead of the configured cadence. The cadence itself
+  // Cloudflare Cron Trigger (see wrangler.toml [triggers]). The cadence
   // varies by day/time (off midweek, hourly on a game day, every minute
-  // during an actual game window) -- see the crons list in wrangler.toml
-  // for the full schedule. Reuses the same dispatch the manual "Refresh
-  // Data" button calls, cooldown and all.
+  // during an actual game window) -- see the crons list in wrangler.toml.
+  // The parlay grades and keeps live scores here on even minutes when a
+  // leg's game is near (parlayData.js tickDue).
   //
   // The same run also saves a projected-median snapshot (medianHistory.js),
   // which is what gives that chart its 10-minutes-in-a-game, hourly-
@@ -372,7 +372,9 @@ export default {
       ctx.waitUntil(runHealthCheck(env).catch((err) => console.error("Health check failed:", err)));
     }
     const [parlay, median] = await Promise.allSettled([
-      tenth ? dispatchParlayRefreshIfNeeded(env) : { status: 204 },
+      // The parlay (parlayData.js, audit X #26): every other minute while a
+      // leg's game is on or waiting to be graded; nothing the rest of the time.
+      at.getUTCMinutes() % 2 === 0 ? runParlay(env) : { status: 204 },
       (async () => {
         const entry = await readCache(env);
         const now = Math.floor(Date.now() / 1000);
@@ -399,9 +401,7 @@ export default {
         if (snap.status === "rejected") throw snap.reason;
       })(),
     ]);
-    if (parlay.status === "rejected" || parlay.value.status >= 400) {
-      console.error("Scheduled parlay refresh dispatch failed:", parlay.reason || parlay.value);
-    }
+    if (parlay.status === "rejected") console.error("Parlay run failed:", parlay.reason && parlay.reason.stack || parlay.reason);
     if (median.status === "rejected") console.error("Median snapshot failed:", median.reason);
   },
 };

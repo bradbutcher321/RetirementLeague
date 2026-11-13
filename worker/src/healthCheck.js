@@ -10,8 +10,7 @@
  * none). It checks:
  *   - ESPN still answers the saved cookies (the same API the dashboard uses)
  *   - each workflow's newest finished run didn't fail and isn't overdue
- *     (refresh_parlay_data and sync_legs are the ones that read the sheet)
- *   - the parlay stats blob the workflows publish to KV is there
+ *   - the parlay stats blob parlayData.js keeps in KV is there
  * and sends a push to subscribers with the "health" notification on (off by
  * default; the commissioner turns it on in the You sheet). It sends when a
  * problem exists, and once more when everything is back to normal; a quiet
@@ -31,9 +30,8 @@ const WORKFLOWS = [
   { file: "update_history_d1.yml", name: "League history update", maxAge: 36 },
   { file: "refresh_franchise_data.yml", name: "Franchise data refresh", maxAge: 96 },
   { file: "sync_scores_to_sheet.yml", name: "Scores to sheet", maxAge: 9 * 24 },
-  { file: "refresh_parlay_data.yml", name: "Parlay data refresh", maxAge: 72 },
-  { file: "enter_parlay.yml", name: "Parlay pick entry", maxAge: null },
-  { file: "sync_legs.yml", name: "Parlay leg sync", maxAge: null },
+  // The parlay runs in the Worker now (audit X #26); the sheet is a nightly copy.
+  { file: "copy_parlay_to_sheet.yml", name: "Parlay sheet copy", maxAge: 36 },
 ];
 const BAD = new Set(["failure", "timed_out", "startup_failure", "action_required"]);
 

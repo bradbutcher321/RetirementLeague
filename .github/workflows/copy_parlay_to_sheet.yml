@@ -1,0 +1,50 @@
+name: Copy Parlay to Sheet
+
+# The parlay lives in the Worker's D1 now (site audit X #26): picks are
+# saved, graded and published there. This copies them into the
+# "Auto Parlay Tracker" sheet tab once a night, for anyone who still reads
+# the sheet. Edits made in the sheet are overwritten here.
+on:
+  schedule:
+    # 4:15am US Eastern-ish (GitHub cron is UTC and best-effort).
+    - cron: '15 9 * * *'
+  workflow_dispatch: # Manual button, and Commissioner > Site & Data's Run now
+
+permissions:
+  contents: read
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install gspread google-auth
+
+    - name: Create Google Secret File
+      run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > google_secret.json
+
+    - name: Copy Picks to the Sheet
+      env:
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: f53f8e388e691eca52769f9f586713df
+      run: python parlay_to_sheet.py
+
+    - name: Remove Google Secret File
+      if: always()
+      run: rm -f google_secret.json

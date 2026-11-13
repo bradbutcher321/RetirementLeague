@@ -26,11 +26,10 @@ career stats in sync with the league's Google Sheet.
   (see the Cloudflare architecture note below), not a committed file. A
   still-Pending pick whose game has actually started shows a live score
   (or live stat, for a player prop) that updates every 2 minutes, tinted
-  green/red by whether it's currently covering -- see
-  `publish_parlay_stats.py`'s `build_live_scores()`. Once a leg is decided,
-  that same score/stat sticks around permanently as the reason why (from
-  the sheet's "Grade Detail" column -- see `auto_grade_results.py`), for
-  the current week and every past week the picker can reach.
+  green/red by whether it's currently covering -- see `liveLeg()` in
+  `worker/src/parlayGrade.js`. Once a leg is decided, that same score/stat
+  sticks around permanently as the reason why (the picks table's `detail`
+  column), for the current week and every past week the picker can reach.
 - **Rule Changes** (`docs/rule-changes.html`) — year tabs (2015, and every
   later year something changed) for a full rules card shown side by side
   with the current rules, each including buy-in/payout amounts and that
@@ -107,75 +106,22 @@ theme.css instead.
   earliest scored `roster_entries` row that year) and writes every year's
   draft as a round × slot grid to `docs/data/draft-board.json`. Runs on
   the same Tuesday/Thursday schedule as the Franchise script above.
-- **`generate_parlay_data.py`** — reads the sheet's `Auto Parlay Tracker`
-  tab (one row per pick) and reproduces the stats the sheet's old `Parlay
-  Results` tab used to compute with formulas. Its output isn't written to
-  a committed file anymore — **`publish_parlay_stats.py`** reuses this
-  script's stats logic unchanged but pushes the result straight to
-  Cloudflare KV, which a Worker route (`GET /parlay-stats`) serves to the
-  site directly, no git commit or GitHub Pages rebuild involved. Runs
-  every 10 minutes via a **Cloudflare Cron Trigger** (`worker/wrangler.toml`'s
-  `[triggers]`, handled by `scheduled()` in `worker/src/index.js`), not
-  GitHub Actions' own `schedule:` — that was observed firing every 2.5-5.5
-  hours instead of every 10 minutes (a documented GitHub Actions
-  limitation: the `schedule` event is best-effort and can be silently
-  dropped, worst right at `:00`/`:30` when everyone else's crons also
-  fire). The Cron Trigger dispatches
-  `.github/workflows/refresh_parlay_data.yml` (`workflow_dispatch`-only
-  now) the same way the Commissioner page's Data Refresh does
-  (`worker/src/parlayRefresh.js`), so both paths share one dispatch
-  function and its cooldown. Also syncs
-  picks into a dedicated D1 database (`sync_parlay_to_d1.py`) for
-  durable, queryable storage — only the rows that actually changed since
-  the last sync, since re-syncing all of them on a 10-minute cadence would
-  eat a meaningful chunk of D1's free-tier daily rows-written budget for
-  no reason. **`auto_grade_results.py`** fills in
-  Result (Win/Loss) for finished picks -- every bet type except Coin Toss
-  (ESPN's public API doesn't report one anywhere): Money Line/Spread/Alt
-  Spread/Totals from the final score, 1st Half Spread from the halftime
-  linescore, and every player prop (Anytime TD, Receiving/Passing Yards,
-  Receptions, Interceptions, Total Yards, Player Points, Home Runs) from a
-  box-score stat line, via `espn_gametime_lookup.py`'s `find_prop_stat()`
-  -- the player's team isn't recorded for these picks, so it's re-resolved
-  through the same ESPN player search used at entry time, then matched
-  against that team's specific game. Since that search's "current team"
-  can be stale for a recently-traded player (confirmed directly for more
-  than one real case), a fallback (`_sweep_prop_stat`) scans every game
-  the sport played that date directly and checks each box score for the
-  player by name if the fast path comes up empty -- slower, but doesn't
-  depend on search having current or even any data for that player at
-  all. Team matching itself handles informal
-  nicknames ("Bucs", "Pats", "Man U", ...) and punctuation ("Hawaii" vs
-  ESPN's own "Hawai'i") beyond ESPN's own name fields -- see
-  `TEAM_NICKNAMES` in `espn_gametime_lookup.py` -- and NCAAM games request
-  the full Division I scoreboard the same way NCAAF already did, not just
-  ESPN's small default "featured games" subset. UFC (an individual sport
-  -- fighters, not teams, and a whole fight card as one ESPN "event"
-  rather than one game) is also supported, via `find_individual_result`;
-  Boxing has no working ESPN scoreboard path at all (confirmed directly),
-  and Women's Tennis has a much more complex tournament-spanning shape,
-  so neither is supported yet. A player who can't be
-  confidently found in the box score (a real DNP, a name ESPN's box score
-  spells differently, or genuine same-name ambiguity) is left for manual
-  review rather than graded a guessed zero. Also writes the score/stat it graded
-  from into a "Grade Detail" sheet column (e.g. "17-10 final" or "Matt
-  Stafford: 390"), so the Parlay Results page can show *why* a leg won or
-  lost next to the pill, not just the pill itself; `--backfill` fills this
-  in for picks that were graded before that column existed, without
-  touching their already-correct Result. Also runnable on-demand and with
-  `--dry-run` to preview without writing. It's the first step in that same
-  10-minute cloud workflow run, and grading works from there again as of
-  `espn_gametime_lookup.py`'s `_fetch` using
-  `site.web.api.espn.com` instead of `site.api.espn.com` — same request
-  shape, but not behind the WAF rule that blocked every scoreboard lookup
-  from GitHub Actions'/Cloudflare's shared IP ranges outright (confirmed
-  directly: HTTP 403 on `site.api.espn.com` from every cloud IP tried,
-  unaffected by browser-real headers, an authenticated ESPN session
-  cookie, or a 37s retry/backoff schedule; `site.web.api.espn.com` just
-  works — `search_player()` in the same file was already on that host).
-  See [tools/PARLAY_DATA_MIGRATION.md](tools/PARLAY_DATA_MIGRATION.md) for the full
-  story of this migration (now complete). Picks are entered, fixed and
-  graded on the site's Parlay Legs page; the old desktop entry tool is gone.
+- **The parlay** runs in the Worker (site audit X #26). The `picks` table in
+  the `retirement-league-parlay` D1 database (`parlay_schema.sql`,
+  `worker/migrations/parlay_011_engine.sql`) is the record:
+  `worker/src/parlayData.js` saves a manager's leg (`syncLegs`) or a
+  commissioner's week (`saveWeek`) straight into it, grades finished legs
+  from ESPN every other minute while a game is on (`tick`, using
+  `parlayGrade.js` and `parlayEspn.js`), keeps live scores in
+  `parlay_live`, and rebuilds the stats blob in KV (`parlayStats.js`) that
+  `GET /parlay-stats` serves. Grading covers every bet type except Coin
+  Toss; a push, a player missing from the box score, or a sport ESPN
+  doesn't cover is left for a commissioner (Commissioner > Parlay > Needs
+  a look). The "Auto Parlay Tracker" sheet tab is now a copy, refreshed
+  nightly by `parlay_to_sheet.py` (`copy_parlay_to_sheet.yml`); an edit made
+  in the sheet is overwritten. The old Python path (grader, publisher,
+  sheet-to-D1 sync and their three Actions) is in `archive/parlay_python/`;
+  `archive/PARLAY_DATA_MIGRATION.md` has the history before that.
 
 - **`generate_league_data_d1.py`** — writes `docs/data/league.json`'s
   per-season rollups and draft order from D1 (`teams`/`matchups`/
@@ -264,12 +210,12 @@ Each has a full docstring; short version:
 
 ```
 docs/                   GitHub Pages site (HTML/CSS/JS + franchise.json, league.json, draft-board.json, rule-changes.json)
-worker/                 Cloudflare Worker powering the live Dashboard and parlay stats (KV-served, no committed JSON)
+worker/                 Cloudflare Worker: the live Dashboard, the parlay (picks, grading, stats), sign-in, push
 espn_api/               Vendored ESPN Fantasy API client library (Python, football only -- the library's other sports were never imported here and are not vendored). Used by the database/ scripts
 sheets_lib.py                 Shared Google Sheets access: credentials, number parsing, Game Tracker + Money Tracker readers
 generate_franchise_data_d1.py  Franchise page data pipeline (D1-backed)
 generate_draft_board_data.py  Draft Board page data pipeline
-generate_parlay_data.py       Parlay stats logic, shared by publish_parlay_stats.py (live) and its own local-preview main()
+parlay_to_sheet.py            Nightly copy of the Worker's parlay picks into the Auto Parlay Tracker sheet
 generate_league_data_d1.py    Standings / Head to Head / League History / Game Records data pipeline (D1-backed)
 generate_lineup_data_d1.py    Game Records' per-game lineups, 2019 on (D1-backed)
 generate_old_lineup_data.py   One-off export of the 2017-2018 lineups straight from ESPN (needs ESPN cookies)

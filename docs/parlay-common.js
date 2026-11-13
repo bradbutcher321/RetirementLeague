@@ -4,7 +4,7 @@
 // page-common.js (esc). Moved out of parlay-results.html so both pages
 // draw a leg's result the same way.
 
-// reconstruct_pick_text (generate_parlay_data.py) writes every pick as
+// reconstructPickText (worker/src/parlayStats.js) writes every pick as
 // "{bet type}: {details}", for bet types it knows and for ones it doesn't,
 // and a pick with no bet type is never published -- so the prefix is always
 // there to read.
@@ -28,7 +28,7 @@ const PROP_STAT_UNITS = {
 };
 
 // Rewrites the graded detail -- free text out of the sheet's Grade Detail
-// column, written by auto_grade_results.py -- into what the chip shows.
+// column, written by the grader (worker/src/parlayGrade.js) -- into what the chip shows.
 // The sheet keeps the original wording as the audit trail; this is purely
 // how it reads on the page, which is also why every past leg picks these
 // up with no backfill.
@@ -66,7 +66,7 @@ function finalChipText(p, detail) {
 // same spot instead, and a leg that hasn't kicked off gets nothing.
 function finalChipHtml(p) {
   if (p.result !== 'Win' && p.result !== 'Loss') return '';
-  // auto_grade_results.py writes a score-graded detail as "17-10 final";
+  // the grader writes a score-graded detail as "17-10 final";
   // the chip is already in the verdict's own slot, so a trailing "final"
   // in the value would be saying it twice. Other shapes (a prop's
   // "Player: 2", a 1st-half score, a UFC result) never end in that word.

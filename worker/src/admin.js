@@ -8,7 +8,7 @@
  *                          notification devices, the announcement, draft date,
  *                          latest log line, the last health snapshot, today's visits
  *   health                 runs every site check now and keeps the result
- *   workflow_run { which } starts league | franchise | history | scores | parlay
+ *   workflow_run { which } starts league | franchise | history | scores | sheet; parlay grades in the Worker
  *   push_info              who has notifications on, and what was sent lately
  *   push_send { title, body, to }   a push to everyone, one manager, or a list of managers (the Nudge)
  *   announce_set { text, until }  /  announce_clear
@@ -29,7 +29,7 @@ import { legsSummary } from "./legs.js";
 import { getStats, getWho } from "./analytics.js";
 import { collectChecks, readSnapshot, saveSnapshot } from "./healthCheck.js";
 import { broadcast, subscriberSummary } from "./push.js";
-import { dispatchParlayRefresh } from "./parlayRefresh.js";
+import { publish as publishParlay, reviewList, tick as parlayTick } from "./parlayData.js";
 import { cached } from "./cache.js";
 import { fetchPlaylist, hiddenVideos, playlistId, playlists } from "./videos.js";
 import { feedbackAdmin, feedbackNew } from "./feedback.js";
@@ -41,6 +41,7 @@ const WORKFLOWS = {
   franchise: ["refresh_franchise_data.yml", "Franchise data refresh"],
   history: ["update_history_d1.yml", "League history update"],
   scores: ["sync_scores_to_sheet.yml", "Scores to sheet"],
+  sheet: ["copy_parlay_to_sheet.yml", "Parlay sheet copy"],
 };
 const RUN_COOLDOWN_SECONDS = 60;
 const etDay = (ms = Date.now()) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date(ms));
@@ -58,7 +59,7 @@ export async function siteInfo(env) {
 
 async function overview(env, body) {
   const names = await ensureManagers(env, body.names);
-  const [mgr, sess, subs, ann, draft, last, snap, stats, parlay, lists, hidden, comms, fbNew] = await Promise.all([
+  const [mgr, sess, subs, ann, draft, last, snap, stats, parlay, lists, hidden, comms, fbNew, review] = await Promise.all([
     env.DB.prepare("SELECT manager FROM auth_managers").all(),
     env.DB.prepare("SELECT DISTINCT manager FROM auth_sessions").all(),
     subscriberSummary(env).catch(() => []),
@@ -72,6 +73,7 @@ async function overview(env, body) {
     hiddenVideos(env),
     commissioners(env),
     feedbackNew(env).catch(() => null),
+    reviewList(env).catch(() => []),
   ]);
   const all = mgr.results.map((r) => r.manager).filter((m) => !names.length || names.includes(m));
   const signed = new Set(sess.results.map((r) => r.manager));
@@ -93,6 +95,8 @@ async function overview(env, body) {
       playlists: Object.keys(lists).map(Number).sort((a, b) => a - b),
       hiddenVideos: hidden.size,
       feedbackNew: fbNew,
+      // Parlay legs the grader couldn't settle, for a commissioner (audit X #26).
+      parlayReview: review,
       // The New season checklist (audit X #22) reads these.
       espnYear: Number(env.ESPN_YEAR) || null,
       santaYear: 2026,
@@ -119,9 +123,11 @@ async function dispatchWorkflow(env, file) {
 async function workflowRun(env, body, who) {
   const which = text(body.which, 20);
   if (which === "parlay") {
-    const r = await dispatchParlayRefresh(env);
-    if (r.status < 300) await logAction(env, who, "refresh", "Started a parlay data refresh");
-    return r;
+    // Grades and republishes right here (audit X #26); no Action to wait on.
+    const out = await parlayTick(env, { force: true });
+    await publishParlay(env, { force: true });
+    await logAction(env, who, "refresh", `Refreshed the parlay: ${out.graded.length} graded, ${out.review.length} need a look`);
+    return { status: 200, body: { ok: true, ...out } };
   }
   const wf = WORKFLOWS[which];
   if (!wf) return fail(400, "bad_workflow");

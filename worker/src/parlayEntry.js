@@ -1,33 +1,29 @@
 /**
  * POST /parlay-entry -- a commissioner's whole-week save from Parlay Legs
  * (it was the Enter Picks page, site audit II #11). The page parses the
- * note and finds every game on ESPN itself; this only checks who is asking
- * (a signed-in commissioner, or the PIN) and hands the finished week to
- * enter_parlay.yml, which writes it to Auto Parlay Tracker and then grades,
- * publishes and syncs.
+ * note and finds every game on ESPN itself; this checks who is asking (a
+ * signed-in commissioner, or the PIN) and saves the week straight into the
+ * picks table (parlayData.js saveWeek, audit X #26).
  *
  * Body: { pin, picks: {year, week, sacko, final_odds, final_payout,
- * dry_run, mode, rows} } (see enter_parlay.py for the rows' fields;
+ * dry_run, mode, rows} } (see parlayData.js saveWeek for the rows' fields;
  * mode "edit" saves each row's Result as sent).
  *
- * GET /parlay-week?year=&week= -- one week's rows as the sheet has them,
- * from the D1 mirror sync_parlay_to_d1.py keeps, for the Edit Week view.
+ * GET /parlay-week?year=&week= -- one week's rows from the picks table,
+ * for the Edit Week view.
  *
  * Requires:
  *   - Secret:  PARLAY_PIN  (wrangler secret put PARLAY_PIN)
- *   - Secret:  GITHUB_PAT  (the same one /refresh-parlay dispatches with)
- *   - KV namespace COOLDOWN_KV, for the wrong-PIN lockout and the cooldown
+ *   - KV namespace COOLDOWN_KV, for the wrong-PIN lockout
  */
-const REPO = "bradbutcher321/RetirementLeague";
-const WORKFLOW_FILE = "enter_parlay.yml";
-const COOLDOWN_SECONDS = 60;
-const COOLDOWN_KEY = "parlay-entry:last";
+import { saveWeek } from "./parlayData.js";
+
 // Ten wrong PINs locks the route for an hour, so a short PIN can't be
 // guessed by trying them all.
 const FAIL_KEY = "parlay-entry:fails";
 const MAX_FAILS = 10;
 const LOCK_SECONDS = 3600;
-// A workflow_dispatch input holds 65,535 characters; a week is about 4,000.
+// A week is about 4,000 characters; anything near this is a mistake.
 const MAX_PICKS_CHARS = 60000;
 
 function samePin(a, b) {
@@ -53,7 +49,7 @@ export async function checkPin(env, pin) {
 
 /** opts.commissioner: index.js saw a signed-in commissioner, so no PIN.
  * opts.guard(picks) may adjust the rows before they are sent; opts.after(picks)
- * runs once the Action is dispatched (both from legs.js, which owns the
+ * runs once the week is saved (both from legs.js, which owns the
  * board's copy of the week). */
 export async function enterParlay(request, env, opts = {}) {
   const commissioner = !!opts.commissioner;
@@ -76,31 +72,12 @@ export async function enterParlay(request, env, opts = {}) {
     return { status: 400, body: { error: "missing_week" } };
   }
   if (opts.guard) picks = await opts.guard(picks).catch((err) => { console.error("Save guard failed:", err); return picks; });
-  const json = JSON.stringify(picks);
-  if (json.length > MAX_PICKS_CHARS) return { status: 413, body: { error: "too_big" } };
-
-  const now = Date.now();
-  const last = Number(await env.COOLDOWN_KV.get(COOLDOWN_KEY)) || 0;
-  const remaining = COOLDOWN_SECONDS - Math.floor((now - last) / 1000);
-  if (remaining > 0) return { status: 429, body: { error: "cooldown", retryAfterSeconds: remaining } };
-
-  const res = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${env.GITHUB_PAT}`,
-      "Accept": "application/vnd.github+json",
-      "User-Agent": "retirement-league-worker",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ ref: "main", inputs: { picks: json } }),
-  });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    return { status: 502, body: { error: "github_dispatch_failed", detail: detail.slice(0, 300) } };
-  }
-  await env.COOLDOWN_KV.put(COOLDOWN_KEY, String(now), { expirationTtl: COOLDOWN_SECONDS + 10 });
-  if (opts.after) await opts.after(picks).catch((err) => console.error("Save mirror failed:", err));
-  return { status: 202, body: { ok: true } };
+  if (JSON.stringify(picks).length > MAX_PICKS_CHARS) return { status: 413, body: { error: "too_big" } };
+  // Straight into the picks table (audit X #26); this used to dispatch
+  // enter_parlay.yml, which wrote the sheet a minute or two later.
+  const out = await saveWeek(env, picks);
+  if (out.status < 300 && !picks.dry_run && opts.after) await opts.after(picks).catch((err) => console.error("Save mirror failed:", err));
+  return out;
 }
 
 export async function getParlayWeek(env, url) {

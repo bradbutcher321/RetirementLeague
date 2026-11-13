@@ -272,7 +272,7 @@
 
 <script src="nav.js?v=b6928293"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
-<script src="parlay-note.js?v=b64ebfa0"></script>
+<script src="parlay-note.js?v=ab0b0dfc"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
   const ESPN = 'https://site.web.api.espn.com/apis/site/v2/sports';
@@ -386,7 +386,7 @@
     const d = draft();
     if (!d) return { d: null, ok: false, html: '' };
     const bad = saveMsg ? `<div class="msg bad">${esc(saveMsg)}</div>` : '';
-    if (d.typed) return { d, ok: d.odds != null, html: bad + `<div class="msg">${d.odds == null ? 'Add the odds. ' : ''}Everyone sees it as you typed it. A commissioner fits it into the sheet later.</div>` };
+    if (d.typed) return { d, ok: d.odds != null, html: bad + `<div class="msg">${d.odds == null ? 'Add the odds. ' : ''}Everyone sees it as you typed it. A commissioner checks it later.</div>` };
     const stop = blocker(d);
     if (stop) return { d, ok: false, html: `<div class="msg bad">${esc(stop[0].player)} ${stop[1] === 'same' ? 'already has this leg' : 'has the other side of this'}: ${esc(pickText(stop[0]))}. Pick something else.</div>` };
     const also = others().filter(o => clash(d, o) === 'also');
@@ -1039,7 +1039,7 @@
   }
 
   // ---------- The week as rows ----------
-  // A saved week as the sheet has it (the D1 mirror).
+  // A saved week as the picks table has it.
   function fromServer(d){
     const rows = {};
     for (const n of roster()) {
@@ -1049,8 +1049,8 @@
     }
     return { sacko: d.sacko || '', final_odds: oddsText(d.final_odds), final_payout: d.final_payout == null ? '' : String(d.final_payout), rows };
   }
-  // The board's copy of one manager's leg (it is ahead of the sheet by a
-  // minute or two), with the Result the sheet has for the same pick.
+  // The board's copy of one manager's leg, with the Result the picks table
+  // has for the same pick.
   function boardRow(n, prev){
     const l = board.legs.find(x => x.player === n);
     if (!l) return blankRow();
@@ -1108,16 +1108,10 @@
 
   // The board moved (a manager saved, or a Pick above): rows the commissioner
   // hasn't touched follow it; a row being edited keeps its boxes.
-  // Rows a week save just sent: the board holds the sheet's old copy of them
-  // until the Action writes it, so they don't follow the board till then.
-  let savedHold = { rows: new Set(), until: 0 };
   function refreshFromBoard(only){
     if (!ed.orig || !onBoardWeek() || cmSaving) return;
     if (!only) ed.asOf = board.asOf;
     for (const n of only || roster()) {
-      // A leg just picked above (only) is newer than the save, so it isn't held.
-      if (!only && savedHold.rows.has(n) && Date.now() < savedHold.until) continue;
-      savedHold.rows.delete(n);
       const nb = boardRow(n, ed.orig.rows[n]);
       if (JSON.stringify(nb) === JSON.stringify(ed.orig.rows[n])) continue;
       const touched = isChanged(n);
@@ -1277,7 +1271,7 @@
         <span class="chip">${m.year} · Week ${m.week}</span><span class="chip gold">${m.got} leg${m.got === 1 ? '' : 's'} filled</span>
         ${m.missing ? `<span class="chip loss">${m.missing} not in the note</span>` : ''}</div>
       ${m.skipped.length ? `<div class="skipped">Lines that aren't a pick, so they were skipped:${m.skipped.map(x => `<div>${esc(x)}</div>`).join('')}</div>` : ''}
-      <p class="fine">Check the rows, then Save to the sheet. Saving replaces the week; a pick that didn't change keeps its result.</p>`;
+      <p class="fine">Check the rows, then Save. Saving replaces the week; a pick that didn't change keeps its result.</p>`;
     return `<section class="glass"><div class="panel-title">Paste a whole week</div><div class="panel-body">
       <textarea class="note-box" id="note-box" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="The week's parlay note"
         placeholder="2026 Week 7:&#10;Sacko: …&#10;&#10;Brad: Spread: Lions -5.5 vs. Cardinals (-110)&#10;…&#10;&#10;Final Odds: +478887&#10;Final Payout: $95,797.48">${esc(noteText)}</textarea>
@@ -1313,7 +1307,7 @@
     barEl.hidden = !ed.cur || !(n || cmSaving);
     if (barEl.hidden) return;
     const mode = weekSaved(ed.year, ed.week) ? 'edit' : 'new';
-    const label = cmSaving ? 'Saving…' : ed.finding.size ? 'Finding games…' : mode === 'new' ? `Save Week ${ed.week}` : 'Save to the sheet';
+    const label = cmSaving ? 'Saving…' : ed.finding.size ? 'Finding games…' : mode === 'new' ? `Save Week ${ed.week}` : 'Save changes';
     barEl.innerHTML = `<span>${n} change${n === 1 ? '' : 's'}<small>Nothing is saved until you tap.</small></span>
       <button type="button" class="gold-btn solid" data-act="save"${cmSaving || ed.finding.size || !stats ? ' disabled' : ''}>${label}</button>`;
   }
@@ -1478,7 +1472,6 @@
     const year = ed.year, week = ed.week, mode = weekSaved(year, week) ? 'edit' : 'new';
     const sent = clone(ed.cur);
     const body = { picks: { year, week, mode, loaded_at: ed.asOf, dry_run: dryQ !== '', ...editPayload() } };
-    const changed = roster().filter(isChanged);
     cmSaving = true;
     steps([['', 'Sending…']]);
     let res = null, out = {};
@@ -1492,17 +1485,14 @@
       return;
     }
     const label = `${year} Week ${week}`;
-    if (body.picks.dry_run) { cmSaving = false; steps([['done', `Sent ${label} as a dry run. Nothing will be written; check the Enter Parlay Picks Action log.`]]); return; }
-    // Accepted: saved. What was sent is the new baseline, and the rows it
-    // changed ignore the board for a few minutes, which still has the
-    // sheet's old copy until the Action writes it.
+    if (body.picks.dry_run) { cmSaving = false; steps([['done', `${label} checks out. Dry run, so nothing was saved.`]]); return; }
+    // Saved, straight into the picks table (audit X #26): what was sent is the new baseline.
     if (ed.year === year && ed.week === week && ed.orig) ed.orig = clone(sent);
-    if (onBoardWeek()) savedHold = { rows: new Set(changed), until: Date.now() + 5 * 60 * 1000 };
     cmSaving = false;
     if (pasteMsg) { noteText = ''; store.set(NOTE_KEY, ''); pasteMsg = null; pasteOpen = false; }
-    steps([['done', `Saved ${label}. Parlay Results shows it in a minute or two.`]]);
-    // A new week is in the sheet once the Action runs; the next save edits it.
-    if (mode === 'new') setTimeout(async () => { try { stats = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(r => r.json()); } catch { /* next load */ } }, 2 * 60 * 1000);
+    steps([['done', `Saved ${label}. It's on Parlay Results now.`]]);
+    // A new week is saved now, so the next save edits it.
+    if (mode === 'new') { try { stats = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(r => r.json()); } catch { /* next load */ } }
   }
   barEl.addEventListener('click', e => { if (e.target.closest('[data-act="save"]')) saveWeek(); });
 

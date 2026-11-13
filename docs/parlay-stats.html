@@ -268,12 +268,12 @@
       <div class="card-grid stats-cards" id="stats-container"><div class="loading-row">Loading stats…</div></div>
     </section>
 
-    <footer id="site-footer" data-source="Data from the league sheet"></footer>
+    <footer id="site-footer" data-source="Graded from ESPN box scores"></footer>
   </div>
 
 <script src="nav.js?v=b6928293"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
-<script src="parlay-common.js?v=3418fa92"></script>
+<script src="parlay-common.js?v=7439641b"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
 
@@ -362,7 +362,7 @@
     return `${head}${body}<br><a href="${esc(weekHref(w))}">Open the week ›</a>`;
   }
 
-  // Legs hit, or legs hit before the first loss (generate_parlay_data.py's
+  // Legs hit, or legs hit before the first loss (worker/src/parlayStats.js's
   // before_loss: won before the earliest losing kickoff), one dot a week.
   function unitChart(done, players) {
     const cols = Array.from({ length: 13 }, () => []);
@@ -522,7 +522,7 @@
   // The line each bucket covers, printed small under its name on the tiles.
   const ODDS_RANGE = { 'Heavy Favorite': '≤ −250', 'Favorite': '−249 to −150', 'Toss-Up': '−149 to +124', 'Underdog': '+125 to +199', 'Longshot': '≥ +200' };
   const oddsRangeHtml = k => (ODDS_RANGE[k] ? `<div class="tr">${ODDS_RANGE[k]}</div>` : '');
-  // generate_parlay_data.py's odds_bucket and over_under_side.
+  // parlayStats.js's oddsBucket and over_under_side.
   const oddsBucket = o => (o <= -250 ? 'Heavy Favorite' : o <= -150 ? 'Favorite' : o < 125 ? 'Toss-Up' : o < 200 ? 'Underdog' : 'Longshot');
   const overUnder = p => { const m = /\b(Over|Under)\b/i.exec(pickRest(p)); return m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : null; };
 

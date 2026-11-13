@@ -469,7 +469,7 @@ def run_d1_sql(statements, label, db_name=None, attempts=1):
     below, and is shared by every script that writes to D1 directly
     (update_history_d1.py, refresh_league_settings.py,
     backfill_draft_positions.py, import_season_sackos.py,
-    sync_parlay_to_d1.py) instead of each re-implementing the same
+    parlay_to_sheet.py) instead of each re-implementing the same
     temp-file/subprocess/error-handling around wrangler. Output is
     ascii-encoded defensively on failure -- wrangler output has crashed a
     plain print() on Windows consoles before with a non-ascii character.
