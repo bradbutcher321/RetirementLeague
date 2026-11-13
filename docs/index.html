@@ -24,9 +24,9 @@
 <!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
-<link rel="stylesheet" href="theme.css?v=8289f9ac">
-<link rel="stylesheet" href="nav.css?v=0c5d8859">
-<link rel="stylesheet" href="live.css?v=3cb88244">
+<link rel="stylesheet" href="theme.css?v=8dc1bc5c">
+<link rel="stylesheet" href="nav.css?v=515b2cfd">
+<link rel="stylesheet" href="live.css?v=b5f81cac">
 </head>
 <body>
   <div id="site-nav"></div>
@@ -64,6 +64,8 @@
          you sit, how far from the playoff line, your odds, who you play. Its
          ✕ hides it until the next week. -->
     <section id="status-section" hidden></section>
+    <!-- The bracket in playoff weeks (audit XI #17), drawn by live.js. -->
+    <section id="bracket-section" hidden></section>
     <section id="waiver-section" hidden></section>
 
     <!-- Week in Review (site audit 28): leads the page from the end of the
@@ -181,18 +183,18 @@
            same Through / projected switch. The toggle stays for the cards. -->
     </section>
 
-    <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
+    <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=b6928293"></script>
+<script src="nav.js?v=90921fec"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
-<script src="race-sim.js?v=f60c97fb"></script>
+<script src="race-sim.js?v=3786b0d6"></script>
 <script src="lore-eggs.js?v=2ac42062"></script>
 <script src="share.js?v=3bc58341"></script>
 <script src="record-watch.js?v=4b579c0c"></script>
 <script src="rivals.js?v=940fc493"></script>
 <script src="lineup-check.js?v=5de09f2a"></script>
-<script src="live.js?v=391276cb"></script>
+<script src="live.js?v=5c203d29"></script>
 <script src="live-cards.js?v=d92e3450"></script>
 
 <script src="track.js?v=0cbf34b9" defer></script>

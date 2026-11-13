@@ -24,8 +24,8 @@
 <!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
-<link rel="stylesheet" href="theme.css?v=8289f9ac">
-<link rel="stylesheet" href="nav.css?v=0c5d8859">
+<link rel="stylesheet" href="theme.css?v=8dc1bc5c">
+<link rel="stylesheet" href="nav.css?v=515b2cfd">
 <style>
   /* ---------- Week selector ----------
      .selector-row and .parlay-select styling both live in theme.css. */
@@ -113,27 +113,9 @@
      Combined Odds/Split strip is folded into these. */
   .hero2{ grid-template-columns: 1fr; }
   .hero2-main > *{ position: relative; }
-  .pr-top{ display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; }
   .pr-top .hero2-v{ margin-bottom: 0; }
-  .pr-chance{ text-align: right; min-width: 0; flex: none; }
-  .pr-chance .k{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
-  .pr-chance .v{ font-family: var(--scoreboard); font-weight: 800; font-size: clamp(1.4rem, 6vw, 1.9rem); line-height: 1.05; white-space: nowrap; }
-  .pr-chance .s{ color: var(--text-dim); font-size: var(--fs-detail); margin-top: 2px; white-space: nowrap; }
-  .pr-pips{ display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); gap: 4px; margin-top: 16px; }
-  .pr-pips i{ position: relative; height: 30px; border-radius: 7px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); display: grid; place-items: center; font: 800 var(--fs-label)/1 var(--body); font-style: normal; color: var(--text-dim); }
-  .pr-pips i.hit{ background: var(--gold); border-color: var(--gold); color: var(--ctl-on-ink); }
-  .pr-pips i.miss{ background: var(--loss-tint); border-color: var(--loss); color: var(--loss); }
-  .pr-pips i.next{ border-color: var(--gold); color: var(--gold); box-shadow: 0 0 0 3px rgba(212,180,106,0.15); }
-  /* Your leg: your color as the pip's whole edge (2px, drawn as border +
-     inset ring so the pip doesn't change size). */
-  .pr-pips i.mine{ border-color: var(--me-ring, #7AAEDB); box-shadow: inset 0 0 0 1px var(--me-ring, #7AAEDB); }
-  .pr-pips i.next.mine{ box-shadow: 0 0 0 3px rgba(212,180,106,0.15), inset 0 0 0 1px var(--me-ring, #7AAEDB); }
-  .pr-pips i.rec::after{ content: ''; position: absolute; top: -6px; bottom: -6px; left: -3px; border-left: 2px dotted rgba(212,180,106,0.7); }
-  .pr-days{ display: grid; grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr)); gap: 4px; margin-top: 6px; font-size: var(--fs-label); color: var(--text-dim); font-weight: 700; text-align: center; letter-spacing: 0.04em; text-transform: uppercase; }
-  .pr-line{ display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--item); font-size: var(--fs-small); line-height: 1.4; color: var(--text-dim); }
-  .pr-line b{ color: var(--text); font-weight: 600; }
-  .pr-line.rec{ border-color: var(--lead-line); background: var(--lead-tint); }
-  .pr-line svg{ flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--gold); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* .pr-chance, .pr-pips, .pr-days and .pr-line live in theme.css (shared with Live's Current Parlay, audit XI #7). */
+  .pr-at{ color: var(--text-dim); font-size: var(--fs-detail); margin-top: 2px; white-space: nowrap; }
   .pr-foot{ display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 14px; }
   .pr-foot .hero-chips{ margin-top: 0; }
   .pr-split{ margin-left: auto; text-align: right; color: var(--text-dim); font-size: var(--fs-small); white-space: nowrap; }
@@ -232,7 +214,7 @@
     <footer id="site-footer" data-source="Graded from ESPN box scores" data-note="Live scores every 2 minutes"></footer>
   </div>
 
-<script src="nav.js?v=b6928293"></script>
+<script src="nav.js?v=90921fec"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
 <script src="share.js?v=3bc58341"></script>
 <script src="parlay-common.js?v=7439641b"></script>
@@ -366,7 +348,8 @@
     if (p.result === 'Win' || (entry && entry.hit)) return '<span class="badge turf">Win</span>';
     if (p.result === 'Loss') return '<span class="badge loss">Loss</span>';
     if (entry) return '<span class="badge loss"><span class="live-dot"></span>Live</span>';
-    return '<span class="badge dim">Pending</span>';
+    // Nothing yet (audit XI #8): the time on the left already says when.
+    return '';
   }
 
   // ---------- Parlay hero (audit VII #11) ----------
@@ -403,7 +386,7 @@
     const priced = pending.every(([, p]) => typeof p.odds === 'number');
     const dLeft = pending.reduce((t, [, p]) => t * decOdds(p.odds), 1);
     const chance = alive && pending.length && priced
-      ? `<div class="pr-chance"><div class="k">Chance to cash</div><div class="v">1 in ${Math.round(dLeft).toLocaleString()}</div><div class="s">${pending.length} left at ${amerOdds(dLeft)}</div></div>`
+      ? `<div class="pr-chance"><div class="k">Chance to cash</div><div class="v">1 in ${Math.round(dLeft).toLocaleString()}</div><div class="s">${wins || losses ? `${pending.length} left at ${amerOdds(dLeft)}` : 'by the legs’ own odds'}</div></div>`
       : `<div class="pr-chance"><div class="k">Combined odds</div><div class="v">${fmtOdds(week.final.odds)}</div><div class="s">${wins} of ${legs.length} legs hit</div></div>`;
 
     const pips = legs.map(([name, p], i) => {
@@ -439,7 +422,7 @@
         <span class="badge status-ribbon ${statusTone}">${alive && legs.length ? `Alive · ${wins} of ${legs.length}` : status}</span>
         <div class="hero2-main glow">
           <div class="pr-top">
-            <div><div class="gold-label-xl">Payout</div><div class="hero2-v">${fmtMoney(week.final.payout)}</div></div>
+            <div><div class="gold-label-xl">Payout</div><div class="hero2-v">${fmtMoney(week.final.payout)}</div>${alive && week.final.odds ? `<div class="pr-at">The bet: ${fmtOdds(week.final.odds)}</div>` : ''}</div>
             ${chance}
           </div>
           ${legs.length ? `<div class="pr-pips" style="--n:${legs.length}" role="img" aria-label="${wins} of ${legs.length} legs hit${losses ? `, ${losses} lost` : ''}">${pips}</div><div class="pr-days" style="--n:${legs.length}" aria-hidden="true">${days}</div>` : ''}

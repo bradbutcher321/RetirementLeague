@@ -88,7 +88,8 @@ const RaceSim = (() => {
     let seed2 = 7310013;
     const rnd2 = () => { seed2 = (seed2 * 16807) % 2147483647; return (seed2 - 1) / 2147483646; };
     const gauss2 = () => { let u = 0, v = 0; while (u === 0) u = rnd2(); while (v === 0) v = rnd2(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
-    const cond = force ? { win: Object.fromEntries(teams.map(t => [t, [0, 0]])), loss: Object.fromEntries(teams.map(t => [t, [0, 0]])) } : null;
+    // cond: this week's result for each team -> [seasons, playoffs, bye, Sacko game] (audit XI #16 added the last two).
+    const cond = force ? { win: Object.fromEntries(teams.map(t => [t, [0, 0, 0, 0]])), loss: Object.fromEntries(teams.map(t => [t, [0, 0, 0, 0]])) } : null;
     for (let k = 0; k < n; k++) {
       const w = {}, pf = {}, pickRes = {};
       let hiS = br && opts.high ? opts.high.score : 0, hiM = br && opts.high ? opts.high.manager : null;
@@ -122,7 +123,7 @@ const RaceSim = (() => {
         if (i < spots) fw[1]++;
         if (i < byes) o.bye++;
         if (i >= N - 2) o.sacko++;
-        if (cond && pickRes[t] !== undefined) { const c = pickRes[t] ? cond.win[t] : cond.loss[t]; c[0]++; if (i < spots) c[1]++; }
+        if (cond && pickRes[t] !== undefined) { const c = pickRes[t] ? cond.win[t] : cond.loss[t]; c[0]++; if (i < spots) c[1]++; if (i < byes) c[2]++; if (i >= N - 2) c[3]++; }
       });
       if (br) {
         // The bracket: six teams, the top two on byes, the top seed meets the
@@ -151,6 +152,9 @@ const RaceSim = (() => {
     if (cond) teams.forEach(t => {
       out[t].ifWin = cond.win[t][0] ? cond.win[t][1] * 100 / cond.win[t][0] : null;
       out[t].ifLoss = cond.loss[t][0] ? cond.loss[t][1] * 100 / cond.loss[t][0] : null;
+      const pc = (c, k) => (c[0] ? c[k] * 100 / c[0] : null);
+      out[t].ifWinBye = pc(cond.win[t], 2); out[t].ifLossBye = pc(cond.loss[t], 2);
+      out[t].ifWinSacko = pc(cond.win[t], 3); out[t].ifLossSacko = pc(cond.loss[t], 3);
     });
     return out;
   }

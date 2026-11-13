@@ -24,8 +24,8 @@
 <!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
-<link rel="stylesheet" href="theme.css?v=8289f9ac">
-<link rel="stylesheet" href="nav.css?v=0c5d8859">
+<link rel="stylesheet" href="theme.css?v=8dc1bc5c">
+<link rel="stylesheet" href="nav.css?v=515b2cfd">
 <style>
   /* ---------- Feed (site audit III #7; redesigned 2026-10-16) ----------
      Every change to a starter's points this week, newest first, the whole
@@ -198,6 +198,9 @@
   /* ---------- The list ---------- */
   .fd-panel{ padding: 6px 12px 12px; }
   .fd{ display: grid; gap: 6px; }
+  /* One day of the list (audit XI #15): skipped by the browser while off
+     screen, so a whole week of plays costs about what one screen does. */
+  .fd-dg{ display: grid; gap: 6px; content-visibility: auto; contain-intrinsic-size: auto 1400px; }
   /* Polish 1: each day says how many plays it has. */
   .fd-day{ display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--gold); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 4px 0; }
   .fd-day .dc{ color: var(--text-dim); font-weight: 600; letter-spacing: 0.02em; text-transform: none; font-size: var(--fs-label); }
@@ -319,9 +322,9 @@
     </section>
 
     <template id="fd-skel-tpl"><span class="sr-only">Loading…</span><div class="sk fd-skel" aria-hidden="true" style="padding:0;background:none;border:0;box-shadow:none"><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:70%;height:13px"></i><i style="width:45%;height:10px"></i></div><i style="width:48px;height:18px"></i></div><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:62%;height:13px"></i><i style="width:40%;height:10px"></i></div><i style="width:48px;height:18px"></i></div><div class="sk-item"><i class="o" style="width:42px;height:42px"></i><div class="sk-col"><i style="width:66%;height:13px"></i><i style="width:50%;height:10px"></i></div><i style="width:48px;height:18px"></i></div></div></template>
-    <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
+    <footer id="site-footer"></footer>
   </div>
-<script src="nav.js?v=b6928293"></script>
+<script src="nav.js?v=90921fec"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
 <script>
   // The Worker saves a row each time a starter's points move
@@ -450,7 +453,7 @@
         } else if (w === liveWeek && me && board) {
           const pr = pairs.find(x => x.includes(me));
           const t = m => (board.teams || []).find(x => x.m === m);
-          if (pr) { const o = pr[0] === me ? pr[1] : pr[0]; opp = `vs ${esc(o)}`; sub = `${f2((t(me) || {}).cur || 0)}–${f2((t(o) || {}).cur || 0)}`; pips = '<i class="live" aria-label="This week"></i>'; }
+          if (pr) { const o = pr[0] === me ? pr[1] : pr[0]; opp = `vs ${esc(o)}`; sub = `${f2((t(me) || {}).cur || 0)}–${f2((t(o) || {}).cur || 0)}`; pips = (board.games || []).some(g => g.state === 'in') ? '<i class="live" aria-label="Games on now"></i>' : ''; }
         }
         if (!opp) { opp = `Week ${w}`; sub = w === liveWeek ? 'Every play so far' : 'Every play'; }
         rows.push(`<button type="button" class="wkr${on ? ' on' : ''}" data-wk-pick="${w}" aria-pressed="${on}"><span class="wkr-n">Wk ${w}${tag ? `<small>${tag}</small>` : ''}</span><span class="wkr-o">${opp}<span>${sub}</span></span><span class="wkr-r">${pips}</span></button>`);
@@ -550,6 +553,53 @@
     return cur;
   }
 
+  // A change of 0.00 has no sign (audit XI #4): a projection note that moved nothing.
+  const signed = d => (Math.abs(d) < 0.005 ? '0.00' : (d > 0 ? '+' : '−') + f2(Math.abs(d)));
+  // The list by day (audit XI #15). Polls on a game day come every 15
+  // seconds and most bring a play or two, so only the day that changed is
+  // touched: new rows go in under its header, and a day whose rows changed
+  // some other way (a play overturned) is redrawn alone. A new week, filter,
+  // view or scope draws the list from scratch, as before.
+  let listState = null;
+  const groupHtml = g => `<div class="fd-dg" data-day="${esc(g.key)}"><div class="fd-day">${g.head}</div>${g.rows.map(r => r.html).join('')}</div>`;
+  function patchList(listEl, groups, sig) {
+    if (!listState || listState.sig !== sig || !listEl.querySelector('.fd-dg')) {
+      listEl.innerHTML = groups.map(groupHtml).join('');
+      listState = { sig, days: new Map() };
+      listEl.querySelectorAll('.fd-dg').forEach((el, i) => listState.days.set(groups[i].key, { el, head: groups[i].head, keys: groups[i].rows.map(r => r.k) }));
+      return;
+    }
+    const want = new Set(groups.map(g => g.key));
+    for (const [day, st] of listState.days) if (!want.has(day)) { st.el.remove(); listState.days.delete(day); }
+    let before = null; // the group the next one goes after (null: the top)
+    groups.forEach(g => {
+      const keys = g.rows.map(r => r.k);
+      let st = listState.days.get(g.key);
+      if (st) {
+        const extra = keys.length - st.keys.length;
+        const same = extra >= 0 && st.keys.every((k, i) => k === keys[i + extra]);
+        if (!same) {
+          st.el.insertAdjacentHTML('afterend', groupHtml(g));
+          const el = st.el.nextElementSibling;
+          st.el.remove();
+          st = { el, head: g.head, keys };
+          listState.days.set(g.key, st);
+        } else {
+          if (extra > 0) st.el.firstElementChild.insertAdjacentHTML('afterend', g.rows.slice(0, extra).map(r => r.html).join(''));
+          if (st.head !== g.head) { st.el.firstElementChild.innerHTML = g.head; st.head = g.head; }
+          st.keys = keys;
+        }
+      } else {
+        if (before) before.insertAdjacentHTML('afterend', groupHtml(g)); else listEl.insertAdjacentHTML('afterbegin', groupHtml(g));
+        st = { el: before ? before.nextElementSibling : listEl.firstElementChild, head: g.head, keys };
+        listState.days.set(g.key, st);
+      }
+      if ((before ? before.nextElementSibling : listEl.firstElementChild) !== st.el) {
+        if (before) before.after(st.el); else listEl.prepend(st.el);
+      }
+      before = st.el;
+    });
+  }
   function render() {
     // A finished week says so, with the way to the live one; the live week
     // says what it's doing, and the time only once it's a few minutes old.
@@ -635,12 +685,23 @@
 
     const perDay = new Map(), upDay = new Map();
     list.forEach(e => { const d = fdDay(e.t), c = e.k === 'p' ? upDay : perDay; c.set(d, (c.get(d) || 0) + 1); });
-    let lastDay = '';
-    const rows = list.map(e => {
-      const day = fdDay(e.t), n = perDay.get(day) || 0, u = upDay.get(day) || 0;
-      const count = [n ? `${n} play${n === 1 ? '' : 's'}` : '', u ? `${u} projection note${u === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ');
-      const head = day !== lastDay ? `<div class="fd-day"><span>${day}</span><span class="dc">${count}</span></div>` : '';
-      lastDay = day;
+    // One group per day (audit XI #15): a poll patches the day that changed
+    // and adds only its new rows, instead of rebuilding the whole week.
+    const groups = [], dayN = new Map();
+    list.forEach(e => {
+      const day = fdDay(e.t);
+      let g = groups[groups.length - 1];
+      if (!g || g.day !== day) {
+        // A day can come back (a play saved out of order): its own key.
+        const seen = (dayN.get(day) || 0) + 1;
+        dayN.set(day, seen);
+        const n = perDay.get(day) || 0, u = upDay.get(day) || 0;
+        const count = [n ? `${n} play${n === 1 ? '' : 's'}` : '', u ? `${u} projection note${u === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ');
+        groups.push(g = { day, key: seen > 1 ? `${day}#${seen}` : day, head: `<span>${day}</span><span class="dc">${count}</span>`, rows: [] });
+      }
+      g.rows.push({ k: `${e.id}${e.over ? 'o' : ''}`, e });
+    });
+    const rowHtml = e => {
       const whose = e.m === me ? 'mine' : opp && e.m === opp ? 'opp' : '';
       // No red for a loss: the minus sign already says it.
       const valTone = whose === 'mine' ? 'mc' : whose === 'opp' ? 'wt' : 'gold';
@@ -661,13 +722,14 @@
       const note = e.over && view === 'detailed' ? `<div class="fd-note">Taken back ${mins === 1 ? 'a minute' : mins + ' minutes'} later, so it didn't count.</div>` : '';
       // The time rides the second line now that a face leads the row.
       const sub2 = e.k === 'p' ? `${who} · ${fdTime(e.t)}` : detailed ? `${teamChip(e.tm)}${esc(gameLine.replace(/^\S+ /, ''))} · ${fdTime(e.t)}` : `${who}${e.tm ? ' · ' + teamChip(e.tm) + esc(gameLine.replace(/^\S+ /, '')) : ''} · ${fdTime(e.t)}`;
-      return `${head}<div class="fd-row item${whose ? ' ' + whose : ''}${detailed ? '' : ' compact'}${e.td && !e.over ? ' td' : ''}${e.over ? ' over' : ''}${seen && e.id > seen ? ' fd-new' : ''}" data-id="${e.id}">
+      return `<div class="fd-row item${whose ? ' ' + whose : ''}${detailed ? '' : ' compact'}${e.td && !e.over ? ' td' : ''}${e.over ? ' over' : ''}${seen && e.id > seen ? ' fd-new' : ''}" data-id="${e.id}">
           ${face(e, tone(e.m))}
           <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${tags}<div class="fd-s">${sub2}</div>${why}</div>
-          <span class="fd-p ${valTone}${Math.abs(e.d) >= 6 ? ' big' : ''}">${e.d > 0 ? '+' : '−'}${f2(Math.abs(e.d))}</span>
+          <span class="fd-p ${valTone}${Math.abs(e.d) >= 6 ? ' big' : ''}">${signed(e.d)}</span>
           ${x}${note}
         </div>`;
-    }).join('');
+    };
+    groups.forEach(g => g.rows.forEach(r => { r.html = rowHtml(r.e); }));
     // A poll that brought points to your matchup: a toast for the biggest (audit IX #11).
     if (seen && !done && me && !frozen()) {
       const fresh = events.filter(e => e.id > seen && e.k !== 'p' && !e.undo && (e.m === me || e.m === opp) && e.d >= 0.5);
@@ -696,7 +758,7 @@
       return `<div class="fd-row item compact${whose ? ' ' + whose : ''}${e.td ? ' td' : ''}">
           ${face(e, tone(e.m))}
           <div class="fd-m"><b>${esc(e.n)}</b> <span class="what">${esc(e.what)}</span>${e.td ? '<span class="tag">TD</span>' : ''}<div class="fd-s">${who}${gl ? ' · ' + esc(gl) : ''} · ${fdDay(e.t).slice(0, 3)}</div></div>
-          <span class="fd-p ${valTone}${Math.abs(e.d) >= 6 ? ' big' : ''}">${e.d > 0 ? '+' : '−'}${f2(Math.abs(e.d))}</span>
+          <span class="fd-p ${valTone}${Math.abs(e.d) >= 6 ? ' big' : ''}">${signed(e.d)}</span>
         </div>`;
     };
     sumEl.innerHTML = top.length ? `<div class="glass fd-sum"><div class="ln-h"><span class="ln-cap">Biggest plays of Week ${week}</span></div>
@@ -708,9 +770,14 @@
     const listEl = document.getElementById('fd-list');
     const bandEl = document.getElementById('fd-band');
     const band = bandEl.getBoundingClientRect().bottom;
-    const anchor = [...listEl.querySelectorAll('.fd-row')].find(r => r.getBoundingClientRect().bottom > band);
+    // Find the row being read through its day first, so days far off screen
+    // (skipped by content-visibility) aren't laid out just to be measured.
+    const dayAt = [...listEl.querySelectorAll('.fd-dg')].find(d => d.getBoundingClientRect().bottom > band);
+    const anchor = dayAt ? [...dayAt.querySelectorAll('.fd-row')].find(r => r.getBoundingClientRect().bottom > band) : null;
     const keep = anchor && listEl.getBoundingClientRect().top < band ? { id: anchor.dataset.id, top: anchor.getBoundingClientRect().top } : null;
-    if (loaded || !listEl.querySelector('.fd-skel')) listEl.innerHTML = loaded ? rows || `<div class="empty-note">${empty}</div>` : document.getElementById('fd-skel-tpl').innerHTML;
+    if (!loaded) { if (!listEl.querySelector('.fd-skel')) listEl.innerHTML = document.getElementById('fd-skel-tpl').innerHTML; listState = null; }
+    else if (!groups.length) { listEl.innerHTML = `<div class="empty-note">${empty}</div>`; listState = null; }
+    else patchList(listEl, groups, JSON.stringify([week, filter, view, scope, game, me, opp, done]));
     if (keep) {
       const same = listEl.querySelector(`.fd-row[data-id="${keep.id}"]`);
       if (same) window.scrollBy({ top: same.getBoundingClientRect().top - keep.top, behavior: 'instant' });
@@ -869,7 +936,8 @@
   // Background tabs don't poll; coming back refreshes right away if stale.
   renderAsk();
   window.pageRefresh = () => load(true); // pull to refresh (page-common.js)
-  load();
+  // The footer's pace once the first load says whether a game is on (audit XI #4).
+  load().then(() => setRefreshNote(pace()));
   // Fast only around games (audit X #27, page-common.js pollMs).
   const pace = () => pollMs(((board && board.games) || []).map(g => ({ state: g.state, ko: g.ko })));
   setInterval(() => {

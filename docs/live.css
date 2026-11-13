@@ -67,10 +67,51 @@
   .psb-row .n .you{ color: var(--me-ring); }
   .psb-row .pj{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.05rem; text-align: center; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .psb-row .pj.fav{ color: var(--text); }
-  .wsb .psb-row .pj{ display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
-  .wsb .psb-row .pj.cur{ color: var(--text); }
-  .wsb .psb-row .pj small{ font: 600 var(--fs-label) var(--body); color: var(--text-dim); white-space: nowrap; }
-  .wsb + .psb, .psb + .wsb{ margin-top: 12px; }
+  /* One board for every game not on yet (audit XI #1): the projection on
+     both sides, any points already in underneath. */
+  .psb-row .pj{ display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+  .psb-row .pj small{ font: 600 var(--fs-label) var(--body); color: var(--text-dim); white-space: nowrap; margin-top: 2px; }
+  /* Stakes (audit XI #16): each side's biggest swing under its own side. */
+  .psb-stk{ grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; margin: -4px 0 8px; font-size: var(--fs-detail); color: var(--text-dim); line-height: 1.3; }
+  .psb-stk .r{ margin-left: auto; text-align: right; }
+  .psb-stk b{ color: var(--text); font-weight: 700; }
+  .psb-gotw{ display: inline-block; margin: 8px 8px 2px; padding: 3px 9px; border-radius: 999px; background: var(--gold); color: var(--ctl-on-ink, #0A0A08); font-size: var(--fs-label); font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+  .psb-gotw + .sb-row{ border-top: 0; }
+  /* A card's game: Game of the week, or which playoff game (audit XI #16, #17). */
+  .mu-tag{ font-size: var(--fs-label); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); padding: 14px 14px 0; margin-bottom: -6px; }
+  .mu-tag.sacko{ color: var(--loss); }
+  .mu-tag + .mu-head, .mu-tag + .pre-h{ padding-top: 10px; }
+  /* On your card: what rides on it (audit XI #16). */
+  .mu-line{ display: grid; grid-template-columns: minmax(0,1fr) repeat(3, 52px); gap: 4px 8px; align-items: baseline; margin-top: 10px; padding: 9px 11px 10px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--me-ring) 35%, transparent); background: color-mix(in srgb, var(--me-ring) 6%, transparent); font-size: var(--fs-small); }
+  .mu-line .h{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+  .mu-line .h:first-child{ color: var(--me-ring); }
+  .mu-line .h:not(:first-child), .mu-line b{ text-align: right; }
+  .mu-line span:not(.h){ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mu-line b{ font-family: var(--scoreboard); font-weight: 800; font-size: 1.12rem; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
+  .mu-line b.up{ color: var(--turf); }
+  .mu-line b.dn{ color: var(--loss); }
+  /* The bracket in playoff weeks (audit XI #17). */
+  #bracket-section{ margin-top: 12px; }
+  .bk-card{ padding: 14px; }
+  .bk-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .bk-title{ font-weight: 700; font-size: 0.92rem; }
+  .bk{ display: grid; grid-auto-flow: column; grid-auto-columns: minmax(104px, 1fr); gap: 8px; }
+  .bk-col{ display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .bk-lab{ color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-lab.sacko{ color: var(--loss); margin-top: 6px; }
+  .bk-g{ border: 1px solid var(--item-line); border-radius: 12px; background: var(--item); padding: 6px 9px; font-size: var(--fs-small); }
+  .bk-g.on{ border-color: var(--lead-line); }
+  .bk-g.me{ border-color: var(--me-ring); }
+  .bk-sk .bk-g{ border-color: var(--loss-line); background: var(--loss-tint); }
+  .bk-r{ display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+  .bk-r .sd{ width: 14px; flex: none; color: var(--text-dim); font-family: var(--scoreboard); font-weight: 700; }
+  .bk-r .bn{ flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .bk-r.you .bn{ color: var(--me-ring); }
+  .bk-r b{ font-family: var(--scoreboard); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-dim); }
+  .bk-r.lead b{ color: var(--gold); }
+  .bk-say{ color: var(--text-dim); font-size: var(--fs-detail); padding: 2px 0; }
+  .bk-live{ display: inline-flex; align-items: center; gap: 5px; color: var(--loss); font-size: var(--fs-label); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+  .bk-live::before{ content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--loss); }
   .psb-row .mini{ display: flex; flex-direction: column; gap: 4px; }
   .psb-row .mini .mu-bar{ height: 4px; gap: 2px; }
   .psb-row .mini small{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -482,6 +523,7 @@
     .mu-w{ display: inline; }
     .mu-n{ display: none; }
     .mu-head{ padding: 16px 18px 0; }
+    .mu-tag{ padding: 16px 18px 0; }
     .mu-odds{ padding: 12px 18px 0; }
     .mu-margin .mu-more{ right: 16px; }
     .mu-foot{ padding: 12px 18px; }
@@ -1244,34 +1286,18 @@
   .ph-head{ display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
   .ph-title{ font-weight: 700; font-size: 0.92rem; }
 
-  .ph-leg{ background: var(--item); border: 1px solid var(--item-line); border-radius: 10px; padding: 12px 14px 11px; }
-  /* A live leg's current trend tints it the same win/outline-tint way a
-     decided one does on the parlay page itself (.leg.live-up/.live-down) --
-     it's reporting where the leg stands right now, not a final result. */
-  .ph-leg.trend-up{ border-color: var(--win-line); background: var(--win-tint); }
-  .ph-leg.trend-down{ border-color: var(--loss-line); background: var(--loss-tint); }
-  .ph-leg-top{ display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-  .ph-leg-name{ font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ph-leg-bet{ color: var(--text-dim); font-size: 0.86rem; margin-top: 4px; line-height: 1.35; }
-  .ph-leg-result{ font-family: var(--scoreboard); font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-dim); white-space: nowrap; flex-shrink: 0; }
-  .ph-leg-result.turf{ color: var(--turf); }
-  .ph-leg-result.loss{ color: var(--loss); }
-  /* Graded-week recap: one sentence (who failed their leg, what it cost)
-     at the top, Sacko/killer as a centered label/value footer at the bottom. The wrap grows like the
-     stats row did (flex: 1); the hidden spacer inside is a real leg box +
-     stats row, so the card is exactly as tall as before, and the recap box
-     is laid over all of it. Text styled like League Lore's beside it. */
-  .ph-recap-wrap{ position: relative; flex: 1; display: flex; flex-direction: column; }
-  .ph-recap-spacer{ visibility: hidden; flex: 1; display: flex; flex-direction: column; }
-  .ph-leg.ph-recap{ position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; padding: 10px 14px; overflow: hidden; }
-  .ph-recap-text{ font-size: 1rem; font-weight: 600; line-height: 1.4; }
-  .ph-recap-text b{ font-weight: 800; }
-  .ph-recap-text b.gold{ font-family: var(--scoreboard); color: var(--gold); font-weight: 800; font-variant-numeric: tabular-nums; }
-  .ph-recap-foot{ display: flex; justify-content: center; gap: 26px; padding-top: 7px; border-top: 1px solid var(--line); }
-  .ph-recap-foot div{ display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-  .ph-recap-foot span{ font-size: var(--fs-label); color: var(--text-dim); letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
-  .ph-recap-foot b{ font-size: 0.86rem; font-weight: 700; color: var(--loss); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ph-kickoff{ color: var(--text-dim); font-size: var(--fs-small); white-space: nowrap; flex-shrink: 0; }
+  /* Current Parlay is the Parlay Results hero in small (audit XI #7): the
+     pips and the chance come from theme.css (.pr-*), sized down here. */
+  .ph-k{ color: var(--gold); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .ph-pay{ font-family: var(--scoreboard); font-weight: 800; font-size: 2.1rem; line-height: 1; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .ph-pay.dim{ color: var(--text-dim); }
+  .parlay-highlight .pr-chance .v{ font-size: 1.45rem; }
+  .parlay-highlight .pr-chance .v.loss{ color: var(--loss); }
+  .parlay-highlight .pr-pips{ margin-top: 12px; }
+  .parlay-highlight .pr-pips i{ height: 26px; }
+  .ph-line{ margin-top: auto; }
+  .parlay-highlight .pr-days + .ph-line{ margin-top: 10px; }
+  .ph-line .ph-live{ font-family: var(--body); font-size: var(--fs-small); vertical-align: baseline; }
 
   /* The live dot is always red -- same as the parlay page's own
      .leg-stats .live-wrap. It marks "in progress", a separate signal from
@@ -1281,16 +1307,6 @@
   .ph-live.turf{ color: var(--turf); }
   .ph-live .dot{ width: 6px; height: 6px; border-radius: 50%; background: var(--loss); flex-shrink: 0; animation: pulse 1.5s ease-in-out infinite; }
 
-  /* margin-top: auto (not a fixed value) pins this row to the card's bottom
-     edge -- once .parlay-highlight is stretched to match League Lore's
-     height, the gap opens up above the stats instead of leaving them
-     stranded mid-card with dead space underneath. */
-  .ph-stats{ display: flex; justify-content: space-between; gap: 10px; margin: auto 54px 0; padding-top: 12px; border-top: 1px solid var(--line); flex-wrap: wrap; }
-  .ph-stat{ text-align: center; }
-  .ph-stat b{ display: block; font-family: var(--scoreboard); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--gold); }
-  .ph-stat b.loss{ color: var(--loss); }
-  .ph-stat b.none{ color: var(--text); }
-  .ph-stat span{ font-size: var(--fs-label); color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; }
 
   /* ---------- Superlatives ---------- */
   /* ---------- Week in Review (site audit 28; audit V #1, #2) ----------
@@ -1530,7 +1546,4 @@
     .spread-col{ width: 84px; }
     .lb-stat{ width: 34px; }
     .lb-stat .v{ font-size: var(--fs-small); }
-    /* The desktop inset that pulls the four stats together leaves too
-       little width on a phone -- Payout wrapped onto a second line. */
-    .ph-stats{ margin: auto 0 0; }
   }

@@ -26,7 +26,7 @@
     const d = new Date(iso);
     const h = d.getHours();
     const mins = String(d.getMinutes()).padStart(2, '0');
-    return `${PARLAY_DAYS[d.getDay()]} ${h % 12 || 12}:${mins}${h < 12 ? 'AM' : 'PM'}`;
+    return `${PARLAY_DAYS[d.getDay()]} ${h % 12 || 12}:${mins} ${h < 12 ? 'AM' : 'PM'}`;
   }
 
   // Which matchups are currently expanded, keyed by team-name pair rather
@@ -345,6 +345,7 @@
 
     return `
       <div class="matchup-card${expanded ? ' expanded' : ''}${mine ? ' me' : ''}${isFinal ? ' done' : ''}" data-key="${encodeURIComponent(key)}">
+        ${isFinal ? playoffTag(m) : cardTagHtml(m)}
         <div class="mu-head">
           ${side('away', m.awayName, m.awayManager, metaParts(m.awayManager, m.awayRecord, m.awayStreak, m.awayName), awayScore, homeScore, m.awayProjected, m.awayPlayers || [])}
           ${isFinal ? `<div class="mu-mid">${status}</div>` : ''}
@@ -352,6 +353,7 @@
         </div>
         ${oddsRow}
         ${needRow}
+        ${mine && !isFinal ? onLineHtml(m) : ''}
         ${isFinal ? '' : `<div class="mu-foot">
           ${pips(m.awayPlayers || [], awayInPlay, awayRemaining, 'away')}
           ${status}
@@ -449,6 +451,7 @@
     const expanded = expandedMatchups.has(key);
     return `
       <div class="matchup-card pre-card me${expanded ? ' expanded' : ''}" data-key="${encodeURIComponent(key)}">
+        ${cardTagHtml(m)}
         <div class="pre-h">
           ${side('away', m.awayManager, m.awayName, m.awayRecord, m.awayStreak, aProj, aProj >= bProj)}
           <div class="pre-mid">${first ? `<span class="pre-ko">${first.day}<b>${first.time}${first.ap}</b></span>` : ''}</div>
@@ -462,7 +465,7 @@
         </div>
         <div class="pre-body">
           ${two}
-          <div class="pre-worth" data-worth${rootNow && rootNow.me ? '' : ' hidden'}>${worthHtml(rootNow)}</div>
+          ${stakesNow && onLineHtml(m) ? onLineHtml(m) : `<div class="pre-worth" data-worth${rootNow && rootNow.me ? '' : ' hidden'}>${worthHtml(rootNow)}</div>`}
           ${preTabsHtml([
             ['k', 'Kickoffs', lanes ? `<div class="pre-bt"><span>${labels[0]}</span><span></span><span>${labels[1]}</span></div>${lanes}` : ''],
             ['p', 'Positions', edgeHtml ? `<div class="pre-bt"><span>${labels[0]}</span><span></span><span>${labels[1]}</span></div>${edgeHtml}` : ''],
@@ -486,49 +489,35 @@
     return `<div class="pre-seg" role="tablist" aria-label="Show">${tabs.map(([k, l]) => `<button type="button" role="tab" data-pretab="${k}" class="${k === sel ? 'on' : ''}" aria-selected="${k === sel}">${esc(l)}</button>`).join('')}</div>
       ${tabs.map(([k, , html]) => `<div class="pre-blk" data-pane="${k}"${k === sel ? '' : ' hidden'}>${html}</div>`).join('')}`;
   }
-  // The other pregame matchups: one row each, both projections and the win
-  // odds; a tap opens the full card under its row, as the finished
-  // scoreboard does.
-  function preBoardHtml(list) {
+  // The other matchups until their games are on (audit VI #8, X #7, XI #1):
+  // one row each with the same number on both sides, the projection, and
+  // any points already in underneath, so a side with Thursday's points never
+  // sits beside a side's projection. A tap opens the full card under its
+  // row, as the finished scoreboard does. With the week's stakes (audit XI
+  // #16) each row says what rides on it for both teams.
+  function boardHtml(list) {
     if (!list.length) return '';
+    const top = gotwKey();
     return `<div class="sb psb glass">${list.map(m => {
-      const key = matchupKey(m);
-      const open = sbOpen.has(key);
-      const ap = parseFloat(m.awayProjected) || 0, hp = parseFloat(m.homeProjected) || 0;
-      const awp = typeof m.awayWinProbability === 'number' ? m.awayWinProbability : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : 50;
-      const wa = Math.max(1, Math.min(99, Math.round(awp))), wb = 100 - wa, fa = wa >= 50;
-      const nm = (mgr, team) => `<span class="${isMe(mgr) ? 'you' : ''}">${esc(mgr || team)}</span>`;
-      const root = mgr => `<b class="psb-root" data-root="${esc(mgr || '')}">${rootMark(rootNow, mgr)}</b>${holeTag(mgr === m.awayManager ? m.awayPlayers : m.homePlayers)}`;
-      return `<button type="button" class="sb-row psb-row" data-sb="${encodeURIComponent(key)}" aria-expanded="${open}" aria-label="${esc(m.awayManager || m.awayName)} ${fmtScore(ap)} projected, ${wa}%, against ${esc(m.homeManager || m.homeName)} ${fmtScore(hp)}, ${wb}%">
-          <span class="n">${muLogoHtml(m.awayManager)}${nm(m.awayManager, m.awayName)}${root(m.awayManager)}</span>
-          <span class="pj${ap >= hp ? ' fav' : ''}">${fmtScore(ap)}</span>
-          <span class="mini"><span class="mu-bar"><span class="${fa ? 'fav' : ''}" style="flex-grow:${wa}"></span><span class="${fa ? '' : 'fav'}" style="flex-grow:${wb}"></span></span><small><span class="${fa ? 'fav' : ''}">${wa}%</span><span class="${fa ? '' : 'fav'}">${wb}%</span></small></span>
-          <span class="pj${hp > ap ? ' fav' : ''}">${fmtScore(hp)}</span>
-          <span class="n r">${nm(m.homeManager, m.homeName)}${muLogoHtml(m.homeManager)}${root(m.homeManager)}</span>
-        </button>${open ? `<div class="sb-open">${renderMatchupCard(m)}</div>` : ''}`;
-    }).join('')}<div class="psb-ft" data-root-all${rootAllHtml(rootNow, list) ? '' : ' hidden'}>${rootAllHtml(rootNow, list)}</div></div>`;
-  }
-  // The started-but-waiting matchups (matchupWaiting): the score so far, or
-  // the projection in grey for a side with nobody played yet, and the odds.
-  function waitBoardHtml(list) {
-    if (!list.length) return '';
-    return `<div class="sb psb wsb glass">${list.map(m => {
       const key = matchupKey(m);
       const open = sbOpen.has(key);
       const as = parseFloat(m.awayScore) || 0, hs = parseFloat(m.homeScore) || 0;
       const ap = parseFloat(m.awayProjected) || 0, hp = parseFloat(m.homeProjected) || 0;
       const awp = typeof m.awayWinProbability === 'number' ? m.awayWinProbability : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : 50;
       const wa = Math.max(1, Math.min(99, Math.round(awp))), wb = 100 - wa, fa = wa >= 50;
-      const nm = mgr => `<span class="${isMe(mgr) ? 'you' : ''}">${esc(mgr)}</span>`;
-      const side = (s, p) => s > 0 ? `<span class="pj cur">${fmtScore(s)}<small>proj ${fmtScore(p)}</small></span>` : `<span class="pj">${fmtScore(p)}<small>proj</small></span>`;
-      return `<button type="button" class="sb-row psb-row" data-sb="${encodeURIComponent(key)}" aria-expanded="${open}" aria-label="${esc(m.awayManager || m.awayName)} ${fmtScore(as)}, projected ${fmtScore(ap)}, ${wa}%, against ${esc(m.homeManager || m.homeName)} ${fmtScore(hs)}, projected ${fmtScore(hp)}, ${wb}%">
-          <span class="n">${muLogoHtml(m.awayManager)}${nm(m.awayManager || m.awayName)}</span>
-          ${side(as, ap)}
+      const nm = (mgr, team) => `<span class="${isMe(mgr) ? 'you' : ''}">${esc(mgr || team)}</span>`;
+      const root = mgr => `<b class="psb-root" data-root="${esc(mgr || '')}">${rootMark(rootNow, mgr)}</b>${holeTag(mgr === m.awayManager ? m.awayPlayers : m.homePlayers)}`;
+      const pj = (p, sc, fav) => `<span class="pj${fav ? ' fav' : ''}">${fmtScore(p)}${sc > 0 ? `<small>${fmtScore(sc)} in</small>` : ''}</span>`;
+      const say = (mgr, sc, p) => `${esc(mgr)} ${fmtScore(p)} projected${sc > 0 ? `, ${fmtScore(sc)} in` : ''}`;
+      return `${pairKey(m) === top ? '<div class="psb-gotw">Game of the week</div>' : ''}<button type="button" class="sb-row psb-row" data-sb="${encodeURIComponent(key)}" aria-expanded="${open}" aria-label="${say(m.awayManager || m.awayName, as, ap)}, ${wa}%, against ${say(m.homeManager || m.homeName, hs, hp)}, ${wb}%">
+          <span class="n">${muLogoHtml(m.awayManager)}${nm(m.awayManager, m.awayName)}${root(m.awayManager)}</span>
+          ${pj(ap, as, ap >= hp)}
           <span class="mini"><span class="mu-bar"><span class="${fa ? 'fav' : ''}" style="flex-grow:${wa}"></span><span class="${fa ? '' : 'fav'}" style="flex-grow:${wb}"></span></span><small><span class="${fa ? 'fav' : ''}">${wa}%</span><span class="${fa ? '' : 'fav'}">${wb}%</span></small></span>
-          ${side(hs, hp)}
-          <span class="n r">${nm(m.homeManager || m.homeName)}${muLogoHtml(m.homeManager)}</span>
+          ${pj(hp, hs, hp > ap)}
+          <span class="n r">${nm(m.homeManager, m.homeName)}${muLogoHtml(m.homeManager)}${root(m.homeManager)}</span>
+          ${stakeRowHtml(m)}
         </button>${open ? `<div class="sb-open">${renderMatchupCard(m)}</div>` : ''}`;
-    }).join('')}</div>`;
+    }).join('')}<div class="psb-ft" data-root-all${rootAllHtml(rootNow, list) ? '' : ' hidden'}>${rootAllHtml(rootNow, list)}</div></div>`;
   }
 
   // ---------- What the week is worth (site audit VII #2, #3) ----------
@@ -596,6 +585,213 @@
       el.innerHTML = rootAllHtml(R, { length: n });
       el.hidden = !el.innerHTML;
     });
+  }
+
+  // ---------- Stakes (site audit XI #16) ----------
+  // What each game this week is worth: the playoff sim's odds for both teams
+  // with a win and with a loss -- RaceSim's conditional run, the same numbers
+  // as the preview card's and the Race tab's "riding on this week" -- for the
+  // playoffs, a bye and the Sacko game. One sim covers all six games. Its key
+  // is the records and the schedule, not the live scores, so it runs a few
+  // times a week per phone, and Live redraws when it lands. The order of the
+  // other matchups (most riding on it first) is set by the week's first run
+  // and kept, so cards never reshuffle during the games.
+  const STAKES_STORE = 'rl-stakes';
+  let stakesNow = null, stakesJob = null;
+  const STAKE_KINDS = [['po', 'Playoffs', 'w', 'l', 'now'], ['bye', 'Bye', 'wb', 'lb', 'bye'], ['sk', 'Sacko', 'ws', 'ls', 'sk']];
+  const pairKey = m => [m.awayManager || m.awayName, m.homeManager || m.homeName].sort().join('|');
+  function stakesFor(data) {
+    const inp = data && !data.archived && !isPlayoffWeek(data) && typeof RaceSim !== 'undefined' ? RaceSim.inputs(data) : null;
+    const wk = inp && inp.sched[0];
+    if (!wk || wk.w !== inp.week) return null; // the week is over
+    const year = data.year || leagueYear;
+    const key = JSON.stringify([year, inp.week, inp.base, inp.sched, inp.spots]);
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem(STAKES_STORE) || 'null'); } catch (e) {}
+    const sameWeek = x => x && x.y === year && x.wk === inp.week;
+    if (stakesNow && stakesNow.k === key) return stakesNow;
+    if (cached && cached.k === key) return cached;
+    if (stakesJob !== key) {
+      stakesJob = key;
+      (window.requestIdleCallback || (f => setTimeout(f, 400)))(() => {
+        if (stakesJob !== key) return;
+        stakesJob = null;
+        const out = RaceSim.simulate(inp, RaceSim.RUNS, null, true);
+        const t = {};
+        Object.keys(out).forEach(mgr => {
+          const o = out[mgr];
+          t[mgr] = { now: o.po, bye: o.bye, sk: o.sacko, w: o.ifWin, l: o.ifLoss, wb: o.ifWinBye, lb: o.ifLossBye, ws: o.ifWinSacko, ls: o.ifLossSacko };
+        });
+        const S = { k: key, y: year, wk: inp.week, t, ord: null };
+        const prev = sameWeek(stakesNow) ? stakesNow : sameWeek(cached) ? cached : null;
+        S.ord = prev && prev.ord ? prev.ord : stakeOrder(S, data.matchups || []);
+        try { localStorage.setItem(STAKES_STORE, JSON.stringify(S)); } catch (e) {}
+        if (shownData === data || (shownData && !shownData.archived && (shownData.year || leagueYear) === year && shownData.week === inp.week)) {
+          stakesNow = S;
+          renderDashboard(shownData, false, true);
+        }
+      }, { timeout: 2500 });
+    }
+    // Until it lands, the week's last answer (same order, nearly the same numbers).
+    return sameWeek(stakesNow) ? stakesNow : sameWeek(cached) ? cached : null;
+  }
+  // A team's biggest swing this week: [kind, label, with a win, with a loss, now, size].
+  function stakeOf(mgr, S = stakesNow) {
+    const o = S && mgr && S.t[mgr];
+    if (!o) return null;
+    return STAKE_KINDS.map(([k, label, w, l, now]) => [k, label, o[w], o[l], o[now]])
+      .filter(x => typeof x[2] === 'number' && typeof x[3] === 'number')
+      .map(x => [...x, Math.abs(x[2] - x[3])])
+      .sort((x, y) => y[5] - x[5])[0] || null;
+  }
+  const stakeSize = (m, S) => { const a = stakeOf(m.awayManager || m.awayName, S), b = stakeOf(m.homeManager || m.homeName, S); return (a ? a[5] : 0) + (b ? b[5] : 0); };
+  const stakeOrder = (S, ms) => ms.slice().sort((x, y) => stakeSize(y, S) - stakeSize(x, S)).map(pairKey);
+  const stakeRank = m => { const i = stakesNow && stakesNow.ord ? stakesNow.ord.indexOf(pairKey(m)) : -1; return i < 0 ? 99 : i; };
+  // The game of the week: the first in the week's order, if anything rides on it.
+  function gotwKey() {
+    const k = stakesNow && stakesNow.ord && stakesNow.ord[0];
+    return k && Object.values(stakesNow.t).some(o => o) ? k : null;
+  }
+  // Under a board row: each team's biggest swing, under its own side.
+  function stakeRowHtml(m) {
+    if (!stakesNow) return '';
+    const a = stakeOf(m.awayManager), b = stakeOf(m.homeManager);
+    if (!a && !b) return '';
+    const half = (x, cls) => `<span class="${cls}">${x && x[5] >= 1 ? `${x[1]} <b>${RaceSim.pct(x[2])}</b> win · ${RaceSim.pct(x[3])} loss` : 'Little riding on it'}</span>`;
+    return `<span class="psb-stk">${half(a, '')}${half(b, 'r')}</span>`;
+  }
+  // On your own card: what rides on it for you (every swing of 3 points or
+  // more, biggest first, at most two) and for the other side (its biggest).
+  function onLineHtml(m) {
+    if (!stakesNow) return '';
+    const me = isMe(m.awayManager) ? m.awayManager : isMe(m.homeManager) ? m.homeManager : null;
+    const o = me && stakesNow.t[me];
+    if (!o || typeof o.w !== 'number') return '';
+    const opp = me === m.awayManager ? m.homeManager : m.awayManager;
+    const kinds = mgr => { const t = stakesNow.t[mgr]; return t ? STAKE_KINDS.map(([k, label, w, l, now]) => [label, t[now], t[w], t[l]]).filter(x => typeof x[2] === 'number' && typeof x[3] === 'number').map(x => [...x, Math.abs(x[2] - x[3])]).sort((x, y) => y[4] - x[4]) : []; };
+    const mine = kinds(me).filter((x, i) => i === 0 || x[4] >= 3).slice(0, 2);
+    const theirs = kinds(opp).slice(0, 1);
+    const p = RaceSim.pct;
+    const row = (who, x, tone) => `<span>${esc(who)} · ${x[0] === 'Sacko' ? 'Sacko' : x[0].toLowerCase()}</span><b>${p(x[1])}</b><b class="${tone ? 'up' : ''}">${p(x[2])}</b><b class="${tone ? 'dn' : ''}">${p(x[3])}</b>`;
+    return `<div class="mu-line"><span class="h">On the line</span><span class="h">Now</span><span class="h">Win</span><span class="h">Loss</span>
+      ${mine.map(x => row('You', x, true)).join('')}${theirs.map(x => row(opp, x, false)).join('')}</div>`;
+  }
+
+  // ---------- The playoffs on Live (site audit XI #17) ----------
+  // The Worker names each playoff game (bracket: Play, Champ, 3rd, 5th,
+  // Cons, Sacko) but doesn't flag the week, so a week past the regular
+  // season is a playoff week. Every card says which game it is, a bracket
+  // strip sits under the status line, and the status line says what a win
+  // or a loss means for you. Seeds are the teams' standing (ESPN's playoff
+  // seed once the regular season is over).
+  const isPlayoffWeek = d => !!d && (Boolean(d.playoffWeek) || (d.regularSeasonWeeks > 0 && d.week > d.regularSeasonWeeks));
+  function seedsOf(d) {
+    const out = new Map();
+    (d.teams || []).forEach(t => { if (t.manager && typeof t.standing === 'number' && t.standing < 900) out.set(t.manager, t.standing); });
+    return out;
+  }
+  const pRound = (d, type) => {
+    const k = d.week - (d.regularSeasonWeeks || 0), six = (d.playoffTeamCount || 6) >= 6;
+    return type === 'Play' ? (six && k <= 1 ? 'Quarterfinal' : 'Semifinal')
+      : type === 'Champ' ? 'Championship' : type === '3rd' ? '3rd place game' : type === '5th' ? '5th place game'
+        : type === 'Cons' ? 'Consolation' : type === 'Sacko' ? 'Sacko game' : '';
+  };
+  // What a quarterfinal winner gets: the top seed takes the lowest seed left.
+  // From the other quarterfinal's result when it's in, else both chances.
+  function qfNext(d, mgr) {
+    const seeds = seedsOf(d), mine = seeds.get(mgr);
+    if (!mine) return '';
+    const byName = s => [...seeds].find(([, v]) => v === s)?.[0] || `the ${s} seed`;
+    if (mine === 6) return byName(1);
+    if (mine === 3) return byName(2);
+    const other = (d.matchups || []).find(m => m.bracket === 'Play' && [m.awayManager, m.homeManager].some(x => [3, 6].includes(seeds.get(x))));
+    if (other && matchupDecided(other)) {
+      const w = (parseFloat(other.awayScore) || 0) > (parseFloat(other.homeScore) || 0) ? other.awayManager : other.homeManager;
+      return seeds.get(w) === 6 ? byName(2) : byName(1);
+    }
+    return `${byName(1)} or ${byName(2)}`;
+  }
+  function playoffTag(m) {
+    const d = shownData;
+    if (!d || d.archived || !m.bracket || !isPlayoffWeek(d)) return '';
+    const name = pRound(d, m.bracket);
+    if (!name) return '';
+    const pay = SUP_PAY || {};
+    const say = m.bracket === 'Champ' ? (pay.first ? `$${pay.first.toLocaleString()} to the winner` : 'for the title')
+      : m.bracket === '3rd' ? (pay.third ? `$${pay.third.toLocaleString()} to the winner` : '')
+        : m.bracket === 'Play' ? (name === 'Quarterfinal' ? 'winner to the semifinals' : 'winner to the final')
+          : m.bracket === 'Cons' ? 'counts for the high score and season points'
+            : m.bracket === 'Sacko' ? 'the loser takes the Sacko' : '';
+    return `<div class="mu-tag${m.bracket === 'Sacko' ? ' sacko' : ''}">${name}${say ? ` · ${say}` : ''}</div>`;
+  }
+  // The tag over a card: its playoff game, or Game of the week.
+  const cardTagHtml = m => playoffTag(m) || (pairKey(m) === gotwKey() ? '<div class="mu-tag">Game of the week</div>' : '');
+  // Up 6.40 with 3 to play / Final: you won 112.40–98.20.
+  function playoffScoreSay(m, me) {
+    const mine = isMe(m.awayManager) ? 'away' : 'home', other = mine === 'away' ? 'home' : 'away';
+    const a = parseFloat(m[mine + 'Score']) || 0, b = parseFloat(m[other + 'Score']) || 0;
+    if (matchupDecided(m)) return a === b ? `Final: a tie at ${fmtScore(a)}.` : `Final: you ${a > b ? 'won' : 'lost'} ${fmtScore(a)}–${fmtScore(b)}.`;
+    if (!a && !b) return '';
+    const left = (parseInt(m[mine + 'Remaining'], 10) || 0) + (parseInt(m[mine + 'InPlay'], 10) || 0);
+    return `${a === b ? 'Tied' : a > b ? `Up ${fmtScore(a - b)}` : `Down ${fmtScore(b - a)}`}${left ? ` with ${left} to play` : ''}.`;
+  }
+  function renderPlayoffLine(el, data, t) {
+    const me = t.manager, seeds = seedsOf(data), seed = seeds.get(me);
+    const m = (data.matchups || []).find(x => isMe(x.awayManager) || isMe(x.homeManager));
+    const k = data.week - (data.regularSeasonWeeks || 0);
+    let text;
+    if (!m) {
+      if (!(seed <= 2 && k === 1)) return false;
+      text = `<b>Bye week.</b> You're through to the semifinal against the lowest seed left.`;
+    } else {
+      const opp = isMe(m.awayManager) ? m.homeManager : m.awayManager;
+      const score = playoffScoreSay(m, me);
+      const name = pRound(data, m.bracket) || 'This week';
+      const pay = SUP_PAY || {};
+      const lowest = [...seeds.values()].sort((a, b) => b - a).slice(0, 2);
+      const next = m.bracket === 'Play' && name === 'Quarterfinal' ? ` Win and you play <b>${esc(qfNext(data, me))}</b> in the semifinal; lose and you play for 5th.`
+        : m.bracket === 'Play' ? ' Win and you play for the title; lose and you play for 3rd.'
+          : m.bracket === 'Champ' ? (pay.first ? ` $${pay.first.toLocaleString()} to the winner, $${(pay.second || 0).toLocaleString()} to the loser.` : '')
+            : m.bracket === '3rd' ? (pay.third ? ` $${pay.third.toLocaleString()} to the winner.` : '')
+              : m.bracket === 'Sacko' ? ' The loser takes the Sacko.'
+                : m.bracket === 'Cons' ? (lowest.includes(seed) && k < 3 ? ' You play in the Sacko game in the last week.' : " You're clear of the Sacko.") : '';
+      text = `<b>${esc(name)} vs ${esc(opp)}${score ? ':' : '.'}</b> ${score}${next}`;
+    }
+    el.innerHTML = `<div class="st-line"><span class="st-mono">${esc(monogram(me))}</span><p class="st-text">${text}</p></div>`;
+    el.hidden = false;
+    return true;
+  }
+  // The bracket under the status line: quarterfinals, semifinals and final
+  // (this week's games live from the Worker, earlier rounds from league.json),
+  // and the Sacko game beside them.
+  function renderBracketStrip(data) {
+    const el = document.getElementById('bracket-section');
+    if (!el) return;
+    if (!data || data.archived || !isPlayoffWeek(data) || (data.year || leagueYear) !== leagueYear) { el.hidden = true; el.innerHTML = ''; return; }
+    const reg = data.regularSeasonWeeks, k = data.week - reg, seeds = seedsOf(data), year = data.year || leagueYear;
+    const byName = s => [...seeds].find(([, v]) => v === s)?.[0] || '';
+    const past = (leagueGames || []).filter(g => g.year === year && g.week > reg);
+    // One game: this week's (live) or an earlier round's (final).
+    const live = (data.matchups || []).filter(m => m.bracket);
+    const gameBox = (a, sa, b, sb, on, done) => {
+      const lead = done || on ? (sa > sb ? 0 : sb > sa ? 1 : -1) : -1;
+      const row = (n, sc, i) => `<div class="bk-r${i === lead ? ' lead' : ''}${isMe(n) ? ' you' : ''}"><span class="sd">${seeds.get(n) || ''}</span><span class="bn">${esc(n)}</span>${done || on ? `<b>${fmtScore(sc)}</b>` : ''}</div>`;
+      return `<div class="bk-g${on ? ' on' : ''}${[a, b].some(isMe) ? ' me' : ''}">${row(a, sa, 0)}${row(b, sb, 1)}${on ? '<span class="bk-live">Live</span>' : ''}</div>`;
+    };
+    const fromLive = m => gameBox(m.awayManager, parseFloat(m.awayScore) || 0, m.homeManager, parseFloat(m.homeScore) || 0, !matchupDecided(m) && (parseFloat(m.awayScore) || 0) + (parseFloat(m.homeScore) || 0) > 0, matchupDecided(m));
+    const fromPast = g => gameBox(g.p1, g.s1, g.p2, g.s2, false, true);
+    const tbd = (s, say) => `<div class="bk-g tbd"><div class="bk-r${isMe(byName(s)) ? ' you' : ''}"><span class="sd">${s}</span><span class="bn">${esc(byName(s))}</span></div><div class="bk-say">${say}</div></div>`;
+    const round = (wk, type, ph) => (k === wk - reg ? live.filter(m => m.bracket === type).map(fromLive) : past.filter(g => g.week === wk && g.type === type).map(fromPast)).join('') || ph;
+    const qf = round(reg + 1, 'Play', '');
+    const sf = round(reg + 2, 'Play', tbd(1, 'vs the lowest seed left') + tbd(2, 'vs the other winner'));
+    const fin = round(reg + 3, 'Champ', `<div class="bk-g tbd"><div class="bk-say">${SUP_PAY && SUP_PAY.first ? `$${SUP_PAY.first.toLocaleString()} to the winner` : 'For the title'}</div></div>`);
+    const lows = [...seeds].sort((x, y) => y[1] - x[1]).slice(0, 2).map(x => x[0]).reverse();
+    const sacko = round(reg + 3, 'Sacko', lows.length === 2 ? gameBox(lows[0], 0, lows[1], 0, false, false) : '');
+    const col = (label, html, more = '') => html ? `<div class="bk-col"><div class="bk-lab">${label}</div>${html}${more}</div>` : '';
+    const sk = sacko ? `<div class="bk-lab sacko">Sacko game</div><div class="bk-sk">${sacko}</div>` : '';
+    el.innerHTML = `<div class="glass bk-card"><div class="bk-head"><span class="bk-title">The bracket</span><span class="badge gold">Week ${data.week} · ${esc(pRound(data, k >= 3 ? 'Champ' : 'Play'))}${k >= 3 ? '' : 's'}</span></div>
+      <div class="bk scroll">${col('Quarterfinals', qf)}${col('Semifinals', sf)}${col('Final', fin, sk)}</div></div>`;
+    el.hidden = false;
   }
 
   // The pair's all-time series before this week (site audit 27), as a link
@@ -1608,7 +1804,7 @@
     const host = wrap.querySelector('.fl-chart');
     host.innerHTML = '';
     // Playoff weeks have no median to play against.
-    const withMedian = !(shownData && shownData.playoffWeek);
+    const withMedian = !isPlayoffWeek(shownData);
     const W = Math.max(160, host.clientWidth), H = host.clientHeight || 150;
     const pad = { l: 28, r: 6, t: 8, b: 20 };
     const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
@@ -2542,94 +2738,58 @@
       .sort((a, b) => (a[1].gametime || '9999').localeCompare(b[1].gametime || '9999'));
     if (!legs.length) { container.innerHTML = ''; return; }
 
+    // The Parlay Results hero in small (audit XI #7): the payout and the
+    // chance to cash, a pip per leg in game order (gold once it hits, red
+    // once it misses, the next one outlined), and the leg that's live or
+    // next. A dead week says who sank it and what it would have paid.
     const wins = legs.filter(([, p]) => p.result === 'Win').length;
-    const losses = legs.filter(([, p]) => p.result === 'Loss').length;
     const pending = legs.filter(([, p]) => p.result === 'Pending');
     const live = parlayData.live || {};
     const liveKey = name => `${week.year}:${week.week}:${name}`;
-    const liveLeg = pending.find(([name]) => live[liveKey(name)]);
-    // Whichever leg is most worth featuring: the live one if any, otherwise
-    // whichever pending leg kicks off soonest (legs are sorted by gametime
-    // already). Once the whole week is graded, the box recaps the week
-    // instead (see recapHtml below), so this only matters while it's open.
-    const [name, p] = liveLeg || pending[0] || legs[legs.length - 1];
-    const entry = live[liveKey(name)];
-
     const result = week.final && week.final.result;
     const status = result === 'Loss' ? 'Dead' : result === 'Win' ? 'Hit' : 'Alive';
     const statusTone = result === 'Loss' ? 'loss' : result === 'Win' ? 'turf' : 'gold';
-
-    let legClass = '', rightHtml;
-    if (entry) {
-      const textTone = entry.tone === 'up' ? ' turf' : '';
-      legClass = entry.tone === 'up' ? ' trend-up' : entry.tone === 'down' ? ' trend-down' : '';
-      rightHtml = `<span class="ph-live${textTone}"><span class="dot"></span>${parlayLiveText(entry, p)}</span>`;
-    } else if (p.result === 'Pending') {
-      rightHtml = `<span class="ph-kickoff">Kickoff ${fmtKickoff(p.gametime)}</span>`;
+    const dec = o => 1 + (o > 0 ? o / 100 : 100 / -o);
+    const nextLeg = pending.find(([name]) => live[liveKey(name)]) || pending[0];
+    const nextI = status === 'Alive' && nextLeg ? legs.indexOf(nextLeg) : -1;
+    const day = iso => (iso ? PARLAY_DAYS[new Date(iso).getDay()] : '');
+    const pips = legs.map(([name, p], i) => {
+      const cls = [p.result === 'Win' ? 'hit' : p.result === 'Loss' ? 'miss' : i === nextI ? 'next' : '', isMe(name) ? 'mine' : ''].filter(Boolean).join(' ');
+      return `<i class="${cls}" title="${esc(name)}">${esc(monogram(name))}</i>`;
+    }).join('');
+    const days = legs.map(([, p]) => `<span>${day(p.gametime)}</span>`).join('');
+    const pay = fmtMoney(week.final && week.final.payout);
+    let top = '', line = '';
+    if (status === 'Dead') {
+      const killer = legs.find(([, p]) => p.result === 'Loss');
+      top = `<div><div class="ph-k">Would have paid</div><div class="ph-pay dim">${pay}</div></div>
+        <div class="pr-chance"><div class="k">Killed by</div><div class="v loss">${esc(killer ? killer[0] : (week.killed_by || []).join(' & '))}</div></div>`;
+      if (killer) line = `<b>${esc(killer[0])}</b> · ${esc(String(killer[1].pick || '').replace(/^[^:]+:\s*/, ''))} · leg ${legs.indexOf(killer) + 1} of ${legs.length}${week.sacko ? ` · Sacko: <b>${esc(week.sacko)}</b>` : ''}`;
+    } else if (status === 'Hit') {
+      top = `<div><div class="ph-k">Paid</div><div class="ph-pay">${pay}</div></div><div class="pr-chance"><div class="k">Legs hit</div><div class="v">${wins} of ${legs.length}</div></div>`;
+      if (week.final && week.final.split) line = `Split <b>${fmtMoney(week.final.split)}</b> each`;
     } else {
-      const tone = p.result === 'Win' ? ' turf' : p.result === 'Loss' ? ' loss' : '';
-      rightHtml = `<span class="ph-leg-result${tone}">${p.result}</span>`;
+      const priced = pending.length && pending.every(([, p]) => typeof p.odds === 'number');
+      const dLeft = pending.reduce((t, [, p]) => t * dec(p.odds), 1);
+      top = `<div><div class="ph-k">Payout</div><div class="ph-pay">${pay}</div></div>${priced ? `<div class="pr-chance"><div class="k">Chance to cash</div><div class="v">1 in ${Math.round(dLeft).toLocaleString()}</div></div>` : ''}`;
+      if (nextLeg) {
+        const [name, p] = nextLeg, entry = live[liveKey(name)];
+        line = entry ? `<span class="ph-live"><span class="dot"></span>Live</span> <b>${esc(name)}</b> · ${esc(parlayLiveText(entry, p))}`
+          : `Next: <b>${esc(name)}</b> · ${esc(parlayBetType(p))} · ${esc(fmtKickoff(p.gametime))}${typeof p.odds === 'number' ? ` · <b>${Math.round(100 / dec(p.odds))}%</b> by the odds` : ''}`;
+      }
     }
-
-    const statsHtml = `
-        <div class="ph-stats">
-          <div class="ph-stat"><b>${wins}</b><span>Hit</span></div>
-          <div class="ph-stat"><b class="${losses ? 'loss' : 'none'}">${losses}</b><span>Lost</span></div>
-          <div class="ph-stat"><b>${fmtOdds(week.final && week.final.odds)}</b><span>Combined Odds</span></div>
-          <div class="ph-stat"><b>${fmtMoney(week.final && week.final.payout)}</b><span>Payout</span></div>
-        </div>`;
-
-    // Every leg graded: one more finished leg says little, so the box says
-    // who sank it and what it cost, with the week's Sacko and killer(s) in a
-    // label/value footer underneath. The stats row goes, and the box takes its place.
-    // The card must not change height when the last leg settles, so an
-    // invisible leg box + stats row still sit underneath holding the old
-    // height, and the recap box covers that whole area (.ph-recap-wrap).
-    let bodyHtml;
-    if (!pending.length) {
-      const lost = legs.filter(([, q]) => q.result === 'Loss').map(([n]) => `<b>${n}</b>`);
-      const listed = lost.length < 3 ? lost.join(' and ') : `${lost.slice(0, -1).join(', ')}, and ${lost[lost.length - 1]}`;
-      const money = `<b class="gold">${fmtMoney(week.final && week.final.payout)}</b>`;
-      const text = lost.length
-        ? `${listed} cost us ${money} by failing their leg${lost.length === 1 ? '' : 's'} of the bet.`
-        : `All ${legs.length} legs hit for ${money}.`;
-      const killers = week.killed_by || [];
-      const notes = [
-        week.sacko ? `<div><span>Sacko</span><b>${week.sacko}</b></div>` : '',
-        killers.length ? `<div><span>Killed by</span><b>${killers.join(' & ')}</b></div>` : '',
-      ].filter(Boolean);
-      bodyHtml = `
-        <div class="ph-recap-wrap">
-          <div class="ph-recap-spacer" aria-hidden="true">
-            <div class="ph-leg"><div class="ph-leg-top"><div class="ph-leg-name">&nbsp;</div></div><div class="ph-leg-bet">&nbsp;</div></div>
-            ${statsHtml}
-          </div>
-          <div class="ph-leg ph-recap">
-            <div class="ph-recap-text">${text}</div>
-            ${notes.length ? `<div class="ph-recap-foot">${notes.join('')}</div>` : ''}
-          </div>
-        </div>`;
-    } else {
-      bodyHtml = `
-        <div class="ph-leg${legClass}">
-          <div class="ph-leg-top">
-            <div class="ph-leg-name">${name}</div>
-            ${rightHtml}
-          </div>
-          <div class="ph-leg-bet">${p.pick}</div>
-        </div>
-        ${statsHtml}`;
-    }
-
     // A real link (site audit II #21), not a div with a click handler, so a
     // keyboard can reach it and a long press offers Open in New Tab.
     container.innerHTML = `
       <a class="parlay-highlight" href="parlay-results.html">
         <div class="ph-head">
           <div class="ph-title">Current Parlay</div>
-          <span class="badge ${statusTone}">${status}</span>
+          <span class="badge ${statusTone}">${status === 'Alive' ? `Alive · ${wins} of ${legs.length}` : status}</span>
         </div>
-        ${bodyHtml}
+        <div class="pr-top">${top}</div>
+        <div class="pr-pips" style="--n:${legs.length}" role="img" aria-label="${wins} of ${legs.length} legs hit">${pips}</div>
+        <div class="pr-days" style="--n:${legs.length}" aria-hidden="true">${days}</div>
+        ${line ? `<div class="pr-line ph-line"><span>${line}</span></div>` : ''}
       </a>`;
   }
 
@@ -3848,7 +4008,7 @@
     const hasPrior = week > 1 && teams.length > 0 && teams.every(t => t.prior);
     const started = teams.some(t => (t.current || 0) > 0);
     // A playoff week leaves the regular-season table as it ended.
-    if (data.playoffWeek) return [['through', 'Regular season']];
+    if (isPlayoffWeek(data)) return [['through', 'Regular season']];
     // A past week is over: before it, and after it.
     if (data.archived) {
       return [
@@ -4154,7 +4314,7 @@
   fetch('data/rule-changes.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(rc => {
     const list = (rc && rc.current && rc.current.payouts) || [];
     const amt = re => { const x = list.find(p => re.test(p.label)); return x ? x.amount : 0; };
-    SUP_PAY = { week: amt(/week/i), season: amt(/season/i) };
+    SUP_PAY = { week: amt(/week/i), season: amt(/season/i), first: amt(/1st/i), second: amt(/2nd/i), third: amt(/3rd/i) };
     renderSuperlatives();
   }).catch(() => {});
   const supPrize = v => (v ? ` <span class="acc-prize">$${v}</span>` : '');
@@ -4292,7 +4452,8 @@
     }).join('');
     // The arrow reads "from where the bars start -> to where they end", so
     // it only belongs in live/projected mode; Through mode has no movement.
-    const leadCaption = m === 'through' ? modeLabel
+    // The pill above already says which view this is (audit XI #9).
+    const leadCaption = m === 'through' ? ''
       : `${week > 1 ? 'Week ' + (week - 1) : 'Preseason'} \u2192 Week ${week}${fin ? '' : m === 'live' ? ' live' : ' projected'}`;
     const chaser = ranked[1];
     const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${leadCaption}</span>${chaser ? `<span>${esc(chaser.manager || chaser.n)} is ${fmtScore(total(leader) - total(chaser))} back</span>` : ''}</div>${leadRows}</div>`
@@ -4300,7 +4461,7 @@
 
     container.innerHTML =
       card('Season High Score' + supPrize(SUP_PAY && SUP_PAY.week), high.score, high.team, high.manager, high.meta, highExtra, tag(high.isNew, 'New record')) +
-      card('Season Points Leader' + supPrize(SUP_PAY && SUP_PAY.season), total(leader), leader.team, leader.manager, modeLabel, leadExtra, tag(leaderChanged, 'New leader'));
+      card('Season Points Leader' + supPrize(SUP_PAY && SUP_PAY.season), total(leader), leader.team, leader.manager, '', leadExtra, tag(leaderChanged, 'New leader'));
     scrollStripsToEnd();
   }
 
@@ -4484,7 +4645,7 @@
     const el = document.getElementById('waiver-section');
     if (!el) return;
     const first = data && Date.parse(data.firstKickoff);
-    if (!data || data.archived || data.playoffWeek || shownYear() !== leagueYear || !(first > Date.now())) { el.hidden = true; el.innerHTML = ''; return; }
+    if (!data || data.archived || isPlayoffWeek(data) || shownYear() !== leagueYear || !(first > Date.now())) { el.hidden = true; el.innerHTML = ''; return; }
     needRoster();
     const R = rosterInfo;
     if (!R || !R.fa || !R.fa.players || !R.fa.players.length) { el.hidden = true; el.innerHTML = ''; return; }
@@ -4543,6 +4704,8 @@
       el.hidden = false;
       return;
     }
+    // A playoff week says what this game means for you (audit XI #17).
+    if (t && isPlayoffWeek(data) && renderPlayoffLine(el, data, t)) return;
     const key = `${data.year || leagueYear}:${data.week}`;
     let hidden = false;
     try { hidden = localStorage.getItem(STATUS_KEY) === key; } catch (e) {}
@@ -4706,7 +4869,7 @@
     });
   }
   function renderYourWeek(el, data, t, key) {
-    if (!getMe() || data.archived || data.pastSeason || data.playoffWeek || data !== liveData) return false;
+    if (!getMe() || data.archived || data.pastSeason || isPlayoffWeek(data) || data !== liveData) return false;
     let y = null;
     if (weekFinal && t) {
       y = yourWeekModel(data, t);
@@ -4786,7 +4949,7 @@
     const chip = Math.abs(lead) < 0.005 ? 'Tied' : `You ${lead > 0 ? 'lead' : 'trail'} by ${Math.abs(lead).toFixed(2)}`;
     const row = (label, sub, from, to, cls) => `<div class="cu-row"><span class="n">${label}${sub ? `<small>${sub}</small>` : ''}</span><span class="from">${fmtScore(from)} \u2192</span><span><span class="to ${cls}">${fmtScore(to)}</span><span class="d">${cuSigned(to - from)}</span></span></div>`;
     const above = now.my - now.median;
-    const medianRow = data.playoffWeek ? '' : row('Median', `you\u2019re ${fmtScore(Math.abs(above))} ${above >= 0 ? 'above' : 'below'} it`, was.median, now.median, 'dim');
+    const medianRow = isPlayoffWeek(data) ? '' : row('Median', `you\u2019re ${fmtScore(Math.abs(above))} ${above >= 0 ? 'above' : 'below'} it`, was.median, now.median, 'dim');
     el.innerHTML = `<div class="cu glass">
       <div class="cu-h"><b>Since you looked at ${esc(fdTime(was.ts))}</b><span class="cu-chip">${chip}</span></div>
       <div class="cu-lines">${row(`You \u00b7 ${esc(now.me)}`, '', was.my, now.my, 'mine')}${row(esc(now.opp), '', was.theirs, now.theirs, '')}${medianRow}</div>
@@ -5069,7 +5232,7 @@
             const s = isMe(m.awayManager) ? 'away' : 'home', o = s === 'away' ? 'home' : 'away';
             opp = `vs ${esc(m[o + 'Manager'])}`;
             sub = `${(Number(m[s + 'Score']) || 0).toFixed(2)}–${(Number(m[o + 'Score']) || 0).toFixed(2)} · ${Math.round(m[s + 'WinProbability'])}% to win`;
-            pips = '<i class="live" aria-label="This week"></i>';
+            pips = !weekFinal && weekState(liveData).live ? '<i class="live" aria-label="Games on now"></i>' : '';
           }
         }
         if (!opp) { opp = 'No game'; sub = w > reg ? 'Out of the playoffs' : ''; }
@@ -5374,7 +5537,8 @@
         // The folding title bar's short name (nav.js headerTools).
         document.querySelector('header h1').dataset.fold = data.week ? `${data.year && data.year !== leagueYear ? data.year + ' · ' : ''}Week ${data.week}` : 'Live';
         // Playoff weeks have no median to watch.
-        document.getElementById('median-container').style.display = data.playoffWeek ? 'none' : '';
+        // No median game in the playoffs (the Worker doesn't flag the week: isPlayoffWeek reads it).
+        document.getElementById('median-container').style.display = isPlayoffWeek(data) ? 'none' : '';
         document.getElementById('matchups-h').textContent = archived ? 'Matchups' : "This week's matchups";
         // A past week's numbers are final, so the parlay and Lore cards
         // (both about right now) step aside.
@@ -5417,13 +5581,17 @@
         // the preview card and the pregame scoreboard; their sims run after paint.
         rootNow = mine && (minePre || matchups.some(m => m !== mine && pre(m)))
           ? rootFor(data, isMe(mine.awayManager) ? mine.awayManager : mine.homeManager) : null;
+        // What rides on each game (audit XI #16); the most first.
+        stakesNow = archived ? null : stakesFor(data);
         const mineCard = m => (minePre && m === mine ? renderPreviewCard(m) : renderMatchupCard(m));
         const onTop = Boolean(mine && getSettings().meTop);
         const rest = matchups.filter(m => m !== mine);
+        if (stakesNow) rest.sort((x, y) => stakeRank(x) - stakeRank(y));
         const ordered = onTop ? rest : mine ? [mine, ...rest] : matchups;
         document.getElementById('my-matchup').innerHTML = onTop ? mineCard(mine) : '';
         renderMePrompt(onTop);
         renderStatusLine(data);
+        renderBracketStrip(data);
         renderWaivers(data);
         // Finished games other than yours fold into one scoreboard (audit V
         // #10); a card folds only once its game is decided.
@@ -5434,7 +5602,7 @@
         const waitRows = ordered.filter(m => m !== mine && !archived && !weekFinal && !folded.includes(m) && !preRows.includes(m) && matchupWaiting(m));
         const cards = ordered.filter(m => !folded.includes(m) && !preRows.includes(m) && !waitRows.includes(m));
         document.getElementById('matchups-container').innerHTML =
-          ordered.length ? cards.map(mineCard).join('') + waitBoardHtml(waitRows) + preBoardHtml(preRows) + scoreboardHtml(folded) : '<div class="loading-row">No matchups found.</div>';
+          ordered.length ? cards.map(mineCard).join('') + boardHtml(ordered.filter(m => waitRows.includes(m) || preRows.includes(m))) + scoreboardHtml(folded) : '<div class="loading-row">No matchups found.</div>';
         const done = matchups.filter(matchupDecided).length;
         document.getElementById('matchups-state').textContent = done && done === matchups.length ? `${done} final` : done ? `${done} of ${matchups.length} final` : '';
         holdScroll();
@@ -5551,7 +5719,9 @@
     const key = card.dataset.key;
     const m = ((shownData && shownData.matchups) || []).find(x => encodeURIComponent(matchupKey(x)) === key);
     if (!m) return;
-    const a = m.awayManager || m.awayName, b = m.homeManager || m.homeName;
+    // You first, the way the card reads (meLeft, audit VII #1).
+    const v = meLeft(m);
+    const a = v.awayManager || v.awayName, b = v.homeManager || v.homeName;
     const decided = card.classList.contains('done');
     const year = (shownData && shownData.year) || leagueYear;
     const mineId = isMe(m.homeManager) ? m.homeId : m.awayId;
@@ -5563,7 +5733,7 @@
       <div class="sheet more-sheet" id="more-sheet" role="dialog" aria-modal="true" aria-label="${esc(a)} vs ${esc(b)}" tabindex="-1">
         <div class="sheet-grab"><span></span></div>
         <div class="sheet-body">
-          <div class="more-h">${muLogoHtml(m.awayManager)}<div><b>${esc(a)} vs ${esc(b)}</b><span>Week ${dashWeek} · ${state}</span></div></div>
+          <div class="more-h">${muLogoHtml(v.awayManager)}<div><b>${esc(a)} vs ${esc(b)}</b><span>Week ${dashWeek} · ${state}</span></div></div>
           <div class="more-list">
             <button type="button" class="more-it" data-act="share"><i>${MORE_IC.share}</i><span><b>Share a picture</b><small>${decided ? 'The final' : 'This matchup as it stands'}, ready for the group chat</small></span><em></em></button>
             ${espn ? `<a class="more-it" href="${esc(espn)}" target="_blank" rel="noopener"><i class="espn">ESPN</i><span><b>Open in ESPN</b><small>Fantasycast for this matchup, in the ESPN app</small></span><em>${MORE_IC.out}</em></a>` : ''}
@@ -5647,7 +5817,9 @@
   // Background tabs don't poll (each poll costs Worker/KV quota); coming
   // back to the tab refreshes right away if the data is stale.
   let lastLoadAt = 0;
-  const loadDashboardTracked = () => { lastLoadAt = Date.now(); return loadDashboard(); };
+  // The footer's pace is set once the first load says whether a game is on
+  // (audit XI #4), not only on the first 15-second tick.
+  const loadDashboardTracked = () => { lastLoadAt = Date.now(); return Promise.resolve(loadDashboard()).then(r => { setRefreshNote(pace()); return r; }); };
   // Pull to refresh (page-common.js) polls instead of reloading, so open
   // matchup cards stay open.
   window.pageRefresh = () => Promise.all([loadDashboardTracked(), typeof loadParlayHighlight === 'function' ? loadParlayHighlight() : null]);

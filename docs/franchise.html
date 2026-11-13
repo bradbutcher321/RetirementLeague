@@ -24,8 +24,8 @@
 <!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
-<link rel="stylesheet" href="theme.css?v=8289f9ac">
-<link rel="stylesheet" href="nav.css?v=0c5d8859">
+<link rel="stylesheet" href="theme.css?v=8dc1bc5c">
+<link rel="stylesheet" href="nav.css?v=515b2cfd">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
      spacing and variants here. */
@@ -125,7 +125,23 @@
      One page per manager: the title is the manager (and picks another), the
      hero their team and career counts, then This season / Career / Scoring /
      Rivals / Trophies, and on your own, Settings. */
-  .pf-title{ position:relative; display:inline-flex; align-items:center; gap:6px; }
+  .pf-title{ position:relative; display:flex; width:fit-content; align-items:center; gap:6px; }
+  /* The tab row pins under the title (audit XI #5), as Standings' band does. */
+  .pf-band{ position:sticky; top:calc(env(safe-area-inset-top, 0px) + var(--nav-shown, 0px) + var(--fold-shown, 0px)); z-index:20; margin:0 -20px 12px; padding:8px 20px; background:var(--bg); transition:top .25s ease, box-shadow .2s ease; }
+  body:has(.nav-bar:not(.tucked)) .pf-band{ --nav-shown:var(--nav-h, 0px); }
+  .pf-band.stuck{ box-shadow:0 1px 0 var(--line), 0 12px 18px -14px rgba(0,0,0,0.9); }
+  .pf-band .tabs{ margin:0; }
+  @media (max-width:480px){ .pf-band{ margin-inline:-14px; padding-inline:14px; } }
+  /* The hero in one row, on every tab but the first (audit XI #5). */
+  .fhero-mini{ display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:var(--card-r); border:1px solid var(--line); box-shadow:var(--card-edge); background:linear-gradient(165deg, var(--surface-2), var(--surface)); }
+  /* .me (theme.css) rings it, as it does the full hero: no border of its own here. */
+  .fm-logo{ position:relative; width:40px; height:40px; flex:none; border-radius:50%; overflow:hidden; border:1px solid var(--line); background:#1b1b1b; display:grid; place-items:center; }
+  .fhero-mini.me .fm-logo{ border:2px solid var(--me-ring); }
+  .fm-logo img{ width:100%; height:100%; object-fit:cover; }
+  .fm-id{ min-width:0; }
+  .fm-name{ font-family:var(--scoreboard); font-weight:800; font-size:1.35rem; line-height:1.05; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fm-sub{ color:var(--text-dim); font-size:var(--fs-small); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fm-sub b{ color:var(--text); font-weight:600; }
   .pf-title svg{ width:20px; height:20px; color:var(--text-dim); flex:none; margin-top:4px; }
   .pf-title select{ position:absolute; inset:0; width:100%; opacity:0; cursor:pointer; font-size:16px; appearance:none; -webkit-appearance:none; }
   .pf-title:focus-within{ outline:2px solid var(--gold); outline-offset:4px; border-radius:6px; }
@@ -439,17 +455,17 @@
 
     <section class="fr-hero"><div id="hero-container"><span class="sr-only">Loading franchise…</span><div class="sk sk-hero" aria-hidden="true"><div class="sk-main"><div class="sk-row" style="justify-content:flex-start;gap:16px"><i class="o" style="width:72px;height:72px"></i><div class="sk-col" style="gap:10px"><i style="width:min(100%,260px);height:36px"></i><i style="width:min(80%,170px);height:12px"></i></div></div><div class="sk-chips"><i class="p" style="width:160px;height:26px"></i><i class="p" style="width:180px;height:26px"></i><i class="p" style="width:168px;height:26px"></i><i class="p" style="width:164px;height:26px"></i><i class="p" style="width:152px;height:26px"></i></div><i style="width:90px;height:10px"></i><div class="sk-chips"><i class="p" style="width:190px;height:30px"></i><i class="p" style="width:226px;height:30px"></i></div></div><div class="sk-side" style="--n:6"><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div></div></div></div></section>
     <section>
-      <div class="tabs scroll" id="tabs" data-glide-panel="tab-content"></div>
+      <div class="pf-band" id="pf-band"><div class="tabs scroll" id="tabs" data-glide-panel="tab-content"></div></div>
       <div id="tab-content"><div class="sk" aria-hidden="true"><div class="sk-row"><i style="width:34%;height:16px"></i><i class="p" style="width:128px;height:36px"></i></div><div class="sk-grid" style="--cols:4"><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div><div class="sk-item" style="justify-items:center;padding:14px 10px"><i style="width:46%;height:9px"></i><i style="width:40%;height:28px"></i><i style="width:52%;height:10px"></i></div></div><i class="area" style="width:100%;height:190px"></i></div></div>
     </section>
 
     <footer id="site-footer" data-note="Money Tracker from the league sheet · Updates Tuesday &amp; Thursday mornings"></footer>
   </div>
 
-<script src="nav.js?v=b6928293"></script>
+<script src="nav.js?v=90921fec"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
 <script src="achievements.js?v=db57e048"></script>
-<script src="race-sim.js?v=f60c97fb"></script>
+<script src="race-sim.js?v=3786b0d6"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
   const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toFixed(d);
@@ -737,17 +753,18 @@
     // read as a scorecard rather than a summary.
     // The counts that settle arguments (audit X #10). Win % lives on Career.
     const st = p.career.standings;
+    const ru = Math.max(0, (st.champ_appearances || 0) - (st.championships || 0));
+    const one = (n, a, b) => (n === 1 ? a : b);
     const side = [
       ['Record', `${w}-${l}`],
-      ['Titles', fmt(st.championships)],
-      ['Runner-up', fmt(Math.max(0, (st.champ_appearances || 0) - (st.championships || 0)))],
+      [one(st.championships, 'Title', 'Titles'), fmt(st.championships)],
+      [one(ru, 'Runner-up', 'Runners-up'), fmt(ru)],
       ['Playoffs', fmt(st.playoff_appearances)],
-      ['Sackos', fmt(st.sackos)],
-      ['Weekly Sackos', fmt(p.weekly_sackos)],
+      [one(st.sackos, 'Sacko', 'Sackos'), fmt(st.sackos)],
+      [one(p.weekly_sackos, 'Weekly Sacko', 'Weekly Sackos'), fmt(p.weekly_sackos)],
     ].map(([l2, v]) => `<div class="fs"><div class="fs-v">${v}</div><div class="fs-l">${l2}</div></div>`).join('');
-    // This season at a glance, once the Worker answers (active managers only).
-    const t = active && LIVE && LIVE.teams ? LIVE.teams.find(x => x.manager === p.name) : null;
-    const seasonChips = t ? `<div class="pf-chips">${chip(`${fmtOrdinal(t.standing)} · ${esc(t.record)}`, 'gold')}${chip(t.clinch ? RaceSim.MARKS[t.clinch] : `${RaceSim.pct(t.playoffPct)} playoffs`, t.clinch === 'e' ? 'loss' : t.clinch ? 'win' : '')}${chip(`${fmtNum(t.pointsFor, 0)} pts`)}</div>` : '';
+    // This season's place, record and odds live on the 2026 tab's Season so
+    // far (and the one-row hero on the other tabs), not here (audit XI #6).
     // No manager name: the page title above is the manager.
     return `
       <div class="fhero${isMe(p.name) ? ' me' : ''}">
@@ -764,11 +781,29 @@
               <div class="fhero-sub">${esc(tenure)}${active ? '' : ' · Retired'}</div>
             </div>
           </div>
-          ${seasonChips}
           ${ranks ? `<div class="hero-pills scroll">${ranks}</div>` : ''}
           ${pastLogosHtml(p)}
         </div>
         <div class="fhero-stats">${side}</div>
+      </div>`;
+  }
+
+  // The hero in one row (audit XI #5): every tab but the first starts right
+  // under the title instead of 320px down. This season's place and record
+  // ride here, since no other tab says them.
+  // Whichever hero the tab on screen gets.
+  const heroHtml = p => (cur === tabsFor(p)[0] ? renderHero(p) : renderHeroMini(p));
+  function renderHeroMini(p) {
+    const r = p.career.record;
+    const w = (r.reg_w || 0) + (r.playoff_w || 0), l = (r.reg_l || 0) + (r.playoff_l || 0);
+    const active = isActivePlayer(p, CTX.currentYear);
+    const t = active && LIVE && LIVE.teams ? LIVE.teams.find(x => x.manager === p.name) : null;
+    const last = p.season_history.length ? p.season_history[p.season_history.length - 1].year : null;
+    const bits = [t ? `<b>${fmtOrdinal(t.standing)} · ${esc(t.record)}</b> this season` : active ? '' : `${p.founded_year}–${last}`, `${w}-${l} career`].filter(Boolean);
+    const name = p.current_team_name || p.name, logo = esc(p.current_team_logo || '');
+    return `<div class="fhero-mini${isMe(p.name) ? ' me' : ''}">
+        <span class="fm-logo"><img src="${logo}" alt="" onerror="onImgError(this)">${logoPh(name, '0.9rem')}</span>
+        <div class="fm-id"><div class="fm-name">${esc(name)}</div><div class="fm-sub">${bits.join(' · ')}</div></div>
       </div>`;
   }
 
@@ -1595,9 +1630,10 @@
     document.querySelector('h1.pf-title').dataset.fold = p.name; // the folding bar, not the picker's options
     document.body.classList.toggle('me-page', isMe(p.name));
     document.title = `Retirement League — ${p.name}`;
-    document.getElementById('hero-container').innerHTML = renderHero(p);
     const list = tabsFor(p);
     cur = list.includes(want) ? want : list[0];
+    // The full hero on the first tab only (audit XI #5).
+    document.getElementById('hero-container').innerHTML = heroHtml(p);
     const tabsEl = document.getElementById('tabs');
     tabsEl.innerHTML = list.map(id => { const l = TAB_DEFS[id].label; return `<button class="tab ${id === cur ? 'on' : ''}" data-tab="${id}">${typeof l === 'function' ? l() : l}</button>`; }).join('');
     const before = morph && !reduceMotion && cur === 'career' ? arcSnapshot() : null;
@@ -1610,6 +1646,18 @@
     setUrlParams({ m: p.name, tab: cur === list[0] ? null : cur });
     if (window.rlHeaderPlace) rlHeaderPlace();
   }
+  // The tab row pins under the title (audit XI #5): the nav bar's height to
+  // sit under it on a desktop, and .stuck while pinned, as Standings' band.
+  function watchBand() {
+    const el = document.getElementById('pf-band');
+    if (!el) return;
+    const bar = document.querySelector('.nav-bar');
+    if (bar) document.documentElement.style.setProperty('--nav-h', bar.offsetHeight + 'px');
+    const top = parseFloat(getComputedStyle(el).top) || 0;
+    el.classList.toggle('stuck', window.scrollY > 0 && el.getBoundingClientRect().top <= top + 1);
+  }
+  addEventListener('scroll', () => requestAnimationFrame(watchBand), { passive: true });
+  addEventListener('resize', () => requestAnimationFrame(watchBand));
   // Your monogram on your own profile: its Settings tab (nav.js youTap).
   addEventListener('rl-you-tap', () => {
     if (!shown || !isMe(shown)) return;
@@ -1622,8 +1670,16 @@
   document.addEventListener('click', e => {
     const t = e.target.closest('.tab[data-tab]');
     if (t) {
+      const band = document.getElementById('pf-band');
+      const pinned = band.classList.contains('stuck');
       want = t.dataset.tab;
       show(document.getElementById('franchise-select').value);
+      // Pinned: the new tab starts right under the tab row (audit XI #5).
+      if (pinned) {
+        const top = parseFloat(getComputedStyle(band).top) || 0;
+        window.scrollTo({ top: document.getElementById('tab-content').getBoundingClientRect().top + window.scrollY - top - band.offsetHeight, behavior: 'instant' });
+        watchBand();
+      }
       return;
     }
     const sr = e.target.closest('.season[data-sched]');
@@ -1683,7 +1739,7 @@
     Object.values(by).forEach(list => list.sort((a, b) => b.year - a.year));
     SHIRTYS = by;
     const p = data && data.players.find(x => x.name === document.getElementById('franchise-select').value);
-    if (p && SHIRTYS[p.name]) document.getElementById('hero-container').innerHTML = renderHero(p);
+    if (p && SHIRTYS[p.name]) document.getElementById('hero-container').innerHTML = heroHtml(p);
   }).catch(() => {});
 
   fetch('data/draft-value.json', { cache: 'no-cache' }).then(r => r.json()).then(d => { DRAFTV = d.years || {}; })
@@ -1712,7 +1768,7 @@
       show(sel.value, true);
     });
     // This season's chips in the hero, once the Worker answers.
-    liveP().then(d => { if (d && shown) document.getElementById('hero-container').innerHTML = renderHero(data.players.find(x => x.name === shown)); });
+    liveP().then(d => { if (d && shown) document.getElementById('hero-container').innerHTML = heroHtml(data.players.find(x => x.name === shown)); });
   }).catch(err => {
     console.error(err);
     document.getElementById('hero-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading franchise data.</div>';

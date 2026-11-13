@@ -24,10 +24,10 @@
 <!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
-<link rel="stylesheet" href="theme.css?v=8289f9ac">
-<link rel="stylesheet" href="nav.css?v=0c5d8859">
+<link rel="stylesheet" href="theme.css?v=8dc1bc5c">
+<link rel="stylesheet" href="nav.css?v=515b2cfd">
 <link rel="stylesheet" href="league.css?v=97fa7167">
-<link rel="stylesheet" href="features.css?v=4896c982">
+<link rel="stylesheet" href="features.css?v=fd5e3df4">
 <style>
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
@@ -263,11 +263,11 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=b6928293"></script>
+<script src="nav.js?v=90921fec"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
 <script src="league-common.js?v=bc5ee91a"></script>
-<script src="race-sim.js?v=f60c97fb"></script>
-<script src="race-ui.js?v=43d4c514"></script>
+<script src="race-sim.js?v=3786b0d6"></script>
+<script src="race-ui.js?v=40fba1d1"></script>
 <script src="rivals.js?v=940fc493"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -366,7 +366,9 @@
     return { weeks, by };
   }
 
-  let bumpPick = null;
+  // undefined: nobody chosen yet, so your own line (audit XI #11); null: none.
+  let bumpPick;
+  const bumpOn = () => (bumpPick === undefined ? (getMe() || null) : bumpPick);
   function bumpChart(year) {
     if (ranksByWeek(year).weeks.length < 2) return '';
     return `<div class="glass bump-card"><div class="panel-title">Rank by Week</div>
@@ -389,10 +391,11 @@
     weeks.forEach((wk, i) => { svg += `<text class="ax" x="${x(i)}" y="${H - 4}" text-anchor="middle">${wk}</text>`; });
     // Projected: this week as one more, dashed, point.
     if (bumpExt) svg += `<text class="ax" x="${x(cols - 1)}" y="${H - 4}" text-anchor="middle" style="fill:var(--gold)">${weeks[weeks.length - 1] + 1}</text>`;
-    const on = name => name === bumpPick ? ' on' : '';
+    const pick = by.has(bumpOn()) ? bumpOn() : null;
+    const on = name => name === pick ? ' on' : '';
     // The picked line last, so it draws over the rest.
-    [...names].sort((a, b) => (a === bumpPick) - (b === bumpPick)).forEach(name => {
-      const rk = by.get(name).slice(), m = esc(name), picked = name === bumpPick;
+    [...names].sort((a, b) => (a === pick) - (b === pick)).forEach(name => {
+      const rk = by.get(name).slice(), m = esc(name), picked = name === pick;
       if (bumpExt) rk.push(bumpExt.get(name) ?? null);
       const all = rk.map((r, i) => r == null ? null : `${x(i).toFixed(1)},${y(r)}`).filter(Boolean);
       const pts = (bumpExt ? all.slice(0, -1) : all).join(' ');
@@ -404,7 +407,7 @@
       const lastR = rk[rk.length - 1];
       if (lastR != null) svg += `<text class="nm${on(name)}" data-m="${m}" x="${W - right + 10}" y="${y(lastR) + 4}">${m}</text>`;
     });
-    el.classList.toggle('picked', !!bumpPick);
+    el.classList.toggle('picked', !!pick);
     el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Each manager's rank after every week">${svg}</svg>`;
   }
   addEventListener('resize', () => { clearTimeout(drawBump.t); drawBump.t = setTimeout(drawBump, 120); });
@@ -892,7 +895,7 @@
     const t = e.target.closest('[data-t]');
     if (t) { tab = t.dataset.t; forcedReg = false; render(); return; }
     const b = e.target.closest('#bump [data-m]');
-    if (b) { bumpPick = bumpPick === b.dataset.m ? null : b.dataset.m; drawBump(); }
+    if (b) { bumpPick = bumpOn() === b.dataset.m ? null : b.dataset.m; drawBump(); }
   });
 
   LG.load().then(data => {

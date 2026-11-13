@@ -46,18 +46,21 @@ const RaceUI = (() => {
     const pk = sched.find(s => s.w === wkSel);
     const swing = TEAMS.map(t => ({ t, d: (BASELINE[t].ifWin ?? 0) - (BASELINE[t].ifLoss ?? 0) })).filter(x => BASELINE[x.t].ifWin != null && BASELINE[x.t].ifLoss != null).sort((a, b) => b.d - a.d).slice(0, 3);
     const rec = t => `${base[t].w}-${base[t].l}`;
-    // Your path (audit IV #12): the records your season ends on most often, and how often each one makes it.
+    // Your path (audit IV #12): the record it takes, the same three finishes
+    // your profile shows (audit X #5, XI #12): centred on the first one
+    // that's better than even, one either side, with what you need from here.
     const meT = TEAMS.find(t => isMe(t));
     let pathCard = '';
     if (meT && res[meT].fw) {
-      const total = INP.reg * 2, fw = res[meT].fw;
-      const share = k => fw[k][0] / RUNS;
-      const common = Object.keys(fw).map(Number).sort((a, b) => share(b) - share(a)).slice(0, 6).sort((a, b) => b - a);
-      pathCard = `<div class="glass ft-sec"><div class="panel-title">Your path <span class="ft-chip">${rec(meT)} now</span></div>
-        <div class="ft-note">Your playoff odds for each record you could finish with, and how often the season ends there.</div>
-        <div class="ft-body"><div class="ft-tiles rc-path">${common.map(k => {
-          const p = fw[k][1] * 100 / fw[k][0], tone = p >= 90 ? ' good' : p <= 10 ? ' bad' : '';
-          return `<div class="ft-tile${tone}"><div class="ft-tl">${k}-${total - k}</div><div class="ft-tv">${pct(p)}</div><div class="ft-ts">${Math.max(1, Math.round(share(k) * 100))}% of seasons</div></div>`;
+      const total = INP.reg * 2, fw = res[meT].fw, have = base[meT].w, had = base[meT].l;
+      const ks = Object.keys(fw).map(Number).filter(k => fw[k][0] >= RUNS * 0.005).sort((a, b) => a - b);
+      const k50 = ks.find(k => fw[k][1] / fw[k][0] >= 0.5);
+      const pick = k50 == null ? [] : [k50 - 1, k50, k50 + 1].filter(k => fw[k]);
+      if (pick.length) pathCard = `<div class="glass ft-sec"><div class="panel-title">Your path <span class="ft-chip">${rec(meT)} now</span></div>
+        <div class="ft-note">The record it takes: your playoff odds at each finish, and what you need from here.</div>
+        <div class="ft-body"><div class="ft-tiles rc-path" style="--n:${pick.length}">${pick.map(k => {
+          const p = fw[k][1] * 100 / fw[k][0], tone = p >= 90 ? ' good' : p <= 10 ? ' bad' : k === k50 ? ' lead' : '';
+          return `<div class="ft-tile${tone}"><div class="ft-tl">At ${k}-${total - k}</div><div class="ft-tv">${pct(p)}</div><div class="ft-ts">${k - have}-${total - k - had} from here</div></div>`;
         }).join('')}</div></div></div>`;
     }
     // You, pinned on top: your odds with every pick so far, and the change from today.
@@ -138,23 +141,31 @@ const RaceUI = (() => {
     let hiI = 0, loI = 0, sw = 1;
     v.forEach((p, i) => { if (p > v[hiI]) hiI = i; if (p < v[loI]) loI = i; if (i && Math.abs(p - v[i - 1]) > Math.abs(v[sw] - v[sw - 1])) sw = i; });
     const wk = i => (i ? `Week ${i}` : 'the draft');
-    return `<div class="glass ft-sec rc-hist"><div class="panel-title">Playoff odds, week by week</div>
-      <div class="ft-body"><div class="rc-hp">${TEAMS.map(t => `<button type="button" data-hist="${esc(t)}" class="${t === sel ? 'on' : ''}${isMe(t) ? ' you' : ''}" aria-pressed="${t === sel}">${esc(t)}</button>`).join('')}</div>
-      <div class="rc-hc"><svg viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${esc(sel)}'s playoff odds after each week: ${v.map(p => pct(p)).join(', ')}">
+    // One picker in the title and tappable lines instead of twelve name
+    // chips (audit XI #11); the line ends sit too close for name labels.
+    return `<div class="glass ft-sec rc-hist"><div class="panel-title">Playoff odds, week by week <select class="lg-select rc-hsel" data-hist-sel aria-label="Whose odds">${TEAMS.map(t => `<option value="${esc(t)}"${t === sel ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
+      <div class="ft-body"><div class="rc-hc"><svg viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${esc(sel)}'s playoff odds after each week: ${v.map(p => pct(p)).join(', ')}">
         ${[0, 25, 50, 75, 100].map(g => `<line x1="${Lp}" x2="${W - Rp}" y1="${y(g)}" y2="${y(g)}" class="${g === 50 ? 'mid' : 'gl'}"/><text x="${Lp - 6}" y="${y(g) + 3.5}" text-anchor="end">${g}%</text>`).join('')}
         ${v.map((_, i) => `<text x="${x(i)}" y="${Ht - 6}" text-anchor="middle">${i ? i : 'Draft'}</text>`).join('')}
         ${TEAMS.filter(t => t !== sel && H[t]).map(t => `<polyline class="o" points="${line(t)}"/>`).join('')}
+        ${TEAMS.filter(t => t !== sel && H[t]).map(t => `<polyline class="hit" data-hist="${esc(t)}" points="${line(t)}"><title>${esc(t)}</title></polyline>`).join('')}
         <polyline class="a${isMe(sel) ? ' you' : ''}" points="${line(sel)}"/>
         ${v.map((p, i) => `<circle class="d${isMe(sel) ? ' you' : ''}" cx="${x(i)}" cy="${y(p)}" r="${i === n - 1 ? 5 : 3.5}"><title>${esc(sel)} after ${wk(i)}: ${pct(p)}</title></circle>`).join('')}
         <text x="${x(n - 1) + 9}" y="${y(v[n - 1]) + 4}" class="end">${pct(v[n - 1])}</text>
       </svg></div>
-      <div class="ft-note" style="padding:0 2px"><b>${esc(sel)}</b>: high ${pct(v[hiI])} after ${wk(hiI)}, low ${pct(v[loI])} after ${wk(loI)}. Biggest swing: Week ${sw}, ${pct(v[sw - 1])} to ${pct(v[sw])}. Tap a dot for its week.</div></div></div>`;
+      <div class="ft-note" style="padding:0 2px"><b>${esc(sel)}</b>: high ${pct(v[hiI])} after ${wk(hiI)}, low ${pct(v[loI])} after ${wk(loI)}. Biggest swing: Week ${sw}, ${pct(v[sw - 1])} to ${pct(v[sw])}. Tap a dot for its week, or a grey line to follow that team.</div></div></div>`;
   }
 
   // Redraws, then puts focus back on the control that was tapped.
   const again = sel => { render(); const el = sel && EL && EL.querySelector(sel); if (el) el.focus({ preventScroll: true }); };
+  document.addEventListener('change', e => {
+    const s = e.target.closest && e.target.closest('[data-hist-sel]');
+    if (!s || !EL || !EL.contains(s)) return;
+    histPick = s.value; again('[data-hist-sel]');
+  });
   document.addEventListener('click', e => {
     if (!EL || !EL.contains(e.target)) return;
+    if (e.target.closest('[data-hist-sel]')) return;
     const b = e.target.closest('[data-k]');
     if (b) { if (b.dataset.v) picks[b.dataset.k] = b.dataset.v; else delete picks[b.dataset.k]; again(`[data-k="${CSS.escape(b.dataset.k)}"]${picks[b.dataset.k] ? '.on' : ''}`); return; }
     const hp = e.target.closest('[data-hist]');

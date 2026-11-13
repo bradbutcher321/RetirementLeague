@@ -363,6 +363,20 @@ html.folded{ --fold-shown: 50px; }
 .hub-ic svg{ width: 17px; height: 17px; }
 .hub-tile b{ font-size: 0.92rem; font-weight: 700; }
 .hub-tile > span:last-child{ color: var(--text-dim); font-size: var(--fs-detail); line-height: 1.35; }
+/* A group's odd last tile takes the whole row on a phone, icon beside the
+   words (audit XI #14), so no group leaves a half-empty row. */
+@media (max-width: 720px){
+  .hub-g > .hub-tile:last-child:nth-child(odd){ grid-column: 1 / -1; min-height: 0; display: grid; grid-template-columns: auto minmax(0,1fr); column-gap: 12px; align-items: center; }
+  .hub-g > .hub-tile:last-child:nth-child(odd) .hub-ic{ grid-row: 1 / 3; margin-bottom: 0; }
+}
+/* The bell's sheet (audit XI #3): a title instead of the You tabs, and one
+   row to your profile's Settings tab under the alerts. */
+.you-alerts-h{ font-weight: 700; font-size: 1.05rem; }
+.you-go{ display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 14px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--item); color: var(--text); text-decoration: none; text-align: left; font: inherit; cursor: pointer; }
+.you-go span{ flex: 1; min-width: 0; }
+.you-go b{ display: block; font-weight: 700; }
+.you-go small{ display: block; color: var(--text-dim); font-size: var(--fs-detail); margin-top: 2px; }
+.you-go i{ font-style: normal; color: var(--text-dim); font-size: 1.2rem; }
 
 /* The ⌘K card: centred near the top of the screen. */
 .search-sheet{ left: 0; right: 0; bottom: auto; top: 12vh; margin: 0 auto; width: min(560px, calc(100vw - 32px)); max-height: 70vh; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); animation: panel-fade .18s ease-out; }

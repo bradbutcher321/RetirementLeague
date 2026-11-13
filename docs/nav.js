@@ -255,7 +255,8 @@
     b.type = 'button';
     b.className = 'hdr-bell';
     b.hidden = true;
-    b.addEventListener('click', () => { markInboxRead(); openYou('push'); });
+    // Just the alerts (audit XI #3): your settings live on your profile.
+    b.addEventListener('click', () => { markInboxRead(); openYou('alerts'); });
     const draw = async () => {
       if (!getMe()) { b.hidden = true; return; }
       const alerts = await recentAlerts();
@@ -837,21 +838,29 @@
 
   window.openYou = async function openYou(panel) {
     if (document.getElementById('you-sheet')) return;
+    // The bell's sheet (audit XI #3): the Recent list and the switches, no
+    // You or Settings tabs, and one row to your profile's Settings tab.
+    const alertsOnly = panel === 'alerts';
+    if (alertsOnly) panel = 'push';
     const here = panel === 'push' && document.getElementById('yu-alerts') || inlineYou[panel || 'you'];
     // Only while it's on the page: a profile tab switched away from leaves it behind.
     if (here && document.body.contains(here)) { here.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     lastFocus = document.activeElement;
     youPanel = YOU_PANELS.some(([k]) => k === panel) ? panel : 'you';
     document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="you-scrim"></div>
-      <div class="sheet you-sheet" id="you-sheet" role="dialog" aria-modal="true" aria-label="You" tabindex="-1">
+      <div class="sheet you-sheet" id="you-sheet" role="dialog" aria-modal="true" aria-label="${alertsOnly ? 'Alerts' : 'You'}" tabindex="-1">
         <div class="sheet-grab" data-grab><span></span><button type="button" class="you-done">Done</button></div>
         <div class="sheet-head you-head" data-grab>
-          <div class="sup-seg you-tabs" role="tablist" aria-label="You">${YOU_PANELS.map(([k, label]) =>
-            `<button type="button" role="tab" data-you-panel="${k}" id="you-tab-${k}" aria-controls="you-body">${label}</button>`).join('')}</div>
+          ${alertsOnly ? '<div class="you-alerts-h">Alerts</div>' : `<div class="sup-seg you-tabs" role="tablist" aria-label="You">${YOU_PANELS.map(([k, label]) =>
+            `<button type="button" role="tab" data-you-panel="${k}" id="you-tab-${k}" aria-controls="you-body">${label}</button>`).join('')}</div>`}
           <button class="x" type="button" aria-label="Close">✕</button>
         </div>
-        <div class="sheet-body"><div id="you-body" role="tabpanel"><div class="you-note">Loading…</div></div></div>
+        <div class="sheet-body"><div id="you-body" role="tabpanel"><div class="you-note">Loading…</div></div>${alertsOnly ? (getMe()
+          ? `<a class="you-go" href="franchise.html?m=${encodeURIComponent(getMe())}&amp;tab=settings"><span><b>Settings</b><small>Your color, matchup on top, account. On your profile.</small></span><i aria-hidden="true">›</i></a>`
+          : '<button type="button" class="you-go" data-you-full><span><b>Settings</b><small>Pick your team, your color, account.</small></span><i aria-hidden="true">›</i></button>') : ''}</div>
       </div>`);
+    const full = document.querySelector('#you-sheet [data-you-full]');
+    if (full) full.addEventListener('click', () => { closeYou(); openYou('settings'); });
     const sheet = document.getElementById('you-sheet');
     document.getElementById('you-scrim').addEventListener('click', closeYou);
     // Done on the phone's sheet, ✕ on the desktop card (nav.css shows one).

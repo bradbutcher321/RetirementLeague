@@ -24,8 +24,8 @@
 <!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
-<link rel="stylesheet" href="theme.css?v=8289f9ac">
-<link rel="stylesheet" href="nav.css?v=0c5d8859">
+<link rel="stylesheet" href="theme.css?v=8dc1bc5c">
+<link rel="stylesheet" href="nav.css?v=515b2cfd">
 <style>
   /* Four tabs and the Year on one row (redesign 2026-10-22): Parlays (the
      parlay itself), Leaders (every manager ranking, one card a stat),
@@ -154,6 +154,14 @@
      worked out here from the Worker's `weeks`, so the Year scope applies
      to all of it. Legs use the shared leg card from theme.css. */
   .mgr-row{ margin: -2px 0 14px; }
+  /* The manager's name is the hero's title and picks another (audit XI #13),
+     the profile's title picker: an invisible select laid over it. */
+  .pm-name{ position: relative; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+  .pm-name > span:first-child{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pm-name svg{ width: 20px; height: 20px; color: var(--text-dim); flex: none; margin-top: 4px; }
+  .pm-title-pick{ position: absolute; inset: 0; }
+  .pm-title-pick select.parlay-select{ position: absolute; inset: 0; width: 100%; height: 100%; min-width: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; font-size: 16px; appearance: none; -webkit-appearance: none; }
+  .pm-name:focus-within{ outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 6px; }
   .mgr-view{ display: grid; gap: 14px; }
   .mgr-view > .tabs{ margin: 0; justify-self: start; max-width: 100%; }
   .pm-avatar{ position: relative; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid var(--gold); }
@@ -271,7 +279,7 @@
     <footer id="site-footer" data-source="Graded from ESPN box scores"></footer>
   </div>
 
-<script src="nav.js?v=b6928293"></script>
+<script src="nav.js?v=90921fec"></script>
 <script src="page-common.js?v=ff41b6f1"></script>
 <script src="parlay-common.js?v=7439641b"></script>
 <script>
@@ -588,13 +596,14 @@
     return out.sort((a, b) => a.bad - b.bad);
   }
 
-  // The shared .fhero, as on Franchise: team logo and name (the dropdown
-  // above already names the manager), the rank pills, then the stat strip.
+  // The shared .fhero, as on Franchise: the manager's name as the title,
+  // which picks another (audit XI #13: the dropdown row is gone), the team
+  // under it, the rank pills, then the stat strip.
   function mgrHero(s, all) {
     const team = (MGR.teams || {})[s.name] || {};
     const years = [...new Set(s.legs.map(x => x.year))];
     const span = years.length > 1 ? `${years[0]}–${years[years.length - 1]}` : String(years[0] || '');
-    const sub = [plural(s.legs.length, 'leg'), span].filter(Boolean).join(' · ');
+    const sub = [team.team, plural(s.legs.length, 'leg'), span].filter(Boolean).join(' · ');
     const ranks = mgrRanks(all, s).map(b => `<span class="rank-badge${b.bad ? ' bad' : ''}">${esc(b.label)}</span>`).join('');
     const logo = team.logo ? `<img src="${esc(team.logo)}" alt="" onerror="this.remove()">` : '';
     const side = [
@@ -611,7 +620,7 @@
           <div class="fhero-id">
             <span class="pm-avatar">${logo}<span class="pm-ph" style="background:${hashColor(s.name)}">${esc(monogram(s.name))}</span></span>
             <div style="min-width:0">
-              <div class="fhero-name">${esc(team.team || s.name)}</div>
+              <div class="fhero-name pm-name"><span>${esc(s.name)}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><span class="pm-title-pick" id="pm-title-pick"></span></div>
               <div class="fhero-sub">${esc(sub)}</div>
             </div>
           </div>
@@ -848,12 +857,17 @@
         if (!s) return;
         const managers = !!TABS[activeCategory].managers;
         closeList();
-        mgrRow.hidden = !managers;
+        // The picker lives in the hero's title (audit XI #13): home first, so
+        // redrawing the hero doesn't take it with it.
+        mgrRow.appendChild(mgrSelect);
+        mgrRow.hidden = true;
         statsContainer.className = managers ? 'stats-cards mgr-view' : 'stats-cards';
         if (managers) {
           loadTeams();
           const view = renderManager(data, activeScope, mgrSelect.value);
           statsContainer.innerHTML = view.html;
+          const pick = document.getElementById('pm-title-pick');
+          if (pick) pick.appendChild(mgrSelect);
           drawMgrChart(view.s);
           keepSelectedInView(document.getElementById('mgr-tabs'));
         } else {

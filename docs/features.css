@@ -223,11 +223,11 @@ svg.elo{ width:100%; height:auto; display:block; }
 .rc-ml em{ font-style:normal; font-family:var(--scoreboard); font-weight:700; color:var(--gold); white-space:nowrap; }
 .rc-mh, .rc-mr{ grid-template-columns:minmax(0,1fr) 56px 64px !important; }
 .rc-ev{ font-family:var(--scoreboard); font-weight:700; color:var(--gold); font-size:1.05rem; text-align:right; }
-.rc-hp{ display:flex; flex-wrap:wrap; gap:6px; }
-.rc-hp button{ height:36px; padding:0 12px; border-radius:999px; border:1px solid var(--track-line); background:rgba(255,255,255,0.04); color:var(--text-dim); font:600 var(--fs-small) var(--body); cursor:pointer; }
-.rc-hp button.on{ color:var(--gold); border-color:var(--gold); background:var(--lead-tint); }
-.rc-hp button.you{ color:var(--me-ring, #7AAEDB); }
-.rc-hp button.you.on{ border-color:var(--me-ring, #7AAEDB); background:color-mix(in srgb, var(--me-ring, #7AAEDB) 10%, transparent); }
+/* Whose line (audit XI #11): one dropdown in the title, and every grey line
+   takes a tap through a wide invisible stroke. */
+.rc-hist .panel-title{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.rc-hsel{ min-width:0; }
+.rc-hc .hit{ fill:none; stroke:transparent; stroke-width:14; pointer-events:stroke; cursor:pointer; }
 .rc-hc svg{ display:block; width:100%; max-width:640px; height:auto; }
 .rc-hc text{ fill:var(--text-dim); font:600 11px var(--body); }
 .rc-hc text.end{ fill:var(--text); font-weight:700; font-size:13px; }
