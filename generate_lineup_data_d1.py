@@ -15,6 +15,12 @@ stat_line and player_id are for the Dashboard's past-season view (its
 roster cells and game logs); generate_old_lineup_data.py's 2017-2018 files
 stop at projected, since there are no stats or ids for those years.
 
+Only finished weeks: a week is written once league.json has its games
+(the Game Tracker gets them after the week ends). The week being played
+changes every few hours as lineups and projections move, and writing it
+made the scheduled refresh commit all week (site audit X #31); the Live
+page has the current week from the Worker.
+
 Also writes docs/data/lineups/records.json, Game Records' player and
 projection records (audit II #9), from every year file on disk -- 2017 and
 2018 included, which generate_old_lineup_data.py wrote -- and league.json
@@ -237,10 +243,15 @@ def main():
                 team_to_manager[(t["year"], t["team_id"])] = manager
     years = sorted(y for y in {t["year"] for t in teams} if y >= hl.BOX_SCORE_MIN_YEAR)
 
+    # Finished weeks: the ones league.json (written just before this) has games for.
+    with open(LEAGUE_PATH, encoding="utf-8") as f:
+        done = {(g[0], g[1]) for g in json.load(f)["games"]}
+
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     bad = 0
     for year in years:
         payload = build_year(year, team_to_manager)
+        payload["weeks"] = {w: v for w, v in payload["weeks"].items() if (year, int(w)) in done}
         if not payload["weeks"]:
             continue
         if do_check:
