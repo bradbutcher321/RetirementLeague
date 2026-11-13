@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
+from json_out import write_if_changed  # only when the data changed (audit X #31)
 import sheets_lib as sheets  # sheet-only pieces: games, money, auth
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data", "league.json")
@@ -207,16 +208,12 @@ def main():
         # wins from the same year this script does.
         "median_era_start_year": MEDIAN_ERA_START_YEAR,
     }
-    if os.path.exists(OUTPUT_PATH):
-        with open(OUTPUT_PATH, encoding="utf-8") as f:
-            old = json.load(f)
-        strip = lambda d: {k: v for k, v in d.items() if k != "generated_at"}
-        if strip(old) == strip(payload):
-            print("No changes; not rewriting.")
-            return
     payload["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(payload, f, separators=(",", ":"))
+    # Only when the data changed (json_out.py, audit X #31): the old check
+    # here compared int draft-order keys with the file's string ones, so it
+    # never matched and every run committed a new timestamp.
+    if not write_if_changed(OUTPUT_PATH, payload, separators=(",", ":")):
+        return
     print(f"Wrote {OUTPUT_PATH}: {len(payload['games'])} games, {len(payload['seasons'])} season rows")
 
 

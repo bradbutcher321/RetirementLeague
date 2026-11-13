@@ -27,6 +27,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
+from json_out import write_if_changed  # only when the data changed (audit X #31)
 from sheets_lib import authorize, SHEET_ID
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data", "rule-changes.json")
@@ -360,9 +361,8 @@ def main():
         "current": current,
         "changes": changes,
     }
-    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2)
+    if not write_if_changed(OUTPUT_PATH, output, indent=2):
+        return
     print(f"Wrote {len(snapshots)} snapshots ({snapshot_years}), {len(changes)} change years, current ({current_year}) to {OUTPUT_PATH}")
 
 

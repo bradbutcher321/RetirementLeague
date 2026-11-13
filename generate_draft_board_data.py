@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
+from json_out import write_if_changed  # only when the data changed (audit X #31)
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs", "data")
 OUTPUT_PATH = os.path.join(DATA_DIR, "draft-board.json")
@@ -234,8 +235,8 @@ def write_draft_value():
         if v:
             values[year] = v
             print(f"  {year} value: through week {v['through_week']}, best {v['best']['player']} ({v['best']['manager']})")
-    with open(VALUE_PATH, "w", encoding="utf-8") as f:
-        json.dump({"generated_at": league.get("generated_at"), "years": values}, f, separators=(",", ":"))
+    if not write_if_changed(VALUE_PATH, {"generated_at": league.get("generated_at"), "years": values}, separators=(",", ":")):
+        return
     print(f"Wrote draft value for {len(values)} years to {VALUE_PATH}")
 
 
@@ -275,9 +276,8 @@ def main():
         "boards": boards,
     }
 
-    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2)
+    if not write_if_changed(OUTPUT_PATH, output, indent=2):
+        return
     print(f"Wrote {len(boards)} draft boards to {OUTPUT_PATH}")
 
 

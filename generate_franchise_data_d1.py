@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
+from json_out import write_if_changed  # only when the data changed (audit X #31)
 from logo_mirror import mirror_player_logos
 from sheets_lib import authorize, load_games, load_money, SHEET_ID, longest_and_current_streak
 
@@ -740,9 +741,8 @@ def main():
         "players": players_out,
     }
 
-    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(output, f, indent=2)
+    if not write_if_changed(OUTPUT_PATH, output, indent=2):
+        return
     print(f"Wrote {len(players_out)} franchises to {OUTPUT_PATH}")
 
 

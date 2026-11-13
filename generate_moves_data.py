@@ -38,6 +38,7 @@ import requests
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"))
 import history_lib as hl
+from json_out import write_if_changed  # only when the data changed (audit X #31)
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(ROOT, "docs", "data")
@@ -397,34 +398,14 @@ def build():
 # Writing
 # --------------------------------------------------------------------------
 
-def write_if_changed(path, obj):
-    """Writes obj as compact JSON unless the file already holds the same
-    content (ignoring generated_at), so a quiet run commits nothing."""
-    text = json.dumps(obj, separators=(",", ":"), ensure_ascii=False)
-    if os.path.exists(path):
-        try:
-            old = json.load(open(path, encoding="utf-8"))
-            new = json.loads(text)
-            if isinstance(old, dict) and isinstance(new, dict) and "generated_at" in old and "generated_at" in new:
-                old.pop("generated_at")
-                new.pop("generated_at")
-            if old == new:
-                return False
-        except ValueError:
-            pass
-    with open(path, "w", encoding="utf-8", newline="\n") as f:
-        f.write(text)
-    return True
-
-
 def main():
     moves, index, card = build()
     os.makedirs(PLAYERS_DIR, exist_ok=True)
-    changed = write_if_changed(os.path.join(DATA, "moves.json"), moves)
-    changed |= write_if_changed(os.path.join(DATA, "players-index.json"), index)
+    changed = write_if_changed(os.path.join(DATA, "moves.json"), moves, separators=(",", ":"), ensure_ascii=False)
+    changed |= write_if_changed(os.path.join(DATA, "players-index.json"), index, separators=(",", ":"), ensure_ascii=False)
     n = 0
     for pid, c in card.items():
-        n += write_if_changed(os.path.join(PLAYERS_DIR, f"{pid}.json"), c)
+        n += write_if_changed(os.path.join(PLAYERS_DIR, f"{pid}.json"), c, separators=(",", ":"), ensure_ascii=False)
     keep = {f"{pid}.json" for pid in card}
     for f in os.listdir(PLAYERS_DIR):
         if f.endswith(".json") and f not in keep:
