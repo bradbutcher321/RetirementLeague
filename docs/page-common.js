@@ -68,9 +68,33 @@ function monogram(name) {
 // your row and open on you; picking again fires 'rl-me' so an open page can
 // redraw. Empty when nobody's been picked (or "Not in the league").
 const ME_KEY = 'rl-me';
+// View as (audit X #21): a commissioner can see the site as another
+// manager sees it, in this tab only (sessionStorage), read-only in spirit:
+// anything saved still saves as you. A gold strip says whose view it is.
+const VIEW_AS_KEY = 'rl-view-as';
+function viewingAs() {
+  try { const v = sessionStorage.getItem(VIEW_AS_KEY); return v && isCommissioner(getAuth()) ? v : ''; } catch (e) { return ''; }
+}
 function getMe() {
+  const v = viewingAs();
+  if (v) return v;
   try { return localStorage.getItem(ME_KEY) || ''; } catch (e) { return ''; }
 }
+// Deferred: getAuth() below isn't defined yet while this file is still running.
+setTimeout(function viewAsStrip() {
+  const v = viewingAs();
+  if (!v) return;
+  const put = () => {
+    if (document.getElementById('viewas')) return;
+    document.body.insertAdjacentHTML('afterbegin', `<div class="viewas" id="viewas" role="status">Viewing as <b>${esc(v)}</b><button type="button" id="viewas-stop">Stop</button></div>`);
+    document.documentElement.classList.add('has-viewas');
+    document.getElementById('viewas-stop').addEventListener('click', () => {
+      try { sessionStorage.removeItem(VIEW_AS_KEY); } catch (e) {}
+      location.href = 'commissioner.html#viewas';
+    });
+  };
+  if (document.body) put(); else document.addEventListener('DOMContentLoaded', put);
+}, 0);
 function setMe(name) {
   try { if (name) localStorage.setItem(ME_KEY, name); else localStorage.removeItem(ME_KEY); } catch (e) {}
   window.dispatchEvent(new CustomEvent('rl-me', { detail: name || '' }));

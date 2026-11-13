@@ -1237,3 +1237,9 @@ footer{ color: var(--text-dim); font-size: var(--fs-small); text-align: center; 
 .wkr-r i.live{ border-color: var(--loss-line); }
 .wkr-r i.live::before{ content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--loss); animation: pulse 1.6s ease-in-out infinite; }
 .wkr-cap{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: var(--fs-label); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 2px 4px 8px; }
+
+/* View as a manager (audit X #21): a commissioner seeing someone else's site. */
+.viewas{ position: fixed; z-index: 120; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 16px 6px; background: var(--gold); color: var(--ctl-on-ink); font: 600 var(--fs-small) var(--body); }
+.viewas button{ height: 28px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(0,0,0,0.35); background: transparent; color: inherit; font: 700 var(--fs-detail) var(--body); cursor: pointer; }
+.has-viewas body{ padding-top: 40px; }

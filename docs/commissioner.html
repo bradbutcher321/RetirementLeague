@@ -27,7 +27,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="theme.css?v=41">
 <link rel="stylesheet" href="nav.css?v=34">
 <style>
   /* ---------- Commissioner: a hub of tools ----------
@@ -49,6 +49,12 @@
   .cm-rows{ display: grid; gap: 6px; }
   .cm-cols{ display: grid; gap: 6px; }
   .cm-split{ display: grid; gap: 14px; }
+  .cm-off{ opacity: 0.55; }
+  .cm-colrow{ padding: 10px 12px; }
+  .cm-pick{ width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+  .cm-tag{ flex: none; font-size: var(--fs-label); font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); white-space: nowrap; }
+  .cm-tag.warn{ color: var(--gold); border-color: var(--lead-line); background: var(--lead-tint); }
+  .cm-tag.ok{ color: var(--turf); border-color: var(--win-line); }
   .cm-groups{ display: grid; gap: 14px; }
   @media (min-width: 721px){
     .cm-cols{ grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -336,7 +342,8 @@
   </div>
 
 <script src="nav.js?v=46"></script>
-<script src="page-common.js?v=42"></script>
+<script src="page-common.js?v=44"></script>
+<script src="lore-eggs.js?v=1"></script>
 <script>
 (function () {
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
@@ -486,6 +493,12 @@
     season:   { label: 'Season', icon: I.cal },
     feedback: { label: 'Feedback', icon: I.chat },
     site:     { label: 'Site & Data', icon: I.shield },
+    // Audit X #18-#24
+    lore:     { label: 'League Lore', icon: I.key },
+    column:   { label: 'The Column', icon: I.table },
+    polls:    { label: 'League Vote', icon: I.check },
+    viewas:   { label: 'View as a manager', icon: I.phone },
+    payouts:  { label: 'Payouts', icon: I.globe },
   };
   const ALIAS = { signins: 'managers', members: 'managers', push: 'messages', announce: 'messages', health: 'site', refresh: 'site', audit: 'site' };
   const failing = () => ((health || (ov && ov.health)) ? (health || ov.health).checks : []).filter(c => !c.ok);
@@ -509,8 +522,13 @@
       case 'messages': return { t: ov.announcement ? 'A banner is showing on Live' : 'Push, Live banner or group text' };
       case 'activity': return { t: ov.visits ? `${plural(ov.visits.visitors, 'visitor', 'visitors')} today` : 'Who comes, and what they read' };
       case 'videos': return { t: ov.playlists.length ? `${ov.playlists[ov.playlists.length - 1]} · ${plural(ov.playlists.length, 'season', 'seasons')}` : 'No playlists yet' };
-      case 'season': return { t: ov.draft ? `Draft ${draftText(ov.draft.at)}` : 'No draft date set' };
+      case 'season': { const todo = seasonChecks().filter(c => c.s === 'todo').length; return { t: todo ? `${plural(todo, 'thing', 'things')} to do before next season` : ov.draft ? `Draft ${draftText(ov.draft.at)}` : 'No draft date set', warn: todo > 0 }; }
       case 'feedback': return { t: ov.feedbackNew ? `${ov.feedbackNew} new` : 'Nothing new', warn: !!ov.feedbackNew };
+      case 'lore': return { t: 'Easter eggs, and a line to pin on Live' };
+      case 'column': return { t: 'Fix a headline, pull one down, say it’s up' };
+      case 'polls': return { t: 'Ask the league a question' };
+      case 'viewas': return { t: 'See the site the way someone else does' };
+      case 'payouts': return { t: 'Who is owed what at the end of the season' };
       case 'site': {
         const f = failing(), h = health || ov.health;
         if (!h) return { t: 'Not checked yet', dot: 'dim' };
@@ -959,12 +977,15 @@
       <label class="cm-field"><span>Title</span><input class="cm-in" id="pu-title" data-keep maxlength="60" value="${esc(drafts['pu-title'] || '')}" autocomplete="off"></label>
       <label class="cm-field"><span>Message</span><textarea class="cm-in" id="pu-body" data-keep maxlength="180" style="min-height:70px">${esc(drafts['pu-body'] || '')}</textarea></label>
       <label class="cm-field"><span>To</span><select class="cm-in" id="pu-to" data-keep><option value="all"${to === 'all' ? ' selected' : ''}>Everyone (${plural(on.length, 'person', 'people')})</option>${on.map(n => `<option value="${esc(n)}"${to === n ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-      ${confirmPush ? `<div class="cm-line item is-lead" style="margin-top:14px"><div class="cm-main"><div class="cm-name">Send to ${to === 'all' ? plural(people_, 'person', 'people') : esc(to)}?</div><div class="cm-sub">It goes out right away and can't be taken back.</div></div><div class="cm-btns"><button type="button" class="cm-btn dim" data-act="push-no">Cancel</button><button type="button" class="cm-btn solid" data-act="push-yes"${busy ? ' disabled' : ''}>Send</button></div></div>`
+      <label class="cm-field"><span>When</span><input class="cm-in" id="pu-at" data-keep type="datetime-local" value="${esc(drafts['pu-at'] || '')}" aria-describedby="pu-at-note"></label>
+      <p class="cm-fine" id="pu-at-note" style="margin-top:6px">Leave it empty to send now. A later time goes out on the Worker's next check, within the hour (Tuesday daytime waits until 7 PM).</p>
+      ${confirmPush ? `<div class="cm-line item is-lead" style="margin-top:14px"><div class="cm-main"><div class="cm-name">${drafts['pu-at'] ? 'Schedule it' : 'Send'} to ${to === 'all' ? plural(people_, 'person', 'people') : esc(to)}?</div><div class="cm-sub">${drafts['pu-at'] ? 'You can cancel it below until it goes.' : "It goes out right away and can't be taken back."}</div></div><div class="cm-btns"><button type="button" class="cm-btn dim" data-act="push-no">Cancel</button><button type="button" class="cm-btn solid" data-act="push-yes"${busy ? ' disabled' : ''}>Send</button></div></div>`
         : `<div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="push-ask"${busy ? ' disabled' : ''}>Send</button></div>`}`;
     const off = names.filter(n => !byMe[n.toLowerCase()]);
     const who = `<p class="cm-fine" style="margin-top:0"><b>${on.length} of ${names.length}</b> have notifications on${on.length ? `: ${esc(list(on))}` : ''}.</p>${off.length ? `<p class="cm-fine">The other ${off.length} get nothing. <button type="button" class="cm-txt gold" data-act="mtab" data-tab="text" data-tpl="1" style="padding:0;min-height:0">Text them how to turn it on ›</button></p>` : ''}`;
+    const later = (screenData.later || []).length ? `<div class="cm-rows">${screenData.later.map(x => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(x.title)}</div><div class="cm-sub">${esc(new Date(x.at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))} · ${esc(Array.isArray(x.to) ? list(x.to) : x.to || 'everyone')}</div></div><button type="button" class="cm-btn dim" data-act="push-cancel" data-id="${esc(x.id)}"${busy ? ' disabled' : ''}>Cancel</button></div>`).join('')}</div>` : '';
     const recent = d.recent.length ? `<div class="cm-rows">${d.recent.map(r => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(r.text)}</div><div class="cm-sub">${esc(r.who)} · ${esc(when(r.ts))}</div></div></div>`).join('')}</div>` : '<div class="cm-empty">Nothing sent from here yet.</div>';
-    return `<div class="cm-split">${panel('Send', send, '', 'Goes to the Home Screen app, whatever notifications each person has turned on.')}<div>${panel('Who gets it', who)}${panel('Sent lately', recent)}</div></div>`;
+    return `<div class="cm-split">${panel('Send', send, '', 'Goes to the Home Screen app, whatever notifications each person has turned on.')}<div>${later ? panel('Scheduled', later) : ''}${panel('Who gets it', who)}${panel('Sent lately', recent)}</div></div>`;
   }
   function textTab() {
     const tpl = GT_TPL();
@@ -1049,7 +1070,7 @@
   function viewSeason() {
     const d = ov.draft;
     const val = drafts['se-draft'] !== undefined ? drafts['se-draft'] : (d ? d.at : '');
-    return { title: 'Season Setup', html: panel('Draft', `
+    return { title: 'Season Setup', html: checklistHtml() + panel('Draft', `
       <label class="cm-field"><span>Date and time (Eastern)</span><input class="cm-in" id="se-draft" data-keep type="datetime-local" value="${esc(val)}"></label>
       <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="draft-save"${busy ? ' disabled' : ''}>Save</button>${d ? '<button type="button" class="cm-btn dim" data-act="draft-clear"' + (busy ? ' disabled' : '') + '>Clear</button>' : ''}</div>`, d ? `<span class="cm-count">${esc(draftText(d.at))}</span>` : '', 'Shows on the Live page until it passes.') };
   }
@@ -1178,7 +1199,134 @@
   }
 
   // ---------- Drawing ----------
-  const VIEWS = { hub: viewHub, parlay: viewParlay, tables: viewTables, managers: viewManagers, messages: viewMessages, activity: viewActivity, videos: viewVideos, season: viewSeason, feedback: viewFeedback, site: viewSite };
+  // ---------- League Lore desk (audit X #18) ----------
+  // The easter eggs Live rolls 1 time in 10, saved on the Worker so a new
+  // one needs no code change, and one line to pin to Live for a few days.
+  const stripTags = h => String(h).replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/&ldquo;|&rdquo;/g, '"').replace(/&mdash;/g, '—').replace(/&amp;/g, '&');
+  const loreNow = () => { const L = screenData.lore; return { eggs: L && L.eggs ? L.eggs : LORE_EGGS.map(t => ({ t, on: true })), pin: L ? L.pin : null }; };
+  function viewLore() {
+    if (screenData.lore === undefined) return { title: 'League Lore', html: panel('Easter eggs', loading) };
+    const { eggs, pin } = loreNow();
+    const on = eggs.filter(e => e.on).length;
+    const rows = eggs.map((e, i) => `<div class="cm-line item${e.on ? '' : ' cm-off'}"><div class="cm-main"><div class="cm-name" style="font-weight:500">${esc(stripTags(e.t))}</div>${pin && pin.t === e.t ? `<div class="cm-sub" style="color:var(--gold)">Pinned on Live${pin.until ? ' through ' + esc(pin.until) : ''}</div>` : ''}</div>
+      <div class="cm-btns"><button type="button" class="cm-btn${pin && pin.t === e.t ? ' solid' : ''}" data-act="lore-pin" data-i="${i}"${busy ? ' disabled' : ''}>${pin && pin.t === e.t ? 'Unpin' : 'Pin'}</button><button type="button" class="cm-btn dim" data-act="lore-on" data-i="${i}"${busy ? ' disabled' : ''}>${e.on ? 'Off' : 'On'}</button></div></div>`).join('');
+    const add = `<label class="cm-field"><span>New easter egg</span><textarea class="cm-in" id="lo-new" data-keep maxlength="300" placeholder="Something only the league gets">${esc(drafts['lo-new'] || '')}</textarea></label>
+      <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="lore-add"${busy ? ' disabled' : ''}>Add</button><button type="button" class="cm-btn dim" data-act="lore-pin-new"${busy ? ' disabled' : ''}>Add and pin it</button></div>`;
+    return { title: 'League Lore', right: `<span class="cm-count">${on} on</span>`, html: `<div class="cm-split">${panel('Easter eggs', `<div class="cm-rows">${rows}</div>`, '', 'Live shows one of these instead of a fact 1 time in 10. A pinned one shows every time until the day it ends.')}${panel('Add one', add)}</div>` };
+  }
+  async function loreSave(eggs, pin, msg) {
+    await act('lore', async () => {
+      await call('lore_set', { eggs, pin });
+      screenData.lore = { eggs, pin };
+      toast(msg);
+    });
+  }
+
+  // ---------- The Column desk (audit X #19) ----------
+  // A wrong headline or dek is fixed here (the Worker keeps the fix; the
+  // column itself isn't touched), a column can be pulled down, and "it's up"
+  // goes to everyone's phone.
+  let colOpen = '', colArmed = '';
+  function viewColumn() {
+    const d = screenData.column;
+    if (!d) return { title: 'The Column', html: panel('Columns', loading) };
+    const fix = d.fix || { hidden: [], edits: {} }, hidden = new Set(fix.hidden || []);
+    const rows = d.columns.slice(0, 12).map(c => {
+      const e = (fix.edits || {})[c.id] || {}, hl = e.headline || c.headline, open = colOpen === c.id;
+      const sub = `Week ${c.week} ${c.kind === 'preview' ? 'preview' : 'recap'} · ${new Date(c.published_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}${hidden.has(c.id) ? ' · pulled down' : e.headline || e.dek ? ' · fixed' : ''}`;
+      return `<div class="item cm-colrow${hidden.has(c.id) ? ' cm-off' : ''}"><div class="cm-line" style="padding:0;min-height:0"><div class="cm-main"><div class="cm-name">${esc(hl)}</div><div class="cm-sub">${esc(sub)}</div></div>
+        <button type="button" class="cm-btn dim" data-act="col-open" data-id="${esc(c.id)}">${open ? 'Close' : 'Fix'}</button></div>
+        ${open ? `<label class="cm-field"><span>Headline</span><input class="cm-in" id="co-hl" data-keep maxlength="300" value="${esc(drafts['co-hl'] ?? hl)}"></label>
+          <label class="cm-field"><span>Dek</span><textarea class="cm-in" id="co-dek" data-keep maxlength="300">${esc(drafts['co-dek'] ?? (e.dek || c.dek))}</textarea></label>
+          <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="col-save" data-id="${esc(c.id)}"${busy ? ' disabled' : ''}>Save fix</button>
+          ${e.headline || e.dek ? `<button type="button" class="cm-btn dim" data-act="col-undo" data-id="${esc(c.id)}"${busy ? ' disabled' : ''}>Undo fix</button>` : ''}
+          <button type="button" class="cm-btn ${hidden.has(c.id) ? '' : 'danger'}" data-act="col-hide" data-id="${esc(c.id)}" data-h="${hidden.has(c.id) ? '0' : '1'}"${busy ? ' disabled' : ''}>${hidden.has(c.id) ? 'Put it back up' : 'Pull it down'}</button>
+          <button type="button" class="cm-btn" data-act="col-push" data-id="${esc(c.id)}"${busy ? ' disabled' : ''}>${colArmed === c.id ? 'Tap again to send' : 'Send “it’s up”'}</button></div>` : ''}</div>`;
+    }).join('');
+    return { title: 'The Column', html: panel('Columns', `<div class="cm-rows">${rows}</div>`, '', 'Written by the Tuesday and Thursday routines. A fix here changes what the site shows; a new column replaces nothing.') };
+  }
+
+  // ---------- League vote (audit X #20) ----------
+  function viewPolls() {
+    const d = screenData.polls;
+    if (!d) return { title: 'League Vote', html: panel('This vote', loading) };
+    const p = d.poll;
+    const cur = p ? (() => {
+      const waiting = names.filter(n => !p.voters.includes(n));
+      return `<div class="item cm-box"><b>${esc(p.q)}</b></div>
+        <div class="cm-rows" style="margin-top:8px">${p.options.map((o, i) => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(o)}</div></div><span class="cm-val">${p.counts[i]}</span></div>`).join('')}</div>
+        <p class="cm-fine">${p.closed ? 'Closed.' : waiting.length ? `Waiting on ${esc(list(waiting))}.` : 'Everyone has voted.'}${p.closes && !p.closed ? ` Closes ${esc(when(Date.parse(p.closes)))}.` : ''}</p>
+        ${p.closed ? '' : `<div class="cm-wrap"><button type="button" class="cm-btn danger" data-act="poll-close"${busy ? ' disabled' : ''}>Close it</button>${waiting.length ? '<button type="button" class="cm-btn" data-act="poll-nudge">Remind the rest</button>' : ''}</div>`}`;
+    })() : '<div class="cm-empty">No vote open.</div>';
+    const form = `<label class="cm-field"><span>Question</span><input class="cm-in" id="po-q" data-keep maxlength="160" placeholder="Add a third FLEX for 2027?" value="${esc(drafts['po-q'] || '')}"></label>
+      <label class="cm-field"><span>Choices, one a line</span><textarea class="cm-in" id="po-opts" data-keep placeholder="Yes&#10;No">${esc(drafts['po-opts'] || '')}</textarea></label>
+      <label class="cm-field"><span>Closes (optional)</span><input class="cm-in" id="po-closes" data-keep type="datetime-local" value="${esc(drafts['po-closes'] || '')}"></label>
+      <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="poll-open"${busy ? ' disabled' : ''}>Open the vote</button></div>
+      <p class="cm-fine">It shows on Live for everyone; signed-in managers tap to vote. Opening a new one closes the last.</p>`;
+    const past = (d.past || []).length ? `<div class="cm-rows">${d.past.map(x => { const top = Math.max(...x.counts); return `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(x.q)}</div><div class="cm-sub">${esc(x.options.map((o, i) => `${o} ${x.counts[i]}`).join(' · '))}${top ? '' : ' · no votes'}</div></div></div>`; }).join('')}</div>` : '';
+    return { title: 'League Vote', html: `<div class="cm-split"><div>${panel(p && !p.closed ? 'Open now' : 'Last vote', cur)}${past ? panel('Before', past) : ''}</div>${panel('New vote', form)}</div>` };
+  }
+
+  // ---------- View as a manager (audit X #21) ----------
+  function viewViewAs() {
+    const rows = names.map(n => `<button type="button" class="cm-line item cm-pick" data-act="viewas" data-who="${esc(n)}"><div class="cm-main"><div class="cm-name">${esc(n)}</div></div><span class="cm-chev">${I.chev}</span></button>`).join('');
+    return { title: 'View as a manager', html: panel('Pick a manager', `<div class="cm-rows">${rows}</div>`, '', 'Opens Live as they see it: their matchup first, their rival tags, their profile, in this tab only. A gold strip across the top says whose view it is and stops it. Anything you save still saves as you.') };
+  }
+
+  // ---------- Payouts (audit X #24) ----------
+  function payoutRows() {
+    const d = screenData.payouts;
+    if (!d || !d.league || !d.rules) return null;
+    const pay = (d.rules.current && d.rules.current.payouts) || [], year = d.rules.current && d.rules.current.year;
+    const amt = re => { const x = pay.find(p => re.test(p.label)); return x ? x.amount : 0; };
+    const G = d.league.games.filter(g => g[0] === year);
+    const champ = G.find(g => g[2] === 'Champ' && g[7] && g[7] !== 'In Progress');
+    const third = G.find(g => g[2] === '3rd' && g[7] && g[7] !== 'In Progress');
+    const done = !!champ;
+    // Highs count every game a team played (consolation included); the season prize is regular-season points.
+    let hi = null;
+    G.forEach(g => [[g[3], g[5], g[1]], [g[4], g[6], g[1]]].forEach(([m, s, w]) => { if (m && s > 0 && (!hi || s > hi.s)) hi = { m, s, w }; }));
+    const pf = {};
+    G.filter(g => g[2] === 'Reg').forEach(g => { if (g[3]) pf[g[3]] = (pf[g[3]] || 0) + g[5]; if (g[4]) pf[g[4]] = (pf[g[4]] || 0) + g[6]; });
+    const pfTop = Object.keys(pf).sort((a, b) => pf[b] - pf[a])[0];
+    const loser = g => (g[7] === g[3] ? g[4] : g[3]);
+    return { done, year, rows: [
+      ['1st place', amt(/^1st/), champ ? champ[7] : null],
+      ['2nd place', amt(/^2nd/), champ ? loser(champ) : null],
+      ['3rd place', amt(/^3rd/), third ? third[7] : null],
+      ['High week', amt(/week/i), hi ? `${hi.m} (${hi.s.toFixed(2)}, Week ${hi.w})` : null],
+      ['Season points', amt(/season/i), pfTop ? `${pfTop} (${pf[pfTop].toFixed(2)})` : null],
+    ].filter(r => r[1]) };
+  }
+  function viewPayouts() {
+    const P = payoutRows();
+    if (!P) return { title: 'Payouts', html: panel('Who is owed what', loading) };
+    const rows = P.rows.map(([l, a, who]) => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(l)}</div><div class="cm-sub">${who ? esc(who) : 'Not decided yet'}</div></div><span class="cm-val">$${a.toLocaleString('en-US')}</span></div>`).join('');
+    return { title: 'Payouts', right: `<span class="cm-count">${P.done ? 'Final' : 'So far'}</span>`, html: panel(`${P.year} payouts`, `<div class="cm-rows">${rows}</div>
+      <div class="cm-wrap"><button type="button" class="cm-btn solid" data-act="pay-copy">${copied === 'pay' ? 'Copied' : 'Copy for the group text'}</button></div>`, '', P.done ? 'The season is over: this is who gets paid.' : 'As it stands. The places fill in once the playoffs are played.') };
+  }
+
+  // ---------- New season checklist (audit X #22) ----------
+  function seasonChecks() {
+    if (!ov) return [];
+    const now = new Date(), season = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1, next = season + 1;
+    const out = [];
+    out.push(ov.espnYear >= next ? { s: 'ok', t: 'ESPN season year', d: `Set to ${ov.espnYear}.` }
+      : { s: now.getMonth() >= 5 && now.getMonth() <= 8 ? 'todo' : 'later', t: 'ESPN season year', d: `Set to ${ov.espnYear || '?'} in the Worker (wrangler.toml ESPN_YEAR). The draft board and Live need ${next} before the ${next} draft.` });
+    out.push(ov.draft ? { s: 'ok', t: 'Draft date', d: draftText(ov.draft.at) + '. Live counts down to it.' } : { s: now.getMonth() >= 5 && now.getMonth() <= 7 ? 'todo' : 'later', t: 'Draft date', d: 'Not set. Live shows a countdown once it is.' });
+    out.push({ s: 'later', t: 'The Column schedule', d: 'Its routines run on UTC: after a clock change the Tuesday and Thursday columns land an hour off. Move them at claude.ai/code/routines.' });
+    out.push((ov.playlists || []).includes(season) ? { s: 'ok', t: 'Recap video playlist', d: `${season} saved.` } : { s: 'later', t: 'Recap video playlist', d: `No ${season} playlist yet. Add it under Recap Videos once the first video is up.` });
+    out.push(ov.santaYear > season ? { s: 'ok', t: 'Secret Santa dates', d: `Set for ${ov.santaYear}.` } : { s: 'later', t: 'Secret Santa dates', d: `Open, close and reveal are fixed to ${ov.santaYear || season} in the Worker (santa.js) and Live (index.html). Move them before next November.` });
+    out.push({ s: 'ok', t: 'Weekly Sacko cap', d: '3 a season, from 2025. Carries over.' });
+    return out;
+  }
+  function checklistHtml() {
+    const C = seasonChecks();
+    const tag = { todo: ['To do', 'warn'], later: ['Later', ''], ok: ['Fine', 'ok'] };
+    return panel('New season checklist', `<div class="cm-rows">${C.map(c => `<div class="cm-line item"><div class="cm-main"><div class="cm-name">${esc(c.t)}</div><div class="cm-sub" style="white-space:normal">${esc(c.d)}</div></div><span class="cm-tag ${tag[c.s][1]}">${tag[c.s][0]}</span></div>`).join('')}</div>`, '', 'Every yearly setting in one list.');
+  }
+
+  const VIEWS = { lore: viewLore, column: viewColumn, polls: viewPolls, viewas: viewViewAs, payouts: viewPayouts, hub: viewHub, parlay: viewParlay, tables: viewTables, managers: viewManagers, messages: viewMessages, activity: viewActivity, videos: viewVideos, season: viewSeason, feedback: viewFeedback, site: viewSite };
   const route = () => { let r = location.hash.slice(1); if (ALIAS[r]) { if (r === 'push') msgTab = 'push'; else if (r === 'announce') msgTab = 'banner'; r = ALIAS[r]; } return VIEWS[r] ? r : 'hub'; };
 
   function draw() {
@@ -1240,8 +1388,8 @@
       else if (r === 'tables') { if (!screenData.tables) screenData.tables = await fetch(WORKER_URL + '/parlay-stats', { cache: 'no-store' }).then(x => x.json()); }
       else if (r === 'messages') {
         draw();
-        const [push, log] = await Promise.all([call('push_info'), call('log'), loadOverview()]);
-        screenData.push = push; screenData.log = log.entries;
+        const [push, log, later] = await Promise.all([call('push_info'), call('log'), call('push_scheduled').catch(() => ({ items: [] })), loadOverview()]);
+        screenData.push = push; screenData.log = log.entries; screenData.later = later.items;
       }
       else if (r === 'activity') screenData.activity = await call('activity');
       else if (r === 'feedback') screenData.feedback = (await call('feedback_list')).items;
@@ -1262,6 +1410,18 @@
       else if (r === 'hub') { await loadOverview(); draw(); hubExtras(); if (!health || Date.now() - health.at > 10 * 60 * 1000) refreshHealth(); }
       else if (r === 'parlay') await Promise.all([loadOverview(), loadBoard(), loadStats()]);
       else if (r === 'season') await loadOverview();
+      else if (r === 'lore') { draw(); screenData.lore = (await call('lore_get')).lore || null; }
+      else if (r === 'column') {
+        draw();
+        const [cols, fx] = await Promise.all([fetch('data/column.json', { cache: 'no-cache' }).then(x => x.json()), call('column_get')]);
+        screenData.column = { columns: (cols.columns || []).slice().sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at)), fix: fx.fix };
+      }
+      else if (r === 'polls') { draw(); screenData.polls = await call('poll_get'); }
+      else if (r === 'payouts') {
+        draw();
+        const [league, rules] = await Promise.all([fetch('data/league.json', { cache: 'no-cache' }).then(x => x.json()), fetch('data/rule-changes.json', { cache: 'no-cache' }).then(x => x.json())]);
+        screenData.payouts = { league, rules };
+      }
     } catch (err) {
       if (lostAccess(err)) return;
       toast(err.message || "Couldn't load that. Try again.");
@@ -1500,19 +1660,78 @@
       $('pu-title').focus();
     }
     else if (a === 'push-ask') {
-      drafts['pu-title'] = $('pu-title').value; drafts['pu-body'] = $('pu-body').value; drafts['pu-to'] = $('pu-to').value;
+      drafts['pu-title'] = $('pu-title').value; drafts['pu-body'] = $('pu-body').value; drafts['pu-to'] = $('pu-to').value; drafts['pu-at'] = $('pu-at').value;
+      if (drafts['pu-at'] && !(new Date(drafts['pu-at']) > new Date(Date.now() + 60000))) { toast('Pick a time at least a minute from now.'); $('pu-at').focus(); return; }
       if (!drafts['pu-title'].trim()) { $('pu-title').focus(); return; }
       confirmPush = true; draw();
     }
     else if (a === 'push-no') { confirmPush = false; draw(); }
     else if (a === 'push-yes') {
       await act('push', async () => {
+        if (drafts['pu-at']) {
+          await call('push_later', { title: drafts['pu-title'], body: drafts['pu-body'], to: drafts['pu-to'] || 'all', at: new Date(drafts['pu-at']).toISOString() });
+          confirmPush = false;
+          const t = new Date(drafts['pu-at']).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+          delete drafts['pu-title']; delete drafts['pu-body']; delete drafts['pu-at'];
+          screenData.later = (await call('push_scheduled')).items;
+          toast(`Scheduled for ${t}`);
+          return;
+        }
         const out = await call('push_send', { title: drafts['pu-title'], body: drafts['pu-body'], to: drafts['pu-to'] || 'all' });
         confirmPush = false;
         delete drafts['pu-title']; delete drafts['pu-body'];
         screenData.push = await call('push_info');
         toast(`Sent to ${plural(out.sent, 'device', 'devices')}`);
       });
+    }
+    else if (a === 'push-cancel') await act('push', async () => { await call('push_cancel', { id: d.id }); screenData.later = (await call('push_scheduled')).items; toast('Cancelled'); });
+    else if (a === 'lore-on') { const L = loreNow(), eggs = L.eggs.map((e, i) => (i === Number(d.i) ? { t: e.t, on: !e.on } : e)); await loreSave(eggs, L.pin, eggs[Number(d.i)].on ? 'On' : 'Off'); }
+    else if (a === 'lore-pin') {
+      const L = loreNow(), e = L.eggs[Number(d.i)];
+      const pinned = L.pin && L.pin.t === e.t;
+      await loreSave(L.eggs, pinned ? null : { t: e.t, until: nextDow(1) }, pinned ? 'Unpinned' : `Pinned through ${nextDow(1)}`);
+    }
+    else if (a === 'lore-add' || a === 'lore-pin-new') {
+      const t = ($('lo-new').value || '').trim();
+      if (!t) { $('lo-new').focus(); return; }
+      const L = loreNow(), egg = { t: esc(t), on: true };
+      await loreSave([egg, ...L.eggs], a === 'lore-pin-new' ? { t: egg.t, until: nextDow(1) } : L.pin, a === 'lore-pin-new' ? `Added and pinned through ${nextDow(1)}` : 'Added');
+      delete drafts['lo-new'];
+    }
+    else if (a === 'col-open') { colOpen = colOpen === d.id ? '' : d.id; delete drafts['co-hl']; delete drafts['co-dek']; colArmed = ''; draw(); }
+    else if (a === 'col-save' || a === 'col-undo') {
+      const body = a === 'col-undo' ? { id: d.id, headline: '', dek: '' } : { id: d.id, headline: $('co-hl').value.trim(), dek: $('co-dek').value.trim() };
+      const c = screenData.column.columns.find(x => x.id === d.id);
+      if (a === 'col-save') { if (body.headline === c.headline) body.headline = ''; if (body.dek === c.dek) body.dek = ''; }
+      await act('col', async () => { screenData.column.fix = (await call('column_set', body)).fix; delete drafts['co-hl']; delete drafts['co-dek']; toast(a === 'col-undo' ? 'Back to what was written' : 'Fixed on the site'); });
+    }
+    else if (a === 'col-hide') await act('col', async () => { screenData.column.fix = (await call('column_set', { id: d.id, hidden: d.h === '1' })).fix; toast(d.h === '1' ? 'Pulled down' : 'Back up'); });
+    else if (a === 'col-push') {
+      if (colArmed !== d.id) { colArmed = d.id; draw(); setTimeout(() => { if (colArmed === d.id) { colArmed = ''; draw(); } }, 4000); return; }
+      colArmed = '';
+      const c = screenData.column.columns.find(x => x.id === d.id), e = ((screenData.column.fix || {}).edits || {})[d.id] || {};
+      await act('col', async () => {
+        const out = await call('push_send', { title: c.kind === 'preview' ? `Week ${c.week} preview is up` : `The Column: Week ${c.week} is up`, body: e.headline || c.headline, to: 'all', url: `column.html?id=${encodeURIComponent(c.id)}` });
+        toast(`Sent to ${plural(out.sent, 'device', 'devices')}`);
+      });
+    }
+    else if (a === 'poll-open') {
+      const q = $('po-q').value.trim(), options = $('po-opts').value.split('\n').map(x => x.trim()).filter(Boolean), closes = $('po-closes').value;
+      if (!q) { $('po-q').focus(); return; }
+      if (options.length < 2) { toast('Two choices at least, one a line.'); $('po-opts').focus(); return; }
+      await act('poll', async () => { await call('poll_create', { q, options, closes: closes ? new Date(closes).toISOString() : '' }); ['po-q', 'po-opts', 'po-closes'].forEach(k => { delete drafts[k]; }); screenData.polls = await call('poll_get'); toast('The vote is on Live'); });
+    }
+    else if (a === 'poll-close') await act('poll', async () => { await call('poll_close'); screenData.polls = await call('poll_get'); toast('Closed'); });
+    else if (a === 'poll-nudge') {
+      const p = screenData.polls.poll, waiting = names.filter(n => !p.voters.includes(n));
+      msgTab = 'push'; setDraft('pu-title', 'League vote'); setDraft('pu-body', `${p.q} Tap to vote on Live.`); location.hash = '#messages';
+      toast(`Waiting on ${list(waiting)}`);
+    }
+    else if (a === 'viewas') { try { sessionStorage.setItem('rl-view-as', d.who); } catch (err) {} location.href = 'index.html'; }
+    else if (a === 'pay-copy') {
+      const P = payoutRows();
+      const text = `${P.year} payouts${P.done ? '' : ' (so far)'}:\n` + P.rows.map(([l, amt, who]) => `${l} $${amt}: ${who || 'TBD'}`).join('\n');
+      copyText(text, () => { copied = 'pay'; draw(); setTimeout(() => { if (copied === 'pay') { copied = ''; draw(); } }, 1600); });
     }
     else if (a === 'video-pick') {
       videoSeason = Number(d.season); screenData.videoList = null; draw();

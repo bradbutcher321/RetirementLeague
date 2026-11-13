@@ -37,7 +37,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/bigshouldersdisplay/v24/fC1_PZJEZG-e9gHhdI4-NBbfd2ys3SjJCx1czNDu.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=39">
+<link rel="stylesheet" href="theme.css?v=41">
 <link rel="stylesheet" href="nav.css?v=34">
 <style>
   /* ---------- Matchup cards ----------
@@ -1455,6 +1455,16 @@
      then a bordered item box standing in for their featured-leg box --
      manager + score on one line, team + the week/qualifier on the next. No
      ambient wash; gold is spent in exactly one place, the score itself. */
+  /* League vote (audit X #20) */
+  .vote-q{ font-weight:650; font-size:0.98rem; line-height:1.35; }
+  .vote-opts{ display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:8px; margin-top:10px; }
+  .vote-opt{ min-height:44px; border-radius:999px; border:1px solid var(--lead-line); background:transparent; color:var(--gold); font:700 var(--fs-small) var(--body); cursor:pointer; }
+  .vote-opt:disabled{ opacity:0.5; }
+  button.vote-res{ width:100%; color:var(--text); cursor:pointer; font-family:var(--body); }
+  .vote-res{ display:flex; justify-content:space-between; align-items:center; gap:8px; min-height:44px; padding:0 14px; border-radius:12px; border:1px solid var(--item-line); background:var(--item); font-weight:600; font-size:var(--fs-small); }
+  .vote-res b{ font-family:var(--scoreboard); font-size:1.2rem; color:var(--gold); }
+  .vote-res.mine{ border-color:var(--me-ring, #7AAEDB); }
+  .vote-note{ color:var(--text-dim); font-size:var(--fs-detail); margin-top:10px; line-height:1.4; }
   .acc-prize{ margin-left:6px; padding:2px 8px; border-radius:999px; border:1px solid var(--lead-line); color:var(--gold); font:700 var(--fs-label) var(--body); vertical-align:2px; }
   .accolade-card{
     background: linear-gradient(165deg, var(--surface-raised), var(--surface));
@@ -1725,8 +1735,9 @@
   </div>
 
 <script src="nav.js?v=46"></script>
-<script src="page-common.js?v=42"></script>
+<script src="page-common.js?v=44"></script>
 <script src="race-sim.js?v=5"></script>
+<script src="lore-eggs.js?v=1"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
 <script src="rivals.js?v=4"></script>
@@ -4832,18 +4843,17 @@
   // Rolled separately at a flat 10% rather than being mixed into the same
   // pool as the real stats -- with 70+ real facts, an easter egg sitting
   // in that same pool would show up far less than 10% of the time.
-  const EASTER_EGG_FACTS = [
-    'Shit hurts k',
-    `&ldquo;Don't do it&rdquo;<span class="stat-moment-attrib">&mdash; Jon</span>`,
-    'Do my eyebrows look good',
-    'Whatever happened to that rent money anyway?',
-    `Flanders has <b>3*</b> championships.<span class="stat-moment-fine">*We all know one of them doesn't count</span>`,
-    'Brad and Claude are the real league MVPs',
-    "Don't forget to check out Flanders's franchise page. Might find something better than a Flanders's dog.",
-    "Joe K is the only member with a J in their name to win a ship. Poor Joe G, Jared, Jeff, Jon, TJ, and Ja'Kris.",
-    'Every member without a J in their name has managed to win a championship except Kris...',
-    "Joe G's 2026 Football Game Attendance:<br>USAF: <b>1</b><br>UCF: <b>0</b>",
-  ];
+  // The built-in list lives in lore-eggs.js; a commissioner's saved list
+  // from the Lore desk (audit X #18, GET /site-info) replaces it, and a
+  // pinned line shows every time until its day passes.
+  let EASTER_EGG_FACTS = LORE_EGGS.slice(), LORE_PIN = null;
+  function loreFromSite(lore) {
+    if (!lore) return;
+    if (Array.isArray(lore.eggs) && lore.eggs.length) EASTER_EGG_FACTS = lore.eggs;
+    LORE_PIN = lore.pin || null;
+    statRolledAt = 0;
+    renderStatOfMoment(false);
+  }
   const EASTER_EGG_CHANCE = 0.10;
   // Rolled separately from EASTER_EGG_FACTS, at its own flat 1%, same
   // reasoning -- this fills in a random manager dynamically (any current
@@ -4917,6 +4927,11 @@
     }
     if (!switched && poll && container.innerHTML.trim() && Date.now() - statRolledAt < STAT_REROLL_MS) return;
     statRolledAt = Date.now();
+    // A pinned line (the Lore desk) is the fact until its day passes.
+    if (LORE_PIN) {
+      container.innerHTML = `<div class="stat-moment"><div class="stat-moment-eyebrow">League Lore</div><div class="stat-moment-box egg"><div class="stat-moment-text">${LORE_PIN}</div></div></div>`;
+      return;
+    }
     const data = standingsData;
     let text, isEgg = false;
     const roll = Math.random();
@@ -7415,9 +7430,38 @@
       const when = target.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + ' at ' + target.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' ET';
       return card('Draft', n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : `In ${n} days`, when);
     }
-    fetch(WORKER_URL + '/site-info').then(r => r.ok ? r.json() : null).then(info => {
+    // A league vote (audit X #20): one tap to vote while signed in, then the count.
+    async function voteCard(id) {
+      const res = await fetch(WORKER_URL + '/polls', { cache: 'no-store', headers: authHeaders() }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+      const p = res && res.poll;
+      if (!p || p.id !== id) return '';
+      const total = p.counts.reduce((a, b) => a + b, 0);
+      const signed = !!getAuth();
+      const closes = p.closes ? new Date(p.closes).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+      // Open and signed in: every option is a button (tap another to change
+      // your vote); the counts show once you've voted, or after it closes.
+      const shown = p.mine != null || p.closed || !signed;
+      const opts = p.options.map((o, i) => signed && !p.closed
+        ? `<button type="button" class="${shown ? 'vote-res' : 'vote-opt'}${p.mine === i ? ' mine' : ''}" data-vote="${i}" data-poll="${esc(p.id)}" aria-pressed="${p.mine === i}"><span>${esc(o)}</span>${shown ? `<b>${p.counts[i]}</b>` : ''}</button>`
+        : `<div class="vote-res${p.mine === i ? ' mine' : ''}"><span>${esc(o)}</span><b>${p.counts[i]}</b></div>`).join('');
+      return `<div class="glass notice-card" id="vote-card"><div class="panel-title"><span>League vote</span><span class="notice-chip">${p.closed ? 'Closed' : closes ? 'Closes ' + esc(closes) : 'Open'}</span></div>
+        <div class="panel-body"><div class="vote-q">${esc(p.q)}</div><div class="vote-opts">${opts}</div>
+        <div class="vote-note">${total} vote${total === 1 ? '' : 's'}${p.voters.length ? ': ' + esc(p.voters.join(', ')) : ''}${!signed ? '. Sign in under You to vote.' : p.mine != null ? '. You can change yours.' : ''}</div></div></div>`;
+    }
+    document.addEventListener('click', async e => {
+      const b = e.target.closest('[data-vote]');
+      if (!b) return;
+      b.disabled = true;
+      const res = await fetch(WORKER_URL + '/polls/vote', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() }, body: JSON.stringify({ id: b.dataset.poll, choice: Number(b.dataset.vote) }) }).catch(() => null);
+      const card = document.getElementById('vote-card');
+      if (card) card.outerHTML = await voteCard(b.dataset.poll) || '';
+      if (!res || !res.ok) b.disabled = false;
+    });
+    fetch(WORKER_URL + '/site-info').then(r => r.ok ? r.json() : null).then(async info => {
       if (!info) return;
-      const html = (info.announcement ? card('Announcement', '', info.announcement.text) : '') + (info.draft ? draft(info.draft.at) : '');
+      if (info.lore && typeof loreFromSite === 'function') loreFromSite(info.lore);
+      const vote = info.poll ? await voteCard(info.poll.id) : '';
+      const html = (info.announcement ? card('Announcement', '', info.announcement.text) : '') + vote + (info.draft ? draft(info.draft.at) : '');
       if (!html) return;
       sec.innerHTML = `<div class="notice-stack">${html}</div>`;
       sec.hidden = false;

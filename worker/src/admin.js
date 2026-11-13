@@ -33,6 +33,7 @@ import { dispatchParlayRefresh } from "./parlayRefresh.js";
 import { cached } from "./cache.js";
 import { fetchPlaylist, hiddenVideos, playlistId, playlists } from "./videos.js";
 import { feedbackAdmin, feedbackNew } from "./feedback.js";
+import { leagueAdmin, siteExtras } from "./league.js";
 
 const REPO = "bradbutcher321/RetirementLeague";
 const WORKFLOWS = {
@@ -51,7 +52,8 @@ const text = (v, max) => String(v == null ? "" : v).trim().slice(0, max);
 export async function siteInfo(env) {
   const [ann, draft] = await Promise.all([getSetting(env, "announcement"), getSetting(env, "draft")]);
   const live = ann && ann.text && (!ann.until || ann.until >= etDay());
-  return { announcement: live ? { text: ann.text, until: ann.until || null } : null, draft: draft && draft.at ? { at: draft.at } : null };
+  const extra = await siteExtras(env).catch(() => ({}));
+  return { announcement: live ? { text: ann.text, until: ann.until || null } : null, draft: draft && draft.at ? { at: draft.at } : null, ...extra };
 }
 
 async function overview(env, body) {
@@ -91,6 +93,10 @@ async function overview(env, body) {
       playlists: Object.keys(lists).map(Number).sort((a, b) => a - b),
       hiddenVideos: hidden.size,
       feedbackNew: fbNew,
+      // The New season checklist (audit X #22) reads these.
+      espnYear: Number(env.ESPN_YEAR) || null,
+      santaYear: 2026,
+      pushLater: ((await getSetting(env, "push_later", [])) || []).length,
     },
   };
 }
@@ -147,7 +153,8 @@ async function pushSend(env, body, who) {
   const to = Array.isArray(body.to) ? body.to.slice(0, 20).map((n) => text(n, 40)).filter(Boolean)
     : body.to && body.to !== "all" ? text(body.to, 40) : null;
   if (Array.isArray(to) && !to.length) return fail(400, "no_recipients");
-  const out = await broadcast(env, { title, body: message }, to);
+  const url = text(body.url, 120).replace(/^\/+/, '');
+  const out = await broadcast(env, { title, body: message, url: url || undefined }, to);
   if (out.error) return fail(503, out.error);
   if (!out.devices) return fail(404, "no_devices");
   const whom = Array.isArray(to) ? to.join(", ") : to || "everyone";
@@ -266,6 +273,9 @@ async function adminRoute(request, env) {
   }
   if (a.startsWith("videos_")) return videos(env, body, who);
   if (a.startsWith("feedback_")) return feedbackAdmin(env, body, who);
+  // Audit X's tools (league.js): lore, column fixes, votes, send later.
+  const more = await leagueAdmin(env, body, who);
+  if (more) return more;
   return fail(400, "bad_action");
 }
 
