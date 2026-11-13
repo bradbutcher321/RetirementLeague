@@ -181,7 +181,7 @@ async function status(request, env) {
     open: now >= OPENS && now < CLOSES, opens: OPENS, closes: CLOSES, reveal: REVEAL, forceAt: FORCE_AT,
     signed, dates, mine: me && cards[me.manager] ? mineRow(cards[me.manager]) : null,
     drawn: draw ? draw.at : null, crew: chain.length ? [...chain].sort() : null,
-    start: start ? start.at : null, started, unmasked: set.unmasked,
+    start: start ? start.at : null, started, unmasked: set.unmasked, hosted: !!(set.host && set.unmasked),
     purchaseBy: set.purchaseBy, eventAt: set.eventAt, place: set.place || "", notes: set.notes || "", ship: !!set.ship,
     opened: people.results.filter((r) => r.opened).map((r) => r.manager),
     seen,
