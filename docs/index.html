@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=32">
+<link rel="stylesheet" href="nav.css?v=33">
 <style>
   /* ---------- Matchup cards ----------
      Phone first: one card per row, both teams side by side, nothing
@@ -107,6 +107,10 @@
   .psb-row .n .you{ color: var(--me-ring); }
   .psb-row .pj{ font-family: var(--scoreboard); font-weight: 700; font-size: 1.05rem; text-align: center; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .psb-row .pj.fav{ color: var(--text); }
+  .wsb .psb-row .pj{ display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+  .wsb .psb-row .pj.cur{ color: var(--text); }
+  .wsb .psb-row .pj small{ font: 600 0.6rem var(--body); color: var(--text-dim); white-space: nowrap; }
+  .wsb + .psb, .psb + .wsb{ margin-top: 12px; }
   .psb-row .mini{ display: flex; flex-direction: column; gap: 4px; }
   .psb-row .mini .mu-bar{ height: 4px; gap: 2px; }
   .psb-row .mini small{ display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.62rem; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -1719,9 +1723,9 @@
     <footer id="site-footer" data-note="Refreshes every 15 seconds"></footer>
   </div>
 
-<script src="nav.js?v=45"></script>
+<script src="nav.js?v=46"></script>
 <script src="page-common.js?v=42"></script>
-<script src="race-sim.js?v=3"></script>
+<script src="race-sim.js?v=4"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
 <script src="rivals.js?v=4"></script>
@@ -2025,7 +2029,10 @@
     if (!isFinal && awayScore !== homeScore && awayScore + homeScore > 0) {
       const awayBehind = awayScore < homeScore;
       const left = awayBehind ? awayInPlay + awayRemaining : homeInPlay + homeRemaining;
-      if (left > 0) {
+      const leaderLeft = awayBehind ? homeInPlay + homeRemaining : awayInPlay + awayRemaining;
+      // Early on it only restates the score (audit X #8): wait until the
+      // trailing team is down to four players, or the leader is done.
+      if (left > 0 && (left <= 4 || leaderLeft === 0)) {
         const mgr = awayBehind ? m.awayManager : m.homeManager;
         const gap = Math.abs(awayScore - homeScore) + 0.01;
         const proj = parseFloat(awayBehind ? m.awayProjected : m.homeProjected);
@@ -2097,6 +2104,13 @@
     if (!medianStatusKnown || (parseFloat(m.awayScore) || 0) + (parseFloat(m.homeScore) || 0) > 0) return false;
     const ps = [...(m.awayPlayers || []), ...(m.homePlayers || [])];
     return ps.length > 0 && ps.every(p => !p.game || p.game.state === 'pre');
+  }
+  // Started but nobody on the field right now (audit X #7): a Thursday
+  // player made it a full card of zeros until Sunday. It stays one line
+  // until one of its games is on again; a tap opens it.
+  function matchupWaiting(m) {
+    if (matchupPregame(m) || matchupDecided(m)) return false;
+    return (parseInt(m.awayInPlay, 10) || 0) + (parseInt(m.homeInPlay, 10) || 0) === 0;
   }
   const ET_PARTS = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' });
   function etKick(iso) {
@@ -2225,6 +2239,28 @@
         </button>${open ? `<div class="sb-open">${renderMatchupCard(m)}</div>` : ''}`;
     }).join('')}<div class="psb-ft" data-root-all${rootAllHtml(rootNow, list) ? '' : ' hidden'}>${rootAllHtml(rootNow, list)}</div></div>`;
   }
+  // The started-but-waiting matchups (matchupWaiting): the score so far, or
+  // the projection in grey for a side with nobody played yet, and the odds.
+  function waitBoardHtml(list) {
+    if (!list.length) return '';
+    return `<div class="sb psb wsb glass">${list.map(m => {
+      const key = matchupKey(m);
+      const open = sbOpen.has(key);
+      const as = parseFloat(m.awayScore) || 0, hs = parseFloat(m.homeScore) || 0;
+      const ap = parseFloat(m.awayProjected) || 0, hp = parseFloat(m.homeProjected) || 0;
+      const awp = typeof m.awayWinProbability === 'number' ? m.awayWinProbability : typeof m.homeWinProbability === 'number' ? 100 - m.homeWinProbability : 50;
+      const wa = Math.max(1, Math.min(99, Math.round(awp))), wb = 100 - wa, fa = wa >= 50;
+      const nm = mgr => `<span class="${isMe(mgr) ? 'you' : ''}">${esc(mgr)}</span>`;
+      const side = (s, p) => s > 0 ? `<span class="pj cur">${fmtScore(s)}<small>proj ${fmtScore(p)}</small></span>` : `<span class="pj">${fmtScore(p)}<small>proj</small></span>`;
+      return `<button type="button" class="sb-row psb-row" data-sb="${encodeURIComponent(key)}" aria-expanded="${open}" aria-label="${esc(m.awayManager || m.awayName)} ${fmtScore(as)}, projected ${fmtScore(ap)}, ${wa}%, against ${esc(m.homeManager || m.homeName)} ${fmtScore(hs)}, projected ${fmtScore(hp)}, ${wb}%">
+          <span class="n">${muLogoHtml(m.awayManager)}${nm(m.awayManager || m.awayName)}</span>
+          ${side(as, ap)}
+          <span class="mini"><span class="mu-bar"><span class="${fa ? 'fav' : ''}" style="flex-grow:${wa}"></span><span class="${fa ? '' : 'fav'}" style="flex-grow:${wb}"></span></span><small><span class="${fa ? 'fav' : ''}">${wa}%</span><span class="${fa ? '' : 'fav'}">${wb}%</span></small></span>
+          ${side(hs, hp)}
+          <span class="n r">${nm(m.homeManager || m.homeName)}${muLogoHtml(m.homeManager)}</span>
+        </button>${open ? `<div class="sb-open">${renderMatchupCard(m)}</div>` : ''}`;
+    }).join('')}</div>`;
+  }
 
   // ---------- What the week is worth (site audit VII #2, #3) ----------
   // The playoff sim (race-sim.js) asked a few more questions: your odds if
@@ -2262,7 +2298,7 @@
     (window.requestIdleCallback || (f => setTimeout(f, 400)))(next, { timeout: 2000 });
     return R;
   }
-  const wholePct = v => (v == null ? '—' : v > 99.5 && v < 100 ? '>99%' : v > 0 && v < 0.5 ? '<1%' : Math.round(v) + '%');
+  const wholePct = RaceSim.pct; // never 100% / 0% until settled (audit X #2)
   function worthHtml(R) {
     if (!R || !R.me) return '';
     const p = wholePct;
@@ -4375,8 +4411,8 @@
     add(teams.length > 1, `${who(teams[teams.length - 1])} is holding down the league cellar this year at ${hi(teams[teams.length - 1] && teams[teams.length - 1].record)}.`);
     add(byDiff[0], `${who(byDiff[0])} has the league's best point differential this year at ${hi('+' + fmtScore((byDiff[0].pointsFor || 0) - (byDiff[0].pointsAgainst || 0)))}.`);
     add(byDiff.length > 1, `${who(byDiff[byDiff.length - 1])} has the league's worst point differential this year at ${hi(fmtScore((byDiff[byDiff.length - 1].pointsFor || 0) - (byDiff[byDiff.length - 1].pointsAgainst || 0)))}.`);
-    add(byOdds[0], `${who(byOdds[0])} has the best playoff odds in the league right now at ${hi(fmtPct(byOdds[0] && byOdds[0].playoffPct))}.`);
-    add(byOdds.length > 1, `${who(byOdds[byOdds.length - 1])} has the longest playoff odds in the league right now, just ${hi(fmtPct(byOdds[byOdds.length - 1] && byOdds[byOdds.length - 1].playoffPct))}.`);
+    add(byOdds[0], `${who(byOdds[0])} has the best playoff odds in the league right now at ${hi(RaceSim.pct(byOdds[0] && byOdds[0].playoffPct))}.`);
+    add(byOdds.length > 1, `${who(byOdds[byOdds.length - 1])} has the longest playoff odds in the league right now, just ${hi(RaceSim.pct(byOdds[byOdds.length - 1] && byOdds[byOdds.length - 1].playoffPct))}.`);
 
     const ptc = data.playoffTeamCount || 0;
     add(ptc > 0 && teams[ptc - 1], `${who(teams[ptc - 1])} is clinging to the final playoff spot, at #${ptc}.`);
@@ -6251,7 +6287,8 @@
       const n = gb % 1 ? gb.toFixed(1) : String(gb);
       line = `, ${n} ${gb === 1 ? 'game' : 'games'} ${rankOf(t) > spots ? 'back of' : 'up on'} the playoff line`;
     }
-    const odds = typeof t.playoffPct === 'number' ? `, with a <b>${Math.round(t.playoffPct)}%</b> shot at the playoffs` : '';
+    const odds = t.clinch === 'e' ? ', and out of the playoff race' : t.clinch ? `, and ${t.clinch === 'z' ? 'sure of a bye' : 'in the playoffs'}`
+      : typeof t.playoffPct === 'number' ? `, with a <b>${RaceSim.pct(t.playoffPct)}</b> shot at the playoffs` : '';
     const mu = (data.matchups || []).find(m => isMe(m.awayManager) || isMe(m.homeManager));
     const opp = weekFinal ? (t.ahead || [])[1] : mu && (isMe(mu.awayManager) ? mu.homeManager : mu.awayManager);
     // Up next goes to your card (audit VIII #4), this week's opponent only.
@@ -6349,7 +6386,7 @@
     const moves = [
       mv('Record', esc(y.rec), move(w1 - l1 >= w0 - l0, y.rec === y.recBefore, esc(y.recBefore))),
       typeof y.rank === 'number' ? mv('Standing', ordinal(y.rank), move(y.rank < y.rankBefore, y.rank === y.rankBefore, ordinal(y.rankBefore || y.rank))) : '',
-      typeof y.odds === 'number' ? mv('Playoff odds', `${oddsR(y.odds)}%`, typeof y.oddsBefore === 'number' ? move(oddsR(y.odds) > oddsR(y.oddsBefore), oddsR(y.odds) === oddsR(y.oddsBefore), `${oddsR(y.oddsBefore)}%`) : '') : '',
+      typeof y.odds === 'number' ? mv('Playoff odds', RaceSim.pct(y.odds), typeof y.oddsBefore === 'number' ? move(oddsR(y.odds) > oddsR(y.oddsBefore), oddsR(y.odds) === oddsR(y.oddsBefore), RaceSim.pct(y.oddsBefore)) : '') : '',
     ].join('');
     let nextHtml = '';
     const n = y.next;
@@ -6358,7 +6395,7 @@
         : n.series[0] > n.series[1] ? `You lead <b>${n.series[0]}-${n.series[1]}</b>` : `${esc(n.name)} leads <b>${n.series[1]}-${n.series[0]}</b>`;
       const run = n.run > 1 ? ` · ${n.runBy === y.me ? 'you' : esc(n.runBy)} won the last ${n.run}` : '';
       const logo = ywLogo(n.name);
-      const pct = v => (typeof v === 'number' ? `${Math.round(v)}%` : '—');
+      const pct = v => (typeof v === 'number' ? RaceSim.pct(v) : '—');
       nextHtml = `<a class="yw-next" href="${esc(pageLink('head-to-head.html', { a: y.me, b: n.name }))}">
           <div class="r1"><span class="k">Up next · Week ${y.week + 1}</span><span class="ser">${ser}${run}</span></div>
           <div class="opp"><span class="yw-lg">${logo ? `<img src="${esc(logo)}" alt="">` : esc(monogram(n.name))}</span><div><b>${esc(n.name)}</b><span>${esc(n.rec)}${n.rank ? ` · ${ordinal(n.rank)}` : ''} · ${esc(n.team)}</span></div></div>
@@ -7119,9 +7156,11 @@
         const folded = ordered.filter(m => m !== mine && matchupDecided(m));
         // Not kicked off yet: a projected scoreboard row each (audit VI #8).
         const preRows = ordered.filter(m => m !== mine && pre(m));
-        const cards = ordered.filter(m => !folded.includes(m) && !preRows.includes(m));
+        // Started, but none of its games on right now (audit X #7): one line.
+        const waitRows = ordered.filter(m => m !== mine && !archived && !weekFinal && !folded.includes(m) && !preRows.includes(m) && matchupWaiting(m));
+        const cards = ordered.filter(m => !folded.includes(m) && !preRows.includes(m) && !waitRows.includes(m));
         document.getElementById('matchups-container').innerHTML =
-          ordered.length ? cards.map(mineCard).join('') + preBoardHtml(preRows) + scoreboardHtml(folded) : '<div class="loading-row">No matchups found.</div>';
+          ordered.length ? cards.map(mineCard).join('') + waitBoardHtml(waitRows) + preBoardHtml(preRows) + scoreboardHtml(folded) : '<div class="loading-row">No matchups found.</div>';
         const done = matchups.filter(matchupDecided).length;
         document.getElementById('matchups-state').textContent = done && done === matchups.length ? `${done} final` : done ? `${done} of ${matchups.length} final` : '';
         holdScroll();

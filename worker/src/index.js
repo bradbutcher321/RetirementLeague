@@ -43,7 +43,7 @@
  * (scheduled() also runs healthCheck.js once a day; site audit III #26.)
  * POST /push/subscribe, /push/unsubscribe -> Home Screen app
  *                      notifications (see push.js, site audit II #37).
- * GET /push/recent?me= -> the last seven days of alerts for that manager
+ * GET /push/recent -> the last seven days of alerts for the signed-in manager
  *                      (You > Notifications > Recent; push.js, audit IV #11).
  * POST /auth/claim, GET /auth/me, POST /auth/signout, POST /auth/admin ->
  *                      manager sign-in (see auth.js, site audit III #24).

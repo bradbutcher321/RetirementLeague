@@ -38,7 +38,7 @@
  * gets a backlog of things that already happened.
  *
  * What each event said is kept in push_log too (audit IV #11), so You >
- * Notifications can list the last seven days: GET /push/recent?me= (recent).
+ * Notifications can list the last seven days: GET /push/recent (recent).
  */
 import { sendPush } from "./webpush.js";
 // The records rules, shared with the dashboard (docs/record-watch.js).
@@ -49,6 +49,7 @@ import LineupCheck from "../../docs/lineup-check.js";
 import Rivals from "../../docs/rivals.js";
 import { commissioners } from "./roles.js";
 import { legsSummary } from "./legs.js";
+import { sessionManager } from "./auth.js";
 
 const PREF_KEYS = ["final", "median", "lineup", "rival", "recap", "record", "parlay", "parlayAll", "legIn", "health"];
 // Off unless asked for: everyone else's legs is a lot of buzzing, and it
@@ -116,10 +117,14 @@ async function backfillLog(env, events, seen) {
   await env.DB.prepare("INSERT OR REPLACE INTO site_settings (k, v, updated) VALUES ('push_log_backfill', '1', ?1)").bind(Date.now()).run();
 }
 
-/** GET /push/recent?me=NAME -> the last seven days of alerts that went to
- * everyone or to that manager, newest first. */
+/** GET /push/recent -> the last seven days of alerts that went to everyone
+ * or, with a signed-in key (Authorization: Bearer), to that manager, newest
+ * first. The name comes from the key, never the address (audit X #3): before
+ * that, ?me=Name read any manager's alerts. Without a key, only the
+ * league-wide ones. */
 export async function recent(request, env) {
-  const me = (new URL(request.url).searchParams.get("me") || "").slice(0, 40);
+  const who = await sessionManager(request, env).catch(() => null);
+  const me = who ? who.manager : "";
   const { results } = await env.DB.prepare(
     `SELECT k, ts, pref, title, body, url, repl, about FROM push_log
      WHERE ts > ?1 AND (to_mgr IS NULL OR LOWER(to_mgr) = LOWER(?2)) ORDER BY ts DESC LIMIT 80`

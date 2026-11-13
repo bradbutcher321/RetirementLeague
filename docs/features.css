@@ -116,6 +116,7 @@ a.plink{ border-bottom:1px dotted rgba(255,255,255,0.25); }
 .pl-feat a{ flex:none; display:inline-flex; align-items:center; height:38px; padding:0 14px; border-radius:999px; border:1px solid var(--track-line); background:rgba(255,255,255,0.05); color:var(--text-dim); text-decoration:none; font-weight:600; font-size:0.8rem; white-space:nowrap; }
 
 /* ---------- Hall of Fame ---------- */
+.hf-views{ margin-bottom:12px; }
 .hf-weights{ display:flex; flex-wrap:wrap; gap:5px; }
 .hf-w{ font-size:0.68rem; color:var(--text-dim); border:1px solid var(--line); border-radius:999px; padding:3px 9px; background:var(--item); }
 .hf-w b{ color:var(--gold); }

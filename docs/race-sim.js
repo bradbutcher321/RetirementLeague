@@ -120,11 +120,41 @@ const RaceSim = (() => {
     return out;
   }
 
+  // What is settled for sure (audit X #2). 6,000 seasons never seeing a
+  // team miss doesn't make it certain, so odds read >99% / <1% until this
+  // says so. Every game left is a matchup or a median game; a tie on wins
+  // counts against the team (points decide it, and they aren't played yet),
+  // and two rivals meeting each other is ignored -- both only make it
+  // stricter, so a mark here is never wrong, only sometimes late.
+  //   z  sure of a bye (top `byes`)     x  sure of a playoff spot     e  out
+  function clinch(d) {
+    const inp = inputs(d);
+    if (!inp) return {};
+    const { teams, base, sched, spots, byes } = inp;
+    const left = Object.fromEntries(teams.map(t => [t, sched.length + sched.reduce((n, s) => n + (s.pairs.some(p => p.includes(t)) ? 1 : 0), 0)]));
+    const lo = t => base[t].w, hi = t => base[t].w + left[t];
+    const out = {};
+    teams.forEach(t => {
+      const others = teams.filter(o => o !== t);
+      const threats = others.filter(o => hi(o) >= lo(t)).length;
+      const above = others.filter(o => lo(o) > hi(t)).length;
+      out[t] = byes && threats < byes ? 'z' : threats < spots ? 'x' : above >= spots ? 'e' : null;
+    });
+    return out;
+  }
+  const MARKS = { z: 'Clinched a bye', x: 'Clinched a playoff spot', e: 'Out of the playoffs' };
+  // Odds as text: whole percents, but never 100% or 0% (see clinch).
+  function pct(v) {
+    if (v == null || isNaN(v)) return '—';
+    return v >= 99.5 ? '>99%' : v < 0.5 ? '<1%' : Math.round(v) + '%';
+  }
+
   // Overwrites the Worker's ESPN playoffPct with the site's number. The
   // result is kept for the same inputs, so moving between pages is instant.
   function apply(d) {
     const inp = inputs(d);
     if (!inp || !inp.sched.length) return d;
+    const marks = clinch(d);
     const key = JSON.stringify([inp.base, inp.live, inp.sched, inp.week, inp.spots]);
     let odds = null;
     try { const c = JSON.parse(localStorage.getItem(STORE) || 'null'); if (c && c.k === key) odds = c.o; } catch (e) {}
@@ -136,9 +166,10 @@ const RaceSim = (() => {
     d.teams.forEach(t => {
       const o = odds[t.manager];
       if (o) { t.playoffPct = o.po; t.byePct = o.bye; t.sackoPct = o.sacko; }
+      t.clinch = marks[t.manager] || null;
     });
     return d;
   }
 
-  return { RUNS, inputs, simulate, apply };
+  return { RUNS, inputs, simulate, apply, clinch, pct, MARKS };
 })();

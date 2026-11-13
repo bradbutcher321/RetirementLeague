@@ -38,7 +38,8 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=32">
+<link rel="stylesheet" href="nav.css?v=33">
+<link rel="stylesheet" href="features.css?v=9">
 <style>
   /* ---------- League History ----------
      Same building blocks as Franchise and Game Records: one panel per
@@ -289,10 +290,11 @@
     <footer id="site-footer" data-note="Earnings from the league sheet"></footer>
   </div>
 
-<script src="nav.js?v=45"></script>
+<script src="nav.js?v=46"></script>
 <script src="page-common.js?v=42"></script>
 <script src="league-common.js?v=6"></script>
 <script src="achievements.js?v=3"></script>
+<script src="hof-ui.js?v=1"></script>
 <script>
   // esc() and typeTile() are globals from page-common.js, not part of LG.
   const { f1, f2, money } = LG;
@@ -776,6 +778,8 @@
       { label: 'Timeline', html: timelineHtml() },
       { label: 'Dynasty', html: dynastyHtml() },
       { label: 'Leaderboards', html: leaderboardsHtml() },
+      // Hall of Fame moved in as a tab (audit X #9); hall-of-fame.html forwards here.
+      { label: 'Hall of Fame', key: 'hof', html: HofUI.html(D) },
     ];
   }
 
@@ -833,6 +837,8 @@
     lbHide();
     document.getElementById('tabs').innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
     document.getElementById('overview').innerHTML = TABS[tab].html;
+    const k = TABS[tab].key || (TABS[tab].santa ? 'santa' : tab ? TABS[tab].label.toLowerCase() : null);
+    setUrlParams({ tab: k });
     keepSelectedInView(document.getElementById('tabs'));
   }
 
@@ -1017,13 +1023,24 @@
     .then(([D, F, R]) => {
       LOGOS = Object.fromEntries(((F && F.players) || []).filter(p => p.current_team_logo).map(p => [p.name, p.current_team_logo]));
       const all = () => { build(D, F, R); if (HOF_DEMO && !HOF) HOF = demoHof(D); santaTab(); };
-      all(); render(); riseIn(document.getElementById('overview').children);
+      all();
+      // A link's ?tab= (hof from the old Hall of Fame page, elo for its Elo view).
+      const want = String(urlParam('tab') || '').toLowerCase();
+      if (want === 'elo') HofUI.setView('elo');
+      const at = TABS.findIndex(t => (t.key || t.label.toLowerCase()) === (want === 'elo' ? 'hof' : want));
+      if (at >= 0) tab = at;
+      render(); riseIn(document.getElementById('overview').children);
       // Picking your team, or its ring colour, in the You sheet redraws every tab.
       const redo = () => { all(); render(); };
       addEventListener('rl-me', redo);
       addEventListener('rl-settings', redo);
       // Secret Santa's tab joins once the Worker says there's a year.
-      HOF_P.then(h => { if (h && h.years && Object.keys(h.years).length) { HOF = h; santaTab(); render(); } });
+      HOF_P.then(h => {
+        if (!(h && h.years && Object.keys(h.years).length)) return;
+        HOF = h; santaTab();
+        if (String(urlParam('tab') || '').toLowerCase() === 'santa') tab = TABS.findIndex(t => t.santa);
+        render();
+      });
     })
     .catch(err => LG.showError('overview', err));
 </script>

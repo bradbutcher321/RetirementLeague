@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Retirement League">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Retirement League">
-<meta property="og:title" content="Retirement League — Franchise">
+<meta property="og:title" content="Retirement League — Managers">
 <meta property="og:description" content="Live scores, standings, records and history for the Retirement League.">
 <meta property="og:url" content="https://bradbutcher321.github.io/RetirementLeague/franchise.html">
 <meta property="og:image" content="https://bradbutcher321.github.io/RetirementLeague/icons/og-image.png">
@@ -20,7 +20,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <style>html{background:#050505}</style>
-<title>Retirement League — Franchise</title>
+<title>Retirement League — Managers</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The two font-family's woff2 files Google serves for the latin subset
@@ -38,7 +38,7 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=32">
+<link rel="stylesheet" href="nav.css?v=33">
 <style>
   /* Selector and stat-card styling live in theme.css -- only this page's own
      spacing and variants here. */
@@ -133,6 +133,68 @@
 
   /* Tabs scroll sideways on a phone via theme.css's shared .scroll. */
   section.fr-hero{ margin-bottom:14px; }
+
+  /* ---------- The profile (audit X #10) ----------
+     One page per manager: the title is the manager (and picks another), the
+     hero their team and career counts, then This season / Career / Scoring /
+     Rivals / Trophies, and on your own, Settings. */
+  .pf-title{ position:relative; display:inline-flex; align-items:center; gap:6px; }
+  .pf-title svg{ width:20px; height:20px; color:var(--text-dim); flex:none; margin-top:4px; }
+  .pf-title select{ position:absolute; inset:0; width:100%; opacity:0; cursor:pointer; font-size:16px; appearance:none; -webkit-appearance:none; }
+  .pf-title:focus-within{ outline:2px solid var(--gold); outline-offset:4px; border-radius:6px; }
+  .me .current-logo-avatar{ border-color:var(--me-ring, #7AAEDB); box-shadow:0 0 14px color-mix(in srgb, var(--me-ring, #7AAEDB) 35%, transparent); }
+  .pf-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  /* Two columns on a wide screen, each its own stack, so a short card never
+     leaves a hole beside a tall one (audit X #1). */
+  .pf-cols{ display:grid; gap:12px; align-items:start; }
+  .pf-col{ display:grid; gap:12px; min-width:0; }
+  @media (min-width:860px){ .pf-cols{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); } }
+  .pf-mu{ display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
+  .pf-mu > div{ flex:1; min-width:0; }
+  .pf-mu b{ font-weight:700; font-size:0.96rem; }
+  .pf-mu .s{ display:block; color:var(--text-dim); font-size:0.8rem; margin-top:2px; }
+  .pf-mu svg, .pf-go svg{ width:16px; height:16px; color:var(--text-dim); flex:none; }
+  .pf-av{ width:34px; height:34px; border-radius:50%; overflow:hidden; flex:none; background:#1d1d1d; display:grid; place-items:center; font:800 0.7rem var(--body); }
+  .pf-av img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .pf-todo{ display:flex; align-items:center; gap:12px; padding:11px 12px; text-decoration:none; color:var(--text); }
+  .pf-todo + .pf-todo{ border-top:1px solid var(--line); }
+  .pf-todo > div{ flex:1; min-width:0; }
+  .pf-todo b{ font-weight:600; font-size:0.88rem; display:block; }
+  .pf-todo .s{ color:var(--text-dim); font-size:0.76rem; display:block; margin-top:1px; overflow-wrap:anywhere; }
+  .pf-pill{ flex:none; height:34px; padding:0 14px; border-radius:999px; display:inline-flex; align-items:center; font-weight:700; font-size:0.78rem; border:1px solid var(--lead-line); color:var(--gold); white-space:nowrap; }
+  .pf-pill.solid{ background:var(--gold); border-color:var(--gold); color:var(--ctl-on-ink); }
+  .pf-last{ color:var(--text-dim); font-size:0.8rem; line-height:1.45; padding:0 2px; }
+  .pf-last b{ color:var(--text); font-weight:600; }
+  .pf-sched{ display:grid; grid-template-columns:repeat(var(--n,7),minmax(0,1fr)); gap:5px; }
+  .pf-wk{ border:1px solid var(--item-line); background:var(--item); border-radius:10px; padding:7px 2px; text-align:center; min-width:0; text-decoration:none; color:var(--text); }
+  .pf-wk.now{ border-color:var(--lead-line); background:var(--lead-tint); }
+  .me-page .pf-wk.now{ border-color:color-mix(in srgb, var(--me-ring, #7AAEDB) 60%, transparent); background:color-mix(in srgb, var(--me-ring, #7AAEDB) 7%, transparent); }
+  .pf-wk .w{ color:var(--text-dim); font-size:0.56rem; font-weight:700; letter-spacing:0.06em; }
+  .pf-wk .o{ font-weight:700; font-size:0.74rem; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 2px; }
+  .pf-wk .r{ color:var(--text-dim); font-size:0.64rem; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .pf-wk .v{ font-size:0.64rem; margin-top:3px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .pf-wk .v.up{ color:var(--turf); } .pf-wk .v.dn{ color:var(--loss); } .pf-wk .v.even{ color:var(--text-dim); }
+  .pf-odds{ display:flex; align-items:center; gap:14px; }
+  .pf-odds .v{ font:800 2.7rem/0.9 var(--scoreboard); color:var(--gold); font-variant-numeric:tabular-nums; flex:none; }
+  .me-page .pf-odds .v{ color:var(--me-ring, #7AAEDB); }
+  .pf-odds .s{ color:var(--text-dim); font-size:0.8rem; line-height:1.45; min-width:0; }
+  .pf-odds .s b{ color:var(--text); font-weight:600; }
+  .pf-spark{ display:block; width:100%; height:56px; margin-top:12px; overflow:visible; }
+  .pf-spark .mid{ stroke:rgba(255,255,255,0.14); stroke-dasharray:3 3; }
+  .pf-spark .ln{ fill:none; stroke:var(--gold); stroke-width:2; stroke-linejoin:round; }
+  .pf-spark .dt{ fill:var(--gold); }
+  .me-page .pf-spark .ln{ stroke:var(--me-ring, #7AAEDB); } .me-page .pf-spark .dt{ fill:var(--me-ring, #7AAEDB); }
+  .pf-spark text{ fill:var(--text-dim); font:600 9px var(--body); }
+  .pf-go{ display:flex; align-items:center; gap:10px; min-height:48px; padding:10px 12px; text-decoration:none; color:var(--text); font-weight:600; font-size:0.86rem; }
+  .pf-go .t{ flex:1; min-width:0; }
+  .pf-go .t small{ display:block; color:var(--text-dim); font-weight:500; font-size:0.74rem; margin-top:1px; }
+  .pf-go + .pf-go{ border-top:1px solid var(--line); }
+  .pf-carry{ color:var(--text-dim); font-size:0.78rem; line-height:1.5; padding:0 2px; }
+  .pf-carry b{ color:var(--text); font-weight:600; }
+  .pf-set .you-sec:first-child{ margin-top:0; padding-top:0; border-top:0; }
+  .yu-ic{ width:32px; height:32px; border-radius:9px; display:grid; place-items:center; flex:none; color:var(--gold); background:var(--lead-tint); border:1px solid var(--lead-line); }
+  .yu-ic.bad{ color:var(--loss); background:var(--loss-tint); border-color:var(--loss-line); }
+  .yu-ic svg{ width:16px; height:16px; }
 
   /* ---------- Tiles: a label, one number, an optional sub-line ---------- */
   .tiles{ display:grid; grid-template-columns:repeat(var(--n,3), minmax(0,1fr)); gap:8px; }
@@ -377,7 +439,9 @@
       <div class="header-row">
         <div>
           <div class="eyebrow">Retirement League</div>
-          <h1>Franchise</h1>
+          <!-- The title is the manager (audit X #10); the invisible select
+               over it picks another, with the phone's own picker. -->
+          <h1 class="pf-title"><span id="pf-name">Managers</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><select class="franchise-select" id="franchise-select" aria-label="Manager"></select></h1>
         </div>
         <div class="updated-block">
           <div class="updated-label">Updated</div>
@@ -385,14 +449,6 @@
         </div>
       </div>
     </header>
-
-    <div class="selector-row">
-      <!-- Label kept for screen readers only: on screen it read "FRANCHISE"
-           directly under the "Franchise" h1, and the dropdown's value (a
-           manager's name) already says what it picks. -->
-      <label class="sr-only" for="franchise-select">Franchise</label>
-      <select class="franchise-select" id="franchise-select"></select>
-    </div>
 
     <section class="fr-hero"><div id="hero-container"><span class="sr-only">Loading franchise…</span><div class="sk sk-hero" aria-hidden="true"><div class="sk-main"><div class="sk-row" style="justify-content:flex-start;gap:16px"><i class="o" style="width:72px;height:72px"></i><div class="sk-col" style="gap:10px"><i style="width:min(100%,260px);height:36px"></i><i style="width:min(80%,170px);height:12px"></i></div></div><div class="sk-chips"><i class="p" style="width:160px;height:26px"></i><i class="p" style="width:180px;height:26px"></i><i class="p" style="width:168px;height:26px"></i><i class="p" style="width:164px;height:26px"></i><i class="p" style="width:152px;height:26px"></i></div><i style="width:90px;height:10px"></i><div class="sk-chips"><i class="p" style="width:190px;height:30px"></i><i class="p" style="width:226px;height:30px"></i></div></div><div class="sk-side" style="--n:6"><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div><div><i style="width:44%;height:11px"></i><i style="width:30%;height:24px"></i></div></div></div></div></section>
     <section>
@@ -403,9 +459,10 @@
     <footer id="site-footer" data-note="Money Tracker from the league sheet · Updates Tuesday &amp; Thursday mornings"></footer>
   </div>
 
-<script src="nav.js?v=45"></script>
+<script src="nav.js?v=46"></script>
 <script src="page-common.js?v=42"></script>
 <script src="achievements.js?v=3"></script>
+<script src="race-sim.js?v=4"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
   const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toFixed(d);
@@ -691,18 +748,22 @@
     // All gold, no per-stat tones: these are this franchise's headline
     // career figures, and colouring some of them good/bad made the strip
     // read as a scorecard rather than a summary.
+    // The counts that settle arguments (audit X #10). Win % lives on Career.
+    const st = p.career.standings;
     const side = [
       ['Record', `${w}-${l}`],
-      ['Win %', fmtPct(pct)],
-      ['Ships', fmt(p.career.standings.championships)],
-      ['Playoffs', fmt(p.career.standings.playoff_appearances)],
-      ['Sackos', fmt(p.career.standings.sackos)],
+      ['Titles', fmt(st.championships)],
+      ['Runner-up', fmt(Math.max(0, (st.champ_appearances || 0) - (st.championships || 0)))],
+      ['Playoffs', fmt(st.playoff_appearances)],
+      ['Sackos', fmt(st.sackos)],
       ['Weekly Sackos', fmt(p.weekly_sackos)],
     ].map(([l2, v]) => `<div class="fs"><div class="fs-v">${v}</div><div class="fs-l">${l2}</div></div>`).join('');
-    // No eyebrow or manager name: the page title and the dropdown right
-    // above already say "Franchise" and whose it is.
+    // This season at a glance, once the Worker answers (active managers only).
+    const t = active && LIVE && LIVE.teams ? LIVE.teams.find(x => x.manager === p.name) : null;
+    const seasonChips = t ? `<div class="pf-chips">${chip(`${fmtOrdinal(t.standing)} · ${esc(t.record)}`, 'gold')}${chip(t.clinch ? RaceSim.MARKS[t.clinch] : `${RaceSim.pct(t.playoffPct)} playoffs`, t.clinch === 'e' ? 'loss' : t.clinch ? 'win' : '')}${chip(`${fmtNum(t.pointsFor, 0)} pts`)}</div>` : '';
+    // No manager name: the page title above is the manager.
     return `
-      <div class="fhero">
+      <div class="fhero${isMe(p.name) ? ' me' : ''}">
         <div class="fhero-main">
           <div class="fhero-id">
             <span class="current-logo-tile" tabindex="0">
@@ -716,6 +777,7 @@
               <div class="fhero-sub">${esc(tenure)}${active ? '' : ' · Retired'}</div>
             </div>
           </div>
+          ${seasonChips}
           ${ranks ? `<div class="hero-pills scroll">${ranks}</div>` : ''}
           ${pastLogosHtml(p)}
         </div>
@@ -1260,54 +1322,347 @@
     ]), { note: `Points each pick scored as a starter for this team in the regular season, graded A to F against that year's draft. <a class="mgr" href="draft-board.html?view=value">Draft Board</a> has every pick.` });
   }
 
+  // ---------- This season (audit X #10) ----------
+  // What you.html had, for any manager: this week's matchup (and, on your
+  // own, what needs doing), the season so far, playoff odds with the record
+  // it takes, the schedule left, and how the roster was built.
+  const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
+  const ESPN_LEAGUE = 58101;
+  const getJSON = (url, opt) => fetch(url, Object.assign({ cache: 'no-cache' }, opt)).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  const SVGI = b => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${b}</svg>`;
+  const IC = {
+    chev: SVGI('<path d="m9 6 6 6-6 6"/>'),
+    alert: SVGI('<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.2v.3"/>'),
+    ticket: SVGI('<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4V7z"/><path d="M14 7v10" stroke-dasharray="2 2.2"/>'),
+  };
+  // The Worker's live numbers, with the site's own odds and clinch marks.
+  let LIVE = null, LIVE_P = null;
+  const liveP = () => LIVE_P || (LIVE_P = getJSON(WORKER_URL, { cache: 'no-store' }).then(d => {
+    if (d && d.teams && typeof RaceSim !== 'undefined') RaceSim.apply(d);
+    LIVE = d && d.teams ? d : null;
+    return LIVE;
+  }));
+  const lazy = {};
+  const once = (k, fn) => lazy[k] || (lazy[k] = fn());
+  const logoOf = name => { const x = data && data.players.find(q => q.name === name); return x && x.current_team_logo; };
+  const avatar = name => { const u = logoOf(name); return `<span class="pf-av">${u ? `<img src="${esc(u)}" alt="" onerror="this.remove()">` : esc(monogram(name))}</span>`; };
+  const ET = { timeZone: 'America/New_York' };
+  const when = ms => { const d = new Date(ms); return `${d.toLocaleDateString('en-US', { weekday: 'short', ...ET })} ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', ...ET })}`; };
+
+  // Finished regular-season games of a year, from league.json.
+  const doneGames = year => GAMES.filter(g => g.year === year && g.type === 'Reg' && g.p2 && g.winner && g.winner !== 'In Progress' && (g.s1 > 0 || g.s2 > 0));
+  function seriesOf(a, b) {
+    const gs = GAMES.filter(g => g.p2 && ((g.p1 === a && g.p2 === b) || (g.p1 === b && g.p2 === a)) && (g.winner === a || g.winner === b));
+    return { w: gs.filter(g => g.winner === a).length, l: gs.filter(g => g.winner === b).length };
+  }
+  // Schedule luck: wins against the real schedule, minus the wins an
+  // average schedule gives the same scores; and the record with each other
+  // manager's schedule (yours played against their opponents).
+  function luckOf(name, year) {
+    const gs = doneGames(year);
+    const score = new Map(), opp = new Map();
+    gs.forEach(g => {
+      const s = score.get(g.week) || new Map(), o = opp.get(g.week) || new Map();
+      s.set(g.p1, g.s1); s.set(g.p2, g.s2); o.set(g.p1, g.p2); o.set(g.p2, g.p1);
+      score.set(g.week, s); opp.set(g.week, o);
+    });
+    let wins = 0, exp = 0, games = 0;
+    const others = new Set();
+    score.forEach((s, wk) => {
+      if (!s.has(name)) return;
+      games++;
+      const mine = s.get(name), o = opp.get(wk).get(name);
+      if (mine > s.get(o)) wins++;
+      let beat = 0, n = 0;
+      s.forEach((v, k) => { if (k === name) return; others.add(k); n++; if (mine > v) beat++; else if (mine === v) beat += 0.5; });
+      exp += n ? beat / n : 0;
+    });
+    const swap = [...others].map(j => {
+      let w = 0;
+      score.forEach((s, wk) => { if (!s.has(name) || !s.has(j)) return; let o = opp.get(wk).get(j); if (o === name) o = j; if (s.get(name) > s.get(o)) w++; });
+      return { j, w };
+    });
+    const hi = Math.max(...swap.map(x => x.w)), lo = Math.min(...swap.map(x => x.w));
+    return { wins, games, exp, luck: wins - exp, best: { w: hi, with: swap.filter(x => x.w === hi).map(x => x.j) }, worst: { w: lo, with: swap.filter(x => x.w === lo).map(x => x.j) } };
+  }
+  // Odds after each finished week, rebuilt from league.json with the
+  // site's sim (fewer runs); the last point is the live number.
+  function oddsPath(year, d) {
+    const gs = doneGames(year);
+    const done = gs.length ? Math.max(...gs.map(g => g.week)) : 0;
+    const key = `rl-odds-path:${year}:${done}:${gs.length}`;
+    try { const c = JSON.parse(sessionStorage.getItem(key)); if (c) return c; } catch (e) {}
+    const mgrs = d.teams.map(t => t.manager), era = data.median_era_start_year || 9999;
+    const oppOf = Object.fromEntries(mgrs.map(m => [m, {}]));
+    GAMES.filter(g => g.year === year && g.type === 'Reg' && g.p2).forEach(g => { if (oppOf[g.p1]) oppOf[g.p1][g.week] = g.p2; if (oppOf[g.p2]) oppOf[g.p2][g.week] = g.p1; });
+    d.teams.forEach(t => (t.ahead || []).forEach((o, i) => { oppOf[t.manager][d.week + i] = o; }));
+    const out = Object.fromEntries(mgrs.map(m => [m, []]));
+    for (let k = 0; k < done; k++) {
+      const prior = Object.fromEntries(mgrs.map(m => [m, { w: 0, l: 0, pf: 0 }]));
+      gs.filter(g => g.week <= k).forEach(g => [[g.p1, g.s1, g.s2], [g.p2, g.s2, g.s1]].forEach(([m, s, o]) => {
+        const r = prior[m]; if (!r) return;
+        r.pf += s; if (s > o) r.w++; else r.l++;
+        if (year >= era && g.median != null) { if (s > g.median) r.w++; else r.l++; }
+      }));
+      const ahead = m => { const a = []; for (let w = k + 1; w <= d.regularSeasonWeeks; w++) a.push(oppOf[m][w] || null); return a; };
+      const inp = RaceSim.inputs({ week: k + 1, regularSeasonWeeks: d.regularSeasonWeeks, playoffTeamCount: d.playoffTeamCount, matchups: [], teams: mgrs.map(m => ({ manager: m, prior: prior[m], ahead: ahead(m) })) });
+      if (!inp) continue;
+      const res = RaceSim.simulate(inp, 1200);
+      mgrs.forEach(m => out[m].push(res[m].po));
+    }
+    d.teams.forEach(t => out[t.manager].push(t.playoffPct));
+    try { sessionStorage.setItem(key, JSON.stringify(out)); } catch (e) {}
+    return out;
+  }
+  function sparkSvg(vals) {
+    if (!vals || vals.length < 2) return '';
+    const W = 300, H = 56, L = 4, R = 30, x = i => L + i * (W - L - R) / (vals.length - 1), y = v => 4 + (100 - Math.max(0, Math.min(100, v))) * (H - 8) / 100;
+    const last = vals.length - 1;
+    return `<svg class="pf-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Playoff odds after each week: ${vals.map(v => RaceSim.pct(v)).join(', ')}">
+      <line class="mid" x1="${L}" x2="${W - R}" y1="${y(50)}" y2="${y(50)}"/><text x="${W - R + 6}" y="${y(50) + 3}">50%</text>
+      <polyline class="ln" points="${vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')}"/>
+      <circle class="dt" cx="${x(last)}" cy="${y(vals[last])}" r="3.5"/></svg>`;
+  }
+
+  // The page's skeleton for the tab; fillNow() puts the numbers in.
+  function nowHtml(p) {
+    const slot = (id, title) => `<div id="${id}">${card(title, '<div class="empty-note">Loading…</div>')}</div>`;
+    return `<div class="pf-cols"><div class="pf-col">${slot('pf-week', 'This week')}${slot('pf-so-far', 'Season so far')}<div id="pf-sched"></div></div>
+      <div class="pf-col">${slot('pf-odds', 'Playoff odds')}<div id="pf-built"></div><div id="pf-more"></div></div></div>`;
+  }
+  const put = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  async function fillNow(p) {
+    const name = p.name, mine = isMe(name), year = CTX.currentYear;
+    const [d] = await Promise.all([liveP(), GAMES_P]);
+    if (shown !== name || curTab() !== 'now') return;
+    const team = d && d.teams.find(t => t.manager === name);
+
+    // This week: the matchup, what needs doing (yours only), last week.
+    const mu = d && (d.matchups || []).find(m => m.awayManager === name || m.homeManager === name);
+    let weekHtml = '', opp = null;
+    if (mu) {
+      const side = mu.awayManager === name ? 'away' : 'home', other = side === 'away' ? 'home' : 'away';
+      opp = mu[other + 'Manager'];
+      const mp = mu[side + 'Players'] || [];
+      const kicks = [...mp, ...(mu[other + 'Players'] || [])].map(x => x.game && Date.parse(x.game.date)).filter(Boolean);
+      const started = (mu[side + 'Score'] || 0) + (mu[other + 'Score'] || 0) > 0;
+      const s = seriesOf(name, opp);
+      const ser = s.w === s.l ? `the series is tied ${s.w}-${s.l}` : `${mine ? 'you' : esc(name)} ${s.w > s.l ? 'lead' : 'trail'}${mine ? '' : 's'} the series ${s.w}-${s.l}`;
+      const line = started
+        ? `${fmt(mu[side + 'Score'], 2)} to ${fmt(mu[other + 'Score'], 2)} · ${Math.round(mu[side + 'WinProbability'])}% to win`
+        : `${fmt(mu[side + 'Projected'], 2)} to ${fmt(mu[other + 'Projected'], 2)} projected · ${Math.round(mu[side + 'WinProbability'])}%`;
+      const todo = [];
+      if (mine) {
+        mp.filter(x => !x.projectedPoints && (!x.game || x.game.state === 'pre')).forEach(h => todo.push(`<a class="pf-todo" href="https://fantasy.espn.com/football/team?leagueId=${ESPN_LEAGUE}&teamId=${team ? team.teamId : ''}&seasonId=${year}" target="_blank" rel="noopener"><span class="yu-ic bad">${IC.alert}</span><div><b>${esc(h.name)} ${!h.game ? 'is on bye' : h.injury === 'OUT' ? 'is out' : 'projects 0'}</b><span class="s">${esc(h.slot)} in your lineup · fix it in ESPN</span></div><span class="pf-pill">Fix</span></a>`));
+        const board = await once('legs', () => getJSON(WORKER_URL + '/legs', { cache: 'no-store', headers: authHeaders() }));
+        if (board && board.open && !board.locked && (board.players || []).includes(name)) {
+          const leg = board.legs.find(l => l.player === name);
+          const locks = new Date(board.locksAt).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', ...ET }).replace(',', '');
+          todo.push(leg
+            ? `<a class="pf-todo" href="parlay-legs.html"><span class="yu-ic">${IC.ticket}</span><div><b>Your leg is in</b><span class="s">${esc(String(leg.raw_pick || '').replace(/\s*\([+-]?\d+\)\s*$/, ''))}</span></div><span class="pf-pill">Change</span></a>`
+            : `<a class="pf-todo" href="parlay-legs.html"><span class="yu-ic">${IC.ticket}</span><div><b>Parlay leg not in</b><span class="s">Locks ${esc(locks)} · ${board.legs.length} of ${board.players.length} in</span></div><span class="pf-pill solid">Enter</span></a>`);
+        }
+      }
+      const href = mine ? 'index.html' : pageLink('head-to-head.html', { a: name, b: opp });
+      weekHtml = `<a class="pf-mu" href="${esc(href)}">${avatar(opp)}<div><b>vs ${esc(opp)}${!started && kicks.length ? ` · ${esc(when(Math.min(...kicks)))}` : ''}</b><span class="s">${esc(line)} · ${ser}</span></div>${IC.chev}</a>
+        ${todo.length ? `<div class="lines">${todo.join('')}</div>` : ''}`;
+    }
+    // Last finished week: the result, where it ranked, and its median call.
+    const fin = doneGames(year).filter(g => g.p1 === name || g.p2 === name);
+    const lw = fin.length ? Math.max(...fin.map(g => g.week)) : null;
+    if (lw) {
+      const g = fin.find(x => x.week === lw), home = g.p1 === name;
+      const my = home ? g.s1 : g.s2, their = home ? g.s2 : g.s1, other = home ? g.p2 : g.p1;
+      const all = doneGames(year).filter(x => x.week === lw).flatMap(x => [x.s1, x.s2]);
+      const place = all.filter(v => v > my).length + 1;
+      const where = place === 1 ? 'the week’s top score' : place === all.length ? 'the week’s low score' : `${fmtOrdinal(place)} of ${all.length} that week`;
+      weekHtml += `<div class="pf-last">Week ${lw}: <b>${my > their ? 'beat' : 'lost to'} ${esc(other)} ${fmt(my, 2)}–${fmt(their, 2)}</b>, ${where}.</div>`;
+    }
+    put('pf-week', weekHtml ? card(d ? `Week ${d.week}` : 'This week', weekHtml) : '');
+
+    // Season so far: record split, points, schedule luck, lineup calls.
+    const gs = doneGames(year);
+    const pf = {};
+    gs.forEach(g => { pf[g.p1] = (pf[g.p1] || 0) + g.s1; pf[g.p2] = (pf[g.p2] || 0) + g.s2; });
+    const pfRank = Object.keys(pf).sort((x, y) => pf[y] - pf[x]).indexOf(name) + 1;
+    const mineG = gs.filter(g => g.p1 === name || g.p2 === name);
+    const hw = mineG.filter(g => g.winner === name).length, hl = mineG.length - hw;
+    const era = year >= (data.median_era_start_year || 9999);
+    const mw = era ? mineG.filter(g => g.median != null && (g.p1 === name ? g.s1 : g.s2) > g.median).length : 0;
+    const ml = era ? mineG.filter(g => g.median != null).length - mw : 0;
+    const lk = mineG.length ? luckOf(name, year) : null;
+    const eff = ((p.efficiency && p.efficiency.by_season) || []).find(s => s.year === year);
+    let started = null;
+    const lineups = await once('lineups' + year, () => getJSON(`data/lineups/${year}.json`));
+    if (lineups && lineups.weeks) {
+      started = 0;
+      Object.entries(lineups.weeks).forEach(([wk, by]) => { if (mineG.some(g => g.week === Number(wk))) (by[name] || []).forEach(r => { if (r[2] !== 'BE' && r[2] !== 'IR') started += r[3] || 0; }); });
+    }
+    const left = eff && eff.pct && started != null ? started * (100 / eff.pct - 1) : null;
+    const luckTone = lk && lk.luck >= 0.5 ? 'win' : lk && lk.luck <= -0.5 ? 'loss' : null;
+    if (mineG.length) {
+      put('pf-so-far', card('Season so far', tiles([
+        ['Record', `${hw + mw}-${hl + ml}`, { tone: 'lead', sub: era ? `${hw}-${hl} matchups · ${mw}-${ml} median` : `${mineG.length} games` }],
+        ['Points', fmtNum(pf[name] || 0, 0), { sub: `${fmtOrdinal(pfRank)} in the league` }],
+        ['Schedule luck', lk ? `${lk.luck > 0.05 ? '+' : lk.luck < -0.05 ? '−' : ''}${Math.abs(lk.luck).toFixed(1)}` : '—', { tone: luckTone, sub: lk ? `Wins vs an average schedule. ${lk.best.w}-${lk.games - lk.best.w} with ${esc(lk.best.with.filter(x => x !== name)[0] || name)}’s, ${lk.worst.w}-${lk.games - lk.worst.w} with ${esc(lk.worst.with.filter(x => x !== name)[0] || name)}’s.` : '' }],
+        ['Lineup calls', eff ? `${fmt(eff.pct, 1)}%` : '—', { sub: left != null ? `${fmt(left, 1)} pts left on the bench` : 'Of the best lineup’s points' }],
+      ], 2), { chip: team ? chip(`${fmtOrdinal(team.standing)} of ${d.teams.length}`, 'gold') : '' }));
+    } else put('pf-so-far', '');
+
+    // The rest of the schedule: their record, then the series all-time.
+    if (team && team.ahead && team.ahead.length) {
+      const rec2 = m => { const t = d.teams.find(x => x.manager === m); return t ? t.record : ''; };
+      const cells = team.ahead.map((o, i) => {
+        const s = seriesOf(name, o), cls = s.w > s.l ? 'up' : s.w < s.l ? 'dn' : 'even';
+        return `<a class="pf-wk${i === 0 ? ' now' : ''}" href="${esc(pageLink('head-to-head.html', { a: name, b: o }))}"><div class="w">WK ${d.week + i}</div><div class="o">${esc(o)}</div><div class="r">${esc(rec2(o))}</div><div class="v ${cls}">${s.w}-${s.l}</div></a>`;
+      }).join('');
+      put('pf-sched', card('The rest of the schedule', `<div class="pf-sched" style="--n:${team.ahead.length}">${cells}</div>`, { note: `Their record, then ${mine ? 'yours' : esc(name) + '’s'} against them all-time.` }));
+    }
+
+    // Playoff odds: now, week by week, and the record it takes (audit X #5).
+    if (team && typeof team.playoffPct === 'number') {
+      const inp = RaceSim.inputs(d);
+      let body = '';
+      if (team.clinch) body = `<div class="pf-odds"><span class="v">${team.clinch === 'e' ? 'Out' : 'In'}</span><span class="s">${esc(RaceSim.MARKS[team.clinch])}.</span></div>`;
+      else {
+        const res = inp && inp.sched.length ? RaceSim.simulate(inp, RaceSim.RUNS, null, true)[name] : null;
+        const worth = res && res.ifWin != null && res.ifLoss != null && opp ? `<b>${RaceSim.pct(res.ifWin)}</b> with a win over ${esc(opp)}, <b>${RaceSim.pct(res.ifLoss)}</b> with a loss.` : '';
+        body = `<div class="pf-odds"><span class="v">${RaceSim.pct(team.playoffPct)}</span><span class="s">to make the playoffs.<br>${worth}</span></div>`;
+        // The record it takes: centred on the first one that's better than
+        // even, one either side, each with the wins it needs from here.
+        if (res && res.fw) {
+          const fw = res.fw, total = inp.reg * 2, have = inp.base[name].w, had = inp.base[name].l;
+          const ks = Object.keys(fw).map(Number).filter(k => fw[k][0] >= RaceSim.RUNS * 0.005).sort((x, y) => x - y);
+          const k50 = ks.find(k => fw[k][1] / fw[k][0] >= 0.5);
+          const pick = k50 == null ? [] : [k50 - 1, k50, k50 + 1].filter(k => fw[k]);
+          if (pick.length) body += tiles(pick.map(k => {
+            const v = fw[k][1] * 100 / fw[k][0];
+            return [`At ${k}-${total - k}`, RaceSim.pct(v), { tone: v >= 90 ? 'win' : v <= 10 ? 'loss' : k === k50 ? 'lead' : null, sub: `${k - have}-${total - k - had} from here` }];
+          }), pick.length);
+        }
+      }
+      put('pf-odds', card('Playoff odds', body + '<div id="pf-path"></div>', { chip: `<a class="chip" href="standings.html?tab=race" style="text-decoration:none">Race ›</a>` }));
+      // The week-by-week line costs a few small sims: after paint.
+      setTimeout(() => {
+        if (shown !== name || curTab() !== 'now') return;
+        const path = oddsPath(year, d)[name];
+        if (path && path.length > 1) put('pf-path', `${sparkSvg(path)}<div class="pf-last">After each week since the draft. ${path.length > 2 ? `High ${RaceSim.pct(Math.max(...path))}, low ${RaceSim.pct(Math.min(...path))}.` : ''}</div>`);
+      }, 60);
+    } else put('pf-odds', '');
+
+    // How the roster was built: starter points from the draft, the wire and
+    // trades, and the three players carrying it.
+    Promise.all([once('board', () => getJSON('data/draft-board.json')), once('moves', () => getJSON('data/moves.json'))]).then(([db, mv]) => {
+      if (shown !== name || curTab() !== 'now' || !lineups || !lineups.weeks) return;
+      const yb = db && db.boards && db.boards[String(year)];
+      if (!yb) return;
+      const col = Object.fromEntries(yb.columns.map(c => [String(c.slot), c.manager]));
+      const drafted = new Set();
+      Object.values(yb.grid).forEach(rd => Object.entries(rd).forEach(([slot, x]) => { if (x && x.player_name && col[slot] === name) drafted.add(x.player_name); }));
+      const traded = new Set();
+      ((mv && mv.trades) || []).filter(t => t.year === year && t.sides && t.sides[name]).forEach(t => t.sides[name].players.forEach(x => traded.add(String(x.id))));
+      const by = { draft: 0, wire: 0, trade: 0 }, per = {};
+      Object.entries(lineups.weeks).forEach(([wk, w]) => (w[name] || []).forEach(r => {
+        if (r[2] === 'BE' || r[2] === 'IR' || !mineG.some(g => g.week === Number(wk))) return;
+        const k = drafted.has(r[0]) ? 'draft' : traded.has(String(r[6])) ? 'trade' : 'wire';
+        by[k] += r[3] || 0; per[r[0]] = (per[r[0]] || 0) + (r[3] || 0);
+        per[r[0] + '\u0000k'] = k;
+      }));
+      const tot = by.draft + by.wire + by.trade;
+      if (!tot) return;
+      const top = Object.keys(per).filter(k => !k.includes('\u0000')).sort((x, y) => per[y] - per[x]);
+      const bestWire = top.find(n => per[n + '\u0000k'] === 'wire');
+      const pctOf = v => `${Math.round(v * 100 / tot)}%`;
+      put('pf-built', card('How the team was built', tiles([
+        ['Drafted', pctOf(by.draft), { tone: 'lead', sub: 'of starter points' }],
+        ['Picked up', pctOf(by.wire), { sub: bestWire ? `${esc(bestWire)} ${fmt(per[bestWire], 1)}` : 'None started' }],
+        ...(by.trade ? [['Traded for', pctOf(by.trade), { sub: 'of starter points' }]] : []),
+      ], by.trade ? 3 : 2) + `<div class="pf-carry">Carried by ${top.slice(0, 3).map(n => `<b>${esc(n)}</b> ${pctOf(per[n])}`).join(', ')}.</div>`));
+    });
+
+    // Where else to look: the roster tools and the next matchup's history.
+    const more = [
+      [pageLink('roster.html', { m: name }), mine ? 'Your roster' : `${esc(name)}’s roster`, 'Byes ahead, free agents, position ranks'],
+      opp ? [pageLink('head-to-head.html', { a: name, b: opp }), `${mine ? 'You' : esc(name)} vs ${esc(opp)}`, 'Every game, all-time'] : null,
+    ].filter(Boolean);
+    put('pf-more', card('', `<div class="lines">${more.map(([h, t, s]) => `<a class="pf-go" href="${esc(h)}"><span class="t">${t}<small>${s}</small></span>${IC.chev}</a>`).join('')}</div>`));
+    riseIn(document.querySelectorAll('#tab-content .stat-card'));
+  }
+
+  // ---------- Settings (your own profile only) ----------
+  // The You sheet's panels, drawn on the page (nav.js rlYou.mount).
+  const settingsHtml = () => `<div class="pf-cols"><div class="pf-col">${card('Notifications', '<div id="pf-push"></div>', { cls: 'pf-set' })}</div><div class="pf-col">${card('Settings', '<div id="pf-settings"></div>', { cls: 'pf-set' })}${card('Account', '<div id="pf-you"></div>', { cls: 'pf-set' })}</div></div>`;
+  function fillSettings() { ['push', 'settings', 'you'].forEach(k => { const el = document.getElementById('pf-' + k); if (el) rlYou.mount(el, k); }); }
+
   // ---------- Tabs ----------
-  // Regrouped in audit II #2: Record became Results, History became
-  // Seasons, Lineups folded into Scoring, and Weekly is new.
-  const TABS = [
-    { id: 'seasons', label: 'Seasons', render: p => renderHistory(p) },
-    { id: 'results', label: 'Results', render: p => `<div class="pair">${renderStreaks(p)}${hasMedian(p) ? renderMedian(p) : ''}</div><div class="pair">${renderRegular(p)}${renderPlayoffs(p)}</div>` },
-    { id: 'weekly', label: 'Weekly', render: p => renderWeekly(p) },
-    { id: 'scoring', label: 'Scoring', render: p => renderScoring(p) },
-    { id: 'rivals', label: 'Rivals', render: p => renderRivalries(p) },
-    { id: 'money', label: 'Money', render: p => renderMoney(p) },
-    { id: 'badges', label: 'Badges', render: p => renderAchievements(p, CTX) },
+  // Audit X #10 regrouped Franchise's seven tabs: This season is new, Career
+  // is Seasons + Results, Scoring is Weekly + Scoring, Trophies is Badges +
+  // Money, and your own profile adds Settings.
+  const TAB_DEFS = {
+    now: { label: () => String(CTX.currentYear), render: p => nowHtml(p), after: p => fillNow(p) },
+    career: { label: 'Career', render: p => renderHistory(p) + `<div class="pair">${renderStreaks(p)}${hasMedian(p) ? renderMedian(p) : ''}</div><div class="pair">${renderRegular(p)}${renderPlayoffs(p)}</div>` },
+    scoring: { label: 'Scoring', render: p => renderWeekly(p) + renderScoring(p) },
+    rivals: { label: 'Rivals', render: p => renderRivalries(p) },
+    trophies: { label: 'Trophies', render: p => renderAchievements(p, CTX) + renderMoney(p) },
+    settings: { label: 'Settings', render: () => settingsHtml(), after: () => fillSettings() },
+  };
+  // Old tab ids, from saved picks and links shared before each regroup.
+  const OLD_TABS = { history: 'career', seasons: 'career', results: 'career', record: 'career', weekly: 'scoring', lineups: 'scoring', money: 'trophies', badges: 'trophies', achievements: 'trophies', you: 'settings' };
+  const tabsFor = p => [
+    ...(isActivePlayer(p, CTX.currentYear) ? ['now'] : []), 'career', 'scoring', 'rivals', 'trophies',
+    ...(isMe(p.name) ? ['settings'] : []),
   ];
-  // Old tab ids, from saved picks and links shared before the regroup.
-  const OLD_TABS = { history: 'seasons', record: 'results', lineups: 'scoring', achievements: 'badges' };
 
   // WEEKLY: weeklyFinishes() over GAMES once league.json is in; undefined
   // while it loads, null if it failed.
   // DRAFTV: data/draft-value.json's years, the same way.
   let data = null, CTX = null, GAMES = [], WEEKLY, DRAFTV;
-  const tabIndex = id => { const k = String(id ?? '').toLowerCase(); return TABS.findIndex(x => x.id === (OLD_TABS[k] || k)); };
-  // The URL's tab (?tab=scoring, from a shared link) wins over the saved one.
-  let tab = (() => {
-    const fromUrl = tabIndex(urlParam('tab'));
-    if (fromUrl >= 0) return fromUrl;
-    try { return Math.max(0, tabIndex(localStorage.getItem('franchise-tab'))); } catch (e) { return 0; }
-  })();
-  // morph: a manager change, which on History glides the Career Arc
+  const normTab = id => { const k = String(id ?? '').toLowerCase(); return OLD_TABS[k] || k; };
+  // The URL's tab (?tab=scoring, from a shared link) wins; otherwise a
+  // profile opens on this season.
+  let want = normTab(urlParam('tab')) || null;
+  let shown = null, cur = null;
+  const curTab = () => cur;
+  window.rlProfileIsMe = () => !!shown && isMe(shown);
+  // morph: a manager change, which on Career glides the Career Arc
   // across rather than redrawing it.
   function show(name, morph) {
     const p = data.players.find(x => x.name === name);
     if (!p) return;
     hideLogoPop();
+    shown = p.name;
+    document.getElementById('pf-name').textContent = p.name;
+    document.querySelector('h1.pf-title').dataset.fold = p.name; // the folding bar, not the picker's options
+    document.body.classList.toggle('me-page', isMe(p.name));
+    document.title = `Retirement League — ${p.name}`;
     document.getElementById('hero-container').innerHTML = renderHero(p);
+    const list = tabsFor(p);
+    cur = list.includes(want) ? want : list[0];
     const tabsEl = document.getElementById('tabs');
-    tabsEl.innerHTML = TABS.map((t, i) => `<button class="tab ${i === tab ? 'on' : ''}" data-i="${i}">${t.label}</button>`).join('');
-    const before = morph && !reduceMotion && TABS[tab].id === 'seasons' ? arcSnapshot() : null;
-    document.getElementById('tab-content').innerHTML = TABS[tab].render(p);
+    tabsEl.innerHTML = list.map(id => { const l = TAB_DEFS[id].label; return `<button class="tab ${id === cur ? 'on' : ''}" data-tab="${id}">${typeof l === 'function' ? l() : l}</button>`; }).join('');
+    const before = morph && !reduceMotion && cur === 'career' ? arcSnapshot() : null;
+    document.getElementById('tab-content').innerHTML = TAB_DEFS[cur].render(p);
     if (before) morphArc(before);
+    if (TAB_DEFS[cur].after) TAB_DEFS[cur].after(p);
     keepSelectedInView(tabsEl);
     // Whatever is on screen is both the saved pick and the link to share.
-    try { localStorage.setItem('franchise-selected', p.name); localStorage.setItem('franchise-tab', TABS[tab].id); } catch (e) {}
-    setUrlParams({ m: p.name, tab: TABS[tab].id });
+    try { localStorage.setItem('franchise-selected', p.name); } catch (e) {}
+    setUrlParams({ m: p.name, tab: cur === list[0] ? null : cur });
+    if (window.rlHeaderPlace) rlHeaderPlace();
   }
+  // Your monogram on your own profile: its Settings tab (nav.js youTap).
+  addEventListener('rl-you-tap', () => {
+    if (!shown || !isMe(shown)) return;
+    want = 'settings'; show(shown);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  // Picking your team (or another) redraws the profile: Settings comes and goes.
+  addEventListener('rl-me', () => { if (data && shown) show(shown); });
 
   document.addEventListener('click', e => {
-    const t = e.target.closest('.tab');
+    const t = e.target.closest('.tab[data-tab]');
     if (t) {
-      tab = Number(t.dataset.i);
+      want = t.dataset.tab;
       show(document.getElementById('franchise-select').value);
       return;
     }
@@ -1356,7 +1711,7 @@
   }).catch(err => { console.error(err); WEEKLY = null; });
   GAMES_P.then(() => {
     const p = data && data.players.find(x => x.name === document.getElementById('franchise-select').value);
-    if (p && TABS[tab].id === 'weekly') document.getElementById('tab-content').innerHTML = renderWeekly(p);
+    if (p && cur === 'scoring') document.getElementById('tab-content').innerHTML = renderWeekly(p) + renderScoring(p);
   });
 
   // Secret Santa's Shirty winners, every year (worker/src/santa.js, GET /santa/hof).
@@ -1374,7 +1729,7 @@
   fetch('data/draft-value.json', { cache: 'no-cache' }).then(r => r.json()).then(d => { DRAFTV = d.years || {}; })
     .catch(err => { console.error(err); DRAFTV = null; }).then(() => {
       const p = data && data.players.find(x => x.name === document.getElementById('franchise-select').value);
-      if (p && TABS[tab].id === 'money') document.getElementById('tab-content').innerHTML = renderMoney(p);
+      if (p && cur === 'trophies') document.getElementById('tab-content').innerHTML = renderAchievements(p, CTX) + renderMoney(p);
     });
 
   fetch('data/franchise.json', { cache: 'no-cache' }).then(r => r.json()).then(d => {
@@ -1396,6 +1751,8 @@
     sel.addEventListener('change', () => {
       show(sel.value, true);
     });
+    // This season's chips in the hero, once the Worker answers.
+    liveP().then(d => { if (d && shown) document.getElementById('hero-container').innerHTML = renderHero(data.players.find(x => x.name === shown)); });
   }).catch(err => {
     console.error(err);
     document.getElementById('hero-container').innerHTML = '<div class="loading-row" style="color:var(--loss);">Error loading franchise data.</div>';

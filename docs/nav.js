@@ -35,34 +35,38 @@
   const TABS = [
     { key: 'live', href: 'index.html', label: 'Live', icon: ICONS.live, pages: ['index.html', 'secret-santa.html'] },
     { key: 'feed', href: 'feed.html', label: 'Feed', icon: ICONS.feed, pages: ['feed.html'] },
-    { key: 'parlay', href: 'parlay-results.html', label: 'Parlay', icon: ICONS.ticket, pages: ['parlay-results.html', 'parlay-legs.html'] },
+    { key: 'parlay', href: 'parlay-results.html', label: 'Parlay', icon: ICONS.ticket, pages: ['parlay-results.html', 'parlay-legs.html', 'parlay-stats.html'] },
     { key: 'standings', href: 'standings.html', label: 'Standings', icon: ICONS.list, pages: ['standings.html'] },
     { key: 'history', href: 'history.html', label: 'History', icon: ICONS.book, pages: [] },
   ];
   // Pages that belong to no tab, so none lights up.
   const NO_TAB = ['commissioner.html', 'you.html'];
+  // The Parlay tab's three pages, one switch across the top of each (audit
+  // X #6). They're siblings, so none of them gets a back button.
+  const PARLAY_PAGES = [['parlay-results.html', 'Results'], ['parlay-legs.html', 'Legs'], ['parlay-stats.html', 'Stats']];
   // Pages that keep their eyebrow instead of a back link: Secret Santa lights
   // the Live tab, which already goes back to Live.
   const NO_BACK = ['secret-santa.html'];
   // The History hub's tiles (history.html). `group` files each under a heading;
   // the tiles show in the order below within it.
+  // Audit X #9 folded five tiles into other pages: Playoff Race is
+  // Standings' Race tab, Hall of Fame a League History tab, Parlay Stats
+  // part of the Parlay tab, and Your Roster and Season Wrapped open from a
+  // manager's profile (franchise.html). Their old pages still work.
   const HISTORY = [
     { href: 'column.html', label: 'The Column', sub: 'Tuesday recap, Thursday preview', icon: ICONS.pen, group: 'This season' },
-    { href: 'overview.html', label: 'League History', sub: 'Champions, timeline, leaderboards', icon: ICONS.book, group: 'Records' },
+    { href: 'overview.html', label: 'League History', sub: 'Champions, timeline, Hall of Fame', icon: ICONS.book, group: 'Records' },
     { href: 'game-records.html', label: 'Game Records', sub: 'Every single-game record', icon: ICONS.chart, group: 'Records' },
     { href: 'head-to-head.html', label: 'Head to Head', sub: 'Any two managers', icon: ICONS.people, group: 'Managers' },
-    { href: 'franchise.html', label: 'Franchise', sub: 'One manager’s whole career', icon: ICONS.shield, group: 'Managers' },
-    { href: 'parlay-stats.html', label: 'Parlay Stats', sub: 'Hit rates, streaks and bet breakdowns', icon: ICONS.ticket, group: 'Records' },
-    { href: 'wrapped.html', label: 'Season Wrapped', sub: 'Any manager’s season, told as a story', icon: ICONS.spark, group: 'Managers' },
-    { href: 'hall-of-fame.html', label: 'Hall of Fame', sub: 'Legacy points and manager Elo', icon: ICONS.trophy, group: 'Records' },
+    { href: 'franchise.html', label: 'Managers', sub: 'Every manager’s season and career', icon: ICONS.shield, group: 'Managers' },
     { href: 'draft-board.html', label: 'Draft Board', sub: 'Every draft since 2015', icon: ICONS.grid, group: 'Drafts & rules' },
     { href: 'players.html', label: 'Players', sub: 'Every player’s story in this league', icon: ICONS.jersey, group: 'Managers' },
     { href: 'moves.html', label: 'Trades & Waivers', sub: 'Every trade graded, best pickups', icon: ICONS.swap, group: 'This season' },
-    { href: 'roster.html', label: 'Your Roster', sub: 'Byes ahead, free agents, position ranks', icon: ICONS.clip, group: 'This season' },
-    { href: 'race.html', label: 'Playoff Race', sub: 'Pick winners, watch the odds move', icon: ICONS.flag, group: 'This season' },
     { href: 'rule-changes.html', label: 'Rule Changes', sub: 'How the league has changed', icon: ICONS.cal, group: 'Drafts & rules' },
     { href: 'videos.html', label: 'League Videos', sub: 'Weekly recaps, sign-in required', icon: ICONS.play, group: 'This season' },
   ];
+  // Pages without a tile any more, still named for the back button.
+  const OTHER_NAMES = { 'roster.html': 'Your Roster', 'wrapped.html': 'Season Wrapped' };
 
   function currentFile() {
     const last = window.location.pathname.split('/').pop();
@@ -128,7 +132,20 @@
     wireYouTab(mount.querySelector('#tb-you'));
     backButton(file);
     headerTools();
+    parlaySwitch(file);
     tabSignals(mount.querySelector('.tabbar'));
+  }
+
+  // ---------- The Parlay switch (audit X #6) ----------
+  // Results, Legs and Stats were three pages with no way between them (Stats
+  // lived under History). One outlined switch under the title of each; the
+  // page's own tabs, if any, stay the solid ones below it.
+  function parlaySwitch(file) {
+    if (!PARLAY_PAGES.some(([f]) => f === file)) return;
+    const hdr = document.querySelector('.wrap > header');
+    if (!hdr || document.getElementById('pl-switch')) return;
+    hdr.insertAdjacentHTML('afterend', `<nav class="tabs outer pl-switch" id="pl-switch" aria-label="Parlay">${PARLAY_PAGES.map(([f, l]) =>
+      `<a class="tab${f === file ? ' on' : ''}" href="${f}"${f === file ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`);
   }
 
   // ---------- A way back (site audit VI #2) ----------
@@ -146,7 +163,9 @@
     const t = TABS.find(x => x.href === file);
     if (t) return t.label;
     const h = HISTORY.find(x => x.href === file);
-    if (h) return h.label;
+    if (h) return file === 'franchise.html' ? (new URLSearchParams(location.search).get('m') || h.label) : h.label;
+    if (OTHER_NAMES[file]) return OTHER_NAMES[file];
+    if (PARLAY_PAGES.some(([f]) => f === file)) return 'Parlay';
     const h1 = document.querySelector('.wrap > header h1');
     return h1 ? h1.textContent.trim() : 'Back';
   }
@@ -163,7 +182,7 @@
   }
   function backButton(file) {
     const trail = noteTrail();
-    if (TAB_FILES.includes(file) || NO_TAB.includes(file) || NO_BACK.includes(file)) return;
+    if (TAB_FILES.includes(file) || NO_TAB.includes(file) || NO_BACK.includes(file) || PARLAY_PAGES.some(([f]) => f === file)) return;
     const eb =document.querySelector('.wrap > header .eyebrow');
     if (!eb) return;
     const prev = trail.length >= 2 ? trail[trail.length - 2] : null;
@@ -194,11 +213,14 @@
   // which opens You (nav.css hides it at 1080px, where the top bar has it).
   // Past the title, a slim glass bar takes the title's place at the top,
   // with the title (or the h1's data-fold, e.g. "Week 6") and the status line.
-  // Your monogram opens your page (you.html, audit VIII #15) once your team
-  // is picked; before that, and on that page itself, it opens the You sheet.
+  // Your monogram opens your profile (franchise.html, audit X #10) once your
+  // team is picked; on your own profile it goes to its Settings tab (the
+  // page listens for rl-you-tap), and with no team yet it opens the You sheet.
   function youTap() {
-    if (getMe() && currentFile() !== 'you.html') location.href = 'you.html';
-    else openYou();
+    const me = getMe();
+    if (!me) { openYou(); return; }
+    if (currentFile() === 'franchise.html' && window.rlProfileIsMe && window.rlProfileIsMe()) { window.dispatchEvent(new Event('rl-you-tap')); return; }
+    location.href = pageLink('franchise.html', { m: me });
   }
   function meButton(cls) {
     const b = document.createElement('button');
@@ -632,8 +654,8 @@
       rows.push({ k: 'This week', name: `You vs ${opp}`, sub: `Week ${live.week}${typeof wp === 'number' ? ` · ${Math.round(wp)}% to win` : ''}`, href: 'index.html' });
       rows.push({ k: 'Rivalry', name: `Head to Head: ${me} vs ${opp}`, sub: 'Every game you two have played', href: pageLink('head-to-head.html', { a: me, b: opp }) });
     }
-    rows.push({ k: 'Odds', name: 'Playoff Race', sub: t ? `${t.record} · pick winners, watch your odds move` : 'Pick winners, watch the odds move', href: 'race.html' });
-    if (me) rows.push({ k: 'You', name: 'Your Franchise page', sub: `${me}'s whole career`, href: pageLink('franchise.html', { m: me }) });
+    rows.push({ k: 'Odds', name: 'Playoff Race', sub: t ? `${t.record} · pick winners, watch your odds move` : 'Pick winners, watch the odds move', href: 'standings.html?tab=race' });
+    if (me) rows.push({ k: 'You', name: 'Your profile', sub: `${me}'s season and whole career`, href: pageLink('franchise.html', { m: me }) });
     const hit = r => `<a class="sr-hit" href="${esc(r.href)}"><span class="sr-k">${r.k}</span><b>${esc(r.name)}</b><span class="sr-s">${esc(r.sub)}</span></a>`;
     box.innerHTML = `<div class="sb-grp">Jump to</div>${rows.map(hit).join('')}
       ${names.length ? `<div class="sb-grp">Managers</div><div class="sb-mgrs">${names.map(n => `<a href="${esc(pageLink('franchise.html', { m: n }))}"><span class="sb-mono${n === me ? ' you' : ''}">${esc(monogram(n))}</span>${esc(n)}</a>`).join('')}</div>` : ''}`;
@@ -816,7 +838,8 @@
   window.openYou = async function openYou(panel) {
     if (document.getElementById('you-sheet')) return;
     const here = panel === 'push' && document.getElementById('yu-alerts') || inlineYou[panel || 'you'];
-    if (here) { here.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    // Only while it's on the page: a profile tab switched away from leaves it behind.
+    if (here && document.body.contains(here)) { here.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     lastFocus = document.activeElement;
     youPanel = YOU_PANELS.some(([k]) => k === panel) ? panel : 'you';
     document.body.insertAdjacentHTML('beforeend', `<div class="scrim" id="you-scrim"></div>
@@ -1145,9 +1168,9 @@
       <label class="you-row"><span>Your matchup at the top of the dashboard<small>Off: it leads the matchups list instead</small></span><input type="checkbox" role="switch" class="you-sw" id="you-set-top"${set.meTop ? ' checked' : ''}></label>
       <div class="you-sec">
         <div class="you-sec-t">Your color</div>
-        <div class="you-sub">The ring around your matchup, cards and standings row.</div>
+        <div class="you-sub">The ring around your matchup, cards and standings row. Now: <b>${esc((ME_COLORS.find(c => c[0] === current) || ME_COLORS[0])[1])}</b>.</div>
         <div class="you-colors" role="radiogroup" aria-label="Your color">${ME_COLORS.map(([k, name, ring]) =>
-          `<button type="button" role="radio" class="you-color${k === current ? ' on' : ''}" data-color="${k}" aria-checked="${k === current}" style="--ring:${ring}"><span class="you-swatch" aria-hidden="true"></span>${esc(name)}</button>`).join('')}</div>
+          `<button type="button" role="radio" class="you-color${k === current ? ' on' : ''}" data-color="${k}" aria-checked="${k === current}" aria-label="${esc(name)}" title="${esc(name)}" style="--ring:${ring}"><span class="you-swatch" aria-hidden="true"></span></button>`).join('')}</div>
         ${me ? '' : '<div class="you-note">Pick your team under You to see it on the site.</div>'}
       </div>${hidden.length ? `
       <div class="you-sec">
@@ -1222,12 +1245,14 @@
   // doesn't ask again. `fresh` asks anyway (the Recent list itself).
   const ALERTS_KEY = 'rl-recent';
   async function recentAlerts(fresh) {
-    const me = getMe() || '';
+    const me = (getMe() || '') + '|' + ((getAuth() || {}).manager || '');
     if (!fresh) {
       try { const c = JSON.parse(sessionStorage.getItem(ALERTS_KEY)); if (c && c.me === me && Date.now() - c.at < 3 * 60 * 1000) return c.alerts; } catch (e) {}
     }
     try {
-      const res = await fetch(WORKER + '/push/recent?me=' + encodeURIComponent(me), { cache: 'no-store' });
+      // The Worker answers for the signed-in key, not a name (audit X #3);
+      // with no sign-in, only the alerts that went to everyone.
+      const res = await fetch(WORKER + '/push/recent', { cache: 'no-store', headers: authHeaders() });
       if (!res.ok) return null;
       const alerts = (await res.json()).alerts;
       try { sessionStorage.setItem(ALERTS_KEY, JSON.stringify({ me, at: Date.now(), alerts })); } catch (e) {}

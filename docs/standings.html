@@ -38,9 +38,9 @@
 <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=38">
-<link rel="stylesheet" href="nav.css?v=32">
+<link rel="stylesheet" href="nav.css?v=33">
 <link rel="stylesheet" href="league.css?v=7">
-<link rel="stylesheet" href="features.css?v=8">
+<link rel="stylesheet" href="features.css?v=9">
 <style>
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
@@ -194,6 +194,9 @@
   .st-od .od{ padding:2px 6px; }
   /* Playoff odds open Playoff Race: a bigger tap area than the pill. */
   .od.go{ position:relative; cursor:pointer; }
+  .od.mark{ min-width:2.6em; text-align:center; font-size:0.78rem; }
+  .st-marks{ color:var(--text-dim); font-size:0.74rem; margin:10px 4px 0; }
+  .st-marks b{ color:var(--text); }
   .od.go::after{ content:''; position:absolute; inset:-14px -8px; }
   .od.go:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   @media (hover:hover){ .od.go:hover{ background:rgba(255,255,255,0.05); } }
@@ -245,10 +248,11 @@
     <footer id="site-footer"></footer>
   </div>
 
-<script src="nav.js?v=45"></script>
+<script src="nav.js?v=46"></script>
 <script src="page-common.js?v=42"></script>
 <script src="league-common.js?v=6"></script>
-<script src="race-sim.js?v=3"></script>
+<script src="race-sim.js?v=4"></script>
+<script src="race-ui.js?v=1"></script>
 <script src="rivals.js?v=4"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -258,7 +262,9 @@
   const n0 = n => Math.round(n).toLocaleString('en-US');
   // "Regular Szn" / "Final" (site audit II #18): the long names pushed the
   // Year dropdown onto its own row on a phone.
-  const TABS = [['reg', 'Regular Szn'], ['final', 'Final'], ['bracket', 'Bracket']];
+  // Race (audit X #9): Playoff Race moved in as a tab (race-ui.js), for
+  // the season in progress only.
+  const TABS = [['reg', 'Regular Szn'], ['final', 'Final'], ['bracket', 'Bracket'], ['race', 'Race']];
   let D, tab = 'final', optsFor = null, forcedReg = false;
   const $ = id => document.getElementById(id);
   // No card title: it read "Regular Season" / "Final Standings" directly
@@ -462,7 +468,7 @@
         if (d.medianGames !== false) { if (medianWin.get(t.name)) w++; else l++; }
       }
       return { player: t.manager, w, l, ties, pf: p.pf + (mode === 'proj' ? own : 0), pa: p.pa + (mode === 'proj' && os !== null ? os : 0),
-        odds: mode === 'through' || liveFinal() ? t.playoffPct : null, ahead: t.ahead || [] };
+        odds: mode === 'through' || liveFinal() ? t.playoffPct : null, clinch: mode === 'through' || liveFinal() ? t.clinch : null, ahead: t.ahead || [] };
     });
     // Through keeps the Worker's own order (its tiebreakers); projected
     // orders by wins, then points, as the dashboard did.
@@ -550,7 +556,10 @@
     const rec = `${r.w}-${r.l}${r.ties ? '-' + r.ties : ''}`;
     // Playoff odds as of the end of last week (Through mode only); win % otherwise.
     const last = oddsCol
-      ? (typeof r.odds === 'number' ? `<i class="od go ${r.odds >= 50 ? 'high' : 'low'}" data-race role="link" tabindex="0" aria-label="Playoff odds ${r.odds.toFixed(0)}%: open Playoff Race">${r.odds.toFixed(0)}%</i>` : '<span class="st-dim">—</span>')
+      // Never 100% or 0% until it is settled; then a letter (audit X #2).
+      ? (typeof r.odds === 'number' ? (r.clinch
+        ? `<i class="od go mark ${r.clinch === 'e' ? 'low' : 'high'}" data-race role="link" tabindex="0" title="${RaceSim.MARKS[r.clinch]}" aria-label="${RaceSim.MARKS[r.clinch]}: open the Race tab">${r.clinch}</i>`
+        : `<i class="od go ${r.odds >= 50 ? 'high' : 'low'}" data-race role="link" tabindex="0" aria-label="Playoff odds ${RaceSim.pct(r.odds)}: open the Race tab">${RaceSim.pct(r.odds)}</i>`) : '<span class="st-dim">—</span>')
       : `<span class="st-pct">${pct(r.pct)}</span>`;
     // Your Daddy / Your Bitch (rivals.js), in your ring color, after the name.
     return `<a class="${cls.join(' ')}" href="${esc(pageLink('franchise.html', { m: r.player }))}" data-rv="${esc(r.player)}"><span class="rk">${r.former ? '–' : (r.rank ?? k + 1)}</span>` +
@@ -645,7 +654,9 @@
     // ESPN leaves the final ranks empty until the season ends, so mid-season
     // "Final" would just repeat Regular Szn: the tab waits for the finish.
     const noFinal = year === D.currentYear && !complete;
-    const tabs = noFinal ? TABS.filter(([k]) => k !== 'final') : TABS;
+    const raceOk = noFinal;
+    if (tab === 'race' && !raceOk) tab = 'reg';
+    const tabs = TABS.filter(([k]) => !(noFinal && k === 'final') && !(k === 'race' && !raceOk));
     if (noFinal && tab === 'final') { tab = 'reg'; forcedReg = true; }
     else if (!noFinal && forcedReg && tab === 'reg') { tab = 'final'; forcedReg = false; }
     // The defaults (this season, Final Standings) leave the URL bare.
@@ -653,6 +664,13 @@
     if (tab === 'bracket') {
       $('tabs').innerHTML = tabs.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
       $('standings-container').innerHTML = `<div class="glass"><div class="ft-body" style="padding:18px">${bracketView(year)}</div></div>`;
+      return;
+    }
+    if (tab === 'race') {
+      $('tabs').innerHTML = tabs.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
+      askLive();
+      if (!LIVE) { $('standings-container').innerHTML = '<div class="glass"><div class="ft-empty">Running the season…</div></div>'; return; }
+      RaceUI.draw($('standings-container'), LIVE.raw);
       return;
     }
     let rows = build(year, tab);
@@ -698,21 +716,24 @@
     $('tabs').innerHTML = tabs.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}"${k === tab && note ? ` title="${esc(note)}"` : ''}>${l}</button>`).join('');
     // 18px above the first row (or the legend) matches the rows' 18px sides.
     const oddsCol = rows.some(r => typeof r.odds === 'number');
-    $('standings-container').innerHTML = (useBand ? bandHtml(LIVE.raw) : '') + `<div class="glass">${legend}<div class="st-list${year === 'all' ? ' wide' : ''}">${header(oddsCol)}${rows.map((r, k) => row(r, k, rows.length, tab, complete, year, race && race[k], sos && sos[k], hard && hard[k], live ? formOf(year, r.player) : null, oddsCol) + (spots && k === spots - 1 && rows.length > spots ? PLAYOFF_LINE : '')).join('')}</div></div>` +
+    const marked = [...new Set(rows.map(r => r.clinch).filter(Boolean))].sort((a, b) => 'zxe'.indexOf(a) - 'zxe'.indexOf(b));
+    const marksNote = marked.length ? `<div class="st-marks">${marked.map(m => `<b>${m}</b> ${RaceSim.MARKS[m].toLowerCase()}`).join(' · ')}</div>` : '';
+    $('standings-container').innerHTML = (useBand ? bandHtml(LIVE.raw) : '') + `<div class="glass">${legend}<div class="st-list${year === 'all' ? ' wide' : ''}">${header(oddsCol)}${rows.map((r, k) => row(r, k, rows.length, tab, complete, year, race && race[k], sos && sos[k], hard && hard[k], live ? formOf(year, r.player) : null, oddsCol) + (spots && k === spots - 1 && rows.length > spots ? PLAYOFF_LINE : '')).join('')}</div>${marksNote}</div>` +
       // Rank by Week: the season in progress, or a finished one's Regular Szn tab.
       (year !== 'all' && (live || tab === 'reg') ? bumpChart(year) : '');
     drawBump();
     watchBand();
   }
 
-  // The odds open Playoff Race, not the row's Franchise page or rival sheet.
+  // The odds open the Race tab, not the row's profile or rival sheet.
   // Caught on window, before page-common.js's rival tap on the document.
   const toRace = e => {
     if (!e.target.closest || !e.target.closest('[data-race]')) return;
     if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
     e.stopPropagation();
-    location.href = 'race.html';
+    tab = 'race'; forcedReg = false; render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   window.addEventListener('click', toRace, true);
   window.addEventListener('keydown', toRace, true);
