@@ -221,6 +221,28 @@ svg.elo{ width:100%; height:auto; display:block; }
 .rc-tag{ font-size:var(--fs-label); font-weight:800; letter-spacing:0.05em; text-transform:uppercase; margin-left:5px; vertical-align:1px; }
 .rc-tag.in{ color:var(--turf); } .rc-tag.out{ color:var(--loss); }
 
+/* Race tab: title odds and the money, and odds week by week (audit X #14, #15). */
+.rc-mls{ display:grid; gap:6px; }
+.rc-ml{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--item); }
+.rc-ml b{ display:block; font-size:var(--fs-small); }
+.rc-ml span{ display:block; color:var(--text-dim); font-size:var(--fs-detail); margin-top:1px; }
+.rc-ml em{ font-style:normal; font-family:var(--scoreboard); font-weight:700; color:var(--gold); white-space:nowrap; }
+.rc-mh, .rc-mr{ grid-template-columns:minmax(0,1fr) 56px 64px !important; }
+.rc-ev{ font-family:var(--scoreboard); font-weight:700; color:var(--gold); font-size:1.05rem; text-align:right; }
+.rc-hp{ display:flex; flex-wrap:wrap; gap:6px; }
+.rc-hp button{ height:36px; padding:0 12px; border-radius:999px; border:1px solid var(--track-line); background:rgba(255,255,255,0.04); color:var(--text-dim); font:600 var(--fs-small) var(--body); cursor:pointer; }
+.rc-hp button.on{ color:var(--gold); border-color:var(--gold); background:var(--lead-tint); }
+.rc-hp button.you{ color:var(--me-ring, #7AAEDB); }
+.rc-hp button.you.on{ border-color:var(--me-ring, #7AAEDB); background:color-mix(in srgb, var(--me-ring, #7AAEDB) 10%, transparent); }
+.rc-hc svg{ display:block; width:100%; max-width:640px; height:auto; }
+.rc-hc text{ fill:var(--text-dim); font:600 11px var(--body); }
+.rc-hc text.end{ fill:var(--text); font-weight:700; font-size:13px; }
+.rc-hc .gl{ stroke:rgba(255,255,255,0.07); } .rc-hc .mid{ stroke:rgba(255,255,255,0.22); stroke-dasharray:4 4; }
+.rc-hc .o{ fill:none; stroke:rgba(255,255,255,0.13); stroke-width:1.5; }
+.rc-hc .a{ fill:none; stroke:var(--gold); stroke-width:2.5; stroke-linejoin:round; }
+.rc-hc .d{ fill:var(--gold); stroke:var(--surface); stroke-width:2; }
+.rc-hc .a.you{ stroke:var(--me-ring, #7AAEDB); } .rc-hc .d.you{ fill:var(--me-ring, #7AAEDB); }
+
 /* ---------- The Column (column.html) ---------- */
 .col-art{ padding:18px 18px 20px; }
 .col-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; }

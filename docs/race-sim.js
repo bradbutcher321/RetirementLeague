@@ -69,17 +69,29 @@ const RaceSim = (() => {
   }
 
   // Same seed every time, so the same inputs always give the same odds.
-  function simulate(inp, n, picks, force) {
+  // opts.bracket (audit X #14) also plays each season on through the
+  // bracket and pays it out: out[t].title / .final, and .ev, the dollars a
+  // team can expect from opts.pay ({ first, second, third, week, season })
+  // with opts.high ({ score, manager }) as the high week to beat. Those
+  // draws come after the regular season's, so the odds don't change.
+  function simulate(inp, n, picks, force, opts) {
     let seed = 20261013;
     const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
     const gauss = () => { let u = 0, v = 0; while (u === 0) u = rnd(); while (v === 0) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
     const { teams, base, mu, live, sched, week, pickWeek, spots, byes } = inp;
     const N = teams.length;
     // fw: how often the season ends on each win total -> [seasons, seasons in the playoffs] (Playoff Race's Your path, audit IV #12).
-    const out = Object.fromEntries(teams.map(t => [t, { po: 0, bye: 0, sacko: 0, fw: {} }]));
+    const out = Object.fromEntries(teams.map(t => [t, { po: 0, bye: 0, sacko: 0, fw: {}, title: 0, final: 0, ev: 0 }]));
+    const br = opts && opts.bracket, pay = (opts && opts.pay) || {};
+    // The bracket draws from its own stream, so the regular season's draws
+    // (and every odds number) are the same with it or without it.
+    let seed2 = 7310013;
+    const rnd2 = () => { seed2 = (seed2 * 16807) % 2147483647; return (seed2 - 1) / 2147483646; };
+    const gauss2 = () => { let u = 0, v = 0; while (u === 0) u = rnd2(); while (v === 0) v = rnd2(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
     const cond = force ? { win: Object.fromEntries(teams.map(t => [t, [0, 0]])), loss: Object.fromEntries(teams.map(t => [t, [0, 0]])) } : null;
     for (let k = 0; k < n; k++) {
       const w = {}, pf = {}, pickRes = {};
+      let hiS = br && opts.high ? opts.high.score : 0, hiM = br && opts.high ? opts.high.manager : null;
       teams.forEach(t => { w[t] = base[t].w; pf[t] = base[t].pf; });
       sched.forEach(({ w: wk, pairs }) => {
         const sc = {};
@@ -98,6 +110,7 @@ const RaceSim = (() => {
           if (wk === pickWeek) { pickRes[a] = winner === a; pickRes[b] = winner === b; }
         });
         teams.slice().sort((x, y) => sc[y] - sc[x]).slice(0, N / 2).forEach(t => { w[t]++; });
+        if (br) teams.forEach(t => { if (sc[t] > hiS) { hiS = sc[t]; hiM = t; } });
         teams.forEach(t => { if (!(wk === week && live[t] && live[t].fin)) pf[t] += sc[t]; });
       });
       const rank = teams.slice().sort((x, y) => (w[y] - w[x]) || (pf[y] - pf[x]));
@@ -111,8 +124,30 @@ const RaceSim = (() => {
         if (i >= N - 2) o.sacko++;
         if (cond && pickRes[t] !== undefined) { const c = pickRes[t] ? cond.win[t] : cond.loss[t]; c[0]++; if (i < spots) c[1]++; }
       });
+      if (br) {
+        // The bracket: six teams, the top two on byes, the top seed meets the
+        // lowest one left; four teams, 1 v 4 and 2 v 3. Then a final and a
+        // third-place game. Every playoff score is the team's own average.
+        const g = (a, b) => (mu[a] + SD * gauss2() > mu[b] + SD * gauss2() ? a : b);
+        const lose = (a, b, win) => (win === a ? b : a);
+        const s = rank.slice(0, spots);
+        let semis;
+        if (spots >= 6) {
+          const q1 = g(s[2], s[5]), q2 = g(s[3], s[4]);
+          const low = rank.indexOf(q1) > rank.indexOf(q2) ? q1 : q2, other = low === q1 ? q2 : q1;
+          semis = [[s[0], low], [s[1], other]];
+        } else semis = [[s[0], s[3]], [s[1], s[2]]];
+        const f1 = g(...semis[0]), f2 = g(...semis[1]);
+        const champ = g(f1, f2), second = lose(f1, f2, champ);
+        const l1 = lose(...semis[0], f1), l2 = lose(...semis[1], f2), third = g(l1, l2);
+        out[champ].title++; out[f1].final++; out[f2].final++;
+        out[champ].ev += pay.first || 0; out[second].ev += pay.second || 0; out[third].ev += pay.third || 0;
+        if (hiM && out[hiM]) out[hiM].ev += pay.week || 0;
+        const pfTop = teams.reduce((a, t) => (pf[t] > pf[a] ? t : a), teams[0]);
+        out[pfTop].ev += pay.season || 0;
+      }
     }
-    teams.forEach(t => { const o = out[t]; o.po *= 100 / n; o.bye *= 100 / n; o.sacko *= 100 / n; });
+    teams.forEach(t => { const o = out[t]; o.po *= 100 / n; o.bye *= 100 / n; o.sacko *= 100 / n; o.title *= 100 / n; o.final *= 100 / n; o.ev /= n; });
     if (cond) teams.forEach(t => {
       out[t].ifWin = cond.win[t][0] ? cond.win[t][1] * 100 / cond.win[t][0] : null;
       out[t].ifLoss = cond.loss[t][0] ? cond.loss[t][1] * 100 / cond.loss[t][0] : null;
@@ -171,5 +206,39 @@ const RaceSim = (() => {
     return d;
   }
 
-  return { RUNS, inputs, simulate, apply, clinch, pct, MARKS };
+  // Odds after each finished week (audit X #15), rebuilt from the season's
+  // games with this same sim (fewer runs), then today's number from the
+  // live payload `d` (after apply). games: league.json rows as objects
+  // ({ year, week, type, p1, p2, s1, s2, winner, median }). Returns
+  // { manager: [after the draft, after Week 1, ..., now] }, kept per tab.
+  function history(d, games, year, medianFrom) {
+    if (!d || !d.teams || !d.regularSeasonWeeks) return null;
+    const gs = games.filter(g => g.year === year && g.type === 'Reg' && g.p2 && g.winner && g.winner !== 'In Progress' && (g.s1 > 0 || g.s2 > 0));
+    const done = gs.length ? Math.max(...gs.map(g => g.week)) : 0;
+    const key = `rl-odds-path:${year}:${done}:${gs.length}:${Math.round(d.teams.reduce((a, t) => a + (t.playoffPct || 0), 0))}`;
+    try { const c = JSON.parse(sessionStorage.getItem(key)); if (c) return c; } catch (e) {}
+    const mgrs = d.teams.map(t => t.manager);
+    const oppOf = Object.fromEntries(mgrs.map(m => [m, {}]));
+    games.filter(g => g.year === year && g.type === 'Reg' && g.p2).forEach(g => { if (oppOf[g.p1]) oppOf[g.p1][g.week] = g.p2; if (oppOf[g.p2]) oppOf[g.p2][g.week] = g.p1; });
+    d.teams.forEach(t => (t.ahead || []).forEach((o, i) => { oppOf[t.manager][d.week + i] = o; }));
+    const out = Object.fromEntries(mgrs.map(m => [m, []]));
+    for (let k = 0; k < Math.min(done, d.week - 1); k++) {
+      const prior = Object.fromEntries(mgrs.map(m => [m, { w: 0, l: 0, pf: 0 }]));
+      gs.filter(g => g.week <= k).forEach(g => [[g.p1, g.s1, g.s2], [g.p2, g.s2, g.s1]].forEach(([m, s, o]) => {
+        const r = prior[m]; if (!r) return;
+        r.pf += s; if (s > o) r.w++; else r.l++;
+        if (year >= medianFrom && g.median != null) { if (s > g.median) r.w++; else r.l++; }
+      }));
+      const ahead = m => { const a = []; for (let w = k + 1; w <= d.regularSeasonWeeks; w++) a.push(oppOf[m][w] || null); return a; };
+      const inp = inputs({ week: k + 1, regularSeasonWeeks: d.regularSeasonWeeks, playoffTeamCount: d.playoffTeamCount, matchups: [], teams: mgrs.map(m => ({ manager: m, prior: prior[m], ahead: ahead(m) })) });
+      if (!inp) continue;
+      const res = simulate(inp, 1200);
+      mgrs.forEach(m => out[m].push(res[m].po));
+    }
+    d.teams.forEach(t => out[t.manager].push(t.playoffPct));
+    try { sessionStorage.setItem(key, JSON.stringify(out)); } catch (e) {}
+    return out;
+  }
+
+  return { RUNS, inputs, simulate, apply, clinch, pct, MARKS, history };
 })();

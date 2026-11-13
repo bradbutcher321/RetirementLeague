@@ -1455,6 +1455,7 @@
      then a bordered item box standing in for their featured-leg box --
      manager + score on one line, team + the week/qualifier on the next. No
      ambient wash; gold is spent in exactly one place, the score itself. */
+  .acc-prize{ margin-left:6px; padding:2px 8px; border-radius:999px; border:1px solid var(--lead-line); color:var(--gold); font:700 var(--fs-label) var(--body); vertical-align:2px; }
   .accolade-card{
     background: linear-gradient(165deg, var(--surface-raised), var(--surface));
     border: 1px solid var(--line);
@@ -1725,7 +1726,7 @@
 
 <script src="nav.js?v=46"></script>
 <script src="page-common.js?v=42"></script>
-<script src="race-sim.js?v=4"></script>
+<script src="race-sim.js?v=5"></script>
 <script src="share.js?v=1"></script>
 <script src="record-watch.js?v=1"></script>
 <script src="rivals.js?v=4"></script>
@@ -5878,6 +5879,16 @@
   // ---------- Superlatives: through last week / + this week live / + this week projected ----------
   let superlativesData = null;
 
+  // What the two Superlatives pay (audit X #14), from Rule Changes' payouts.
+  let SUP_PAY = null;
+  fetch('data/rule-changes.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(rc => {
+    const list = (rc && rc.current && rc.current.payouts) || [];
+    const amt = re => { const x = list.find(p => re.test(p.label)); return x ? x.amount : 0; };
+    SUP_PAY = { week: amt(/week/i), season: amt(/season/i) };
+    renderSuperlatives();
+  }).catch(() => {});
+  const supPrize = v => (v ? ` <span class="acc-prize">$${v}</span>` : '');
+
   function renderSuperlatives() {
     const data = superlativesData;
     if (!data) return;
@@ -5955,10 +5966,9 @@
 
     let highExtra = '';
     if (m === 'through') {
-      // A past week's other view is its final; a playoff week has no other view.
-      const other = data.playoffWeek ? '' : data.archived ? ` Switch to Week ${week} final to see how that week's scores stack up.`
-        : " Switch to a live or projected view to see how this week's scores stack up.";
-      highExtra = `<div class="sup-note">Record set in Week ${prevHigh.week}.${other}</div>`;
+      // Who it pays and who's closest (audit X #14), not how to switch views.
+      const left = Math.max(0, (data.regularSeasonWeeks || 14) - (week - 1));
+      highExtra = `<div class="sup-note">Set in Week ${prevHigh.week}${SUP_PAY && SUP_PAY.week ? `, the score to beat for the $${SUP_PAY.week}` : ''}.${left ? ` ${left} regular-season week${left === 1 ? '' : 's'} left to beat it.` : ''}</div>`;
     } else {
       const topTeams = [...teams].sort((a, b) => (m === 'proj' ? b.proj - a.proj : b.cur - a.cur)).slice(0, 3);
       const domainVals = topTeams.flatMap(r => [r.cur, r.proj]).concat(recordScore ? [recordScore] : []);
@@ -6014,12 +6024,13 @@
     // it only belongs in live/projected mode; Through mode has no movement.
     const leadCaption = m === 'through' ? modeLabel
       : `${week > 1 ? 'Week ' + (week - 1) : 'Preseason'} \u2192 Week ${week}${fin ? '' : m === 'live' ? ' live' : ' projected'}`;
-    const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${leadCaption}</span></div>${leadRows}</div>`
+    const chaser = ranked[1];
+    const leadExtra = `<div class="cmp-wrap"><div class="cmp-head"><span>${leadCaption}</span>${chaser ? `<span>${esc(chaser.manager || chaser.n)} is ${fmtScore(total(leader) - total(chaser))} back</span>` : ''}</div>${leadRows}</div>`
       + leaderStripHtml(teams, leader, week, m, fin);
 
     container.innerHTML =
-      card('Season High Score', high.score, high.team, high.manager, high.meta, highExtra, tag(high.isNew, 'New record')) +
-      card('Season Points Leader', total(leader), leader.team, leader.manager, modeLabel, leadExtra, tag(leaderChanged, 'New leader'));
+      card('Season High Score' + supPrize(SUP_PAY && SUP_PAY.week), high.score, high.team, high.manager, high.meta, highExtra, tag(high.isNew, 'New record')) +
+      card('Season Points Leader' + supPrize(SUP_PAY && SUP_PAY.season), total(leader), leader.team, leader.manager, modeLabel, leadExtra, tag(leaderChanged, 'New leader'));
     scrollStripsToEnd();
   }
 

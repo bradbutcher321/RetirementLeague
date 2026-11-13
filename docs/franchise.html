@@ -462,7 +462,7 @@
 <script src="nav.js?v=46"></script>
 <script src="page-common.js?v=42"></script>
 <script src="achievements.js?v=3"></script>
-<script src="race-sim.js?v=4"></script>
+<script src="race-sim.js?v=5"></script>
 <script>
   const { seasonState, bestChampionshipStreak, everHitPlayoffRate, ACHIEVEMENTS } = ACHIEVEMENTS_LIB;
   const fmt = (n, d = 0) => (n === null || n === undefined || Number.isNaN(n)) ? '—' : Number(n).toFixed(d);
@@ -1385,35 +1385,8 @@
     const hi = Math.max(...swap.map(x => x.w)), lo = Math.min(...swap.map(x => x.w));
     return { wins, games, exp, luck: wins - exp, best: { w: hi, with: swap.filter(x => x.w === hi).map(x => x.j) }, worst: { w: lo, with: swap.filter(x => x.w === lo).map(x => x.j) } };
   }
-  // Odds after each finished week, rebuilt from league.json with the
-  // site's sim (fewer runs); the last point is the live number.
-  function oddsPath(year, d) {
-    const gs = doneGames(year);
-    const done = gs.length ? Math.max(...gs.map(g => g.week)) : 0;
-    const key = `rl-odds-path:${year}:${done}:${gs.length}`;
-    try { const c = JSON.parse(sessionStorage.getItem(key)); if (c) return c; } catch (e) {}
-    const mgrs = d.teams.map(t => t.manager), era = data.median_era_start_year || 9999;
-    const oppOf = Object.fromEntries(mgrs.map(m => [m, {}]));
-    GAMES.filter(g => g.year === year && g.type === 'Reg' && g.p2).forEach(g => { if (oppOf[g.p1]) oppOf[g.p1][g.week] = g.p2; if (oppOf[g.p2]) oppOf[g.p2][g.week] = g.p1; });
-    d.teams.forEach(t => (t.ahead || []).forEach((o, i) => { oppOf[t.manager][d.week + i] = o; }));
-    const out = Object.fromEntries(mgrs.map(m => [m, []]));
-    for (let k = 0; k < done; k++) {
-      const prior = Object.fromEntries(mgrs.map(m => [m, { w: 0, l: 0, pf: 0 }]));
-      gs.filter(g => g.week <= k).forEach(g => [[g.p1, g.s1, g.s2], [g.p2, g.s2, g.s1]].forEach(([m, s, o]) => {
-        const r = prior[m]; if (!r) return;
-        r.pf += s; if (s > o) r.w++; else r.l++;
-        if (year >= era && g.median != null) { if (s > g.median) r.w++; else r.l++; }
-      }));
-      const ahead = m => { const a = []; for (let w = k + 1; w <= d.regularSeasonWeeks; w++) a.push(oppOf[m][w] || null); return a; };
-      const inp = RaceSim.inputs({ week: k + 1, regularSeasonWeeks: d.regularSeasonWeeks, playoffTeamCount: d.playoffTeamCount, matchups: [], teams: mgrs.map(m => ({ manager: m, prior: prior[m], ahead: ahead(m) })) });
-      if (!inp) continue;
-      const res = RaceSim.simulate(inp, 1200);
-      mgrs.forEach(m => out[m].push(res[m].po));
-    }
-    d.teams.forEach(t => out[t.manager].push(t.playoffPct));
-    try { sessionStorage.setItem(key, JSON.stringify(out)); } catch (e) {}
-    return out;
-  }
+  // Odds after each finished week: RaceSim.history (race-sim.js, audit X #15).
+  const oddsPath = (year, d) => RaceSim.history(d, GAMES, year, data.median_era_start_year || 9999) || {};
   function sparkSvg(vals) {
     if (!vals || vals.length < 2) return '';
     const W = 300, H = 56, L = 4, R = 30, x = i => L + i * (W - L - R) / (vals.length - 1), y = v => 4 + (100 - Math.max(0, Math.min(100, v))) * (H - 8) / 100;

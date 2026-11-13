@@ -5,18 +5,29 @@
 // 6,000 times. Nothing is gold until you pick: a pick outlines the winner,
 // and each side's button carries its current odds.
 //
-// RaceUI.draw(el, live) draws into el from the Worker's dashboard payload
-// and keeps the picks while the same week is shown. Needs race-sim.js,
-// page-common.js (esc, isMe, pageLink) and features.css (rc-*, ft-*).
+// RaceUI.draw(el, live, ctx) draws into el from the Worker's dashboard
+// payload and keeps the picks while the same week is shown. ctx: { games,
+// year, medianFrom } for the week-by-week chart (audit X #15). Also shows
+// title odds and what each team can expect to win (audit X #14), from
+// data/rule-changes.json's payouts. Needs race-sim.js, page-common.js (esc,
+// isMe, pageLink) and features.css (rc-*, ft-*).
 const RaceUI = (() => {
   const pct = RaceSim.pct; // never 100% / 0% until settled (audit X #2)
   const RUNS = RaceSim.RUNS;
-  let EL = null, LIVE = null, KEY = null;
+  let EL = null, LIVE = null, KEY = null, CTX = null, OPTS = null, histPick = null;
+  // The season's payouts (Rule Changes), once: { first, second, third, week, season }.
+  let PAY = null;
+  const payP = fetch('data/rule-changes.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(rc => {
+    const list = (rc && rc.current && rc.current.payouts) || [];
+    const amt = re => { const x = list.find(p => re.test(p.label)); return x ? x.amount : 0; };
+    PAY = { first: amt(/^1st/), second: amt(/^2nd/), third: amt(/^3rd/), week: amt(/week/i), season: amt(/season/i), buyIn: (rc && rc.current && rc.current.buy_in) || 0 };
+  }).catch(() => { PAY = {}; });
   let INP, TEAMS, base, sched, PICK_WEEK, SPOTS, BYES, N, BASELINE;
   const picks = {};              // "week|a|b" -> winner
   let wkSel = null;              // the week the pick card shows
   const picked = w => Object.keys(picks).filter(k => k.startsWith(w + '|')).length;
-  const simulate = (n, force) => RaceSim.simulate(INP, n, picks, force);
+  const simulate = (n, force) => RaceSim.simulate(INP, n, picks, force, OPTS);
+  const money = v => '$' + Math.round(v).toLocaleString('en-US');
 
   function setup(live) {
     INP = RaceSim.inputs(live);
@@ -84,8 +95,60 @@ const RaceUI = (() => {
               <div class="rc-v sm">${BYES ? pct(r.bye) : '—'}</div>
               <div class="rc-v sm${r.sacko >= 25 ? ' red' : ''}">${pct(r.sacko)}</div></a>${i === SPOTS - 1 ? PLAYOFF_LINE : ''}`;
           }).join('')}</div></div></div>
+        ${moneyHtml(res, order)}
       </div></div>
+      ${histHtml()}
       <div class="rc-foot">Each team scores like its average so far, pulled toward the league’s. Ties go to points scored, the league’s rule. The Sacko column is the chance of finishing ${N - 1}th or ${N}th, which since 2025 means playing in the Sacko game. These are the same odds the rest of the site shows.</div>`;
+  }
+
+  // Title odds and the money (audit X #14): the bracket played out on every
+  // simulated season, and what's already up for grabs.
+  function moneyHtml(res, order) {
+    if (!PAY || !PAY.first) return '';
+    const L = LIVE, rows = TEAMS.slice().sort((a, b) => res[b].title - res[a].title || res[b].po - res[a].po);
+    const pfs = (L.teams || []).map(t => ({ m: t.manager, pf: t.pointsFor || 0 })).sort((a, b) => b.pf - a.pf);
+    const hi = L.priorSeasonHigh;
+    const lines = [
+      hi && PAY.week ? `<div class="rc-ml"><div><b>High week · ${money(PAY.week)}</b><span>${esc(hi.manager)} ${hi.score.toFixed(2)}, Week ${hi.week}</span></div><em>${esc(hi.manager)}</em></div>` : '',
+      pfs.length > 1 && PAY.season ? `<div class="rc-ml"><div><b>Season points · ${money(PAY.season)}</b><span>${esc(pfs[0].m)} ${pfs[0].pf.toFixed(2)} · ${esc(pfs[1].m)} is ${(pfs[0].pf - pfs[1].pf).toFixed(2)} back</span></div><em>${esc(pfs[0].m)}</em></div>` : '',
+      `<div class="rc-ml"><div><b>1st ${money(PAY.first)}${PAY.second ? ` · 2nd ${money(PAY.second)}` : ''}${PAY.third ? ` · 3rd ${money(PAY.third)}` : ''}</b><span>Decided in the playoffs</span></div></div>`,
+    ].join('');
+    return `<div class="glass ft-sec"><div class="panel-title">Title odds and the money <span class="ft-chip">${RUNS.toLocaleString('en-US')} seasons</span></div>
+      <div class="ft-body"><div class="rc-mls">${lines}</div>
+      <div class="rc-head rc-mh"><span></span><span>Title</span><span>Expected</span></div>
+      <div class="rc-list">${rows.map(t => `<a class="ft-item rc-tr rc-mr${isMe(t) ? ' me' : ''}" href="${esc(pageLink('franchise.html', { m: t }))}">
+        <div><b>${esc(t)}</b><span class="sub">final ${pct(res[t].final)} · playoffs ${pct(res[t].po)}</span></div>
+        <div class="rc-v"><span class="oddp ${res[t].title >= 10 ? 'good' : ''}">${pct(res[t].title)}</span></div>
+        <div class="rc-v rc-ev">${money(res[t].ev)}</div></a>`).join('')}</div>
+      <div class="ft-note" style="padding:0 2px">Expected is what a team wins on average across the simulated seasons, prizes included${PAY.buyIn ? `, against the ${money(PAY.buyIn)} buy-in` : ''}. Playoff games are played at each team's average.</div></div></div>`;
+  }
+
+  // Playoff odds after every week (audit X #15): yours (or the one picked)
+  // over everyone else's in grey.
+  function histHtml() {
+    if (!CTX || !CTX.games) return '';
+    const H = RaceSim.history(LIVE, CTX.games, CTX.year, CTX.medianFrom);
+    if (!H) return '';
+    const sel = histPick && H[histPick] ? histPick : TEAMS.find(t => isMe(t)) || TEAMS.slice().sort((a, b) => BASELINE[b].po - BASELINE[a].po)[0];
+    const v = H[sel], n = v.length;
+    if (n < 2) return '';
+    const W = 600, Ht = 230, Lp = 36, Rp = 44, Tp = 12, Bp = 24;
+    const x = i => Lp + i * (W - Lp - Rp) / (n - 1), y = p => Tp + (100 - p) * (Ht - Tp - Bp) / 100;
+    const line = m => H[m].map((p, i) => `${x(i).toFixed(1)},${y(p).toFixed(1)}`).join(' ');
+    let hiI = 0, loI = 0, sw = 1;
+    v.forEach((p, i) => { if (p > v[hiI]) hiI = i; if (p < v[loI]) loI = i; if (i && Math.abs(p - v[i - 1]) > Math.abs(v[sw] - v[sw - 1])) sw = i; });
+    const wk = i => (i ? `Week ${i}` : 'the draft');
+    return `<div class="glass ft-sec rc-hist"><div class="panel-title">Playoff odds, week by week</div>
+      <div class="ft-body"><div class="rc-hp">${TEAMS.map(t => `<button type="button" data-hist="${esc(t)}" class="${t === sel ? 'on' : ''}${isMe(t) ? ' you' : ''}" aria-pressed="${t === sel}">${esc(t)}</button>`).join('')}</div>
+      <div class="rc-hc"><svg viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${esc(sel)}'s playoff odds after each week: ${v.map(p => pct(p)).join(', ')}">
+        ${[0, 25, 50, 75, 100].map(g => `<line x1="${Lp}" x2="${W - Rp}" y1="${y(g)}" y2="${y(g)}" class="${g === 50 ? 'mid' : 'gl'}"/><text x="${Lp - 6}" y="${y(g) + 3.5}" text-anchor="end">${g}%</text>`).join('')}
+        ${v.map((_, i) => `<text x="${x(i)}" y="${Ht - 6}" text-anchor="middle">${i ? i : 'Draft'}</text>`).join('')}
+        ${TEAMS.filter(t => t !== sel && H[t]).map(t => `<polyline class="o" points="${line(t)}"/>`).join('')}
+        <polyline class="a${isMe(sel) ? ' you' : ''}" points="${line(sel)}"/>
+        ${v.map((p, i) => `<circle class="d${isMe(sel) ? ' you' : ''}" cx="${x(i)}" cy="${y(p)}" r="${i === n - 1 ? 5 : 3.5}"><title>${esc(sel)} after ${wk(i)}: ${pct(p)}</title></circle>`).join('')}
+        <text x="${x(n - 1) + 9}" y="${y(v[n - 1]) + 4}" class="end">${pct(v[n - 1])}</text>
+      </svg></div>
+      <div class="ft-note" style="padding:0 2px"><b>${esc(sel)}</b>: high ${pct(v[hiI])} after ${wk(hiI)}, low ${pct(v[loI])} after ${wk(loI)}. Biggest swing: Week ${sw}, ${pct(v[sw - 1])} to ${pct(v[sw])}. Tap a dot for its week.</div></div></div>`;
   }
 
   // Redraws, then puts focus back on the control that was tapped.
@@ -94,6 +157,8 @@ const RaceUI = (() => {
     if (!EL || !EL.contains(e.target)) return;
     const b = e.target.closest('[data-k]');
     if (b) { if (b.dataset.v) picks[b.dataset.k] = b.dataset.v; else delete picks[b.dataset.k]; again(`[data-k="${CSS.escape(b.dataset.k)}"]${picks[b.dataset.k] ? '.on' : ''}`); return; }
+    const hp = e.target.closest('[data-hist]');
+    if (hp) { histPick = hp.dataset.hist; again(`[data-hist="${CSS.escape(histPick)}"]`); return; }
     const w = e.target.closest('[data-wk]');
     if (w) { wkSel = Number(w.dataset.wk); again(`[data-wk="${wkSel}"]`); return; }
     const c = e.target.closest('[data-clear]');
@@ -102,8 +167,11 @@ const RaceUI = (() => {
   });
 
   // Draws into el. The same week again keeps your picks; a new one starts over.
-  function draw(el, live) {
+  function draw(el, live, ctx) {
     EL = el;
+    if (ctx) CTX = ctx;
+    OPTS = { bracket: true, pay: PAY || {}, high: live && live.priorSeasonHigh ? { score: live.priorSeasonHigh.score, manager: live.priorSeasonHigh.manager } : null };
+    if (!PAY) payP.then(() => { KEY = null; if (EL && document.body.contains(EL)) draw(EL, LIVE, CTX); });
     const key = live ? `${live.week}|${live.updatedAt || ''}` : null;
     if (live !== LIVE || key !== KEY) {
       LIVE = live; KEY = key;

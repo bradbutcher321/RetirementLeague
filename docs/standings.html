@@ -40,7 +40,7 @@
 <link rel="stylesheet" href="theme.css?v=39">
 <link rel="stylesheet" href="nav.css?v=34">
 <link rel="stylesheet" href="league.css?v=8">
-<link rel="stylesheet" href="features.css?v=10">
+<link rel="stylesheet" href="features.css?v=12">
 <style>
   /* Selector styling, the tabs-plus-Year row (.controls-row) and the
      label+control pairing that stops the two splitting across a wrap
@@ -194,6 +194,39 @@
   .st-od .od{ padding:2px 6px; }
   /* Playoff odds open Playoff Race: a bigger tap area than the pill. */
   .od.go{ position:relative; cursor:pointer; }
+  /* Luck tab (audit X #13, #16) */
+  .lk-cols{ display:grid; gap:14px; }
+  @media (min-width:860px){ .lk-cols{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:start; } }
+  .lk-pods{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+  .lk-pod{ text-align:left; padding:9px 10px; border-radius:10px; border:1px solid var(--item-line); background:var(--item); color:var(--text); font:inherit; cursor:pointer; min-width:0; }
+  .lk-pod.on{ border-color:var(--gold); }
+  .lk-pod.me.on{ border-color:var(--me-ring, #7AAEDB); }
+  .lk-top{ display:flex; justify-content:space-between; gap:6px; align-items:baseline; }
+  .lk-top b{ font-size:var(--fs-small); font-weight:650; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lk-top em, .lk-call em{ font-style:normal; font-family:var(--scoreboard); font-weight:700; font-size:1.05rem; color:var(--text-dim); }
+  .lk-top em.up, .lk-call em.up, .lk-say .up{ color:var(--turf); } .lk-top em.dn, .lk-call em.dn, .lk-say .dn{ color:var(--loss); } .lk-call em.gold{ color:var(--gold); }
+  .lk-sub{ display:block; color:var(--text-dim); font-size:var(--fs-label); margin-top:2px; line-height:1.3; }
+  .lk-wrap{ overflow-x:auto; }
+  .lk-grid{ display:grid; grid-template-columns:62px repeat(var(--n), minmax(22px,1fr)); gap:2px; min-width:330px; font-variant-numeric:tabular-nums; }
+  .lk-ch{ text-align:center; color:var(--text-dim); font-size:var(--fs-label); font-weight:700; padding-bottom:3px; }
+  .lk-rn{ text-align:left; background:none; border:0; color:var(--text-dim); font:600 var(--fs-detail) var(--body); padding:0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  .lk-rn.on{ color:var(--text); }
+  .me-ring .lk-rn.on{ color:var(--me-ring); }
+  .lk-c{ height:24px; display:grid; place-items:center; border-radius:5px; background:rgba(255,255,255,0.035); color:var(--text-dim); font-size:var(--fs-detail); font-weight:600; }
+  .lk-c.u1{ background:rgba(79,174,122,0.16); color:#9fd6b6; } .lk-c.u2{ background:rgba(79,174,122,0.34); color:#d6f2e2; }
+  .lk-c.d1{ background:rgba(214,98,79,0.16); color:#eaa598; } .lk-c.d2{ background:rgba(214,98,79,0.34); color:#f6d3cc; }
+  .lk-c.own{ background:none; box-shadow:inset 0 0 0 1px var(--gold); color:var(--gold); }
+  .lk-c.dim{ opacity:0.3; }
+  .lk-say{ color:var(--text-dim); font-size:var(--fs-small); line-height:1.5; }
+  .lk-say b{ color:var(--text); }
+  .lk-sort{ margin-bottom:2px; }
+  .lk-calls{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+  @media (min-width:860px){ .lk-calls{ grid-template-columns:repeat(4,minmax(0,1fr)); } }
+  .lk-call{ display:grid; padding:9px 11px; text-decoration:none; color:inherit; }
+  .lk-call b{ font-size:var(--fs-small); }
+  .lk-call em{ margin-top:2px; }
+  .lk-call span{ color:var(--text-dim); font-size:var(--fs-label); line-height:1.3; }
+  .lk-call.me{ border-color:var(--me-ring, #7AAEDB); }
   .od.mark{ min-width:2.6em; text-align:center; font-size:var(--fs-small); }
   .st-marks{ color:var(--text-dim); font-size:var(--fs-detail); margin:10px 4px 0; }
   .st-marks b{ color:var(--text); }
@@ -233,7 +266,7 @@
            row and Year control below say which ones -- a line reading
            "All-Time Final Standings" only repeated all three. -->
       <div class="controls-row">
-        <div class="tabs" id="tabs" data-glide-panel="standings-container"></div>
+        <div class="tabs scroll" id="tabs" data-glide-panel="standings-container"></div>
         <div class="selector-group">
           <label class="selector-label" for="year-select">Year</label>
           <select class="lg-select" id="year-select" autocomplete="off"></select>
@@ -251,8 +284,8 @@
 <script src="nav.js?v=46"></script>
 <script src="page-common.js?v=42"></script>
 <script src="league-common.js?v=6"></script>
-<script src="race-sim.js?v=4"></script>
-<script src="race-ui.js?v=1"></script>
+<script src="race-sim.js?v=5"></script>
+<script src="race-ui.js?v=2"></script>
 <script src="rivals.js?v=4"></script>
 <script>
   // esc() is a global from page-common.js, not part of LG.
@@ -264,7 +297,7 @@
   // Year dropdown onto its own row on a phone.
   // Race (audit X #9): Playoff Race moved in as a tab (race-ui.js), for
   // the season in progress only.
-  const TABS = [['reg', 'Regular Szn'], ['final', 'Final'], ['bracket', 'Bracket'], ['race', 'Race']];
+  const TABS = [['reg', 'Regular Szn'], ['final', 'Final'], ['bracket', 'Bracket'], ['race', 'Race'], ['luck', 'Luck']];
   let D, tab = 'final', optsFor = null, forcedReg = false;
   const $ = id => document.getElementById(id);
   // No card title: it read "Regular Season" / "Final Standings" directly
@@ -656,7 +689,8 @@
     const noFinal = year === D.currentYear && !complete;
     const raceOk = noFinal;
     if (tab === 'race' && !raceOk) tab = 'reg';
-    const tabs = TABS.filter(([k]) => !(noFinal && k === 'final') && !(k === 'race' && !raceOk));
+    if (tab === 'luck' && year === 'all') tab = 'reg';
+    const tabs = TABS.filter(([k]) => !(noFinal && k === 'final') && !(k === 'race' && !raceOk) && !(k === 'luck' && year === 'all'));
     if (noFinal && tab === 'final') { tab = 'reg'; forcedReg = true; }
     else if (!noFinal && forcedReg && tab === 'reg') { tab = 'final'; forcedReg = false; }
     // The defaults (this season, Final Standings) leave the URL bare.
@@ -666,11 +700,19 @@
       $('standings-container').innerHTML = `<div class="glass"><div class="ft-body" style="padding:18px">${bracketView(year)}</div></div>`;
       return;
     }
+    if (tab === 'luck') {
+      $('tabs').innerHTML = tabs.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
+      keepSelectedInView($('tabs'));
+      $('standings-container').innerHTML = luckView(year);
+      fillCalls(year);
+      return;
+    }
     if (tab === 'race') {
       $('tabs').innerHTML = tabs.map(([k, l]) => `<button class="tab ${k === tab ? 'on' : ''}" data-t="${k}">${l}</button>`).join('');
+      keepSelectedInView($('tabs'));
       askLive();
       if (!LIVE) { $('standings-container').innerHTML = '<div class="glass"><div class="ft-empty">Running the season…</div></div>'; return; }
-      RaceUI.draw($('standings-container'), LIVE.raw);
+      RaceUI.draw($('standings-container'), LIVE.raw, { games: D.games, year: D.currentYear, medianFrom: D.median_era_start_year || 9999 });
       return;
     }
     let rows = build(year, tab);
@@ -724,6 +766,131 @@
     drawBump();
     watchBand();
   }
+
+  // ---------- Luck (audit X #13, #16) ----------
+  // Schedule luck: each team's matchup wins against the real schedule,
+  // minus the wins an average schedule gives the same scores (its record
+  // against the whole league that week, scaled to one game). And every
+  // team's record with every other team's schedule. Then lineup calls:
+  // how close each started its best lineup.
+  let luckPick = null, callSort = 'eff';
+  function luckData(year) {
+    const gs = D.games.filter(g => g.year === year && g.type === 'Reg' && g.p2 && g.winner && g.winner !== 'In Progress' && (g.s1 > 0 || g.s2 > 0));
+    const score = new Map(), opp = new Map();
+    gs.forEach(g => {
+      if (!score.has(g.week)) { score.set(g.week, new Map()); opp.set(g.week, new Map()); }
+      score.get(g.week).set(g.p1, g.s1).set(g.p2, g.s2);
+      opp.get(g.week).set(g.p1, g.p2).set(g.p2, g.p1);
+    });
+    const mgrs = [...new Set(gs.flatMap(g => [g.p1, g.p2]))];
+    const rows = mgrs.map(m => {
+      let w = 0, games = 0, exp = 0;
+      score.forEach((s, wk) => {
+        if (!s.has(m)) return;
+        games++;
+        if (s.get(m) > s.get(opp.get(wk).get(m))) w++;
+        let beat = 0, n = 0;
+        s.forEach((v, k) => { if (k !== m) { n++; if (s.get(m) > v) beat++; else if (s.get(m) === v) beat += 0.5; } });
+        exp += n ? beat / n : 0;
+      });
+      const swap = Object.fromEntries(mgrs.map(j => {
+        let sw = 0;
+        score.forEach((s, wk) => { if (!s.has(m) || !s.has(j)) return; let o = opp.get(wk).get(j); if (o === m) o = j; if (s.get(m) > s.get(o)) sw++; });
+        return [j, sw];
+      }));
+      return { m, w, games, exp, luck: w - exp, swap };
+    });
+    return { rows, mgrs, weeks: score.size, gs };
+  }
+  const sgn1 = v => `${v > 0.05 ? '+' : v < -0.05 ? '−' : ''}${Math.abs(v).toFixed(1)}`;
+  function luckView(year) {
+    const L = luckData(year);
+    if (!L.weeks) return '<div class="glass"><div class="ft-empty">No finished weeks yet.</div></div>';
+    const order = L.rows.slice().sort((a, b) => b.luck - a.luck);
+    const sel = luckPick && L.mgrs.includes(luckPick) ? luckPick : (L.mgrs.find(m => isMe(m)) || order[0].m);
+    const S = L.rows.find(r => r.m === sel);
+    const cols = (live => live ? D.seasons.filter(s => s.year === year).sort((a, b) => (a.reg_rank || 99) - (b.reg_rank || 99)).map(s => s.player).filter(p => L.mgrs.includes(p)) : L.mgrs)(true);
+    const ini = m => monogram(m);
+    const best = Math.max(...Object.entries(S.swap).filter(([j]) => j !== sel).map(([, v]) => v)), worst = Math.min(...Object.entries(S.swap).filter(([j]) => j !== sel).map(([, v]) => v));
+    const withs = v => Object.entries(S.swap).filter(([j, x]) => j !== sel && x === v).map(([j]) => esc(j));
+    const pods = order.map(r => `<button type="button" class="lk-pod${r.m === sel ? ' on' : ''}${isMe(r.m) ? ' me' : ''}" data-luck="${esc(r.m)}" aria-pressed="${r.m === sel}">
+        <span class="lk-top"><b>${esc(r.m)}</b><em class="${r.luck >= 0.5 ? 'up' : r.luck <= -0.5 ? 'dn' : ''}">${sgn1(r.luck)}</em></span>
+        <span class="lk-sub">${r.w}-${r.games - r.w} · should be ${r.exp.toFixed(1)}-${(r.games - r.exp).toFixed(1)}</span></button>`).join('');
+    const grid = `<div class="lk-grid" style="--n:${cols.length}"><span></span>${cols.map(c => `<span class="lk-ch" title="${esc(c)}">${esc(ini(c))}</span>`).join('')}
+      ${cols.map(r => { const R = L.rows.find(x => x.m === r); return `<button type="button" class="lk-rn${r === sel ? ' on' : ''}" data-luck="${esc(r)}">${esc(r)}</button>` + cols.map(c => {
+        const v = R.swap[c], d = v - R.swap[r];
+        const cls = c === r ? 'own' : d >= 2 ? 'u2' : d === 1 ? 'u1' : d <= -2 ? 'd2' : d === -1 ? 'd1' : '';
+        return `<span class="lk-c ${cls}${r === sel ? '' : ' dim'}" title="${esc(r)} with ${esc(c)}'s schedule: ${v}-${R.games - v}">${v}</span>`; }).join(''); }).join('')}</div>`;
+    return `<div class="lk-cols"><div class="glass"><div class="panel-title">Schedule luck <span class="ft-chip">Matchups · ${L.weeks} week${L.weeks === 1 ? '' : 's'}</span></div>
+        <div class="ft-note">Matchup wins against the real schedule, minus the wins an average schedule gives the same scores. Tap one to follow it below.</div>
+        <div class="ft-body"><div class="lk-pods">${pods}</div></div></div>
+      <div class="glass"><div class="panel-title">${isMe(sel) ? 'You' : esc(sel)} with everyone's schedule</div>
+        <div class="ft-body"><div class="lk-wrap">${grid}</div>
+        <div class="lk-say"><b>${esc(sel)}</b> is ${S.w}-${S.games - S.w}. Best: <b class="up">${best}-${S.games - best}</b> with ${withs(best).join(' or ')}'s schedule. Worst: <b class="dn">${worst}-${S.games - worst}</b> with ${withs(worst).join(' or ')}'s.</div></div></div></div>
+      <div id="lk-calls"></div>`;
+  }
+
+  // Lineup calls: the best lineup each roster could have started (QB, 2 RB,
+  // 2 WR, TE, 2 FLEX from RB/WR/TE) against the one it did, every week.
+  let CALLS = {};
+  function bestLineup(rows, pos) {
+    const pool = rows.filter(r => r[2] !== 'IR').map(r => ({ p: r[3] || 0, k: pos(r) }));
+    let tot = 0;
+    const take = ok => { let bi = -1; pool.forEach((x, i) => { if (!x.used && ok.includes(x.k) && (bi < 0 || x.p > pool[bi].p)) bi = i; }); if (bi >= 0) { pool[bi].used = true; tot += pool[bi].p; } };
+    [['QB'], ['RB'], ['RB'], ['WR'], ['WR'], ['TE'], ['RB', 'WR', 'TE'], ['RB', 'WR', 'TE']].forEach(take);
+    return tot;
+  }
+  async function fillCalls(year) {
+    const slot = () => document.getElementById('lk-calls');
+    if (!CALLS[year]) {
+      CALLS[year] = Promise.all([
+        fetch(`data/lineups/${year}.json`, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+        fetch('data/players-index.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null),
+      ]).then(([lu, pi]) => {
+        if (!lu || !lu.weeks) return null;
+        const byId = new Map(((pi && pi.players) || []).map(p => [String(p[0]), p[2]]));
+        const byName = new Map();
+        Object.values(lu.weeks).forEach(w => Object.values(w).forEach(rows => rows.forEach(r => { if (['QB', 'RB', 'WR', 'TE'].includes(r[2])) byName.set(r[0], r[2]); })));
+        const pos = r => (['QB', 'RB', 'WR', 'TE'].includes(r[2]) ? r[2] : byId.get(String(r[6])) || byName.get(r[0]) || null);
+        const gs = luckData(year).gs, out = {};
+        gs.forEach(g => [[g.p1, g.p2], [g.p2, g.p1]].forEach(([m, o]) => {
+          const rows = (lu.weeks[String(g.week)] || {})[m], orows = (lu.weeks[String(g.week)] || {})[o];
+          if (!rows || !orows) return;
+          const st = rows.filter(r => r[2] !== 'BE' && r[2] !== 'IR');
+          const act = st.reduce((a, r) => a + (r[3] || 0), 0), proj = st.reduce((a, r) => a + (r[4] || 0), 0);
+          const best = Math.max(act, bestLineup(rows, pos));
+          const theirs = orows.filter(r => r[2] !== 'BE' && r[2] !== 'IR').reduce((a, r) => a + (r[3] || 0), 0);
+          const x = out[m] || (out[m] = { m, act: 0, best: 0, proj: 0, weeks: 0, perfect: 0, cost: [] });
+          x.act += act; x.best += best; x.proj += proj; x.weeks++;
+          if (best - act < 0.005) x.perfect++;
+          if (act < theirs && best > theirs) x.cost.push(g.week);
+        }));
+        return Object.values(out);
+      });
+    }
+    const rows = await CALLS[year];
+    if (!slot() || !rows || !rows.length) return;
+    const key = { eff: r => r.act / r.best, cost: r => -r.cost.length * 1000 - (r.best - r.act), perfect: r => r.perfect, espn: r => (r.act - r.proj) / r.weeks };
+    const sorted = rows.slice().sort((a, b) => key[callSort](b) - key[callSort](a));
+    const SORTS = [['eff', 'Best calls'], ['cost', 'Bench cost'], ['perfect', 'Perfect'], ['espn', 'vs ESPN']];
+    slot().innerHTML = `<div class="glass ft-sec"><div class="panel-title">Lineup calls <span class="ft-chip">${year}</span></div>
+      <div class="ft-body"><div class="seg lk-sort" role="tablist">${SORTS.map(([k, l]) => `<button type="button" role="tab" data-calls="${k}" class="${k === callSort ? 'on' : ''}" aria-selected="${k === callSort}">${l}</button>`).join('')}</div>
+      <div class="lk-calls">${sorted.map(r => {
+        const eff = r.act / r.best * 100, espn = (r.act - r.proj) / r.weeks;
+        const [v, sub, tone] = callSort === 'cost' ? [String(r.cost.length), r.cost.length ? `Week${r.cost.length > 1 ? 's' : ''} ${r.cost.join(', ')}` : 'Never cost a win', r.cost.length >= 2 ? 'dn' : '']
+          : callSort === 'perfect' ? [`${r.perfect} of ${r.weeks}`, 'Best lineup started', 'gold']
+          : callSort === 'espn' ? [sgn1(espn), "A week vs ESPN's projection", espn > 3 ? 'up' : espn < -3 ? 'dn' : '']
+          : [`${eff.toFixed(1)}%`, `${(r.best - r.act).toFixed(1)} pts left on the bench`, 'gold'];
+        return `<a class="ft-item lk-call${isMe(r.m) ? ' me' : ''}" href="${esc(pageLink('franchise.html', { m: r.m }))}"><b>${esc(r.m)}</b><em class="${tone}">${v}</em><span>${sub}</span></a>`;
+      }).join('')}</div>
+      <div class="ft-note" style="padding:0 2px">A win left on the bench is a loss the best lineup from the same roster would have won.</div></div></div>`;
+  }
+  document.addEventListener('click', e => {
+    const p = e.target.closest('[data-luck]');
+    if (p) { luckPick = p.dataset.luck; const y = Number($('year-select').value); $('standings-container').innerHTML = luckView(y); fillCalls(y); return; }
+    const c = e.target.closest('[data-calls]');
+    if (c) { callSort = c.dataset.calls; fillCalls(Number($('year-select').value)); }
+  });
 
   // The odds open the Race tab, not the row's profile or rival sheet.
   // Caught on window, before page-common.js's rival tap on the document.
