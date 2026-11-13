@@ -245,7 +245,11 @@
   @media (min-width:560px){ .ss-haul{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
   .ss-t{ display:grid; gap:4px; padding:8px; border-radius:12px; border:1px solid var(--item-line); background:var(--item); color:var(--text); text-decoration:none; min-width:0; }
   .ss-t .ph{ aspect-ratio:1; display:grid; place-items:center; color:var(--text-dim); }
+  .ss-t .ph{ position:relative; }
   .ss-t .ph img{ width:92%; height:92%; object-fit:contain; }
+  /* A fit check (them, in the shirt) fills the tile; the shirt itself tucks into the corner. */
+  .ss-t .ph img.fit{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:8px; }
+  .ss-t .ph.hasfit img:not(.fit){ position:absolute; right:3px; bottom:3px; width:40%; height:auto; z-index:1; filter:drop-shadow(0 2px 5px rgba(0,0,0,.7)); }
   .ss-t b{ font-size:0.72rem; }
   .ss-t small{ font-size:0.66rem; color:var(--text-dim); line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .ss-w{ display:grid; gap:6px; }
@@ -959,7 +963,7 @@
     const haul = chain.map(n => {
       const g = y.gifts[n], i = g && g.shirt != null ? g.shirt : null, title = g ? g.title || 'A shirt' : 'Not recorded';
       const href = g && g.url;
-      return `<${href ? `a href="${esc(href)}" target="_blank" rel="noopener"` : 'div'} class="ss-t"><span class="ph">${i != null ? `<img src="icons/santa/shirts/${String(i).padStart(3, '0')}.webp" alt="" loading="lazy">` : ''}</span><b>${esc(n)} got</b><small>${esc(title)}</small></${href ? 'a' : 'div'}>`;
+      return `<${href ? `a href="${esc(href)}" target="_blank" rel="noopener"` : 'div'} class="ss-t"><span class="ph"${(y.fits || []).includes(n) && y.year === hofNow ? ` data-ssfit="${esc(n)}"` : ''}>${i != null ? `<img src="icons/santa/shirts/${String(i).padStart(3, '0')}.webp" alt="" loading="lazy">` : ''}</span><b>${esc(n)} got</b><small>${esc(title)}</small></${href ? 'a' : 'div'}>`;
     }).join('');
     const won = Object.entries(y.shirtys || {}).flatMap(([k, r]) => (r.winners || []).map(w => `<div class="ss-won">${SS_TROPHY}<div style="min-width:0"><b>${link(w.manager)}</b><small>${esc(labels[k] || r.label || k)}${w.giftee ? ` · for ${esc(w.giftee)}` : ''}</small></div></div>`)).join('');
     return `${HOF_DEMO ? '<p class="ss-note">Preview with example data.</p>' : ''}
@@ -990,6 +994,19 @@
         best: { winners: [{ manager: santa(chain[4]), giftee: chain[4] }] }, offensive: { winners: [{ manager: santa(chain[7]), giftee: chain[7] }] },
         detective: { winners: [{ manager: chain[3] }] }, late: { winners: [{ manager: chain[9] }] } } } } };
   }
+
+  // Fit-check photos (this year's, for signed-in managers): fetched once a tile for them is on the page.
+  const hofNow = 2026, fitSeen = new Map();
+  function loadFits() {
+    let a = null; try { a = JSON.parse(localStorage.getItem('rl-auth')); } catch (e) {}
+    if (!a || !a.token) return;
+    document.querySelectorAll('[data-ssfit]:not(.hasfit)').forEach(el => {
+      const n = el.dataset.ssfit;
+      if (!fitSeen.has(n)) fitSeen.set(n, fetch(`${HOF_URL.replace('/hof', '/photo')}?kind=fit&m=${encodeURIComponent(n)}`, { headers: { Authorization: 'Bearer ' + a.token } }).then(r => (r.ok ? r.blob() : null)).then(b => (b ? URL.createObjectURL(b) : null)).catch(() => null));
+      fitSeen.get(n).then(src => { if (!src || el.classList.contains('hasfit')) return; el.classList.add('hasfit'); const im = new Image(); im.className = 'fit'; im.alt = n + ' in the shirt'; im.src = src; el.prepend(im); });
+    });
+  }
+  new MutationObserver(() => { if (document.querySelector('[data-ssfit]:not(.hasfit)')) loadFits(); }).observe(document.body, { childList: true, subtree: true });
 
   const HOF_P = HOF_DEMO ? Promise.resolve(null) : fetch(HOF_URL).then(r => (r.ok ? r.json() : null)).catch(() => null);
   Promise.all([
