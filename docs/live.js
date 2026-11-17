@@ -5188,6 +5188,23 @@
   // as a row of chips, then the chosen season's weeks, regular season and
   // playoffs apart. It opens on the season on screen.
   let wpYear = null;
+  // This season's finished weeks that league.json doesn't have yet, from
+  // the Worker: week -> { m: your matchup, median } (m null: no game).
+  const wpGap = {};
+  function wpFillGaps() {
+    const me = getMe(), live = liveWeekNow();
+    if (!me || !live || !leagueGames) return;
+    for (let w = 1; w < live; w++) {
+      if (wpGap[w] || leagueGames.some(g => g.year === leagueYear && g.week === w && (g.p1 === me || g.p2 === me))) continue;
+      wpGap[w] = { pending: true };
+      fetchCurrentSeasonWeek(w)
+        .then(d => {
+          wpGap[w] = { m: (d.matchups || []).find(x => isMe(x.awayManager) || isMe(x.homeManager)) || null, median: d.currentMedian };
+          if (document.querySelector('#wp-sheet, #wp-pop')) wpRender();
+        })
+        .catch(() => { delete wpGap[w]; });
+    }
+  }
 
   function wpDetail(year) {
     if (year < 2017) return 'Scores only: ESPN kept no lineups before 2017.';
@@ -5221,13 +5238,24 @@
       for (let w = count; w >= 1; w--) {
         const on = at.year === year && at.week === w;
         const g = mine.find(x => x.week === w);
-        const tag = w > reg ? (g && GAME_LABELS[g.type]) || 'Playoffs' : '';
+        let tag = w > reg ? (g && GAME_LABELS[g.type]) || 'Playoffs' : '';
         let opp = '', sub = '', pips = '';
         if (g) {
           const mineS = g.p1 === me ? g.s1 : g.s2, theirs = g.p1 === me ? g.s2 : g.s1;
           opp = g.p2 ? `vs ${esc(g.p1 === me ? g.p2 : g.p1)}` : 'Median only';
           sub = `${mineS.toFixed(2)}–${theirs.toFixed(2)}${year >= medianEraYear && g.median && w <= reg ? ` · median ${Number(g.median).toFixed(2)}` : ''}`;
           pips = `<i class="${g.winner === me ? 'w' : 'l'}">${g.winner === me ? 'W' : 'L'}</i>${year >= medianEraYear && g.median && w <= reg ? `<i class="${mineS > g.median ? 'w' : 'l'}">${mineS > g.median ? 'W' : 'L'}</i>` : ''}`;
+        } else if (year === leagueYear && w < live && wpGap[w] && wpGap[w].m) {
+          // Over, but not in league.json yet (the Tuesday score sync hasn't
+          // reached the Game Tracker): the Worker's final for that week.
+          const { m, median } = wpGap[w];
+          const s = isMe(m.awayManager) ? 'away' : 'home', o = s === 'away' ? 'home' : 'away';
+          const mineS = Number(m[s + 'Score']) || 0, theirs = Number(m[o + 'Score']) || 0;
+          const won = mineS > theirs, medOn = year >= medianEraYear && median && w <= reg;
+          opp = `vs ${esc(m[o + 'Manager'])}`;
+          sub = `${mineS.toFixed(2)}–${theirs.toFixed(2)}${medOn ? ` · median ${Number(median).toFixed(2)}` : ''}`;
+          pips = `<i class="${won ? 'w' : 'l'}">${won ? 'W' : 'L'}</i>${medOn ? `<i class="${mineS > median ? 'w' : 'l'}">${mineS > median ? 'W' : 'L'}</i>` : ''}`;
+          if (!tag) tag = won ? 'Won' : 'Lost';
         } else if (year === leagueYear && w === live && liveData) {
           const m = (liveData.matchups || []).find(x => isMe(x.awayManager) || isMe(x.homeManager));
           if (m) {
@@ -5237,6 +5265,7 @@
             pips = !weekFinal && weekState(liveData).live ? '<i class="live" aria-label="Games on now"></i>' : '';
           }
         }
+        if (!opp && year === leagueYear && w < live && wpGap[w] && wpGap[w].pending) opp = 'Loading…';
         if (!opp) { opp = 'No game'; sub = w > reg ? 'Out of the playoffs' : ''; }
         rows.push(`<button type="button" class="wkr${on ? ' on' : ''}" data-wp-week="${w}" aria-pressed="${on}"><span class="wkr-n">Wk ${w}<small>${year === leagueYear && w === live ? 'This week' : tag || (g ? (g.winner === me ? 'Won' : 'Lost') : '')}</small></span><span class="wkr-o">${opp}${sub ? `<span>${sub}</span>` : ''}</span><span class="wkr-r">${pips}</span></button>`);
       }
@@ -5280,6 +5309,7 @@
     }
     document.getElementById('wk-title').setAttribute('aria-expanded', 'true');
     document.body.classList.add('wp-open');
+    wpFillGaps();
     wpRender();
   }
 
