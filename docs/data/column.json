@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-12T12:08:58+00:00",
+ "generated_at": "2026-11-17T16:09:10+00:00",
  "columns": [
   {
    "id": "2026-w10-preview",
@@ -47,6 +47,110 @@
      "a": "Joe K",
      "b": "TJ",
      "note": "TJ's 111.97 is the week's top projection. Joe K gets a 25% chance and his three-game streak."
+    }
+   ]
+  },
+  {
+   "id": "2026-w10-recap",
+   "kind": "recap",
+   "season": 2026,
+   "week": 10,
+   "published_at": "2026-11-17T11:09:10-05:00",
+   "headline": "Flanders Drops 143.32, Loses Anyway, and TJ Benches His Way Out",
+   "dek": "Jon edges Flanders in the closest game of the week, Chad flattens Jared, and two managers lose games their own benches would have won.",
+   "body": [
+    "Flanders put up <b>143.32</b>, the second-best score of the week, and lost to the only number bigger: Jon's <b>148.52</b>. The <b>5.20</b>-point margin was the closest game of the week, and Flanders paid for it in the flex, where Devin Singletary put up a donut while Kaelon Black sat on the bench with <b>13.60</b>. The best lineup on that roster was <b>155.92</b>, enough to win. George Pickens scored <b>38.00</b> on a <b>9.89</b> projection, the best start of the week against projection, and Christian McCaffrey added <b>44.30</b>, so two players went nuclear and the manager still found a way to lose. The series is tied 3-3.",
+    "Jon will take it. Dak Prescott scored <b>34.42</b> on a <b>16.55</b> projection, Tyler Higbee laid a donut at tight end, and the week's high score lifted Jon from third to second at 13-7. Big budget, one blank frame, and for once the production actually cleared the box office. Jon, Kris and Joe G are all 13-7, with Jon ahead on points.",
+    "The biggest beating was Chad over Jared, <b>120.58</b> to <b>85.36</b>, a <b>35.22</b>-point margin. Jahmyr Gibbs scored <b>40.70</b> on a <b>21.63</b> projection, which paid for Kyren Williams scoring <b>4.20</b> on a <b>16.97</b> projection. Chad sits alone in first at 16-4. Jared, alone in last at 3-17, got <b>1.40</b> from Tyler Warren at tight end, and even the best lineup on the roster, <b>100.06</b>, loses to Chad. Jared still leads the series 11-10, which is the kind of stat you frame when it is all you have.",
+    "Then there is TJ, the other manager who lost by choice. Drake Maye started at quarterback and scored <b>3.02</b> on a <b>21.97</b> projection while Aaron Rodgers sat on the bench with <b>15.62</b>. TJ's best lineup was <b>106.78</b>, more than enough to beat Joe K's <b>98.52</b>. That is dumb, not a little dumb, the kind of dumb that leaves <b>19.96</b> points on the pine. TJ slides from fifth to sixth at 10-10, and Joe K leads the series 5-4.",
+    "Joe K, for once, did nothing wrong and still got punished. Joe K left nothing on the bench, a perfect lineup, and it came up <b>1.51</b> short of the <b>100.03</b> median. Patrick Mahomes scored <b>35.42</b> on an <b>18.55</b> projection, Tucker Kraft scored <b>2.40</b>, and Joe K went 1-1 to stay seventh at 10-10. Acing the test and still failing the class is a very Joe K way to spend a Sunday.",
+    "Joe G beat Kris <b>123.06</b> to <b>101.54</b> behind Brock Purdy's <b>31.66</b> and Chase Brown's <b>24.30</b>, despite a donut from Kayshon Boutte in the flex. Kris cleared the median by <b>1.51</b> and still dropped from second to third, with Rhamondre Stevenson scoring <b>1.00</b> on an <b>11.78</b> projection next to Chuba Hubbard's <b>31.70</b>. Joe G leads that series 8-7. Jeff beat Collin <b>102.04</b> to <b>73.48</b>, the low score of the week, and Collin's best lineup of <b>89.70</b> still loses, so leaving Omarion Hampton's <b>17.00</b> on the bench was just garnish. Jeff leads that series 8-6.",
+    "Ben beat Brad <b>91.06</b> to <b>80.10</b> in a game where both missed the median. Bryce Young scored <b>8.10</b> on an <b>18.80</b> projection, Brad's best lineup was <b>83.70</b>, and Brad falls to tenth at 7-13 as Flanders climbs past to ninth. Ben moves up to fifth and takes a 9-8 series lead despite Brock Bowers scoring <b>2.80</b>. Secret Santa check: ten managers are still at the North Pole with no shirt picked, Flanders has ordered, TJ has picked one, nobody has wrapped anything, and the shirts are due November 20."
+   ],
+   "standings": [
+    {
+     "rank": 1,
+     "manager": "Chad",
+     "record": "16-4",
+     "move": 0,
+     "note": "Alone in first at 16-4; Gibbs went for 40.70 while Kyren Williams managed 4.20."
+    },
+    {
+     "rank": 2,
+     "manager": "Jon",
+     "record": "13-7",
+     "move": 1,
+     "note": "High score of 148.52 and up to second. Dak's 34.42 did the heavy lifting."
+    },
+    {
+     "rank": 3,
+     "manager": "Kris",
+     "record": "13-7",
+     "move": -1,
+     "note": "Beat the median, lost the game, fell to third. Stevenson's 1.00 in the flex didn't help."
+    },
+    {
+     "rank": 4,
+     "manager": "Joe G",
+     "record": "13-7",
+     "move": 0,
+     "note": "Purdy's 31.66 beat Kris despite a Boutte donut in the flex. Fourth at 13-7."
+    },
+    {
+     "rank": 5,
+     "manager": "Ben",
+     "record": "11-9",
+     "move": 1,
+     "note": "Won with 91.06, a score that missed the median, and climbed to fifth anyway."
+    },
+    {
+     "rank": 6,
+     "manager": "TJ",
+     "record": "10-10",
+     "move": -1,
+     "note": "Started Maye for 3.02 with Rodgers' 15.62 on the bench. Down to sixth."
+    },
+    {
+     "rank": 7,
+     "manager": "Joe K",
+     "record": "10-10",
+     "move": 0,
+     "note": "Perfect lineup, 98.52, still under the median. Stays seventh at 10-10."
+    },
+    {
+     "rank": 8,
+     "manager": "Jeff",
+     "record": "10-10",
+     "move": 0,
+     "note": "Beat the median by 2.01 and Collin by 28.56. Holding at eighth, 10-10."
+    },
+    {
+     "rank": 9,
+     "manager": "Flanders",
+     "record": "8-12",
+     "move": 1,
+     "note": "Lost by 5.20 with 12.60 left on the bench, but somehow climbed to ninth."
+    },
+    {
+     "rank": 10,
+     "manager": "Brad",
+     "record": "7-13",
+     "move": -1,
+     "note": "80.10, eleventh of 12 this week, and down to tenth. Bryce Young's 8.10 led the charge."
+    },
+    {
+     "rank": 11,
+     "manager": "Collin",
+     "record": "6-14",
+     "move": 0,
+     "note": "Week-low 73.48 even with Deebo beating his projection by 14.36. Eleventh at 6-14."
+    },
+    {
+     "rank": 12,
+     "manager": "Jared",
+     "record": "3-17",
+     "move": 0,
+     "note": "Last at 3-17. Tyler Warren's 1.40 at tight end was the lowlight of 85.36."
     }
    ]
   },
