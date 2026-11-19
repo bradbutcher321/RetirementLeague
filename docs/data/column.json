@@ -1,6 +1,55 @@
 {
- "generated_at": "2026-11-17T16:09:10+00:00",
+ "generated_at": "2026-11-19T12:07:46+00:00",
  "columns": [
+  {
+   "id": "2026-w11-preview",
+   "kind": "preview",
+   "season": 2026,
+   "week": 11,
+   "published_at": "2026-11-19T07:07:46-05:00",
+   "headline": "Chad and Kris Meet in a Coin Flip at the Top of the Table",
+   "dek": "ESPN gives first-place Chad a 51% chance against Kris. Jared is projected for 49.33, and nine managers still have not picked a Secret Santa shirt.",
+   "body": [
+    "The game of the week is Kris against Chad, and ESPN can barely tell them apart. Chad is projected for <b>107.37</b>, Kris for <b>105.15</b>, a gap of <b>2.22</b> that makes it the closest projection on the slate, with win chances of <b>51%</b> and <b>49%</b>. Chad sits first at 16-4 on a W4 streak with <b>1231.76</b> points and a <b>99.95%</b> playoff chance, about as close to a lock as you can get without being good on Sunday. Kris is third at 13-7, tied on record with Jon and Joe G, and trails the series 9-5. A win here does not make Kris the best team in the league. It just hands Chad a fifth loss to think about.",
+    "Meanwhile, big brother Joe G, the one who is supposed to know better, rides his own W4 streak into a projection of <b>86.77</b>, below the projected median of <b>95.66</b>. Flanders, at 8-12 and ninth, is projected for <b>95.56</b> and gets a <b>56%</b> win chance, and Flanders leads the series 10-7. Little brother is in the game of the week. Big brother is a <b>44%</b> underdog to a team with an <b>18.25%</b> playoff chance.",
+    "The biggest mismatch is Collin against Jared, and it is not close on paper: a projected gap of <b>44.37</b>. Jared, last at 3-17 on an L6 streak, is projected for <b>49.33</b>, a number that looks less like a lineup and more like a cry for help. His playoff chance is <b>0.1%</b>. Collin gets <b>80%</b> odds and leads the series 8-3, which is the only thing going right for an 11th-place team with a <b>1.88%</b> playoff chance. Eleventh against twelfth, and somebody still has to win it.",
+    "Brad brings an L4 streak, a 7-13 record and a <b>5.35%</b> playoff chance into a projection of <b>98.19</b> against Jon's <b>118.31</b>, the top projection of the week. ESPN has Jon at <b>62%</b>. Brad leads the series 6-1, which is the one stat line on his page he would want framed.",
+    "Then there is the 10-10 traffic jam. TJ is sixth with a <b>43.33%</b> playoff chance, Joe K seventh at <b>25.45%</b>, Jeff eighth at <b>50.05%</b>, so the model likes the guy ranked lowest of the three best. TJ, on an L3 streak, is projected for <b>81.76</b> against Jeff's <b>95.75</b> and leads that series 4-1. Joe K gets the second-lowest projection of the week, <b>79.25</b>, against Ben's <b>115.68</b>, and a <b>28%</b> win chance. Joe K leads the series 10-5. ESPN does not care.",
+    "Secret Santa shirts are due Friday, and nine managers are still at the North Pole without a shirt picked, including Chad, who has nearly clinched a playoff spot and has not clinched a gift. Only Flanders, Kris and TJ have ordered one. Nobody has wrapped anything. The league that cannot set a lineup also cannot shop."
+   ],
+   "games": [
+    {
+     "a": "Kris",
+     "b": "Chad",
+     "note": "Closest projection of the week: 105.15 to 107.37. Chad leads the series 9-5 and is on a W4 streak."
+    },
+    {
+     "a": "Flanders",
+     "b": "Joe G",
+     "note": "Joe G is 13-7 and projected for 86.77. Flanders gets 56% and leads the series 10-7."
+    },
+    {
+     "a": "Collin",
+     "b": "Jared",
+     "note": "Jared projected for 49.33 on an L6 streak. Collin is an 80% favorite and leads 8-3."
+    },
+    {
+     "a": "Brad",
+     "b": "Jon",
+     "note": "Jon owns the week's top projection at 118.31. Brad owns the series, 6-1."
+    },
+    {
+     "a": "TJ",
+     "b": "Jeff",
+     "note": "Both 10-10. TJ is on an L3 skid and a 40% underdog, but leads the series 4-1."
+    },
+    {
+     "a": "Joe K",
+     "b": "Ben",
+     "note": "Joe K projected for 79.25 with a 28% win chance. He still leads Ben 10-5 all-time."
+    }
+   ]
+  },
   {
    "id": "2026-w10-preview",
    "kind": "preview",
