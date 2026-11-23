@@ -18,6 +18,29 @@ const PLAYER_OU = new Set(["Receiving Yards", "Passing TD", "Home Runs", "Player
 const PLAYER_ONLY = new Set(["Anytime TD", "Coin Toss"]);
 export const SACKO_COST = 20;
 const GRADED = new Set(["Win", "Loss"]);
+// A Void leg (a DNP, or one the commissioner voided) came off the slip: it
+// isn't a W or an L anywhere in the stats, and the parlay goes on without it.
+const SETTLED = new Set([...GRADED, "Void"]);
+const toDec = (o) => (o > 0 ? 1 + o / 100 : 1 + 100 / -o);
+const toAmerican = (d) => (d >= 2 ? (d - 1) * 100 : -100 / (d - 1));
+
+/** A week with a voided leg the entered odds don't already reflect (the
+ * commissioner's re-priced slip names them in priced_voids): the odds with
+ * each such leg's odds divided out, the payout scaled the same way, and the
+ * entered figures kept as `was`. Hard Rock's price won't match exactly. */
+function estimateVoids(week, priced) {
+  const f = week.final;
+  const out = Object.entries(week.picks).filter(([n, p]) => p.result === "Void" && typeof p.odds === "number" && p.odds && !priced.has(n));
+  if (!out.length || f.odds == null || !f.odds) return;
+  const was = { odds: f.odds, payout: f.payout };
+  const d0 = toDec(f.odds), d = out.reduce((t, [, p]) => t / toDec(p.odds), d0);
+  if (!(d > 1)) return;
+  f.odds = pyRound(toAmerican(d));
+  if (f.payout != null) f.payout = pyRound(f.payout * d / d0, 2);
+  if (f.split != null && f.payout != null) f.split = pyRound(f.payout * (f.split / was.payout), 2);
+  f.estimated = true;
+  f.was = was;
+}
 
 /** Python's round(x, n): the double's exact decimal value rounded to n
  * places, an exact tie to the even digit. (toFixed isn't exact in V8:
@@ -82,6 +105,7 @@ export function loadWeeks(players, rows) {
       const payout = toFloat(r.final_payout);
       byKey.set(key, {
         year: Number(r.year), week: Number(r.week), sacko: s(r.sacko) || null, picks: {},
+        priced: new Set(s(r.priced_voids).split(",").map((x) => x.trim()).filter(Boolean)),
         final: { odds: toFloat(r.final_odds), payout, split: payout != null && players.length ? pyRound(payout / players.length, 2) : null },
       });
     }
@@ -93,11 +117,13 @@ export function loadWeeks(players, rows) {
       sport: s(r.sport) || null,
       odds: toFloat(r.odds),
       gametime: s(r.gametime) || null,
-      result: GRADED.has(result) ? result : "Pending",
+      result: SETTLED.has(result) ? result : "Pending",
       detail: s(r.detail) || null,
     };
   }
-  return [...byKey.values()].filter((w) => Object.keys(w.picks).length).sort((a, b) => a.year - b.year || a.week - b.week);
+  const weeks = [...byKey.values()].filter((w) => Object.keys(w.picks).length).sort((a, b) => a.year - b.year || a.week - b.week);
+  for (const w of weeks) { estimateVoids(w, w.priced); delete w.priced; }
+  return weeks;
 }
 
 export function weekState(week, players) {
@@ -105,7 +131,8 @@ export function weekState(week, players) {
   const graded = picks.filter((p) => GRADED.has(p.result)).length;
   const wins = picks.filter((p) => p.result === "Win").length;
   const losses = graded - wins;
-  const complete = picks.length === players.length && graded === players.length;
+  const settled = picks.filter((p) => SETTLED.has(p.result)).length;
+  const complete = picks.length === players.length && settled === players.length;
   return { graded, wins, losses, complete, result: losses ? "Loss" : complete ? "Win" : "Pending" };
 }
 
@@ -118,9 +145,10 @@ function killInfo(week) {
   return [killers, chances];
 }
 function betPositions(week) {
-  const times = Object.values(week.picks).filter((p) => p.gametime).map((p) => p.gametime);
+  const counted = (p) => p.gametime && p.result !== "Void";
+  const times = Object.values(week.picks).filter(counted).map((p) => p.gametime);
   const out = {};
-  for (const [n, p] of Object.entries(week.picks)) if (p.gametime) out[n] = 1 + times.filter((t) => t < p.gametime).length;
+  for (const [n, p] of Object.entries(week.picks)) if (counted(p)) out[n] = 1 + times.filter((t) => t < p.gametime).length;
   return out;
 }
 function sortedLegs(week, players) {
@@ -184,6 +212,7 @@ export function computeStats(players, weeks) {
     for (const [n, pos] of Object.entries(betPositions(week))) if (positions[n]) positions[n].push(pos);
 
     for (const [name, p] of Object.entries(week.picks)) {
+      if (p.result === "Void") continue;
       if (p.odds && GRADED.has(p.result) && oddsLists[name]) oddsLists[name].push(p.odds);
       let sport = null, btype = null;
       if (p.sport) { if (!sports.has(p.sport)) sports.set(p.sport, [0, 0]); sport = sports.get(p.sport); }
@@ -223,7 +252,7 @@ export function computeStats(players, weeks) {
     if (st.complete) {
       perParlay.set(st.wins, (perParlay.get(st.wins) || 0) + 1);
       let before = 0;
-      for (const [, p] of sortedLegs(week, players)) { if (p.result === "Loss") break; before++; }
+      for (const [, p] of sortedLegs(week, players)) { if (p.result === "Loss") break; if (p.result === "Win") before++; }
       beforeLoss.set(before, (beforeLoss.get(before) || 0) + 1);
     }
   }

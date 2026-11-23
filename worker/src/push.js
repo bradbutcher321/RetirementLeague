@@ -21,7 +21,7 @@
  *   record  a Game Records record was set or broken, good or bad -- a team
  *          score, margin, combined points, a starter's game (everyone; site
  *          audit III #14, the Record Watch box on the dashboard)
- *   parlay  your parlay leg hit or died
+ *   parlay  your parlay leg hit, died or was voided
  *   rival   your Daddy / your Bitch (docs/rivals.js: who beats you most, who
  *          you beat most): the morning of the week's first kickoff when you
  *          play one, once when they pull 10 points ahead of you, and the
@@ -418,14 +418,14 @@ export function currentEvents(year, dashboard, parlay, book, rivals, now = new D
   const pw = parlay && parlay.weeks && parlay.weeks[parlay.weeks.length - 1];
   if (pw && pw.picks) {
     for (const [name, p] of Object.entries(pw.picks)) {
-      if (p.result !== "Win" && p.result !== "Loss") continue;
+      if (p.result !== "Win" && p.result !== "Loss" && p.result !== "Void") continue;
       const hit = p.result === "Win";
       out.push({
         key: `parlay:${pw.year}:${pw.week}:${name}`,
         to: name,
         pref: "parlay",
         message: {
-          title: hit ? "Your parlay leg hit" : "Your parlay leg died",
+          title: p.result === "Void" ? "Your parlay leg was voided" : hit ? "Your parlay leg hit" : "Your parlay leg died",
           body: String(p.pick || ""),
           url: "parlay-results.html",
           tag: `parlay-${pw.year}-${pw.week}`,
@@ -451,7 +451,7 @@ export function currentEvents(year, dashboard, parlay, book, rivals, now = new D
         pref: "parlayAll",
         message: {
           title: `${name}'s leg hit`,
-          body: `${String(p.pick || "")} · ${hits} of ${Object.keys(pw.picks).length} in`,
+          body: `${String(p.pick || "")} · ${hits} of ${Object.values(pw.picks).filter((q) => q.result !== "Void").length} in`,
           url: "parlay-results.html",
           tag: `parlayall-${pw.year}-${pw.week}-${name}`,
         },

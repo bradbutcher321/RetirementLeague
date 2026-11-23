@@ -65,7 +65,9 @@ function finalChipText(p, detail) {
 // until the leg is actually decided -- a live leg gets livePillHtml in the
 // same spot instead, and a leg that hasn't kicked off gets nothing.
 function finalChipHtml(p) {
-  if (p.result !== 'Win' && p.result !== 'Loss') return '';
+  if (p.result !== 'Win' && p.result !== 'Loss' && p.result !== 'Void') return '';
+  // A voided prop's detail is "<player>: DNP"; the player's already on the bet line.
+  if (p.result === 'Void') return /:\s*DNP$/i.test(p.detail || '') ? '<span class="fin">DNP</span>' : '';
   // the grader writes a score-graded detail as "17-10 final";
   // the chip is already in the verdict's own slot, so a trailing "final"
   // in the value would be saying it twice. Other shapes (a prop's

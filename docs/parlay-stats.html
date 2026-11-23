@@ -24,7 +24,7 @@
 <!-- The two fonts, from docs/fonts/ (audit X #29): preloaded so headings don't flash in a fallback font. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
-<link rel="stylesheet" href="theme.css?v=8dc1bc5c">
+<link rel="stylesheet" href="theme.css?v=94c4bdcd">
 <link rel="stylesheet" href="nav.css?v=997f8198">
 <style>
   /* Four tabs and the Year on one row (redesign 2026-10-22): Parlays (the
@@ -64,6 +64,9 @@
   .pc.Loss{ background: var(--loss); border-color: var(--loss); }
   .pc.after{ opacity: 0.28; }
   .pc.Pending{ border-style: dashed; }
+  /* A voided leg (off the slip): grey outline with a slash, like its pip on Parlay Results. */
+  .pc.Void{ border-color: rgba(255,255,255,0.32); overflow: hidden; }
+  .pc.Void::before{ content: ''; position: absolute; left: 2px; right: 2px; top: 50%; border-top: 1.5px solid rgba(255,255,255,0.32); transform: rotate(-30deg); }
   .pc.kill::after{ content: "✕"; position: absolute; inset: 0; display: grid; place-items: center; font-size: var(--fs-label); font-weight: 800; line-height: 1; color: #1A0A07; }
   .pg-n{ font-family: var(--scoreboard); font-weight: 700; font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
   .pg-n small{ color: var(--text-dim); font-size: 0.75em; }
@@ -281,7 +284,7 @@
 
 <script src="nav.js?v=7d37e514"></script>
 <script src="page-common.js?v=35de6e21"></script>
-<script src="parlay-common.js?v=7439641b"></script>
+<script src="parlay-common.js?v=78fd97fc"></script>
 <script>
   const WORKER_URL = 'https://retirement-league-refresh-proxy.bradbutcher321.workers.dev';
 
@@ -298,6 +301,8 @@
   const scoped = (data, scope) => data.weeks.filter(w => scope === 'all' || String(w.year) === scope);
   // A week's legs in kickoff order (the sheet's manager order breaks ties),
   // the way Parlay Results lists them.
+  // A voided leg (a DNP) is off the slip: it isn't counted as one of the week's legs.
+  const onSlip = L => L.filter(x => x.result !== 'Void');
   const legsOf = (w, players) => players.filter(p => w.picks[p]).map(p => ({ who: p, ...w.picks[p] }))
     .sort((a, b) => (a.gametime || '9999').localeCompare(b.gametime || '9999'));
   const weekHref = w => pageLink('parlay-results.html', { year: w.year, week: w.week });
@@ -335,8 +340,8 @@
           const after = killed && x.result !== 'Pending' && (x.gametime || '') > (killed.gametime || '');
           return `<span class="pc ${x.result}${killers.has(x.who) ? ' kill' : ''}${after ? ' after' : ''}"></span>`;
         }).join('');
-        const id = `${w.year}-${w.week}`;
-        return `<button type="button" class="pg-row${PS.pick === id ? ' sel' : ''}" data-wk="${id}" aria-label="${w.year} Week ${w.week}: ${wins(w)} of ${L.length} legs hit"><span class="pg-wk">Wk ${w.week}</span><span class="pg-cells">${cells}</span><span class="pg-n">${wins(w)}<small>/${L.length}</small></span></button>`;
+        const id = `${w.year}-${w.week}`, n = onSlip(L).length;
+        return `<button type="button" class="pg-row${PS.pick === id ? ' sel' : ''}" data-wk="${id}" aria-label="${w.year} Week ${w.week}: ${wins(w)} of ${n} legs hit"><span class="pg-wk">Wk ${w.week}</span><span class="pg-cells">${cells}</span><span class="pg-n">${wins(w)}<small>/${n}</small></span></button>`;
       }).join('');
       const rec = `${yw.filter(w => w.final.result === 'Win').length}-${yw.filter(w => w.final.result === 'Loss').length}`;
       return `<div class="pg-yr"><span>${yr}</span><span class="r">${rec}</span></div>${rows}`;
@@ -351,7 +356,7 @@
     return `<div class="tab-view">${hero}
       <div class="stat-card"><div class="stat-card-title">Every parlay</div><div class="stat-card-note">A square per leg in kickoff order. ✕ is the first loss; the legs after it are faded.</div>
         <div class="stat-card-body">${grid || '<div class="empty-note">No parlays yet.</div>'}
-          <div class="pg-key"><span><i class="pc Win"></i>Win</span><span><i class="pc Loss"></i>Loss</span><span><i class="pc Loss kill"></i>Killed it</span><span><i class="pc Win after"></i>After it died</span><span><i class="pc Pending"></i>Pending</span></div>
+          <div class="pg-key"><span><i class="pc Win"></i>Win</span><span><i class="pc Loss"></i>Loss</span><span><i class="pc Loss kill"></i>Killed it</span><span><i class="pc Win after"></i>After it died</span><span><i class="pc Pending"></i>Pending</span>${ws.some(w => Object.values(w.picks).some(p => p.result === 'Void')) ? '<span><i class="pc Void"></i>Void</span>' : ''}</div>
           <div class="item pg-detail" aria-live="polite">${detail}</div></div></div>
       <div class="stat-card"><div class="stat-card-title split">How far they got ${ucSeg}</div><div class="stat-card-body">${unitChart(done, data.players)}</div></div>
       <div class="card-grid">
@@ -365,7 +370,7 @@
     const hitN = L.filter(x => x.result === 'Win').length;
     const k = L.filter(x => killers.includes(x.who)).map(x =>
       `${nameHtml(x.who)} · ${esc(x.pick)} ${esc(fmtOdds(x.odds))}${x.detail ? ` <span class="dim">(${esc(x.detail)})</span>` : ''}`).join('<br>');
-    const head = `<span class="pm-cap">${w.year} · Week ${w.week} · ${hitN}/${L.length} hit · would have paid ${short$(w.final.payout || 0)}</span>`;
+    const head = `<span class="pm-cap">${w.year} · Week ${w.week} · ${hitN}/${onSlip(L).length} hit · would have paid ${short$(w.final.payout || 0)}</span>`;
     const body = k ? `<span class="dim">Killed by</span> ${k}` : `<span class="dim">${w.final.result === 'Pending' ? 'Still alive.' : 'Nobody lost a leg.'}</span>`;
     return `${head}${body}<br><a href="${esc(weekHref(w))}">Open the week ›</a>`;
   }
@@ -603,7 +608,7 @@
     const team = (MGR.teams || {})[s.name] || {};
     const years = [...new Set(s.legs.map(x => x.year))];
     const span = years.length > 1 ? `${years[0]}–${years[years.length - 1]}` : String(years[0] || '');
-    const sub = [team.team, plural(s.legs.length, 'leg'), span].filter(Boolean).join(' · ');
+    const sub = [team.team, plural(s.legs.filter(x => x.result !== 'Void').length, 'leg'), span].filter(Boolean).join(' · ');
     const ranks = mgrRanks(all, s).map(b => `<span class="rank-badge${b.bad ? ' bad' : ''}">${esc(b.label)}</span>`).join('');
     const logo = team.logo ? `<img src="${esc(team.logo)}" alt="" onerror="this.remove()">` : '';
     const side = [
@@ -632,7 +637,7 @@
 
   function mgrOverview(s) {
     const graded = s.legs.filter(x => x.net !== null).length;
-    const last = s.legs.slice(-8);
+    const last = s.legs.filter(x => x.result !== 'Void').slice(-8);
     const cur = s.cur > 0 ? `<b class="up">W${s.cur}</b>` : s.cur < 0 ? `<b class="down">L${-s.cur}</b>` : '<b>—</b>';
     const form = last.map(x => `<div><i class="${x.result}">${x.result === 'Win' ? 'W' : x.result === 'Loss' ? 'L' : '·'}</i><span>'${String(x.year).slice(2)} Wk ${x.week}</span></div>`).join('');
     const pickPod = (x, label) => x ? `
@@ -694,7 +699,8 @@
   function mgrLegRow(x) {
     const d = x.gametime ? new Date(x.gametime) : null;
     const status = x.result === 'Win' ? '<span class="badge turf">Win</span>'
-      : x.result === 'Loss' ? '<span class="badge loss">Loss</span>' : '<span class="badge dim">Pending</span>';
+      : x.result === 'Loss' ? '<span class="badge loss">Loss</span>'
+      : x.result === 'Void' ? '<span class="badge dim">Void</span>' : '<span class="badge dim">Pending</span>';
     const tags = (x.kill ? `<span class="badge loss">${x.shared ? 'Shared kill' : 'Killed it'}</span>` : '')
       + (x.sacko ? '<span class="badge dim">Sacko week</span>' : '');
     const rest = pickRest(x);

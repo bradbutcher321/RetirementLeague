@@ -31,7 +31,9 @@ import { newCtx } from "./parlayEspn.js";
 const KV_KEY = "parlay_stats_v1";
 const PICK_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "odds", "gametime", "raw_pick"];
 const GAMETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
-const RESULTS = new Set(["", "Pending", "Win", "Loss"]);
+const RESULTS = new Set(["", "Pending", "Win", "Loss", "Void"]);
+// A leg that's been decided: a Void (a DNP) is as final as a Win or a Loss.
+const SETTLED = new Set(["Win", "Loss", "Void"]);
 // Live scores from half an hour before kickoff to eight hours after.
 const LEAD_MIN = 30, TAIL_H = 8;
 // A leg that can't be graded is tried again every 30 minutes for a week, then left for a commissioner.
@@ -100,7 +102,7 @@ export async function tick(env, { nowMs = Date.now(), force = false } = {}) {
   const backfillDue = (r) => !r.checked || (force || nowMs - r.checked >= RETRY_MS) && nowN - naiveMs(r.gametime) < GIVE_UP_MS;
 
   // Finished games first, oldest first: grade them.
-  const pending = rows.filter((r) => r.result !== "Win" && r.result !== "Loss").sort((a, b) => (a.gametime < b.gametime ? -1 : 1));
+  const pending = rows.filter((r) => !SETTLED.has(r.result)).sort((a, b) => (a.gametime < b.gametime ? -1 : 1));
   for (const r of pending) {
     if (r.gametime > now) continue;
     const age = nowN - naiveMs(r.gametime);
@@ -111,7 +113,7 @@ export async function tick(env, { nowMs = Date.now(), force = false } = {}) {
     const res = GRADABLE.has(r.bet_type) || r.review == null ? await gradeLeg(ctx, r) : { outcome: null, why: r.review };
     if (res.outcome) {
       writes.push(env.PARLAY_DB.prepare(
-        "UPDATE picks SET result = ?1, detail = ?2, review = NULL, checked = ?3 WHERE year = ?4 AND week = ?5 AND player = ?6 AND (result IS NULL OR result NOT IN ('Win', 'Loss'))"
+        "UPDATE picks SET result = ?1, detail = ?2, review = NULL, checked = ?3 WHERE year = ?4 AND week = ?5 AND player = ?6 AND (result IS NULL OR result NOT IN ('Win', 'Loss', 'Void'))"
       ).bind(res.outcome, res.detail, nowMs, r.year, r.week, r.player));
       report.graded.push(`${r.year}:${r.week}:${r.player} ${res.outcome} [${res.detail}]`);
     } else {
@@ -163,16 +165,25 @@ export async function tickDue(env, nowMs = Date.now()) {
     "SELECT gametime, result, review, checked, detail, bet_type FROM picks WHERE bet_type IS NOT NULL AND bet_type != '' AND gametime IS NOT NULL AND gametime != ''"
   ).all();
   for (const r of results) {
-    const graded = r.result === "Win" || r.result === "Loss";
+    const graded = SETTLED.has(r.result);
     const mins = (nowN - naiveMs(r.gametime)) / 60000;
     if (!graded && mins >= -LEAD_MIN && mins <= TAIL_H * 60) return "a game is on";
     if (!graded && mins > 0 && nowMs - (r.checked || 0) >= RETRY_MS && mins * 60000 < GIVE_UP_MS) return "a finished leg to grade";
-    if (graded && !r.detail && GRADABLE.has(r.bet_type) && (!r.checked || nowMs - r.checked >= RETRY_MS && mins * 60000 < GIVE_UP_MS)) return "a result without its score";
+    if ((r.result === "Win" || r.result === "Loss") && !r.detail && GRADABLE.has(r.bet_type) && (!r.checked || nowMs - r.checked >= RETRY_MS && mins * 60000 < GIVE_UP_MS)) return "a result without its score";
   }
   return null;
 }
 
 // ---------- Writes from the site ----------
+/** Which voided legs the week's final odds already account for. A
+ * commissioner who saves new final odds or payout while legs are voided is
+ * typing the re-priced slip, so those legs are priced in; an unchanged
+ * figure keeps what was there. Anything not priced in is estimated
+ * (parlayStats.js estimateVoids). */
+function pricedVoids(before, m, voids) {
+  const changed = !before || before.final_odds !== m.final_odds || before.final_payout !== m.final_payout;
+  return changed ? (voids.length ? voids.join(",") : null) : (before.priced_voids ?? null);
+}
 const meta = async (env, year, week) =>
   env.PARLAY_DB.prepare("SELECT sacko, final_odds, final_payout FROM picks WHERE year = ?1 AND week = ?2 LIMIT 1").bind(year, week).first();
 function upsert(env, year, week, player, m, row, extra = {}) {
@@ -241,8 +252,9 @@ export async function saveWeek(env, picks) {
     if (!existing.length) return { status: 404, body: { error: "no_week", detail: `${year} Week ${week} has no picks yet` } };
     const m = { sacko: sacko || null, final_odds: num(picks.final_odds), final_payout: num(picks.final_payout) };
     if (picks.dry_run) return { status: 200, body: { ok: true, dry_run: true, would: m } };
-    await env.PARLAY_DB.prepare("UPDATE picks SET sacko = ?1, final_odds = ?2, final_payout = ?3 WHERE year = ?4 AND week = ?5")
-      .bind(m.sacko, m.final_odds, m.final_payout, year, week).run();
+    const priced = pricedVoids(existing[0], m, existing.filter((r) => r.result === "Void").map((r) => r.player));
+    await env.PARLAY_DB.prepare("UPDATE picks SET sacko = ?1, final_odds = ?2, final_payout = ?3, priced_voids = ?4 WHERE year = ?5 AND week = ?6")
+      .bind(m.sacko, m.final_odds, m.final_payout, priced, year, week).run();
     await publish(env, { force: true });
     return { status: 200, body: { ok: true } };
   }
@@ -260,7 +272,7 @@ export async function saveWeek(env, picks) {
     let result = "Pending";
     if (edit) {
       result = String(r.result || "").trim();
-      if (!RESULTS.has(result)) return { status: 400, body: { error: "bad_result", detail: `${p}: ${result} isn't Pending, Win or Loss` } };
+      if (!RESULTS.has(result)) return { status: 400, body: { error: "bad_result", detail: `${p}: ${result} isn't Pending, Win, Loss or Void` } };
       if (!c.bet_type) result = "";
     }
     const was = byPlayer[p];
@@ -280,7 +292,8 @@ export async function saveWeek(env, picks) {
     // A row that didn't change keeps its detail, game and review notes.
     return upsert(env, year, week, p, m, c, same ? { detail: was.detail, game_id: was.game_id, review: was.review, checked: was.checked } : { game_id: was && was.raw_pick === c.raw_pick ? was.game_id : null });
   });
-  stmts.push(env.PARLAY_DB.prepare("UPDATE picks SET sacko = ?1, final_odds = ?2, final_payout = ?3 WHERE year = ?4 AND week = ?5").bind(m.sacko, m.final_odds, m.final_payout, year, week));
+  const priced = pricedVoids(existing[0], m, names.filter((p) => clean[p] && clean[p].result === "Void"));
+  stmts.push(env.PARLAY_DB.prepare("UPDATE picks SET sacko = ?1, final_odds = ?2, final_payout = ?3, priced_voids = ?4 WHERE year = ?5 AND week = ?6").bind(m.sacko, m.final_odds, m.final_payout, priced, year, week));
   await env.PARLAY_DB.batch(stmts);
   await publish(env, { force: true });
   return { status: 200, body: { ok: true } };
@@ -288,6 +301,6 @@ export async function saveWeek(env, picks) {
 
 /** For the Commissioner page: legs that need a human, and the last run. */
 export async function reviewList(env) {
-  const { results } = await env.PARLAY_DB.prepare("SELECT year, week, player, bet_type, raw_pick, review, checked FROM picks WHERE review IS NOT NULL AND review != '' AND (result IS NULL OR result NOT IN ('Win', 'Loss')) ORDER BY year DESC, week DESC").all();
+  const { results } = await env.PARLAY_DB.prepare("SELECT year, week, player, bet_type, raw_pick, review, checked FROM picks WHERE review IS NOT NULL AND review != '' AND (result IS NULL OR result NOT IN ('Win', 'Loss', 'Void')) ORDER BY year DESC, week DESC").all();
   return results;
 }

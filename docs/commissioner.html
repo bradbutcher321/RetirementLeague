@@ -24,7 +24,7 @@
 <title>Retirement League — Commissioner</title>
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
-<link rel="stylesheet" href="theme.css?v=8dc1bc5c">
+<link rel="stylesheet" href="theme.css?v=94c4bdcd">
 <link rel="stylesheet" href="nav.css?v=997f8198">
 <style>
   /* ---------- Commissioner: a hub of tools ----------
@@ -476,7 +476,7 @@
         if (!P) return { t: "Legs, Sacko, odds and Jon's tables" };
         const W = parlayWeek();
         if (W && W.result) return { t: W.result === 'Win' ? 'It hit' : 'Dead' };
-        if (W && W.placed) return { t: `Placed · ${W.wins} of ${W.legs.length} hit` };
+        if (W && W.placed) return { t: `Placed · ${W.wins} of ${W.slip} hit` };
         if (shut(P)) return { t: "Locked · the bet isn't in yet", warn: true };
         return { t: `${P.legsIn.length} of ${P.players.length} in · ${P.reopened ? 'reopened' : 'locks ' + etDay(P.locksAt)}`, warn: P.missing.length > 0 };
       }
@@ -522,20 +522,26 @@
     const meta = (B && B.meta) || {};
     const f = (w && w.final) || {};
     const sacko = meta.sacko || (w && w.sacko) || '';
-    const odds = meta.final_odds != null ? meta.final_odds : f.odds != null ? f.odds : null;
-    const payout = meta.final_payout != null ? meta.final_payout : f.payout != null ? f.payout : null;
+    // The bet as entered from the slip. With a voided leg the published
+    // figures are an estimate (f.was holds what was entered).
+    const entered = f.estimated && f.was ? f.was : f;
+    const odds = meta.final_odds != null ? meta.final_odds : entered.odds != null ? entered.odds : null;
+    const payout = meta.final_payout != null ? meta.final_payout : entered.payout != null ? entered.payout : null;
     const placed = odds != null && !!sacko;
     const result = f.result === 'Win' || f.result === 'Loss' ? f.result : '';
     const picks = (w && w.picks) || {};
     const legs = P.players.map(n => {
       const st = picks[n], b = B && (B.legs || []).find(l => l.player === n);
       return { n, pick: st ? st.pick : b ? pickText(b.raw_pick) : '', odds: st ? st.odds : b ? b.odds : null,
-        gt: (st && st.gametime) || (b && b.gametime) || '', result: st && (st.result === 'Win' || st.result === 'Loss') ? st.result : '' };
+        gt: (st && st.gametime) || (b && b.gametime) || '', result: st && (st.result === 'Win' || st.result === 'Loss' || st.result === 'Void') ? st.result : '' };
     });
     const byTime = legs.filter(l => l.gt).sort((x, y) => x.gt.localeCompare(y.gt));
     const isShut = shut(P);
     return { P, placed, result, sacko, odds, payout, legs, byTime, isShut, killed: (w && w.killed_by) || [],
       wins: legs.filter(l => l.result === 'Win').length, next: byTime.find(l => !l.result),
+      // A voided leg is off the slip; est is the payout with it taken out.
+      slip: legs.filter(l => l.result !== 'Void').length, voids: legs.filter(l => l.result === 'Void').map(l => l.n),
+      est: f.estimated ? { odds: f.odds, payout: f.payout } : null,
       phase: result ? 4 : placed ? 3 : isShut ? 1 : 0 };
   }
   const untilText = ms => {
@@ -572,8 +578,8 @@
         <p class="cm-fine">Place the bet, then put in the Sacko, final odds and payout so Parlay shows the payout.</p>
         <div class="cm-wrap"><a class="cm-btn solid" href="#parlay">Enter the bet</a>${lockBtn}</div>`;
     } else {
-      const chip = W.result === 'Win' ? '<span class="cm-count green">Hit</span>' : W.result === 'Loss' ? '<span class="cm-count red">Dead</span>' : `<span class="cm-count">Alive · ${W.wins} of ${W.legs.length}</span>`;
-      const pips = (W.byTime.length ? W.byTime : W.legs).map(l => rollCell(l.n, l.result === 'Win' ? 'won' : l.result === 'Loss' ? 'lost' : W.next && l.n === W.next.n && !W.result ? 'next' : 'wait', l.gt ? gtDay(l.gt) : '—')).join('');
+      const chip = W.result === 'Win' ? '<span class="cm-count green">Hit</span>' : W.result === 'Loss' ? '<span class="cm-count red">Dead</span>' : `<span class="cm-count">Alive · ${W.wins} of ${W.slip}</span>`;
+      const pips = (W.byTime.length ? W.byTime : W.legs).map(l => rollCell(l.n, l.result === 'Win' ? 'won' : l.result === 'Loss' ? 'lost' : W.next && l.n === W.next.n && !W.result ? 'next' : 'wait', l.result === 'Void' ? 'Void' : l.gt ? gtDay(l.gt) : '—')).join('');
       const line = W.result === 'Loss' ? `Dead${W.killed.length ? ` · killed by <b>${esc(list(W.killed))}</b>` : ''}.`
         : W.result === 'Win' ? `<b>It hit.</b> ${fmtMoney(W.payout / W.legs.length)} each.`
         : W.next ? `Next: <b>${esc(W.next.n)}</b> · ${esc(W.next.pick)}${W.next.gt ? ` · ${esc(gtTime(W.next.gt))}` : ''}` : '';
@@ -672,6 +678,7 @@
     const P = W.P;
     let cls = '', sub;
     if (W.phase === 0) { const inn = P.legsIn.includes(l.n); cls = inn ? 'is-win' : ''; sub = inn ? (l.odds != null ? `In · ${fmtOdds(l.odds)}` : 'In') : 'No leg yet'; }
+    else if (l.result === 'Void') sub = 'Void';
     else if (l.result) { cls = l.result === 'Win' ? 'is-win' : 'is-loss'; sub = l.result === 'Win' ? 'Won' : 'Lost'; }
     else sub = l.gt ? gtTime(l.gt).replace(/ [AP]M$/, '') : P.legsIn.includes(l.n) ? 'In' : 'No leg';
     return `<a class="cm-leg item ${cls}" href="parlay-legs.html?for=${encodeURIComponent(l.n)}"${l.pick ? ` title="${esc(l.pick)}"` : ''}>${avatarHtml(l.n, logos)}<span class="cm-main"><b>${esc(l.n)}</b><small>${esc(sub)}</small></span></a>`;
@@ -694,6 +701,7 @@
       <label class="cm-field"><span>Sacko</span><select class="cm-in" id="bt-sacko"${off}><option value="">—</option>${P.players.map(n => `<option${n === sacko ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
       <div class="cm-bet"><label class="cm-field"><span>Final odds</span><input class="cm-in" id="bt-odds" inputmode="numeric" autocomplete="off" placeholder="+400,000" value="${esc(odds)}"${off}></label>
         <label class="cm-field"><span>Payout</span><input class="cm-in" id="bt-pay" inputmode="decimal" autocomplete="off" placeholder="80,000" value="${esc(pay)}"${off}></label></div>
+      ${W.est ? `<p class="cm-fine">${esc(list(W.voids))}'s leg is void, so Parlay shows an estimate: <b>${esc(fmtMoney(W.est.payout))}</b> at ${esc(fmtOdds(W.est.odds))}. Save the re-priced odds and payout from the slip to replace it.</p>` : ''}
       <div class="cm-bet-foot"><p class="cm-fine" id="bt-split">${betSplit(pay, P.players.length, can)}</p><button type="button" class="cm-btn solid" data-act="bet-save"${can && !busy ? '' : ' disabled'}>${busy === 'bet' ? 'Saving…' : 'Save'}</button></div>`, chip);
   }
   function viewParlay() {
@@ -710,7 +718,7 @@
     const legs = panel('Legs', `${phaseHtml(W)}<div class="cm-legs">${order.map(l => legTile(W, l)).join('')}</div>
       <p class="cm-fine">Tap anyone to enter or change their leg.${note ? ' ' + note : ''}</p>${acts ? `<div class="cm-wrap">${acts}</div>` : ''}
       ${access === 'session' || W.phase > 1 ? '' : '<p class="cm-fine">Sign in as a commissioner to lock or unlock the legs.</p>'}${pricedHtml(P)}`,
-      `<span class="cm-count${W.phase === 0 ? '' : ' dim'}">${W.phase >= 3 ? `${W.wins} of ${W.legs.length} hit` : `${P.legsIn.length} of ${P.players.length} in`}</span>`);
+      `<span class="cm-count${W.phase === 0 ? '' : ' dim'}">${W.phase >= 3 ? `${W.wins} of ${W.slip} hit` : `${P.legsIn.length} of ${P.players.length} in`}</span>`);
     // Legs the grader left for a person: a push, a Coin Toss, a name ESPN spells differently.
     const review = (ov.parlayReview || []).map(r => `<div class="cm-line item is-loss"><div class="cm-main"><div class="cm-name">${esc(r.player)} · ${r.year} Week ${r.week}</div><div class="cm-sub">${esc(r.raw_pick || r.bet_type || '')}</div><div class="cm-sub bad">${esc(r.review)}</div></div><a class="cm-btn dim" href="parlay-legs.html?year=${r.year}&week=${r.week}">Set result</a></div>`).join('');
     const left = P.oddsLeft;

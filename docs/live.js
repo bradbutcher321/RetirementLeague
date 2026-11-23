@@ -2744,6 +2744,8 @@
     // next. A dead week says who sank it and what it would have paid.
     const wins = legs.filter(([, p]) => p.result === 'Win').length;
     const pending = legs.filter(([, p]) => p.result === 'Pending');
+    // A voided leg (a DNP) is off the slip: the parlay is the rest of them.
+    const onSlip = legs.filter(([, p]) => p.result !== 'Void');
     const live = parlayData.live || {};
     const liveKey = name => `${week.year}:${week.week}:${name}`;
     const result = week.final && week.final.result;
@@ -2754,19 +2756,20 @@
     const nextI = status === 'Alive' && nextLeg ? legs.indexOf(nextLeg) : -1;
     const day = iso => (iso ? PARLAY_DAYS[new Date(iso).getDay()] : '');
     const pips = legs.map(([name, p], i) => {
-      const cls = [p.result === 'Win' ? 'hit' : p.result === 'Loss' ? 'miss' : i === nextI ? 'next' : '', isMe(name) ? 'mine' : ''].filter(Boolean).join(' ');
+      const cls = [p.result === 'Win' ? 'hit' : p.result === 'Loss' ? 'miss' : p.result === 'Void' ? 'void' : i === nextI ? 'next' : '', isMe(name) ? 'mine' : ''].filter(Boolean).join(' ');
       return `<i class="${cls}" title="${esc(name)}">${esc(monogram(name))}</i>`;
     }).join('');
     const days = legs.map(([, p]) => `<span>${day(p.gametime)}</span>`).join('');
-    const pay = fmtMoney(week.final && week.final.payout);
+    // With a void the payout is an estimate until the re-priced slip is in.
+    const pay = (week.final && week.final.estimated ? '<span class="approx" aria-label="about">≈</span>' : '') + fmtMoney(week.final && week.final.payout);
     let top = '', line = '';
     if (status === 'Dead') {
       const killer = legs.find(([, p]) => p.result === 'Loss');
       top = `<div><div class="ph-k">Would have paid</div><div class="ph-pay dim">${pay}</div></div>
         <div class="pr-chance"><div class="k">Killed by</div><div class="v loss">${esc(killer ? killer[0] : (week.killed_by || []).join(' & '))}</div></div>`;
-      if (killer) line = `<b>${esc(killer[0])}</b> · ${esc(String(killer[1].pick || '').replace(/^[^:]+:\s*/, ''))} · leg ${legs.indexOf(killer) + 1} of ${legs.length}${week.sacko ? ` · Sacko: <b>${esc(week.sacko)}</b>` : ''}`;
+      if (killer) line = `<b>${esc(killer[0])}</b> · ${esc(String(killer[1].pick || '').replace(/^[^:]+:\s*/, ''))} · leg ${onSlip.indexOf(killer) + 1} of ${onSlip.length}${week.sacko ? ` · Sacko: <b>${esc(week.sacko)}</b>` : ''}`;
     } else if (status === 'Hit') {
-      top = `<div><div class="ph-k">Paid</div><div class="ph-pay">${pay}</div></div><div class="pr-chance"><div class="k">Legs hit</div><div class="v">${wins} of ${legs.length}</div></div>`;
+      top = `<div><div class="ph-k">Paid</div><div class="ph-pay">${pay}</div></div><div class="pr-chance"><div class="k">Legs hit</div><div class="v">${wins} of ${onSlip.length}</div></div>`;
       if (week.final && week.final.split) line = `Split <b>${fmtMoney(week.final.split)}</b> each`;
     } else {
       const priced = pending.length && pending.every(([, p]) => typeof p.odds === 'number');
@@ -2784,10 +2787,10 @@
       <a class="parlay-highlight" href="parlay-results.html">
         <div class="ph-head">
           <div class="ph-title">Current Parlay</div>
-          <span class="badge ${statusTone}">${status === 'Alive' ? `Alive · ${wins} of ${legs.length}` : status}</span>
+          <span class="badge ${statusTone}">${status === 'Alive' ? `Alive · ${wins} of ${onSlip.length}` : status}</span>
         </div>
         <div class="pr-top">${top}</div>
-        <div class="pr-pips" style="--n:${legs.length}" role="img" aria-label="${wins} of ${legs.length} legs hit">${pips}</div>
+        <div class="pr-pips" style="--n:${legs.length}" role="img" aria-label="${wins} of ${onSlip.length} legs hit">${pips}</div>
         <div class="pr-days" style="--n:${legs.length}" aria-hidden="true">${days}</div>
         ${line ? `<div class="pr-line ph-line"><span>${line}</span></div>` : ''}
       </a>`;

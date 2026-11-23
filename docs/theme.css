@@ -987,6 +987,10 @@ footer{ color: var(--text-dim); font-size: var(--fs-small); text-align: center; 
 }
 .leg.Win, .leg.live-up{ border-color: var(--win-line); background: var(--win-tint); }
 .leg.Loss, .leg.live-down{ border-color: var(--loss-line); background: var(--loss-tint); }
+/* Void (a DNP: off the slip): the Win/Loss outline in neutral grey, no
+   tint, and the odds struck because they no longer count toward the bet. */
+.leg.Void{ border-color: rgba(255,255,255,0.28); }
+.leg.Void .leg-odds{ text-decoration: line-through; text-decoration-thickness: 1.5px; }
 
 /* The rail: sport, then the time big, then AM/PM -- or, live, the clock
    big and the period under it in the sport's own words (liveRail). Red
@@ -1024,6 +1028,11 @@ footer{ color: var(--text-dim); font-size: var(--fs-small); text-align: center; 
 .pr-pips i{ position: relative; height: 30px; border-radius: 7px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); display: grid; place-items: center; font: 800 var(--fs-label)/1 var(--body); font-style: normal; color: var(--text-dim); }
 .pr-pips i.hit{ background: var(--gold); border-color: var(--gold); color: var(--ctl-on-ink); }
 .pr-pips i.miss{ background: var(--loss-tint); border-color: var(--loss); color: var(--loss); }
+/* A voided leg: grey outline, no fill, a slash through it. */
+/* "About" before an estimated figure: the scoreboard face has no ≈. */
+.approx{ font-family: var(--body); font-weight: 600; font-size: 0.62em; color: var(--text-dim); margin-right: 3px; vertical-align: 0.12em; }
+.pr-pips i.void{ background: none; border-color: rgba(255,255,255,0.32); color: var(--text-dim); }
+.pr-pips i.void::before{ content: ''; position: absolute; left: 4px; right: 4px; top: 50%; border-top: 1.5px solid rgba(255,255,255,0.32); transform: rotate(-35deg); }
 .pr-pips i.next{ border-color: var(--gold); color: var(--gold); box-shadow: 0 0 0 3px rgba(212,180,106,0.15); }
 /* Your leg: your color as the pip's whole edge (2px, drawn as border +
    inset ring so the pip doesn't change size). */

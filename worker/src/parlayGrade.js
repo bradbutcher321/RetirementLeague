@@ -3,7 +3,9 @@
  * archive/parlay_python's auto_grade_results.py and publish_parlay_stats.py's build_live_scores
  * (site audit X #26), on the lookups in parlayEspn.js.
  *
- * gradeLeg(ctx, pick) -> { outcome: 'Win'|'Loss'|null, detail, why }
+ * gradeLeg(ctx, pick) -> { outcome: 'Win'|'Loss'|'Void'|null, detail, why }
+ *   Void: a player prop whose player is on a roster in the final game but
+ *   not on its box score (a DNP).
  *   outcome null with `why` = needs a human (a push, Coin Toss, a player
  *   not on the box score...), or not final yet. Same rules as the Python:
  *   a Money Line tie is a Loss, landing exactly on a line is a push (left
@@ -85,8 +87,8 @@ export async function gradeLeg(ctx, p) {
     if (!p.player_prop) return { outcome: null, why: "missing Player Prop" };
     const [need, name] = propTarget(p.player_prop);
     const loc = await locateProp(ctx, name, bet, p.sport, p.gametime, true, p.game_id);
-    // League rule: a player who didn't play loses the leg (no void like a sportsbook).
-    if (loc && loc.dnp) return { outcome: "Loss", detail: `${p.player_prop}: DNP` };
+    // A player who didn't play voids the leg, the way the book does: it comes off the slip.
+    if (loc && loc.dnp) return { outcome: "Void", detail: `${p.player_prop}: DNP` };
     if (!loc || !loc.found) return { outcome: null, why: `'${name}' not found in the box score (not final yet, a DNP, or a name mismatch)` };
     const total = loc.total;
     if (PROP_BINARY.has(bet)) return { outcome: total >= need ? "Win" : "Loss", detail: `${p.player_prop}: ${g(total)}` };

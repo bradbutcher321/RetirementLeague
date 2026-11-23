@@ -24,7 +24,7 @@
 <title>Retirement League — Parlay Legs</title>
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/big-shoulders-display.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/inter.woff2">
-<link rel="stylesheet" href="theme.css?v=8dc1bc5c">
+<link rel="stylesheet" href="theme.css?v=94c4bdcd">
 <link rel="stylesheet" href="nav.css?v=997f8198">
 <style>
   /* ---------- Parlay Legs ----------
@@ -1012,7 +1012,7 @@
   ['Anytime TD', 'Coin Toss'].forEach(b => { FIELDS_FOR[b] = ['player_prop']; });
   const ALL_FIELDS = ['team', 'opponent', 'player_prop', 'line', 'side'];
   const LABELS = { team: 'Team', opponent: 'Opponent', player_prop: 'Player', line: 'Line', side: 'Side' };
-  const RESULTS = ['Pending', 'Win', 'Loss'];
+  const RESULTS = ['Pending', 'Win', 'Loss', 'Void'];
   const dryQ = new URLSearchParams(location.search).has('dry') ? '&dry' : '';
 
   const ed = { year: null, week: null, orig: null, cur: null, status: '', open: new Set(), finding: new Set(),
