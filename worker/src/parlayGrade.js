@@ -85,6 +85,8 @@ export async function gradeLeg(ctx, p) {
     if (!p.player_prop) return { outcome: null, why: "missing Player Prop" };
     const [need, name] = propTarget(p.player_prop);
     const loc = await locateProp(ctx, name, bet, p.sport, p.gametime, true, p.game_id);
+    // League rule: a player who didn't play loses the leg (no void like a sportsbook).
+    if (loc && loc.dnp) return { outcome: "Loss", detail: `${p.player_prop}: DNP` };
     if (!loc || !loc.found) return { outcome: null, why: `'${name}' not found in the box score (not final yet, a DNP, or a name mismatch)` };
     const total = loc.total;
     if (PROP_BINARY.has(bet)) return { outcome: total >= need ? "Win" : "Loss", detail: `${p.player_prop}: ${g(total)}` };

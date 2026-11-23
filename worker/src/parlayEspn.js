@@ -276,6 +276,31 @@ async function onNflRoster(ctx, player, teamName) {
   const names = await ctx.rosters.get(id);
   return names == null ? true : names.has(foldName(player));
 }
+/** Which of a game's two competitors has the player on its roster (by exact
+ * name, or its nickname variant), or null -- a DNP check, so a misspelt name
+ * stays a question for the commissioner instead of a Loss. */
+async function rosterTeamOf(ctx, path, comps, player) {
+  if (!path) return null;
+  const targets = new Set([foldName(player)]);
+  const v = nicknameVariant(player);
+  if (v) targets.add(foldName(v));
+  for (const c of comps) {
+    const id = (c.team || {}).id;
+    if (!id) continue;
+    const key = `${path}:${id}`;
+    if (!ctx.rosters.has(key)) {
+      ctx.rosters.set(key, getJSON(ctx, `${SITE}/${path}/teams/${id}/roster`).then((d) => {
+        if (!d) return null;
+        // NFL/college group athletes by position ({ items }); other sports list them flat.
+        const list = (d.athletes || []).flatMap((g) => (g.items ? g.items : [g]));
+        return new Set(list.map((a) => foldName(a.fullName || a.displayName || "")));
+      }));
+    }
+    const names = await ctx.rosters.get(key);
+    if (names && [...targets].some((t) => names.has(t))) return c;
+  }
+  return null;
+}
 /** [team, sport] for a player, or [null, null] when ESPN's search can't say for sure. */
 export async function findPlayerTeam(ctx, player, betType) {
   let hits = await searchPlayer(ctx, player);
@@ -355,13 +380,18 @@ export async function locateProp(ctx, player, betType, sport, gametime, requireF
   if (gameId) {
     const hit = await eventById(ctx, sport, gameId);
     if (hit) {
-      const [comp, c0, c1, s] = hit;
+      const [comp, c0, c1, s, path] = hit;
       const done = ((comp.status || {}).type || {}).completed;
       const found = propFromSummary(s, player, betType);
       const blockTeam = found.length === 1 ? ((found[0][1].team || {}).abbreviation) : null;
       const teamC = blockTeam ? [c0, c1].find((c) => (c.team || {}).abbreviation === blockTeam) || c0 : c0;
       const oppC = teamC === c0 ? c1 : c0;
       if (found.length === 1 && (!requireFinal || done)) return { comp, teamC, oppC, total: found[0][0], found: true };
+      // Final, not on the box score, but on one of the two teams' rosters: he didn't play.
+      if (done && !found.length && requireFinal) {
+        const rosterC = await rosterTeamOf(ctx, path, [c0, c1], player);
+        if (rosterC) return { comp, teamC: rosterC, oppC: rosterC === c0 ? c1 : c0, total: null, found: false, dnp: true };
+      }
       return { comp, teamC, oppC, total: null, found: false };
     }
   }
