@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-19T12:07:46+00:00",
+ "generated_at": "2026-11-24T16:09:17+00:00",
  "columns": [
   {
    "id": "2026-w11-preview",
@@ -47,6 +47,110 @@
      "a": "Joe K",
      "b": "Ben",
      "note": "Joe K projected for 79.25 with a 28% win chance. He still leads Ben 10-5 all-time."
+    }
+   ]
+  },
+  {
+   "id": "2026-w11-recap",
+   "kind": "recap",
+   "season": 2026,
+   "week": 11,
+   "published_at": "2026-11-24T11:09:17-05:00",
+   "headline": "Joe K Loses by 0.24 With the Fix Sitting on His Bench",
+   "dek": "Jon drops the week's high score on Brad, Ben steals one by 0.24, and the brothers both win, though only one of them set his lineup like an adult.",
+   "body": [
+    "The game of the week was decided by a rounding error and a bad decision. Ben beat Joe K <b>96.10</b> to <b>95.86</b>, a margin of <b>0.24</b>, and Joe K is the only loser this week whose best lineup would have won. He left Braelon Allen and his <b>8.90</b> on the bench to start Emari Demercado in the flex, and Demercado returned <b>3.90</b>. His best lineup was <b>100.86</b>. That is not bad luck, that is dumb, the kind of dumb that leaves a man staring at his phone at midnight wondering how he lost to a team whose stud got lapped by his own projection.",
+    "Because Ben did not exactly earn it either. Ja'Marr Chase was projected for <b>21.02</b> and gave him <b>5.60</b>, the worst start against projection of anyone this week. Ladd McConkey bailed him out with <b>18.20</b>, and Ben walks away a winner while still trailing the series to Joe K 10-6. Joe K somehow moved up a spot to sixth at 11-11, which tells you everything about the bottom half of this league.",
+    "Jon put up the high score, <b>145.40</b>, and spent it on Brad, who managed <b>67.46</b>. The <b>77.94</b> margin was the biggest of the week. Dak Prescott threw in <b>35.90</b> and Jonah Coleman ran for <b>32.90</b> against a projection of <b>17.81</b>, the best start of the week. Even with Hunter Henry laying a donut at tight end, Jon still had more than he needed, which is a lot of production for once matched by the product. Brad still leads the series 6-2, a fact he will cling to like it means anything.",
+    "Brad's afternoon: Jonathan Taylor gave him <b>4.70</b> on a projection of <b>15.17</b> and Emeka Egbuka chipped in <b>2.80</b>. His best lineup was <b>75.46</b>, so this one was not a lineup problem, it was a roster problem. He slid to 11th at 7-15. Brad would like everyone to know his head is not that big, and this week neither was his score.",
+    "Jared had the low score at <b>57.32</b>, and his best possible lineup, <b>64.52</b>, would also have lost to Collin. Matthew Stafford put up a donut at quarterback and DK Metcalf managed <b>0.70</b>. Jared is 3-19 and alone in last. Collin won that game with <b>77.68</b>, still under the <b>88.20</b> median, after benching Khalil Shakir and his <b>12.80</b> to start Kyle Monangai, who scored <b>1.80</b>. Collin leads that series 9-3 and climbed to 10th, ahead of Brad on rank at the same 7-15.",
+    "TJ started Aaron Rodgers, projected for <b>15.11</b>, and got a donut. The <b>65.40</b> that followed lost to Jeff and dropped TJ two spots to eighth. Jeff won with <b>82.96</b>, below the median, while Courtland Sutton laid a donut at receiver and Antonio Williams posted <b>16.70</b> on his bench. Mike Evans saved him with <b>19.90</b> on a projection of <b>9.47</b>.",
+    "Chad beat Kris <b>103.64</b> to <b>78.26</b> and left nothing on his bench, a perfect lineup, with Travis Kelce posting <b>22.40</b> on a <b>9.49</b> projection. Big brother Joe G also won, <b>112.70</b> to <b>93.44</b> over Flanders, but benched Kayshon Boutte's <b>11.00</b> to start Chase Brown, who gave him <b>6.10</b>. Joe G is the one who is supposed to know better. Chad sits alone in first at 18-4; Joe G rose to third, tied with Jon at 15-7 and behind him on points. Meanwhile, Secret Santa: the shirts were due November 20, nothing is wrapped, and seven managers, Chad included, are still at the North Pole without a shirt picked."
+   ],
+   "standings": [
+    {
+     "rank": 1,
+     "manager": "Chad",
+     "record": "18-4",
+     "move": 0,
+     "note": "Perfect lineup, 18-4, and still hasn't picked a Secret Santa shirt. Priorities."
+    },
+    {
+     "rank": 2,
+     "manager": "Jon",
+     "record": "15-7",
+     "move": 0,
+     "note": "145.40 and the week's best lineup at 158.60. Finally, a highlight reel worth the budget."
+    },
+    {
+     "rank": 3,
+     "manager": "Joe G",
+     "record": "15-7",
+     "move": 1,
+     "note": "Up to third with 112.70, despite Mark Andrews laying a donut at tight end."
+    },
+    {
+     "rank": 4,
+     "manager": "Kris",
+     "record": "13-9",
+     "move": -1,
+     "note": "Josh Allen gave 12.16 on a 23.38 projection, and Kris slid to fourth at 13-9."
+    },
+    {
+     "rank": 5,
+     "manager": "Ben",
+     "record": "13-9",
+     "move": 0,
+     "note": "Won by 0.24 with Chase scoring 5.60. Fifth place, purchased entirely on credit."
+    },
+    {
+     "rank": 6,
+     "manager": "Joe K",
+     "record": "11-11",
+     "move": 1,
+     "note": "Best lineup 100.86, lost at 95.86. Moved up to sixth anyway, which is worse."
+    },
+    {
+     "rank": 7,
+     "manager": "Jeff",
+     "record": "11-11",
+     "move": 1,
+     "note": "Won, missed the median, and Mike Evans doubled his projection. Up to seventh at 11-11."
+    },
+    {
+     "rank": 8,
+     "manager": "TJ",
+     "record": "10-12",
+     "move": -2,
+     "note": "Rodgers donut, 65.40, down two spots to eighth. A full-team effort in the wrong direction."
+    },
+    {
+     "rank": 9,
+     "manager": "Flanders",
+     "record": "9-13",
+     "move": 0,
+     "note": "Beat the median with 93.44 and still lost. Ashton Jeanty's 25.40 deserved a better roommate."
+    },
+    {
+     "rank": 10,
+     "manager": "Collin",
+     "record": "7-15",
+     "move": 1,
+     "note": "Won with 77.68, up to tenth, with 17.60 points sitting on the bench."
+    },
+    {
+     "rank": 11,
+     "manager": "Brad",
+     "record": "7-15",
+     "move": -1,
+     "note": "67.46 and down to 11th. Jonathan Taylor scored 4.70 and so did the vibes."
+    },
+    {
+     "rank": 12,
+     "manager": "Jared",
+     "record": "3-19",
+     "move": 0,
+     "note": "Week's low at 57.32 and 3-19. Cam Ward's 22.22 was a lonely man at a long table."
     }
    ]
   },
