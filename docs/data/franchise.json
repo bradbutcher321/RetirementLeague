@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-20T13:17:52.990696+00:00",
+  "generated_at": "2026-11-24T15:02:48.000205+00:00",
   "median_era_start_year": 2025,
   "efficiency_start_year": 2019,
   "players": [
@@ -26,7 +26,7 @@
       "career": {
         "record": {
           "reg_w": 98,
-          "reg_l": 86,
+          "reg_l": 88,
           "reg_t": 0,
           "playoff_w": 13,
           "playoff_l": 10,
@@ -34,25 +34,25 @@
           "consolation_l": 2
         },
         "win_rates": {
-          "reg_pct": 53.3,
+          "reg_pct": 52.7,
           "playoff_pct": 56.5,
-          "median_pct": 45.8
+          "median_pct": 44.0
         },
         "points": {
-          "total_pf": 19610.04,
-          "total_pa": 18849.46,
-          "avg_pf": 102.67,
-          "avg_pa": 98.69
+          "total_pf": 19677.5,
+          "total_pa": 18994.86,
+          "avg_pf": 102.49,
+          "avg_pa": 98.93
         },
         "median": {
           "wins": 11,
-          "losses": 13,
-          "pct": 45.8
+          "losses": 14,
+          "pct": 44.0
         },
         "standings": {
           "reg_season_champs": 0,
           "best_regular_finish": 2,
-          "worst_regular_finish": 10,
+          "worst_regular_finish": 11,
           "playoff_appearances": 9,
           "champ_appearances": 5,
           "championships": 2,
@@ -70,23 +70,23 @@
         "close_wins": 6,
         "close_losses": 11,
         "blowout_wins": 15,
-        "blowout_losses": 11
+        "blowout_losses": 12
       },
       "streaks": {
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 7,
-          "current": -1
+          "current": -2
         },
         "combined": {
           "longest_win": 6,
           "longest_loss": 7,
-          "current": -3
+          "current": -5
         },
         "median": {
           "longest_win": 3,
-          "longest_loss": 4,
-          "current": -4
+          "longest_loss": 5,
+          "current": -5
         }
       },
       "rivalries": {
@@ -97,18 +97,12 @@
           "win_pct": 38.9
         },
         "favorite_opponent": {
-          "opponent": "Jon",
+          "opponent": "TJ",
           "wins": 6,
           "losses": 1,
           "win_pct": 85.7
         },
         "all": [
-          {
-            "opponent": "Jon",
-            "wins": 6,
-            "losses": 1,
-            "win_pct": 85.7
-          },
           {
             "opponent": "TJ",
             "wins": 6,
@@ -120,6 +114,12 @@
             "wins": 15,
             "losses": 4,
             "win_pct": 78.9
+          },
+          {
+            "opponent": "Jon",
+            "wins": 6,
+            "losses": 2,
+            "win_pct": 75.0
           },
           {
             "opponent": "Corey",
@@ -328,20 +328,20 @@
         {
           "year": 2026,
           "team_name": "Ye for Prez",
-          "reg_record": "7-13",
-          "reg_standing": 10,
+          "reg_record": "7-15",
+          "reg_standing": 11,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 905.18
+          "points_for": 972.64
         }
       ],
       "efficiency": {
-        "games_analyzed": 125,
+        "games_analyzed": 126,
         "career_pct": 89.4,
-        "points_left_on_bench": 1527.9,
-        "avg_points_left": 12.22,
+        "points_left_on_bench": 1535.9,
+        "avg_points_left": 12.19,
         "perfect_lineups": 14,
         "worst_game": {
           "year": 2021,
@@ -363,16 +363,16 @@
         "optimal_record": {
           "actual": {
             "w": 54,
-            "l": 52,
+            "l": 53,
             "t": 0
           },
           "optimal": {
             "w": 72,
-            "l": 34,
+            "l": 35,
             "t": 0
           },
           "extra_wins": 18,
-          "games": 106
+          "games": 107
         },
         "by_season": [
           {
@@ -412,16 +412,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 91.2
+            "games": 11,
+            "pct": 91.1
           }
         ]
       },
       "all_play": {
-        "w": 831,
-        "l": 685,
+        "w": 833,
+        "l": 694,
         "t": 0,
-        "pct": 54.8
+        "pct": 54.6
       }
     },
     {
@@ -486,8 +486,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 100,
-          "reg_l": 84,
+          "reg_w": 101,
+          "reg_l": 85,
           "reg_t": 0,
           "playoff_w": 13,
           "playoff_l": 4,
@@ -497,18 +497,18 @@
         "win_rates": {
           "reg_pct": 54.3,
           "playoff_pct": 76.5,
-          "median_pct": 45.8
+          "median_pct": 48.0
         },
         "points": {
-          "total_pf": 19943.74,
-          "total_pa": 18649.08,
-          "avg_pf": 104.42,
-          "avg_pa": 97.64
+          "total_pf": 20037.18,
+          "total_pa": 18761.78,
+          "avg_pf": 104.36,
+          "avg_pa": 97.72
         },
         "median": {
-          "wins": 11,
+          "wins": 12,
           "losses": 13,
-          "pct": 45.8
+          "pct": 48.0
         },
         "standings": {
           "reg_season_champs": 3,
@@ -537,7 +537,7 @@
         "head_to_head": {
           "longest_win": 10,
           "longest_loss": 7,
-          "current": -3
+          "current": -4
         },
         "combined": {
           "longest_win": 10,
@@ -547,7 +547,7 @@
         "median": {
           "longest_win": 4,
           "longest_loss": 6,
-          "current": 1
+          "current": 2
         }
       },
       "rivalries": {
@@ -595,16 +595,16 @@
             "win_pct": 62.5
           },
           {
-            "opponent": "Joe G",
-            "wins": 10,
-            "losses": 7,
-            "win_pct": 58.8
-          },
-          {
             "opponent": "Brad",
             "wins": 11,
             "losses": 8,
             "win_pct": 57.9
+          },
+          {
+            "opponent": "Joe G",
+            "wins": 10,
+            "losses": 8,
+            "win_pct": 55.6
           },
           {
             "opponent": "Jon",
@@ -783,20 +783,20 @@
         {
           "year": 2026,
           "team_name": "Flanders And The Funky Bunch",
-          "reg_record": "8-12",
+          "reg_record": "9-13",
           "reg_standing": 9,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 939.78
+          "points_for": 1033.22
         }
       ],
       "efficiency": {
-        "games_analyzed": 124,
+        "games_analyzed": 125,
         "career_pct": 88.5,
-        "points_left_on_bench": 1758.18,
-        "avg_points_left": 14.18,
+        "points_left_on_bench": 1770.4,
+        "avg_points_left": 14.16,
         "perfect_lineups": 12,
         "worst_game": {
           "year": 2019,
@@ -818,16 +818,16 @@
         "optimal_record": {
           "actual": {
             "w": 66,
-            "l": 40,
+            "l": 41,
             "t": 0
           },
           "optimal": {
             "w": 79,
-            "l": 27,
+            "l": 28,
             "t": 0
           },
           "extra_wins": 13,
-          "games": 106
+          "games": 107
         },
         "by_season": [
           {
@@ -867,14 +867,14 @@
           },
           {
             "year": 2026,
-            "games": 10,
+            "games": 11,
             "pct": 89.2
           }
         ]
       },
       "all_play": {
-        "w": 867,
-        "l": 648,
+        "w": 873,
+        "l": 653,
         "t": 1,
         "pct": 57.2
       }
@@ -897,7 +897,7 @@
       "career": {
         "record": {
           "reg_w": 75,
-          "reg_l": 109,
+          "reg_l": 111,
           "reg_t": 0,
           "playoff_w": 2,
           "playoff_l": 4,
@@ -905,20 +905,20 @@
           "consolation_l": 14
         },
         "win_rates": {
-          "reg_pct": 40.8,
+          "reg_pct": 40.3,
           "playoff_pct": 33.3,
-          "median_pct": 25.0
+          "median_pct": 24.0
         },
         "points": {
-          "total_pf": 17961.28,
-          "total_pa": 19067.62,
-          "avg_pf": 94.04,
-          "avg_pa": 99.83
+          "total_pf": 18018.6,
+          "total_pa": 19145.3,
+          "avg_pf": 93.85,
+          "avg_pa": 99.72
         },
         "median": {
           "wins": 6,
-          "losses": 18,
-          "pct": 25.0
+          "losses": 19,
+          "pct": 24.0
         },
         "standings": {
           "reg_season_champs": 1,
@@ -947,17 +947,17 @@
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 9,
-          "current": -7
+          "current": -8
         },
         "combined": {
           "longest_win": 6,
-          "longest_loss": 12,
-          "current": -12
+          "longest_loss": 14,
+          "current": -14
         },
         "median": {
           "longest_win": 2,
-          "longest_loss": 6,
-          "current": -6
+          "longest_loss": 7,
+          "current": -7
         }
       },
       "rivalries": {
@@ -1037,8 +1037,8 @@
           {
             "opponent": "Collin",
             "wins": 3,
-            "losses": 8,
-            "win_pct": 27.3
+            "losses": 9,
+            "win_pct": 25.0
           },
           {
             "opponent": "Ben",
@@ -1061,8 +1061,8 @@
         ]
       },
       "moves": {
-        "total": 155,
-        "avg_per_season": 12.9,
+        "total": 156,
+        "avg_per_season": 13.0,
         "busiest_season": {
           "year": 2015,
           "moves": 28
@@ -1073,7 +1073,7 @@
         "best_position": 1,
         "worst_position": 10
       },
-      "weekly_sackos": 4,
+      "weekly_sackos": 5,
       "money": {
         "total_dues": 1600.0,
         "net_result": -1580.0,
@@ -1205,20 +1205,20 @@
         {
           "year": 2026,
           "team_name": "Your Local Donnie's",
-          "reg_record": "3-17",
+          "reg_record": "3-19",
           "reg_standing": 12,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 831.04
+          "points_for": 888.36
         }
       ],
       "efficiency": {
-        "games_analyzed": 127,
+        "games_analyzed": 128,
         "career_pct": 87.4,
-        "points_left_on_bench": 1674.64,
-        "avg_points_left": 13.19,
+        "points_left_on_bench": 1681.84,
+        "avg_points_left": 13.14,
         "perfect_lineups": 12,
         "worst_game": {
           "year": 2025,
@@ -1240,16 +1240,16 @@
         "optimal_record": {
           "actual": {
             "w": 35,
-            "l": 71,
+            "l": 72,
             "t": 0
           },
           "optimal": {
             "w": 56,
-            "l": 50,
+            "l": 51,
             "t": 0
           },
           "extra_wins": 21,
-          "games": 106
+          "games": 107
         },
         "by_season": [
           {
@@ -1289,16 +1289,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
+            "games": 11,
             "pct": 89.5
           }
         ]
       },
       "all_play": {
         "w": 634,
-        "l": 882,
+        "l": 893,
         "t": 0,
-        "pct": 41.8
+        "pct": 41.5
       }
     },
     {
@@ -1333,7 +1333,7 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 104,
+          "reg_w": 106,
           "reg_l": 80,
           "reg_t": 0,
           "playoff_w": 10,
@@ -1342,20 +1342,20 @@
           "consolation_l": 4
         },
         "win_rates": {
-          "reg_pct": 56.5,
+          "reg_pct": 57.0,
           "playoff_pct": 45.5,
-          "median_pct": 75.0
+          "median_pct": 76.0
         },
         "points": {
-          "total_pf": 19237.32,
-          "total_pa": 18914.02,
-          "avg_pf": 100.72,
-          "avg_pa": 99.03
+          "total_pf": 19350.02,
+          "total_pa": 19007.46,
+          "avg_pf": 100.78,
+          "avg_pa": 99.0
         },
         "median": {
-          "wins": 18,
+          "wins": 19,
           "losses": 6,
-          "pct": 75.0
+          "pct": 76.0
         },
         "standings": {
           "reg_season_champs": 0,
@@ -1384,17 +1384,17 @@
         "head_to_head": {
           "longest_win": 5,
           "longest_loss": 5,
-          "current": 1
+          "current": 2
         },
         "combined": {
           "longest_win": 6,
           "longest_loss": 5,
-          "current": 3
+          "current": 5
         },
         "median": {
           "longest_win": 6,
           "longest_loss": 2,
-          "current": 4
+          "current": 5
         }
       },
       "rivalries": {
@@ -1485,9 +1485,9 @@
           },
           {
             "opponent": "Flanders",
-            "wins": 7,
+            "wins": 8,
             "losses": 10,
-            "win_pct": 41.2
+            "win_pct": 44.4
           },
           {
             "opponent": "Ben",
@@ -1498,8 +1498,8 @@
         ]
       },
       "moves": {
-        "total": 92,
-        "avg_per_season": 7.7,
+        "total": 93,
+        "avg_per_season": 7.8,
         "busiest_season": {
           "year": 2015,
           "moves": 14
@@ -1642,20 +1642,20 @@
         {
           "year": 2026,
           "team_name": "The Cubicle Warrior",
-          "reg_record": "13-7",
-          "reg_standing": 4,
+          "reg_record": "15-7",
+          "reg_standing": 3,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 1026.1
+          "points_for": 1138.8
         }
       ],
       "efficiency": {
-        "games_analyzed": 126,
-        "career_pct": 89.2,
-        "points_left_on_bench": 1601.3,
-        "avg_points_left": 12.71,
+        "games_analyzed": 127,
+        "career_pct": 89.3,
+        "points_left_on_bench": 1606.2,
+        "avg_points_left": 12.65,
         "perfect_lineups": 16,
         "worst_game": {
           "year": 2020,
@@ -1676,17 +1676,17 @@
         },
         "optimal_record": {
           "actual": {
-            "w": 59,
+            "w": 60,
             "l": 47,
             "t": 0
           },
           "optimal": {
-            "w": 79,
+            "w": 80,
             "l": 27,
             "t": 0
           },
           "extra_wins": 20,
-          "games": 106
+          "games": 107
         },
         "by_season": [
           {
@@ -1726,16 +1726,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 88.3
+            "games": 11,
+            "pct": 89.0
           }
         ]
       },
       "all_play": {
-        "w": 804,
-        "l": 711,
+        "w": 814,
+        "l": 712,
         "t": 1,
-        "pct": 53.1
+        "pct": 53.3
       }
     },
     {
@@ -1795,8 +1795,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 87,
-          "reg_l": 97,
+          "reg_w": 88,
+          "reg_l": 98,
           "reg_t": 0,
           "playoff_w": 7,
           "playoff_l": 7,
@@ -1806,18 +1806,18 @@
         "win_rates": {
           "reg_pct": 47.3,
           "playoff_pct": 50.0,
-          "median_pct": 45.8
+          "median_pct": 48.0
         },
         "points": {
-          "total_pf": 18733.72,
-          "total_pa": 18884.4,
-          "avg_pf": 98.08,
-          "avg_pa": 98.87
+          "total_pf": 18829.58,
+          "total_pa": 18980.5,
+          "avg_pf": 98.07,
+          "avg_pa": 98.86
         },
         "median": {
-          "wins": 11,
+          "wins": 12,
           "losses": 13,
-          "pct": 45.8
+          "pct": 48.0
         },
         "standings": {
           "reg_season_champs": 1,
@@ -1838,7 +1838,7 @@
         "biggest_loss_margin": 84.9,
         "lowest_loss_margin": 0.1,
         "close_wins": 12,
-        "close_losses": 15,
+        "close_losses": 16,
         "blowout_wins": 6,
         "blowout_losses": 12
       },
@@ -1846,17 +1846,17 @@
         "head_to_head": {
           "longest_win": 9,
           "longest_loss": 5,
-          "current": 1
+          "current": -1
         },
         "combined": {
           "longest_win": 9,
           "longest_loss": 9,
-          "current": -1
+          "current": 1
         },
         "median": {
           "longest_win": 3,
           "longest_loss": 5,
-          "current": -1
+          "current": 1
         }
       },
       "rivalries": {
@@ -1888,8 +1888,8 @@
           {
             "opponent": "Ben",
             "wins": 10,
-            "losses": 5,
-            "win_pct": 66.7
+            "losses": 6,
+            "win_pct": 62.5
           },
           {
             "opponent": "Chad",
@@ -2098,20 +2098,20 @@
         {
           "year": 2026,
           "team_name": "Kirk'n Hard",
-          "reg_record": "10-10",
-          "reg_standing": 7,
+          "reg_record": "11-11",
+          "reg_standing": 6,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 988.06
+          "points_for": 1083.92
         }
       ],
       "efficiency": {
-        "games_analyzed": 127,
-        "career_pct": 88.3,
-        "points_left_on_bench": 1656.74,
-        "avg_points_left": 13.05,
+        "games_analyzed": 128,
+        "career_pct": 88.4,
+        "points_left_on_bench": 1661.74,
+        "avg_points_left": 12.98,
         "perfect_lineups": 9,
         "worst_game": {
           "year": 2025,
@@ -2133,16 +2133,16 @@
         "optimal_record": {
           "actual": {
             "w": 48,
-            "l": 58,
+            "l": 59,
             "t": 0
           },
           "optimal": {
-            "w": 68,
+            "w": 69,
             "l": 38,
             "t": 0
           },
-          "extra_wins": 20,
-          "games": 106
+          "extra_wins": 21,
+          "games": 107
         },
         "by_season": [
           {
@@ -2182,16 +2182,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 90.4
+            "games": 11,
+            "pct": 90.8
           }
         ]
       },
       "all_play": {
-        "w": 735,
-        "l": 781,
+        "w": 742,
+        "l": 785,
         "t": 0,
-        "pct": 48.5
+        "pct": 48.6
       }
     },
     {
@@ -2241,7 +2241,7 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 96,
+          "reg_w": 98,
           "reg_l": 88,
           "reg_t": 0,
           "playoff_w": 9,
@@ -2250,20 +2250,20 @@
           "consolation_l": 6
         },
         "win_rates": {
-          "reg_pct": 52.2,
+          "reg_pct": 52.7,
           "playoff_pct": 60.0,
-          "median_pct": 75.0
+          "median_pct": 76.0
         },
         "points": {
-          "total_pf": 18963.08,
-          "total_pa": 18665.48,
-          "avg_pf": 99.28,
-          "avg_pa": 97.73
+          "total_pf": 19066.72,
+          "total_pa": 18743.74,
+          "avg_pf": 99.31,
+          "avg_pa": 97.62
         },
         "median": {
-          "wins": 18,
+          "wins": 19,
           "losses": 6,
-          "pct": 75.0
+          "pct": 76.0
         },
         "standings": {
           "reg_season_champs": 2,
@@ -2292,17 +2292,17 @@
         "head_to_head": {
           "longest_win": 10,
           "longest_loss": 6,
-          "current": 4
+          "current": 5
         },
         "combined": {
           "longest_win": 10,
           "longest_loss": 6,
-          "current": 8
+          "current": 10
         },
         "median": {
           "longest_win": 5,
           "longest_loss": 1,
-          "current": 4
+          "current": 5
         }
       },
       "rivalries": {
@@ -2319,9 +2319,9 @@
           "win_pct": 100.0,
           "also": {
             "opponent": "Kris",
-            "wins": 9,
+            "wins": 10,
             "losses": 5,
-            "win_pct": 64.3
+            "win_pct": 66.7
           }
         },
         "all": [
@@ -2333,9 +2333,9 @@
           },
           {
             "opponent": "Kris",
-            "wins": 9,
+            "wins": 10,
             "losses": 5,
-            "win_pct": 64.3
+            "win_pct": 66.7
           },
           {
             "opponent": "Jeff",
@@ -2550,21 +2550,21 @@
         {
           "year": 2026,
           "team_name": "BIG BALL(er)S",
-          "reg_record": "16-4",
+          "reg_record": "18-4",
           "reg_standing": 1,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 1231.76
+          "points_for": 1335.4
         }
       ],
       "efficiency": {
-        "games_analyzed": 126,
-        "career_pct": 88.1,
+        "games_analyzed": 127,
+        "career_pct": 88.2,
         "points_left_on_bench": 1762.8,
-        "avg_points_left": 13.99,
-        "perfect_lineups": 13,
+        "avg_points_left": 13.88,
+        "perfect_lineups": 14,
         "worst_game": {
           "year": 2019,
           "week": 13,
@@ -2584,17 +2584,17 @@
         },
         "optimal_record": {
           "actual": {
-            "w": 52,
+            "w": 53,
             "l": 54,
             "t": 0
           },
           "optimal": {
-            "w": 69,
+            "w": 70,
             "l": 37,
             "t": 0
           },
           "extra_wins": 17,
-          "games": 106
+          "games": 107
         },
         "by_season": [
           {
@@ -2634,16 +2634,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 94.9
+            "games": 11,
+            "pct": 95.3
           }
         ]
       },
       "all_play": {
-        "w": 752,
-        "l": 764,
+        "w": 761,
+        "l": 766,
         "t": 0,
-        "pct": 49.6
+        "pct": 49.8
       }
     },
     {
@@ -2698,8 +2698,8 @@
       "seasons": 12,
       "career": {
         "record": {
-          "reg_w": 71,
-          "reg_l": 113,
+          "reg_w": 72,
+          "reg_l": 114,
           "reg_t": 0,
           "playoff_w": 4,
           "playoff_l": 4,
@@ -2707,20 +2707,20 @@
           "consolation_l": 13
         },
         "win_rates": {
-          "reg_pct": 38.6,
+          "reg_pct": 38.7,
           "playoff_pct": 50.0,
-          "median_pct": 29.2
+          "median_pct": 28.0
         },
         "points": {
-          "total_pf": 18256.36,
-          "total_pa": 19149.52,
-          "avg_pf": 95.58,
-          "avg_pa": 100.26
+          "total_pf": 18339.32,
+          "total_pa": 19214.92,
+          "avg_pf": 95.52,
+          "avg_pa": 100.08
         },
         "median": {
           "wins": 7,
-          "losses": 17,
-          "pct": 29.2
+          "losses": 18,
+          "pct": 28.0
         },
         "standings": {
           "reg_season_champs": 1,
@@ -2749,17 +2749,17 @@
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 16,
-          "current": 1
+          "current": 2
         },
         "combined": {
           "longest_win": 6,
           "longest_loss": 14,
-          "current": 2
+          "current": -1
         },
         "median": {
           "longest_win": 2,
           "longest_loss": 6,
-          "current": 1
+          "current": -1
         }
       },
       "rivalries": {
@@ -2769,10 +2769,10 @@
           "losses": 4,
           "win_pct": 0.0,
           "also": {
-            "opponent": "TJ",
-            "wins": 1,
-            "losses": 4,
-            "win_pct": 20.0
+            "opponent": "Jared",
+            "wins": 8,
+            "losses": 16,
+            "win_pct": 33.3
           }
         },
         "favorite_opponent": {
@@ -2837,16 +2837,16 @@
             "win_pct": 33.3
           },
           {
+            "opponent": "TJ",
+            "wins": 2,
+            "losses": 4,
+            "win_pct": 33.3
+          },
+          {
             "opponent": "Jon",
             "wins": 3,
             "losses": 6,
             "win_pct": 33.3
-          },
-          {
-            "opponent": "TJ",
-            "wins": 1,
-            "losses": 4,
-            "win_pct": 20.0
           },
           {
             "opponent": "Chappy",
@@ -3001,20 +3001,20 @@
         {
           "year": 2026,
           "team_name": "Oviedo Ballknowers",
-          "reg_record": "10-10",
-          "reg_standing": 8,
+          "reg_record": "11-11",
+          "reg_standing": 7,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 931.24
+          "points_for": 1014.2
         }
       ],
       "efficiency": {
-        "games_analyzed": 126,
+        "games_analyzed": 127,
         "career_pct": 87.0,
-        "points_left_on_bench": 1813.36,
-        "avg_points_left": 14.39,
+        "points_left_on_bench": 1830.06,
+        "avg_points_left": 14.41,
         "perfect_lineups": 9,
         "worst_game": {
           "year": 2019,
@@ -3035,17 +3035,17 @@
         },
         "optimal_record": {
           "actual": {
-            "w": 44,
+            "w": 45,
             "l": 62,
             "t": 0
           },
           "optimal": {
-            "w": 64,
+            "w": 65,
             "l": 42,
             "t": 0
           },
           "extra_wins": 20,
-          "games": 106
+          "games": 107
         },
         "by_season": [
           {
@@ -3085,14 +3085,14 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 87.4
+            "games": 11,
+            "pct": 87.0
           }
         ]
       },
       "all_play": {
-        "w": 663,
-        "l": 853,
+        "w": 668,
+        "l": 859,
         "t": 0,
         "pct": 43.7
       }
@@ -3124,7 +3124,7 @@
       "seasons": 10,
       "career": {
         "record": {
-          "reg_w": 80,
+          "reg_w": 82,
           "reg_l": 76,
           "reg_t": 0,
           "playoff_w": 7,
@@ -3133,20 +3133,20 @@
           "consolation_l": 7
         },
         "win_rates": {
-          "reg_pct": 51.3,
+          "reg_pct": 51.9,
           "playoff_pct": 58.3,
-          "median_pct": 29.2
+          "median_pct": 32.0
         },
         "points": {
-          "total_pf": 16008.58,
-          "total_pa": 15491.2,
-          "avg_pf": 100.68,
-          "avg_pa": 97.43
+          "total_pf": 16104.68,
+          "total_pa": 15587.06,
+          "avg_pf": 100.65,
+          "avg_pa": 97.42
         },
         "median": {
-          "wins": 7,
+          "wins": 8,
           "losses": 17,
-          "pct": 29.2
+          "pct": 32.0
         },
         "standings": {
           "reg_season_champs": 1,
@@ -3166,7 +3166,7 @@
         "lowest_win_margin": 0.14,
         "biggest_loss_margin": 71.62,
         "lowest_loss_margin": 0.82,
-        "close_wins": 15,
+        "close_wins": 16,
         "close_losses": 8,
         "blowout_wins": 8,
         "blowout_losses": 8
@@ -3175,25 +3175,25 @@
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 5,
-          "current": 5
+          "current": 6
         },
         "combined": {
           "longest_win": 6,
           "longest_loss": 6,
-          "current": -1
+          "current": 2
         },
         "median": {
           "longest_win": 2,
           "longest_loss": 6,
-          "current": -1
+          "current": 1
         }
       },
       "rivalries": {
         "nemesis": {
-          "opponent": "Joe K",
-          "wins": 5,
-          "losses": 10,
-          "win_pct": 33.3
+          "opponent": "Flanders",
+          "wins": 6,
+          "losses": 11,
+          "win_pct": 35.3
         },
         "favorite_opponent": {
           "opponent": "Jared",
@@ -3263,22 +3263,22 @@
             "win_pct": 43.8
           },
           {
+            "opponent": "Joe K",
+            "wins": 6,
+            "losses": 10,
+            "win_pct": 37.5
+          },
+          {
             "opponent": "Flanders",
             "wins": 6,
             "losses": 11,
             "win_pct": 35.3
-          },
-          {
-            "opponent": "Joe K",
-            "wins": 5,
-            "losses": 10,
-            "win_pct": 33.3
           }
         ]
       },
       "moves": {
-        "total": 191,
-        "avg_per_season": 19.1,
+        "total": 193,
+        "avg_per_season": 19.3,
         "busiest_season": {
           "year": 2020,
           "moves": 31
@@ -3399,20 +3399,20 @@
         {
           "year": 2026,
           "team_name": "Bart Harley Jarvis Fan Club",
-          "reg_record": "11-9",
+          "reg_record": "13-9",
           "reg_standing": 5,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 967.02
+          "points_for": 1063.12
         }
       ],
       "efficiency": {
-        "games_analyzed": 124,
-        "career_pct": 87.6,
-        "points_left_on_bench": 1822.66,
-        "avg_points_left": 14.7,
+        "games_analyzed": 125,
+        "career_pct": 87.7,
+        "points_left_on_bench": 1825.36,
+        "avg_points_left": 14.6,
         "perfect_lineups": 11,
         "worst_game": {
           "year": 2023,
@@ -3433,17 +3433,17 @@
         },
         "optimal_record": {
           "actual": {
-            "w": 64,
+            "w": 65,
             "l": 42,
             "t": 0
           },
           "optimal": {
-            "w": 77,
+            "w": 78,
             "l": 29,
             "t": 0
           },
           "extra_wins": 13,
-          "games": 106
+          "games": 107
         },
         "by_season": [
           {
@@ -3483,16 +3483,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 87.4
+            "games": 11,
+            "pct": 88.3
           }
         ]
       },
       "all_play": {
-        "w": 673,
-        "l": 647,
+        "w": 681,
+        "l": 650,
         "t": 0,
-        "pct": 51.0
+        "pct": 51.2
       }
     },
     {
@@ -3533,7 +3533,7 @@
       "career": {
         "record": {
           "reg_w": 81,
-          "reg_l": 75,
+          "reg_l": 77,
           "reg_t": 0,
           "playoff_w": 5,
           "playoff_l": 8,
@@ -3541,20 +3541,20 @@
           "consolation_l": 4
         },
         "win_rates": {
-          "reg_pct": 51.9,
+          "reg_pct": 51.3,
           "playoff_pct": 38.5,
-          "median_pct": 66.7
+          "median_pct": 64.0
         },
         "points": {
-          "total_pf": 15970.58,
-          "total_pa": 15520.26,
-          "avg_pf": 100.44,
-          "avg_pa": 97.61
+          "total_pf": 16048.84,
+          "total_pa": 15623.9,
+          "avg_pf": 100.31,
+          "avg_pa": 97.65
         },
         "median": {
           "wins": 16,
-          "losses": 8,
-          "pct": 66.7
+          "losses": 9,
+          "pct": 64.0
         },
         "standings": {
           "reg_season_champs": 1,
@@ -3583,25 +3583,25 @@
         "head_to_head": {
           "longest_win": 6,
           "longest_loss": 6,
-          "current": -1
+          "current": -2
         },
         "combined": {
           "longest_win": 12,
           "longest_loss": 6,
-          "current": 1
+          "current": -2
         },
         "median": {
           "longest_win": 6,
           "longest_loss": 2,
-          "current": 1
+          "current": -1
         }
       },
       "rivalries": {
         "nemesis": {
           "opponent": "Chad",
           "wins": 5,
-          "losses": 9,
-          "win_pct": 35.7
+          "losses": 10,
+          "win_pct": 33.3
         },
         "favorite_opponent": {
           "opponent": "Jeff",
@@ -3679,14 +3679,14 @@
           {
             "opponent": "Chad",
             "wins": 5,
-            "losses": 9,
-            "win_pct": 35.7
+            "losses": 10,
+            "win_pct": 33.3
           }
         ]
       },
       "moves": {
-        "total": 232,
-        "avg_per_season": 23.2,
+        "total": 233,
+        "avg_per_season": 23.3,
         "busiest_season": {
           "year": 2018,
           "moves": 31
@@ -3807,21 +3807,21 @@
         {
           "year": 2026,
           "team_name": "SLIMETIME BABY",
-          "reg_record": "13-7",
-          "reg_standing": 3,
+          "reg_record": "13-9",
+          "reg_standing": 4,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 1030.54
+          "points_for": 1108.8
         }
       ],
       "efficiency": {
-        "games_analyzed": 125,
+        "games_analyzed": 126,
         "career_pct": 89.0,
         "points_left_on_bench": 1570.58,
-        "avg_points_left": 12.56,
-        "perfect_lineups": 14,
+        "avg_points_left": 12.46,
+        "perfect_lineups": 15,
         "worst_game": {
           "year": 2023,
           "week": 3,
@@ -3842,16 +3842,16 @@
         "optimal_record": {
           "actual": {
             "w": 50,
-            "l": 56,
+            "l": 57,
             "t": 0
           },
           "optimal": {
             "w": 71,
-            "l": 35,
+            "l": 36,
             "t": 0
           },
           "extra_wins": 21,
-          "games": 106
+          "games": 107
         },
         "by_season": [
           {
@@ -3891,16 +3891,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 91.1
+            "games": 11,
+            "pct": 91.7
           }
         ]
       },
       "all_play": {
-        "w": 663,
-        "l": 657,
+        "w": 667,
+        "l": 664,
         "t": 0,
-        "pct": 50.2
+        "pct": 50.1
       }
     },
     {
@@ -3950,8 +3950,8 @@
       "seasons": 8,
       "career": {
         "record": {
-          "reg_w": 70,
-          "reg_l": 60,
+          "reg_w": 71,
+          "reg_l": 61,
           "reg_t": 0,
           "playoff_w": 3,
           "playoff_l": 8,
@@ -3961,18 +3961,18 @@
         "win_rates": {
           "reg_pct": 53.8,
           "playoff_pct": 27.3,
-          "median_pct": 54.2
+          "median_pct": 52.0
         },
         "points": {
-          "total_pf": 13024.56,
-          "total_pa": 12825.74,
-          "avg_pf": 102.56,
-          "avg_pa": 100.99
+          "total_pf": 13102.24,
+          "total_pa": 12883.06,
+          "avg_pf": 102.36,
+          "avg_pa": 100.65
         },
         "median": {
           "wins": 13,
-          "losses": 11,
-          "pct": 54.2
+          "losses": 12,
+          "pct": 52.0
         },
         "standings": {
           "reg_season_champs": 1,
@@ -4001,17 +4001,17 @@
         "head_to_head": {
           "longest_win": 10,
           "longest_loss": 7,
-          "current": -1
+          "current": 1
         },
         "combined": {
           "longest_win": 10,
           "longest_loss": 8,
-          "current": -2
+          "current": -1
         },
         "median": {
           "longest_win": 5,
           "longest_loss": 4,
-          "current": -1
+          "current": -2
         }
       },
       "rivalries": {
@@ -4023,16 +4023,16 @@
         },
         "favorite_opponent": {
           "opponent": "Jared",
-          "wins": 8,
+          "wins": 9,
           "losses": 3,
-          "win_pct": 72.7
+          "win_pct": 75.0
         },
         "all": [
           {
             "opponent": "Jared",
-            "wins": 8,
+            "wins": 9,
             "losses": 3,
-            "win_pct": 72.7
+            "win_pct": 75.0
           },
           {
             "opponent": "Joe K",
@@ -4197,20 +4197,20 @@
         {
           "year": 2026,
           "team_name": "Awh Shoughs",
-          "reg_record": "6-14",
-          "reg_standing": 11,
+          "reg_record": "7-15",
+          "reg_standing": 10,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 916.44
+          "points_for": 994.12
         }
       ],
       "efficiency": {
-        "games_analyzed": 126,
+        "games_analyzed": 127,
         "career_pct": 86.5,
-        "points_left_on_bench": 2013.42,
-        "avg_points_left": 15.98,
+        "points_left_on_bench": 2031.02,
+        "avg_points_left": 15.99,
         "perfect_lineups": 8,
         "worst_game": {
           "year": 2023,
@@ -4231,17 +4231,17 @@
         },
         "optimal_record": {
           "actual": {
-            "w": 57,
+            "w": 58,
             "l": 49,
             "t": 0
           },
           "optimal": {
-            "w": 75,
+            "w": 76,
             "l": 31,
             "t": 0
           },
           "extra_wins": 18,
-          "games": 106
+          "games": 107
         },
         "by_season": [
           {
@@ -4281,16 +4281,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 86.6
+            "games": 11,
+            "pct": 86.2
           }
         ]
       },
       "all_play": {
-        "w": 555,
-        "l": 531,
+        "w": 558,
+        "l": 539,
         "t": 0,
-        "pct": 51.1
+        "pct": 50.9
       }
     },
     {
@@ -4310,7 +4310,7 @@
       "seasons": 5,
       "career": {
         "record": {
-          "reg_w": 47,
+          "reg_w": 49,
           "reg_l": 43,
           "reg_t": 0,
           "playoff_w": 3,
@@ -4319,20 +4319,20 @@
           "consolation_l": 2
         },
         "win_rates": {
-          "reg_pct": 52.2,
+          "reg_pct": 53.3,
           "playoff_pct": 50.0,
-          "median_pct": 54.2
+          "median_pct": 56.0
         },
         "points": {
-          "total_pf": 7895.92,
-          "total_pa": 7494.12,
-          "avg_pf": 101.23,
-          "avg_pa": 96.08
+          "total_pf": 8041.32,
+          "total_pa": 7561.58,
+          "avg_pf": 101.79,
+          "avg_pa": 95.72
         },
         "median": {
-          "wins": 13,
+          "wins": 14,
           "losses": 11,
-          "pct": 54.2
+          "pct": 56.0
         },
         "standings": {
           "reg_season_champs": 0,
@@ -4348,38 +4348,38 @@
       "extremes": {
         "highest_score": 158.76,
         "lowest_score": 64.52,
-        "biggest_win_margin": 72.72,
+        "biggest_win_margin": 77.94,
         "lowest_win_margin": 0.74,
         "biggest_loss_margin": 63.94,
         "lowest_loss_margin": 1.56,
         "close_wins": 6,
         "close_losses": 2,
-        "blowout_wins": 9,
+        "blowout_wins": 10,
         "blowout_losses": 3
       },
       "streaks": {
         "head_to_head": {
           "longest_win": 4,
           "longest_loss": 4,
-          "current": 2
+          "current": 3
         },
         "combined": {
-          "longest_win": 4,
+          "longest_win": 6,
           "longest_loss": 9,
-          "current": 4
+          "current": 6
         },
         "median": {
           "longest_win": 4,
           "longest_loss": 5,
-          "current": 2
+          "current": 3
         }
       },
       "rivalries": {
         "nemesis": {
           "opponent": "Brad",
-          "wins": 1,
+          "wins": 2,
           "losses": 6,
-          "win_pct": 14.3
+          "win_pct": 25.0
         },
         "favorite_opponent": {
           "opponent": "TJ",
@@ -4450,9 +4450,9 @@
           },
           {
             "opponent": "Brad",
-            "wins": 1,
+            "wins": 2,
             "losses": 6,
-            "win_pct": 14.3
+            "win_pct": 25.0
           }
         ]
       },
@@ -4524,20 +4524,20 @@
         {
           "year": 2026,
           "team_name": "The Commish",
-          "reg_record": "13-7",
+          "reg_record": "15-7",
           "reg_standing": 2,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 1079.36
+          "points_for": 1224.76
         }
       ],
       "efficiency": {
-        "games_analyzed": 78,
+        "games_analyzed": 79,
         "career_pct": 90.8,
-        "points_left_on_bench": 799.26,
-        "avg_points_left": 10.25,
+        "points_left_on_bench": 812.46,
+        "avg_points_left": 10.28,
         "perfect_lineups": 11,
         "worst_game": {
           "year": 2023,
@@ -4558,17 +4558,17 @@
         },
         "optimal_record": {
           "actual": {
-            "w": 34,
+            "w": 35,
             "l": 32,
             "t": 0
           },
           "optimal": {
-            "w": 43,
+            "w": 44,
             "l": 23,
             "t": 0
           },
           "extra_wins": 9,
-          "games": 66
+          "games": 67
         },
         "by_season": [
           {
@@ -4593,16 +4593,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 95.3
+            "games": 11,
+            "pct": 94.8
           }
         ]
       },
       "all_play": {
-        "w": 362,
+        "w": 373,
         "l": 364,
         "t": 0,
-        "pct": 49.9
+        "pct": 50.6
       }
     },
     {
@@ -4616,7 +4616,7 @@
       "career": {
         "record": {
           "reg_w": 46,
-          "reg_l": 44,
+          "reg_l": 46,
           "reg_t": 0,
           "playoff_w": 2,
           "playoff_l": 4,
@@ -4624,20 +4624,20 @@
           "consolation_l": 3
         },
         "win_rates": {
-          "reg_pct": 51.1,
+          "reg_pct": 50.0,
           "playoff_pct": 33.3,
-          "median_pct": 54.2
+          "median_pct": 52.0
         },
         "points": {
-          "total_pf": 7566.32,
-          "total_pa": 7471.12,
-          "avg_pf": 97.0,
-          "avg_pa": 95.78
+          "total_pf": 7631.72,
+          "total_pa": 7554.08,
+          "avg_pf": 96.6,
+          "avg_pa": 95.62
         },
         "median": {
           "wins": 13,
-          "losses": 11,
-          "pct": 54.2
+          "losses": 12,
+          "pct": 52.0
         },
         "standings": {
           "reg_season_champs": 0,
@@ -4666,17 +4666,17 @@
         "head_to_head": {
           "longest_win": 5,
           "longest_loss": 3,
-          "current": -2
+          "current": -3
         },
         "combined": {
           "longest_win": 5,
-          "longest_loss": 5,
-          "current": -5
+          "longest_loss": 7,
+          "current": -7
         },
         "median": {
           "longest_win": 3,
-          "longest_loss": 3,
-          "current": -3
+          "longest_loss": 4,
+          "current": -4
         }
       },
       "rivalries": {
@@ -4708,8 +4708,8 @@
           {
             "opponent": "Jeff",
             "wins": 4,
-            "losses": 1,
-            "win_pct": 80.0
+            "losses": 2,
+            "win_pct": 66.7
           },
           {
             "opponent": "Chad",
@@ -4829,20 +4829,20 @@
         {
           "year": 2026,
           "team_name": "Scary  Terry ",
-          "reg_record": "10-10",
-          "reg_standing": 6,
+          "reg_record": "10-12",
+          "reg_standing": 8,
           "made_playoffs": false,
           "playoff_record": null,
           "final_standing": 0,
           "champion": false,
-          "points_for": 992.08
+          "points_for": 1057.48
         }
       ],
       "efficiency": {
-        "games_analyzed": 78,
-        "career_pct": 89.0,
-        "points_left_on_bench": 939.36,
-        "avg_points_left": 12.04,
+        "games_analyzed": 79,
+        "career_pct": 88.9,
+        "points_left_on_bench": 948.66,
+        "avg_points_left": 12.01,
         "perfect_lineups": 6,
         "worst_game": {
           "year": 2024,
@@ -4864,16 +4864,16 @@
         "optimal_record": {
           "actual": {
             "w": 33,
-            "l": 33,
+            "l": 34,
             "t": 0
           },
           "optimal": {
             "w": 44,
-            "l": 22,
+            "l": 23,
             "t": 0
           },
           "extra_wins": 11,
-          "games": 66
+          "games": 67
         },
         "by_season": [
           {
@@ -4898,16 +4898,16 @@
           },
           {
             "year": 2026,
-            "games": 10,
-            "pct": 91.9
+            "games": 11,
+            "pct": 91.6
           }
         ]
       },
       "all_play": {
-        "w": 351,
-        "l": 375,
+        "w": 352,
+        "l": 385,
         "t": 0,
-        "pct": 48.3
+        "pct": 47.8
       }
     },
     {
