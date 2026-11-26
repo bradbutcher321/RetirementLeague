@@ -1,6 +1,55 @@
 {
- "generated_at": "2026-11-24T16:09:17+00:00",
+ "generated_at": "2026-11-26T12:07:04+00:00",
  "columns": [
+  {
+   "id": "2026-w12-preview",
+   "kind": "preview",
+   "season": 2026,
+   "week": 12,
+   "published_at": "2026-11-26T07:07:04-05:00",
+   "headline": "Joe G and Brad Break an 11-11 Tie While Heading Opposite Directions",
+   "dek": "The all-time series is dead even, one of them has won five straight and the other has lost five straight, and ESPN still calls it a near coin flip.",
+   "body": [
+    "The game of the week is Joe G against Brad, because the all-time series is tied 11-11 and somebody finally gets to stop saying it is tied. ESPN projects Joe G for <b>102.49</b> and Brad for <b>99.40</b>, a <b>3.09</b>-point gap and a <b>52%</b> to <b>48%</b> split. Joe G is third at 15-7 on a W5 streak with a <b>99.13%</b> playoff chance. Brad is 11th at 7-15 on an L5 streak with a <b>0.98%</b> playoff chance. Brad is even projected above the <b>98.52</b> median, which is nice for a team that has spent five straight weeks losing anyway. If Brad wins, he gets the series lead and nothing else. If he loses, he gets a sixth straight loss and a rivalry he can no longer call even.",
+    "The closest projection on the board is Flanders against Kris: <b>98.74</b> to <b>98.30</b>, a <b>0.44</b>-point gap, <b>50%</b> each. Flanders is ninth at 9-13 on a W2 streak with an <b>18.63%</b> playoff chance and leads the series 10-6. Kris is fourth at 13-9, tied on record with Ben and ahead of him on points, yet ESPN gives Ben the better playoff chance, <b>90.68%</b> to <b>84.93%</b>. Kris has the higher seat and the worse odds, which is the fantasy equivalent of a corner office with no window.",
+    "The biggest mismatch is Jon against Joe K. Jon is projected for <b>126.41</b>, Joe K for <b>83.49</b>, a <b>42.92</b>-point gap and a <b>22%</b> win chance for Joe K. Joe K is sixth at 11-11 with a <b>29.45%</b> playoff chance, tied on record with Jeff, who sits seventh and somehow has better odds at <b>48.15%</b>. Joe K brings a W1 streak into this, the shortest heater a man can have, and ESPN looked at it and shrugged. Jon leads the series 5-4 and is second at 15-7, tied on record with Joe G and ahead on points.",
+    "Chad is alone in first at 18-4, rides a W5 streak, owns a <b>100%</b> playoff chance and carries the top projection of the week, <b>127.88</b>, into a <b>73%</b> win chance against Collin's <b>92.11</b>. And yet Collin leads that series 7-5. Collin is 10th at 7-15, tied with Brad and ahead of him on points, but with a <b>0.85%</b> playoff chance, lower than Brad's.",
+    "Jared is alone in last at 3-19, has lost seven straight, has no playoff chance at all and gets the lowest projection on the slate, <b>74.42</b>. TJ, on an L4 streak himself, is a <b>61%</b> favorite at <b>89.67</b> and leads the series 7-1. Two teams that have forgotten how to win, and one of them is legally required to. Ben is also a <b>61%</b> favorite, <b>112.24</b> to Jeff's <b>94.48</b>, even though Jeff leads that series 9-7.",
+    "Secret Santa: the buy-by date was November 20, and seven managers are still at the North Pole without a shirt picked, including Chad, who has a <b>100%</b> playoff chance and no shirt. Brad, Ben, Collin, Jared, Jeff and Joe K are right there with him. Nobody has wrapped anything. Projections are ESPN's; the shame is all yours."
+   ],
+   "games": [
+    {
+     "a": "Flanders",
+     "b": "Kris",
+     "note": "The closest projection of the week, 98.74 to 98.30, a true 50-50, and Flanders leads the series 10-6"
+    },
+    {
+     "a": "Chad",
+     "b": "Collin",
+     "note": "Chad is a 73% favorite with the top projection, 127.88, but Collin leads the series 7-5"
+    },
+    {
+     "a": "Joe G",
+     "b": "Brad",
+     "note": "Series tied 11-11, Joe G on W5, Brad on L5, and ESPN only has it 52% to 48%"
+    },
+    {
+     "a": "Jared",
+     "b": "TJ",
+     "note": "Two losing streaks collide; Jared's 74.42 is the lowest projection on the slate and TJ leads 7-1"
+    },
+    {
+     "a": "Jon",
+     "b": "Joe K",
+     "note": "The biggest gap of the week at 42.92 points; Joe K gets a 22% chance and a 4-5 series deficit"
+    },
+    {
+     "a": "Jeff",
+     "b": "Ben",
+     "note": "Ben is projected for 112.24 and a 61% chance, but Jeff leads the series 9-7"
+    }
+   ]
+  },
   {
    "id": "2026-w11-preview",
    "kind": "preview",
