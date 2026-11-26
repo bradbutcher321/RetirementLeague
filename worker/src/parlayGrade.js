@@ -67,6 +67,11 @@ function gradeIndividual(bet, aWon, rounds, line, side) {
   if (TOTAL_VS.has(bet)) return rounds == null ? null : gradeOverUnder(rounds, line, side);
   return null;
 }
+function wonAlready(bet, total, need, line, side) {
+  if (PROP_BINARY.has(bet)) return total >= need;
+  const l = parseSigned(line);
+  return side === "Over" && l != null && total > l;
+}
 const propTarget = (prop) => { const m = String(prop).match(MULTI); return m ? [Number(m[1]), m[2]] : [1, prop]; };
 const tone = (outcome) => (outcome === "Win" ? "up" : outcome === "Loss" ? "down" : null);
 
@@ -89,7 +94,12 @@ export async function gradeLeg(ctx, p) {
     const loc = await locateProp(ctx, name, bet, p.sport, p.gametime, true, p.game_id);
     // A player who didn't play voids the leg, the way the book does: it comes off the slip.
     if (loc && loc.dnp) return { outcome: "Void", detail: `${p.player_prop}: DNP` };
-    if (!loc || !loc.found) return { outcome: null, why: `'${name}' not found in the box score (not final yet, a DNP, or a name mismatch)` };
+    if (!loc || !loc.found) {
+      // Before the final, a prop that can't lose any more is already a Win: the TD is in, the Over is passed.
+      const now = await locateProp(ctx, name, bet, p.sport, p.gametime, false, p.game_id);
+      if (now && now.found && wonAlready(bet, now.total, need, p.line, p.side)) return { outcome: "Win", detail: `${p.player_prop}: ${g(now.total)}` };
+      return { outcome: null, why: `'${name}' not found in the box score (not final yet, a DNP, or a name mismatch)` };
+    }
     const total = loc.total;
     if (PROP_BINARY.has(bet)) return { outcome: total >= need ? "Win" : "Loss", detail: `${p.player_prop}: ${g(total)}` };
     const outcome = gradeOverUnder(total, p.line, p.side);
@@ -133,7 +143,8 @@ export async function liveLeg(ctx, p) {
     if (!loc || !loc.teamC || !loc.oppC) return { live: null, matchup: null };
     const st = gameState(loc.comp, loc.teamC, loc.oppC);
     const matchup = `${abbrevOf(loc.teamC)} vs. ${abbrevOf(loc.oppC)}`;
-    const stat = loc.found ? loc.total : null;
+    // Not on the box score during the game yet: no catches, no TD, so far.
+    const stat = loc.found ? loc.total : st.state === "in" ? 0 : null;
     if (st.state === "pre" || stat == null) return { live: null, matchup };
     let hit = false, t;
     if (PROP_BINARY.has(bet)) { hit = stat >= need; t = hit ? "up" : "down"; }

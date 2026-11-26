@@ -47,7 +47,9 @@ compatibility_date = "2024-09-23"
 #      Thursday-night NCAAF/NFL.
 #   C) every minute, Sat/Sun 4pm-11:59pm UTC -- Saturday NCAAF and Sunday
 #      NFL afternoon/night (starts ~1hr early on Sunday: noon ET, not 1pm).
-#   D) hourly, Thu 12pm-11:59pm UTC -- Thursday daytime before kickoff.
+#   D) every minute, Thu 4pm-10:59pm UTC -- Thanksgiving's (and Christmas's)
+#      afternoon games, which only got hourly runs before 2026-11-26. (It was
+#      an hourly Thursday rule, already covered by E.)
 #   E) hourly, every hour, every day but Tuesday -- the "otherwise" baseline
 #      (redundant with A/B/C/D where they overlap). Wednesday and Thursday
 #      were added for the "your leg isn't in yet" reminders (src/push.js
@@ -62,7 +64,7 @@ crons = [
   "* 0-4 * * MON,TUE,FRI,SAT,SUN", # A
   "* 23 * * MON,THU",             # B
   "* 16-23 * * SAT,SUN",          # C
-  "0 12-23 * * THU",              # D
+  "* 16-22 * * THU",              # D
   "0 * * * MON,WED,THU,FRI,SAT,SUN", # E
 ]
 
