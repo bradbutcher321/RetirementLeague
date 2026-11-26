@@ -32,6 +32,7 @@ const KV_KEY = "parlay_stats_v1";
 const PICK_FIELDS = ["sport", "bet_type", "team", "opponent", "player_prop", "line", "side", "odds", "gametime", "raw_pick"];
 const GAMETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
 const RESULTS = new Set(["", "Pending", "Win", "Loss", "Void"]);
+const NO_BET = "No Bet";
 // A leg that's been decided: a Void (a DNP) is as final as a Win or a Loss.
 const SETTLED = new Set(["Win", "Loss", "Void"]);
 // Live scores from half an hour before kickoff to eight hours after.
@@ -279,6 +280,8 @@ export async function saveWeek(env, picks) {
     // mode new: the same pick keeps its graded Result (and its detail and game).
     if (!edit && was && was.raw_pick && was.raw_pick === c.raw_pick && was.result) result = was.result;
     c.result = c.bet_type ? result : null;
+    // A manager who didn't send a leg: off the slip like a DNP, nothing to grade or price.
+    if (c.bet_type === NO_BET) Object.assign(c, Object.fromEntries(PICK_FIELDS.map((f) => [f, ""])), { bet_type: NO_BET, raw_pick: "No bet", odds: null, result: "Void" });
     clean[p] = c;
   }
   if (!Object.keys(clean).length) return { status: 400, body: { error: "no_picks" } };

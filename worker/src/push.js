@@ -419,6 +419,7 @@ export function currentEvents(year, dashboard, parlay, book, rivals, now = new D
   if (pw && pw.picks) {
     for (const [name, p] of Object.entries(pw.picks)) {
       if (p.result !== "Win" && p.result !== "Loss" && p.result !== "Void") continue;
+      if (p.pick === "No bet") continue;
       const hit = p.result === "Win";
       out.push({
         key: `parlay:${pw.year}:${pw.week}:${name}`,

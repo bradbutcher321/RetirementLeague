@@ -318,6 +318,7 @@
 
   // ---------- Legs (kept in step with worker/src/legs.js) ----------
   function pickText(l){
+    if (l.bet_type === NO_BET) return 'No bet';
     if (['Spread', 'Alt Spread', '1st Half Spread'].includes(l.bet_type)) return `${l.bet_type}: ${l.team} ${l.line} vs. ${l.opponent}`;
     if (l.bet_type === 'Money Line') return `${l.bet_type}: ${l.team} vs. ${l.opponent}`;
     if (['Total Points', 'Total Goals', 'Total Rounds'].includes(l.bet_type)) return `${l.bet_type}: ${l.side} ${l.line} ${l.team} vs. ${l.opponent}`;
@@ -325,8 +326,10 @@
     if (['Anytime TD', 'Coin Toss'].includes(l.bet_type)) return `${l.bet_type}: ${l.player_prop}`;
     return `${l.bet_type}: ${l.side} ${l.line} ${l.player_prop}`;
   }
+  const NO_BET = 'No Bet';
   function betHtml(l){
     if (l.bet_type === 'Other') return esc(l.player_prop);
+    if (l.bet_type === NO_BET) return '<b>No bet</b>';
     const t = pickText(l), i = t.indexOf(':');
     return `<b>${esc(t.slice(0, i))}</b> ·${esc(t.slice(i + 1))}`;
   }
@@ -638,6 +641,7 @@
 
   // ---------- Drawing ----------
   function legRow(l){
+    if (l.bet_type === NO_BET) return `<div class="pl-leg out${l.player === me() ? ' me' : ''}"><div class="pl-leg-top"><span class="pl-leg-name">${esc(l.player)}</span><span class="pl-leg-odds">No bet</span></div></div>`;
     const when = l.bet_type === 'Other' ? '<span class="badge gold">Typed in</span>'
       : l.gametime ? `<span><span class="sport">${esc(l.sport)}</span> · ${esc(kick(l.gametime))}</span>` : '';
     return `<div class="pl-leg${l.player === me() ? ' me' : ''}">
@@ -808,7 +812,7 @@
       ? `<span>${esc(forWhom())}'s leg</span><button type="button" class="link-btn" id="back-mine" style="padding:0;min-height:32px">Back to mine</button>` : 'Your leg';
     document.getElementById('chips').innerHTML = board ? `<span class="chip gold">${board.year} · Week ${board.week}</span>
       <span class="chip">${board.locked ? 'Locked · legs confirmed' : board.reopened ? 'Reopened' : board.open ? `Locks ${esc(etWhen(board.locksAt))}` : `Locked · opens ${esc(etWhen(board.opensAt))}`}</span>
-      <span class="chip">${board.legs.length} of ${board.players.length} in</span>` : '';
+      <span class="chip">${board.legs.filter(l => l.bet_type !== NO_BET).length} of ${board.players.length - board.legs.filter(l => l.bet_type === NO_BET).length} in</span>` : '';
     if (cm) renderCm();
     else {
       document.getElementById('board-title').textContent = board ? `Week ${board.week}` : 'This week';
@@ -1056,7 +1060,7 @@
     if (!l) return blankRow();
     const r = { ...blankRow(), ...Object.fromEntries(['sport', 'bet_type', 'team', 'opponent', 'player_prop', 'line', 'side', 'raw_pick'].map(f => [f, l[f] == null ? '' : String(l[f])])),
       odds: oddsText(l.odds), gametime: (l.gametime || '').slice(0, 16) };
-    r.result = prev && prev.bet_type === r.bet_type && prev.raw_pick === r.raw_pick ? prev.result : '';
+    r.result = r.bet_type === NO_BET ? 'Void' : prev && prev.bet_type === r.bet_type && prev.raw_pick === r.raw_pick ? prev.result : '';
     return r;
   }
   function buildBase(d){
@@ -1204,7 +1208,13 @@
   }
 
   function cmRow(n){
-    const r = ed.cur.rows[n], has = !!r.bet_type, open = ed.open.has(n);
+    const r = ed.cur.rows[n];
+    if (r.bet_type === NO_BET) {
+      return `<div class="pl-leg out${isChanged(n) ? ' changed' : ''}${n === me() ? ' me' : ''}">
+        <div class="pl-leg-top"><span class="pl-leg-name">${esc(n)}</span><span class="pl-leg-odds">No bet</span></div>
+        <div class="res-row"><span class="fine" style="margin:0">Off the slip, like a void</span><span class="btns">${(canPick() ? act('pick', n, 'Pick') : '') + act('nobet-undo', n, 'Undo')}</span></div></div>`;
+    }
+    const has = !!r.bet_type, open = ed.open.has(n);
     const why = rowWhy(n);
     const bad = has && why.length > 0;
     let game = '';
@@ -1216,7 +1226,7 @@
     }
     const results = has && !(onBoardWeek() && board.open)
       ? `<div class="seg" data-res="${esc(n)}">${RESULTS.map(x => `<button type="button" data-v="${x}" class="${(r.result || 'Pending') === x ? 'on' : ''}">${x}</button>`).join('')}</div>` : '<span></span>';
-    const btns = (canPick() ? act('pick', n, has ? 'Re-pick' : 'Pick') : '') + act('edit', n, open ? 'Done' : has ? 'Edit pick' : 'Edit');
+    const btns = (canPick() ? act('pick', n, has ? 'Re-pick' : 'Pick') : '') + (has || open ? '' : act('nobet', n, 'No bet')) + act('edit', n, open ? 'Done' : has ? 'Edit pick' : 'Edit');
     const l = { ...r, odds: parseOdds(r.odds) };
     return `<div class="pl-leg${has ? '' : ' out'}${isChanged(n) ? ' changed' : ''}${bad ? ' bad' : ''}${n === me() ? ' me' : ''}">
       <div class="pl-leg-top"><span class="pl-leg-name">${esc(n)}</span><span class="pl-leg-odds">${has ? fmtRowOdds(r) : 'Not in yet'}</span></div>
@@ -1366,6 +1376,11 @@
     if (b.dataset.act === 'edit') { if (ed.open.has(n)) ed.open.delete(n); else ed.open.add(n); renderCm(); }
     else if (b.dataset.act === 'pick' && !saving) enterFor(n);
     else if (b.dataset.act === 'fill') fillFromText(n);
+    else if (b.dataset.act === 'nobet' || b.dataset.act === 'nobet-undo') {
+      ed.cur.rows[n] = b.dataset.act === 'nobet' ? { ...blankRow(), bet_type: NO_BET, raw_pick: 'No bet', result: 'Void' } : blankRow();
+      ed.open.delete(n); delete ed.keys[n]; delete ed.parseWhy[n]; delete ed.gameWhy[n]; delete ed.hint[n];
+      renderCm();
+    }
   });
   boardEl.addEventListener('input', e => {
     const t = e.target;
@@ -1418,7 +1433,7 @@
     for (const n of roster()) {
       const p = picks[n], was = ed.orig.rows[n];
       delete ed.parseWhy[n]; delete ed.gameWhy[n]; delete ed.hint[n];
-      if (!p) { ed.cur.rows[n] = blankRow(); delete ed.keys[n]; continue; }
+      if (!p) { ed.cur.rows[n] = was.bet_type === NO_BET ? clone(was) : blankRow(); delete ed.keys[n]; continue; }
       if (was.bet_type && was.raw_pick && was.raw_pick === p.raw_line) { ed.cur.rows[n] = clone(was); continue; }   // unchanged
       ed.cur.rows[n] = { ...blankRow(), bet_type: p.bet_type, team: p.team, opponent: p.opponent, player_prop: p.player_prop,
         line: p.line, side: p.side, odds: oddsText(p.odds), raw_pick: p.raw_line };

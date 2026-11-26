@@ -83,6 +83,7 @@ const probToAmerican = (p) => (p > 0.5 ? -p / (1 - p) * 100 : 100 / p - 100);
 /** generate_parlay_data.reconstruct_pick_text */
 export function reconstructPickText(bet, team, opp, prop, line, side) {
   if (!bet) return "";
+  if (bet === "No Bet") return "No bet";
   const t = (x) => x.trim();
   if (TEAM_LINE_VS.has(bet)) return t(`${bet}: ${team} ${line} vs. ${opp}`);
   if (VS_ONLY.has(bet)) return t(`${bet}: ${team} vs. ${opp}`);

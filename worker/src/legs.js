@@ -550,7 +550,7 @@ function tryPrice(x, markets) {
  * how "updated" | "same" | "moved" (Hard Rock is on another line) | "kept". */
 export async function priceAtLock(env, b) {
   const now = Date.now();
-  const rows = b.legs.map((l) => ({ l, r: { player: l.player, pick: pickText(l), was: l.odds, odds: l.odds, how: "kept", why: "" } }));
+  const rows = b.legs.filter((l) => l.bet_type !== "No Bet").map((l) => ({ l, r: { player: l.player, pick: pickText(l), was: l.odds, odds: l.odds, how: "kept", why: "" } }));
   const todo = [];
   for (const x of rows) {
     const l = x.l;
