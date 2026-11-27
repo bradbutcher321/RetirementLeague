@@ -270,53 +270,84 @@ const DOGS = {
 };
 
 function buddy(parent) {
-  // Buddy's costume: bright green coat to the knee with a black underskirt, white fur collar and cuffs,
-  // black belt with a gold buckle, yellow tights, curly black shoes, green hat with a yellow band.
-  const G = '#22a83f', GD = '#1b8f34';
-  const leg = (n, sx) => `<g data-p="${n}"><line x1="0" y1="0" x2="0" y2="92" stroke="#f5cf1f" stroke-width="16" stroke-linecap="round"/>
-    <path d="M${-8 * sx} 90 Q ${-9 * sx} 104 ${6 * sx} 104 Q ${20 * sx} 104 ${25 * sx} 95 Q ${27 * sx} 88 ${20 * sx} 90 Q ${18 * sx} 96 ${8 * sx} 94 Z" fill="#141414"/></g>`;
-  const arm = n => `<g data-p="${n}"><line x1="0" y1="0" x2="0" y2="56" stroke="${G}" stroke-width="17" stroke-linecap="round"/>
-    <path d="M-12 52 q 3 -4 6 0 q 3 -4 6 0 q 3 -4 6 0 q 3 -4 6 0 L 12 64 q -3 3 -6 0 q -3 3 -6 0 q -3 3 -6 0 q -3 3 -6 0 Z" fill="#fff"/>
-    <circle cx="0" cy="71" r="8.5" fill="${SKIN}"/></g>`;
+  // Buddy: green coat to mid-thigh that opens in an arch below the belt, gold embroidery down the front and
+  // round the hem, wide black belt with a big gold buckle, pointed white fur collar, big fur cuffs, yellow
+  // tights, curly brown hair, small green hat with a yellow band and a red feather. Arms have elbows so he
+  // can stand hands-on-hips.
+  const G = '#2a9a3c', GD = '#1f7d2f', EMB = '#d9b84a';
+  const leg = (n, sx) => `<g data-p="${n}"><line x1="0" y1="0" x2="${sx * 2}" y2="108" stroke="#f6c719" stroke-width="19" stroke-linecap="round"/>
+    <path d="M${-7 * sx} 108 Q ${-8 * sx} 120 ${6 * sx} 120 Q ${20 * sx} 120 ${24 * sx} 111 Q ${26 * sx} 104 ${19 * sx} 106 Q ${17 * sx} 112 ${8 * sx} 110 Z" fill="#161616"/></g>`;
+  const fur = (w, h) => { let d = `M${-w / 2} 0`; const n = Math.round(w / 6);
+    for (let i = 0; i < n; i++) d += ` q ${f1(w / n / 2)} -4 ${f1(w / n)} 0`; d += ` L ${w / 2} ${h}`;
+    for (let i = 0; i < n; i++) d += ` q ${f1(-w / n / 2)} 4 ${f1(-w / n)} 0`; return d + ' Z'; };
+  const arm = (n, f) => `<g data-p="${n}"><line x1="0" y1="0" x2="0" y2="34" stroke="${G}" stroke-width="19" stroke-linecap="round"/>
+    <g data-p="${f}"><line x1="0" y1="0" x2="0" y2="20" stroke="${G}" stroke-width="18" stroke-linecap="round"/>
+      <path d="${fur(28, 15)}" transform="translate(0 18)" fill="#fff"/>
+      <ellipse cx="0" cy="39" rx="8.5" ry="8" fill="${SKIN}"/></g></g>`;
+  // gold scrollwork: little curls in a column
+  const curls = (x, y0, y1, dir) => { let d = ''; for (let y = y0; y < y1; y += 11) d += `M${x} ${y} c ${3 * dir} -4 ${7 * dir} -2 ${6 * dir} 2 c -1 3 ${-4 * dir} 3 ${-4 * dir} 0 M${x} ${y + 5} l ${-3 * dir} 3 `; return d; };
   const html = `
+    <path d="M-38 -136 L 38 -136 L 53 -55 Q 0 -61 -53 -55 Z" fill="#141414"/>
     ${leg('legL', -1)}${leg('legR', 1)}
-    ${arm('armL')}
-    <path d="M-40 -136 L 40 -136 L 54 -66 L -54 -66 Z" fill="#151515"/>
-    <path d="M-38 -136 C -46 -112 -54 -88 -60 -64 C -42 -60 -24 -62 -10 -70 C -6 -100 -4 -120 -2 -136 Z" fill="${G}"/>
-    <path d="M38 -136 C 46 -112 54 -88 60 -64 C 42 -60 24 -62 10 -70 C 6 -100 4 -120 2 -136 Z" fill="${G}"/>
-    <path d="M-60 -64 C -42 -60 -24 -62 -10 -70 L -10 -66 C -24 -58 -42 -56 -60 -60 Z M60 -64 C 42 -60 24 -62 10 -70 L 10 -66 C 24 -58 42 -56 60 -60 Z" fill="${GD}"/>
-    <path d="M-31 -196 C -38 -170 -40 -150 -39 -136 L 39 -136 C 40 -150 38 -170 31 -196 Z" fill="${G}"/>
-    <path d="M-2 -196 L -2 -136 L 2 -136 L 2 -196 Z" fill="${GD}"/>
-    <rect x="-41" y="-146" width="82" height="13" rx="2" fill="#151515"/>
-    <rect x="-10" y="-150" width="20" height="21" rx="2.5" fill="none" stroke="#f2c21b" stroke-width="4"/>
-    ${arm('armR')}
-    <path d="M-38 -198 Q -36 -182 -22 -178 Q -16 -184 -8 -180 Q 0 -188 8 -180 Q 16 -184 22 -178 Q 36 -182 38 -198 Q 20 -212 0 -210 Q -20 -212 -38 -198 Z" fill="#fff"/>
+    <path d="M-34 -200 C -40 -176 -42 -156 -41 -138 L 41 -138 C 42 -156 40 -176 34 -200 Z" fill="${G}"/>
+    <path d="M-41 -138 L -2 -138 L -2 -98 C -6 -78 -16 -62 -32 -54 C -42 -50 -52 -50 -58 -52 C -54 -80 -48 -110 -41 -138 Z" fill="${G}"/>
+    <path d="M41 -138 L 2 -138 L 2 -98 C 6 -78 16 -62 32 -54 C 42 -50 52 -50 58 -52 C 54 -80 48 -110 41 -138 Z" fill="${G}"/>
+    <line x1="0" y1="-196" x2="0" y2="-98" stroke="${GD}" stroke-width="3"/>
+    <g stroke="${EMB}" stroke-width="1.6" fill="none" stroke-linecap="round">
+      <path d="${curls(-6, -182, -158, -1)}${curls(6, -182, -158, 1)}${curls(-6, -132, -104, -1)}${curls(6, -132, -104, 1)}"/>
+      <path d="M-7 -96 C -10 -80 -18 -66 -32 -58 C -42 -54 -50 -55 -55 -56 M7 -96 C 10 -80 18 -66 32 -58 C 42 -54 50 -55 55 -56"/>
+      <path d="M-50 -60 l 3 -5 l 3 5 M-40 -58 l 3 -5 l 3 5 M-28 -62 l 3 -5 l 3 5 M50 -60 l -3 -5 l -3 5 M40 -58 l -3 -5 l -3 5 M28 -62 l -3 -5 l -3 5"/>
+    </g>
+    <rect x="-44" y="-152" width="88" height="17" rx="2" fill="#151515"/>
+    <rect x="-13" y="-156" width="26" height="25" rx="2" fill="url(#gold)"/><rect x="-7" y="-150" width="14" height="13" fill="#151515"/>
+    ${arm('armL', 'foreL')}${arm('armR', 'foreR')}
+    <path d="M-37 -203 C -30 -196 -27 -186 -26 -172 L -7 -186 L 0 -178 L 7 -186 L 26 -172 C 27 -186 30 -196 37 -203 C 20 -213 -20 -213 -37 -203 Z" fill="#fff" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M-26 -176 l -3 4 M-20 -182 l -2 4 M26 -176 l 3 4 M20 -182 l 2 4" stroke="#e3e6ea" stroke-width="1.5"/>
     <g data-p="head">
-      <rect x="-8" y="-12" width="16" height="12" fill="${SKIN}"/>
-      <ellipse cx="-20" cy="-30" rx="5" ry="7" fill="${SKIN}"/><ellipse cx="20" cy="-30" rx="5" ry="7" fill="${SKIN}"/>
-      <ellipse cx="0" cy="-32" rx="20" ry="24" fill="${SKIN}"/>
-      <path d="M-21 -30 C -24 -52 -12 -60 0 -60 C 14 -60 24 -52 21 -30 C 18 -40 16 -44 12 -46 C 4 -42 -8 -42 -14 -46 C -18 -44 -20 -38 -21 -30 Z" fill="#9a4a24"/>
-      <circle cx="-7.5" cy="-33" r="2.8" fill="#2a1a10"/><circle cx="7.5" cy="-33" r="2.8" fill="#2a1a10"/>
-      <path d="M-9 -22 Q 0 -12 9 -22" stroke="#8a2a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <ellipse cx="-13" cy="-24" rx="4" ry="2.4" fill="#ff8a8a" opacity=".45"/><ellipse cx="13" cy="-24" rx="4" ry="2.4" fill="#ff8a8a" opacity=".45"/>
-      <path d="M-22 -50 C -18 -72 -4 -92 8 -100 C 12 -84 18 -66 22 -50 Z" fill="${G}"/>
-      <rect x="-24" y="-56" width="48" height="9" rx="3" fill="#f5cf1f"/>
-      <path d="M-18 -56 C -30 -64 -32 -74 -26 -80 C -24 -70 -20 -64 -14 -58 Z" fill="#d81f2a"/>
+      <rect x="-8" y="-12" width="16" height="14" fill="${SKIN}"/>
+      <ellipse cx="-19" cy="-30" rx="5" ry="7" fill="${SKIN}"/><ellipse cx="19" cy="-30" rx="5" ry="7" fill="${SKIN}"/>
+      <ellipse cx="0" cy="-32" rx="19" ry="23" fill="${SKIN}"/>
+      <g fill="#6a3d20">
+        <circle cx="-20" cy="-40" r="7"/><circle cx="20" cy="-40" r="7"/><circle cx="-22" cy="-30" r="5.5"/><circle cx="22" cy="-30" r="5.5"/>
+        <circle cx="-16" cy="-50" r="7.5"/><circle cx="16" cy="-50" r="7.5"/><circle cx="-7" cy="-55" r="7.5"/><circle cx="7" cy="-55" r="7.5"/><circle cx="0" cy="-52" r="6"/>
+        <circle cx="-12" cy="-45" r="4.5"/><circle cx="12" cy="-45" r="4.5"/>
+      </g>
+      <g stroke="#4a2914" stroke-width="1.4" fill="none" stroke-linecap="round">
+        <path d="M-22 -42 a 3 3 0 1 1 3 3 M20 -42 a 3 3 0 1 0 -3 3 M-16 -52 a 3 3 0 1 1 3 3 M14 -52 a 3 3 0 1 0 -3 3 M-6 -57 a 3 3 0 1 1 3 3 M8 -57 a 3 3 0 1 0 -3 3 M-23 -31 a 2.5 2.5 0 1 1 2.5 2.5 M23 -31 a 2.5 2.5 0 1 0 -2.5 2.5"/>
+      </g>
+      <path d="M-12 -40 Q -7 -45 -2 -41 M2 -41 Q 7 -45 12 -40" stroke="#4a2914" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-7" cy="-33" rx="4.4" ry="4.8" fill="#fff"/><ellipse cx="7" cy="-33" rx="4.4" ry="4.8" fill="#fff"/>
+      <circle cx="-6.6" cy="-32.6" r="2.4" fill="#3a2414"/><circle cx="7.4" cy="-32.6" r="2.4" fill="#3a2414"/>
+      <path d="M-2 -26 Q 0 -22 2 -26" stroke="#d9a07c" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <path d="M-10 -18 Q 0 -11 10 -18" stroke="#a0453a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-12" cy="-21" rx="3.6" ry="2.2" fill="#ff8a8a" opacity=".4"/><ellipse cx="12" cy="-21" rx="3.6" ry="2.2" fill="#ff8a8a" opacity=".4"/>
+      <g transform="rotate(6 0 -58)">
+        <path d="M-17 -58 C -12 -74 -4 -88 4 -96 C 8 -86 13 -72 17 -58 Z" fill="${G}"/>
+        <path d="M-18 -66 L 18 -66 L 17 -57 L -17 -57 Z" fill="#f5cc2a"/>
+        <path d="M12 -66 C 16 -76 22 -84 30 -88 C 28 -80 22 -72 15 -64 Z" fill="#e0304a"/>
+      </g>
     </g>`;
   const b = mk(parent, html);
-  piv(b.p.legL, -12, -104, 0); piv(b.p.legR, 12, -104, 0);
-  piv(b.p.armL, -30, -188, 20); piv(b.p.armR, 30, -188, -20); piv(b.p.head, 0, -198, 0);
+  piv(b.p.legL, -11, -126, 0); piv(b.p.legR, 11, -126, 0);
+  piv(b.p.foreL, 0, 34, -75); piv(b.p.foreR, 0, 34, 75);
+  piv(b.p.armL, -33, -192, 40); piv(b.p.armR, 33, -192, -40); piv(b.p.head, 0, -200, 0);
   return b;
 }
+// Two bars hands-on-hips, bouncing and leaning; two bars arms up, waving and kicking.
 function buddyDance(b, t, bpm, amp = 1) {
-  const bt = beat(t, bpm), s = Math.sin(Math.PI * bt), s2 = Math.sin(Math.PI * bt / 2);
-  piv(b.p.armL, -30, -188, 130 + 35 * s2 * amp);
-  piv(b.p.armR, 30, -188, -130 + 35 * s2 * amp);
-  const kick = Math.max(0, Math.sin(Math.PI * bt / 2));
-  piv(b.p.legL, -12, -104, (Math.floor(bt / 2) % 2 ? 0 : 28 * kick) * amp);
-  piv(b.p.legR, 12, -104, (Math.floor(bt / 2) % 2 ? -28 * kick : 0) * amp);
-  piv(b.p.head, 0, -198, 8 * s2);
-  return { r: 4 * s2, y: -8 * Math.abs(s) };
+  const bt = beat(t, bpm), s = Math.sin(Math.PI * bt), s2 = Math.sin(Math.PI * bt / 2), seg = bt % 8;
+  const up = seg < 4 ? (seg < .4 ? 1 - seg / .4 : 0) : (seg < 4.4 ? (seg - 4) / .4 : 1);
+  const m = eIO(clamp(up)) * clamp(amp);
+  const wave = 25 * s2;
+  piv(b.p.armL, -33, -192, lerp(40, 145 + wave, m));
+  piv(b.p.foreL, 0, 34, lerp(-75, 15 + 15 * s, m));
+  piv(b.p.armR, 33, -192, lerp(-40, -145 + wave, m));
+  piv(b.p.foreR, 0, 34, lerp(75, -15 - 15 * s, m));
+  const kick = Math.max(0, Math.sin(Math.PI * bt / 2)) * m;
+  piv(b.p.legL, -11, -126, (Math.floor(bt / 2) % 2 ? 0 : 26 * kick) * amp);
+  piv(b.p.legR, 11, -126, (Math.floor(bt / 2) % 2 ? -26 * kick : 0) * amp);
+  piv(b.p.head, 0, -200, lerp(10 * s2, 6 * s2, m));
+  return { r: lerp(6 * s2, 3 * s2, m) * amp, y: -lerp(5, 9, m) * Math.abs(s) * amp };
 }
 
 let NARS = 0;
@@ -343,18 +374,30 @@ function narwhal(parent) {
 }
 // k: 0 = under water, 1 = up.
 function narPop(n, k, t) { n.p.body.setAttribute('transform', `translate(0 ${f1((1 - eBack(k)) * 150 + Math.sin(t * 3) * 4)}) rotate(${f1(Math.sin(t * 2.2) * 4)} 0 0)`); }
-// A round puffin: black back and wings, pale blue-grey face and belly, big orange beak, orange feet.
+// The puffin from the movie: big round black head with a white face, googly eyes, a big orange cone beak,
+// two curly wires on top, round black body with a white belly, stubby wings, orange feet.
 function puffin(parent) {
-  const wing = n => `<g data-p="${n}"><path d="M0 0 C -13 8 -15 30 -7 44 C 2 32 4 14 0 0 Z" fill="#141519"/></g>`;
+  const wing = n => `<g data-p="${n}"><path d="M0 0 C -9 5 -12 18 -7 30 C -2 22 2 10 0 0 Z" fill="#17171b"/></g>`;
   const p = mk(parent, `
-    <path d="M-24 -2 C -24 -10 -14 -12 -6 -8 L -4 -2 C -8 2 -20 2 -24 -2 Z M24 -2 C 24 -10 14 -12 6 -8 L 4 -2 C 8 2 20 2 24 -2 Z" fill="#f39a1e"/>
-    <ellipse cx="0" cy="-48" rx="31" ry="40" fill="#15161a"/>
-    <path d="M-4 -82 C 18 -86 30 -66 28 -46 C 30 -22 22 -10 6 -10 C -12 -10 -20 -24 -18 -46 C -18 -62 -16 -78 -4 -82 Z" fill="#c9dbe7"/>
-    <path d="M18 -68 C 34 -68 48 -60 50 -52 C 42 -46 30 -46 18 -50 Z" fill="#f39a1e"/>
-    <path d="M22 -55 C 32 -54 42 -53 49 -52" stroke="#d27a10" stroke-width="1.6" fill="none"/>
-    <circle cx="6" cy="-64" r="3.4" fill="#111"/><circle cx="7" cy="-65.2" r="1.1" fill="#fff"/>
-    ${wing('wingL')}${wing('wingR')}`);
-  piv(p.p.wingL, -27, -56, 12); piv(p.p.wingR, 27, -56, -12);
+    <path d="M-10 -14 L -10 -4 M10 -14 L 10 -4" stroke="#ea7a1c" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="-12" cy="-2" rx="12" ry="4.5" fill="#ef8a22"/><ellipse cx="12" cy="-2" rx="12" ry="4.5" fill="#ef8a22"/>
+    <ellipse cx="0" cy="-34" rx="25" ry="27" fill="#17171b"/>
+    <ellipse cx="1" cy="-31" rx="18" ry="21" fill="#eef0f7"/>
+    <ellipse cx="-5" cy="-38" rx="6" ry="9" fill="#fff" opacity=".7"/>
+    ${wing('wingL')}${wing('wingR')}
+    <g stroke="#26262a" stroke-width="2" fill="none" stroke-linecap="round">
+      <path d="M-6 -96 C -10 -106 -8 -114 -2 -116 C 2 -117 3 -112 0 -111"/>
+      <path d="M6 -96 C 8 -108 16 -112 21 -109 C 24 -107 22 -103 19 -105"/>
+    </g>
+    <circle cx="0" cy="-74" r="25" fill="#17171b"/>
+    <path d="M-20 -70 C -20 -84 -8 -90 4 -88 C 16 -86 24 -78 22 -66 C 20 -54 8 -50 0 -51 C -12 -52 -20 -60 -20 -70 Z" fill="#f4f4f7"/>
+    <ellipse cx="-10" cy="-64" rx="4" ry="2.6" fill="#f3a0b0" opacity=".55"/>
+    <circle cx="-5" cy="-79" r="7" fill="#fff" stroke="#d9dbe3" stroke-width="1"/><circle cx="10" cy="-79" r="7" fill="#fff" stroke="#d9dbe3" stroke-width="1"/>
+    <circle cx="-3.5" cy="-80" r="3.2" fill="#111"/><circle cx="11.5" cy="-80" r="3.2" fill="#111"/>
+    <path d="M10 -72 C 22 -74 36 -70 44 -64 C 36 -60 22 -58 12 -60 Z" fill="#f2861e"/>
+    <path d="M12 -60 C 22 -58 36 -60 44 -64 C 36 -62 24 -62 12 -63 Z" fill="#c9600c"/>
+    <path d="M36 -68 C 40 -67 43 -65 44 -64" stroke="#ffc35a" stroke-width="2" fill="none" stroke-linecap="round"/>`);
+  piv(p.p.wingL, -22, -46, 12); piv(p.p.wingR, 22, -46, -12);
   return p;
 }
 function angel(parent) {
@@ -632,7 +675,7 @@ scene(13.5, 25.5, (g, s) => {
   // Puffin waddles in and flaps.
   const w = k01(lt, 2.2, 3.6);
   const flap = w >= 1 ? Math.sin(lt * 14) * 35 * (Math.sin(Math.PI * beat(lt, 160) / 4) > 0 ? 1 : .2) : 0;
-  piv(s.puf.p.wingL, -27, -56, 15 + flap); piv(s.puf.p.wingR, 27, -56, -15 - flap);
+  piv(s.puf.p.wingL, -22, -46, 15 + flap); piv(s.puf.p.wingR, 22, -46, -15 - flap);
   place(s.puf, lerp(VB.x + VB.w + 50, 345, w), 702 - bounce(lt, 160) * 6, 1.05, Math.sin(lt * 10) * 6 * (w < 1 ? 1 : .4));
 });
 
@@ -824,7 +867,7 @@ const forest = scene(50, 1e9, (g, s) => {
     piv(a.p.wingL, -10, -50, Math.sin(ft * 3.2) * 10); piv(a.p.wingR, -10, -50, Math.sin(ft * 3.2) * 10); show(a.p.plaque, false);
     const bd = buddyDance(s.fBuddy, ft, bpm); place(s.fBuddy, lerp(VB.x - 60, 52, ent(1)), 612 + bd.y, .46, bd.r);
     place(s.fHorse, lerp(VB.x + VB.w + 90, 338, ent(2)), 606 - bounce(ft, bpm) * 8, .46, Math.sin(Math.PI * beat(ft, bpm) / 2) * 6);
-    const fl = Math.sin(ft * 14) * 30; piv(s.fPuf.p.wingL, -27, -56, 15 + fl); piv(s.fPuf.p.wingR, 27, -56, -15 - fl);
+    const fl = Math.sin(ft * 14) * 30; piv(s.fPuf.p.wingL, -22, -46, 15 + fl); piv(s.fPuf.p.wingR, 22, -46, -15 - fl);
     place(s.fPuf, lerp(VB.x + VB.w + 40, 262, ent(3)), 612 - bounce(ft, bpm, .5) * 6, .62);
     place(s.fNar, 198, 690, .5); narPop(s.fNar, k01(ft, 1.2, 1.8), ft);
     s.fDogs.forEach(d => {
