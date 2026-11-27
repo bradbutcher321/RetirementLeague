@@ -270,29 +270,38 @@ const DOGS = {
 };
 
 function buddy(parent) {
-  const leg = (n, sx) => `<g data-p="${n}"><line x1="0" y1="0" x2="0" y2="96" stroke="#f2cf3a" stroke-width="15" stroke-linecap="round"/><ellipse cx="${sx * 6}" cy="101" rx="13" ry="6.5" fill="#3b2a1e"/></g>`;
-  const arm = n => `<g data-p="${n}"><line x1="0" y1="0" x2="0" y2="58" stroke="#2f8f43" stroke-width="14" stroke-linecap="round"/><rect x="-9" y="52" width="18" height="9" rx="4.5" fill="#fff"/><circle cx="0" cy="69" r="8" fill="${SKIN}"/></g>`;
+  // Buddy's costume: bright green coat to the knee with a black underskirt, white fur collar and cuffs,
+  // black belt with a gold buckle, yellow tights, curly black shoes, green hat with a yellow band.
+  const G = '#22a83f', GD = '#1b8f34';
+  const leg = (n, sx) => `<g data-p="${n}"><line x1="0" y1="0" x2="0" y2="92" stroke="#f5cf1f" stroke-width="16" stroke-linecap="round"/>
+    <path d="M${-8 * sx} 90 Q ${-9 * sx} 104 ${6 * sx} 104 Q ${20 * sx} 104 ${25 * sx} 95 Q ${27 * sx} 88 ${20 * sx} 90 Q ${18 * sx} 96 ${8 * sx} 94 Z" fill="#141414"/></g>`;
+  const arm = n => `<g data-p="${n}"><line x1="0" y1="0" x2="0" y2="56" stroke="${G}" stroke-width="17" stroke-linecap="round"/>
+    <path d="M-12 52 q 3 -4 6 0 q 3 -4 6 0 q 3 -4 6 0 q 3 -4 6 0 L 12 64 q -3 3 -6 0 q -3 3 -6 0 q -3 3 -6 0 q -3 3 -6 0 Z" fill="#fff"/>
+    <circle cx="0" cy="71" r="8.5" fill="${SKIN}"/></g>`;
   const html = `
     ${leg('legL', -1)}${leg('legR', 1)}
     ${arm('armL')}
-    <path d="M-30 -196 C -36 -160 -40 -132 -45 -100 L 45 -100 C 40 -132 36 -160 30 -196 Z" fill="#2f8f43"/>
-    <path d="M-6 -196 L -2 -100 L 2 -100 L 6 -196 Z" fill="#287a39"/>
-    <rect x="-48" y="-108" width="96" height="13" rx="6.5" fill="#fff"/>
-    <rect x="-39" y="-146" width="78" height="9" fill="#24201e"/><rect x="-8" y="-148" width="16" height="13" rx="2" fill="none" stroke="${GOLD}" stroke-width="3"/>
-    <ellipse cx="0" cy="-195" rx="24" ry="8" fill="#fff"/>
+    <path d="M-40 -136 L 40 -136 L 54 -66 L -54 -66 Z" fill="#151515"/>
+    <path d="M-38 -136 C -46 -112 -54 -88 -60 -64 C -42 -60 -24 -62 -10 -70 C -6 -100 -4 -120 -2 -136 Z" fill="${G}"/>
+    <path d="M38 -136 C 46 -112 54 -88 60 -64 C 42 -60 24 -62 10 -70 C 6 -100 4 -120 2 -136 Z" fill="${G}"/>
+    <path d="M-60 -64 C -42 -60 -24 -62 -10 -70 L -10 -66 C -24 -58 -42 -56 -60 -60 Z M60 -64 C 42 -60 24 -62 10 -70 L 10 -66 C 24 -58 42 -56 60 -60 Z" fill="${GD}"/>
+    <path d="M-31 -196 C -38 -170 -40 -150 -39 -136 L 39 -136 C 40 -150 38 -170 31 -196 Z" fill="${G}"/>
+    <path d="M-2 -196 L -2 -136 L 2 -136 L 2 -196 Z" fill="${GD}"/>
+    <rect x="-41" y="-146" width="82" height="13" rx="2" fill="#151515"/>
+    <rect x="-10" y="-150" width="20" height="21" rx="2.5" fill="none" stroke="#f2c21b" stroke-width="4"/>
     ${arm('armR')}
+    <path d="M-38 -198 Q -36 -182 -22 -178 Q -16 -184 -8 -180 Q 0 -188 8 -180 Q 16 -184 22 -178 Q 36 -182 38 -198 Q 20 -212 0 -210 Q -20 -212 -38 -198 Z" fill="#fff"/>
     <g data-p="head">
-      <rect x="-7" y="-10" width="14" height="12" fill="${SKIN}"/>
-      <ellipse cx="-21" cy="-28" rx="5" ry="7" fill="${SKIN}"/><ellipse cx="21" cy="-28" rx="5" ry="7" fill="${SKIN}"/>
-      <ellipse cx="0" cy="-30" rx="21" ry="24" fill="${SKIN}"/>
-      <g fill="#6b4226"><circle cx="-16" cy="-46" r="8"/><circle cx="-6" cy="-52" r="8"/><circle cx="6" cy="-52" r="8"/><circle cx="17" cy="-45" r="8"/><circle cx="-21" cy="-36" r="5"/><circle cx="21" cy="-36" r="5"/></g>
-      <path d="M-13 -42 Q -8 -46 -3 -42 M3 -42 Q 8 -46 13 -42" stroke="#5a3820" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-      <circle cx="-8" cy="-34" r="5.2" fill="#fff"/><circle cx="8" cy="-34" r="5.2" fill="#fff"/><circle cx="-7.5" cy="-33.5" r="2.8" fill="#3a2a1a"/><circle cx="8.5" cy="-33.5" r="2.8" fill="#3a2a1a"/>
-      <path d="M-11 -20 Q 0 -4 11 -20 Z" fill="#7a1f2b"/><path d="M-10 -20 L10 -20 L 9 -17 L -9 -17 Z" fill="#fff"/>
-      <ellipse cx="-14" cy="-22" rx="4" ry="2.5" fill="#ff8a8a" opacity=".5"/><ellipse cx="14" cy="-22" rx="4" ry="2.5" fill="#ff8a8a" opacity=".5"/>
-      <path d="M-24 -48 C -20 -76 4 -92 34 -84 C 20 -76 18 -64 24 -48 Z" fill="#2f8f43"/>
-      <rect x="-26" y="-54" width="52" height="11" rx="5.5" fill="#fff"/>
-      <path d="M30 -86 l10 -8 l-2 10 Z" fill="${RED}"/>
+      <rect x="-8" y="-12" width="16" height="12" fill="${SKIN}"/>
+      <ellipse cx="-20" cy="-30" rx="5" ry="7" fill="${SKIN}"/><ellipse cx="20" cy="-30" rx="5" ry="7" fill="${SKIN}"/>
+      <ellipse cx="0" cy="-32" rx="20" ry="24" fill="${SKIN}"/>
+      <path d="M-21 -30 C -24 -52 -12 -60 0 -60 C 14 -60 24 -52 21 -30 C 18 -40 16 -44 12 -46 C 4 -42 -8 -42 -14 -46 C -18 -44 -20 -38 -21 -30 Z" fill="#9a4a24"/>
+      <circle cx="-7.5" cy="-33" r="2.8" fill="#2a1a10"/><circle cx="7.5" cy="-33" r="2.8" fill="#2a1a10"/>
+      <path d="M-9 -22 Q 0 -12 9 -22" stroke="#8a2a2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-13" cy="-24" rx="4" ry="2.4" fill="#ff8a8a" opacity=".45"/><ellipse cx="13" cy="-24" rx="4" ry="2.4" fill="#ff8a8a" opacity=".45"/>
+      <path d="M-22 -50 C -18 -72 -4 -92 8 -100 C 12 -84 18 -66 22 -50 Z" fill="${G}"/>
+      <rect x="-24" y="-56" width="48" height="9" rx="3" fill="#f5cf1f"/>
+      <path d="M-18 -56 C -30 -64 -32 -74 -26 -80 C -24 -70 -20 -64 -14 -58 Z" fill="#d81f2a"/>
     </g>`;
   const b = mk(parent, html);
   piv(b.p.legL, -12, -104, 0); piv(b.p.legR, 12, -104, 0);
@@ -310,37 +319,42 @@ function buddyDance(b, t, bpm, amp = 1) {
   return { r: 4 * s2, y: -8 * Math.abs(s) };
 }
 
+let NARS = 0;
+// A blue narwhal poking straight up out of a splash, teal spiral horn, purple spots. (0,0) is the water line.
 function narwhal(parent) {
-  return mk(parent, `
-    <path d="M-58 -2 C -72 -10 -80 -24 -92 -22 C -85 -10 -85 4 -92 16 C -80 15 -70 6 -58 4 Z" fill="#7f9db8"/>
-    <path d="M-60 0 C -60 -26 -20 -36 20 -32 C 50 -29 66 -14 64 4 C 62 20 32 26 0 24 C -30 22 -52 16 -60 0 Z" fill="#8fb0c9"/>
-    <path d="M-44 12 C -10 26 30 24 58 8 C 44 22 4 30 -44 12 Z" fill="#dfeaf3"/>
-    <g fill="#6f8fab"><ellipse cx="-24" cy="-18" rx="5" ry="3"/><ellipse cx="-6" cy="-24" rx="4" ry="2.4"/><ellipse cx="-36" cy="-8" rx="3.4" ry="2.2"/><ellipse cx="8" cy="-14" rx="3" ry="2"/><ellipse cx="22" cy="-24" rx="3.6" ry="2.2"/></g>
-    <path d="M58 -18 L 118 -84 L 63 -11 Z" fill="#f6eed6"/>
-    <g stroke="#cbbf98" stroke-width="1.6"><line x1="68" y1="-26" x2="73" y2="-22"/><line x1="78" y1="-37" x2="83" y2="-33"/><line x1="88" y1="-48" x2="92" y2="-45"/><line x1="98" y1="-59" x2="101" y2="-57"/><line x1="107" y1="-70" x2="109" y2="-68"/></g>
-    <path d="M-2 12 C 6 22 18 22 22 14 C 14 16 6 16 -2 12 Z" fill="#6f8fab"/>
-    <circle cx="40" cy="-8" r="3.6" fill="#1b2430"/><circle cx="41" cy="-9.2" r="1.2" fill="#fff"/>
-    <path d="M46 3 Q 52 7 58 2" stroke="#1b2430" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <ellipse cx="34" cy="0" rx="4" ry="2.4" fill="#ff8aa0" opacity=".5"/>
-    <path d="M-10 -34 l-5 -10 l10 3 l3 -10 l5 10 Z" fill="${RED}" opacity="0"/>`);
+  const id = 'nc' + (++NARS);
+  let bands = '';
+  for (let i = 1; i <= 6; i++) { const u = i / 7.2, cx = 13 + (52 - 13) * u, cy = -115 + (-224 + 115) * u, w = 9 * (1 - u) + 1.5;
+    bands += `<path d="M${f1(cx - w)} ${f1(cy + 2)} L ${f1(cx + w)} ${f1(cy - 6)}" stroke="#23897d" stroke-width="${f1(2.5 + 2 * (1 - u))}" stroke-linecap="round"/>`; }
+  const n = mk(parent, `
+    <clipPath id="${id}"><rect x="-160" y="-420" width="320" height="424"/></clipPath>
+    <g clip-path="url(#${id})"><g data-p="body">
+      <path d="M4 -114 L 52 -224 L 23 -117 Z" fill="#4cc8b8"/>${bands}
+      <path d="M-36 12 C -40 -50 -34 -104 -2 -118 C 26 -128 44 -100 42 -64 C 41 -30 40 -8 38 12 Z" fill="#3f51c6"/>
+      <path d="M30 -92 C 40 -72 40 -32 38 12 L 30 12 C 33 -20 35 -60 30 -92 Z" fill="#3646b2"/>
+      <g fill="#7340b8"><ellipse cx="-16" cy="-100" rx="4.5" ry="3.5"/><ellipse cx="-4" cy="-107" rx="4" ry="3"/><ellipse cx="7" cy="-100" rx="3.5" ry="3"/><ellipse cx="-24" cy="-88" rx="3.2" ry="2.6"/><ellipse cx="-10" cy="-92" rx="2.6" ry="2.2"/></g>
+      <circle cx="12" cy="-74" r="4.6" fill="#111"/><circle cx="13.4" cy="-75.6" r="1.5" fill="#fff"/>
+      <path d="M21 -59 Q 25 -53 31 -59" stroke="#111" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <path d="M-20 -58 C -34 -66 -48 -62 -56 -52 C -44 -48 -32 -48 -20 -50 Z" fill="#3f51c6" stroke="#1b2466" stroke-width="2.2" stroke-linejoin="round"/>
+    </g></g>
+    <path d="M-80 4 C -72 -8 -54 -2 -46 -8 C -32 -14 -16 -4 0 -6 C 16 -8 30 -16 46 -8 C 58 -2 72 -10 82 2 C 86 12 68 18 42 16 C 12 20 -20 20 -52 16 C -72 14 -86 12 -80 4 Z" fill="#4a9ff5"/>
+    <path d="M-52 2 C -40 -2 -26 2 -14 0 M 18 -2 C 30 -6 44 -2 56 0" stroke="#8fcaff" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+  return n;
 }
+// k: 0 = under water, 1 = up.
+function narPop(n, k, t) { n.p.body.setAttribute('transform', `translate(0 ${f1((1 - eBack(k)) * 150 + Math.sin(t * 3) * 4)}) rotate(${f1(Math.sin(t * 2.2) * 4)} 0 0)`); }
+// A round puffin: black back and wings, pale blue-grey face and belly, big orange beak, orange feet.
 function puffin(parent) {
-  const wing = n => `<g data-p="${n}"><path d="M0 0 C -10 6 -12 26 -4 40 C 2 30 4 14 0 0 Z" fill="#141418"/></g>`;
+  const wing = n => `<g data-p="${n}"><path d="M0 0 C -13 8 -15 30 -7 44 C 2 32 4 14 0 0 Z" fill="#141519"/></g>`;
   const p = mk(parent, `
-    <path d="M-12 -3 l-9 3 l10 2 Z M12 -3 l9 3 l-10 2 Z" fill="#f2792b"/>
-    <rect x="-11" y="-12" width="5" height="11" fill="#f2792b"/><rect x="6" y="-12" width="5" height="11" fill="#f2792b"/>
-    ${wing('wingL')}
-    <ellipse cx="0" cy="-40" rx="23" ry="32" fill="#1d1d22"/>
-    <ellipse cx="3" cy="-33" rx="16" ry="25" fill="#fff"/>
-    <path d="M-12 -54 Q 3 -46 16 -54 L 16 -48 Q 3 -40 -12 -48 Z" fill="${RED}"/>
-    <circle cx="0" cy="-74" r="19" fill="#1d1d22"/>
-    <ellipse cx="5" cy="-73" rx="14" ry="12" fill="#f4f4f0"/>
-    <path d="M12 -86 Q 34 -80 46 -70 Q 34 -62 12 -56 Z" fill="#ef5a1c"/><path d="M12 -86 Q 18 -84 22 -82 L 22 -59 Q 17 -58 12 -56 Z" fill="#8d97a3"/><path d="M26 -80 Q 28 -71 26 -61" stroke="#ffc04a" stroke-width="3" fill="none"/><path d="M30 -66 Q 38 -67 46 -70" stroke="#b33a10" stroke-width="1.5" fill="none"/>
-    <circle cx="8" cy="-77" r="3.2" fill="#111"/><circle cx="8.8" cy="-78" r="1" fill="#fff"/><path d="M5 -79 l-3 -2 M11 -79 l3 -2" stroke="#e0464f" stroke-width="1.3"/>
-    <ellipse cx="2" cy="-68" rx="3.4" ry="2" fill="#ff8aa0" opacity=".55"/>
-    ${wing('wingR')}
-    ${hatSVG('santa', -42).replace('translate(0 -42)', 'translate(-2 -66) scale(.72)')}`);
-  piv(p.p.wingL, -17, -58, 15); piv(p.p.wingR, 17, -58, -15);
+    <path d="M-24 -2 C -24 -10 -14 -12 -6 -8 L -4 -2 C -8 2 -20 2 -24 -2 Z M24 -2 C 24 -10 14 -12 6 -8 L 4 -2 C 8 2 20 2 24 -2 Z" fill="#f39a1e"/>
+    <ellipse cx="0" cy="-48" rx="31" ry="40" fill="#15161a"/>
+    <path d="M-4 -82 C 18 -86 30 -66 28 -46 C 30 -22 22 -10 6 -10 C -12 -10 -20 -24 -18 -46 C -18 -62 -16 -78 -4 -82 Z" fill="#c9dbe7"/>
+    <path d="M18 -68 C 34 -68 48 -60 50 -52 C 42 -46 30 -46 18 -50 Z" fill="#f39a1e"/>
+    <path d="M22 -55 C 32 -54 42 -53 49 -52" stroke="#d27a10" stroke-width="1.6" fill="none"/>
+    <circle cx="6" cy="-64" r="3.4" fill="#111"/><circle cx="7" cy="-65.2" r="1.1" fill="#fff"/>
+    ${wing('wingL')}${wing('wingR')}`);
+  piv(p.p.wingL, -27, -56, 12); piv(p.p.wingR, 27, -56, -12);
   return p;
 }
 function angel(parent) {
@@ -352,9 +366,9 @@ function angel(parent) {
     <path d="M-60 104 Q 0 118 60 104 L 58 96 Q 0 110 -58 96 Z" fill="${GOLD}"/>
     <path d="M-24 -60 Q 0 -48 24 -60 L 22 -50 Q 0 -40 -22 -50 Z" fill="${GOLD}"/>
     <g data-p="head">
-      <path d="M-26 -80 C -30 -50 -20 -40 -16 -42 L 16 -42 C 20 -40 30 -50 26 -80 Z" fill="#f2c65b"/>
+      <path d="M-26 -80 C -30 -50 -20 -40 -16 -42 L 16 -42 C 20 -40 30 -50 26 -80 Z" fill="#f4f5f8" stroke="#d8dce6" stroke-width="1.5"/>
       <circle cx="0" cy="-82" r="21" fill="${SKIN}"/>
-      <path d="M-22 -84 C -20 -108 20 -108 22 -84 C 14 -96 -6 -98 -22 -84 Z" fill="#f2c65b"/>
+      <path d="M-22 -84 C -20 -108 20 -108 22 -84 C 14 -96 -6 -98 -22 -84 Z" fill="#f4f5f8" stroke="#d8dce6" stroke-width="1.5"/>
       <path d="M-10 -84 Q -6 -80 -2 -84 M2 -84 Q 6 -80 10 -84" stroke="#5a3820" stroke-width="2.2" fill="none" stroke-linecap="round"/>
       <path d="M-6 -73 Q 0 -67 6 -73" stroke="#c0504d" stroke-width="2.4" fill="none" stroke-linecap="round"/>
       <ellipse cx="-12" cy="-75" rx="4" ry="2.4" fill="#ff8a9a" opacity=".55"/><ellipse cx="12" cy="-75" rx="4" ry="2.4" fill="#ff8a9a" opacity=".55"/>
@@ -377,7 +391,7 @@ function dala(parent, withBanner) {
   const h = mk(parent, `
     ${withBanner ? `<g data-p="banner"><line x1="97" y1="-104" x2="90" y2="-258" stroke="#7a4a1e" stroke-width="5" stroke-linecap="round"/><circle cx="90" cy="-260" r="6" fill="${GOLD}"/>
       <path data-p="flag" fill="#0b5fa5"/><path data-p="flagEdge" fill="none" stroke="#fecc02" stroke-width="4"/>
-      <text data-p="flagTxt" x="4" y="-205" font-size="42" text-anchor="middle" fill="#fecc02" ${FONT} letter-spacing="1">GOD JUL</text></g>` : ''}
+      <text data-p="flagTxt" x="-13" y="-209" font-size="34" text-anchor="middle" fill="#fecc02" ${FONT} letter-spacing="1">GOD JUL</text></g>` : ''}
     <path d="M -80 -94 C -98 -88 -104 -66 -101 -46 C -94 -62 -88 -76 -74 -84 Z" fill="#1a1a1a"/>
     <path d="M -78 -96 C -40 -104 10 -104 34 -100 C 44 -120 52 -142 58 -158 L 62 -172 L 68 -160 C 82 -158 96 -140 106 -124 Q 110 -114 101 -110 L 86 -110 C 77 -108 71 -102 69 -92 C 67 -84 67 -76 69 -64 L 76 0 L 44 0 L 40 -42 Q 0 -54 -44 -42 L -52 0 L -84 0 C -90 -30 -93 -70 -78 -96 Z" fill="#c8102e"/>
     <path d="M -78 -96 C -40 -104 10 -104 34 -100 L 34 -96 C 10 -100 -40 -100 -76 -92 Z" fill="#9c0c24" opacity=".5"/>
@@ -599,7 +613,6 @@ scene(13.5, 25.5, (g, s) => {
     '';
   s.notes = notes(el('g', {}, g), 6, 7);
   s.nar = narwhal(g);
-  s.waterFront = el('path', { fill: '#1c5a86', opacity: .78 }, g);
   mk(g, `<path d="M120 610 L 360 610 L 380 640 L 100 640 Z" fill="#c9e6f5"/><path d="M110 600 Q 240 588 370 600 L 360 612 L 120 612 Z" fill="#fff"/>`);
   s.splash = el('g', { fill: '#dff3ff' }, g);
   s.drops = [0, 1, 2, 3, 4, 5].map(i => el('circle', { r: 4 }, s.splash));
@@ -609,18 +622,17 @@ scene(13.5, 25.5, (g, s) => {
 }, (lt, t, s) => {
   const j = k01(lt, .2, 1.1), arc = Math.sin(Math.PI * j) * 140;
   const d = buddyDance(s.bud, lt, 160, k01(lt, 1.1, 1.6));
-  place(s.bud, lerp(VB.x - 80, 215, eOut(j)), 604 - arc + d.y, .96, d.r);
-  s.notes(lt, 215, 340, k01(lt, 2, 3));
+  place(s.bud, lerp(VB.x - 80, 228, eOut(j)), 604 - arc + d.y, .96, d.r);
+  s.notes(lt, 228, 340, k01(lt, 2, 3));
   // Narwhal pops up out of the sea at 1.6 s and bobs.
   const n = k01(lt, 1.5, 2.3), nb = Math.sin(lt * 3) * 6;
-  place(s.nar, 72, lerp(720, 596, eBack(n)) + nb, .95, -8 + Math.sin(lt * 2.6) * 6);
-  s.waterFront.setAttribute('d', `M-1400 628 L -10 628 Q 40 ${618 + Math.sin(t * 3) * 4} 90 628 Q 140 ${638 - Math.sin(t * 3) * 4} 190 628 L 1800 628 L 1800 1300 L -1400 1300 Z`);
+  place(s.nar, 56, 640 + nb * .3, .95); narPop(s.nar, n, lt);
   const sp = k01(lt, 1.6, 2.6);
-  s.drops.forEach((c, i) => { c.setAttribute('cx', f1(72 + (i - 2.5) * 14 * sp * 2)); c.setAttribute('cy', f1(620 - Math.sin(Math.PI * sp) * (40 + i % 3 * 15))); c.setAttribute('opacity', sp > 0 && sp < 1 ? 1 : 0); });
+  s.drops.forEach((c, i) => { c.setAttribute('cx', f1(56 + (i - 2.5) * 14 * sp * 2)); c.setAttribute('cy', f1(620 - Math.sin(Math.PI * sp) * (40 + i % 3 * 15))); c.setAttribute('opacity', sp > 0 && sp < 1 ? 1 : 0); });
   // Puffin waddles in and flaps.
   const w = k01(lt, 2.2, 3.6);
   const flap = w >= 1 ? Math.sin(lt * 14) * 35 * (Math.sin(Math.PI * beat(lt, 160) / 4) > 0 ? 1 : .2) : 0;
-  piv(s.puf.p.wingL, -17, -58, 15 + flap); piv(s.puf.p.wingR, 17, -58, -15 - flap);
+  piv(s.puf.p.wingL, -27, -56, 15 + flap); piv(s.puf.p.wingR, 27, -56, -15 - flap);
   place(s.puf, lerp(VB.x + VB.w + 50, 345, w), 702 - bounce(lt, 160) * 6, 1.05, Math.sin(lt * 10) * 6 * (w < 1 ? 1 : .4));
 });
 
@@ -667,7 +679,6 @@ scene(38, 50, (g, s) => {
   s.puffs = el('g', { fill: '#fff' }, g);
   s.pf = Array.from({ length: 10 }, () => el('circle', { r: 8 }, s.puffs));
   s.horse = dala(g, true);
-  s.bubble = mk(g, `<path d="M-70 -46 h140 a14 14 0 0 1 14 14 v28 a14 14 0 0 1 -14 14 h-96 l-22 18 l4 -18 h-26 a14 14 0 0 1 -14 -14 v-28 a14 14 0 0 1 14 -14 Z" fill="#fff" stroke="#0b5fa5" stroke-width="4"/><text x="0" y="-8" font-size="30" text-anchor="middle" fill="#0b5fa5" ${FONT}>God Jul!</text>`);
 }, (lt, t, s) => {
   s.aur.forEach((a, i) => { let d = 'M-500 ' + (140 + i * 30); for (let x = -500; x <= 900; x += 70) d += ` L ${x} ${f1(140 + i * 30 + Math.sin(x / 90 + t * .7 + i) * 26)}`; a.setAttribute('d', d); });
   // Run in (0.4-4.2), rear up and say God Jul (4.4-7.6), run off (7.8-11.5).
@@ -680,14 +691,12 @@ scene(38, 50, (g, s) => {
   const hs = 1.12, hy = 655 - Math.abs(gal) * 10;
   s.horse.g.setAttribute('transform', `translate(${f1(x - 68 * hs)} ${f1(hy)}) rotate(${f1(rr)}) translate(${f1(68 * hs)} 0) scale(${hs})`);
   // The banner ripples back from its pole.
-  const W = 180, H = 70, px = 90, top = -258;
+  const W = 206, H = 72, px = 90, top = -258;
   let d = `M ${px} ${top}`, edge = '';
   for (let i = 0; i <= 10; i++) { const u = i / 10, xx = px - u * W, yy = top + Math.sin(u * 5 - t * 9) * 8 * u; d += ` L ${f1(xx)} ${f1(yy)}`; }
   for (let i = 10; i >= 0; i--) { const u = i / 10, xx = px - u * W, yy = top + H + Math.sin(u * 5 - t * 9) * 8 * u; d += ` L ${f1(xx)} ${f1(yy)}`; }
   s.horse.p.flag.setAttribute('d', d + ' Z'); s.horse.p.flagEdge.setAttribute('d', d + ' Z');
   s.horse.p.flagTxt.setAttribute('transform', `translate(0 ${f1(Math.sin(.5 * 5 - t * 9) * 4)})`);
-  op(s.bubble, k01(lt, 4.7, 5.0) * (1 - k01(lt, 7.4, 7.8)));
-  place(s.bubble, clamp(x + 120, VB.x + 100, VB.x + VB.w - 100), 340, eBack(k01(lt, 4.7, 5.1)) || .01);
   s.pf.forEach((c, i) => { const k = (lt * 1.6 + i / 10) % 1; c.setAttribute('cx', f1(x - 90 - k * 90 + (i % 3) * 30)); c.setAttribute('cy', f1(655 - k * 30)); c.setAttribute('r', f1(4 + k * 12)); c.setAttribute('opacity', f1(running ? (1 - k) * .8 : 0)); });
 });
 
@@ -728,10 +737,7 @@ const forest = scene(50, 1e9, (g, s) => {
   s.fBuddy = buddy(s.cast);
   s.fHorse = dala(s.cast, false);
   s.fPuf = puffin(s.cast);
-  s.pond = el('ellipse', { cx: 200, cy: 678, rx: 50, ry: 12, fill: '#3b78b0', stroke: '#e9f4ff', 'stroke-width': 4 }, s.cast);
-  s.pondClip = el('clipPath', { id: 'pondClip' }, g); el('rect', { x: 100, y: 300, width: 200, height: 378 }, s.pondClip);
-  s.fNarWrap = el('g', { 'clip-path': 'url(#pondClip)' }, s.cast);
-  s.fNar = narwhal(s.fNarWrap);
+  s.fNar = narwhal(s.cast);
   s.fDogs = [['dane', 34, 762, 1.0], ['golden', 98, 764, .95], ['dalm', 165, 764, .82], ['corgi', 232, 766, .8], ['pug', 296, 766, .78], ['chi', 362, 766, .74]]
     .map(([k, x, y, sc], i) => { const o = Object.assign({}, DOGS[k]); delete o.sign; const d = dog(s.cast, o); Object.assign(d, { x, y, sc, i }); return d; });
   s.fNotes = [notes(el('g', {}, s.cast), 4, 31), notes(el('g', {}, s.cast), 4, 32), notes(el('g', {}, s.cast), 4, 33)];
@@ -818,9 +824,9 @@ const forest = scene(50, 1e9, (g, s) => {
     piv(a.p.wingL, -10, -50, Math.sin(ft * 3.2) * 10); piv(a.p.wingR, -10, -50, Math.sin(ft * 3.2) * 10); show(a.p.plaque, false);
     const bd = buddyDance(s.fBuddy, ft, bpm); place(s.fBuddy, lerp(VB.x - 60, 52, ent(1)), 612 + bd.y, .46, bd.r);
     place(s.fHorse, lerp(VB.x + VB.w + 90, 338, ent(2)), 606 - bounce(ft, bpm) * 8, .46, Math.sin(Math.PI * beat(ft, bpm) / 2) * 6);
-    const fl = Math.sin(ft * 14) * 30; piv(s.fPuf.p.wingL, -17, -58, 15 + fl); piv(s.fPuf.p.wingR, 17, -58, -15 - fl);
+    const fl = Math.sin(ft * 14) * 30; piv(s.fPuf.p.wingL, -27, -56, 15 + fl); piv(s.fPuf.p.wingR, 27, -56, -15 - fl);
     place(s.fPuf, lerp(VB.x + VB.w + 40, 262, ent(3)), 612 - bounce(ft, bpm, .5) * 6, .62);
-    place(s.fNar, 196, 700 - 34 * ent(4) + Math.sin(ft * 3) * 4, .42, -10 + Math.sin(ft * 2.6) * 8);
+    place(s.fNar, 198, 690, .5); narPop(s.fNar, k01(ft, 1.2, 1.8), ft);
     s.fDogs.forEach(d => {
       const k = ent(2 + d.i * .4), b = bounce(ft, bpm, d.i * .5) * 6;
       place(d, d.x, d.y + (1 - k) * 160 - b, d.sc);
