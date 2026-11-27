@@ -122,6 +122,7 @@
     <div class="y">You are the Secret Santa for</div>
     <div class="n" id="endName">?</div>
     <div class="shh">🤫 Shh! Keep it a secret.</div>
+    <div class="shh hide" id="testNote" style="margin-top:10px;color:#8a6418">This was a test run. The real links show the real names.</div>
     <button class="btn" id="againBtn">▶ Watch again</button>
   </div>
 </div>
@@ -151,8 +152,12 @@ function decode(tok) {
   } catch (e) { return null; }
 }
 const Q = new URLSearchParams(location.search);
-const TOKEN = (location.hash.slice(1) || Q.get('k') || '').trim();
-const WHO = decode(TOKEN) || (Q.has('t') || Q.has('preview') ? { me: 'Connie', to: Q.get('to') || 'Rachel' } : null);
+const HP = new URLSearchParams(location.hash.slice(1).replace(/^([^=&]+)(&|$)/, 'k=$1$2'));
+const TOKEN = (HP.get('k') || Q.get('k') || '').trim();
+const FROM = +(HP.get('from') || Q.get('from') || 0);
+const TEST = TOKEN.toLowerCase() === 'test';   // #test: a full run with a pretend draw, safe to share
+const WHO = TEST ? { me: 'there', to: 'Mrs. Claus', test: true } : decode(TOKEN) || (Q.has('t') || Q.has('preview') ? { me: 'Connie', to: Q.get('to') || 'Rachel' } : null);
+const slug = n => n.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '');
 
 // ====================================================================================
 // Little helpers
@@ -744,6 +749,7 @@ const forest = scene(50, 1e9, (g, s) => {
     <g data-p="q"><text x="0" y="62" font-size="60" text-anchor="middle" fill="#c9b9a0" ${FONT}>? ? ?</text></g>
     <g data-p="nameG"><circle data-p="burst" cx="0" cy="40" r="90" fill="url(#glowY)"/><text data-p="name" x="0" y="64" font-size="68" text-anchor="middle" fill="${RED}" stroke="#fff" stroke-width="2" paint-order="stroke" ${FONT}></text></g>`);
   s.sign.p.name.textContent = WHO ? WHO.to.toUpperCase() : '';
+  if (WHO) s.sign.p.name.setAttribute('font-size', f1(Math.min(68, 300 / (WHO.to.length * .7))));
   s.rays = el('g', { opacity: 0 }, g); g.insertBefore(s.rays, s.sign.g);
   for (let i = 0; i < 12; i++) el('path', { d: 'M0 0 L -22 -420 L 22 -420 Z', fill: '#fff6c2', transform: `rotate(${i * 30})` }, s.rays);
   s.lyr = mk(g, `<rect x="-190" y="-24" width="380" height="46" rx="23" fill="rgba(10,23,51,.62)"/><text data-p="txt" x="0" y="9" font-size="23" text-anchor="middle" fill="#fff" ${FONT}></text>`);
@@ -893,7 +899,7 @@ function render(T) {
 // Sound: everything is synthesized except the spoken lines (voice/*.mp3).
 // ====================================================================================
 const A = { ctx: null, raw: {}, buf: {} };
-const VOICES = ['time', 'goes-to', 'godjul', 'hohoho'].concat(WHO ? ['name-' + WHO.to.toLowerCase()] : []);
+const VOICES = ['time', 'goes-to', 'godjul', 'hohoho'].concat(WHO ? ['name-' + slug(WHO.to)] : []);
 VOICES.forEach(k => { A.raw[k] = fetch(`voice/${k}.mp3?v=${VO_V}`).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null); });
 function audioInit() {
   try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch (e) {}
@@ -1005,7 +1011,7 @@ function buildScore() {
   at(59.2, w => I.pad(w, ['D4', 'F4', 'A4'], .035, 1.8));
   for (let i = 0; i < 46; i++) { const tt = 59.25 + i * .038; at(tt, w => I.snare(w, .04 + .12 * (i / 46))); }
   at(61, w => { I.crash(w, .26); I.kick(w, .4); ['C4', 'E4', 'G4', 'C5'].forEach(n => I.brass(w, n, .08, 1.4)); I.sparkle(w + .1, .1); });
-  at(61.25, w => voice(w, 'name-' + (WHO ? WHO.to.toLowerCase() : '')));
+  at(61.25, w => voice(w, 'name-' + (WHO ? slug(WHO.to) : '')));
   at(60.55, w => ['G4', 'G4'].forEach((n, i) => I.brass(w + i * .2, n, .07, .12)));
   jingleBars(61.5, ['C', 'F', 'G7', 'C'], JB2.slice(17));
   // The finale: everyone sings "We Wish You a Merry Christmas".
@@ -1049,7 +1055,8 @@ function pump() {
 setInterval(pump, 200);
 function start() {
   P.on = true; P.ended = false; P.next = 0; $('end').classList.remove('on');
-  if (A.ctx) { P.base = A.ctx.currentTime + .25; } else { P.perf0 = performance.now() + 250; }
+  const from = P.started ? 0 : FROM; P.started = true;
+  if (A.ctx) { P.base = A.ctx.currentTime + .25 - from; } else { P.perf0 = performance.now() + 250 - from * 1000; }
   pump();
 }
 function frame() {
@@ -1062,8 +1069,10 @@ function frame() {
   requestAnimationFrame(frame);
 }
 function endCard() {
-  $('endHi').textContent = `Merry Christmas, ${WHO.me}! 🎄`;
+  $('endHi').textContent = WHO.test ? 'Merry Christmas! 🎄' : `Merry Christmas, ${WHO.me}! 🎄`;
   $('endName').textContent = WHO.to;
+  $('endName').style.fontSize = Math.min(58, 270 / (WHO.to.length * .58)) + 'px';
+  $('testNote').classList.toggle('hide', !WHO.test);
   $('end').classList.add('on');
   try { localStorage.setItem('fsanta-seen-' + TOKEN, '1'); } catch (e) {}
 }
@@ -1081,8 +1090,8 @@ $('againBtn').addEventListener('click', () => { audioInit(); $('end').classList.
 // ====================================================================================
 function intro() {
   $('intro').classList.remove('hide');
-  $('hiName').textContent = `Hi ${WHO.me}! 👋`;
-  $('envTo').textContent = `For ${WHO.me}`;
+  $('hiName').textContent = WHO.test ? 'Hi there! 👋 (test run)' : `Hi ${WHO.me}! 👋`;
+  $('envTo').textContent = WHO.test ? 'Test run' : `For ${WHO.me}`;
   const fl = $('flakes'), r = rng(9);
   for (let i = 0; i < 26; i++) { const f = document.createElement('i'); f.style.left = (r() * 100) + 'vw'; f.style.animationDuration = (6 + r() * 7) + 's'; f.style.animationDelay = (-r() * 12) + 's'; const sz = 4 + r() * 6; f.style.width = f.style.height = sz + 'px'; fl.appendChild(f); }
   let seen = false; try { seen = localStorage.getItem('fsanta-seen-' + TOKEN) === '1'; } catch (e) {}
